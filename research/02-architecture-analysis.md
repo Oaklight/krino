@@ -1,7 +1,8 @@
 # Jev Architecture Analysis
 
 **Date:** 2026-09-18
-**Status:** Informed speculation based on public evidence
+**Updated:** 2026-09-18 (probe results incorporated)
+**Status:** Partially validated through empirical probing
 
 ## What TypeSafe Has Confirmed
 
@@ -17,90 +18,175 @@
 
 6. **No architecture paper published** as of September 2026.
 
-## Architecture Hypotheses
+## Our Probing Results
 
-Three candidate architectures have been discussed in the community:
+We ran four systematic probes against the Jev API (jev-1.13.0), totaling 744 API calls. Raw data in `probing/results/`. Full methodology and scripts in `probing/scripts/`.
 
-### Hypothesis A: Encoder-Only Transformer + Classification Heads (BERT-style)
+### Probe 1: Token Accounting (34 records)
 
-**Fit:** Encoder-only models compute a representation of the full input in one pass and attach task-specific heads for fixed-size output distributions — exactly the shape Choice/Score/Noul need.
+Verified and refined Hume's token formula:
 
-**Evidence for:**
-- Mechanically the most natural fit for the described behavior
-- Single forward pass is the default for encoder models
-- Classification heads over a fixed output set is standard practice
+**Output tokens:** `4 (shared) + 15 × N_questions + Σ tokenized_len(question_id_i)`
+- Hume's formula is structurally correct but the ID term should use **tokenized length**, not raw character length (~2 chars per token for repeated characters)
+- Output token cost varies by question type: noul=20, score=17, choice=38+ (scales with option count at ~7 tokens/option)
+- Score output is constant regardless of level count (3-level and 5-level both produce 17 tokens)
 
-**Evidence against:**
-- TypeSafe says "new architecture" — BERT-style is not new
-- BERT-scale models (~340M params) may not have the semantic depth needed for "frontier intelligence" claims
-- Would need significant scaling beyond traditional BERT sizes
+**Input tokens:** Baseline template overhead is ~271 tokens. Each additional noul question costs a stable **~12.6 input tokens**, perfectly linear from 1 to 20 questions. State length scales input tokens linearly with zero effect on output tokens.
 
-### Hypothesis B: Text Diffusion Model (LLaDA-style)
+**Architecture signal:** Token accounting is exactly additive, consistent with a shared prefix + branched suffix model. The fixed per-question overhead (~12.6 input tokens, 15 output tokens) matches tool-call framing patterns.
 
-**Fit:** Diffusion models compute outputs via iterative denoising rather than left-to-right autoregression. Could potentially produce calibrated probabilities over fixed output sets.
+### Probe 2: Noul Precision Quantization (1,450 values)
 
-**Evidence for:**
-- TypeSafe's GitHub includes a [fork of LLaDA](https://github.com/typesafe-ai/LLaDA) (Large Language Diffusion Models, arxiv:2502.09992), predating launch by over a year
-- LLaDA natively has a `get_log_likelihood()` function that evaluates conditional probabilities without generating text
-- TypeSafe's launch blog includes the phrase "continuously diffuse" (possible Easter egg)
-- LLaDA uses a standard Transformer architecture with a different probabilistic modeling approach (masked diffusion vs autoregression)
-- LLaDA's FAQ explicitly says it is NOT improved BERT — it's a generative model with a proper log-likelihood bound
+**All probability values — noul, choice, and score — are quantized to an exact 1/100 grid (0.01 steps) with zero residual.**
 
-**Evidence against:**
-- Text diffusion models typically need multiple denoising steps, making 70ms latency challenging
-- LLaDA's own FAQ says it's *slower* than autoregressive baselines at generation
-- However, for classification/scoring (not generation), a single diffusion step might suffice
+| Type | Values | Unique | Min nonzero | Range |
+|------|--------|--------|-------------|-------|
+| Noul | 500 | 88 | 0.01 | 0.01–0.99 |
+| Choice prob | 450 | 72 | 0.01 | 0.00–1.00 |
+| Score prob | 500 | 75 | 0.01 | 0.00–1.00 |
 
-### Hypothesis C: Purpose-Built Architecture
+Noul values never reach exactly 0.0 or 1.0 (capped at 0.01–0.99). Choice and score probabilities can hit exact 0.0 and 1.0.
 
-**Fit:** Given how narrow Jev's three primitives are, TypeSafe may have built something that doesn't map cleanly onto either existing category.
+**Architecture signal:** At most 101 distinct output values. Most likely API-layer rounding rather than model-intrinsic quantization, but could indicate a coarse output head if the model genuinely uses ≤100 bins.
 
-**Evidence for:**
-- "New model architecture" is explicitly stated
-- The output constraints are so specific that a general-purpose architecture may be wasteful
-- TypeSafe also forked [vllm](https://github.com/typesafe-ai/vllm), suggesting custom inference engineering
+### Probe 3: Diffusion vs Autoregressive Signature (188 records)
 
-**Evidence against:**
-- Building a new architecture from scratch is extremely expensive
-- Most "new architectures" in practice are modifications of existing ones
+**Masking robustness (20 states × 6 masking levels):**
 
-## Our Best Guess
+| Masking % | Mean noul | Delta from 0% |
+|-----------|-----------|---------------|
+| 0% | 0.973 | — |
+| 10% | 0.929 | -0.044 |
+| 20% | 0.868 | -0.106 |
+| 30% | 0.682 | -0.292 |
+| 40% | 0.571 | -0.402 |
+| 50% | 0.450 | -0.523 |
 
-**Most likely: a large pretrained LLM backbone (possibly diffusion-based, given the LLaDA fork), with custom classification/scoring heads, trained end-to-end with RLCD.**
+Near-linear collapse with no plateau. A diffusion model trained with random masking would show much greater resilience.
 
-The reasoning:
+**Word scrambling (20 states × 3 orderings):**
 
-1. **The backbone is a pretrained language model** — the AI primer explicitly says RLCD is a post-training method starting from pretrained LMs. The model needs frontier-level language understanding, which requires billions of parameters and web-scale pretraining.
+| Order | Mean noul | Delta |
+|-------|-----------|-------|
+| Original | 0.974 | — |
+| Reversed | 0.762 | -0.211 |
+| Shuffled | 0.831 | -0.143 |
 
-2. **LLaDA as a potential base** — LLaDA is architecturally attractive because:
-   - It uses a standard Transformer but with masked diffusion instead of autoregression
-   - Its `get_log_likelihood()` function naturally evaluates conditional probabilities
-   - It can compute representations in parallel (no sequential dependency)
-   - It's an 8B parameter model — big enough for strong language understanding
-   - TypeSafe forked it and has had it since June 2025
+Strong word-order sensitivity. Reversal (which completely breaks left-to-right flow) hurts more than shuffling (which preserves some local adjacency).
 
-3. **Custom heads for the three primitives** — on top of the backbone, lightweight heads that:
-   - For Choice: compute softmax over user-defined option embeddings
-   - For Score: compute probabilities over user-defined levels
-   - For Noul: compute a single yes/no probability
+**Cloze (fill-in-the-blank):** 8/8 correct. Not strongly discriminative — any large model should ace these.
 
-4. **RLCD training** — the key innovation. Uses RL to optimize the entire pipeline (backbone + heads) for calibrated probabilities. The reward signal measures the match between stated confidence and actual accuracy across populations of predictions.
+**Verdict: autoregressive backbone, not diffusion.** The steep masking degradation and strong word-order sensitivity are classic autoregressive signatures. The LLaDA fork on TypeSafe's GitHub was likely an exploration path that was not used for the production model.
 
-5. **Engineering optimizations** — the "parallel sampler" and "hardware-aware" claims suggest deep inference optimization, likely including:
-   - KV-cache sharing across questions (questions share the same state)
-   - Batched evaluation of multiple questions in one pass
-   - Quantization / pruning for latency
-   - Custom CUDA kernels (hence the vllm fork)
+### Probe 4: Ordering Bias on Ambiguous Cases (72 records)
 
-## The RLCD Training Gap
+**No systematic position bias:**
 
-RLCD is the most critical and least disclosed component. What we know:
+| Position | Mean probability |
+|----------|-----------------|
+| 0 (first) | 0.3300 |
+| 1 (middle) | 0.3392 |
+| 2 (last) | 0.3308 |
 
-- **Objective:** calibration — P(stated confidence) ≈ P(actual correctness) across populations
-- **Method:** reinforcement learning with a reward signal based on calibration metrics
-- **Not disclosed:** loss function, reward model construction, training data, calibration measurement during training
+All within 1pp of the 0.333 baseline.
 
-Calibration-aware training is not entirely novel in the literature (e.g., "Rewarding Doubt" and related work on epistemic calibration), but the full product-level implementation at this scale appears to be new.
+**Choice flips:** 2 out of 12 ambiguous cases (16.7%) had their top choice change depending on option order. Both flipped cases had top-two options within ~10pp of each other. Clear-cut cases showed zero sensitivity.
+
+**Probability swings:** Mean 0.065, max 0.220, median 0.040.
+
+**Architecture signal:** The lack of systematic position bias disfavors simple left-to-right option scoring. Instead, it's consistent with **listwise processing** where all options are seen simultaneously before the decision is made. This aligns with Hume's IIA violation finding — options interact within the decision computation.
+
+## Architecture Hypotheses — Updated
+
+### ~~Hypothesis A: Encoder-Only Transformer (BERT-style)~~ — Unlikely
+
+Our probing evidence argues against this:
+- Strong word-order sensitivity (Probe 3) is inconsistent with bidirectional encoder models, which are relatively order-agnostic
+- The token accounting pattern (Probe 1) matches autoregressive tool-call framing, not encoder classification
+
+### ~~Hypothesis B: Text Diffusion Model (LLaDA-style)~~ — Ruled Out
+
+Our Probe 3 results directly contradict this:
+- Steep masking degradation (0.97→0.45 at 50% masking) is the opposite of what a diffusion model trained with random masking would show
+- Strong word-order sensitivity is inconsistent with diffusion models that process all positions simultaneously
+- The LLaDA fork was likely an exploration that did not make it into the production architecture
+
+### Hypothesis C: Purpose-Built Architecture — Partially Supported
+
+The "new architecture" claim may refer to the output mechanism rather than the backbone.
+
+### Hypothesis D: Causal LM + Constrained Parallel Tool Calls — Best Fit ✅
+
+**This is our current best hypothesis, supported by all four probes and external evidence.**
+
+Jev's API maps directly onto LLM parallel tool calling with three critical constraints:
+
+| Standard LLM Tool Calling | Jev System One |
+|---------------------------|----------------|
+| System message / context | `state` |
+| Tool definitions (JSON Schema) | Question definitions (noul/choice/score) |
+| Parallel tool calls | Parallel questions (forced, never sequential) |
+| Tool call arguments (arbitrary JSON) | Probability distribution only (fixed shape) |
+| Tool results feed back into next turn | No chaining (one-shot, read-only state) |
+
+The constraint stack that enables single-pass inference:
+1. **Only 3 tools** — noul (sigmoid), choice (softmax over K options), score (softmax over N levels)
+2. **Every tool output is a probability vector** — never text, never variable-length
+3. **All calls are forced-parallel** — no tool can see another tool's output
+4. **State is read-only** — no tool modifies shared context
+
+Because the output is always a fixed-size probability distribution, autoregressive decoding is unnecessary. The output head is:
+- Noul: single sigmoid → `P(yes)`
+- Choice: softmax over K options → `{option: probability}`
+- Score: softmax over N levels → `{level: probability}`, then `score = Σ(level × P(level))`
+
+**Evidence supporting this hypothesis:**
+
+| Evidence | Source |
+|----------|--------|
+| Token accounting is exactly additive (shared prefix + per-question overhead) | Our Probe 1 |
+| Output token formula matches tool-call framing (4 shared + 15/answer + tokenized ID) | Our Probe 1 + Hume |
+| Autoregressive backbone (masking fragility, word-order sensitivity) | Our Probe 3 |
+| Listwise option processing (no position bias, IIA violation) | Our Probe 4 + Hume |
+| Probabilities quantized to 1/100 grid | Our Probe 2 |
+| Tokenizer closest to Qwen (348/415 match) | Hume (445 probes) |
+| Context window: ~32k/branch, ~65k total | Hume (35 probes) |
+| Question isolation confirmed (can't see sibling question's content) | Hume (visibility experiment) |
+| Likely sparse MoE, ~10B active params | Hume (latency inference) |
+| Confidence field is `(p_max - 1/K) / (1 - 1/K)`, not learned | Hume (reverse-engineered) |
+
+**Proposed full architecture:**
+
+```
+                    ┌─── Question 1 suffix ──→ Readout Head → P(options)
+                    │
+State prefix ───→ Shared KV Cache ─┼─── Question 2 suffix ──→ Readout Head → P(yes/no)
+  (causal LM)      │               │
+                    │               └─── Question 3 suffix ──→ Readout Head → P(levels)
+                    │
+                    (Prefix computed once, reused for all branches)
+```
+
+- **Backbone:** Causal autoregressive Transformer, likely Qwen-family (tokenizer evidence), possibly sparse MoE (~10B active params)
+- **Inference:** Shared state prefix KV cache (Hydragen/DeFT pattern) + isolated question suffix branches
+- **Output:** Listwise readout head per question (softmax/sigmoid over options/levels), not autoregressive text generation
+- **Training:** RLCD — calibration-aware RL applied to the readout head probabilities
+- **Quantization:** Output probabilities rounded to 0.01 steps (API layer)
+
+## Community Evidence Summary
+
+| Finding | Source | Confidence |
+|---------|--------|------------|
+| Autoregressive backbone (not diffusion, not encoder) | Our Probe 3 | **High** |
+| Shared prefix + isolated question branches | Our Probe 1 + Hume | **Very high** |
+| Listwise option processing (no position bias, IIA violation) | Our Probe 4 + Hume | **High** |
+| Output quantized to 1/100 grid | Our Probe 2 | **Very high** |
+| Tokenizer novel, closest to Qwen (348/415) | Hume | **Very high** |
+| Context window: ~32k/branch, ~65k total | Hume | **Very high** |
+| Likely sparse MoE (~10B active) | Hume (latency) | **Moderate** |
+| Calibration has fixed compression-toward-middle distortion | Sacco (800 items) | **High** |
+| Confidence = `(p_max - 1/K) / (1 - 1/K)` | Hume | **Very high** |
+| Open Qwen reproductions reach ~85% of Jev's accuracy | OpenJev, open-alternative-jev | **High** |
 
 ## Known Limitations (from jaggedness doc)
 
@@ -116,6 +202,17 @@ These limitations provide architecture clues:
 | Adversarial content can steer answers | No adversarial robustness training (acknowledged, planned for improvement) |
 | P(noul) and 1-P(not noul) don't sum to 1 | Each question is evaluated truly independently — no structural invariance across questions |
 | Cannot generate text at all | Fundamental architectural constraint, not a training choice |
+
+## The RLCD Training Gap
+
+RLCD is the most critical and least disclosed component. What we know:
+
+- **Objective:** calibration — P(stated confidence) ≈ P(actual correctness) across populations
+- **Method:** reinforcement learning with a reward signal based on calibration metrics
+- **Not disclosed:** loss function, reward model construction, training data, calibration measurement during training
+- **Independent finding (Sacco):** Jev's probabilities show a fixed compression-toward-middle distortion — overstating low probabilities, understating high ones. Recommendation: "treat as a monotone score, not a probability, and fit your own calibration map."
+
+Calibration-aware training is not entirely novel in the literature (e.g., "Rewarding Doubt" and related work on epistemic calibration), but the full product-level implementation at this scale appears to be new.
 
 ## Reproduction Roadmap
 
@@ -133,9 +230,9 @@ These limitations provide architecture clues:
 
 1. **RLCD training** — the loss function, reward model, and training procedure are undisclosed.
 
-2. **The exact model architecture** — "new model architecture" is a black box.
+2. **The exact model architecture** — the readout head design and training are not public.
 
-3. **The calibration quality** — Jev's claimed calibration has not been independently verified against public benchmarks.
+3. **The calibration quality** — Jev's calibration has been independently measured (Sacco, calibre) and found to have a compression-toward-middle distortion. Reproducing even this level of calibration requires the RLCD recipe.
 
 4. **The training data** — undisclosed.
 
@@ -153,10 +250,10 @@ Given access to HPC resources (ANL), we can explore:
 - Freeze various backbones (0.5B to 8B) and compare head quality
 - Experiment with rival-aware attention (jevbetter's approach)
 
-#### Phase 3: LLaDA Exploration
-- Load LLaDA-8B-Base and test its `get_log_likelihood()` for option scoring
-- Compare LLaDA vs autoregressive backbones for the scoring task
-- If LLaDA shows promise, explore RLCD-style calibration training on top
+#### Phase 3: ~~LLaDA Exploration~~ Deprioritized
+- ~~Load LLaDA-8B-Base and test its `get_log_likelihood()` for option scoring~~
+- Our Probe 3 results indicate Jev does NOT use a diffusion backbone, so LLaDA exploration is deprioritized
+- May still be worth a quick comparison to confirm the diffusion hypothesis is wrong at scale
 
 #### Phase 4: RLCD Approximation
 - Design a calibration-aware training objective (ECE loss, Brier score loss, or RL-based)
@@ -169,6 +266,10 @@ Given access to HPC resources (ANL), we can explore:
 - TypeSafe AI primer: https://docs.typesafe.ai/introduction/machine-learning-primer
 - TypeSafe launch blog: https://typesafe.ai/blog/introducing-system-one-models-and-jev
 - explainx.ai analysis: https://explainx.ai/blog/how-does-jev-work-rlcd-system-one-model-explained-2026
+- Archer Hume probing study: https://archerhume.com/posts/jevs-architecture-unmasked/
+- SamuelSacco calibration audit: https://github.com/SamuelSacco/jev-exploration
+- calibre routing study: https://github.com/FirasSX914/calibre
+- jev-rerank-bench: https://github.com/anessbelbati/jev-rerank-bench
 - OpenJev (TheoLeeCJ): https://github.com/TheoLeeCJ/openjev
 - open-jev (daseinlabs): https://github.com/daseinlabs/open-jev
 - jevlike (vinnylarouge): https://github.com/vinnylarouge/jevlike
