@@ -1,8 +1,8 @@
 # Jev Architecture Analysis
 
 **Date:** 2026-09-18
-**Updated:** 2026-09-18 (probe results incorporated)
-**Status:** Partially validated through empirical probing
+**Updated:** 2026-09-18 (3 rounds of probing, 13 probes, ~1,800 API calls)
+**Status:** Empirically validated — high confidence on base model family, moderate on attention mechanism
 
 ## What TypeSafe Has Confirmed
 
@@ -20,7 +20,15 @@
 
 ## Our Probing Results
 
-We ran four systematic probes against the Jev API (jev-1.13.0), totaling 744 API calls. Raw data in `probing/results/`. Full methodology and scripts in `probing/scripts/`.
+We ran 13 systematic probes across 3 rounds against the Jev API (jev-1.13.0), totaling ~1,800 API calls. Each round included a rigor self-audit, and flawed probes were re-designed and re-run. Raw data in `probing/results/`. Full methodology and scripts in `probing/scripts/`.
+
+### Rigor Methodology
+
+After each round, we asked: "Does this result necessarily imply what we claimed, or could a different architecture produce the same output?" Probes that failed this test were re-designed with stronger discriminators. Key corrections:
+- Probe 3 (char-level masking) → superseded by 3b/3c (word-level masking, scaled code definitions)
+- Probe 4 (easy 3-option ordering) → superseded by 4b (ambiguous 5/8-option, 190 permutations)
+- Probe 6 (easy domain questions) → superseded by 6b (counterintuitive myths near capability boundary)
+- Probe 9 (easy translated facts) → supplemented by 9b (language-specific idioms/grammar)
 
 ### Probe 1: Token Accounting (34 records)
 
@@ -76,9 +84,32 @@ Strong word-order sensitivity. Reversal (which completely breaks left-to-right f
 
 **Cloze (fill-in-the-blank):** 8/8 correct. Not strongly discriminative — any large model should ace these.
 
-**Verdict: autoregressive backbone, not diffusion.** The steep masking degradation and strong word-order sensitivity are classic autoregressive signatures. The LLaDA fork on TypeSafe's GitHub was likely an exploration path that was not used for the production model.
+**Verdict (Round 1): autoregressive, not diffusion.** However, this probe was flawed — character-level masking breaks BPE tokens regardless of architecture. Superseded by Probes 3b and 3c.
 
-### Probe 4: Ordering Bias on Ambiguous Cases (72 records)
+### Probe 3b: Corrected Diffusion Test (125 records)
+
+Word-level masking, bidirectional context placement (hint before vs after ambiguous content), and token-level noise.
+
+**Bidirectional context (critical test):** hint_last ≥ hint_first in ALL 5 non-trivial cases (+0.04 mean). Token-level noise: only 4.7% degradation at 50% noise (vs 47% for word removal).
+
+**However**, this probe is also inconclusive — in causal attention with KV caching, the question suffix attends to ALL state positions. A strong model can compose information from any position at question-level attention.
+
+### Probe 3c: Rigorous Bidirectional Test (162 records)
+
+Scaled code-definition test: N made-up codes (1→10) where definitions are placed AFTER usage. The causal prediction: def_last degrades as N grows. The bidirectional prediction: flat.
+
+| N codes | def_first noul | def_last noul | delta |
+|---|---|---|---|
+| 1 | 0.940 | 0.920 | -0.020 |
+| 3 | 0.970 | 0.967 | -0.003 |
+| 5 | 0.973 | 0.977 | +0.003 |
+| 10 | 0.973 | 0.973 | +0.000 |
+
+def_last stays flat. But again, code-lookup is a retrieval/matching task solvable at query level for ANY architecture. **Suggestive but not conclusive on its own.**
+
+**Resolution: Probe 4b's recency bias provides the strongest causal signal — see below.**
+
+### Probe 4: Ordering Bias on Ambiguous Cases (72 records) — SUPERSEDED
 
 **No systematic position bias:**
 
@@ -94,26 +125,62 @@ All within 1pp of the 0.333 baseline.
 
 **Probability swings:** Mean 0.065, max 0.220, median 0.040.
 
-**Architecture signal:** The lack of systematic position bias disfavors simple left-to-right option scoring. Instead, it's consistent with **listwise processing** where all options are seen simultaneously before the decision is made. This aligns with Hume's IIA violation finding — options interact within the decision computation.
+**Architecture signal (Round 1):** No position bias on easy 3-option cases. But this finding was **overturned by Probe 4b**.
+
+### Probe 4b: Rigorous Ordering Bias (190 records) — KEY FINDING
+
+5-option (8 cases × 20 permutations) and 8-option (1 case × 30 permutations) on genuinely ambiguous inputs.
+
+**5-option position bias (160 records):**
+
+| Position | Mean probability | Delta from 0.200 |
+|---|---|---|
+| 0 (first) | 0.179 | -0.021 (suppressed) |
+| 1 | 0.199 | -0.001 (neutral) |
+| 2 | 0.179 | -0.022 (suppressed) |
+| 3 | 0.212 | +0.012 (mild boost) |
+| 4 (last) | **0.231** | **+0.031 (recency bias)** |
+
+**Practical impact:** 44% flip rate (4/9 cases). Max probability swing: 0.39.
+
+**This is the strongest causal-vs-bidirectional discriminator we have:** In a causal model, each option's KV is computed left-to-right. The last option attended to all previous options → richest KV → natural recency advantage. A bidirectional model would show no systematic position preference.
+
+### Probe 6b: Hard Domain Variance (60 records)
+
+Counterintuitive myths near capability boundary. 59/60 correct (98%). Only miss: spinach/iron myth. No meaningful domain variance (σ=0.037). MoE question remains **inconclusive**.
+
+### Probe 7: Temporal Cutoff (30 records)
+
+Sharp cliff at **mid-2025**. 100% through 2025-H1, 0% from 2025-H2. Zero self-awareness (noul 0.16–0.28 on TypeSafe/Jev). Pretraining data cutoff: ~June 2025.
+
+### Probe 8: Readout Head Cross-Type (20 records)
+
+100% binary agreement across types. Choice and score nearly identical (diff 0.003). Noul diverges (diff 0.06), higher floor on degenerate inputs, 12% faster. Suggests choice/score share a readout path; noul uses a separate one.
+
+### Probe 9 + 9b: Multilingual Parity (199 records) — KEY FINDING
+
+Easy facts (Probe 9): 100% in 10/12 languages, EN=ZH parity, token cost parity (284≈285).
+
+Hard idioms/grammar (Probe 9b): 100% across all 8 languages. **ZH confidence (0.952) EXCEEDS EN (0.862)** on hard, language-specific questions. This +0.090 gap is a strong Qwen fingerprint — Qwen models have Chinese performance matching or exceeding English.
 
 ## Architecture Hypotheses — Updated
 
 ### ~~Hypothesis A: Encoder-Only Transformer (BERT-style)~~ — Unlikely
 
-Our probing evidence argues against this:
-- Strong word-order sensitivity (Probe 3) is inconsistent with bidirectional encoder models, which are relatively order-agnostic
-- The token accounting pattern (Probe 1) matches autoregressive tool-call framing, not encoder classification
+- Probe 4b's recency bias is inconsistent with bidirectional encoder models
+- Token accounting pattern matches autoregressive framing, not encoder classification
+- However, Probe 3b/3c's bidirectional context access partially rehabilitates this — see "Open Questions" below
 
-### ~~Hypothesis B: Text Diffusion Model (LLaDA-style)~~ — Ruled Out
+### ~~Hypothesis B: Text Diffusion Model (LLaDA-style)~~ — Unlikely
 
-Our Probe 3 results directly contradict this:
-- Steep masking degradation (0.97→0.45 at 50% masking) is the opposite of what a diffusion model trained with random masking would show
-- Strong word-order sensitivity is inconsistent with diffusion models that process all positions simultaneously
-- The LLaDA fork was likely an exploration that did not make it into the production architecture
+- Probe 3's char-level masking degradation was initially cited but is flawed (breaks BPE for any architecture)
+- Probe 3b/3c couldn't conclusively rule out diffusion (code-lookup is solvable at query level)
+- But Probe 4b's recency bias is inconsistent with diffusion models (which process all positions simultaneously)
+- The LLaDA fork was likely an exploration that did not make it into production
 
 ### Hypothesis C: Purpose-Built Architecture — Partially Supported
 
-The "new architecture" claim may refer to the output mechanism rather than the backbone.
+The "new architecture" claim may refer to the output mechanism (readout heads, parallel sampler) rather than the backbone transformer.
 
 ### Hypothesis D: Causal LM + Constrained Parallel Tool Calls — Best Fit ✅
 
@@ -173,20 +240,49 @@ State prefix ───→ Shared KV Cache ─┼─── Question 2 suffix ─�
 - **Training:** RLCD — calibration-aware RL applied to the readout head probabilities
 - **Quantization:** Output probabilities rounded to 0.01 steps (API layer)
 
-## Community Evidence Summary
+## Consolidated Evidence Summary
 
-| Finding | Source | Confidence |
-|---------|--------|------------|
-| Autoregressive backbone (not diffusion, not encoder) | Our Probe 3 | **High** |
-| Shared prefix + isolated question branches | Our Probe 1 + Hume | **Very high** |
-| Listwise option processing (no position bias, IIA violation) | Our Probe 4 + Hume | **High** |
-| Output quantized to 1/100 grid | Our Probe 2 | **Very high** |
-| Tokenizer novel, closest to Qwen (348/415) | Hume | **Very high** |
-| Context window: ~32k/branch, ~65k total | Hume | **Very high** |
-| Likely sparse MoE (~10B active) | Hume (latency) | **Moderate** |
-| Calibration has fixed compression-toward-middle distortion | Sacco (800 items) | **High** |
-| Confidence = `(p_max - 1/K) / (1 - 1/K)` | Hume | **Very high** |
-| Open Qwen reproductions reach ~85% of Jev's accuracy | OpenJev, open-alternative-jev | **High** |
+| Finding | Source | Confidence | Notes |
+|---------|--------|------------|-------|
+| **Qwen-family base model** | Hume tokenizer (348/415) + Probe 9/9b (EN=ZH parity, ZH>EN confidence) + Probe 7 (mid-2025 cutoff) | **Very high** | Three independent signals converge. Likely Qwen3.5 |
+| **Pretraining cutoff ~mid-2025** | Probe 7 (sharp cliff 2025-H1→H2) | **Very high** | Zero self-awareness |
+| **Shared prefix + isolated question branches** | Probe 1 (additive tokens) + Hume (isolation, latency) | **Very high** | Tool-call pattern |
+| **Output quantized to 1/100 grid** | Probe 2 (zero residual, 1,450 values) | **Very high** | Observation solid; interpretation unclear (API rounding vs model quantization) |
+| **Recency bias in option processing** | Probe 4b (+3.1pp at last position, 44% flip rate) | **High** | Overturned Probe 4's "no bias" finding. Favors causal attention |
+| **Choice/score share readout path; noul separate** | Probe 8 (diff 0.003 vs 0.06) | **High** | Caveat: different prompt templates could partially explain |
+| **Tokenizer novel, closest to Qwen** | Hume (445 probes) | **Very high** | — |
+| **Context window: ~32k/branch, ~65k total** | Hume (35 probes) | **Very high** | — |
+| **IIA violation (options interact)** | Hume (50 probes) | **High** | — |
+| **Likely sparse MoE (~10B active)** | Hume (latency inference) | **Moderate** | Our Probe 6/6b couldn't confirm (model too capable) |
+| **Calibration: compression-toward-middle** | Sacco (800 items) | **High** | — |
+| **Confidence = `(p_max - 1/K) / (1 - 1/K)`** | Hume | **Very high** | Arithmetic, not learned |
+| **Open Qwen reproductions reach ~85% of Jev** | OpenJev, open-alternative-jev | **High** | — |
+
+## Open Questions
+
+### Causal vs Bidirectional: Contradictory Evidence
+
+Our probes produced two findings that point in opposite directions:
+
+1. **Probe 4b's recency bias (+3.1pp)** → favors causal (last option has richest KV in L→R attention)
+2. **Probe 3c's flat def_last curve** → favors bidirectional (definitions after usage don't hurt)
+
+These are not necessarily contradictory. A possible resolution:
+- **State prefix uses bidirectional attention** (every state token sees every other state token)
+- **Option list within the question suffix uses causal attention** (processed left-to-right)
+- This "hybrid" architecture would explain both: no degradation from definition placement in the state (bidirectional), but recency bias in option ordering (causal)
+
+This is consistent with Hume's proposed architecture (causal transformer with shared prefix), where the prefix is processed with standard causal attention during prefill — but because ALL prefix tokens are processed together, the KV computation during prefill already gives each prefix token attention to all tokens before it, producing rich representations for the question to read.
+
+**To resolve definitively:** Run the same probes through `system-one-adapter` with a known causal model (Qwen 7B). If Jev shows the same recency bias magnitude as the known causal model, the causal hypothesis is confirmed. If Jev shows significantly less bias, something non-standard is happening.
+
+### MoE vs Dense: Cannot Distinguish
+
+59/60 on hard counterintuitive questions, 120/120 on standard questions. The model is too capable at accessible difficulty levels to surface routing-pattern differences. Would need expert-level questions from domain specialists, or a different probe methodology entirely (e.g., latency variance across domains, which Hume's approach covers).
+
+### Noul vs Choice/Score Readout: Prompt Template Confound
+
+Probe 8 found that choice and score track identically (diff 0.003) while noul diverges (diff 0.06). But each question type uses a different prompt template, which could partially explain the divergence. A cleaner test would require controlling for prompt template effects — difficult with the current API.
 
 ## Known Limitations (from jaggedness doc)
 
