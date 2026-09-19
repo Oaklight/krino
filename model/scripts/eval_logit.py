@@ -106,7 +106,7 @@ def main() -> int:
     dataset_paths = args.datasets
     if not dataset_paths:
         benchmarks = ROOT / "model" / "data" / "benchmarks"
-        dataset_paths = sorted(str(p) for p in benchmarks.glob("*.jsonl"))
+        dataset_paths = sorted(str(p) for p in benchmarks.rglob("*.jsonl"))
         if not dataset_paths:
             print("No datasets found. Run data pipeline first: python -m model.data.pipeline")
             return 1

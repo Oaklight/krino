@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any, Iterator
@@ -35,15 +36,40 @@ def _read_parquet(path: Path) -> list[dict[str, Any]]:
 def _load_hf_parquet(dataset: str, config: str, split: str) -> list[dict[str, Any]]:
     """Download and read a HuggingFace dataset split as parquet.
 
-    Assumes single-shard datasets (0000.parquet). All current benchmarks
-    (Banking77, SST-2, AG News, MNLI, typed-decisions) are single-shard.
-    Multi-shard datasets would need shard enumeration.
+    Supports multi-shard datasets by fetching 0000.parquet, 0001.parquet, ...
+    until a 404 is returned.
     """
     safe_name = dataset.replace("/", "__")
-    cache_path = DATA_DIR / safe_name / f"{config}_{split}.parquet"
-    url = f"https://huggingface.co/datasets/{dataset}/resolve/refs%2Fconvert%2Fparquet/{config}/{split}/0000.parquet"
-    _download_parquet(url, cache_path)
-    return _read_parquet(cache_path)
+    base_url = f"https://huggingface.co/datasets/{dataset}/resolve/refs%2Fconvert%2Fparquet/{config}/{split}"
+    cache_dir = DATA_DIR / safe_name
+
+    # Migrate old single-shard cache filename to new naming convention
+    old_cache = cache_dir / f"{config}_{split}.parquet"
+    new_first = cache_dir / f"{config}_{split}_0000.parquet"
+    if old_cache.exists() and not new_first.exists():
+        old_cache.rename(new_first)
+
+    rows: list[dict[str, Any]] = []
+    for shard_idx in range(1000):
+        shard_name = f"{config}_{split}_{shard_idx:04d}.parquet"
+        cache_path = cache_dir / shard_name
+        url = f"{base_url}/{shard_idx:04d}.parquet"
+
+        if not cache_path.exists():
+            try:
+                _download_parquet(url, cache_path)
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    if shard_idx == 0:
+                        raise FileNotFoundError(
+                            f"No parquet shards found for {dataset}/{config}/{split}"
+                        )
+                    break
+                raise
+
+        rows.extend(_read_parquet(cache_path))
+
+    return rows
 
 
 # --- Banking77 ---
