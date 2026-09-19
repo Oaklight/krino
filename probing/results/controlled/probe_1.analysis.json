@@ -1,0 +1,121 @@
+{
+  "identity_failures": [],
+  "interpretation_guardrail": "Within-entry-count response-size slopes control candidate-scoring count. Weak slopes can disfavor full visible JSON generation, but cannot exclude compact internal decoding followed by ordinary serialization.",
+  "matched_request_byte_sizes": [
+    35820
+  ],
+  "mean_total_time_by_string_family": {
+    "ascii": 0.2964234707437249,
+    "combining": 0.2894949830758075,
+    "emoji": 0.30107105786575833,
+    "punctuation": 0.3080740896402858,
+    "unicode": 0.30035614564419827
+  },
+  "overall_latency_scaling": {
+    "reported_output_tokens_vs_total": {
+      "intercept": 0.29313740499092544,
+      "r": 0.21989293346524136,
+      "r_squared": 0.04835290218794906,
+      "slope": 2.4725756353553054e-06
+    },
+    "reported_output_tokens_vs_ttfb": {
+      "intercept": 0.2931102727650613,
+      "r": 0.21950288039184748,
+      "r_squared": 0.0481815145003177,
+      "slope": 2.4679557166216504e-06
+    },
+    "response_bytes_vs_total": {
+      "intercept": 0.293100714587279,
+      "r": 0.18626142154741374,
+      "r_squared": 0.034693317156863364,
+      "slope": 1.3561548852622028e-06
+    },
+    "response_bytes_vs_ttfb": {
+      "intercept": 0.2930767931888046,
+      "r": 0.18583319515085886,
+      "r_squared": 0.03453397641997719,
+      "slope": 1.3529087337456681e-06
+    }
+  },
+  "records": 360,
+  "within_entry_count_latency_scaling": {
+    "2": {
+      "reported_output_tokens_vs_total": {
+        "intercept": 0.29489859893817916,
+        "r": 0.10104257869871856,
+        "r_squared": 0.010209602710086734,
+        "slope": 4.562608751690854e-06
+      },
+      "reported_output_tokens_vs_ttfb": {
+        "intercept": 0.294870652004212,
+        "r": 0.10099660317225032,
+        "r_squared": 0.010200313852333002,
+        "slope": 4.560536924656397e-06
+      },
+      "response_bytes_vs_total": {
+        "intercept": 0.2932292554523561,
+        "r": 0.12114004098291327,
+        "r_squared": 0.014674909529341907,
+        "slope": 3.647207031958223e-06
+      },
+      "response_bytes_vs_ttfb": {
+        "intercept": 0.2932014340636046,
+        "r": 0.12110224959724575,
+        "r_squared": 0.014665754857513608,
+        "slope": 3.646072600478522e-06
+      }
+    },
+    "32": {
+      "reported_output_tokens_vs_total": {
+        "intercept": 0.2989445690204127,
+        "r": 0.21987750216689605,
+        "r_squared": 0.04834611595915338,
+        "slope": 2.3230656337942933e-06
+      },
+      "reported_output_tokens_vs_ttfb": {
+        "intercept": 0.2989137415900477,
+        "r": 0.2194674892427534,
+        "r_squared": 0.04816597883451807,
+        "slope": 2.3185380192526397e-06
+      },
+      "response_bytes_vs_total": {
+        "intercept": 0.2996510706599421,
+        "r": 0.1719483386238249,
+        "r_squared": 0.02956623115549355,
+        "slope": 1.2111948427300294e-06
+      },
+      "response_bytes_vs_ttfb": {
+        "intercept": 0.2996280892012488,
+        "r": 0.17148557350644758,
+        "r_squared": 0.029407301920835235,
+        "slope": 1.2078331924444528e-06
+      }
+    },
+    "8": {
+      "reported_output_tokens_vs_total": {
+        "intercept": 0.2875474477210985,
+        "r": 0.05504835461519108,
+        "r_squared": 0.003030321345839829,
+        "slope": 8.267698726304122e-07
+      },
+      "reported_output_tokens_vs_ttfb": {
+        "intercept": 0.2875214063437167,
+        "r": 0.05480766138719246,
+        "r_squared": 0.003003879746733147,
+        "slope": 8.230877858808001e-07
+      },
+      "response_bytes_vs_total": {
+        "intercept": 0.28836576554478516,
+        "r": 0.015110109422663092,
+        "r_squared": 0.00022831540676485196,
+        "slope": 1.5131547282641693e-07
+      },
+      "response_bytes_vs_ttfb": {
+        "intercept": 0.2883408381212947,
+        "r": 0.014874942158837572,
+        "r_squared": 0.00022126390422876337,
+        "slope": 1.4894831726045946e-07
+      }
+    }
+  }
+}
