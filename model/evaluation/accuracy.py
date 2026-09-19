@@ -40,7 +40,7 @@ def evaluate_typed(
             noul_preds.append(pred.get("noul", 0.5))
             noul_labels.append(label.get("label", False))
         elif q_type == "choice":
-            noul_preds.append(pred.get("choice", ""))
+            choice_preds.append(pred.get("choice", ""))
             choice_labels.append(label.get("label", ""))
         elif q_type == "score":
             score_preds.append(pred.get("score", 0.0))

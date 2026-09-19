@@ -4,15 +4,13 @@ Pluggable backend: any object with a .evaluate(state, questions) method
 that returns {question_id: answer_dict}.
 
 Usage:
-    from model.src.server import create_app
-    app = create_app(backend)
-    # Run with: uvicorn model.src.server:app
+    from model.src.server import serve
+    serve(backend, port=8000)
 """
 
 from __future__ import annotations
 
 import json
-import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import Any, Protocol
 
@@ -34,7 +32,7 @@ def _confidence(probabilities: dict[str, float]) -> float:
     if k <= 1:
         return 1.0
     p_max = max(probabilities.values())
-    return (p_max - 1.0 / k) / (1.0 - 1.0 / k)
+    return max(0.0, (p_max - 1.0 / k) / (1.0 - 1.0 / k))
 
 
 def _format_response(answers: dict[str, Any], model_name: str, input_tokens: int = 0, output_tokens: int = 0) -> dict[str, Any]:
