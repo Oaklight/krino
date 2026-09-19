@@ -28,11 +28,13 @@ from model.src.decision_model import DecisionModel
 from model.src.logit_scorer import LogitScorer
 
 # (name, text, length, grammaticality 0/1, commonness 0/1)
+# Factorial: grammaticality and commonness are partially crossed to avoid confounding.
+# grammatical+common, grammatical+rare, ungrammatical+common, ungrammatical+rare
 VARIANTS = [
-    ("short_common", "Approve the request.", 20, 1.0, 1.0),
-    ("long_common", "Approve the request after completing the ordinary review process.", 66, 1.0, 1.0),
-    ("short_rare", "Request: approve.", 17, 0.0, 0.0),
-    ("long_rare", "The request is what shall, following review completion, be approved by action.", 78, 0.0, 0.0),
+    ("short_gram_common", "Approve the request.", 20, 1.0, 1.0),
+    ("long_gram_rare", "Approve the request pursuant to the heretofore stipulated adjudication.", 72, 1.0, 0.0),
+    ("short_ungram_common", "Request approve do.", 19, 0.0, 1.0),
+    ("long_ungram_rare", "The request is what shall, following review completion, be approved by action.", 78, 0.0, 0.0),
 ]
 
 LABEL_SETS = [
@@ -58,7 +60,6 @@ def pearson(xs, ys):
 
 
 def run_test(scorer, n_items=N_ITEMS, seed=42):
-    rng = random.Random(seed)
     lengths, probabilities = [], []
     grammaticalities, commonnesses = [], []
     variant_probs = {v[0]: [] for v in VARIANTS}
