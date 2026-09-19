@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
 
 
 def load_causal_lm(
@@ -32,6 +32,29 @@ def load_causal_lm(
         torch_dtype=dtype,
         device_map=device if device == "auto" else None,
     )
+    if device != "auto":
+        model = model.to(device)
+    model.eval()
+
+    if freeze:
+        for param in model.parameters():
+            param.requires_grad_(False)
+
+    return model, tokenizer
+
+
+def load_encoder(
+    model_name: str = "answerdotai/ModernBERT-base",
+    device: str | None = None,
+    dtype: torch.dtype = torch.bfloat16,
+    freeze: bool = True,
+) -> tuple[AutoModel, AutoTokenizer]:
+    """Load a bidirectional encoder model and tokenizer."""
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModel.from_pretrained(model_name, torch_dtype=dtype)
     if device != "auto":
         model = model.to(device)
     model.eval()

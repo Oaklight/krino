@@ -14,7 +14,7 @@ import torch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from model.src.backbone import load_causal_lm
+from model.src.backbone import load_causal_lm, load_encoder
 from model.src.decision_model import DecisionModel
 from model.data.pipeline import load_jsonl
 from model.training.supervised import train
@@ -30,6 +30,7 @@ def main() -> int:
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--rank", type=int, default=64, help="Attention head rank")
     parser.add_argument("--rival-aware", action="store_true", help="Use rival-aware attention")
+    parser.add_argument("--encoder", action="store_true", help="Use encoder backbone (ModernBERT) instead of causal LM")
     parser.add_argument("--max-train", type=int, default=None, help="Max training items")
     parser.add_argument("--max-eval", type=int, default=None, help="Max eval items")
     parser.add_argument("--checkpoint-dir", type=Path, default=None)
@@ -42,8 +43,11 @@ def main() -> int:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
 
-    print(f"Loading backbone: {args.model}")
-    backbone, tokenizer = load_causal_lm(args.model, device=args.device, freeze=True)
+    print(f"Loading backbone: {args.model} ({'encoder' if args.encoder else 'causal'})")
+    if args.encoder:
+        backbone, tokenizer = load_encoder(args.model, device=args.device, freeze=True)
+    else:
+        backbone, tokenizer = load_causal_lm(args.model, device=args.device, freeze=True)
 
     model = DecisionModel(
         backbone=backbone,
