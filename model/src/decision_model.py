@@ -41,9 +41,10 @@ class DecisionModel(nn.Module):
             param.requires_grad_(False)
 
         device = next(self.backbone.parameters()).device
-        self.noul_head = self.noul_head.to(device)
-        self.choice_head = self.choice_head.to(device)
-        self.score_head = self.score_head.to(device)
+        dtype = next(self.backbone.parameters()).dtype
+        self.noul_head = self.noul_head.to(device=device, dtype=dtype)
+        self.choice_head = self.choice_head.to(device=device, dtype=dtype)
+        self.score_head = self.score_head.to(device=device, dtype=dtype)
 
     @property
     def device(self) -> torch.device:
