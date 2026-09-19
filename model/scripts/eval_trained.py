@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 from model.src.backbone import load_causal_lm, load_encoder
 from model.src.decision_model import DecisionModel
+from model.data.pipeline import load_jsonl
 from model.evaluation.accuracy import noul_accuracy, choice_accuracy
 from model.evaluation.calibration import expected_calibration_error, brier_score
 
@@ -39,7 +40,8 @@ def evaluate_items(model, items):
         t0 = time.monotonic()
         try:
             answer = model.predict(item.state, item.question)
-        except Exception:
+        except Exception as e:
+            print(f"    WARN: item {i} failed: {e}", file=sys.stderr)
             n_skipped += 1
             continue
         latencies.append(time.monotonic() - t0)
@@ -112,8 +114,6 @@ def main():
     model.load_heads(args.heads)
     model.eval()
     print(f"Heads loaded from {args.heads}")
-
-    from model.data.pipeline import load_jsonl
 
     all_results = {}
     for ds_path in args.datasets:
