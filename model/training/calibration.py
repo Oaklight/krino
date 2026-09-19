@@ -71,6 +71,7 @@ class _ItemResult(NamedTuple):
     task_loss: torch.Tensor
     confidence: torch.Tensor
     correctness: torch.Tensor
+    brier_per_item: torch.Tensor
 
 
 def _forward_and_extract(
@@ -104,8 +105,9 @@ def _forward_and_extract(
         confidence = torch.where(prob > 0.5, prob, 1.0 - prob)
         predicted = (prob > 0.5).float()
         correctness = (predicted == target.squeeze()).float().detach()
+        brier = (prob - target.squeeze()) ** 2
 
-        return _ItemResult(task_loss, confidence, correctness)
+        return _ItemResult(task_loss, confidence, correctness, brier)
 
     elif q_type == "choice":
         criteria = question["criteria"]
@@ -128,8 +130,10 @@ def _forward_and_extract(
         confidence = probs.max(dim=-1).values.squeeze()
         predicted = probs.argmax(dim=-1)
         correctness = (predicted.squeeze() == target.squeeze()).float().detach()
+        one_hot = F.one_hot(target, num_classes=logits.shape[-1]).float()
+        brier = ((probs - one_hot) ** 2).sum(dim=-1).squeeze()
 
-        return _ItemResult(task_loss, confidence, correctness)
+        return _ItemResult(task_loss, confidence, correctness, brier)
 
     elif q_type == "score":
         criteria = question["criteria"]
@@ -149,8 +153,10 @@ def _forward_and_extract(
         confidence = probs.max(dim=-1).values.squeeze()
         predicted = probs.argmax(dim=-1)
         correctness = (predicted.squeeze() == target.squeeze()).float().detach()
+        one_hot = F.one_hot(target, num_classes=logits.shape[-1]).float()
+        brier = ((probs - one_hot) ** 2).sum(dim=-1).squeeze()
 
-        return _ItemResult(task_loss, confidence, correctness)
+        return _ItemResult(task_loss, confidence, correctness, brier)
 
     return None
 
@@ -175,10 +181,7 @@ def _compute_batch_loss(
         return cfg.alpha * task_loss + cfg.beta * cal_loss
 
     if cfg.name == "brier":
-        brier_per_item = torch.stack(
-            [(r.confidence - r.correctness) ** 2 for r in results]
-        )
-        cal_loss = brier_per_item.mean()
+        cal_loss = torch.stack([r.brier_per_item for r in results]).mean()
         return cfg.alpha * task_loss + cfg.beta * cal_loss
 
     raise ValueError(f"Unknown calibration loss: {cfg.name}")
