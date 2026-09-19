@@ -594,6 +594,7 @@ def load_mednli() -> Iterator[TypedQuestion]:
 
 # --- ContractNLI (Legal Clause Entailment, Noul) ---
 
+# 0=NotMentioned, 1=Entailment, 2=Contradiction
 CONTRACTNLI_LABEL_MAP = {0: False, 1: True, 2: False}
 
 
@@ -651,14 +652,17 @@ def load_codesearchnet() -> Iterator[TypedQuestion]:
                 doc = row["func_documentation_string"].strip()
                 correct_code = row["func_code_string"].strip()
 
-                distractor_indices = rng.sample(
-                    [j for j in range(len(valid)) if j != i], min(3, len(valid) - 1)
-                )
+                pool = [
+                    j for j in range(len(valid))
+                    if j != i and valid[j]["func_code_string"].strip() != correct_code
+                ]
+                if len(pool) < 3:
+                    continue
+                distractor_indices = rng.sample(pool, 3)
                 distractors = [valid[j]["func_code_string"].strip() for j in distractor_indices]
 
-                options = [correct_code] + distractors
-                rng.shuffle(options)
-                correct_idx = options.index(correct_code)
+                correct_pos = rng.randrange(4)
+                options = distractors[:correct_pos] + [correct_code] + distractors[correct_pos:]
 
                 criteria = {_CSN_KEYS[j]: opt for j, opt in enumerate(options)}
                 yield TypedQuestion.choice(
@@ -666,7 +670,7 @@ def load_codesearchnet() -> Iterator[TypedQuestion]:
                     state=f"Docstring: {doc}",
                     instructions=f"Which {lang} code snippet correctly implements the described functionality?",
                     criteria=criteria,
-                    label=_CSN_KEYS[correct_idx],
+                    label=_CSN_KEYS[correct_pos],
                     source="codesearchnet",
                     split=out_split,
                     group=f"codesearchnet-{lang}",
