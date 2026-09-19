@@ -19,6 +19,8 @@ DEFAULT_CAPS: dict[str, int] = {
     "race": 30_000,
     "hellaswag": 30_000,
     "agnews": 30_000,
+    "swag": 30_000,
+    "codesearchnet": 15_000,
 }
 
 
