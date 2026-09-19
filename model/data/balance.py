@@ -77,8 +77,11 @@ def main() -> int:
     args = parser.parse_args()
 
     jsonl_files = sorted(DATA_DIR.rglob("*.jsonl"))
-    # Exclude any previously generated balanced files
-    jsonl_files = [f for f in jsonl_files if not f.stem.startswith("balanced_")]
+    # Exclude balanced outputs and raw/unconverted files
+    jsonl_files = [
+        f for f in jsonl_files
+        if not f.stem.startswith("balanced_") and "_raw" not in f.stem
+    ]
 
     all_items = []
     for path in jsonl_files:
