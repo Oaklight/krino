@@ -303,6 +303,96 @@ def load_sst5() -> Iterator[TypedQuestion]:
             )
 
 
+# --- ARC (AI2 Reasoning Challenge) ---
+
+
+def load_arc() -> Iterator[TypedQuestion]:
+    for config in ("ARC-Easy", "ARC-Challenge"):
+        for split_name in ("train", "test", "validation"):
+            rows = _load_hf_parquet("allenai/ai2_arc", config, split_name)
+            out_split = "test" if split_name == "validation" else split_name
+            for i, row in enumerate(rows):
+                choices = row.get("choices", {})
+                texts = choices.get("text", [])
+                labels = choices.get("label", [])
+                criteria = {lbl: txt for lbl, txt in zip(labels, texts)}
+                answer_key = row.get("answerKey", "")
+                if answer_key not in criteria:
+                    continue
+                yield TypedQuestion.choice(
+                    id=f"arc-{config.lower()}-{out_split}-{i:05d}",
+                    state=row.get("question", ""),
+                    instructions="Which answer is correct?",
+                    criteria=criteria,
+                    label=answer_key,
+                    source="arc",
+                    split=out_split,
+                    group=f"arc-{config.lower()}",
+                )
+
+
+# --- RACE (Reading Comprehension) ---
+
+RACE_KEYS = ["A", "B", "C", "D"]
+
+
+def load_race() -> Iterator[TypedQuestion]:
+    for config in ("middle", "high"):
+        for split_name in ("train", "test", "validation"):
+            rows = _load_hf_parquet("ehovy/race", config, split_name)
+            out_split = "test" if split_name == "validation" else split_name
+            for i, row in enumerate(rows):
+                article = row.get("article", "")
+                question = row.get("question", "")
+                options = row.get("options", [])
+                answer = row.get("answer", "")
+                if len(options) != 4 or answer not in RACE_KEYS:
+                    continue
+                criteria = {k: opt for k, opt in zip(RACE_KEYS, options)}
+                yield TypedQuestion.choice(
+                    id=f"race-{config}-{out_split}-{i:05d}",
+                    state=article,
+                    instructions=f"Based on the passage above, answer: {question}",
+                    criteria=criteria,
+                    label=answer,
+                    source="race",
+                    split=out_split,
+                    group=f"race-{config}",
+                )
+
+
+# --- HellaSwag (Commonsense Completion) ---
+
+HELLASWAG_KEYS = {"0", "1", "2", "3"}
+
+
+def load_hellaswag() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation"):
+        rows = _load_hf_parquet("Rowan/hellaswag", "default", split_name)
+        out_split = "test" if split_name == "validation" else "train"
+        for i, row in enumerate(rows):
+            label = str(row.get("label", ""))
+            if label not in HELLASWAG_KEYS:
+                continue
+            ctx = row.get("ctx", "")
+            activity = row.get("activity_label", "")
+            endings = row.get("endings", [])
+            if len(endings) != 4:
+                continue
+            state = f"{activity}: {ctx}" if activity else ctx
+            criteria = {str(j): e for j, e in enumerate(endings)}
+            yield TypedQuestion.choice(
+                id=f"hellaswag-{out_split}-{i:05d}",
+                state=state,
+                instructions="Which ending most naturally completes the context?",
+                criteria=criteria,
+                label=label,
+                source="hellaswag",
+                split=out_split,
+                group=row.get("activity_label", f"hellaswag-{i % 100}"),
+            )
+
+
 # --- Unified loader ---
 
 LOADERS = {
@@ -313,6 +403,9 @@ LOADERS = {
     "typed_decisions": load_typed_decisions,
     "stsb": load_stsb,
     "sst5": load_sst5,
+    "arc": load_arc,
+    "race": load_race,
+    "hellaswag": load_hellaswag,
 }
 
 
