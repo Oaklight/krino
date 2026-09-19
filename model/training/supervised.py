@@ -65,26 +65,48 @@ def train_epoch(
     train_items: list,
     optimizer: torch.optim.Optimizer,
     max_grad_norm: float = 1.0,
+    accumulation_steps: int = 1,
 ) -> dict[str, float]:
-    """Train for one epoch. Returns loss statistics."""
+    """Train for one epoch. Returns loss statistics.
+
+    Args:
+        accumulation_steps: number of items to accumulate gradients over
+            before an optimizer step. Default 1 preserves per-item SGD.
+    """
     model.train()
     total_loss = 0.0
     n_items = 0
     n_skipped = 0
+    accum_count = 0
+
+    optimizer.zero_grad()
 
     for item in train_items:
-        optimizer.zero_grad()
         loss = compute_loss(model, item)
         if loss is None:
             n_skipped += 1
             continue
-        loss.backward()
+
+        scaled_loss = loss / accumulation_steps
+        scaled_loss.backward()
+        total_loss += loss.item()
+        n_items += 1
+        accum_count += 1
+
+        if accum_count >= accumulation_steps:
+            torch.nn.utils.clip_grad_norm_(
+                [p for p in model.parameters() if p.requires_grad], max_grad_norm
+            )
+            optimizer.step()
+            optimizer.zero_grad()
+            accum_count = 0
+
+    if accum_count > 0:
         torch.nn.utils.clip_grad_norm_(
             [p for p in model.parameters() if p.requires_grad], max_grad_norm
         )
         optimizer.step()
-        total_loss += loss.item()
-        n_items += 1
+        optimizer.zero_grad()
 
     return {
         "mean_loss": total_loss / max(n_items, 1),
@@ -167,6 +189,7 @@ def train(
     max_grad_norm: float = 1.0,
     checkpoint_dir: Path | None = None,
     eval_every: int = 1,
+    accumulation_steps: int = 1,
 ) -> dict[str, Any]:
     """Full training loop with evaluation and checkpointing."""
     trainable = [p for p in model.parameters() if p.requires_grad]
@@ -188,7 +211,7 @@ def train(
         shuffled = list(train_items)
         random.shuffle(shuffled)
 
-        train_stats = train_epoch(model, shuffled, optimizer, max_grad_norm)
+        train_stats = train_epoch(model, shuffled, optimizer, max_grad_norm, accumulation_steps)
         scheduler.step()
 
         elapsed = time.monotonic() - t0

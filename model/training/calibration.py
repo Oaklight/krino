@@ -1,4 +1,4 @@
-"""Calibration-aware training loop.
+"""Calibration-aware training loop with virtual batching.
 
 Extends the supervised training loop with composite losses:
     L = alpha * task_loss + beta * calibration_loss
@@ -7,11 +7,19 @@ where task_loss is the standard CE/BCE and calibration_loss is one of
 Brier, MMCE, or focal (from losses.py). Focal replaces the task loss
 entirely since it is itself a classification loss.
 
+MMCE requires multiple samples to compute kernel statistics. This module
+uses "virtual batching": per-item forward passes (variable-length text,
+variable option counts) with batch-level loss computation. Each item's
+confidence tensor retains its computation graph so gradients flow back
+through the shared head parameters.
+
 Usage:
     from model.training.calibration import compute_calibrated_loss, train
 
     # In training config:
     loss_cfg = {"name": "brier", "alpha": 0.7, "beta": 0.3}
+    # or
+    loss_cfg = {"name": "mmce", "alpha": 0.5, "beta": 0.5, "batch_size": 16}
     # or
     loss_cfg = {"name": "focal", "gamma": 2.0, "label_smoothing": 0.05}
 """
@@ -21,9 +29,9 @@ from __future__ import annotations
 import json
 import random
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 import torch
 import torch.nn as nn
@@ -36,8 +44,7 @@ from model.training.losses import (
     brier_loss_binary,
     focal_loss,
     focal_loss_binary,
-    mmce_loss,
-    mmce_loss_binary,
+    mmce_kernel_loss,
 )
 
 
@@ -51,63 +58,30 @@ class CalibrationLossConfig:
     gamma: float = 2.0
     label_smoothing: float = 0.0
     mmce_bandwidth: float = 0.25
+    batch_size: int = 16
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> CalibrationLossConfig:
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
 
 
-def _compute_task_and_cal_loss(
-    q_type: str,
-    logits: torch.Tensor,
-    target: torch.Tensor,
-    cfg: CalibrationLossConfig,
-) -> torch.Tensor:
-    """Compute composite loss for a single item.
+class _ItemResult(NamedTuple):
+    """Per-item forward pass result for batched loss computation."""
 
-    For focal: replaces the task loss entirely (focal IS a task loss).
-    For brier/mmce: task loss (CE) + calibration term.
-    """
-    is_binary = q_type == "noul"
-
-    if cfg.name == "focal":
-        if is_binary:
-            return focal_loss_binary(logits, target, gamma=cfg.gamma)
-        return focal_loss(
-            logits, target, gamma=cfg.gamma, label_smoothing=cfg.label_smoothing
-        )
-
-    # task loss: standard CE / BCE
-    if is_binary:
-        task = F.binary_cross_entropy_with_logits(logits, target)
-    else:
-        task = F.cross_entropy(logits, target)
-
-    # calibration term
-    if cfg.name == "brier":
-        if is_binary:
-            cal = brier_loss_binary(logits, target)
-        else:
-            cal = brier_loss(logits, target)
-    elif cfg.name == "mmce":
-        if is_binary:
-            cal = mmce_loss_binary(logits, target, kernel_bandwidth=cfg.mmce_bandwidth)
-        else:
-            cal = mmce_loss(logits, target, kernel_bandwidth=cfg.mmce_bandwidth)
-    else:
-        raise ValueError(f"Unknown calibration loss: {cfg.name}")
-
-    return cfg.alpha * task + cfg.beta * cal
+    task_loss: torch.Tensor
+    confidence: torch.Tensor
+    correctness: torch.Tensor
 
 
-def compute_calibrated_loss(
+def _forward_and_extract(
     model: nn.Module,
     item: Any,
     cfg: CalibrationLossConfig,
-) -> torch.Tensor | None:
-    """Compute calibration-aware loss for a single typed-question item.
+) -> _ItemResult | None:
+    """Forward pass for a single item, returning loss components.
 
-    Drop-in replacement for supervised.compute_loss with calibration terms.
+    Returns task loss (CE/BCE or focal), confidence in own prediction
+    (has grad for MMCE backprop), and correctness indicator (detached).
     """
     state = item.state
     question = item.question
@@ -120,7 +94,18 @@ def compute_calibrated_loss(
         if isinstance(label, str):
             label = label.lower() in ("true", "yes", "1")
         target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
-        return _compute_task_and_cal_loss("noul", logit, target, cfg)
+
+        if cfg.name == "focal":
+            task_loss = focal_loss_binary(logit, target, gamma=cfg.gamma)
+        else:
+            task_loss = F.binary_cross_entropy_with_logits(logit, target)
+
+        prob = torch.sigmoid(logit).squeeze()
+        confidence = torch.where(prob > 0.5, prob, 1.0 - prob)
+        predicted = (prob > 0.5).float()
+        correctness = (predicted == target.squeeze()).float().detach()
+
+        return _ItemResult(task_loss, confidence, correctness)
 
     elif q_type == "choice":
         criteria = question["criteria"]
@@ -131,7 +116,20 @@ def compute_calibrated_loss(
             return None
         target_idx = keys.index(label)
         target = torch.tensor([target_idx], device=logits.device)
-        return _compute_task_and_cal_loss("choice", logits, target, cfg)
+
+        if cfg.name == "focal":
+            task_loss = focal_loss(
+                logits, target, gamma=cfg.gamma, label_smoothing=cfg.label_smoothing
+            )
+        else:
+            task_loss = F.cross_entropy(logits, target)
+
+        probs = F.softmax(logits, dim=-1)
+        confidence = probs.max(dim=-1).values.squeeze()
+        predicted = probs.argmax(dim=-1)
+        correctness = (predicted.squeeze() == target.squeeze()).float().detach()
+
+        return _ItemResult(task_loss, confidence, correctness)
 
     elif q_type == "score":
         criteria = question["criteria"]
@@ -139,9 +137,51 @@ def compute_calibrated_loss(
         target_idx = int(round(float(label)))
         target_idx = max(0, min(len(criteria) - 1, target_idx))
         target = torch.tensor([target_idx], device=logits.device)
-        return _compute_task_and_cal_loss("score", logits, target, cfg)
+
+        if cfg.name == "focal":
+            task_loss = focal_loss(
+                logits, target, gamma=cfg.gamma, label_smoothing=cfg.label_smoothing
+            )
+        else:
+            task_loss = F.cross_entropy(logits, target)
+
+        probs = F.softmax(logits, dim=-1)
+        confidence = probs.max(dim=-1).values.squeeze()
+        predicted = probs.argmax(dim=-1)
+        correctness = (predicted.squeeze() == target.squeeze()).float().detach()
+
+        return _ItemResult(task_loss, confidence, correctness)
 
     return None
+
+
+def _compute_batch_loss(
+    results: list[_ItemResult],
+    cfg: CalibrationLossConfig,
+) -> torch.Tensor:
+    """Combine per-item results into a single batch loss."""
+    task_loss = torch.stack([r.task_loss for r in results]).mean()
+
+    if cfg.name == "focal":
+        return task_loss
+
+    if cfg.name == "mmce":
+        if len(results) >= 2:
+            confidences = torch.stack([r.confidence for r in results])
+            correctness = torch.stack([r.correctness for r in results])
+            cal_loss = mmce_kernel_loss(confidences, correctness, cfg.mmce_bandwidth)
+        else:
+            cal_loss = torch.tensor(0.0, device=task_loss.device)
+        return cfg.alpha * task_loss + cfg.beta * cal_loss
+
+    if cfg.name == "brier":
+        brier_per_item = torch.stack(
+            [(r.confidence - r.correctness) ** 2 for r in results]
+        )
+        cal_loss = brier_per_item.mean()
+        return cfg.alpha * task_loss + cfg.beta * cal_loss
+
+    raise ValueError(f"Unknown calibration loss: {cfg.name}")
 
 
 def train_epoch(
@@ -151,30 +191,45 @@ def train_epoch(
     cfg: CalibrationLossConfig,
     max_grad_norm: float = 1.0,
 ) -> dict[str, float]:
-    """Train for one epoch with calibration-aware loss."""
+    """Train for one epoch with batched calibration-aware loss."""
     model.train()
     total_loss = 0.0
     n_items = 0
     n_skipped = 0
+    n_batches = 0
+    batch_size = cfg.batch_size
 
-    for item in train_items:
+    for batch_start in range(0, len(train_items), batch_size):
+        batch_items = train_items[batch_start : batch_start + batch_size]
         optimizer.zero_grad()
-        loss = compute_calibrated_loss(model, item, cfg)
-        if loss is None:
-            n_skipped += 1
+
+        results: list[_ItemResult] = []
+        for item in batch_items:
+            result = _forward_and_extract(model, item, cfg)
+            if result is None:
+                n_skipped += 1
+                continue
+            results.append(result)
+
+        if not results:
             continue
+
+        loss = _compute_batch_loss(results, cfg)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(
             [p for p in model.parameters() if p.requires_grad], max_grad_norm
         )
         optimizer.step()
-        total_loss += loss.item()
-        n_items += 1
+
+        total_loss += loss.item() * len(results)
+        n_items += len(results)
+        n_batches += 1
 
     return {
         "mean_loss": total_loss / max(n_items, 1),
         "n_items": n_items,
         "n_skipped": n_skipped,
+        "n_batches": n_batches,
     }
 
 
@@ -190,7 +245,7 @@ def train(
     checkpoint_dir: Path | None = None,
     eval_every: int = 1,
 ) -> dict[str, Any]:
-    """Full calibration-aware training loop.
+    """Full calibration-aware training loop with virtual batching.
 
     Same interface as supervised.train but with configurable loss.
     Reuses supervised.eval_epoch for evaluation (eval always uses CE
@@ -205,14 +260,6 @@ def train(
     else:
         cfg = loss_cfg
 
-    if cfg.name == "mmce":
-        raise ValueError(
-            "MMCE requires batched training (n >= 2 samples per forward pass) "
-            "but the current training loop processes items one at a time. "
-            "MMCE will silently return 0 with batch_size=1. "
-            "Use 'brier' or 'focal' until batched training is implemented."
-        )
-
     trainable = [p for p in model.parameters() if p.requires_grad]
     optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)
     warmup_epochs = max(1, epochs // 10)
@@ -222,7 +269,10 @@ def train(
         optimizer, schedulers=[warmup, cosine], milestones=[warmup_epochs]
     )
 
-    print(f"Calibration training: loss={cfg.name} alpha={cfg.alpha} beta={cfg.beta}")
+    print(
+        f"Calibration training: loss={cfg.name} alpha={cfg.alpha} beta={cfg.beta} "
+        f"batch_size={cfg.batch_size}"
+    )
     if cfg.name == "focal":
         print(f"  focal gamma={cfg.gamma} label_smoothing={cfg.label_smoothing}")
     elif cfg.name == "mmce":
@@ -255,6 +305,7 @@ def train(
                 "name": cfg.name,
                 "alpha": cfg.alpha,
                 "beta": cfg.beta,
+                "batch_size": cfg.batch_size,
             },
         }
 
@@ -282,6 +333,7 @@ def train(
                                 "name": cfg.name,
                                 "alpha": cfg.alpha,
                                 "beta": cfg.beta,
+                                "batch_size": cfg.batch_size,
                             },
                         },
                         checkpoint_dir / "training_state.pt",
