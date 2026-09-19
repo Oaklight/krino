@@ -209,6 +209,12 @@ def train(
                 log["best"] = True
                 if checkpoint_dir:
                     model.save_heads(checkpoint_dir / "best_heads.pt")
+                    torch.save({
+                        "optimizer": optimizer.state_dict(),
+                        "scheduler": scheduler.state_dict(),
+                        "epoch": epoch,
+                        "best_eval_loss": best_eval_loss,
+                    }, checkpoint_dir / "training_state.pt")
         else:
             print(f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} ({elapsed:.1f}s)")
 
