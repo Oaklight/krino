@@ -16,8 +16,19 @@ from transformers import PreTrainedModel, PreTrainedTokenizerBase
 from .heads import ChoiceHead, NoulHead, ScoreHead
 
 
+def _is_encoder_model(backbone: PreTrainedModel) -> bool:
+    """Detect whether backbone is an encoder (bidirectional) or causal decoder."""
+    return not getattr(backbone.config, "is_decoder", True)
+
+
 class DecisionModel(nn.Module):
-    """Frozen backbone + trainable decision heads."""
+    """Frozen backbone + trainable decision heads.
+
+    Supports both causal LM (Qwen, Llama, Gemma) and encoder (ModernBERT, BERT)
+    backbones. Pooling strategy is detected automatically:
+      - Causal: last-token pooling (last token sees full sequence)
+      - Encoder: mean pooling (all tokens see all tokens)
+    """
 
     def __init__(
         self,
@@ -32,6 +43,7 @@ class DecisionModel(nn.Module):
         self.backbone = backbone
         self.tokenizer = tokenizer
         self.hidden_size = hidden_size or backbone.config.hidden_size
+        self.is_encoder = _is_encoder_model(backbone)
 
         self.noul_head = NoulHead(self.hidden_size, dropout)
         self.choice_head = ChoiceHead(self.hidden_size, rank, rival_aware, dropout)
@@ -50,7 +62,11 @@ class DecisionModel(nn.Module):
         return next(self.backbone.parameters()).device
 
     def _encode_text(self, text: str | list[str], max_length: int = 512) -> torch.Tensor:
-        """Encode text and return last-token hidden state per sequence."""
+        """Encode text and return pooled hidden state per sequence.
+
+        Causal LM: last-token pooling (last token attended to full sequence).
+        Encoder: mean pooling (all tokens see all tokens bidirectionally).
+        """
         if isinstance(text, str):
             text = [text]
         inputs = self.tokenizer(
@@ -59,8 +75,12 @@ class DecisionModel(nn.Module):
         with torch.no_grad():
             outputs = self.backbone(**inputs, output_hidden_states=True)
         hidden = outputs.hidden_states[-1]
-        seq_lengths = inputs["attention_mask"].sum(dim=1) - 1
-        pooled = hidden[torch.arange(hidden.size(0), device=hidden.device), seq_lengths]
+        if self.is_encoder:
+            mask = inputs["attention_mask"].unsqueeze(-1).float()
+            pooled = (hidden * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
+        else:
+            seq_lengths = inputs["attention_mask"].sum(dim=1) - 1
+            pooled = hidden[torch.arange(hidden.size(0), device=hidden.device), seq_lengths]
         return pooled.float()
 
     def _encode_with_sequence(self, text: str, max_length: int = 512) -> torch.Tensor:
