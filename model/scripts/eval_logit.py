@@ -95,10 +95,14 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=None, help="Output JSON path")
     parser.add_argument("--norm", default="mean", choices=["mean", "sum"], help="Log-prob normalization")
     parser.add_argument("--strategy", default="description", choices=["description", "label"], help="Choice scoring strategy")
+    parser.add_argument("--dtype", default="bfloat16", choices=["float16", "bfloat16", "float32"], help="Model dtype (use float16 for V100)")
     args = parser.parse_args()
 
+    import torch
+    dtype_map = {"float16": torch.float16, "bfloat16": torch.bfloat16, "float32": torch.float32}
+
     print(f"Loading {args.model}...")
-    model, tokenizer = load_causal_lm(args.model, device=args.device)
+    model, tokenizer = load_causal_lm(args.model, device=args.device, dtype=dtype_map[args.dtype])
     scorer = LogitScorer(model, tokenizer, norm=args.norm, strategy=args.strategy)
     print(f"Strategy: {args.strategy}, norm: {args.norm}")
     print(f"Model loaded on {next(model.parameters()).device}")
@@ -106,7 +110,7 @@ def main() -> int:
     dataset_paths = args.datasets
     if not dataset_paths:
         benchmarks = ROOT / "model" / "data" / "benchmarks"
-        dataset_paths = sorted(str(p) for p in benchmarks.rglob("*.jsonl"))
+        dataset_paths = sorted(str(p) for p in benchmarks.glob("*.jsonl"))
         if not dataset_paths:
             print("No datasets found. Run data pipeline first: python -m model.data.pipeline")
             return 1
