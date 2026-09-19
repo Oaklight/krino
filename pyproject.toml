@@ -16,6 +16,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+data = [
+    "pyarrow>=14.0",
+]
 train = [
     "accelerate>=0.30",
 ]

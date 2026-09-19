@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import urllib.request
 from pathlib import Path
 from typing import Any, Iterator
@@ -12,45 +13,32 @@ from .format import TypedQuestion
 DATA_DIR = Path(__file__).resolve().parent / "benchmarks"
 
 
-def _download_json(url: str, cache_path: Path) -> Any:
+def _download_parquet(url: str, cache_path: Path) -> Path:
     if cache_path.exists():
-        return json.loads(cache_path.read_text())
+        return cache_path
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    with urllib.request.urlopen(url, timeout=60) as resp:
-        data = json.loads(resp.read().decode())
-    cache_path.write_text(json.dumps(data, ensure_ascii=False))
-    return data
+    print(f"  downloading {url}", file=sys.stderr)
+    with urllib.request.urlopen(url, timeout=120) as resp:
+        cache_path.write_bytes(resp.read())
+    return cache_path
 
 
-HF_PAGE_SIZE = 100
-MAX_ROWS = 10_000
+def _read_parquet(path: Path) -> list[dict[str, Any]]:
+    try:
+        import pyarrow.parquet as pq
+    except ImportError:
+        raise ImportError("pyarrow is required for data preparation: pip install 'jev-explore[data]'")
+    table = pq.read_table(path)
+    return table.to_pylist()
 
 
-def _download_rows(dataset: str, config: str, split: str, cache_dir: Path, max_rows: int = MAX_ROWS) -> list[dict]:
-    """Download rows from HuggingFace datasets-server with pagination (100 rows/page)."""
-    all_rows: list[dict] = []
-    cache_path = cache_dir / f"{split}_rows.json"
-    if cache_path.exists():
-        cached = json.loads(cache_path.read_text())
-        return cached.get("rows", [])
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    offset = 0
-    while offset < max_rows:
-        url = f"https://datasets-server.huggingface.co/rows?dataset={dataset}&config={config}&split={split}&offset={offset}&length={HF_PAGE_SIZE}"
-        try:
-            with urllib.request.urlopen(url, timeout=60) as resp:
-                data = json.loads(resp.read().decode())
-        except Exception:
-            break
-        rows = data.get("rows", [])
-        if not rows:
-            break
-        all_rows.extend(rows)
-        if len(rows) < HF_PAGE_SIZE:
-            break
-        offset += HF_PAGE_SIZE
-    cache_path.write_text(json.dumps({"rows": all_rows}, ensure_ascii=False))
-    return all_rows
+def _load_hf_parquet(dataset: str, config: str, split: str) -> list[dict[str, Any]]:
+    """Download and read a HuggingFace dataset split as parquet."""
+    safe_name = dataset.replace("/", "__")
+    cache_path = DATA_DIR / safe_name / f"{config}_{split}.parquet"
+    url = f"https://huggingface.co/datasets/{dataset}/resolve/refs%2Fconvert%2Fparquet/{config}/{split}/0000.parquet"
+    _download_parquet(url, cache_path)
+    return _read_parquet(cache_path)
 
 
 # --- Banking77 ---
@@ -94,9 +82,8 @@ BANKING77_LABELS = [
 def load_banking77() -> Iterator[TypedQuestion]:
     criteria = {label: label.replace("_", " ") for label in BANKING77_LABELS}
     for split_name in ("train", "test"):
-        rows = _download_rows("legacy-datasets/banking77", "default", split_name, DATA_DIR / "banking77")
-        for i, row_entry in enumerate(rows):
-            row = row_entry.get("row", row_entry)
+        rows = _load_hf_parquet("legacy-datasets/banking77", "default", split_name)
+        for i, row in enumerate(rows):
             text = row.get("text", "")
             label_idx = row.get("label", 0)
             label = BANKING77_LABELS[label_idx] if isinstance(label_idx, int) and label_idx < len(BANKING77_LABELS) else str(label_idx)
@@ -116,10 +103,9 @@ def load_banking77() -> Iterator[TypedQuestion]:
 
 def load_sst2() -> Iterator[TypedQuestion]:
     for split_name in ("train", "validation"):
-        rows = _download_rows("stanfordnlp/sst2", "default", split_name, DATA_DIR / "sst2")
+        rows = _load_hf_parquet("stanfordnlp/sst2", "default", split_name)
         out_split = "test" if split_name == "validation" else "train"
-        for i, row_entry in enumerate(rows):
-            row = row_entry.get("row", row_entry)
+        for i, row in enumerate(rows):
             sentence = row.get("sentence", "")
             label_val = row.get("label", 0)
             yield TypedQuestion.noul(
@@ -146,9 +132,8 @@ AGNEWS_CRITERIA = {
 
 def load_agnews() -> Iterator[TypedQuestion]:
     for split_name in ("train", "test"):
-        rows = _download_rows("fancyzhx/ag_news", "default", split_name, DATA_DIR / "agnews")
-        for i, row_entry in enumerate(rows):
-            row = row_entry.get("row", row_entry)
+        rows = _load_hf_parquet("fancyzhx/ag_news", "default", split_name)
+        for i, row in enumerate(rows):
             text = row.get("text", "")
             label_idx = row.get("label", 0)
             label = AGNEWS_LABELS.get(str(label_idx), str(label_idx))
@@ -168,10 +153,9 @@ def load_agnews() -> Iterator[TypedQuestion]:
 
 def load_mnli() -> Iterator[TypedQuestion]:
     for split_name in ("train", "validation_matched"):
-        rows = _download_rows("nyu-mll/multi_nli", "default", split_name, DATA_DIR / "mnli")
+        rows = _load_hf_parquet("nyu-mll/multi_nli", "default", split_name)
         out_split = "test" if "validation" in split_name else "train"
-        for i, row_entry in enumerate(rows):
-            row = row_entry.get("row", row_entry)
+        for i, row in enumerate(rows):
             premise = row.get("premise", "")
             hypothesis = row.get("hypothesis", "")
             label_idx = row.get("label", -1)
@@ -193,9 +177,8 @@ def load_mnli() -> Iterator[TypedQuestion]:
 
 def load_typed_decisions() -> Iterator[TypedQuestion]:
     for split_name in ("train", "test"):
-        rows = _download_rows("LocalLLaMA/typed-decisions", "all", split_name, DATA_DIR / "typed_decisions")
-        for i, row_entry in enumerate(rows):
-            row = row_entry.get("row", row_entry)
+        rows = _load_hf_parquet("LocalLLaMA/typed-decisions", "all", split_name)
+        for i, row in enumerate(rows):
             state = row.get("state", row.get("context", ""))
             q = row.get("question", {})
             if isinstance(q, str):
