@@ -56,8 +56,9 @@ def _load_hf_parquet(dataset: str, config: str, split: str) -> list[dict[str, An
     except ImportError:
         raise ImportError("pyarrow is required for data preparation: pip install 'jev-explore[data]'")
 
+    MAX_SHARDS = 1000
     tables: list[pa.Table] = []
-    for shard_idx in range(1000):
+    for shard_idx in range(MAX_SHARDS):
         shard_name = f"{config}_{split}_{shard_idx:04d}.parquet"
         cache_path = cache_dir / shard_name
         url = f"{base_url}/{shard_idx:04d}.parquet"
@@ -75,6 +76,8 @@ def _load_hf_parquet(dataset: str, config: str, split: str) -> list[dict[str, An
                 raise
 
         tables.append(_read_parquet(cache_path))
+    else:
+        print(f"  warning: hit {MAX_SHARDS}-shard cap for {dataset}/{config}/{split}", file=sys.stderr)
 
     return pa.concat_tables(tables).to_pylist()
 
