@@ -382,7 +382,7 @@ def load_hellaswag() -> Iterator[TypedQuestion]:
             state = f"{activity}: {ctx}" if activity else ctx
             criteria = {str(j): e for j, e in enumerate(endings)}
             yield TypedQuestion.choice(
-                id=f"hellaswag-{out_split}-{i:05d}",
+                id=f"hellaswag-{split_name}-{i:05d}",
                 state=state,
                 instructions="Which ending most naturally completes the context?",
                 criteria=criteria,
@@ -450,7 +450,7 @@ def load_fever() -> Iterator[TypedQuestion]:
             evidence_str = "\n".join(evidence_texts) if evidence_texts else "(no evidence)"
             state = f"Claim: {claim}\n\nEvidence:\n{evidence_str}"
             yield TypedQuestion.choice(
-                id=f"fever-{out_split}-{i:05d}",
+                id=f"fever-{split_name}-{i:05d}",
                 state=state,
                 instructions="Based on the evidence, what is the verdict on this claim?",
                 criteria=FEVER_CRITERIA,
