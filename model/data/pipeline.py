@@ -24,13 +24,12 @@ def _download_parquet(url: str, cache_path: Path) -> Path:
     return cache_path
 
 
-def _read_parquet(path: Path) -> list[dict[str, Any]]:
+def _read_parquet(path: Path) -> "pyarrow.Table":
     try:
         import pyarrow.parquet as pq
     except ImportError:
         raise ImportError("pyarrow is required for data preparation: pip install 'jev-explore[data]'")
-    table = pq.read_table(path)
-    return table.to_pylist()
+    return pq.read_table(path)
 
 
 def _load_hf_parquet(dataset: str, config: str, split: str) -> list[dict[str, Any]]:
@@ -49,7 +48,9 @@ def _load_hf_parquet(dataset: str, config: str, split: str) -> list[dict[str, An
     if old_cache.exists() and not new_first.exists():
         old_cache.rename(new_first)
 
-    rows: list[dict[str, Any]] = []
+    import pyarrow as pa
+
+    tables: list[pa.Table] = []
     for shard_idx in range(1000):
         shard_name = f"{config}_{split}_{shard_idx:04d}.parquet"
         cache_path = cache_dir / shard_name
@@ -67,9 +68,9 @@ def _load_hf_parquet(dataset: str, config: str, split: str) -> list[dict[str, An
                     break
                 raise
 
-        rows.extend(_read_parquet(cache_path))
+        tables.append(_read_parquet(cache_path))
 
-    return rows
+    return pa.concat_tables(tables).to_pylist()
 
 
 # --- Banking77 ---
@@ -261,9 +262,8 @@ def load_all(sources: list[str] | None = None) -> list[TypedQuestion]:
 
 def save_jsonl(items: list[TypedQuestion], path: Path) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as f:
-        for item in items:
-            f.write(json.dumps(item.to_dict(), ensure_ascii=False) + "\n")
+    lines = [json.dumps(item.to_dict(), ensure_ascii=False) for item in items]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return len(items)
 
 
