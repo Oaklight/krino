@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-import json
 import sys
-import os
 from pathlib import Path
 from typing import Any
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "probing" / "scripts"))
 
 
 def compare_on_dataset(
@@ -39,6 +35,7 @@ def compare_on_dataset(
         model_results.append({"item_id": item.id, "answer": model_answer, "label": item.label, "type": item.question["type"]})
 
     if jev_api_key:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "probing" / "scripts"))
         from jev_client import JevClient
         jev = JevClient(api_key=jev_api_key)
         for item in items:

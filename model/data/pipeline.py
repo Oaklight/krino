@@ -23,14 +23,13 @@ def _download_json(url: str, cache_path: Path) -> Any:
     return data
 
 
-def _download_csv_lines(url: str, cache_path: Path) -> list[str]:
-    if cache_path.exists():
-        return cache_path.read_text().splitlines()
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    with urllib.request.urlopen(url, timeout=60) as resp:
-        text = resp.read().decode()
-    cache_path.write_text(text)
-    return text.splitlines()
+MAX_ROWS_PER_REQUEST = 10_000
+
+
+def _warn_truncation(source: str, split: str, returned: int) -> None:
+    if returned >= MAX_ROWS_PER_REQUEST:
+        import sys
+        print(f"  warning: {source}/{split} returned {returned} rows (API limit {MAX_ROWS_PER_REQUEST}); dataset may be truncated", file=sys.stderr)
 
 
 # --- Banking77 ---
@@ -74,28 +73,17 @@ BANKING77_LABELS = [
 def load_banking77() -> Iterator[TypedQuestion]:
     criteria = {label: label.replace("_", " ") for label in BANKING77_LABELS}
     for split_name in ("train", "test"):
-        cache = DATA_DIR / "banking77" / f"{split_name}.json"
-        url = f"{BANKING77_URL}/{split_name}-00000-of-00001.parquet"
-        try:
-            data = _download_json(
-                f"https://huggingface.co/api/datasets/PolyAI/banking77/parquet/default/{split_name}",
-                DATA_DIR / "banking77" / f"{split_name}_meta.json",
-            )
-            parquet_url = data[0]["url"] if data else url
-        except Exception:
-            parquet_url = url
         rows_cache = DATA_DIR / "banking77" / f"{split_name}_rows.json"
-        if not rows_cache.exists():
-            try:
-                rows_data = _download_json(
-                    f"https://datasets-server.huggingface.co/rows?dataset=PolyAI/banking77&config=default&split={split_name}&offset=0&length=10000",
-                    rows_cache,
-                )
-            except Exception:
-                rows_data = {"rows": []}
-        else:
-            rows_data = json.loads(rows_cache.read_text())
-        for i, row_entry in enumerate(rows_data.get("rows", [])):
+        try:
+            rows_data = _download_json(
+                f"https://datasets-server.huggingface.co/rows?dataset=PolyAI/banking77&config=default&split={split_name}&offset=0&length={MAX_ROWS_PER_REQUEST}",
+                rows_cache,
+            )
+        except Exception:
+            rows_data = {"rows": []}
+        rows = rows_data.get("rows", [])
+        _warn_truncation("banking77", split_name, len(rows))
+        for i, row_entry in enumerate(rows):
             row = row_entry.get("row", row_entry)
             text = row.get("text", "")
             label_idx = row.get("label", 0)
@@ -119,7 +107,7 @@ def load_sst2() -> Iterator[TypedQuestion]:
         rows_cache = DATA_DIR / "sst2" / f"{split_name}_rows.json"
         try:
             rows_data = _download_json(
-                f"https://datasets-server.huggingface.co/rows?dataset=stanfordnlp/sst2&config=default&split={split_name}&offset=0&length=10000",
+                f"https://datasets-server.huggingface.co/rows?dataset=stanfordnlp/sst2&config=default&split={split_name}&offset=0&length={MAX_ROWS_PER_REQUEST}",
                 rows_cache,
             )
         except Exception:
@@ -156,7 +144,7 @@ def load_agnews() -> Iterator[TypedQuestion]:
         rows_cache = DATA_DIR / "agnews" / f"{split_name}_rows.json"
         try:
             rows_data = _download_json(
-                f"https://datasets-server.huggingface.co/rows?dataset=fancyzhx/ag_news&config=default&split={split_name}&offset=0&length=10000",
+                f"https://datasets-server.huggingface.co/rows?dataset=fancyzhx/ag_news&config=default&split={split_name}&offset=0&length={MAX_ROWS_PER_REQUEST}",
                 rows_cache,
             )
         except Exception:
@@ -185,7 +173,7 @@ def load_mnli() -> Iterator[TypedQuestion]:
         rows_cache = DATA_DIR / "mnli" / f"{split_name}_rows.json"
         try:
             rows_data = _download_json(
-                f"https://datasets-server.huggingface.co/rows?dataset=nyu-mll/multi_nli&config=default&split={split_name}&offset=0&length=10000",
+                f"https://datasets-server.huggingface.co/rows?dataset=nyu-mll/multi_nli&config=default&split={split_name}&offset=0&length={MAX_ROWS_PER_REQUEST}",
                 rows_cache,
             )
         except Exception:
@@ -217,7 +205,7 @@ def load_typed_decisions() -> Iterator[TypedQuestion]:
         rows_cache = DATA_DIR / "typed_decisions" / f"{split_name}_rows.json"
         try:
             rows_data = _download_json(
-                f"https://datasets-server.huggingface.co/rows?dataset=LocalLLaMA/typed-decisions&config=default&split={split_name}&offset=0&length=10000",
+                f"https://datasets-server.huggingface.co/rows?dataset=LocalLLaMA/typed-decisions&config=default&split={split_name}&offset=0&length={MAX_ROWS_PER_REQUEST}",
                 rows_cache,
             )
         except Exception:
