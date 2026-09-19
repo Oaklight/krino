@@ -18,9 +18,9 @@ def _download_parquet(url: str, cache_path: Path) -> Path:
     if cache_path.exists():
         return cache_path
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    print(f"  downloading {url}", file=sys.stderr)
     with urllib.request.urlopen(url, timeout=120) as resp:
         cache_path.write_bytes(resp.read())
+    print(f"  downloaded {cache_path.name} ({cache_path.stat().st_size // 1024} KB)", file=sys.stderr)
     return cache_path
 
 
