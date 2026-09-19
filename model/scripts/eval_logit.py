@@ -45,11 +45,12 @@ def evaluate_dataset(
         q_type = item.question["type"]
         if q_type == "noul":
             noul_val = answer.get("noul", 0.5)
+            label = item.label if isinstance(item.label, bool) else str(item.label).lower() == "true"
             noul_preds.append(noul_val)
-            noul_labels.append(item.label)
-            conf = noul_val if item.label else 1 - noul_val
+            noul_labels.append(label)
+            conf = noul_val if label else 1 - noul_val
             noul_confs.append(conf)
-            noul_correct.append((noul_val > 0.5) == item.label)
+            noul_correct.append((noul_val > 0.5) == label)
         elif q_type == "choice":
             choice_val = answer.get("choice", "")
             choice_preds.append(choice_val)
