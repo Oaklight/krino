@@ -9,6 +9,8 @@ import random
 import sys
 from pathlib import Path
 
+import torch
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
@@ -36,6 +38,9 @@ def main() -> int:
     args = parser.parse_args()
 
     random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(args.seed)
 
     print(f"Loading backbone: {args.model}")
     backbone, tokenizer = load_causal_lm(args.model, device=args.device, freeze=True)
