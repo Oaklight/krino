@@ -247,6 +247,62 @@ def load_typed_decisions() -> Iterator[TypedQuestion]:
                 )
 
 
+# --- STS-B (Semantic Textual Similarity) ---
+
+STS_LEVELS = [
+    "No similarity", "Slight similarity", "Moderate similarity",
+    "Good similarity", "Strong similarity", "Perfect similarity",
+]
+
+
+def load_stsb() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation", "test"):
+        rows = _load_hf_parquet("nyu-mll/glue", "stsb", split_name)
+        out_split = "test" if split_name in ("validation", "test") else "train"
+        for i, row in enumerate(rows):
+            sentence1 = row.get("sentence1", "")
+            sentence2 = row.get("sentence2", "")
+            score = float(row.get("label", 0))
+            label = float(min(5, max(0, round(score))))
+            state = f"Sentence A: {sentence1}\nSentence B: {sentence2}"
+            yield TypedQuestion.score(
+                id=f"stsb-{out_split}-{i:05d}",
+                state=state,
+                instructions="How semantically similar are these two sentences?",
+                criteria=STS_LEVELS,
+                label=label,
+                source="stsb",
+                split=out_split,
+                group=f"stsb-{i % 50}",
+            )
+
+
+# --- SST-5 (Fine-grained Sentiment) ---
+
+SST5_LEVELS = [
+    "Very negative", "Negative", "Neutral", "Positive", "Very positive",
+]
+
+
+def load_sst5() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation", "test"):
+        rows = _load_hf_parquet("SetFit/sst5", "default", split_name)
+        out_split = "test" if split_name in ("validation", "test") else "train"
+        for i, row in enumerate(rows):
+            text = row.get("text", "")
+            label_val = row.get("label", 0)
+            yield TypedQuestion.score(
+                id=f"sst5-{out_split}-{i:05d}",
+                state=text,
+                instructions="What is the sentiment of this sentence?",
+                criteria=SST5_LEVELS,
+                label=float(label_val),
+                source="sst5",
+                split=out_split,
+                group=f"sst5-{i % 50}",
+            )
+
+
 # --- Unified loader ---
 
 LOADERS = {
@@ -255,6 +311,8 @@ LOADERS = {
     "agnews": load_agnews,
     "mnli": load_mnli,
     "typed_decisions": load_typed_decisions,
+    "stsb": load_stsb,
+    "sst5": load_sst5,
 }
 
 
