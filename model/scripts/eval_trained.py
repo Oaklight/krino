@@ -29,12 +29,13 @@ def evaluate_items(model, items):
     noul_confs, noul_correct = [], []
     choice_confs, choice_correct = [], []
     latencies = []
-    n_skipped = 0
+    n_unsupported = 0
+    n_failed = 0
 
     for i, item in enumerate(items):
         q_type = item.question.get("type", "")
         if q_type not in ("noul", "choice"):
-            n_skipped += 1
+            n_unsupported += 1
             continue
 
         t0 = time.monotonic()
@@ -42,7 +43,7 @@ def evaluate_items(model, items):
             answer = model.predict(item.state, item.question)
         except Exception as e:
             print(f"    WARN: item {i} failed: {e}", file=sys.stderr)
-            n_skipped += 1
+            n_failed += 1
             continue
         latencies.append(time.monotonic() - t0)
 
@@ -67,7 +68,7 @@ def evaluate_items(model, items):
         if (i + 1) % 200 == 0:
             print(f"    {i + 1}/{len(items)}")
 
-    results = {"items_evaluated": len(items) - n_skipped, "items_skipped": n_skipped}
+    results = {"items_evaluated": len(items) - n_unsupported - n_failed, "items_unsupported": n_unsupported, "items_failed": n_failed}
     if noul_preds:
         results["noul"] = {
             "accuracy": noul_accuracy(noul_preds, noul_labels),
