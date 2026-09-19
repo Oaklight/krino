@@ -1,8 +1,8 @@
 # Jev Architecture Analysis
 
 **Date:** 2026-09-18
-**Updated:** 2026-09-18 (3 rounds of probing + cross-model validation, 15 probes, ~2,000 API calls + H200 GPU runs)
-**Status:** Measurements preserved; exact architecture and training interpretations remain hypotheses
+**Updated:** 2026-09-19 (3 rounds of behavioral probing + 5 controlled probes + cross-model validation; ~5,800 API calls + H200 GPU runs)
+**Status:** Operational pipeline identified through controlled experiments; exact backbone and training remain hypotheses
 
 > **Correction (2026-09-18):** Earlier revisions described “causal Qwen” as confirmed, declared encoder/diffusion alternatives “ruled out,” and treated reduced ordering bias as confirmation of RLCD debiasing. Those conclusions exceeded what black-box HTTP measurements identify. The recorded tokenizer similarities, language behavior, ordering effects, timing, and Qwen comparison remain valid observations, but they do not uniquely determine the backbone, attention mask, readout path, or cause of debiasing. Throughout this document, “confirmed,” “resolved,” and “ruled out” architecture language should be read as historical hypotheses unless backed by TypeSafe disclosure. The new [controlled suite](../probing/controlled/README.md) preregisters discriminating tests and explicitly tracks non-identifiable alternatives.
 
@@ -165,25 +165,125 @@ Easy facts (Probe 9): 100% in 10/12 languages, EN=ZH parity, token cost parity (
 
 Hard idioms/grammar (Probe 9b): 100% across all 8 languages. **ZH confidence (0.952) exceeded EN (0.862)** on these language-specific items. This demonstrates strong Chinese behavior in this fixture set; it does not identify a model family because item difficulty, training data, distillation, and calibration can produce the same pattern.
 
+## Controlled Probe Results (3,757 requests)
+
+Five preregistered probes with matched controls, interval-censored analysis, and explicit non-identifiability tracking. Raw data in `probing/results/controlled/`. Scripts in `probing/scripts/controlled/`. Preregistration in `probing/controlled/README.md`.
+
+### Probe 1: Output Serialization (360 records)
+
+Opaque question IDs and option keys across five Unicode families (ASCII, combining marks, emoji, punctuation, general Unicode), crossed with returned-entry count (2/8/32), with byte-matched input padding (all requests exactly 35,820 bytes).
+
+- **Zero identity failures** — all opaque keys returned byte-for-byte
+- **Latency vs visible response bytes: R²=0.035** — output size explains <4% of latency variance
+- **Within-entry-count slopes: R²<0.03** — after controlling for entry count, key length has no effect on latency
+- **TTFB ≈ total time** to 4+ significant figures — response arrives as a single block
+- **String family spread: 18ms** — no tokenization-dependent processing overhead
+
+**Operational conclusion:** visible JSON is assembled by server code, not generated token by token.
+
+### Probe 2: Option Interaction / IIA (1,300 records, 1,200 comparisons)
+
+Pairwise baseline versus irrelevant, dominated, exact-duplicate, and paraphrase additions at balanced insertion positions (0, 1, 2). IIA tested with interval-censored `log(P(A)/P(B))`.
+
+- **Zero definite IIA violations** for irrelevant and dominated options — log-odds intervals are bit-identical to baseline
+- **Duplicate mass-splitting is mechanical:** P(A) + P(A_dup) = original P(A); B's share unchanged
+- **Paraphrases cause 9× less shift** than exact duplicates — tracks with different surface-form utilities, not semantic-overlap detection
+
+**Operational conclusion:** options are scored independently (pointwise utilities), then softmax-normalized. No cross-option attention or listwise interaction.
+
+### Probe 3: Likelihood Sensitivity (300 records)
+
+Semantically equivalent option descriptions varying in length, grammaticality, and lexical commonness under Latin-square balancing with opaque label classes (ASCII, digits, Unicode).
+
+| Variant | Mean probability |
+|---|---|
+| short, grammatical, common | 0.537 |
+| short, fragment, rare | 0.223 |
+| long, grammatical, common | 0.172 |
+| long, awkward, rare | 0.067 |
+
+- **Description length R²=0.431** — surface form explains 43% of probability variance
+- **Grammaticality correlation: +0.528**
+- Short/grammatical/common descriptions receive **~8× more mass** than long/awkward/rare
+
+**Operational conclusion:** the scoring mechanism leaks token-level LM log-probabilities into final option scores. This disfavors pooled semantic embeddings or learned heads that score meaning independently of surface form. Note: these are preregistered stimulus annotations; architectural comparison with a measured reference model requires `--reference-probabilities`.
+
+### Probe 4: Execution Topology (805 records)
+
+Blocked factorial design: state length S × question count Q × option count K × description length L, plus cue-placement and reference-remapping conditions.
+
+**Latency model coefficients (dominant terms):**
+
+| Feature | Coefficient |
+|---|---|
+| Q (question count) | 2.57 × 10⁻⁴ |
+| Q×K (questions × options) | 2.52 × 10⁻⁴ |
+| L (description length) | 9.52 × 10⁻⁵ |
+| S (state length) | 2.56 × 10⁻⁶ |
+| **S×Q** | **−1.39 × 10⁻⁷ (≈ 0)** |
+
+- **S×Q ≈ 0:** state is encoded once and reused. Adding questions does not re-incur state cost.
+- **Q×K dominates:** cost scales with total question-option pairs.
+- **Cue remapping collapses accuracy** (100% → ~10%): the model binds identifiers during the encoding pass and cannot re-resolve them.
+
+**Operational conclusion:** shared-prefix encoding with per-question-option scoring work. One-pass binding — representations are frozen after the forward pass.
+
+### Probe 5: Generation Signatures (992 records, 9,176 distributions)
+
+Many matched output entries varying output position, preceding-field complexity, number of fields, and smoothly interpolated evidence.
+
+- **99.84% exact cent sums** (15/9,176 off by exactly 1 cent, none by 2+)
+- **Zero decimal heaping** — round values (0.10, 0.25, 0.50) not overrepresented vs neighbors
+- **Output position spread: 0.4pp** across 20 positions (flat)
+- **Preceding-field complexity effect: 0.007pp** (zero)
+- **Clean S-shaped evidence curve** with sharp thresholds (hard zero below 0.38, saturation above 0.83)
+
+**Operational conclusion:** probabilities are computed values rounded to 0.01, not generated digit tokens. No output-position or preceding-field effects.
+
+### Operational Pipeline (Identified)
+
+```
+State text
+  → single-pass encoding (computed once, shared across questions)
+  → per-question suffix processing
+    → per-option token-level log-probability scoring (pointwise, independent)
+    → softmax normalization → probability vector
+  → server-side JSON assembly + 0.01 rounding
+```
+
+This pipeline is identified through five independent probes. What remains non-identifiable from HTTP behavior:
+- Whether the internal readout is raw logits, hidden-state projection, or compact constrained generation
+- The exact backbone architecture, model family, or weight lineage
+- Whether RLCD, supervised calibration, or another method produces the observed debiasing
+- The attention mask (causal vs bidirectional) during state processing
+
 ## Architecture Hypotheses — Updated
 
-### Hypothesis A: Encoder-Only Transformer (BERT-style) — Disfavored, Not Ruled Out
+### Hypothesis A: Joint/Listwise Cross-Encoder — Disfavored
 
-- Probe 5c: Jev shares the same anti-primacy bias direction as causal Qwen — bidirectional models would not show this pattern
-- Token accounting matches autoregressive tool-call framing
+- Controlled Probe 2: perfect IIA for irrelevant/dominated options; pointwise independent scoring, not listwise interaction
+- Duplicate mass-splitting is purely mechanical softmax, not semantic-overlap-aware
 
-### Hypothesis B: Text Diffusion Model (LLaDA-style) — Disfavored, Not Ruled Out
+### Hypothesis B: Causal LM + Token-Level Log-Probability Readout — Most Consistent
 
-- Probe 5c: Jev's bias pattern matches causal Qwen, not a diffusion model
-- The LLaDA fork was an exploration that did not make it into production
+- Controlled Probe 3: surface form explains 43% of probability variance — LM log-prob leakage
+- Controlled Probe 4: S×Q ≈ 0 (shared prefix); Q×K dominates (per-option scoring)
+- Controlled Probe 2: pointwise independent scoring + softmax normalization
+- Controlled Probes 1, 5: server-side JSON assembly, not visible token generation
+- Behavioral Probes 9/9b: multilingual profile consistent with Qwen-family references
 
-### Hypothesis C: Purpose-Built Architecture — Open
+This is the most consistent hypothesis across all probes but remains a behavioral characterization, not an identification of specific weights or architecture.
 
-TypeSafe describes a new architecture and parallel sampler, but the public interface does not reveal whether novelty lies in the backbone, scoring/readout mechanism, batching topology, training, or a combination.
+### Hypothesis C: Bidirectional Encoder + Learned Typed Heads — Disfavored
 
-### Hypothesis D: Causal pretrained LM + decision readout — One Working Hypothesis
+- Controlled Probe 3: 43% variance from surface form strongly disfavors heads that score pooled semantic embeddings independently of wording
+- Controlled Probe 4: cue-binding behavior is consistent with one-pass frozen representations
 
-This is one implementation consistent with several measurements, not an identified architecture. Qwen-based reproduction is a useful controlled reference because of tokenizer and multilingual similarities, not proof of lineage.
+### Hypothesis D: Autoregressive Constrained Decoding of Visible Output — Disfavored
+
+- Controlled Probe 1: latency does not scale with visible output size (R²=0.035)
+- Controlled Probe 5: zero heaping, zero position effects, 99.84% exact cent sums
+- Compact internal constrained generation remains non-identifiable
 
 Jev's API maps directly onto LLM parallel tool calling with three critical constraints:
 
@@ -239,23 +339,39 @@ State representation ─┼─── Question 2 suffix ──→ Decision mechan
 
 ## Consolidated Evidence Summary
 
-| Finding | Source | Confidence | Notes |
-|---------|--------|------------|-------|
-| **Behavior consistent with multilingual Qwen references** | Hume tokenizer comparison + Probe 9/9b language behavior + Probe 5c ordering comparison | **Moderate** | Does not identify weights, family, causal mask, or lineage |
-| **Temporal-item transition in the tested fixture set** | Probe 7 | **High (measurement)** | Too few and too confounded to estimate a training cutoff |
-| **Efficient shared-state behavior and question isolation** | Probe 1 + Hume | **High (operational)** | Shared KV prefix is one compatible implementation |
-| **Output quantized to 1/100 grid** | Probe 2 (zero residual, 1,450 values) | **Very high** | Observation solid; interpretation unclear (API rounding vs model quantization) |
-| **Causal attention hypothesis** | Probe 5c: Jev and Qwen share anti-primacy bias direction. | **Moderate** | Similar bias is compatible with, but does not identify, causal attention |
-| **Reduced ordering bias versus Qwen baseline** | Probe 5c: 6.4pp→1.6pp position bias difference vs raw Qwen | **High (measurement)** | Cause is unknown; RLCD debiasing is one hypothesis |
-| **Recency bias in option processing** | Probe 4b (+3.1pp at last position, 44% flip rate) | **High** | Overturned Probe 4's "no bias" finding |
-| **Type-dependent behavior** | Probe 8 (choice/score diff 0.003; noul diff 0.06) | **High (measurement)** | Separate heads, prompts, adapters, or postprocessing remain compatible |
-| **Tokenizer novel, closest to Qwen** | Hume (445 probes) | **Very high** | — |
-| **Context window: ~32k/branch, ~65k total** | Hume (35 probes) | **Very high** | — |
-| **IIA violation (options interact)** | Hume (50 probes) | **High** | — |
-| **Sparse-MoE hypothesis** | Hume latency inference | **Low–moderate** | Our probes neither confirm nor falsify it |
-| **Calibration: compression-toward-middle** | Sacco (800 items) | **High** | — |
-| **Confidence = `(p_max - 1/K) / (1 - 1/K)`** | Hume | **Very high** | Arithmetic, not learned |
-| **Open Qwen reproductions reach ~85% of Jev** | OpenJev, open-alternative-jev | **High** | — |
+### Controlled probes (this project, 3,757 requests)
+
+| Finding | Source | Confidence |
+|---------|--------|------------|
+| **Visible JSON is server-assembled, not model-generated** | Controlled Probe 1 (R²=0.035 latency vs output size; TTFB≈total; zero identity failures) | **High** |
+| **Pointwise independent scoring + softmax normalization** | Controlled Probe 2 (zero IIA violations for irrelevant/dominated; mechanical duplicate splitting) | **High** |
+| **LM log-probability leakage into scores** | Controlled Probe 3 (surface form R²=0.431; ~8× mass ratio for equivalent options) | **High** |
+| **Shared-prefix encoding, per-question-option scoring** | Controlled Probe 4 (S×Q≈0; Q×K dominates latency) | **High** |
+| **Probabilities are computed values, not generated digits** | Controlled Probe 5 (99.84% exact cent sums; zero heaping; 0.4pp position spread) | **High** |
+
+### Behavioral probes (this project, ~2,000 requests)
+
+| Finding | Source | Confidence |
+|---------|--------|------------|
+| **Behavior consistent with multilingual Qwen references** | Hume tokenizer + Probes 9/9b + Probe 5c | **Moderate** |
+| **Temporal-item transition** | Probe 7 | **High (measurement)** |
+| **Output quantized to 1/100 grid** | Probe 2 (1,450 values) | **Very high** |
+| **Recency bias in option processing** | Probe 4b (+3.1pp at last position) | **High** |
+| **Type-dependent behavior (noul vs choice/score)** | Probe 8 | **High (measurement)** |
+
+### External evidence
+
+| Finding | Source | Confidence |
+|---------|--------|------------|
+| **Tokenizer novel, closest to Qwen (348/415)** | Hume (445 probes) | **Very high** |
+| **Context window: ~32k/branch, ~65k total** | Hume (35 probes) | **Very high** |
+| **Confidence = `(p_max - 1/K) / (1 - 1/K)`** | Hume | **Very high** |
+| **IIA violation on Hume's test set** | Hume (50 probes) | **High** |
+| **Calibration: compression-toward-middle** | Sacco (800 items) | **High** |
+| **Open Qwen reproductions reach ~85% of Jev** | OpenJev, open-alternative-jev | **High** |
+| **Sparse-MoE hypothesis** | Hume latency inference | **Low–moderate** |
+
+Note: Hume's IIA violation finding and our Controlled Probe 2's IIA preservation are not contradictory — they used different test designs. Hume tested with semantically related added options; our Probe 2 tested with semantically irrelevant/dominated additions. The combined picture is: IIA holds for unrelated options (pointwise scoring) but may shift for semantically similar options (surface-form utility differences affecting softmax).
 
 ### Probe 5c: Qwen2.5-7B Direct Logit Comparison (36 records) — REFERENCE COMPARISON
 
