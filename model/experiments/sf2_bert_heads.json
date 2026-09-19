@@ -1,0 +1,33 @@
+{
+  "n_items": 50,
+  "n_observations": 400,
+  "length_r_squared": 0.3533651220380262,
+  "grammaticality_r_squared": 0.25188487176586855,
+  "commonness_r_squared": 0.33490101554520424,
+  "correlations": {
+    "length": -0.5944452220667824,
+    "grammaticality": -0.5018813323544407,
+    "commonness": 0.5787063292769522
+  },
+  "variant_summary": {
+    "short_gram_common": {
+      "mean": 0.07200000000000001,
+      "n": 100
+    },
+    "long_gram_rare": {
+      "mean": 0.10859999999999999,
+      "n": 100
+    },
+    "short_ungram_common": {
+      "mean": 0.795,
+      "n": 100
+    },
+    "long_ungram_rare": {
+      "mean": 0.0232,
+      "n": 100
+    }
+  },
+  "mode": "trained_heads",
+  "model": "answerdotai/ModernBERT-base",
+  "elapsed_s": 1.4
+}
