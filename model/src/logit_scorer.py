@@ -114,13 +114,10 @@ class LogitScorer:
         self, state: Any, instructions: str, criteria: dict[str, str]
     ) -> dict[str, Any]:
         keys = list(criteria.keys())
-        descriptions = [criteria[k] for k in keys]
 
-        context = f"State: {state}\nQuestion: {instructions}\nOptions:\n"
-        context += "\n".join(f"- {k}: {v}" for k, v in criteria.items())
-        context += "\nAnswer:"
+        context = f"State: {state}\nQuestion: {instructions}\nAnswer:"
 
-        option_texts = [f" {k}" for k in keys]
+        option_texts = [f" {v}" if v else f" {k}" for k, v in criteria.items()]
         scores = self._score_options(context, option_texts)
         probs = self._softmax(scores)
 
@@ -135,11 +132,9 @@ class LogitScorer:
     def _eval_score(
         self, state: Any, instructions: str, criteria: list[str]
     ) -> dict[str, Any]:
-        context = f"State: {state}\nQuestion: {instructions}\nLevels:\n"
-        context += "\n".join(f"- {i}: {desc}" for i, desc in enumerate(criteria))
-        context += "\nLevel:"
+        context = f"State: {state}\nQuestion: {instructions}\nAnswer:"
 
-        option_texts = [f" {i}" for i in range(len(criteria))]
+        option_texts = [f" {desc}" for desc in criteria]
         scores = self._score_options(context, option_texts)
         probs = self._softmax(scores)
 
