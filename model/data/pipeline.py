@@ -46,9 +46,15 @@ def _load_hf_parquet(dataset: str, config: str, split: str) -> list[dict[str, An
     old_cache = cache_dir / f"{config}_{split}.parquet"
     new_first = cache_dir / f"{config}_{split}_0000.parquet"
     if old_cache.exists() and not new_first.exists():
-        old_cache.rename(new_first)
+        try:
+            old_cache.rename(new_first)
+        except FileNotFoundError:
+            pass
 
-    import pyarrow as pa
+    try:
+        import pyarrow as pa
+    except ImportError:
+        raise ImportError("pyarrow is required for data preparation: pip install 'jev-explore[data]'")
 
     tables: list[pa.Table] = []
     for shard_idx in range(1000):
@@ -262,8 +268,11 @@ def load_all(sources: list[str] | None = None) -> list[TypedQuestion]:
 
 def save_jsonl(items: list[TypedQuestion], path: Path) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
-    lines = [json.dumps(item.to_dict(), ensure_ascii=False) for item in items]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    CHUNK = 8192
+    with path.open("w", encoding="utf-8", buffering=CHUNK * 1024) as f:
+        for item in items:
+            f.write(json.dumps(item.to_dict(), ensure_ascii=False))
+            f.write("\n")
     return len(items)
 
 
