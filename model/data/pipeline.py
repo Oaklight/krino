@@ -393,6 +393,73 @@ def load_hellaswag() -> Iterator[TypedQuestion]:
             )
 
 
+# --- TabFact (Table Verification) ---
+
+
+def load_tabfact() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation", "test"):
+        rows = _load_hf_parquet("wenhu/tab_fact", "tab_fact", split_name)
+        out_split = "test" if split_name in ("validation", "test") else "train"
+        for i, row in enumerate(rows):
+            table_text = row.get("table_text", "")
+            caption = row.get("table_caption", "")
+            statement = row.get("statement", "")
+            label_val = row.get("label", 0)
+            state = f"Table: {caption}\n{table_text}\n\nStatement: {statement}"
+            yield TypedQuestion.noul(
+                id=f"tabfact-{out_split}-{i:05d}",
+                state=state,
+                instructions="Is the statement entailed by the table?",
+                label=bool(label_val),
+                source="tabfact",
+                split=out_split,
+                group=row.get("table_id", f"tabfact-{i % 200}"),
+            )
+
+
+# --- FEVER (Fact Verification) ---
+
+FEVER_CRITERIA = {
+    "supports": "The evidence supports the claim",
+    "refutes": "The evidence refutes or contradicts the claim",
+    "nei": "There is not enough information to verify the claim",
+}
+FEVER_LABEL_MAP = {
+    "SUPPORTS": "supports",
+    "REFUTES": "refutes",
+    "NOT ENOUGH INFO": "nei",
+}
+
+
+def load_fever() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation"):
+        rows = _load_hf_parquet("copenlu/fever_gold_evidence", "default", split_name)
+        out_split = "test" if split_name == "validation" else "train"
+        for i, row in enumerate(rows):
+            claim = row.get("claim", "")
+            raw_label = row.get("label", "")
+            label = FEVER_LABEL_MAP.get(raw_label)
+            if label is None:
+                continue
+            evidence_list = row.get("evidence", [])
+            evidence_texts = []
+            for ev in evidence_list:
+                if isinstance(ev, (list, tuple)) and len(ev) >= 3:
+                    evidence_texts.append(str(ev[2]))
+            evidence_str = "\n".join(evidence_texts) if evidence_texts else "(no evidence)"
+            state = f"Claim: {claim}\n\nEvidence:\n{evidence_str}"
+            yield TypedQuestion.choice(
+                id=f"fever-{out_split}-{i:05d}",
+                state=state,
+                instructions="Based on the evidence, what is the verdict on this claim?",
+                criteria=FEVER_CRITERIA,
+                label=label,
+                source="fever",
+                split=out_split,
+                group=f"fever-{i % 200}",
+            )
+
+
 # --- Unified loader ---
 
 LOADERS = {
@@ -406,6 +473,8 @@ LOADERS = {
     "arc": load_arc,
     "race": load_race,
     "hellaswag": load_hellaswag,
+    "tabfact": load_tabfact,
+    "fever": load_fever,
 }
 
 
