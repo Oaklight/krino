@@ -1,0 +1,28 @@
+{
+  "cue_condition_mean_probabilities": {
+    "early;remapped=False": 1.0,
+    "early;remapped=True": 0.12990000000000007,
+    "late;remapped=False": 1.0,
+    "late;remapped=True": 0.07550000000000001
+  },
+  "latency_features": [
+    "S",
+    "Q",
+    "K",
+    "L",
+    "S×Q",
+    "S×K",
+    "Q×K"
+  ],
+  "latency_model_coefficients": {
+    "K": -3.100686066452715e-05,
+    "L": 9.522288091636292e-05,
+    "Q": 0.00025665069396602243,
+    "QxK": 0.0002523037777258922,
+    "S": 2.562452112692079e-06,
+    "SxK": 2.2164564825986623e-07,
+    "SxQ": -1.389969456138145e-07,
+    "intercept": 0.16425284372270754
+  },
+  "non_identifiability": "Causal and bidirectional implementations can both consume the complete HTTP request before producing typed outputs; cue timing is not an architecture proof."
+}

@@ -1,0 +1,38 @@
+{
+  "annotation_guardrail": "Grammaticality and lexical-commonness are preregistered stimulus annotations, not measured language-model probabilities. Architectural comparison requires --reference-probabilities.",
+  "external_reference": {
+    "correlation": null,
+    "paired_count": 0,
+    "regression_reference_on_jev": null
+  },
+  "length_regression": {
+    "intercept": 0.4670473273784217,
+    "r": -0.6566622000338588,
+    "r_squared": 0.4312052449533076,
+    "slope": -0.004797178505600478
+  },
+  "reference_file_format": "JSON object: {'<item_id>:<variant_name>': probability}. No torch dependency.",
+  "surface_correlations": {
+    "description_length": -0.6566622000338588,
+    "grammaticality": 0.5283725947714542,
+    "preregistered_lexical_commonness": 0.5283725947714542
+  },
+  "variant_summary": {
+    "long_awkward_rare": {
+      "mean_probability": 0.06739999999999985,
+      "n": 300
+    },
+    "long_grammatical_common": {
+      "mean_probability": 0.1719666666666665,
+      "n": 300
+    },
+    "short_fragment_rare": {
+      "mean_probability": 0.22330000000000008,
+      "n": 300
+    },
+    "short_grammatical_common": {
+      "mean_probability": 0.5372333333333331,
+      "n": 300
+    }
+  }
+}
