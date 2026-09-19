@@ -9,6 +9,8 @@ import sys
 import time
 from pathlib import Path
 
+import torch
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
@@ -98,7 +100,6 @@ def main() -> int:
     parser.add_argument("--dtype", default="bfloat16", choices=["float16", "bfloat16", "float32"], help="Model dtype (use float16 for V100)")
     args = parser.parse_args()
 
-    import torch
     dtype_map = {"float16": torch.float16, "bfloat16": torch.bfloat16, "float32": torch.float32}
 
     print(f"Loading {args.model}...")
@@ -110,7 +111,7 @@ def main() -> int:
     dataset_paths = args.datasets
     if not dataset_paths:
         benchmarks = ROOT / "model" / "data" / "benchmarks"
-        dataset_paths = sorted(str(p) for p in benchmarks.glob("*.jsonl"))
+        dataset_paths = sorted(str(p) for p in benchmarks.rglob("*.jsonl"))
         if not dataset_paths:
             print("No datasets found. Run data pipeline first: python -m model.data.pipeline")
             return 1

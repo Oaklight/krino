@@ -12,6 +12,8 @@ from typing import Any
 import torch
 from sentence_transformers import CrossEncoder
 
+_DTYPE_MAP = {"float16": torch.float16, "bfloat16": torch.bfloat16, "float32": torch.float32}
+
 
 def load_reranker(
     model_name: str = "cross-encoder/ettin-reranker-150m-v1",
@@ -20,7 +22,7 @@ def load_reranker(
 ) -> CrossEncoder:
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-    return CrossEncoder(model_name, device=device, model_kwargs={"dtype": dtype})
+    return CrossEncoder(model_name, device=device, model_kwargs={"torch_dtype": _DTYPE_MAP[dtype]})
 
 
 class RerankerScorer:

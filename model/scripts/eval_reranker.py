@@ -96,10 +96,7 @@ def main():
     dataset_paths = args.datasets
     if not dataset_paths:
         benchmarks = ROOT / "model" / "data" / "benchmarks"
-        dataset_paths = sorted(str(p) for p in benchmarks.glob("*.jsonl"))
-        openjev = benchmarks / "openjev"
-        if openjev.is_dir():
-            dataset_paths += sorted(str(p) for p in openjev.glob("*.jsonl"))
+        dataset_paths = sorted(str(p) for p in benchmarks.rglob("*.jsonl"))
 
     all_results = {}
     for ds_path in dataset_paths:
