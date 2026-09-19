@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate encoder-based scoring baseline on benchmarks."""
+"""Evaluate reranker-based scoring baseline on benchmarks."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from model.src.encoder_scorer import EncoderScorer, load_encoder
+from model.src.reranker_scorer import RerankerScorer, load_reranker
 from model.data.pipeline import load_jsonl
 from model.evaluation.accuracy import noul_accuracy, choice_accuracy
 from model.evaluation.calibration import expected_calibration_error, brier_score
@@ -78,29 +78,28 @@ def evaluate_dataset(scorer, dataset_path, max_items=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate encoder scoring baseline")
-    parser.add_argument("--model", default="answerdotai/ModernBERT-base", help="Encoder model name")
+    parser = argparse.ArgumentParser(description="Evaluate reranker scoring baseline")
+    parser.add_argument("--model", default="cross-encoder/ettin-reranker-150m-v1", help="Reranker model name")
     parser.add_argument("--device", default=None)
     parser.add_argument("--datasets", nargs="+", default=None)
     parser.add_argument("--max-items", type=int, default=None)
     parser.add_argument("--output", type=Path, default=None)
-    parser.add_argument("--mode", default="crossencoder", choices=["crossencoder", "biencoder"])
-    parser.add_argument("--dtype", default="bfloat16", choices=["float16", "bfloat16", "float32"], help="Model dtype (use float16 for V100)")
+    parser.add_argument("--dtype", default="float32", choices=["float16", "bfloat16", "float32"],
+                        help="Model dtype (use float16 for V100)")
     args = parser.parse_args()
 
-    import torch
-    dtype_map = {"float16": torch.float16, "bfloat16": torch.bfloat16, "float32": torch.float32}
-
     print(f"Loading {args.model}...")
-    model, tokenizer = load_encoder(args.model, device=args.device, dtype=dtype_map[args.dtype])
-    scorer = EncoderScorer(model, tokenizer, mode=args.mode)
-    print(f"Mode: {args.mode}")
-    print(f"Model loaded on {next(model.parameters()).device}")
+    model = load_reranker(args.model, device=args.device, dtype=args.dtype)
+    scorer = RerankerScorer(model)
+    print(f"Model loaded on {model.device}")
 
     dataset_paths = args.datasets
     if not dataset_paths:
         benchmarks = ROOT / "model" / "data" / "benchmarks"
         dataset_paths = sorted(str(p) for p in benchmarks.glob("*.jsonl"))
+        openjev = benchmarks / "openjev"
+        if openjev.is_dir():
+            dataset_paths += sorted(str(p) for p in openjev.glob("*.jsonl"))
 
     all_results = {}
     for ds_path in dataset_paths:
