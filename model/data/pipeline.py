@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import urllib.request
 from pathlib import Path
 from typing import Any, Iterator
@@ -23,13 +22,35 @@ def _download_json(url: str, cache_path: Path) -> Any:
     return data
 
 
-MAX_ROWS_PER_REQUEST = 10_000
+HF_PAGE_SIZE = 100
+MAX_ROWS = 10_000
 
 
-def _warn_truncation(source: str, split: str, returned: int) -> None:
-    if returned >= MAX_ROWS_PER_REQUEST:
-        import sys
-        print(f"  warning: {source}/{split} returned {returned} rows (API limit {MAX_ROWS_PER_REQUEST}); dataset may be truncated", file=sys.stderr)
+def _download_rows(dataset: str, config: str, split: str, cache_dir: Path, max_rows: int = MAX_ROWS) -> list[dict]:
+    """Download rows from HuggingFace datasets-server with pagination (100 rows/page)."""
+    all_rows: list[dict] = []
+    cache_path = cache_dir / f"{split}_rows.json"
+    if cache_path.exists():
+        cached = json.loads(cache_path.read_text())
+        return cached.get("rows", [])
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    offset = 0
+    while offset < max_rows:
+        url = f"https://datasets-server.huggingface.co/rows?dataset={dataset}&config={config}&split={split}&offset={offset}&length={HF_PAGE_SIZE}"
+        try:
+            with urllib.request.urlopen(url, timeout=60) as resp:
+                data = json.loads(resp.read().decode())
+        except Exception:
+            break
+        rows = data.get("rows", [])
+        if not rows:
+            break
+        all_rows.extend(rows)
+        if len(rows) < HF_PAGE_SIZE:
+            break
+        offset += HF_PAGE_SIZE
+    cache_path.write_text(json.dumps({"rows": all_rows}, ensure_ascii=False))
+    return all_rows
 
 
 # --- Banking77 ---
@@ -73,16 +94,7 @@ BANKING77_LABELS = [
 def load_banking77() -> Iterator[TypedQuestion]:
     criteria = {label: label.replace("_", " ") for label in BANKING77_LABELS}
     for split_name in ("train", "test"):
-        rows_cache = DATA_DIR / "banking77" / f"{split_name}_rows.json"
-        try:
-            rows_data = _download_json(
-                f"https://datasets-server.huggingface.co/rows?dataset=PolyAI/banking77&config=default&split={split_name}&offset=0&length={MAX_ROWS_PER_REQUEST}",
-                rows_cache,
-            )
-        except Exception:
-            rows_data = {"rows": []}
-        rows = rows_data.get("rows", [])
-        _warn_truncation("banking77", split_name, len(rows))
+        rows = _download_rows("legacy-datasets/banking77", "default", split_name, DATA_DIR / "banking77")
         for i, row_entry in enumerate(rows):
             row = row_entry.get("row", row_entry)
             text = row.get("text", "")
@@ -104,16 +116,9 @@ def load_banking77() -> Iterator[TypedQuestion]:
 
 def load_sst2() -> Iterator[TypedQuestion]:
     for split_name in ("train", "validation"):
-        rows_cache = DATA_DIR / "sst2" / f"{split_name}_rows.json"
-        try:
-            rows_data = _download_json(
-                f"https://datasets-server.huggingface.co/rows?dataset=stanfordnlp/sst2&config=default&split={split_name}&offset=0&length={MAX_ROWS_PER_REQUEST}",
-                rows_cache,
-            )
-        except Exception:
-            rows_data = {"rows": []}
+        rows = _download_rows("stanfordnlp/sst2", "default", split_name, DATA_DIR / "sst2")
         out_split = "test" if split_name == "validation" else "train"
-        for i, row_entry in enumerate(rows_data.get("rows", [])):
+        for i, row_entry in enumerate(rows):
             row = row_entry.get("row", row_entry)
             sentence = row.get("sentence", "")
             label_val = row.get("label", 0)
@@ -141,15 +146,8 @@ AGNEWS_CRITERIA = {
 
 def load_agnews() -> Iterator[TypedQuestion]:
     for split_name in ("train", "test"):
-        rows_cache = DATA_DIR / "agnews" / f"{split_name}_rows.json"
-        try:
-            rows_data = _download_json(
-                f"https://datasets-server.huggingface.co/rows?dataset=fancyzhx/ag_news&config=default&split={split_name}&offset=0&length={MAX_ROWS_PER_REQUEST}",
-                rows_cache,
-            )
-        except Exception:
-            rows_data = {"rows": []}
-        for i, row_entry in enumerate(rows_data.get("rows", [])):
+        rows = _download_rows("fancyzhx/ag_news", "default", split_name, DATA_DIR / "agnews")
+        for i, row_entry in enumerate(rows):
             row = row_entry.get("row", row_entry)
             text = row.get("text", "")
             label_idx = row.get("label", 0)
@@ -170,16 +168,9 @@ def load_agnews() -> Iterator[TypedQuestion]:
 
 def load_mnli() -> Iterator[TypedQuestion]:
     for split_name in ("train", "validation_matched"):
-        rows_cache = DATA_DIR / "mnli" / f"{split_name}_rows.json"
-        try:
-            rows_data = _download_json(
-                f"https://datasets-server.huggingface.co/rows?dataset=nyu-mll/multi_nli&config=default&split={split_name}&offset=0&length={MAX_ROWS_PER_REQUEST}",
-                rows_cache,
-            )
-        except Exception:
-            rows_data = {"rows": []}
+        rows = _download_rows("nyu-mll/multi_nli", "default", split_name, DATA_DIR / "mnli")
         out_split = "test" if "validation" in split_name else "train"
-        for i, row_entry in enumerate(rows_data.get("rows", [])):
+        for i, row_entry in enumerate(rows):
             row = row_entry.get("row", row_entry)
             premise = row.get("premise", "")
             hypothesis = row.get("hypothesis", "")
@@ -202,15 +193,8 @@ def load_mnli() -> Iterator[TypedQuestion]:
 
 def load_typed_decisions() -> Iterator[TypedQuestion]:
     for split_name in ("train", "test"):
-        rows_cache = DATA_DIR / "typed_decisions" / f"{split_name}_rows.json"
-        try:
-            rows_data = _download_json(
-                f"https://datasets-server.huggingface.co/rows?dataset=LocalLLaMA/typed-decisions&config=default&split={split_name}&offset=0&length={MAX_ROWS_PER_REQUEST}",
-                rows_cache,
-            )
-        except Exception:
-            rows_data = {"rows": []}
-        for i, row_entry in enumerate(rows_data.get("rows", [])):
+        rows = _download_rows("LocalLLaMA/typed-decisions", "all", split_name, DATA_DIR / "typed_decisions")
+        for i, row_entry in enumerate(rows):
             row = row_entry.get("row", row_entry)
             state = row.get("state", row.get("context", ""))
             q = row.get("question", {})

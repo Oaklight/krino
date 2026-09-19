@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jev-explore"
+version = "0.1.0"
+description = "Exploration, probing, and replication of typed decision models"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+
+dependencies = [
+    "torch>=2.0",
+    "transformers>=4.40",
+]
+
+[project.optional-dependencies]
+train = [
+    "accelerate>=0.30",
+]
+serve = [
+    "uvicorn>=0.24",
+    "fastapi>=0.110",
+]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["model*", "probing*"]
+
+[tool.ruff]
+exclude = ["probing/scripts/httpclient.py"]
