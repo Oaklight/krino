@@ -11,11 +11,10 @@ No training required — uses the pretrained LM's own token predictions.
 
 from __future__ import annotations
 
-import copy
 from typing import Any
 
 import torch
-from transformers import PreTrainedModel, PreTrainedTokenizerBase
+from transformers import DynamicCache, PreTrainedModel, PreTrainedTokenizerBase
 
 
 class LogitScorer:
@@ -43,13 +42,19 @@ class LogitScorer:
         self.strategy = strategy
 
     def _score_options(self, context: str, options: list[str]) -> list[float]:
-        """Compute normalized log-probability scores for each option."""
+        """Compute normalized log-probability scores for each option.
+
+        Uses DynamicCache.crop() to reuse the prefix KV cache across options
+        without deep-copying tensors.
+        """
         ctx_ids = self.tokenizer(context, return_tensors="pt").input_ids.to(self.device)
 
-        with torch.inference_mode():
-            ctx_out = self.model(ctx_ids, use_cache=True)
-            cache = ctx_out.past_key_values
+        cache = DynamicCache()
+        with torch.no_grad():
+            ctx_out = self.model(ctx_ids, past_key_values=cache, use_cache=True)
             last_logit = ctx_out.logits[0, -1]
+
+        prefix_len = cache.get_seq_length()
 
         scores = []
         for opt_text in options:
@@ -61,11 +66,22 @@ class LogitScorer:
                 scores.append(float("-inf"))
                 continue
 
-            with torch.inference_mode():
-                opt_cache = copy.deepcopy(cache)
+            suffix_len = len(opt_ids)
+            attn_mask = torch.ones((1, prefix_len + suffix_len), dtype=torch.long, device=self.device)
+            cache_pos = torch.arange(prefix_len, prefix_len + suffix_len, device=self.device)
+
+            with torch.no_grad():
                 opt_out = self.model(
-                    opt_ids.unsqueeze(0), past_key_values=opt_cache, use_cache=True
+                    opt_ids.unsqueeze(0),
+                    attention_mask=attn_mask,
+                    past_key_values=cache,
+                    cache_position=cache_pos,
+                    use_cache=True,
                 )
+
+            tokens_added = cache.get_seq_length() - prefix_len
+            if tokens_added > 0:
+                cache.crop(-tokens_added)
 
             logits = torch.cat([last_logit.unsqueeze(0), opt_out.logits[0, :-1]], dim=0)
             logp = torch.log_softmax(logits.float(), dim=-1)
