@@ -50,7 +50,7 @@ class DecisionModel(nn.Module):
         return next(self.backbone.parameters()).device
 
     def _encode_text(self, text: str | list[str], max_length: int = 512) -> torch.Tensor:
-        """Encode text and return last hidden state (mean-pooled)."""
+        """Encode text and return last-token hidden state per sequence."""
         if isinstance(text, str):
             text = [text]
         inputs = self.tokenizer(
@@ -58,9 +58,9 @@ class DecisionModel(nn.Module):
         ).to(self.device)
         with torch.no_grad():
             outputs = self.backbone(**inputs, output_hidden_states=True)
-        hidden = outputs.hidden_states[-1] if hasattr(outputs, "hidden_states") and outputs.hidden_states else outputs.last_hidden_state
-        mask = inputs["attention_mask"].unsqueeze(-1).float()
-        pooled = (hidden * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
+        hidden = outputs.hidden_states[-1]
+        seq_lengths = inputs["attention_mask"].sum(dim=1) - 1
+        pooled = hidden[torch.arange(hidden.size(0), device=hidden.device), seq_lengths]
         return pooled.float()
 
     def _encode_with_sequence(self, text: str, max_length: int = 512) -> torch.Tensor:
@@ -70,7 +70,7 @@ class DecisionModel(nn.Module):
         ).to(self.device)
         with torch.no_grad():
             outputs = self.backbone(**inputs, output_hidden_states=True)
-        hidden = outputs.hidden_states[-1] if hasattr(outputs, "hidden_states") and outputs.hidden_states else outputs.last_hidden_state
+        hidden = outputs.hidden_states[-1]
         return hidden.float()
 
     def forward_noul(self, state: str, instructions: str) -> torch.Tensor:
@@ -127,7 +127,7 @@ class DecisionModel(nn.Module):
             score_val = sum(i * p for i, p in enumerate(probs))
             return {"type": "score", "score": round(score_val, 2), "probabilities": prob_dict, "legend": legend}
 
-        return {}
+        raise ValueError(f"Unknown question type: {q_type}")
 
     def trainable_parameters(self) -> int:
         return sum(p.numel() for p in self.parameters() if p.requires_grad)

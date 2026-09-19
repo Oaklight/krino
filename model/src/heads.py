@@ -102,7 +102,7 @@ class AttentionHead(nn.Module):
         attn_weights = self.dropout(attn_weights)
         attended = torch.einsum("bnl,blr->bnr", attn_weights, v)
 
-        logits = (q * attended).sum(-1) * self.scale
+        logits = (q * attended).sum(-1)
         if option_mask is not None:
             logits = logits.masked_fill(~option_mask, float("-inf"))
 
@@ -119,7 +119,7 @@ class AttentionHead(nn.Module):
         rival_weights = F.softmax(rival_scores, dim=-1)
         rival_ctx = torch.einsum("bnm,bmr->bnr", rival_weights, rv)
 
-        q_orig = self.query(opt) if hasattr(self, "_q_cache") else rq
+        q_orig = self.query(opt)
         gate = torch.sigmoid(self.rival_gate(torch.cat([q_orig, rival_ctx], dim=-1)))
         return opt + gate * rival_ctx
 

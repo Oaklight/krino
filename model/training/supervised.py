@@ -7,6 +7,7 @@ Only head parameters receive gradients.
 from __future__ import annotations
 
 import json
+import random
 import time
 from pathlib import Path
 from typing import Any
@@ -152,7 +153,6 @@ def train(
     for epoch in range(1, epochs + 1):
         t0 = time.monotonic()
 
-        import random
         shuffled = list(train_items)
         random.shuffle(shuffled)
 
