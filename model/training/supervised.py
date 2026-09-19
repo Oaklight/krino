@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 
 
 def compute_loss(
@@ -32,6 +32,8 @@ def compute_loss(
 
     if q_type == "noul":
         logit = model.forward_noul(state, instructions)
+        if isinstance(label, str):
+            label = label.lower() in ("true", "yes", "1")
         target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
         return F.binary_cross_entropy_with_logits(logit, target)
 
@@ -93,32 +95,59 @@ def train_epoch(
 
 @torch.no_grad()
 def eval_epoch(model: nn.Module, eval_items: list) -> dict[str, Any]:
-    """Evaluate on a set of items. Returns loss and accuracy statistics."""
+    """Evaluate on a set of items. Returns loss and accuracy statistics.
+
+    Uses a single forward pass per item for both loss and prediction.
+    """
     model.eval()
     total_loss = 0.0
     n_items = 0
     correct = 0
 
     for item in eval_items:
-        loss = compute_loss(model, item)
-        if loss is None:
-            continue
-        total_loss += loss.item()
-        n_items += 1
+        state = item.state
+        question = item.question
+        label = item.label
+        q_type = question.get("type", "noul")
+        instructions = question.get("instructions", "")
 
-        answer = model.predict(item.state, item.question)
-        q_type = item.question.get("type", "noul")
         if q_type == "noul":
-            pred = answer.get("noul", 0.5) > 0.5
-            if pred == item.label:
+            if isinstance(label, str):
+                label = label.lower() in ("true", "yes", "1")
+            logit = model.forward_noul(state, instructions)
+            target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
+            loss = F.binary_cross_entropy_with_logits(logit, target)
+            pred = torch.sigmoid(logit).item() > 0.5
+            if pred == label:
                 correct += 1
         elif q_type == "choice":
-            if answer.get("choice") == item.label:
+            criteria = question["criteria"]
+            keys = list(criteria.keys())
+            option_texts = [v or k for k, v in criteria.items()]
+            logits = model.forward_choice(state, instructions, option_texts)
+            if label not in keys:
+                continue
+            target_idx = keys.index(label)
+            target = torch.tensor([target_idx], device=logits.device)
+            loss = F.cross_entropy(logits, target)
+            pred_idx = logits.argmax(dim=-1).item()
+            if keys[pred_idx] == label:
                 correct += 1
         elif q_type == "score":
-            pred_level = int(round(answer.get("score", 0)))
-            if pred_level == int(round(float(item.label))):
+            criteria = question["criteria"]
+            logits = model.forward_score(state, instructions, criteria)
+            target_idx = int(round(float(label)))
+            target_idx = max(0, min(len(criteria) - 1, target_idx))
+            target = torch.tensor([target_idx], device=logits.device)
+            loss = F.cross_entropy(logits, target)
+            pred_idx = logits.argmax(dim=-1).item()
+            if pred_idx == target_idx:
                 correct += 1
+        else:
+            continue
+
+        total_loss += loss.item()
+        n_items += 1
 
     return {
         "mean_loss": total_loss / max(n_items, 1),
@@ -142,7 +171,10 @@ def train(
     """Full training loop with evaluation and checkpointing."""
     trainable = [p for p in model.parameters() if p.requires_grad]
     optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)
-    scheduler = CosineAnnealingLR(optimizer, T_max=epochs)
+    warmup_epochs = max(1, epochs // 10)
+    warmup = LinearLR(optimizer, start_factor=0.1, total_iters=warmup_epochs)
+    cosine = CosineAnnealingLR(optimizer, T_max=max(1, epochs - warmup_epochs))
+    scheduler = SequentialLR(optimizer, schedulers=[warmup, cosine], milestones=[warmup_epochs])
 
     print(f"Training: {sum(p.numel() for p in trainable)} trainable params")
     print(f"  {len(train_items)} train items, {len(eval_items)} eval items, {epochs} epochs")
@@ -176,9 +208,7 @@ def train(
                 best_eval_loss = eval_stats["mean_loss"]
                 log["best"] = True
                 if checkpoint_dir:
-                    checkpoint_dir.mkdir(parents=True, exist_ok=True)
-                    head_state = {k: v for k, v in model.state_dict().items() if "backbone" not in k}
-                    torch.save(head_state, checkpoint_dir / "best_heads.pt")
+                    model.save_heads(checkpoint_dir / "best_heads.pt")
         else:
             print(f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} ({elapsed:.1f}s)")
 

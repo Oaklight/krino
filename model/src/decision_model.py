@@ -7,6 +7,7 @@ LM and encoder backbones.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -148,6 +149,18 @@ class DecisionModel(nn.Module):
             return {"type": "score", "score": round(score_val, 2), "probabilities": prob_dict, "legend": legend}
 
         raise ValueError(f"Unknown question type: {q_type}")
+
+    def save_heads(self, path: Path | str) -> None:
+        """Save only head parameters to a checkpoint."""
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        head_state = {k: v for k, v in self.state_dict().items() if "backbone" not in k}
+        torch.save(head_state, path)
+
+    def load_heads(self, path: Path | str) -> None:
+        """Load head parameters from a checkpoint."""
+        head_state = torch.load(Path(path), map_location=self.device, weights_only=True)
+        self.load_state_dict(head_state, strict=False)
 
     def trainable_parameters(self) -> int:
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
