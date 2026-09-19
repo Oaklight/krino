@@ -183,20 +183,32 @@ def load_typed_decisions() -> Iterator[TypedQuestion]:
     for split_name in ("train", "test"):
         rows = _load_hf_parquet("LocalLLaMA/typed-decisions", "all", split_name)
         for i, row in enumerate(rows):
-            state = row.get("state", row.get("context", ""))
-            q = row.get("question", {})
-            if isinstance(q, str):
-                q = json.loads(q) if q.startswith("{") else {"type": "noul", "instructions": q}
-            label = row.get("label", row.get("answer", None))
-            yield TypedQuestion(
-                id=f"typed_decisions-{split_name}-{i:05d}",
-                state=state,
-                question=q,
-                label=label,
-                source="typed_decisions",
-                split=split_name,
-                group=row.get("domain", f"td-{i % 20}"),
-            )
+            state = row.get("state", "")
+            if isinstance(state, str) and state.startswith("{"):
+                state = json.loads(state)
+            questions = row.get("questions", {})
+            if isinstance(questions, str):
+                questions = json.loads(questions) if questions.startswith("{") else {}
+            gold = row.get("gold", {})
+            if isinstance(gold, str):
+                gold = json.loads(gold) if gold.startswith("{") else {}
+            workflow = row.get("workflow", f"td-{i % 20}")
+            for qid, q_def in questions.items():
+                if not isinstance(q_def, dict) or "type" not in q_def:
+                    continue
+                gold_answer = gold.get(qid, {})
+                label = gold_answer.get("label", None)
+                if label is None:
+                    continue
+                yield TypedQuestion(
+                    id=f"typed_decisions-{split_name}-{i:05d}-{qid}",
+                    state=state if isinstance(state, str) else json.dumps(state, ensure_ascii=False),
+                    question=q_def,
+                    label=label,
+                    source="typed_decisions",
+                    split=split_name,
+                    group=workflow,
+                )
 
 
 # --- Unified loader ---
