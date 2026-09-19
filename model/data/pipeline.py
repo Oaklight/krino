@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import random
 import sys
 import urllib.error
 import urllib.request
@@ -461,6 +462,217 @@ def load_fever() -> Iterator[TypedQuestion]:
             )
 
 
+# --- Yelp Reviews (Fine-grained Sentiment, Score) ---
+
+YELP_LEVELS = [
+    "1 star — Terrible",
+    "2 stars — Poor",
+    "3 stars — Average",
+    "4 stars — Good",
+    "5 stars — Excellent",
+]
+
+_YELP_TRAIN_SAMPLE = 20_000
+
+
+def load_yelp() -> Iterator[TypedQuestion]:
+    rng = random.Random(42)
+    for split_name in ("train", "test"):
+        rows = _load_hf_parquet("Yelp/yelp_review_full", "yelp_review_full", split_name)
+        if split_name == "train" and len(rows) > _YELP_TRAIN_SAMPLE:
+            rows = rng.sample(rows, _YELP_TRAIN_SAMPLE)
+        for i, row in enumerate(rows):
+            text = row.get("text", "")
+            if not text:
+                continue
+            label_val = row.get("label", 0)
+            yield TypedQuestion.score(
+                id=f"yelp-{split_name}-{i:05d}",
+                state=text,
+                instructions="What star rating does this review correspond to?",
+                criteria=YELP_LEVELS,
+                label=float(label_val),
+                source="yelp",
+                split=split_name,
+                group=f"yelp-{i % 200}",
+            )
+
+
+# --- SWAG (Grounded Commonsense, 4-way Choice) ---
+
+SWAG_KEYS = ["A", "B", "C", "D"]
+
+
+def load_swag() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation"):
+        rows = _load_hf_parquet("allenai/swag", "regular", split_name)
+        out_split = "test" if split_name == "validation" else "train"
+        for i, row in enumerate(rows):
+            label_idx = row.get("label", -1)
+            if not isinstance(label_idx, int) or label_idx < 0 or label_idx > 3:
+                continue
+            startphrase = row.get("startphrase", "")
+            endings = [row.get(f"ending{j}", "") for j in range(4)]
+            if not startphrase or not all(endings):
+                continue
+            criteria = {k: e for k, e in zip(SWAG_KEYS, endings)}
+            yield TypedQuestion.choice(
+                id=f"swag-{split_name}-{i:05d}",
+                state=startphrase,
+                instructions="Which ending most naturally completes the sentence?",
+                criteria=criteria,
+                label=SWAG_KEYS[label_idx],
+                source="swag",
+                split=out_split,
+                group=row.get("video-id", f"swag-{i % 100}"),
+            )
+
+
+# --- MultiRC (Multi-Sentence Reading Comprehension, Noul) ---
+
+
+def load_multirc() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation"):
+        rows = _load_hf_parquet("aps/super_glue", "multirc", split_name)
+        out_split = "test" if split_name == "validation" else "train"
+        for i, row in enumerate(rows):
+            label_val = row.get("label", -1)
+            if label_val not in (0, 1):
+                continue
+            paragraph = row.get("paragraph", "")
+            question = row.get("question", "")
+            answer = row.get("answer", "")
+            if not paragraph or not question or not answer:
+                continue
+            idx = row.get("idx", {})
+            para_idx = idx.get("paragraph", i % 50) if isinstance(idx, dict) else i % 50
+            state = f"Passage: {paragraph}\n\nQuestion: {question}\n\nAnswer: {answer}"
+            yield TypedQuestion.noul(
+                id=f"multirc-{split_name}-{i:05d}",
+                state=state,
+                instructions="Is this answer correct for the given question and passage?",
+                label=bool(label_val),
+                source="multirc",
+                split=out_split,
+                group=f"multirc-p{para_idx}",
+            )
+
+
+# --- MedNLI (Medical NLI, Noul) ---
+
+MEDNLI_LABEL_MAP = {
+    "entailment": True,
+    "contradiction": False,
+    "neutral": False,
+}
+
+
+def load_mednli() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation", "test"):
+        rows = _load_hf_parquet("presencesw/mednli", "default", split_name)
+        out_split = "test" if split_name in ("validation", "test") else "train"
+        for i, row in enumerate(rows):
+            gold_label = row.get("gold_label", "")
+            label = MEDNLI_LABEL_MAP.get(gold_label)
+            if label is None:
+                continue
+            sentence1 = row.get("sentence1", "")
+            sentence2 = row.get("sentence2", "")
+            if not sentence1 or not sentence2:
+                continue
+            state = f"Premise: {sentence1}\nHypothesis: {sentence2}"
+            yield TypedQuestion.noul(
+                id=f"mednli-{split_name}-{i:05d}",
+                state=state,
+                instructions="Does the premise entail the hypothesis?",
+                label=label,
+                source="mednli",
+                split=out_split,
+                group=f"mednli-{i % 50}",
+            )
+
+
+# --- ContractNLI (Legal Clause Entailment, Noul) ---
+
+CONTRACTNLI_LABEL_MAP = {0: False, 1: True, 2: False}
+
+
+def load_contractnli() -> Iterator[TypedQuestion]:
+    for config in ("contractnli_a", "contractnli_b"):
+        for split_name in ("train", "validation", "test"):
+            rows = _load_hf_parquet("kiddothe2b/contract-nli", config, split_name)
+            out_split = "test" if split_name in ("validation", "test") else "train"
+            for i, row in enumerate(rows):
+                label_idx = row.get("label", -1)
+                label = CONTRACTNLI_LABEL_MAP.get(label_idx)
+                if label is None:
+                    continue
+                premise = row.get("premise", "")
+                hypothesis = row.get("hypothesis", "")
+                if not premise or not hypothesis:
+                    continue
+                state = f"Contract clause: {premise}\n\nProposition: {hypothesis}"
+                yield TypedQuestion.noul(
+                    id=f"contractnli-{config}-{split_name}-{i:05d}",
+                    state=state,
+                    instructions="Does the contract clause entail the proposition?",
+                    label=label,
+                    source="contractnli",
+                    split=out_split,
+                    group=f"contractnli-{config}",
+                )
+
+
+# --- CodeSearchNet (Code Retrieval, Choice) ---
+
+_CSN_LANGUAGES = ("python", "java", "javascript")
+_CSN_TRAIN_SAMPLE = 3_000
+_CSN_KEYS = ["A", "B", "C", "D"]
+
+
+def load_codesearchnet() -> Iterator[TypedQuestion]:
+    rng = random.Random(42)
+    for lang in _CSN_LANGUAGES:
+        for split_name in ("train", "validation"):
+            rows = _load_hf_parquet("code-search-net/code_search_net", lang, split_name)
+            out_split = "test" if split_name == "validation" else "train"
+
+            valid = [
+                r for r in rows
+                if r.get("func_documentation_string", "").strip()
+                and r.get("func_code_string", "").strip()
+            ]
+            if len(valid) < 4:
+                continue
+            if split_name == "train" and len(valid) > _CSN_TRAIN_SAMPLE:
+                valid = rng.sample(valid, _CSN_TRAIN_SAMPLE)
+
+            for i, row in enumerate(valid):
+                doc = row["func_documentation_string"].strip()
+                correct_code = row["func_code_string"].strip()
+
+                distractor_indices = rng.sample(
+                    [j for j in range(len(valid)) if j != i], min(3, len(valid) - 1)
+                )
+                distractors = [valid[j]["func_code_string"].strip() for j in distractor_indices]
+
+                options = [correct_code] + distractors
+                rng.shuffle(options)
+                correct_idx = options.index(correct_code)
+
+                criteria = {_CSN_KEYS[j]: opt for j, opt in enumerate(options)}
+                yield TypedQuestion.choice(
+                    id=f"codesearchnet-{lang}-{split_name}-{i:05d}",
+                    state=f"Docstring: {doc}",
+                    instructions=f"Which {lang} code snippet correctly implements the described functionality?",
+                    criteria=criteria,
+                    label=_CSN_KEYS[correct_idx],
+                    source="codesearchnet",
+                    split=out_split,
+                    group=f"codesearchnet-{lang}",
+                )
+
+
 # --- Unified loader ---
 
 LOADERS = {
@@ -476,6 +688,12 @@ LOADERS = {
     "hellaswag": load_hellaswag,
     "tabfact": load_tabfact,
     "fever": load_fever,
+    "yelp": load_yelp,
+    "swag": load_swag,
+    "multirc": load_multirc,
+    "mednli": load_mednli,
+    "contractnli": load_contractnli,
+    "codesearchnet": load_codesearchnet,
 }
 
 
