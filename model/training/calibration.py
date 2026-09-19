@@ -14,14 +14,10 @@ confidence tensor retains its computation graph so gradients flow back
 through the shared head parameters.
 
 Usage:
-    from model.training.calibration import compute_calibrated_loss, train
+    from model.training.calibration import train
 
-    # In training config:
-    loss_cfg = {"name": "brier", "alpha": 0.7, "beta": 0.3}
-    # or
-    loss_cfg = {"name": "mmce", "alpha": 0.5, "beta": 0.5, "batch_size": 16}
-    # or
-    loss_cfg = {"name": "focal", "gamma": 2.0, "label_smoothing": 0.05}
+    train(model, train_items, eval_items,
+          loss_cfg={"name": "mmce", "alpha": 0.5, "beta": 0.5, "batch_size": 16})
 """
 
 from __future__ import annotations
@@ -40,8 +36,6 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 
 from model.training.losses import (
-    brier_loss,
-    brier_loss_binary,
     focal_loss,
     focal_loss_binary,
     mmce_kernel_loss,

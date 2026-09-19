@@ -102,6 +102,12 @@ def train_epoch(
             accum_count = 0
 
     if accum_count > 0:
+        # Re-scale so the partial batch has the same effective LR as full batches
+        if accum_count < accumulation_steps:
+            scale = accumulation_steps / accum_count
+            for p in model.parameters():
+                if p.requires_grad and p.grad is not None:
+                    p.grad.mul_(scale)
         torch.nn.utils.clip_grad_norm_(
             [p for p in model.parameters() if p.requires_grad], max_grad_norm
         )
