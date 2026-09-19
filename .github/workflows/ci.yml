@@ -20,7 +20,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install pytest
+        run: pip install --no-deps -e . && pip install pytest
 
       - name: Run pipeline validation tests
         run: pytest tests/test_pipeline.py -v
