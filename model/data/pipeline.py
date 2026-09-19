@@ -33,7 +33,12 @@ def _read_parquet(path: Path) -> list[dict[str, Any]]:
 
 
 def _load_hf_parquet(dataset: str, config: str, split: str) -> list[dict[str, Any]]:
-    """Download and read a HuggingFace dataset split as parquet."""
+    """Download and read a HuggingFace dataset split as parquet.
+
+    Assumes single-shard datasets (0000.parquet). All current benchmarks
+    (Banking77, SST-2, AG News, MNLI, typed-decisions) are single-shard.
+    Multi-shard datasets would need shard enumeration.
+    """
     safe_name = dataset.replace("/", "__")
     cache_path = DATA_DIR / safe_name / f"{config}_{split}.parquet"
     url = f"https://huggingface.co/datasets/{dataset}/resolve/refs%2Fconvert%2Fparquet/{config}/{split}/0000.parquet"
@@ -43,7 +48,6 @@ def _load_hf_parquet(dataset: str, config: str, split: str) -> list[dict[str, An
 
 # --- Banking77 ---
 
-BANKING77_URL = "https://huggingface.co/datasets/PolyAI/banking77/resolve/main/data"
 BANKING77_LABELS = [
     "activate_my_card", "age_limit", "apple_pay_or_google_pay", "atm_support",
     "automatic_top_up", "balance_not_updated_after_bank_transfer",
@@ -235,7 +239,6 @@ def load_jsonl(path: Path) -> list[TypedQuestion]:
 
 
 if __name__ == "__main__":
-    import sys
     sources = sys.argv[1:] or None
     items = load_all(sources)
     by_source = {}

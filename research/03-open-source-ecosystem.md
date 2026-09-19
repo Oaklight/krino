@@ -35,8 +35,8 @@ The [system-one-adapter-python](https://github.com/typesafe-ai/system-one-adapte
 |---------|-------|-------|-----------------|-------|
 | [TheoLeeCJ/openjev](https://github.com/TheoLeeCJ/openjev) | Qwen3.5-4B | — | 0.845 vs 0.883 (102-row subset) | Browser WebGPU demo, CUDA backend, prefix sharing |
 | [daseinlabs/open-jev](https://github.com/daseinlabs/open-jev) | Gemma 3 4B | — | Agrees on routing, disagrees on judgment calls | MLX on Apple Silicon, full `/v1/systemone` contract |
-| [LitJev](https://github.com/) | Any Qwen model | 11 | — | Zero-training logit readout, includes Doom benchmark |
-| [zhihz/openjev](https://github.com/) | Qwen3-4B (frozen) | 9 | — | Bilingual EN/ZH, Apple Silicon MLX |
+| [LitJev](https://github.com/zhengxuyu/litjev) | Any Qwen model | 11 | — | Zero-training logit readout, includes Doom benchmark |
+| [zhihz/openjev](https://github.com/zhihz/openjev) | Qwen3-4B (frozen) | 9 | — | Bilingual EN/ZH, Apple Silicon MLX |
 
 #### Strategy B: Trained Heads and Adapters
 
@@ -44,7 +44,7 @@ The [system-one-adapter-python](https://github.com/typesafe-ai/system-one-adapte
 |---------|-------|-------|-----------------|-------|
 | [TianyuCodings/NanoJev](https://github.com/TianyuCodings/NanoJev) | Qwen3-0.6B (full fine-tune) | 452 | 75% vs 76.5% (fixed-route diagnostic) | Most ambitious open reproduction; RLCD experiment; HF: `C-Tianyu/NanoJev` |
 | [Laya](https://github.com/convaiinnovations/laya) (convaiinnovations) | ModernBERT-large (395M + 26M head) | — | AG News 0.947 vs Jev 0.910; typed-decisions 0.766 vs Jev 0.727 | **Only true RLCD reproduction** — REINFORCE + proper scoring rules; HF: `convaiinnovations/laya` |
-| [Bespoke Nimble](https://github.com/) (Bespoke Labs) | Qwen3.5-9B (LoRA) | 81 | 90.1% ref match vs Jev 93.2% | First established lab entry; contrastive data curation; 2,676 curated examples |
+| [Bespoke Nimble](https://github.com/bespokelabsai/nimble) (Bespoke Labs) | Qwen3.5-9B (LoRA) | 81 | 90.1% ref match vs Jev 93.2% | First established lab entry; contrastive data curation; 2,676 curated examples |
 | [vinnylarouge/jevlike](https://github.com/vinnylarouge/jevlike) | Custom byte encoder or frozen HF backbone | — | ~98% on synthetic, 26% on Wikispeedia | Doom and chess demos with vision scorer; cross-entropy only (no RL) |
 | [olanotolu/jevbetter](https://github.com/olanotolu/jevbetter) | Hashed n-gram encoder + rival-aware attention | — | +4.3pp over jevlike, 2x better calibration | Gated MLP, temperature scaling |
 | [novvoo/nanojev](https://github.com/novvoo/nanojev) | Small bidirectional transformer (100K-5M params) | 0 | 73.2% on unified test (210 intents), ECE 0.172 | Educational single-file `nanoJEV.py` (~1500 lines); nanoGPT style; RLCD loss ablation |
@@ -61,34 +61,34 @@ The [system-one-adapter-python](https://github.com/typesafe-ai/system-one-adapte
 |---------|-------------|
 | [Jev MCP](https://github.com/itsmostafa/typesafe-mcp) | Python MCP server exposing classify/score/check tools to MCP-compatible agents |
 | [TypeSafe MCP](https://github.com/typesafe-ai/skills) | Go CLI and single-binary MCP server for Claude Desktop/Code/Codex |
-| [pi-typesafe](https://github.com/) | Pi extension with batched `typesafe_evaluate` tool and offline-testable transport |
-| [s1-rs](https://github.com/) | Rust derive layer for typed question sets, confidence gates, and network-free testing |
-| [TypeSafeAI.Net](https://github.com/) | .NET client with Microsoft.Extensions.AI adapters |
+| pi-typesafe | Pi extension with batched `typesafe_evaluate` tool and offline-testable transport |
+| s1-rs | Rust derive layer for typed question sets, confidence gates, and network-free testing |
+| TypeSafeAI.Net | .NET client with Microsoft.Extensions.AI adapters |
 
 ### Tier 3: Applications and Demos
 
 | Project | Description |
 |---------|-------------|
 | [CUA-S1](https://github.com/trycua/cua) (trycua/cua, `libs/cua-s1/`) | **First practical application of Jev-style architecture for a real task.** GUI form filling — 706K-param one-pass option scorer (2.8 MB), byte-level encoder, jevlike-derived AttentionHead. 100% on 196 real-form decisions. Trained on synthetic data only. 23.7k★ parent repo. |
-| [Jev Browser](https://github.com/) | Agent skill for Jev-selected browser actions in observation-action-verification loops |
-| [Jev Ultrafast](https://github.com/) | Browser Use agent with dynamic indexed action space and batched decisions |
-| [Crowdcheck](https://github.com/) | Tests posts on 10,000 synthetic personas with batched Jev calls |
-| [HEIST//ONE](https://github.com/) | Observable browser stealth game where Jev evaluates guard reactions |
-| [Jev Plays Pokemon](https://github.com/) | FireRed/Showdown harness where Jev picks moves from current battle state |
-| [Jev Plays StarCraft](https://github.com/) | Structured-state harness for StarCraft shareware campaign |
-| [TypeSafe Mario](https://github.com/) | NES controller experiment with emulator telemetry |
-| [Supercov](https://github.com/) | Code quality scorer — Jev ranks source files so agents know what to fix first |
-| [Every](https://github.com/) | Semantic code search CLI: ask a yes/no question of every function, rank by probability |
-| [Jev Review](https://github.com/) | Staged code-review workflow with local dashboard |
+| Jev Browser | Agent skill for Jev-selected browser actions in observation-action-verification loops |
+| Jev Ultrafast | Browser Use agent with dynamic indexed action space and batched decisions |
+| Crowdcheck | Tests posts on 10,000 synthetic personas with batched Jev calls |
+| HEIST//ONE | Observable browser stealth game where Jev evaluates guard reactions |
+| Jev Plays Pokémon | FireRed/Showdown harness where Jev picks moves from current battle state |
+| Jev Plays StarCraft | Structured-state harness for StarCraft shareware campaign |
+| TypeSafe Mario | NES controller experiment with emulator telemetry |
+| Supercov | Code quality scorer — Jev ranks source files so agents know what to fix first |
+| Every | Semantic code search CLI: ask a yes/no question of every function, rank by probability |
+| Jev Review | Staged code-review workflow with local dashboard |
 
 ### Tier 4: Independent Evaluations
 
 | Project | Description |
 |---------|-------------|
-| [calibre](https://github.com/) | Independent calibration measurement on Banking77 and Web of Science datasets |
-| [Jev Judge vs Dimension Scores](https://github.com/) | 3-task measurement: direct Jev question vs 12-14 Jev-scored dimensions with fitted weights |
-| [Jev Rerank Bench](https://github.com/) | Reranking comparison with raw provider responses and uncertainty intervals |
-| [Jev Spam Eval](https://github.com/) | Zero-shot spam detection study against trained TF-IDF baselines |
+| [calibre](https://github.com/FirasSX914/calibre) | Independent calibration measurement on Banking77 and Web of Science datasets |
+| Jev Judge vs Dimension Scores | 3-task measurement: direct Jev question vs 12-14 Jev-scored dimensions with fitted weights |
+| [Jev Rerank Bench](https://github.com/anessbelbati/jev-rerank-bench) | Reranking comparison with raw provider responses and uncertainty intervals |
+| [Jev Spam Eval](https://github.com/bitnovus/jev-spam-eval) | Zero-shot spam detection study against trained TF-IDF baselines |
 | [OpenJev benchmark](https://github.com/TheoLeeCJ/openjev) | Head-to-head comparison of direct logit scoring vs Jev on shared test set |
 
 ## RLCD Reproduction Landscape
