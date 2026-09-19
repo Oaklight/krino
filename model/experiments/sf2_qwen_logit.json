@@ -1,0 +1,33 @@
+{
+  "n_items": 50,
+  "n_observations": 400,
+  "length_r_squared": 0.02424265628848002,
+  "grammaticality_r_squared": 0.9587491724326832,
+  "commonness_r_squared": 0.04043615722471429,
+  "correlations": {
+    "length": 0.15570053400191028,
+    "grammaticality": 0.9791573787868236,
+    "commonness": -0.20108743676499108
+  },
+  "variant_summary": {
+    "short_gram_common": {
+      "mean": 0.4118,
+      "n": 100
+    },
+    "long_gram_rare": {
+      "mean": 0.503,
+      "n": 100
+    },
+    "short_ungram_common": {
+      "mean": 0.0,
+      "n": 100
+    },
+    "long_ungram_rare": {
+      "mean": 0.0802,
+      "n": 100
+    }
+  },
+  "mode": "logit_readout_description",
+  "model": "Qwen/Qwen3-0.6B",
+  "elapsed_s": 6.2
+}
