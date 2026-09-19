@@ -47,6 +47,37 @@ def brier_loss_binary(logit: torch.Tensor, target: torch.Tensor) -> torch.Tensor
     return ((prob - target) ** 2).mean()
 
 
+def mmce_kernel_loss(
+    confidences: torch.Tensor,
+    correctness: torch.Tensor,
+    kernel_bandwidth: float = 0.25,
+) -> torch.Tensor:
+    """MMCE² from pre-extracted confidence and correctness tensors.
+
+    This is the core MMCE kernel computation, factored out so it can be
+    called on batches of per-item confidence/correctness pairs collected
+    across multiple forward passes (virtual batching).
+
+    Args:
+        confidences: [N] predicted confidence in own prediction (has grad).
+        correctness: [N] whether prediction was correct (0 or 1, detached).
+        kernel_bandwidth: bandwidth for the Laplacian kernel.
+
+    Returns:
+        Scalar MMCE² loss.
+    """
+    n = confidences.shape[0]
+    if n < 2:
+        return torch.tensor(0.0, device=confidences.device, requires_grad=True)
+
+    cal_error = confidences - correctness
+    conf_diff = (confidences.unsqueeze(1) - confidences.unsqueeze(0)).abs()
+    kernel = torch.exp(-conf_diff / kernel_bandwidth)
+    mmce_sq = (cal_error.unsqueeze(1) * cal_error.unsqueeze(0) * kernel).mean()
+
+    return mmce_sq
+
+
 def mmce_loss(
     logits: torch.Tensor,
     target: torch.Tensor,
@@ -70,21 +101,7 @@ def mmce_loss(
     predictions = probs.argmax(dim=-1)
     correctness = (predictions == target).float()
 
-    n = confidences.shape[0]
-    if n < 2:
-        return torch.tensor(0.0, device=logits.device, requires_grad=True)
-
-    # calibration error per sample: confidence - accuracy indicator
-    cal_error = confidences - correctness
-
-    # Laplacian kernel: k(c_i, c_j) = exp(-|c_i - c_j| / bandwidth)
-    conf_diff = (confidences.unsqueeze(1) - confidences.unsqueeze(0)).abs()
-    kernel = torch.exp(-conf_diff / kernel_bandwidth)
-
-    # MMCE² = mean of outer product of calibration errors weighted by kernel
-    mmce_sq = (cal_error.unsqueeze(1) * cal_error.unsqueeze(0) * kernel).mean()
-
-    return mmce_sq
+    return mmce_kernel_loss(confidences, correctness, kernel_bandwidth)
 
 
 def mmce_loss_binary(
@@ -108,17 +125,7 @@ def mmce_loss_binary(
     confidence = torch.where(prob > 0.5, prob, 1.0 - prob)
     correctness = (predicted == target_sq).float()
 
-    n = confidence.shape[0]
-    if n < 2:
-        return torch.tensor(0.0, device=logit.device, requires_grad=True)
-
-    cal_error = confidence - correctness
-
-    conf_diff = (confidence.unsqueeze(1) - confidence.unsqueeze(0)).abs()
-    kernel = torch.exp(-conf_diff / kernel_bandwidth)
-    mmce_sq = (cal_error.unsqueeze(1) * cal_error.unsqueeze(0) * kernel).mean()
-
-    return mmce_sq
+    return mmce_kernel_loss(confidence, correctness, kernel_bandwidth)
 
 
 def focal_loss(
