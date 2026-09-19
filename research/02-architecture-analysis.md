@@ -2,13 +2,15 @@
 
 **Date:** 2026-09-18
 **Updated:** 2026-09-18 (3 rounds of probing + cross-model validation, 15 probes, ~2,000 API calls + H200 GPU runs)
-**Status:** Empirically validated — high confidence on base model, attention, and RLCD debiasing
+**Status:** Measurements preserved; exact architecture and training interpretations remain hypotheses
+
+> **Correction (2026-09-18):** Earlier revisions described “causal Qwen” as confirmed, declared encoder/diffusion alternatives “ruled out,” and treated reduced ordering bias as confirmation of RLCD debiasing. Those conclusions exceeded what black-box HTTP measurements identify. The recorded tokenizer similarities, language behavior, ordering effects, timing, and Qwen comparison remain valid observations, but they do not uniquely determine the backbone, attention mask, readout path, or cause of debiasing. Throughout this document, “confirmed,” “resolved,” and “ruled out” architecture language should be read as historical hypotheses unless backed by TypeSafe disclosure. The new [controlled suite](../probing/controlled/README.md) preregisters discriminating tests and explicitly tracks non-identifiable alternatives.
 
 ## What TypeSafe Has Confirmed
 
 1. **RLCD (Reinforcement Learning for Calibrated Decisions)** — a new post-training method. Optimizes for probability calibration: if the model says 70% across many predictions, roughly 70% should be correct. Distinct from RLHF (human preference) and RLVR (verifiable correctness).
 
-2. **Single forward pass, no autoregressive decoding** — because the output space is fixed and small (up to 255 choices, a scalar score, or a boolean), the model scores all possible answers in one pass. No token-by-token decode loop.
+2. **Parallel output claim** — TypeSafe states that Jev produces all typed answers in a single query rather than exposing token-by-token generation. The public API does not establish whether the hidden implementation uses direct numerical readout, compact internal decoding, or another mechanism.
 
 3. **New model architecture** — TypeSafe's launch post says "a new model architecture" but does not disclose what it is.
 
@@ -22,7 +24,7 @@
 
 We ran 13 systematic probes across 3 rounds against the Jev API (jev-1.13.0), totaling ~1,800 API calls. Each round included a rigor self-audit, and flawed probes were re-designed and re-run. Raw data in `probing/results/`. Full methodology and scripts in `probing/scripts/`.
 
-### Rigor Methodology
+### Methodological review
 
 After each round, we asked: "Does this result necessarily imply what we claimed, or could a different architecture produce the same output?" Probes that failed this test were re-designed with stronger discriminators. Key corrections:
 - Probe 3 (char-level masking) → superseded by 3b/3c (word-level masking, scaled code definitions)
@@ -41,7 +43,7 @@ Verified and refined Hume's token formula:
 
 **Input tokens:** Baseline template overhead is ~271 tokens. Each additional noul question costs a stable **~12.6 input tokens**, perfectly linear from 1 to 20 questions. State length scales input tokens linearly with zero effect on output tokens.
 
-**Architecture signal:** Token accounting is exactly additive, consistent with a shared prefix + branched suffix model. The fixed per-question overhead (~12.6 input tokens, 15 output tokens) matches tool-call framing patterns.
+**Operational interpretation:** Token accounting is additive over the tested requests. Shared state computation with per-question work is one explanation, but billing counters may reflect request/response serialization rather than neural compute.
 
 ### Probe 2: Noul Precision Quantization (1,450 values)
 
@@ -55,7 +57,7 @@ Verified and refined Hume's token formula:
 
 Noul values never reach exactly 0.0 or 1.0 (capped at 0.01–0.99). Choice and score probabilities can hit exact 0.0 and 1.0.
 
-**Architecture signal:** At most 101 distinct output values. Most likely API-layer rounding rather than model-intrinsic quantization, but could indicate a coarse output head if the model genuinely uses ≤100 bins.
+**Operational interpretation:** The API exposes at most 101 probability values on this grid. The measurements do not distinguish model-intrinsic quantization, rounding, renormalization, or other API-layer postprocessing.
 
 ### Probe 3: Diffusion vs Autoregressive Signature (188 records)
 
@@ -84,7 +86,7 @@ Strong word-order sensitivity. Reversal (which completely breaks left-to-right f
 
 **Cloze (fill-in-the-blank):** 8/8 correct. Not strongly discriminative — any large model should ace these.
 
-**Verdict (Round 1): autoregressive, not diffusion.** However, this probe was flawed — character-level masking breaks BPE tokens regardless of architecture. Superseded by Probes 3b and 3c.
+**Historical interpretation (withdrawn):** This was initially described as evidence for autoregressive rather than diffusion processing. Character-level corruption changes tokenization under either architecture, so that inference was invalid. Superseded by Probes 3b and 3c.
 
 ### Probe 3b: Corrected Diffusion Test (125 records)
 
@@ -94,7 +96,7 @@ Word-level masking, bidirectional context placement (hint before vs after ambigu
 
 **However**, this probe is also inconclusive — in causal attention with KV caching, the question suffix attends to ALL state positions. A strong model can compose information from any position at question-level attention.
 
-### Probe 3c: Rigorous Bidirectional Test (162 records)
+### Probe 3c: Controlled Bidirectional Test (162 records)
 
 Scaled code-definition test: N made-up codes (1→10) where definitions are placed AFTER usage. The causal prediction: def_last degrades as N grows. The bidirectional prediction: flat.
 
@@ -107,7 +109,7 @@ Scaled code-definition test: N made-up codes (1→10) where definitions are plac
 
 def_last stays flat. But again, code-lookup is a retrieval/matching task solvable at query level for ANY architecture. **Suggestive but not conclusive on its own.**
 
-**Resolution: Probe 4b's recency bias provides the strongest causal signal — see below.**
+**Status:** This result does not identify the attention mask. Probe 4b supplies a separate positional measurement, not a resolution.
 
 ### Probe 4: Ordering Bias on Ambiguous Cases (72 records) — SUPERSEDED
 
@@ -127,7 +129,7 @@ All within 1pp of the 0.333 baseline.
 
 **Architecture signal (Round 1):** No position bias on easy 3-option cases. But this finding was **overturned by Probe 4b**.
 
-### Probe 4b: Rigorous Ordering Bias (190 records) — KEY FINDING
+### Probe 4b: Controlled Ordering Bias (190 records) — KEY FINDING
 
 5-option (8 cases × 20 permutations) and 8-option (1 case × 30 permutations) on genuinely ambiguous inputs.
 
@@ -143,7 +145,7 @@ All within 1pp of the 0.333 baseline.
 
 **Practical impact:** 44% flip rate (4/9 cases). Max probability swing: 0.39.
 
-**This is the strongest causal-vs-bidirectional discriminator we have:** In a causal model, each option's KV is computed left-to-right. The last option attended to all previous options → richest KV → natural recency advantage. A bidirectional model would show no systematic position preference.
+**Operational interpretation:** Option position materially affects outputs on ambiguous items. Causal processing is one possible cause, but positional embeddings, listwise heads, prompt templates, training data, constrained decoding, and server orchestration can produce similar patterns.
 
 ### Probe 6b: Hard Domain Variance (60 records)
 
@@ -151,37 +153,37 @@ Counterintuitive myths near capability boundary. 59/60 correct (98%). Only miss:
 
 ### Probe 7: Temporal Cutoff (30 records)
 
-Sharp cliff at **mid-2025**. 100% through 2025-H1, 0% from 2025-H2. Zero self-awareness (noul 0.16–0.28 on TypeSafe/Jev). Pretraining data cutoff: ~June 2025.
+On the small, hand-selected temporal set, answers changed sharply between the 2025-H1 and 2025-H2 groups, and Jev assigned low noul values (0.16–0.28) to TypeSafe/Jev statements. The sample is too small and confounded by item difficulty to identify a pretraining cutoff or establish "self-awareness."
 
 ### Probe 8: Readout Head Cross-Type (20 records)
 
-100% binary agreement across types. Choice and score nearly identical (diff 0.003). Noul diverges (diff 0.06), higher floor on degenerate inputs, 12% faster. Suggests choice/score share a readout path; noul uses a separate one.
+100% binary agreement across types. Choice and score were nearly identical (diff 0.003), while noul differed more (diff 0.06), had a higher floor on degenerate inputs, and was 12% faster. This establishes type-dependent behavior; separate readout paths are one of several explanations, alongside prompt templates and postprocessing.
 
 ### Probe 9 + 9b: Multilingual Parity (199 records) — KEY FINDING
 
 Easy facts (Probe 9): 100% in 10/12 languages, EN=ZH parity, token cost parity (284≈285).
 
-Hard idioms/grammar (Probe 9b): 100% across all 8 languages. **ZH confidence (0.952) EXCEEDS EN (0.862)** on hard, language-specific questions. This +0.090 gap is a strong Qwen fingerprint — Qwen models have Chinese performance matching or exceeding English.
+Hard idioms/grammar (Probe 9b): 100% across all 8 languages. **ZH confidence (0.952) exceeded EN (0.862)** on these language-specific items. This demonstrates strong Chinese behavior in this fixture set; it does not identify a model family because item difficulty, training data, distillation, and calibration can produce the same pattern.
 
 ## Architecture Hypotheses — Updated
 
-### ~~Hypothesis A: Encoder-Only Transformer (BERT-style)~~ — Ruled Out
+### Hypothesis A: Encoder-Only Transformer (BERT-style) — Disfavored, Not Ruled Out
 
 - Probe 5c: Jev shares the same anti-primacy bias direction as causal Qwen — bidirectional models would not show this pattern
 - Token accounting matches autoregressive tool-call framing
 
-### ~~Hypothesis B: Text Diffusion Model (LLaDA-style)~~ — Ruled Out
+### Hypothesis B: Text Diffusion Model (LLaDA-style) — Disfavored, Not Ruled Out
 
 - Probe 5c: Jev's bias pattern matches causal Qwen, not a diffusion model
 - The LLaDA fork was an exploration that did not make it into production
 
-### ~~Hypothesis C: Purpose-Built Architecture~~ — Partially Correct
+### Hypothesis C: Purpose-Built Architecture — Open
 
-The "new architecture" refers to the output mechanism (readout heads, parallel sampler, RLCD debiasing), not a novel backbone. The backbone is a standard causal Transformer.
+TypeSafe describes a new architecture and parallel sampler, but the public interface does not reveal whether novelty lies in the backbone, scoring/readout mechanism, batching topology, training, or a combination.
 
-### Hypothesis D: Causal Qwen + Readout Heads + RLCD — Confirmed ✅
+### Hypothesis D: Causal pretrained LM + decision readout — One Working Hypothesis
 
-**This is our current best hypothesis, supported by all four probes and external evidence.**
+This is one implementation consistent with several measurements, not an identified architecture. Qwen-based reproduction is a useful controlled reference because of tokenizer and multilingual similarities, not proof of lineage.
 
 Jev's API maps directly onto LLM parallel tool calling with three critical constraints:
 
@@ -199,7 +201,7 @@ The constraint stack that enables single-pass inference:
 3. **All calls are forced-parallel** — no tool can see another tool's output
 4. **State is read-only** — no tool modifies shared context
 
-Because the output is always a fixed-size probability distribution, autoregressive decoding is unnecessary. The output head is:
+Because each answer space is bounded, direct numerical readout is possible and full visible-JSON decoding is unnecessary. The API remains compatible with direct heads, compact internal constrained decoding, and server-side mapping. One candidate head design is:
 - Noul: single sigmoid → `P(yes)`
 - Choice: softmax over K options → `{option: probability}`
 - Score: softmax over N levels → `{level: probability}`, then `score = Σ(level × P(level))`
@@ -219,47 +221,45 @@ Because the output is always a fixed-size probability distribution, autoregressi
 | Likely sparse MoE, ~10B active params | Hume (latency inference) |
 | Confidence field is `(p_max - 1/K) / (1 - 1/K)`, not learned | Hume (reverse-engineered) |
 
-**Proposed full architecture:**
+**One candidate implementation:**
 
 ```
-                    ┌─── Question 1 suffix ──→ Readout Head → P(options)
+                    ┌─── Question 1 suffix ──→ Decision mechanism → P(options)
                     │
-State prefix ───→ Shared KV Cache ─┼─── Question 2 suffix ──→ Readout Head → P(yes/no)
-  (causal LM)      │               │
-                    │               └─── Question 3 suffix ──→ Readout Head → P(levels)
+State representation ─┼─── Question 2 suffix ──→ Decision mechanism → P(yes/no)
                     │
-                    (Prefix computed once, reused for all branches)
+                    └─── Question 3 suffix ──→ Decision mechanism → P(levels)
 ```
 
-- **Backbone:** Causal autoregressive Transformer, likely Qwen-family (tokenizer evidence), possibly sparse MoE (~10B active params)
-- **Inference:** Shared state prefix KV cache (Hydragen/DeFT pattern) + isolated question suffix branches
-- **Output:** Listwise readout head per question (softmax/sigmoid over options/levels), not autoregressive text generation
-- **Training:** RLCD — calibration-aware RL applied to the readout head probabilities
-- **Quantization:** Output probabilities rounded to 0.01 steps (API layer)
+- **Backbone hypothesis:** A multilingual pretrained Transformer; causal Qwen is a useful reference, not an identification
+- **Inference hypothesis:** Shared state computation with isolated per-question work; KV caching is one compatible mechanism
+- **Output hypotheses:** Direct typed heads, listwise scoring, compact constrained decoding, and server-side mapping remain compatible
+- **Training disclosure:** TypeSafe names RLCD but has not published its loss, reward, data, or where calibration is applied
+- **Observed API behavior:** Probabilities are exposed on a 0.01 grid; the responsible layer is unknown
 
 ## Consolidated Evidence Summary
 
 | Finding | Source | Confidence | Notes |
 |---------|--------|------------|-------|
-| **Qwen-family base model** | Hume tokenizer (348/415) + Probe 9/9b (EN=ZH parity, ZH>EN confidence) + Probe 7 (mid-2025 cutoff) | **Very high** | Three independent signals converge. Likely Qwen3.5 |
-| **Pretraining cutoff ~mid-2025** | Probe 7 (sharp cliff 2025-H1→H2) | **Very high** | Zero self-awareness |
-| **Shared prefix + isolated question branches** | Probe 1 (additive tokens) + Hume (isolation, latency) | **Very high** | Tool-call pattern |
+| **Behavior consistent with multilingual Qwen references** | Hume tokenizer comparison + Probe 9/9b language behavior + Probe 5c ordering comparison | **Moderate** | Does not identify weights, family, causal mask, or lineage |
+| **Temporal-item transition in the tested fixture set** | Probe 7 | **High (measurement)** | Too few and too confounded to estimate a training cutoff |
+| **Efficient shared-state behavior and question isolation** | Probe 1 + Hume | **High (operational)** | Shared KV prefix is one compatible implementation |
 | **Output quantized to 1/100 grid** | Probe 2 (zero residual, 1,450 values) | **Very high** | Observation solid; interpretation unclear (API rounding vs model quantization) |
-| **Causal attention confirmed** | Probe 5c: Jev and Qwen share anti-primacy bias direction. Jev 4× less biased (RLCD debiasing). | **Very high** | Resolves causal-vs-bidirectional question |
-| **RLCD debiasing is measurable** | Probe 5c: 6.4pp→1.6pp position bias reduction vs raw Qwen | **High** | 75% reduction in ordering artifacts |
+| **Causal attention hypothesis** | Probe 5c: Jev and Qwen share anti-primacy bias direction. | **Moderate** | Similar bias is compatible with, but does not identify, causal attention |
+| **Reduced ordering bias versus Qwen baseline** | Probe 5c: 6.4pp→1.6pp position bias difference vs raw Qwen | **High (measurement)** | Cause is unknown; RLCD debiasing is one hypothesis |
 | **Recency bias in option processing** | Probe 4b (+3.1pp at last position, 44% flip rate) | **High** | Overturned Probe 4's "no bias" finding |
-| **Choice/score share readout path; noul separate** | Probe 8 (diff 0.003 vs 0.06) | **High** | Caveat: different prompt templates could partially explain |
+| **Type-dependent behavior** | Probe 8 (choice/score diff 0.003; noul diff 0.06) | **High (measurement)** | Separate heads, prompts, adapters, or postprocessing remain compatible |
 | **Tokenizer novel, closest to Qwen** | Hume (445 probes) | **Very high** | — |
 | **Context window: ~32k/branch, ~65k total** | Hume (35 probes) | **Very high** | — |
 | **IIA violation (options interact)** | Hume (50 probes) | **High** | — |
-| **Likely sparse MoE (~10B active)** | Hume (latency inference) | **Moderate** | Our Probe 6/6b couldn't confirm (model too capable) |
+| **Sparse-MoE hypothesis** | Hume latency inference | **Low–moderate** | Our probes neither confirm nor falsify it |
 | **Calibration: compression-toward-middle** | Sacco (800 items) | **High** | — |
 | **Confidence = `(p_max - 1/K) / (1 - 1/K)`** | Hume | **Very high** | Arithmetic, not learned |
 | **Open Qwen reproductions reach ~85% of Jev** | OpenJev, open-alternative-jev | **High** | — |
 
-### Probe 5c: Qwen2.5-7B Direct Logit Comparison (36 records) — RESOLUTION
+### Probe 5c: Qwen2.5-7B Direct Logit Comparison (36 records) — REFERENCE COMPARISON
 
-Ran the EXACT same 6 ordering-bias cases through Qwen2.5-7B-Instruct using direct logit scoring (Route B) on an H200 GPU. This is the definitive comparison: same model family (Qwen), same test cases, direct logit readout (no prompted probabilities).
+Ran the exact same 6 ordering-bias cases through Qwen2.5-7B-Instruct using direct logit scoring (Route B) on an H200 GPU. This is a controlled reference comparison using the same test cases and direct logit readout (no prompted probabilities); it does not establish that Jev uses the same model family.
 
 **Position bias comparison (3-option, delta from 0.333):**
 
@@ -271,17 +271,17 @@ Ran the EXACT same 6 ordering-bias cases through Qwen2.5-7B-Instruct using direc
 
 **Key findings:**
 1. **Qwen's raw bias is 4× larger than Jev's** (6.4pp vs 1.6pp first-position suppression). Same anti-primacy direction.
-2. **Both share the same qualitative bias pattern** — consistent with a shared base model family.
-3. **RLCD debiasing is real** — going from 6.4pp to 1.6pp is a 75% reduction in position bias. A well-calibrated model should not change its probability assignment based on irrelevant factors like option ordering.
-4. **This resolves the causal-vs-bidirectional question** — Jev shows the same bias direction as known causal Qwen, just reduced. The Probe 3b/3c results (flat def_last) are explained by strong composition at query level, not by bidirectional attention.
+2. **Both showed first-position suppression in this fixture set.** Shared lineage is one explanation, but common positional priors, prompts, or training data are equally compatible.
+3. **Jev showed 75% less position bias than this Qwen baseline** (6.4pp versus 1.6pp). RLCD debiasing is one possible explanation, but prompt construction, model scale, other post-training, typed heads, or API postprocessing could also cause the difference.
+4. **The comparison does not resolve causal versus bidirectional processing.** Matching a known causal model's bias direction is suggestive, but a bidirectional model or typed scorer can learn the same positional pattern. The Probe 3b/3c results likewise remain compatible with multiple architectures.
 
 ## Resolved and Open Questions
 
-### ✅ Causal vs Bidirectional — RESOLVED: Causal + RLCD Debiasing
+### Causal vs Bidirectional — Open; Causal + RLCD Debiasing Is a Working Hypothesis
 
-Probes 3b and 3c initially suggested bidirectional attention (hint_last ≥ hint_first, flat def_last with scaling N). Probe 4b found recency bias favoring causal. These appeared contradictory.
+Probes 3b and 3c initially suggested bidirectional attention (hint_last ≥ hint_first, flat def_last with scaling N). Probe 4b found recency bias compatible with causal processing. These observations pull in different directions but are not uniquely identifying.
 
-**Probe 5c resolved the contradiction:** Jev and Qwen2.5-7B share the same anti-primacy bias direction, confirming the same causal attention mechanism. Jev's 4× smaller bias magnitude is the signature of **RLCD calibration training debiasing the base model's position artifacts**. The Probe 3b/3c results are explained by the model being strong enough to compose information at query level (which any capable causal model can do), not by bidirectional attention.
+**Probe 5c adds suggestive evidence, not a resolution:** Jev and Qwen2.5-7B share the same anti-primacy bias direction, while Jev's magnitude is 4× smaller. A shared causal mechanism plus RLCD debiasing could explain this pattern, but so could other backbones, prompt templates, typed heads, post-training methods, or postprocessing. Probe 3b/3c remains compatible with both strong causal composition and bidirectional processing.
 
 ### ⬜ MoE vs Dense — Inconclusive
 
@@ -304,7 +304,7 @@ These limitations provide architecture clues:
 | Context rot with large irrelevant state | Attention-based architecture where unrelated content acts as distractor |
 | Adversarial content can steer answers | No adversarial robustness training (acknowledged, planned for improvement) |
 | P(noul) and 1-P(not noul) don't sum to 1 | Each question is evaluated truly independently — no structural invariance across questions |
-| Cannot generate text at all | Fundamental architectural constraint, not a training choice |
+| Public API does not generate text | Interface constraint; hidden internal generation remains non-identifiable |
 
 ## The RLCD Training Gap
 
@@ -335,7 +335,7 @@ Calibration-aware training is not entirely novel in the literature (e.g., "Rewar
 
 2. **The exact model architecture** — the readout head design and training are not public.
 
-3. **The calibration quality** — Jev's calibration has been independently measured (Sacco, calibre) and found to have a compression-toward-middle distortion. Reproducing even this level of calibration requires the RLCD recipe.
+3. **The cause of observed calibration behavior** — independent studies report domain-dependent distortion, but the public evidence does not show which loss, calibration layer, or RL procedure caused it.
 
 4. **The training data** — undisclosed.
 
@@ -353,9 +353,9 @@ Given access to HPC resources (ANL), we can explore:
 - Freeze various backbones (0.5B to 8B) and compare head quality
 - Experiment with rival-aware attention (jevbetter's approach)
 
-#### Phase 3: ~~LLaDA Exploration~~ Cancelled
-- ~~Load LLaDA-8B-Base and test its `get_log_likelihood()` for option scoring~~
-- Probe 5c confirmed Jev uses a causal Qwen backbone, not diffusion. LLaDA is cancelled.
+#### Phase 3: LLaDA Exploration — Deprioritized
+- Load LLaDA-8B-Base and test its `get_log_likelihood()` for option scoring only if diffusion remains a useful comparison baseline.
+- Probe 5c made a causal-Qwen working hypothesis more attractive, but did not identify Jev's backbone or rule out diffusion.
 
 #### Phase 4: RLCD Approximation
 - Design a calibration-aware training objective (ECE loss, Brier score loss, or RL-based)
