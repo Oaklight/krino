@@ -19,7 +19,14 @@ from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 
 class LogitScorer:
-    """Score typed-question options using direct LM log-probabilities."""
+    """Score typed-question options using direct LM log-probabilities.
+
+    Two scoring strategies for choice questions:
+      - "label": list options as "0. description", score label tokens ("0", "1", ...)
+        Works for high-cardinality sets where labels are single tokens.
+      - "description": score the full description text as a continuation
+        More semantic signal per token, matches OpenJev's approach.
+    """
 
     def __init__(
         self,
@@ -27,11 +34,13 @@ class LogitScorer:
         tokenizer: PreTrainedTokenizerBase,
         device: str | None = None,
         norm: str = "mean",
+        strategy: str = "description",
     ) -> None:
         self.model = model
         self.tokenizer = tokenizer
         self.device = device or next(model.parameters()).device
         self.norm = norm
+        self.strategy = strategy
 
     def _score_options(self, context: str, options: list[str]) -> list[float]:
         """Compute normalized log-probability scores for each option."""
@@ -116,18 +125,21 @@ class LogitScorer:
         keys = list(criteria.keys())
         descriptions = list(criteria.values())
 
-        if len(keys) <= 10:
-            labels = [str(i) for i in range(len(keys))]
+        if self.strategy == "description":
+            context = f"State: {state}\nQuestion: {instructions}\nAnswer:"
+            option_texts = [f" {desc or key}" for key, desc in zip(keys, descriptions)]
         else:
-            labels = [chr(65 + i) if i < 26 else f"opt{i}" for i in range(len(keys))]
+            if len(keys) <= 10:
+                labels = [str(i) for i in range(len(keys))]
+            else:
+                labels = [chr(65 + i) if i < 26 else f"opt{i}" for i in range(len(keys))]
+            context = f"State: {state}\nQuestion: {instructions}\nOptions:\n"
+            context += "\n".join(
+                f"{labels[i]}. {descriptions[i] or keys[i]}" for i in range(len(keys))
+            )
+            context += "\nAnswer:"
+            option_texts = [f" {label}" for label in labels]
 
-        context = f"State: {state}\nQuestion: {instructions}\nOptions:\n"
-        context += "\n".join(
-            f"{labels[i]}. {descriptions[i] or keys[i]}" for i in range(len(keys))
-        )
-        context += "\nAnswer:"
-
-        option_texts = [f" {label}" for label in labels]
         scores = self._score_options(context, option_texts)
         probs = self._softmax(scores)
 
