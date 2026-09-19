@@ -443,6 +443,7 @@ def load_fever() -> Iterator[TypedQuestion]:
                 continue
             evidence_list = row.get("evidence", [])
             evidence_texts = []
+            # copenlu/fever_gold_evidence format: [page, sent_id, sentence_text, ...]
             for ev in evidence_list:
                 if isinstance(ev, (list, tuple)) and len(ev) >= 3:
                     evidence_texts.append(str(ev[2]))

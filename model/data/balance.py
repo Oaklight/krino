@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .pipeline import DATA_DIR, load_jsonl, save_jsonl
 
+# Only large datasets need caps; small ones (stsb, sst5, arc, etc.) are kept in full.
 DEFAULT_CAPS: dict[str, int] = {
     "mnli": 30_000,
     "sst2": 30_000,
@@ -89,9 +90,12 @@ def main() -> int:
         print(f"  loaded {len(items):>8,} items from {path.relative_to(DATA_DIR)}")
         all_items.extend(items)
 
+    train_all = [item for item in all_items if item.split == "train"]
+    test_all = [item for item in all_items if item.split == "test"]
+
     before = count_distribution(all_items)
-    balanced = downsample(all_items, DEFAULT_CAPS, seed=args.seed)
-    after = count_distribution(balanced)
+    balanced_train = downsample(train_all, DEFAULT_CAPS, seed=args.seed)
+    after = count_distribution(balanced_train + test_all)
 
     print_report(before, after)
 
@@ -99,8 +103,8 @@ def main() -> int:
         print("\n  (dry run — no files saved)")
         return 0
 
-    train_items = [item for item in balanced if item.split == "train"]
-    test_items = [item for item in balanced if item.split == "test"]
+    train_items = balanced_train
+    test_items = test_all
 
     train_path = DATA_DIR / "balanced_train.jsonl"
     test_path = DATA_DIR / "balanced_test.jsonl"
