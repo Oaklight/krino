@@ -205,6 +205,14 @@ def train(
     else:
         cfg = loss_cfg
 
+    if cfg.name == "mmce":
+        raise ValueError(
+            "MMCE requires batched training (n >= 2 samples per forward pass) "
+            "but the current training loop processes items one at a time. "
+            "MMCE will silently return 0 with batch_size=1. "
+            "Use 'brier' or 'focal' until batched training is implemented."
+        )
+
     trainable = [p for p in model.parameters() if p.requires_grad]
     optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)
     warmup_epochs = max(1, epochs // 10)

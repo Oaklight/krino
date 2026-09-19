@@ -102,9 +102,11 @@ def mmce_loss_binary(
     Returns:
         Scalar MMCE² loss.
     """
-    prob = torch.sigmoid(logit)
-    confidence = torch.where(target > 0.5, prob, 1.0 - prob).squeeze(-1)
-    correctness = torch.ones_like(confidence)
+    prob = torch.sigmoid(logit).squeeze(-1)
+    predicted = (prob > 0.5).float()
+    target_sq = target.squeeze(-1)
+    confidence = torch.where(prob > 0.5, prob, 1.0 - prob)
+    correctness = (predicted == target_sq).float()
 
     n = confidence.shape[0]
     if n < 2:
@@ -144,7 +146,7 @@ def focal_loss(
 
     if label_smoothing > 0:
         n_classes = logits.shape[-1]
-        smooth_target = torch.full_like(probs, label_smoothing / (n_classes - 1))
+        smooth_target = torch.full_like(probs, label_smoothing / max(n_classes - 1, 1))
         smooth_target.scatter_(1, target.unsqueeze(1), 1.0 - label_smoothing)
         # focal weight based on predicted probability of true class
         p_t = probs.gather(1, target.unsqueeze(1)).squeeze(1)
@@ -166,6 +168,9 @@ def focal_loss_binary(
     gamma: float = 2.0,
 ) -> torch.Tensor:
     """Focal loss for binary (noul) predictions.
+
+    No label_smoothing parameter — smoothing a binary target toward 0.5
+    fights the sigmoid, unlike multi-class where it redistributes mass.
 
     Args:
         logit: [batch, 1] pre-sigmoid logit.
