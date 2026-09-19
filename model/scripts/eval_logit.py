@@ -94,11 +94,13 @@ def main() -> int:
     parser.add_argument("--max-items", type=int, default=None, help="Max items per dataset")
     parser.add_argument("--output", type=Path, default=None, help="Output JSON path")
     parser.add_argument("--norm", default="mean", choices=["mean", "sum"], help="Log-prob normalization")
+    parser.add_argument("--strategy", default="description", choices=["description", "label"], help="Choice scoring strategy")
     args = parser.parse_args()
 
     print(f"Loading {args.model}...")
     model, tokenizer = load_causal_lm(args.model, device=args.device)
-    scorer = LogitScorer(model, tokenizer, norm=args.norm)
+    scorer = LogitScorer(model, tokenizer, norm=args.norm, strategy=args.strategy)
+    print(f"Strategy: {args.strategy}, norm: {args.norm}")
     print(f"Model loaded on {next(model.parameters()).device}")
 
     dataset_paths = args.datasets
