@@ -21,10 +21,10 @@ data = [
 ]
 train = [
     "accelerate>=0.30",
+    "trl>=0.12",
 ]
 serve = [
-    "uvicorn>=0.24",
-    "fastapi>=0.110",
+    "sglang[all]>=0.4",
 ]
 dev = [
     "pytest>=8.0",
