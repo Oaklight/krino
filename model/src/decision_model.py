@@ -41,10 +41,9 @@ class DecisionModel(nn.Module):
             param.requires_grad_(False)
 
         device = next(self.backbone.parameters()).device
-        dtype = next(self.backbone.parameters()).dtype
-        self.noul_head = self.noul_head.to(device=device, dtype=dtype)
-        self.choice_head = self.choice_head.to(device=device, dtype=dtype)
-        self.score_head = self.score_head.to(device=device, dtype=dtype)
+        self.noul_head = self.noul_head.to(device).float()
+        self.choice_head = self.choice_head.to(device).float()
+        self.score_head = self.score_head.to(device).float()
 
     @property
     def device(self) -> torch.device:
@@ -62,7 +61,7 @@ class DecisionModel(nn.Module):
         hidden = outputs.hidden_states[-1] if hasattr(outputs, "hidden_states") and outputs.hidden_states else outputs.last_hidden_state
         mask = inputs["attention_mask"].unsqueeze(-1).float()
         pooled = (hidden * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
-        return pooled
+        return pooled.float()
 
     def _encode_with_sequence(self, text: str, max_length: int = 512) -> torch.Tensor:
         """Encode text and return full sequence hidden states [1, seq_len, hidden]."""
@@ -72,7 +71,7 @@ class DecisionModel(nn.Module):
         with torch.no_grad():
             outputs = self.backbone(**inputs, output_hidden_states=True)
         hidden = outputs.hidden_states[-1] if hasattr(outputs, "hidden_states") and outputs.hidden_states else outputs.last_hidden_state
-        return hidden
+        return hidden.float()
 
     def forward_noul(self, state: str, instructions: str) -> torch.Tensor:
         """Returns logit [1, 1] for noul prediction."""
