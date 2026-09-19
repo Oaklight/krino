@@ -1,0 +1,91 @@
+# Calibration loss sweep for Qwen3-0.6B decision heads.
+#
+# Usage:
+#   python -m model.scripts.train_calibrated \
+#       --config model/configs/qwen_0.6b_calibrated.yaml --run <name>
+#
+# Each run under `runs:` overrides the shared `defaults:`.
+# The sweep covers all Phase A loss candidates from issue #23.
+
+defaults:
+  model: Qwen/Qwen3-0.6B
+  train_data:
+    - model/data/benchmarks/banking77.jsonl
+  eval_data:
+    - model/data/benchmarks/banking77.jsonl
+  max_train: 5000
+  max_eval: 500
+  epochs: 10
+  lr: 1e-3
+  rank: 64
+  seed: 42
+
+runs:
+  # --- Baseline: standard CE (no calibration term) ---
+  ce_baseline:
+    loss: focal
+    gamma: 0.0          # focal(gamma=0) = CE
+    label_smoothing: 0.0
+    output: model/experiments/cal_ce_baseline.json
+
+  # --- Label smoothing baselines ---
+  label_smooth_005:
+    loss: focal
+    gamma: 0.0
+    label_smoothing: 0.05
+    output: model/experiments/cal_label_smooth_005.json
+
+  label_smooth_010:
+    loss: focal
+    gamma: 0.0
+    label_smoothing: 0.10
+    output: model/experiments/cal_label_smooth_010.json
+
+  # --- Focal loss ---
+  focal_g1:
+    loss: focal
+    gamma: 1.0
+    output: model/experiments/cal_focal_g1.json
+
+  focal_g2:
+    loss: focal
+    gamma: 2.0
+    output: model/experiments/cal_focal_g2.json
+
+  focal_g2_ls:
+    loss: focal
+    gamma: 2.0
+    label_smoothing: 0.05
+    output: model/experiments/cal_focal_g2_ls.json
+
+  # --- Brier score ---
+  brier_07:
+    loss: brier
+    alpha: 0.7
+    beta: 0.3
+    batch_size: 16
+    output: model/experiments/cal_brier_07.json
+
+  brier_05:
+    loss: brier
+    alpha: 0.5
+    beta: 0.5
+    batch_size: 16
+    output: model/experiments/cal_brier_05.json
+
+  # --- MMCE ---
+  mmce_05:
+    loss: mmce
+    alpha: 0.5
+    beta: 0.5
+    batch_size: 16
+    mmce_bandwidth: 0.25
+    output: model/experiments/cal_mmce_05.json
+
+  mmce_03:
+    loss: mmce
+    alpha: 0.7
+    beta: 0.3
+    batch_size: 32
+    mmce_bandwidth: 0.25
+    output: model/experiments/cal_mmce_03.json
