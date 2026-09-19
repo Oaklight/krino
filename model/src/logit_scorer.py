@@ -1,0 +1,159 @@
+"""Route B logit scorer: score options by reading log-probabilities directly.
+
+Given a state and a question with typed options, this scorer:
+1. Encodes the state + question as a shared prefix
+2. For each option, computes the mean log-probability of its tokens
+   conditioned on the prefix
+3. Applies softmax normalization across options
+
+No training required — uses the pretrained LM's own token predictions.
+"""
+
+from __future__ import annotations
+
+import copy
+from typing import Any
+
+import torch
+from transformers import PreTrainedModel, PreTrainedTokenizerBase
+
+
+class LogitScorer:
+    """Score typed-question options using direct LM log-probabilities."""
+
+    def __init__(
+        self,
+        model: PreTrainedModel,
+        tokenizer: PreTrainedTokenizerBase,
+        device: str | None = None,
+        norm: str = "mean",
+    ) -> None:
+        self.model = model
+        self.tokenizer = tokenizer
+        self.device = device or next(model.parameters()).device
+        self.norm = norm
+
+    def _score_options(self, context: str, options: list[str]) -> list[float]:
+        """Compute normalized log-probability scores for each option."""
+        ctx_ids = self.tokenizer(context, return_tensors="pt").input_ids.to(self.device)
+
+        with torch.inference_mode():
+            ctx_out = self.model(ctx_ids, use_cache=True)
+            cache = ctx_out.past_key_values
+            last_logit = ctx_out.logits[0, -1]
+
+        scores = []
+        for opt_text in options:
+            opt_ids = self.tokenizer(
+                opt_text, add_special_tokens=False, return_tensors="pt"
+            ).input_ids[0].to(self.device)
+
+            if len(opt_ids) == 0:
+                scores.append(float("-inf"))
+                continue
+
+            with torch.inference_mode():
+                opt_cache = copy.deepcopy(cache)
+                opt_out = self.model(
+                    opt_ids.unsqueeze(0), past_key_values=opt_cache, use_cache=True
+                )
+
+            logits = torch.cat([last_logit.unsqueeze(0), opt_out.logits[0, :-1]], dim=0)
+            logp = torch.log_softmax(logits.float(), dim=-1)
+            tok_lp = logp[torch.arange(len(opt_ids), device=self.device), opt_ids]
+
+            if self.norm == "mean":
+                scores.append(tok_lp.mean().item())
+            elif self.norm == "sum":
+                scores.append(tok_lp.sum().item())
+            else:
+                scores.append(tok_lp.mean().item())
+
+        return scores
+
+    def _softmax(self, scores: list[float]) -> list[float]:
+        t = torch.tensor(scores, dtype=torch.float32)
+        probs = torch.softmax(t, dim=0).tolist()
+        return probs
+
+    def evaluate(self, state: Any, questions: dict[str, Any]) -> dict[str, Any]:
+        """Evaluate typed questions against a state.
+
+        This implements the DecisionBackend protocol from model.src.server.
+        """
+        answers = {}
+        for qid, question in questions.items():
+            q_type = question.get("type", "noul")
+            instructions = question.get("instructions", "")
+
+            if q_type == "noul":
+                answers[qid] = self._eval_noul(state, instructions, question.get("criteria"))
+            elif q_type == "choice":
+                answers[qid] = self._eval_choice(state, instructions, question["criteria"])
+            elif q_type == "score":
+                answers[qid] = self._eval_score(state, instructions, question["criteria"])
+
+        return answers
+
+    def _eval_noul(
+        self, state: Any, instructions: str, criteria: dict[str, str] | None = None
+    ) -> dict[str, Any]:
+        true_desc = "yes"
+        false_desc = "no"
+        if criteria:
+            true_desc = criteria.get("true", "yes")
+            false_desc = criteria.get("false", "no")
+
+        context = f"State: {state}\nQuestion: {instructions}\nAnswer:"
+        scores = self._score_options(context, [f" {true_desc}", f" {false_desc}"])
+        probs = self._softmax(scores)
+        noul = round(max(0.01, min(0.99, probs[0])), 2)
+        return {"type": "noul", "noul": noul}
+
+    def _eval_choice(
+        self, state: Any, instructions: str, criteria: dict[str, str]
+    ) -> dict[str, Any]:
+        keys = list(criteria.keys())
+        descriptions = [criteria[k] for k in keys]
+
+        context = f"State: {state}\nQuestion: {instructions}\nOptions:\n"
+        context += "\n".join(f"- {k}: {v}" for k, v in criteria.items())
+        context += "\nAnswer:"
+
+        option_texts = [f" {k}" for k in keys]
+        scores = self._score_options(context, option_texts)
+        probs = self._softmax(scores)
+
+        prob_dict = {k: round(p, 2) for k, p in zip(keys, probs)}
+        choice = max(prob_dict, key=prob_dict.get)
+        return {
+            "type": "choice",
+            "choice": choice,
+            "probabilities": prob_dict,
+        }
+
+    def _eval_score(
+        self, state: Any, instructions: str, criteria: list[str]
+    ) -> dict[str, Any]:
+        context = f"State: {state}\nQuestion: {instructions}\nLevels:\n"
+        context += "\n".join(f"- {i}: {desc}" for i, desc in enumerate(criteria))
+        context += "\nLevel:"
+
+        option_texts = [f" {i}" for i in range(len(criteria))]
+        scores = self._score_options(context, option_texts)
+        probs = self._softmax(scores)
+
+        prob_dict = {str(i): round(p, 2) for i, p in enumerate(probs)}
+        legend = {str(i): desc for i, desc in enumerate(criteria)}
+        score_val = sum(i * p for i, p in enumerate(probs))
+        return {
+            "type": "score",
+            "score": round(score_val, 2),
+            "probabilities": prob_dict,
+            "legend": legend,
+        }
+
+    def predict(self, state: str, question: dict[str, Any]) -> dict[str, Any]:
+        """Single-question interface for evaluation suite compatibility."""
+        result = self.evaluate(state, {"q": question})
+        return result["q"]
