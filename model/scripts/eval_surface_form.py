@@ -27,11 +27,12 @@ from model.src.backbone import load_causal_lm, load_encoder
 from model.src.decision_model import DecisionModel
 from model.src.logit_scorer import LogitScorer
 
+# (name, text, length, grammaticality 0/1, commonness 0/1)
 VARIANTS = [
-    ("short_common", "Approve the request.", 20),
-    ("long_common", "Approve the request after completing the ordinary review process.", 66),
-    ("short_rare", "Request: approve.", 17),
-    ("long_rare", "The request is what shall, following review completion, be approved by action.", 78),
+    ("short_common", "Approve the request.", 20, 1.0, 1.0),
+    ("long_common", "Approve the request after completing the ordinary review process.", 66, 1.0, 1.0),
+    ("short_rare", "Request: approve.", 17, 0.0, 0.0),
+    ("long_rare", "The request is what shall, following review completion, be approved by action.", 78, 0.0, 0.0),
 ]
 
 LABEL_SETS = [
@@ -59,6 +60,7 @@ def pearson(xs, ys):
 def run_test(scorer, n_items=N_ITEMS, seed=42):
     rng = random.Random(seed)
     lengths, probabilities = [], []
+    grammaticalities, commonnesses = [], []
     variant_probs = {v[0]: [] for v in VARIANTS}
 
     for item_idx in range(n_items):
@@ -67,6 +69,7 @@ def run_test(scorer, n_items=N_ITEMS, seed=42):
             assignment = [(labels[i], VARIANTS[(i + shift) % len(VARIANTS)]) for i in range(len(labels))]
             criteria = {label: variant[1] for label, variant in assignment}
             variant_by_label = {label: variant[0] for label, variant in assignment}
+            variant_info_by_label = {label: variant for label, variant in assignment}
 
             state = f"Case {item_idx}: all listed actions have exactly the same consequence and utility."
             question = {
@@ -83,11 +86,14 @@ def run_test(scorer, n_items=N_ITEMS, seed=42):
                 if variant_name:
                     variant_info = next(v for v in VARIANTS if v[0] == variant_name)
                     lengths.append(variant_info[2])
+                    grammaticalities.append(variant_info[3])
+                    commonnesses.append(variant_info[4])
                     probabilities.append(prob)
                     variant_probs[variant_name].append(prob)
 
-    r = pearson(lengths, probabilities)
-    r_squared = r ** 2 if r is not None else None
+    r_length = pearson(lengths, probabilities)
+    r_gram = pearson(grammaticalities, probabilities)
+    r_common = pearson(commonnesses, probabilities)
 
     variant_summary = {
         name: {"mean": sum(ps) / len(ps), "n": len(ps)}
@@ -97,8 +103,14 @@ def run_test(scorer, n_items=N_ITEMS, seed=42):
     return {
         "n_items": n_items,
         "n_observations": len(probabilities),
-        "length_correlation": r,
-        "length_r_squared": r_squared,
+        "length_r_squared": r_length ** 2 if r_length is not None else None,
+        "grammaticality_r_squared": r_gram ** 2 if r_gram is not None else None,
+        "commonness_r_squared": r_common ** 2 if r_common is not None else None,
+        "correlations": {
+            "length": r_length,
+            "grammaticality": r_gram,
+            "commonness": r_common,
+        },
         "variant_summary": variant_summary,
     }
 
@@ -143,9 +155,11 @@ def main():
     results["elapsed_s"] = round(elapsed, 1)
 
     print(f"\n{'='*50}")
-    print(f"Surface-form sensitivity: R² = {results['length_r_squared']:.4f}" if results['length_r_squared'] else "R² = N/A")
-    print(f"  R² > 0.3 → surface form dominates (LM-logit leakage)")
-    print(f"  R² < 0.1 → trained head ignores surface form")
+    print(f"Surface-form sensitivity:")
+    for dim in ("length", "grammaticality", "commonness"):
+        r2 = results.get(f"{dim}_r_squared")
+        print(f"  {dim:20s} R² = {r2:.4f}" if r2 is not None else f"  {dim:20s} R² = N/A")
+    print(f"  (R² > 0.3 → surface form dominates; R² < 0.1 → head ignores it)")
     print(f"\nVariant means:")
     for name, stats in sorted(results["variant_summary"].items()):
         print(f"  {name:15s}: {stats['mean']:.4f} (n={stats['n']})")
