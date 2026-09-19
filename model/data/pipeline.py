@@ -266,7 +266,7 @@ def load_stsb() -> Iterator[TypedQuestion]:
             label = float(min(5, max(0, round(score))))
             state = f"Sentence A: {sentence1}\nSentence B: {sentence2}"
             yield TypedQuestion.score(
-                id=f"stsb-{out_split}-{i:05d}",
+                id=f"stsb-{split_name}-{i:05d}",
                 state=state,
                 instructions="How semantically similar are these two sentences?",
                 criteria=STS_LEVELS,
@@ -292,7 +292,7 @@ def load_sst5() -> Iterator[TypedQuestion]:
             text = row.get("text", "")
             label_val = row.get("label", 0)
             yield TypedQuestion.score(
-                id=f"sst5-{out_split}-{i:05d}",
+                id=f"sst5-{split_name}-{i:05d}",
                 state=text,
                 instructions="What is the sentiment of this sentence?",
                 criteria=SST5_LEVELS,
@@ -320,7 +320,7 @@ def load_arc() -> Iterator[TypedQuestion]:
                 if answer_key not in criteria:
                     continue
                 yield TypedQuestion.choice(
-                    id=f"arc-{config.lower()}-{out_split}-{i:05d}",
+                    id=f"arc-{config.lower()}-{split_name}-{i:05d}",
                     state=row.get("question", ""),
                     instructions="Which answer is correct?",
                     criteria=criteria,
@@ -350,7 +350,7 @@ def load_race() -> Iterator[TypedQuestion]:
                     continue
                 criteria = {k: opt for k, opt in zip(RACE_KEYS, options)}
                 yield TypedQuestion.choice(
-                    id=f"race-{config}-{out_split}-{i:05d}",
+                    id=f"race-{config}-{split_name}-{i:05d}",
                     state=article,
                     instructions=f"Based on the passage above, answer: {question}",
                     criteria=criteria,
@@ -389,7 +389,7 @@ def load_hellaswag() -> Iterator[TypedQuestion]:
                 label=label,
                 source="hellaswag",
                 split=out_split,
-                group=row.get("activity_label", f"hellaswag-{i % 100}"),
+                group=row.get("activity_label") or f"hellaswag-{i % 100}",
             )
 
 
@@ -407,7 +407,7 @@ def load_tabfact() -> Iterator[TypedQuestion]:
             label_val = row.get("label", 0)
             state = f"Table: {caption}\n{table_text}\n\nStatement: {statement}"
             yield TypedQuestion.noul(
-                id=f"tabfact-{out_split}-{i:05d}",
+                id=f"tabfact-{split_name}-{i:05d}",
                 state=state,
                 instructions="Is the statement entailed by the table?",
                 label=bool(label_val),
@@ -443,10 +443,10 @@ def load_fever() -> Iterator[TypedQuestion]:
                 continue
             evidence_list = row.get("evidence", [])
             evidence_texts = []
-            # copenlu/fever_gold_evidence format: [page, sent_id, sentence_text, ...]
+            # copenlu/fever_gold_evidence format: [page_title, sentence_text]
             for ev in evidence_list:
-                if isinstance(ev, (list, tuple)) and len(ev) >= 3:
-                    evidence_texts.append(str(ev[2]))
+                if isinstance(ev, (list, tuple)) and len(ev) >= 2:
+                    evidence_texts.append(str(ev[-1]))
             evidence_str = "\n".join(evidence_texts) if evidence_texts else "(no evidence)"
             state = f"Claim: {claim}\n\nEvidence:\n{evidence_str}"
             yield TypedQuestion.choice(
