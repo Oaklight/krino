@@ -210,9 +210,12 @@ def main() -> int:
         checkpoint_dir=checkpoint_dir,
     )
 
-    final_eval = results["history"][-1].get("eval", {})
-    print(f"\nFinal: loss={final_eval.get('mean_loss', 'N/A'):.4f} "
-          f"acc={final_eval.get('accuracy', 'N/A'):.4f}")
+    final_eval = next(
+        (e["eval"] for e in reversed(results["history"]) if "eval" in e), {}
+    )
+    loss_str = f"{final_eval['mean_loss']:.4f}" if "mean_loss" in final_eval else "N/A"
+    acc_str = f"{final_eval['accuracy']:.4f}" if "accuracy" in final_eval else "N/A"
+    print(f"\nFinal: loss={loss_str} acc={acc_str}")
 
     if output:
         output = Path(output)
