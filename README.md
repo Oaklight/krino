@@ -21,6 +21,16 @@ cp .env.example .env
 # Fill in your API key
 ```
 
+## Controlled black-box suite
+
+The [controlled probe suite](probing/controlled/README.md) preregisters five stdlib-only experiments and records raw HTTP evidence without credentials. The suite is implemented and unit tested; full live collection has not been run, and generated live results should remain uncommitted.
+
+Start by inspecting the deterministic smoke schedule:
+
+```bash
+python probing/scripts/controlled/probe_1_output_serialization.py --mode smoke --seed 20260918 --dry-run
+```
+
 ## Links
 
 - [TypeSafe docs](https://docs.typesafe.ai)

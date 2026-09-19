@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Probe 3c: Rigorous bidirectional test.
+"""Probe 3c: Controlled bidirectional test.
 
 The flaw in Probe 3b: in causal attention with KV caching, the question suffix
 attends to ALL state KVs. A strong model can compose information from any positions
@@ -23,7 +23,7 @@ from jev_client import JevClient
 
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
 os.makedirs(RESULTS_DIR, exist_ok=True)
-OUTFILE = os.path.join(RESULTS_DIR, "03c-bidi-rigorous.jsonl")
+OUTFILE = os.path.join(RESULTS_DIR, "03c-bidi-controlled.jsonl")
 
 random.seed(42)
 
@@ -128,7 +128,7 @@ def main():
             f.write(json.dumps(record) + "\n")
 
     print("=" * 70)
-    print("PROBE 3c: Rigorous Bidirectional Test (Scaling Code Definitions)")
+    print("PROBE 3c: Controlled Bidirectional Test (Scaling Code Definitions)")
     print("=" * 70)
 
     # Test with N=1,2,3,5,7,10 codes

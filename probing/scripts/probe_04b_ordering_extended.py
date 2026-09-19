@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Probe 4b: Rigorous ordering bias — larger option sets + harder cases.
+"""Probe 4b: Controlled ordering bias — larger option sets + harder cases.
 
 Probe 4 flaw: only 12 cases with 3 options, all relatively easy.
 Hume DID find position bias with reference-card experiments.
@@ -22,7 +22,7 @@ from jev_client import JevClient
 
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
 os.makedirs(RESULTS_DIR, exist_ok=True)
-OUTFILE = os.path.join(RESULTS_DIR, "04b-ordering-rigorous.jsonl")
+OUTFILE = os.path.join(RESULTS_DIR, "04b-ordering-controlled.jsonl")
 
 random.seed(42)
 
@@ -120,7 +120,7 @@ def main():
     open(OUTFILE, "w").close()
 
     print("=" * 70)
-    print("PROBE 4b: Rigorous Ordering Bias")
+    print("PROBE 4b: Controlled Ordering Bias")
     print("=" * 70)
 
     # 5-option cases: sample 20 permutations each (out of 120 possible)
