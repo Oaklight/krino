@@ -21,6 +21,9 @@ defaults:
   seed: 42
 
 runs:
+  # focal(gamma=0, label_smoothing=0) reduces to standard CE.
+  # CE and label smoothing baselines use this identity.
+
   # --- Baseline: standard CE (no calibration term) ---
   ce_baseline:
     loss: focal
