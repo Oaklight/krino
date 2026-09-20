@@ -11,6 +11,7 @@ No training required — uses the pretrained LM's own token predictions.
 
 from __future__ import annotations
 
+import copy
 from typing import Any
 
 import torch
@@ -41,11 +42,11 @@ class LogitScorer:
         self.norm = norm
         self.strategy = strategy
 
-    def _score_options(self, context: str, options: list[str]) -> list[float]:
+    def _score_options(self, context: str, options: list[str], batch_size: int = 64) -> list[float]:
         """Compute normalized log-probability scores for each option.
 
-        Uses DynamicCache.crop() to reuse the prefix KV cache across options
-        without deep-copying tensors.
+        Batches options into a single forward pass per sub-batch to minimize
+        GPU kernel launch overhead (77 sequential passes → 1-2 batched passes).
         """
         ctx_ids = self.tokenizer(context, return_tensors="pt").input_ids.to(self.device)
 
@@ -56,43 +57,85 @@ class LogitScorer:
 
         prefix_len = cache.get_seq_length()
 
-        scores = []
+        all_opt_ids = []
         for opt_text in options:
-            opt_ids = self.tokenizer(
+            ids = self.tokenizer(
                 opt_text, add_special_tokens=False, return_tensors="pt"
             ).input_ids[0].to(self.device)
+            all_opt_ids.append(ids)
 
-            if len(opt_ids) == 0:
-                scores.append(float("-inf"))
-                continue
+        scores = [float("-inf")] * len(options)
+        valid_indices = [i for i, ids in enumerate(all_opt_ids) if len(ids) > 0]
 
-            suffix_len = len(opt_ids)
-            attn_mask = torch.ones((1, prefix_len + suffix_len), dtype=torch.long, device=self.device)
-            cache_pos = torch.arange(prefix_len, prefix_len + suffix_len, device=self.device)
+        for batch_start in range(0, len(valid_indices), batch_size):
+            batch_indices = valid_indices[batch_start : batch_start + batch_size]
+            batch_ids = [all_opt_ids[i] for i in batch_indices]
+            batch_scores = self._score_batch(cache, prefix_len, last_logit, batch_ids)
+            for i, idx in enumerate(batch_indices):
+                scores[idx] = batch_scores[i]
 
-            with torch.no_grad():
-                opt_out = self.model(
-                    opt_ids.unsqueeze(0),
-                    attention_mask=attn_mask,
-                    past_key_values=cache,
-                    cache_position=cache_pos,
-                    use_cache=True,
-                )
+        return scores
 
-            tokens_added = cache.get_seq_length() - prefix_len
-            if tokens_added > 0:
-                cache.crop(-tokens_added)
+    def _score_batch(
+        self,
+        prefix_cache: DynamicCache,
+        prefix_len: int,
+        last_logit: torch.Tensor,
+        opt_ids_list: list[torch.Tensor],
+    ) -> list[float]:
+        n = len(opt_ids_list)
+        lengths = [len(ids) for ids in opt_ids_list]
+        max_len = max(lengths)
 
-            logits = torch.cat([last_logit.unsqueeze(0), opt_out.logits[0, :-1]], dim=0)
-            logp = torch.log_softmax(logits.float(), dim=-1)
-            tok_lp = logp[torch.arange(len(opt_ids), device=self.device), opt_ids]
+        pad_id = self.tokenizer.pad_token_id or 0
+        padded = torch.full((n, max_len), pad_id, dtype=torch.long, device=self.device)
+        for i, ids in enumerate(opt_ids_list):
+            padded[i, : len(ids)] = ids
 
-            if self.norm == "mean":
-                scores.append(tok_lp.mean().item())
-            elif self.norm == "sum":
-                scores.append(tok_lp.sum().item())
+        # Attention mask: 1 for prefix + real tokens, 0 for padding
+        attn_mask = torch.zeros((n, prefix_len + max_len), dtype=torch.long, device=self.device)
+        for i, length in enumerate(lengths):
+            attn_mask[i, : prefix_len + length] = 1
+
+        cache_pos = torch.arange(prefix_len, prefix_len + max_len, device=self.device)
+
+        batch_cache = copy.deepcopy(prefix_cache)
+        batch_cache.batch_repeat_interleave(n)
+
+        with torch.no_grad():
+            out = self.model(
+                padded,
+                attention_mask=attn_mask,
+                past_key_values=batch_cache,
+                cache_position=cache_pos,
+                use_cache=False,
+            )
+
+        # Shifted logits: last_logit predicts token 0, out.logits[:, t-1] predicts token t
+        # Build [n, max_len, vocab] prediction logits
+        pred_logits = torch.cat(
+            [last_logit.unsqueeze(0).unsqueeze(0).expand(n, 1, -1), out.logits[:, :-1, :]],
+            dim=1,
+        )
+        logp = torch.log_softmax(pred_logits.float(), dim=-1)
+
+        # Gather log-probs at actual token positions
+        tok_logp = logp.gather(2, padded.unsqueeze(-1)).squeeze(-1)
+
+        # Mask out padding
+        length_mask = torch.zeros((n, max_len), device=self.device)
+        for i, length in enumerate(lengths):
+            length_mask[i, :length] = 1.0
+
+        tok_logp = tok_logp * length_mask
+
+        scores = []
+        for i, length in enumerate(lengths):
+            lp = tok_logp[i, :length]
+            if self.norm == "sum":
+                scores.append(lp.sum().item())
             else:
-                scores.append(tok_lp.mean().item())
+                scores.append(lp.mean().item())
 
         return scores
 
