@@ -23,7 +23,8 @@ jobs:
         run: pip install -r docs_en/requirements.txt
 
       - name: Build docs
-        run: mkdocs build -f docs_en/mkdocs.yml -d site
+        run: mkdocs build -f docs_en/mkdocs.yml
+        working-directory: .
 
       - name: Deploy to jev-explore-site
         uses: peaceiris/actions-gh-pages@v4
@@ -31,4 +32,4 @@ jobs:
           deploy_key: ${{ secrets.SITE_DEPLOY_KEY }}
           external_repository: Oaklight/jev-explore-site
           publish_branch: main
-          publish_dir: ./site
+          publish_dir: docs_en/site
