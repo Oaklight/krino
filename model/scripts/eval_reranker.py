@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT))
 
 from model.src.reranker_scorer import RerankerScorer, load_reranker
 from model.data.pipeline import load_jsonl
-from model.evaluation.accuracy import noul_accuracy, choice_accuracy
+from model.evaluation.accuracy import noul_accuracy, choice_accuracy, score_mae
 from model.evaluation.calibration import expected_calibration_error, brier_score
 
 
@@ -25,6 +25,7 @@ def evaluate_dataset(scorer, dataset_path, max_items=None):
 
     noul_preds, noul_labels = [], []
     choice_preds, choice_labels = [], []
+    score_preds, score_labels = [], []
     noul_confs, noul_correct = [], []
     choice_confs, choice_correct = [], []
     latencies = []
@@ -51,6 +52,9 @@ def evaluate_dataset(scorer, dataset_path, max_items=None):
             probs = answer.get("probabilities", {})
             choice_confs.append(probs.get(choice_val, 0))
             choice_correct.append(choice_val == item.label)
+        elif q_type == "score":
+            score_preds.append(answer.get("score", 0.0))
+            score_labels.append(float(item.label))
 
         if (i + 1) % 100 == 0:
             print(f"  {i + 1}/{len(items)} ({elapsed:.3f}s/item)")
@@ -67,6 +71,8 @@ def evaluate_dataset(scorer, dataset_path, max_items=None):
             "accuracy": choice_accuracy(choice_preds, choice_labels),
             "ece": expected_calibration_error(choice_confs, choice_correct),
         }
+    if score_preds:
+        results["score"] = score_mae(score_preds, score_labels)
     if latencies:
         latencies.sort()
         results["latency"] = {
@@ -108,13 +114,17 @@ def main():
         print(f"{'='*60}")
         results = evaluate_dataset(scorer, path, max_items=args.max_items)
         for section, data in results.items():
-            if isinstance(data, dict) and "accuracy" in data:
+            if not isinstance(data, dict):
+                continue
+            if "accuracy" in data:
                 acc = data["accuracy"]
                 if isinstance(acc, dict):
                     print(f"  {section} accuracy: {acc.get('accuracy', 'N/A'):.4f} (n={acc.get('n', 0)})")
                 ece = data.get("ece", {})
                 if isinstance(ece, dict):
                     print(f"  {section} ECE: {ece.get('ece', 'N/A'):.4f}")
+            elif "mae" in data:
+                print(f"  {section} MAE: {data['mae']:.4f} (n={data.get('n', 0)})")
         if "latency" in results:
             lat = results["latency"]
             print(f"  latency: mean={lat['mean_s']:.3f}s median={lat['median_s']:.3f}s p95={lat['p95_s']:.3f}s")
