@@ -66,12 +66,15 @@ All models meet the <100ms target. Batched inference (PR #42) reduced Banking77 
 
 ### Measured Jev API latency (for comparison)
 
-From 1,257 API calls across probing experiments:
-- **Median:** 106ms (end-to-end, includes network)
-- **p5–p95:** 74ms–195ms
-- **Estimated server-side compute:** ~60–70ms
+From 5,564 timed API calls across 21 probing experiments (16 standard + 5 controlled):
+- **Median:** 166ms (end-to-end, includes network)
+- **Mean:** 174ms
+- **p5–p95:** 83ms–288ms
+- **Estimated server-side compute:** ~60–100ms (network overhead varies by payload size)
 
-Data: `probing/results/*.jsonl` (each record has `elapsed_s`).
+Controlled probes use larger payloads (multi-question, multi-option) than standard probes, shifting the distribution upward. Standard probes alone: median 106ms, p5–p95 74–195ms.
+
+Data: `probing/results/*.jsonl` (`elapsed_s` for standard, `total_time_s` for controlled).
 
 ## Step 2: Trained Decision Heads
 

@@ -4,7 +4,7 @@ Probing, analysis, and open replication of [TypeSafe.ai](https://typesafe.ai)'s 
 
 ## Highlights
 
-- **Black-box probing** of the Jev API (13 probes, 1,257 API calls) identified the architecture: causal Qwen-family backbone + typed decision heads + RLCD calibration
+- **Black-box probing** of the Jev API (21 probes, 5,620 API calls) identified the architecture: causal Qwen-family backbone + typed decision heads + RLCD calibration
 - **Open replication** achieving **95.2% on Banking77** (vs Jev's 77.8%) with a 150M reranker-pretrained encoder + trained decision heads
 - **Novel finding:** cross-encoder reranker pretraining transfers to decision scoring — Ettin-150m beats vanilla ModernBERT by +4.8pp at identical params
 - **19-benchmark evaluation suite** across 3 question types (noul, choice, score) and 6 domains
