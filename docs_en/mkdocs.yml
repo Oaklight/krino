@@ -1,0 +1,82 @@
+site_name: "jev-explore"
+site_description: "Probing, analysis, and open replication of TypeSafe.ai's Jev System One model"
+site_author: "Peng Ding"
+site_url: "https://oaklight.github.io/jev-explore"
+repo_name: "Oaklight/jev-explore"
+repo_url: "https://github.com/Oaklight/jev-explore"
+copyright: "Copyright &copy; 2026 Peng Ding"
+
+theme:
+  name: material
+  language: en
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - navigation.tracking
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - toc.follow
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Oaklight/jev-explore
+
+nav:
+  - Home: index.md
+  - Overview: overview.md
+  - Probing:
+      - probing/index.md
+      - API Testing: probing/api-testing.md
+      - Architecture Analysis: probing/architecture.md
+  - Replication:
+      - replication/index.md
+      - Results: replication/results.md
+      - Open Decision Model: replication/model.md
