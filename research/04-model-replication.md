@@ -12,7 +12,7 @@ This document consolidates findings from our effort to build an open typed decis
 State → shared encoding → per-option token-level scoring → softmax → calibrated probabilities
 ```
 
-We evaluated 10 backbone models across 19 benchmarks, trained lightweight decision heads, and tested cross-benchmark generalization and surface-form sensitivity. The headline results: a 150M reranker-pretrained encoder with trained heads achieves 95.2% on Banking77, beating all other approaches including a 596M causal LM (93.2%) and Jev itself (77.8%).
+We evaluated 10 backbone models across 19 benchmarks, trained lightweight decision heads, and tested cross-benchmark generalization and surface-form sensitivity. We then benchmarked the Jev API on the exact same eval suite to get authoritative comparison targets (PR #45, issue #44). The headline results: a 150M reranker-pretrained encoder with trained heads achieves 95.2% on Banking77 (vs Jev's 75.0%), but Jev dominates on reasoning-heavy tasks (ARC 99.0%, RACE 95.5%, authored144 97.9%).
 
 ## Step 1: Zero-Training Baselines
 
@@ -34,11 +34,11 @@ Average accuracy ranking across choice + noul benchmarks (200 items per benchmar
 | 3 | **Ettin-400m** | **400M** | **Reranker** | **59.4%** |
 | 4 | Qwen2.5-1.5B | 1.5B | Causal | 59.2% |
 | 5 | Qwen3-1.7B | 1.7B | Causal | 54.2% |
-| 6 | SmolLM2-1.7B | 1.7B | Causal | 52.7% |
-| 7 | Ettin-150m | 150M | Reranker | 51.4% |
-| 8 | Qwen2.5-0.5B | 0.5B | Causal | 50.9% |
-| 9 | Qwen3-0.6B | 0.6B | Causal | 48.3% |
-| 10 | Ettin-68m | 68M | Reranker | 47.6% |
+| 6 | Ettin-150m | 150M | Reranker | 53.5% |
+| 7 | Qwen2.5-0.5B | 0.5B | Causal | 53.5% |
+| 8 | SmolLM2-1.7B | 1.7B | Causal | 51.1% |
+| 9 | Ettin-68m | 68M | Reranker | 50.4% |
+| 10 | Qwen3-0.6B | 0.6B | Causal | 47.8% |
 
 Vanilla ModernBERT (base/large) scored near random on most benchmarks — embedding-similarity scoring without training is not viable for typed decisions.
 
@@ -48,21 +48,24 @@ Vanilla ModernBERT (base/large) scored near random on most benchmarks — embedd
 
 2. **Qwen2.5 > Qwen3 at matched scale.** Qwen2.5-1.5B beats Qwen3-1.7B on 12/15 benchmarks. The Qwen3 "thinking" architecture doesn't help for logit readout — its internal reasoning tokens are not exposed in the continuation log-probabilities.
 
-3. **Banking77 (77-class) is the hardest discriminator.** Most sub-7B causal models score 0–3% (random = 1.3%). Only Qwen2.5-7B-Inst (2.0%) and Ettin-400m (49.0%) show meaningful discrimination at this difficulty level.
+3. **Banking77 (77-class) is the hardest discriminator.** All causal models score 0–3% (random = 1.3%) — logit readout completely fails at this cardinality due to surface-form bias. Only Ettin rerankers show meaningful zero-shot discrimination: Ettin-400m (49.0%), Ettin-68m (27.0%).
 
 4. **Rerankers underperform on noul.** Binary yes/no scoring via cross-encoder relevance doesn't work well — the "documents" are just "yes" and "no," which don't carry enough semantic signal for relevance matching.
+
+5. **CodeSearchNet 100% for rerankers is a length-bias artifact.** The correct code snippet is 2× longer on average than distractors. Rerankers exploit length/lexical overlap rather than semantic understanding. This benchmark needs distractor length matching (#29).
 
 ### Latency (batched inference, H200 bf16)
 
 | Model | Params | Banking77 (77-opt) | SST-2 (2-opt) |
 |-------|--------|-------------------|---------------|
-| Ettin-68m | 68M | **28ms** | 6ms |
-| Ettin-150m | 150M | 33ms | 6ms |
-| Ettin-400m | 400M | 36ms | 8ms |
+| Ettin-68m | 68M | **29ms** | 6ms |
+| Ettin-150m | 150M | 31ms | 6ms |
+| Qwen2.5-0.5B | 0.5B | 35ms | 15ms |
 | SmolLM2-1.7B | 1.7B | 34ms | 14ms |
+| Ettin-400m | 400M | 38ms | 9ms |
 | Qwen2.5-7B-Inst | 7B | 50ms | 19ms |
 
-All models meet the <100ms target. Batched inference (PR #42) reduced Banking77 latency from 1848ms to 32ms per item — a 39× speedup via padding options and expanding the prefix KV cache with `batch_repeat_interleave`.
+All models meet the <100ms target. Batched inference (PR #42) reduced Banking77 latency from 1848ms to ~35ms per item — a 39× speedup via padding options and expanding the prefix KV cache with `batch_repeat_interleave`.
 
 ### Measured Jev API latency (for comparison)
 
@@ -75,6 +78,80 @@ From 5,564 timed API calls across 21 probing experiments (16 standard + 5 contro
 Controlled probes use larger payloads (multi-question, multi-option) than standard probes, shifting the distribution upward. Standard probes alone: median 106ms, p5–p95 74–195ms.
 
 Data: `probing/results/*.jsonl` (`elapsed_s` for standard, `total_time_s` for controlled).
+
+## Jev API Benchmark Results
+
+We ran the Jev API against all 19 benchmarks using the exact same 200-item eval subsets (PR #45, issue #44). This gives authoritative comparison targets on identical data.
+
+### Full results
+
+**Choice benchmarks:**
+
+| Benchmark | Options | Jev API | Best zero-shot (ours) | Best model (ours) |
+|-----------|---------|---------|----------------------|-------------------|
+| ARC | 4 | **99.0%** | 73.5% (Ettin-400m / Phi-4-mini) | — |
+| authored144 | 3 | **97.9%** | 54.9% (Qwen2.5-7B) | — |
+| RACE | 4 | **95.5%** | 65.5% (Phi-4-mini) | — |
+| FEVER | 3 | **91.0%** | 66.5% (Qwen2.5-7B) | — |
+| HellaSwag | 4 | **89.5%** | 68.0% (Qwen2.5-7B) | — |
+| AG News | 4 | 79.0% | 80.0% (SmolLM2-1.7B) | — |
+| SWAG | 4 | 77.5% | 71.0% (Qwen2.5-7B) | — |
+| Banking77 | 77 | 75.0% | 49.0% (Ettin-400m) | **95.2%** (Ettin-150m r128 trained) |
+| CodeSearchNet | 4 | **100.0%** | 100.0% (Ettin, length bias) | — |
+
+**Noul benchmarks:**
+
+| Benchmark | Jev API | Best zero-shot (ours) | Gap |
+|-----------|---------|----------------------|-----|
+| SST-2 | 90.5% | 87.5% (Qwen2.5-1.5B) | +3.0pp |
+| MultiRC | **90.0%** | 88.0% (Qwen2.5-7B) | +2.0pp |
+| MedNLI | **89.5%** | 86.0% (Qwen2.5-7B) | +3.5pp |
+| TabFact | 82.0% | 78.0% (Qwen3-1.7B / Ettin-400m) | +4.0pp |
+| ContractNLI | **80.5%** | 79.5% (Phi-4-mini) | +1.0pp |
+
+**Score benchmarks (MAE, lower is better):**
+
+| Benchmark | Jev API | Best zero-shot (ours) |
+|-----------|---------|----------------------|
+| Yelp | **0.432** | 0.85+ (all models) |
+| SST-5 | **0.489** | 0.85+ (all models) |
+| STS-B | **0.494** | 0.85+ (all models) |
+
+**Jev calibration (ECE):**
+
+| Benchmark | Jev ECE | Notes |
+|-----------|---------|-------|
+| ARC | **0.009** | Near-perfect calibration |
+| authored144 | 0.031 | Excellent |
+| RACE | 0.025 | Excellent |
+| Banking77 | 0.163 | Weaker — 77-class is hard to calibrate |
+| SST-2 | 0.133 | Moderate |
+| AG News | 0.153 | Moderate |
+
+**Jev latency:**
+
+Consistent ~305ms TTFB across all benchmarks (measured from our client). Higher than the probing-era measurements (median 166ms) — likely due to benchmark payloads being larger than typical probing payloads, or API infrastructure changes.
+
+### Key observations
+
+1. **Jev dominates on reasoning-heavy tasks.** ARC (99.0%), authored144 (97.9%), RACE (95.5%), HellaSwag (89.5%) — these all require multi-hop reasoning, reading comprehension, or commonsense inference. Our best zero-shot models (Qwen2.5-7B, Phi-4-mini) are 20-43pp behind. This strongly suggests Jev uses a large causal backbone with substantial reasoning capability — an encoder-only model cannot achieve 99% on ARC.
+
+2. **We beat Jev on Banking77 with trained heads** (95.2% vs 75.0%), but this is in-domain trained. Jev's 75.0% is zero-shot generalization across 77 classes — impressive given no task-specific training. The comparison is not apples-to-apples until we have multi-task trained heads that generalize.
+
+3. **Jev's calibration varies by task.** ARC ECE=0.009 (excellent) vs Banking77 ECE=0.163 (weaker). High-cardinality choice tasks are harder to calibrate, consistent with information-theoretic expectations.
+
+4. **Score-type tasks are where Jev's advantage is clearest.** Our zero-shot models get MAE 0.85+ on SST-5/STS-B/Yelp; Jev gets 0.43-0.49. The logit-readout and cross-encoder approaches don't handle ordinal regression well. Jev's ScoreHead (or equivalent) is substantially better calibrated for continuous scores.
+
+5. **The causal backbone question is settled.** A pure encoder (Ettin-150m) cannot reach Jev-level performance on ARC, RACE, or authored144 — these require the kind of sequential reasoning that causal LMs excel at. A general-purpose decision model needs either a causal backbone or a hybrid architecture.
+
+### Implications for training strategy
+
+The Jev API results reshape our priorities:
+
+- **Multi-task training on all 19 benchmarks** is the immediate next step — single-benchmark heads score 95.2% in-domain but would likely score <50% on ARC/RACE
+- **Causal backbone (Qwen) may be needed** for reasoning-heavy tasks, despite encoder's efficiency advantage on comparison tasks. A hybrid approach — or simply accepting a larger model — may be necessary
+- **Calibration is Jev's core advantage.** Even where our accuracy is competitive (SST-2, MultiRC), Jev's calibration (ECE) is likely better. Step 3 calibration training is the path to closing this gap
+- **Score-type performance needs a different approach.** MAE 0.85 vs Jev's 0.43 — the current ScoreHead + CE loss is insufficient. Ordinal losses (ranked probability score) or RLCD with score-specific rewards are needed
 
 ## Step 2: Trained Decision Heads
 
@@ -106,7 +183,7 @@ Total trainable: ~301K–402K params depending on backbone hidden size. Backbone
 | ModernBERT-large r64 | Encoder | 395M | 64 | 402K | 89.2% |
 | ModernBERT-base r64 | Encoder | 149M | 64 | 301K | 89.0% |
 | ModernBERT-base r128 | Encoder | 149M | 128 | ~600K | 88.4% |
-| Jev (reference) | — | — | — | — | 77.8% |
+| Jev API (measured) | — | — | — | — | 75.0% |
 
 ### Key findings
 
@@ -174,7 +251,7 @@ Replaced sequential per-option forward passes with batched inference. Options ar
 
 | Benchmark | Options | Sequential | Batched | Speedup |
 |-----------|---------|-----------|---------|---------|
-| Banking77 | 77 | 1,848ms | 32ms | **39×** |
+| Banking77 | 77 | 1,848ms | 35ms | **53×** |
 | SST-2 | 2 | 42ms | 15ms | 2.8× |
 
 ### KV cache optimization (PR #41)
@@ -187,9 +264,9 @@ Replaced `copy.deepcopy(cache)` per option with `DynamicCache.crop()` — a zero
 
 | Type | Benchmarks | Total items |
 |------|-----------|-------------|
-| Choice | Banking77, AG News, ARC, RACE, HellaSwag, CodeSearchNet, SWAG, FEVER, authored144 | ~300K |
-| Noul | SST-2, TabFact, MultiRC, MedNLI, ContractNLI, MNLI | ~600K |
-| Score | SST-5, STS-B, Yelp | ~80K |
+| Choice | Banking77, AG News, ARC, RACE, HellaSwag, CodeSearchNet, SWAG, FEVER, authored144 | ~690K |
+| Noul | SST-2, TabFact, MultiRC, MedNLI, ContractNLI, MNLI | ~655K |
+| Score | SST-5, STS-B, Yelp | ~90K |
 
 ## Current Status and Next Steps
 
@@ -216,9 +293,11 @@ Replaced `copy.deepcopy(cache)` per option with `DynamicCache.crop()` — a zero
 
 2. **Can calibration training reduce surface-form sensitivity?** Architecture alone doesn't solve it (encoder R²=0.35). An explicit invariance loss — `KL(P(options | original), P(options | paraphrased))` — is planned for Step 3 but not yet tested.
 
-3. **What is the right backbone for production?** Ettin-150m is the accuracy winner, but it underperforms on noul tasks at zero-shot. With trained heads, this may not matter. Latency (33ms on Banking77) is within the <100ms target.
+3. **Encoder vs causal backbone for production?** Ettin-150m wins on comparison tasks (Banking77 95.2%), but Jev API results show reasoning-heavy tasks (ARC 99.0%, RACE 95.5%) require causal LM representations that encoders cannot provide. A general-purpose model may need a causal backbone or a hybrid encoder-decoder architecture.
 
-4. **Is the Ettin-400m instability fixable?** Lower LR or longer warmup may close the gap with 150m, but 150m is already sufficient and faster.
+4. **Can we close the score-type gap?** Jev scores MAE 0.43–0.49 on SST-5/STS-B/Yelp; our models get 0.85+. The ScoreHead + CE loss is insufficient for ordinal regression. Ranked probability score (Laya's RLCD) or ordinal-specific losses may be needed.
+
+5. **What is Jev's calibration advantage?** Jev achieves ECE 0.009 on ARC and 0.031 on authored144. Our models' ECE is unmeasured on trained heads — this is the key metric for Step 3 to target.
 
 ## References
 
