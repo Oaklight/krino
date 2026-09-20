@@ -70,7 +70,8 @@ class LogitScorer:
         for batch_start in range(0, len(valid_indices), batch_size):
             batch_indices = valid_indices[batch_start : batch_start + batch_size]
             batch_ids = [all_opt_ids[i] for i in batch_indices]
-            batch_scores = self._score_batch(cache, prefix_len, last_logit, batch_ids)
+            is_last = batch_start + batch_size >= len(valid_indices)
+            batch_scores = self._score_batch(cache, prefix_len, last_logit, batch_ids, copy_cache=not is_last)
             for i, idx in enumerate(batch_indices):
                 scores[idx] = batch_scores[i]
 
@@ -82,6 +83,7 @@ class LogitScorer:
         prefix_len: int,
         last_logit: torch.Tensor,
         opt_ids_list: list[torch.Tensor],
+        copy_cache: bool = True,
     ) -> list[float]:
         n = len(opt_ids_list)
         lengths = [len(ids) for ids in opt_ids_list]
@@ -99,7 +101,7 @@ class LogitScorer:
 
         cache_pos = torch.arange(prefix_len, prefix_len + max_len, device=self.device)
 
-        batch_cache = copy.deepcopy(prefix_cache)
+        batch_cache = copy.deepcopy(prefix_cache) if copy_cache else prefix_cache
         batch_cache.batch_repeat_interleave(n)
 
         with torch.no_grad():
