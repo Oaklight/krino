@@ -53,6 +53,7 @@ from .synthetic_templates import (
 )
 from .lsh import LSHIndex
 from .synthetic_dedup import dedup_families
+from .synthetic_llm_label import label_items_llm
 from .synthetic_repair import fill_variant_gaps, repair_variants
 from .synthetic_validate import validate_family
 
@@ -70,7 +71,7 @@ LLM_REPAIR_MODEL = os.environ.get("LLM_REPAIR_MODEL", "argo:gpt-4.1-nano")
 MAX_CONCURRENT = int(os.environ.get("SYNTH_MAX_CONCURRENT", "20"))
 MAX_RETRIES = 3
 
-ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "fill-variants", "repair", "dedup", "validate", "jev-label", "report"]
+ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "fill-variants", "repair", "dedup", "validate", "llm-label", "jev-label", "report"]
 VARIANT_STAGES = {"counterfactual", "paraphrase", "negation"}
 
 
@@ -784,7 +785,7 @@ async def run_pipeline(
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    needs_llm = stages & ({"base"} | VARIANT_STAGES | {"fill-variants", "repair", "validate"})
+    needs_llm = stages & ({"base"} | VARIANT_STAGES | {"fill-variants", "repair", "validate", "llm-label"})
 
     if needs_llm:
         if not LLM_BASE_URL:
@@ -917,9 +918,42 @@ async def run_pipeline(
             variant_data = domain_variants[idx] if idx < len(domain_variants) else {}
             items = family_to_typed_questions(
                 family, variant_data, domain, family.get("_family_idx", idx),
-                enabled_stages=stages if stages != set(ALL_STAGES) else None,
+                enabled_stages=None if (stages >= {"base", "counterfactual", "paraphrase", "negation", "shuffle"} or stages & {"llm-label", "jev-label", "report"}) else stages,
             )
             all_items.extend(items)
+
+    # LLM soft labels (multi-teacher, namespaced by model)
+    if "llm-label" in stages and all_items:
+        llm_teacher = os.environ.get("LLM_TEACHER_MODEL", "argo:gpt-5.6-luna")
+        teacher_key = llm_teacher.replace("argo:", "").replace(".", "_").replace("-", "_")
+        logger.info("LLM labeling with %s (%d items)...", llm_teacher, len(all_items))
+
+        if not LLM_BASE_URL:
+            logger.error("LLM_BASE_URL not set for llm-label stage")
+        else:
+            client_headers = {"Content-Type": "application/json"}
+            if LLM_API_KEY:
+                client_headers["Authorization"] = f"Bearer {LLM_API_KEY}"
+
+            async with AsyncClient(
+                headers=client_headers, timeout=120, pool_size=max_concurrent,
+            ) as label_client:
+                label_results = await label_items_llm(
+                    label_client, all_items, llm_teacher, LLM_BASE_URL,
+                    max_concurrent=max_concurrent,
+                )
+
+            label_map = {r.item_id: r for r in label_results}
+            for item in all_items:
+                lr = label_map.get(item["id"])
+                if lr and lr.teacher_probs:
+                    tp = item.get("teacher_probs")
+                    if not isinstance(tp, dict) or any(isinstance(v, (int, float)) for v in tp.values()):
+                        tp = {}
+                    tp[teacher_key] = lr.teacher_probs
+                    item["teacher_probs"] = tp
+
+            logger.info("  %s: %d/%d items labeled", teacher_key, len(label_results), len(all_items))
 
     # Jev API soft labels
     if "jev-label" in stages and all_items:
@@ -932,7 +966,11 @@ async def run_pipeline(
         for item in all_items:
             lr = label_map.get(item["id"])
             if lr and lr.teacher_probs:
-                item["teacher_probs"] = lr.teacher_probs
+                tp = item.get("teacher_probs")
+                if not isinstance(tp, dict) or any(isinstance(v, (int, float)) for v in tp.values()):
+                    tp = {}
+                tp["jev"] = lr.teacher_probs
+                item["teacher_probs"] = tp
         print_bucket_report(label_results)
 
     # Save final output
@@ -1137,6 +1175,13 @@ def main() -> int:
         help=f"Max concurrent API requests (default: {MAX_CONCURRENT})",
     )
     parser.add_argument(
+        "--llm-teacher",
+        type=str,
+        default=None,
+        metavar="MODEL",
+        help="LLM model for soft-label annotation (e.g., argo:gpt-5.6-luna, deepseek-v4.1-flash)",
+    )
+    parser.add_argument(
         "--push-to-hf",
         type=str,
         default=None,
@@ -1170,6 +1215,9 @@ def main() -> int:
         if args.skip_variants:
             stages -= VARIANT_STAGES
             stages.discard("shuffle")
+
+    if args.llm_teacher:
+        os.environ["LLM_TEACHER_MODEL"] = args.llm_teacher
 
     pipeline_stages = stages - {"report"}
     if pipeline_stages:
