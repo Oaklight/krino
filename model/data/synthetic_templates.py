@@ -38,13 +38,11 @@ COGNITIVE_TYPE_DESCRIPTIONS: dict[str, str] = {
 
 # --- Domain templates ---
 # "seed_source": name in pipeline.LOADERS to draw real states from (None = pure generation)
-# "seed_field": how to extract the state text from a TypedQuestion loaded by the seed source
 
 DOMAIN_TEMPLATES: dict[str, dict] = {
     "medical_triage": {
         "description": "Patient presenting with symptoms requiring triage assessment",
         "seed_source": "mednli",
-        "seed_field": "state",
         "state_prompt": (
             "Create a realistic emergency department patient presentation. Include:\n"
             "- Patient demographics (age, sex)\n"
@@ -78,7 +76,6 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
     "legal_judgment": {
         "description": "Contract clause analysis and breach determination",
         "seed_source": "contractnli",
-        "seed_field": "state",
         "state_prompt": (
             "Create a realistic legal scenario involving a contract dispute. Include:\n"
             "- Type of contract (employment, lease, service, NDA, etc.)\n"
@@ -110,7 +107,6 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
     "code_review": {
         "description": "Code snippet analysis for bugs and security issues",
         "seed_source": "codesearchnet",
-        "seed_field": "state",
         "state_prompt": (
             "Create a realistic code snippet (10-20 lines) in Python, JavaScript, or Go that "
             "contains a subtle issue. The issue could be:\n"
@@ -144,7 +140,6 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
     "financial_analysis": {
         "description": "Market data and financial metrics analysis",
         "seed_source": "tabfact",
-        "seed_field": "state",
         "state_prompt": (
             "Create a realistic financial analysis scenario. Include:\n"
             "- Company or market context (sector, size)\n"
@@ -177,7 +172,6 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
     "scientific_reasoning": {
         "description": "Experimental data interpretation and hypothesis evaluation",
         "seed_source": "arc",
-        "seed_field": "state",
         "state_prompt": (
             "Create a realistic scientific experiment scenario. Include:\n"
             "- Research question or hypothesis\n"
@@ -210,7 +204,6 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
     "content_analysis": {
         "description": "Article or post analysis for tone, topic, and engagement",
         "seed_source": "fever",
-        "seed_field": "state",
         "state_prompt": (
             "Write a realistic excerpt from an article, blog post, or social media thread. "
             "Include:\n"
@@ -243,7 +236,6 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
     "spatial_reasoning": {
         "description": "Scene layout and spatial relationship evaluation",
         "seed_source": None,
-        "seed_field": None,
         "state_prompt": (
             "Describe a spatial scene or layout. Include:\n"
             "- Physical environment (room, building, outdoor area, map)\n"
@@ -275,7 +267,6 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
     "product_categorization": {
         "description": "Product description classification and quality assessment",
         "seed_source": None,
-        "seed_field": None,
         "state_prompt": (
             "Write a realistic product listing description. Include:\n"
             "- Product name and brand (fictional)\n"
@@ -308,7 +299,6 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
     "education_assessment": {
         "description": "Student answer evaluation and error analysis",
         "seed_source": None,
-        "seed_field": None,
         "state_prompt": (
             "Create a realistic student response to an academic question. Include:\n"
             "- The original question (math, science, history, or language)\n"
@@ -341,7 +331,6 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
     "safety_moderation": {
         "description": "User-generated content safety and moderation assessment",
         "seed_source": None,
-        "seed_field": None,
         "state_prompt": (
             "Write a realistic user-generated message or post that requires moderation review. "
             "It could be:\n"
