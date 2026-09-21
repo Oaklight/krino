@@ -52,6 +52,7 @@ from .synthetic_templates import (
     json_compact,
 )
 from .synthetic_dedup import dedup_families
+from .synthetic_repair import repair_variants
 from .synthetic_validate import validate_family
 
 logger = logging.getLogger(__name__)
@@ -63,11 +64,12 @@ LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
 LLM_GEN_MODEL = os.environ.get("LLM_GEN_MODEL", "claude-sonnet-4-20250514")
 LLM_VARIANT_MODEL = os.environ.get("LLM_VARIANT_MODEL", "GPT-4.1-mini")
 LLM_JUDGE_MODEL = os.environ.get("LLM_JUDGE_MODEL", "gemini-2.0-flash")
+LLM_REPAIR_MODEL = os.environ.get("LLM_REPAIR_MODEL", "argo:gpt-4.1-nano")
 
 MAX_CONCURRENT = int(os.environ.get("SYNTH_MAX_CONCURRENT", "20"))
 MAX_RETRIES = 3
 
-ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "dedup", "validate", "jev-label"]
+ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "repair", "dedup", "validate", "jev-label"]
 VARIANT_STAGES = {"counterfactual", "paraphrase", "negation"}
 
 
@@ -732,7 +734,7 @@ async def run_pipeline(
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    needs_llm = stages & ({"base"} | VARIANT_STAGES | {"validate"})
+    needs_llm = stages & ({"base"} | VARIANT_STAGES | {"repair", "validate"})
 
     if needs_llm:
         if not LLM_BASE_URL:
@@ -776,6 +778,22 @@ async def run_pipeline(
                     loaded = _load_jsonl(DATA_DIR / f"{domain}_variants.jsonl")
                     if loaded:
                         variants_by_domain[domain] = loaded
+
+            # Repair bad labels
+            if "repair" in stages and variants_by_domain:
+                for domain in list(variants_by_domain.keys()):
+                    families = families_by_domain.get(domain, [])
+                    variants = variants_by_domain[domain]
+                    if families and variants:
+                        template = DOMAIN_TEMPLATES[domain]
+                        updated, repaired, failed = await repair_variants(
+                            client, families, variants, template,
+                            LLM_REPAIR_MODEL, LLM_BASE_URL,
+                            max_concurrent=max_concurrent,
+                        )
+                        if repaired:
+                            variants_by_domain[domain] = updated
+                            _save_jsonl(updated, DATA_DIR / f"{domain}_variants.jsonl")
 
             # Dedup
             if "dedup" in stages and families_by_domain:
