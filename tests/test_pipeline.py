@@ -244,6 +244,7 @@ EXPECTED_TYPES: dict[str, set[str]] = {
     "mednli": {"noul"},
     "contractnli": {"noul"},
     "codesearchnet": {"choice"},
+    "synthetic": {"noul", "choice", "score"},
 }
 
 
@@ -253,8 +254,49 @@ EXPECTED_TYPES: dict[str, set[str]] = {
 
 
 @pytest.fixture(autouse=True)
-def _patch_hf():
-    with patch.object(pipeline, "_load_hf_parquet", side_effect=_mock_load_hf_parquet):
+def _patch_hf(tmp_path):
+    # Write mock synthetic JSONL so load_synthetic() finds data
+    synth_dir = tmp_path / "synthetic"
+    synth_dir.mkdir()
+    synth_path = synth_dir / "synthetic.jsonl"
+    import json
+    mock_items = [
+        TypedQuestion.noul(
+            id="synthetic-test-0000-noul-entailment",
+            state="Patient presents with chest pain.",
+            instructions="Is this urgent?",
+            label=True,
+            source="synthetic",
+            split="train",
+            group="synthetic-test-0000",
+        ).to_dict(),
+        TypedQuestion.choice(
+            id="synthetic-test-0000-choice",
+            state="Patient presents with chest pain.",
+            instructions="What is the triage level?",
+            criteria={"immediate": "Life-threatening", "urgent": "Serious", "non_urgent": "Minor"},
+            label="immediate",
+            source="synthetic",
+            split="train",
+            group="synthetic-test-0000",
+        ).to_dict(),
+        TypedQuestion.score(
+            id="synthetic-test-0000-score",
+            state="Patient presents with chest pain.",
+            instructions="Rate urgency.",
+            criteria=["Low", "Medium", "High", "Critical"],
+            label=4.0,
+            source="synthetic",
+            split="train",
+            group="synthetic-test-0000",
+        ).to_dict(),
+    ]
+    with open(synth_path, "w") as f:
+        for item in mock_items:
+            f.write(json.dumps(item) + "\n")
+
+    with patch.object(pipeline, "_load_hf_parquet", side_effect=_mock_load_hf_parquet), \
+         patch.object(pipeline, "DATA_DIR", tmp_path):
         yield
 
 
@@ -390,17 +432,18 @@ class TestLoaderRegistry:
             "banking77", "sst2", "agnews", "mnli", "typed_decisions",
             "stsb", "sst5", "arc", "race", "hellaswag", "tabfact", "fever",
             "yelp", "swag", "multirc", "mednli", "contractnli", "codesearchnet",
+            "synthetic",
         }
         assert set(pipeline.LOADERS.keys()) == expected
 
     def test_loader_count(self):
-        assert len(pipeline.LOADERS) == 18
+        assert len(pipeline.LOADERS) == 19
 
     def test_load_all_works(self):
         items = pipeline.load_all()
         assert len(items) > 0
         sources = {item.source for item in items}
-        assert len(sources) == 18
+        assert len(sources) == 19
 
     def test_load_all_single_source(self):
         items = pipeline.load_all(["sst2"])
