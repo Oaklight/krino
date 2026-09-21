@@ -232,3 +232,82 @@ async def repair_variants(
 
     logger.info("  Repair complete: %d fixed, %d unfixable", repaired, failed)
     return variants, repaired, failed
+
+
+def find_variant_gaps(
+    families: list[dict],
+    variants: list[dict],
+) -> dict[int, list[str]]:
+    """Find families with missing variant types.
+
+    Returns {family_index: [missing_variant_types]}.
+    """
+    gaps: dict[int, list[str]] = {}
+    for fi, var in enumerate(variants):
+        if fi >= len(families):
+            break
+        missing = []
+        cf = var.get("counterfactual")
+        if not cf or not cf.get("state"):
+            missing.append("counterfactual")
+        para = var.get("paraphrase")
+        if not para or not para.get("state_paraphrase"):
+            missing.append("paraphrase")
+        neg = var.get("negation")
+        if not neg or not neg.get("negated_questions"):
+            missing.append("negation")
+        if missing:
+            gaps[fi] = missing
+    return gaps
+
+
+async def fill_variant_gaps(
+    client: Any,
+    families: list[dict],
+    variants: list[dict],
+    model: str,
+    base_url: str,
+    max_concurrent: int = 10,
+) -> tuple[list[dict], int, int]:
+    """Fill missing variant types for families. Returns (updated_variants, filled, failed)."""
+    from .synthetic import _gen_single_variant
+
+    gaps = find_variant_gaps(families, variants)
+    if not gaps:
+        logger.info("  No variant gaps to fill")
+        return variants, 0, 0
+
+    total_missing = sum(len(v) for v in gaps.values())
+    logger.info(
+        "  Found %d missing variants across %d families",
+        total_missing, len(gaps),
+    )
+
+    semaphore = asyncio.Semaphore(max_concurrent)
+    filled = 0
+    failed = 0
+
+    async def _fill_one(fi: int, vt: str) -> tuple[int, str, bool]:
+        result = await _gen_single_variant(client, families[fi], vt, semaphore)
+        if result:
+            variants[fi][vt] = result
+            return fi, vt, True
+        return fi, vt, False
+
+    tasks = [
+        _fill_one(fi, vt)
+        for fi, missing in gaps.items()
+        for vt in missing
+    ]
+    results = await asyncio.gather(*tasks)
+
+    for fi, vt, ok in results:
+        if ok:
+            filled += 1
+            logger.info("  Filled family %d %s", fi, vt)
+        else:
+            failed += 1
+            logger.warning("  Failed family %d %s", fi, vt)
+
+    logger.info("  Gap fill complete: %d filled, %d failed", filled, failed)
+    return variants, filled, failed
