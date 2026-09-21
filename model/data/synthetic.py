@@ -852,6 +852,14 @@ async def run_pipeline(
                     if dropped:
                         families_by_domain[domain] = kept
                         _save_jsonl(kept, DATA_DIR / f"{domain}_families.jsonl")
+                        # Sync variants: remove entries for dropped families
+                        variants = variants_by_domain.get(domain, [])
+                        if variants:
+                            kept_set = set(range(len(families))) - set(dropped)
+                            variants_by_domain[domain] = [
+                                variants[i] for i in sorted(kept_set) if i < len(variants)
+                            ]
+                            _save_jsonl(variants_by_domain[domain], DATA_DIR / f"{domain}_variants.jsonl")
 
             # Validation
             if "validate" in stages and families_by_domain:
@@ -875,6 +883,13 @@ async def run_pipeline(
             if dropped:
                 families_by_domain[domain] = kept
                 _save_jsonl(kept, DATA_DIR / f"{domain}_families.jsonl")
+                variants = variants_by_domain.get(domain, [])
+                if variants:
+                    kept_set = set(range(len(families))) - set(dropped)
+                    variants_by_domain[domain] = [
+                        variants[i] for i in sorted(kept_set) if i < len(variants)
+                    ]
+                    _save_jsonl(variants_by_domain[domain], DATA_DIR / f"{domain}_variants.jsonl")
 
     # Convert to TypedQuestion items
     all_items: list[dict[str, Any]] = []
