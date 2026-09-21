@@ -1,106 +1,17 @@
 """LSH-based near-duplicate detection for synthetic data families.
 
-Uses MinHash on character n-grams to find families with overly similar
-states, then drops duplicates keeping the first occurrence.
-
-Pure Python, no external dependencies.
+Uses the standalone lsh module for MinHash/LSH, applies it to family
+state text to find and remove near-duplicates.
 """
 
 from __future__ import annotations
 
-import hashlib
 import logging
-import struct
 from typing import Any
 
+from .lsh import LSHIndex
+
 logger = logging.getLogger(__name__)
-
-_MERSENNE_PRIME = (1 << 61) - 1
-_MAX_HASH = (1 << 32) - 1
-
-
-def _char_ngrams(text: str, n: int = 5) -> set[str]:
-    """Extract character n-grams from text."""
-    text = text.lower().strip()
-    if len(text) < n:
-        return {text}
-    return {text[i:i + n] for i in range(len(text) - n + 1)}
-
-
-def _hash_ngram(ngram: str) -> int:
-    """Hash an n-gram to a 32-bit integer."""
-    return struct.unpack("<I", hashlib.md5(ngram.encode()).digest()[:4])[0]
-
-
-class MinHash:
-    """MinHash signature for approximate Jaccard similarity."""
-
-    def __init__(self, num_perm: int = 128, seed: int = 42):
-        self.num_perm = num_perm
-        import random
-        rng = random.Random(seed)
-        self._a = [rng.randint(1, _MERSENNE_PRIME - 1) for _ in range(num_perm)]
-        self._b = [rng.randint(0, _MERSENNE_PRIME - 1) for _ in range(num_perm)]
-        self._hashvalues = [_MERSENNE_PRIME] * num_perm
-
-    def update(self, ngrams: set[str]) -> None:
-        for ngram in ngrams:
-            h = _hash_ngram(ngram)
-            for i in range(self.num_perm):
-                val = (self._a[i] * h + self._b[i]) % _MERSENNE_PRIME
-                if val < self._hashvalues[i]:
-                    self._hashvalues[i] = val
-
-    @property
-    def signature(self) -> tuple[int, ...]:
-        return tuple(self._hashvalues)
-
-    def jaccard(self, other: MinHash) -> float:
-        if self.num_perm != other.num_perm:
-            raise ValueError("MinHash num_perm mismatch")
-        return sum(
-            a == b for a, b in zip(self._hashvalues, other._hashvalues)
-        ) / self.num_perm
-
-
-class LSHIndex:
-    """Locality-Sensitive Hashing index for fast near-duplicate lookup."""
-
-    def __init__(self, num_perm: int = 128, bands: int = 16, seed: int = 42):
-        if num_perm % bands != 0:
-            raise ValueError(f"num_perm ({num_perm}) must be divisible by bands ({bands})")
-        self.num_perm = num_perm
-        self.bands = bands
-        self.rows = num_perm // bands
-        self.seed = seed
-        self._buckets: list[dict[tuple[int, ...], list[int]]] = [
-            {} for _ in range(bands)
-        ]
-        self._signatures: list[tuple[int, ...]] = []
-
-    def _band_hashes(self, sig: tuple[int, ...]) -> list[tuple[int, ...]]:
-        return [
-            sig[i * self.rows:(i + 1) * self.rows]
-            for i in range(self.bands)
-        ]
-
-    def insert(self, idx: int, sig: tuple[int, ...]) -> None:
-        self._signatures.append(sig)
-        for band_idx, band_hash in enumerate(self._band_hashes(sig)):
-            self._buckets[band_idx].setdefault(band_hash, []).append(idx)
-
-    def query(self, sig: tuple[int, ...]) -> set[int]:
-        """Return indices of candidate near-duplicates."""
-        candidates: set[int] = set()
-        for band_idx, band_hash in enumerate(self._band_hashes(sig)):
-            bucket = self._buckets[band_idx].get(band_hash, [])
-            candidates.update(bucket)
-        return candidates
-
-    def make_minhash(self, text: str) -> MinHash:
-        mh = MinHash(num_perm=self.num_perm, seed=self.seed)
-        mh.update(_char_ngrams(text))
-        return mh
 
 
 def dedup_families(
@@ -120,7 +31,7 @@ def dedup_families(
     lsh = LSHIndex(num_perm=num_perm, bands=bands, seed=seed)
     kept: list[dict[str, Any]] = []
     dropped: list[int] = []
-    signatures: list[MinHash] = []
+    signatures: list = []
 
     for idx, family in enumerate(families):
         state = family.get("state", "")
@@ -171,7 +82,6 @@ def dedup_items(
     if not items:
         return [], 0
 
-    # Group items by state text
     state_to_items: dict[str, list[dict]] = {}
     for item in items:
         state = item.get("state", "")

@@ -51,7 +51,8 @@ from .synthetic_templates import (
     build_variant_prompt,
     json_compact,
 )
-from .synthetic_dedup import LSHIndex, dedup_families
+from .lsh import LSHIndex
+from .synthetic_dedup import dedup_families
 from .synthetic_repair import repair_variants
 from .synthetic_validate import validate_family
 
