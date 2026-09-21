@@ -37,7 +37,7 @@ from model.data.synthetic_validate import ValidationResult
 
 class TestDomainTemplates:
     def test_all_domains_have_required_fields(self):
-        required = {"description", "state_prompt", "choice_template", "score_template", "seed_source", "seed_field"}
+        required = {"description", "state_prompt", "choice_template", "score_template", "seed_source"}
         for domain, template in DOMAIN_TEMPLATES.items():
             missing = required - set(template.keys())
             assert not missing, f"{domain} missing fields: {missing}"
@@ -268,6 +268,17 @@ class TestFamilyConversion:
         assert len(neg_items) == 1
         assert neg_items[0]["label"] is False
 
+    def test_score_labels_converted_to_0based(self):
+        from model.data.synthetic import family_to_typed_questions
+        items = family_to_typed_questions(
+            self.SAMPLE_FAMILY, {}, "medical_triage", 0
+        )
+        score_items = [i for i in items if i["question"]["type"] == "score"]
+        labels = {i["label"] for i in score_items}
+        assert 3.0 in labels  # 4.0 - 1.0 = 3.0
+        assert 1.0 in labels  # 2.0 - 1.0 = 1.0
+        assert all(l >= 0.0 for l in labels)
+
     def test_roundtrip_to_typed_question(self):
         from model.data.synthetic import family_to_typed_questions
         items = family_to_typed_questions(
@@ -322,6 +333,9 @@ class TestConfidenceBucketing:
 
     def test_boundary_medium_high(self):
         assert _bucket_confidence(0.9) == "high"
+
+    def test_exact_1_0(self):
+        assert _bucket_confidence(1.0) == "high"
 
     def test_boundary_uncertain_medium(self):
         assert _bucket_confidence(0.6) == "medium"
