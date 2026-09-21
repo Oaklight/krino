@@ -53,7 +53,7 @@ from .synthetic_templates import (
 )
 from .lsh import LSHIndex
 from .synthetic_dedup import dedup_families
-from .synthetic_repair import repair_variants
+from .synthetic_repair import fill_variant_gaps, repair_variants
 from .synthetic_validate import validate_family
 
 logger = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ LLM_REPAIR_MODEL = os.environ.get("LLM_REPAIR_MODEL", "argo:gpt-4.1-nano")
 MAX_CONCURRENT = int(os.environ.get("SYNTH_MAX_CONCURRENT", "20"))
 MAX_RETRIES = 3
 
-ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "repair", "dedup", "validate", "jev-label", "report"]
+ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "fill-variants", "repair", "dedup", "validate", "jev-label", "report"]
 VARIANT_STAGES = {"counterfactual", "paraphrase", "negation"}
 
 
@@ -783,7 +783,7 @@ async def run_pipeline(
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    needs_llm = stages & ({"base"} | VARIANT_STAGES | {"repair", "validate"})
+    needs_llm = stages & ({"base"} | VARIANT_STAGES | {"fill-variants", "repair", "validate"})
 
     if needs_llm:
         if not LLM_BASE_URL:
@@ -827,6 +827,23 @@ async def run_pipeline(
                     loaded = _load_jsonl(DATA_DIR / f"{domain}_variants.jsonl")
                     if loaded:
                         variants_by_domain[domain] = loaded
+
+            # Fill variant gaps (missing counterfactual/paraphrase/negation)
+            if "fill-variants" in stages and variants_by_domain:
+                # Use a fallback model for content-filtered items
+                fill_model = os.environ.get("LLM_FILL_MODEL", LLM_VARIANT_MODEL)
+                for domain in list(variants_by_domain.keys()):
+                    families = families_by_domain.get(domain, [])
+                    variants = variants_by_domain[domain]
+                    if families and variants:
+                        updated, filled, failed = await fill_variant_gaps(
+                            client, families, variants,
+                            fill_model, LLM_BASE_URL,
+                            max_concurrent=max_concurrent,
+                        )
+                        if filled:
+                            variants_by_domain[domain] = updated
+                            _save_jsonl(updated, DATA_DIR / f"{domain}_variants.jsonl")
 
             # Repair bad labels
             if "repair" in stages and variants_by_domain:
