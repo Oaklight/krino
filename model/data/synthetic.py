@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import hashlib
 import json
 import logging
 import os
@@ -75,6 +74,10 @@ VARIANT_STAGES = {"counterfactual", "paraphrase", "negation"}
 
 # --- File I/O helpers ---
 
+# probing/scripts contains the zerodep httpclient (async HTTP) and jev_client
+# (Jev API). They are path-injected here because they are standalone scripts,
+# not installable packages.
+
 
 def _save_jsonl(items: list[dict], path: Path) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -92,10 +95,6 @@ def _load_jsonl(path: Path) -> list[dict]:
 
 
 # --- LLM helpers ---
-
-
-def _short_hash(text: str) -> str:
-    return hashlib.sha256(text.encode()).hexdigest()[:12]
 
 
 async def _llm_chat(
@@ -176,7 +175,7 @@ def _load_seed_states(domain: str, count: int, seed: int = 42) -> list[str]:
     if not train_items:
         train_items = items
 
-    states = list({item.state for item in train_items})
+    states = sorted({item.state for item in train_items})
     rng.shuffle(states)
     states = [s for s in states if len(s) >= 50]
 
@@ -448,8 +447,9 @@ def family_to_typed_questions(
     score_questions_valid = []
     for si, sq in enumerate(score_questions_raw):
         sq_criteria = sq.get("criteria", template["score_template"]["criteria"])
-        sq_label = float(sq["label"])
-        if 1.0 <= sq_label <= float(len(sq_criteria)):
+        sq_label_raw = float(sq["label"])
+        if 1.0 <= sq_label_raw <= float(len(sq_criteria)):
+            sq_label = sq_label_raw - 1.0  # convert 1-based LLM output to 0-based training index
             if do_base:
                 items.append(
                     TypedQuestion.score(
@@ -463,11 +463,11 @@ def family_to_typed_questions(
                         group=group,
                     ).to_dict()
                 )
-            score_questions_valid.append(sq)
+            score_questions_valid.append({**sq, "_label_0based": sq_label})
         else:
             logger.warning(
                 "Dropped score-%d for %s-%04d: label %.1f out of range [1, %d]",
-                si, domain, family_idx, sq_label, len(sq_criteria),
+                si, domain, family_idx, sq_label_raw, len(sq_criteria),
             )
 
     # --- Variants ---
@@ -519,16 +519,16 @@ def family_to_typed_questions(
                     )
             if score_questions_valid and cf.get("score_label") is not None:
                 first_sq = score_questions_valid[0]
-                cf_score_label = float(cf["score_label"])
+                cf_score_label_raw = float(cf["score_label"])
                 cf_score_criteria = first_sq.get("criteria", template["score_template"]["criteria"])
-                if 1.0 <= cf_score_label <= float(len(cf_score_criteria)):
+                if 1.0 <= cf_score_label_raw <= float(len(cf_score_criteria)):
                     items.append(
                         TypedQuestion.score(
                             id=f"synthetic-{domain}-{family_idx:04d}-cf-score-0",
                             state=cf_state,
                             instructions=first_sq.get("instructions", template["score_template"]["instructions"]),
                             criteria=cf_score_criteria,
-                            label=cf_score_label,
+                            label=cf_score_label_raw - 1.0,
                             source="synthetic",
                             split="train",
                             group=group,
@@ -537,7 +537,7 @@ def family_to_typed_questions(
                 else:
                     logger.warning(
                         "Dropped cf-score for %s-%04d: label %.1f out of range [1, %d]",
-                        domain, family_idx, cf_score_label, len(cf_score_criteria),
+                        domain, family_idx, cf_score_label_raw, len(cf_score_criteria),
                     )
 
     # Paraphrase
@@ -579,7 +579,7 @@ def family_to_typed_questions(
                             state=para_state,
                             instructions=sq["instructions"],
                             criteria=sq["criteria"],
-                            label=float(sq["label"]),
+                            label=sq["_label_0based"],
                             source="synthetic",
                             split="train",
                             group=group,
@@ -675,7 +675,6 @@ async def run_pipeline(
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     needs_llm = stages & ({"base"} | VARIANT_STAGES | {"validate"})
-    client_ctx = None
 
     if needs_llm:
         if not LLM_BASE_URL:
@@ -869,6 +868,10 @@ def main() -> int:
 
     # Handle legacy flags
     stages = args.stages
+    if stages is not None:
+        invalid = stages - set(ALL_STAGES)
+        if invalid:
+            parser.error(f"Unknown stages: {', '.join(sorted(invalid))}. Available: {', '.join(ALL_STAGES)}")
     if stages is None:
         stages = set(ALL_STAGES)
         if args.skip_validation:

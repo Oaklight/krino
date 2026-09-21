@@ -12,7 +12,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 CONFIDENCE_BUCKETS = {
-    "high": (0.9, 1.0),
+    "high": (0.9, 1.01),
     "medium": (0.6, 0.9),
     "uncertain": (0.0, 0.6),
 }
@@ -32,7 +32,7 @@ def _bucket_confidence(confidence: float) -> str:
     for bucket, (lo, hi) in CONFIDENCE_BUCKETS.items():
         if lo <= confidence < hi:
             return bucket
-    return "high"
+    return "uncertain"
 
 
 def _extract_probs(answer: dict[str, Any], question_type: str) -> tuple[dict[str, float], float]:
