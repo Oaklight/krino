@@ -11,12 +11,8 @@ import json
 import pytest
 
 from model.data.format import TypedQuestion
-from model.data.synthetic_dedup import (
-    LSHIndex,
-    MinHash,
-    _char_ngrams,
-    dedup_families,
-)
+from model.data.lsh import LSHIndex, MinHash, char_ngrams
+from model.data.synthetic_dedup import dedup_families
 from model.data.synthetic_label import (
     CONFIDENCE_BUCKETS,
     LabelResult,
@@ -423,7 +419,7 @@ class TestMinHash:
         assert mh1.jaccard(mh2) < 0.3
 
     def test_char_ngrams(self):
-        ngrams = _char_ngrams("hello world", n=3)
+        ngrams = char_ngrams("hello world", n=3)
         assert "hel" in ngrams
         assert "llo" in ngrams
         assert "wor" in ngrams
