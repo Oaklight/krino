@@ -30,8 +30,10 @@ from pathlib import Path
 from typing import Any
 
 _repo_root = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(_repo_root / "probing" / "scripts"))
+# _vendor contains zerodep httpclient (async HTTP) and dotenv
+# probing/scripts contains jev_client (Jev API, used by jev-label stage)
 sys.path.insert(0, str(_repo_root / "_vendor"))
+sys.path.insert(0, str(_repo_root / "probing" / "scripts"))
 
 from dotenv import load_dotenv
 
@@ -76,10 +78,6 @@ VARIANT_STAGES = {"counterfactual", "paraphrase", "negation"}
 
 
 # --- File I/O helpers ---
-
-# probing/scripts contains the zerodep httpclient (async HTTP) and jev_client
-# (Jev API). They are path-injected here because they are standalone scripts,
-# not installable packages.
 
 
 def _save_jsonl(items: list[dict], path: Path) -> int:
