@@ -382,23 +382,38 @@ async def run_variant_stage(
             ", ".join(ordered_types), remaining, domain,
         )
 
-        domain_variants = list(cached_variants)
-        for fi in range(start_idx, len(families)):
+        async def _gen_family_variants(fi: int) -> tuple[int, dict]:
             family = families[fi]
             tasks = {
                 vt: _gen_single_variant(client, family, vt, semaphore)
                 for vt in ordered_types
             }
             results = await asyncio.gather(*tasks.values())
-            variant_data = dict(zip(tasks.keys(), results))
-            domain_variants.append(variant_data)
-            _append_jsonl(variant_data, variants_path)
+            return fi, dict(zip(tasks.keys(), results))
 
-            done = fi - start_idx + 1
-            if done % 10 == 0 or fi == len(families) - 1:
+        # Fan out across all remaining families
+        gen_tasks = [_gen_family_variants(fi) for fi in range(start_idx, len(families))]
+        pending = {asyncio.ensure_future(t): t for t in gen_tasks}
+        results_by_idx: dict[int, dict] = {}
+        next_to_write = start_idx
+        domain_variants = list(cached_variants)
+        done_count = 0
+
+        for coro in asyncio.as_completed(pending):
+            fi, variant_data = await coro
+            results_by_idx[fi] = variant_data
+            done_count += 1
+
+            # Write in order to preserve resume correctness
+            while next_to_write in results_by_idx:
+                domain_variants.append(results_by_idx.pop(next_to_write))
+                _append_jsonl(domain_variants[-1], variants_path)
+                next_to_write += 1
+
+            if done_count % 10 == 0 or done_count == remaining:
                 logger.info(
-                    "  %s: variants %d/%d (%.1fs)",
-                    domain, fi + 1, len(families), time.monotonic() - t0,
+                    "  %s: variants %d/%d done, %d written (%.1fs)",
+                    domain, done_count, remaining, next_to_write, time.monotonic() - t0,
                 )
 
         result[domain] = domain_variants
