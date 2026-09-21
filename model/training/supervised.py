@@ -19,22 +19,66 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 
 
+def _score_target(label: Any, n_levels: int, device: torch.device) -> torch.Tensor:
+    """Build a score target distribution.
+
+    Integer labels produce one-hot targets. Float labels interpolate between
+    adjacent levels (e.g. 2.5 → [0, 0, 0.5, 0.5, 0]).
+    """
+    label_f = float(label)
+    label_f = max(0.0, min(float(n_levels - 1), label_f))
+    if label_f == int(label_f):
+        return F.one_hot(torch.tensor(int(label_f), device=device), n_levels).float()
+    lo = int(label_f)
+    hi = min(lo + 1, n_levels - 1)
+    frac = label_f - lo
+    target = torch.zeros(n_levels, device=device)
+    target[lo] = 1.0 - frac
+    target[hi] = frac
+    return target
+
+
+def _soft_cross_entropy(logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    """Cross-entropy against a soft target distribution."""
+    log_probs = F.log_softmax(logits, dim=-1)
+    return -(target * log_probs).sum(dim=-1).mean()
+
+
+def _teacher_loss(logits: torch.Tensor, teacher_probs: dict, keys: list[str]) -> torch.Tensor:
+    """KL-divergence against Jev teacher probability distribution."""
+    teacher = torch.tensor([teacher_probs.get(k, 0.0) for k in keys], device=logits.device)
+    teacher = teacher / teacher.sum().clamp(min=1e-9)
+    log_probs = F.log_softmax(logits, dim=-1).squeeze(0)
+    return F.kl_div(log_probs, teacher, reduction="batchmean")
+
+
 def compute_loss(
     model: nn.Module,
     item: Any,
 ) -> torch.Tensor | None:
-    """Compute loss for a single typed-question item."""
+    """Compute loss for a single typed-question item.
+
+    Supports three loss modes:
+    - Standard: one-hot CE (noul→BCE, choice→CE, score→CE or interpolated soft CE)
+    - Teacher distillation: KL-divergence against item.teacher_probs when available
+    - Float score labels: interpolated soft targets between adjacent levels
+    """
     state = item.state
     question = item.question
     label = item.label
     q_type = question.get("type", "noul")
     instructions = question.get("instructions", "")
+    teacher_probs = getattr(item, "teacher_probs", None)
 
     if q_type == "noul":
         logit = model.forward_noul(state, instructions)
         if isinstance(label, str):
             label = label.lower() in ("true", "yes", "1")
-        target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
+        if teacher_probs and "noul" in teacher_probs:
+            teacher_p = float(teacher_probs["noul"])
+            target = torch.tensor([[teacher_p]], device=logit.device)
+        else:
+            target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
         return F.binary_cross_entropy_with_logits(logit, target)
 
     elif q_type == "choice":
@@ -42,6 +86,8 @@ def compute_loss(
         keys = list(criteria.keys())
         option_texts = [v or k for k, v in criteria.items()]
         logits = model.forward_choice(state, instructions, option_texts)
+        if teacher_probs:
+            return _teacher_loss(logits, teacher_probs, keys)
         if label not in keys:
             return None
         target_idx = keys.index(label)
@@ -52,10 +98,14 @@ def compute_loss(
         criteria = question["criteria"]
         level_texts = criteria
         logits = model.forward_score(state, instructions, level_texts)
-        target_idx = int(round(float(label)))
-        target_idx = max(0, min(len(criteria) - 1, target_idx))
-        target = torch.tensor([target_idx], device=logits.device)
-        return F.cross_entropy(logits, target)
+        n_levels = len(criteria)
+        if teacher_probs:
+            level_keys = [str(i) for i in range(n_levels)]
+            return _teacher_loss(logits, teacher_probs, level_keys)
+        target = _score_target(label, n_levels, logits.device)
+        if target.argmax() == target.sum():
+            return F.cross_entropy(logits, target.argmax().unsqueeze(0))
+        return _soft_cross_entropy(logits, target.unsqueeze(0))
 
     return None
 
@@ -163,13 +213,17 @@ def eval_epoch(model: nn.Module, eval_items: list) -> dict[str, Any]:
                 correct += 1
         elif q_type == "score":
             criteria = question["criteria"]
+            n_levels = len(criteria)
             logits = model.forward_score(state, instructions, criteria)
-            target_idx = int(round(float(label)))
-            target_idx = max(0, min(len(criteria) - 1, target_idx))
-            target = torch.tensor([target_idx], device=logits.device)
-            loss = F.cross_entropy(logits, target)
+            target = _score_target(label, n_levels, logits.device)
+            if target.argmax() == target.sum():
+                loss = F.cross_entropy(logits, target.argmax().unsqueeze(0))
+            else:
+                loss = _soft_cross_entropy(logits, target.unsqueeze(0))
             pred_idx = logits.argmax(dim=-1).item()
-            if pred_idx == target_idx:
+            gold_idx = int(round(float(label)))
+            gold_idx = max(0, min(n_levels - 1, gold_idx))
+            if pred_idx == gold_idx:
                 correct += 1
         else:
             continue

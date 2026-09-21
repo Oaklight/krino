@@ -130,25 +130,35 @@ def _forward_and_extract(
         return _ItemResult(task_loss, confidence, correctness, brier)
 
     elif q_type == "score":
+        from .supervised import _score_target, _soft_cross_entropy, _teacher_loss
+
         criteria = question["criteria"]
+        n_levels = len(criteria)
         logits = model.forward_score(state, instructions, criteria)
+        teacher_probs = getattr(item, "teacher_probs", None)
+
+        target_dist = _score_target(label, n_levels, logits.device)
         target_idx = int(round(float(label)))
-        target_idx = max(0, min(len(criteria) - 1, target_idx))
+        target_idx = max(0, min(n_levels - 1, target_idx))
         target = torch.tensor([target_idx], device=logits.device)
 
-        if cfg.name == "focal":
+        if teacher_probs:
+            level_keys = [str(i) for i in range(n_levels)]
+            task_loss = _teacher_loss(logits, teacher_probs, level_keys)
+        elif cfg.name == "focal":
             task_loss = focal_loss(
                 logits, target, gamma=cfg.gamma, label_smoothing=cfg.label_smoothing
             )
-        else:
+        elif target_dist.argmax() == target_dist.sum():
             task_loss = F.cross_entropy(logits, target)
+        else:
+            task_loss = _soft_cross_entropy(logits, target_dist.unsqueeze(0))
 
         probs = F.softmax(logits, dim=-1)
         confidence = probs.max(dim=-1).values.squeeze()
         predicted = probs.argmax(dim=-1)
         correctness = (predicted.squeeze() == target.squeeze()).float().detach()
-        one_hot = F.one_hot(target, num_classes=logits.shape[-1]).float()
-        brier = ((probs - one_hot) ** 2).sum(dim=-1).squeeze()
+        brier = ((probs - target_dist.unsqueeze(0)) ** 2).sum(dim=-1).squeeze()
 
         return _ItemResult(task_loss, confidence, correctness, brier)
 
