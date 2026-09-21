@@ -51,7 +51,7 @@ from .synthetic_templates import (
     build_variant_prompt,
     json_compact,
 )
-from .synthetic_dedup import dedup_families
+from .synthetic_dedup import LSHIndex, dedup_families
 from .synthetic_repair import repair_variants
 from .synthetic_validate import validate_family
 
@@ -293,7 +293,19 @@ async def run_base_stage(
 
         logger.info("  Generating %d families (%d-%d)...", remaining, start_idx, actual_count - 1)
 
+        # Build LSH index from cached families for on-the-fly dedup
+        dedup_threshold = 0.7
+        lsh = LSHIndex(num_perm=128, bands=16)
+        dedup_sigs = []
+        for ci, cf in enumerate(cached):
+            mh = lsh.make_minhash(cf.get("state", ""))
+            lsh.insert(ci, mh.signature)
+            dedup_sigs.append(mh)
+        dedup_dropped = 0
+        _dedup_lock = asyncio.Lock()
+
         async def _generate_and_save(idx: int, cog_types: list[str]) -> dict | None:
+            nonlocal dedup_dropped
             if seed_states:
                 family = await generate_seeded_family(
                     client, domain, seed_states[idx], cog_types, idx, semaphore
@@ -302,8 +314,26 @@ async def run_base_stage(
                 family = await generate_pure_family(
                     client, domain, cog_types, idx, semaphore
                 )
-            if family:
-                _append_jsonl(family, families_path)
+            if not family:
+                return None
+
+            # On-the-fly dedup check
+            async with _dedup_lock:
+                mh = lsh.make_minhash(family.get("state", ""))
+                candidates = lsh.query(mh.signature)
+                is_dup = any(
+                    mh.jaccard(dedup_sigs[c]) >= dedup_threshold
+                    for c in candidates
+                )
+                if is_dup:
+                    dedup_dropped += 1
+                    logger.info("  Dedup: family %d is near-duplicate, skipping", idx)
+                    return None
+                sig_idx = len(dedup_sigs)
+                lsh.insert(sig_idx, mh.signature)
+                dedup_sigs.append(mh)
+
+            _append_jsonl(family, families_path)
             return family
 
         tasks = []
@@ -317,6 +347,9 @@ async def run_base_stage(
         new_valid = [f for f in new_families if f is not None]
         all_families = cached + new_valid
         result[domain] = all_families
+
+        if dedup_dropped:
+            logger.info("  Dedup: dropped %d near-duplicate families during generation", dedup_dropped)
 
         total_valid = len(all_families)
         logger.info(
