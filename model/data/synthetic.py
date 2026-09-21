@@ -69,7 +69,7 @@ LLM_REPAIR_MODEL = os.environ.get("LLM_REPAIR_MODEL", "argo:gpt-4.1-nano")
 MAX_CONCURRENT = int(os.environ.get("SYNTH_MAX_CONCURRENT", "20"))
 MAX_RETRIES = 3
 
-ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "repair", "dedup", "validate", "jev-label"]
+ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "repair", "dedup", "validate", "jev-label", "report"]
 VARIANT_STAGES = {"counterfactual", "paraphrase", "negation"}
 
 
@@ -871,6 +871,119 @@ async def run_pipeline(
     return all_items
 
 
+EXPECTED_PER_FAMILY = 35  # 9 base + 6 cf + 9 para-state + 4 para-q + 4 neg + ~3 shuffle
+
+
+def run_report(domains: list[str]) -> None:
+    """Report generation status for each domain from cached files."""
+    from collections import Counter
+
+    logger.info("=" * 72)
+    logger.info(
+        "%-25s %8s %8s %8s %10s %10s %6s",
+        "Domain", "Families", "Variants", "Items", "Per-family", "Expected", "Gap",
+    )
+    logger.info("-" * 72)
+
+    total_families = 0
+    total_items = 0
+    all_types = Counter()
+
+    for domain in domains:
+        families = _load_jsonl(DATA_DIR / f"{domain}_families.jsonl")
+        variants = _load_jsonl(DATA_DIR / f"{domain}_variants.jsonl")
+        n_fam = len(families)
+        n_var = len(variants)
+
+        items: list[dict] = []
+        for idx, fam in enumerate(families):
+            vd = variants[idx] if idx < len(variants) else {}
+            items.extend(family_to_typed_questions(fam, vd, domain, fam.get("_family_idx", idx)))
+
+        n_items = len(items)
+        per_fam = n_items / n_fam if n_fam else 0
+        expected = EXPECTED_PER_FAMILY * n_fam
+        gap_pct = ((n_items - expected) / expected * 100) if expected else 0
+
+        types = Counter(i["question"]["type"] for i in items)
+        all_types += types
+
+        # Variant breakdown
+        v_counts = Counter()
+        for i in items:
+            iid = i["id"]
+            if "-cf-" in iid:
+                v_counts["cf"] += 1
+            elif "-para-state-" in iid:
+                v_counts["para-state"] += 1
+            elif "-para-q-" in iid:
+                v_counts["para-q"] += 1
+            elif "-neg-" in iid:
+                v_counts["neg"] += 1
+            elif "-shuffle-" in iid:
+                v_counts["shuffle"] += 1
+            else:
+                v_counts["base"] += 1
+
+        # Bad labels in variants
+        bad_cf_choice = 0
+        bad_cf_score = 0
+        template = DOMAIN_TEMPLATES.get(domain, {})
+        for idx, (fam, var) in enumerate(zip(families, variants)):
+            cf = var.get("counterfactual", {})
+            if cf:
+                choice_qs = fam.get("choice_questions", [])
+                if not choice_qs and fam.get("choice_question"):
+                    choice_qs = [fam["choice_question"]]
+                if choice_qs and cf.get("choice_label"):
+                    criteria = choice_qs[0].get("criteria", template.get("choice_template", {}).get("criteria", {}))
+                    if cf["choice_label"] not in criteria:
+                        bad_cf_choice += 1
+                if cf.get("score_label") is not None:
+                    score_qs = fam.get("score_questions", [])
+                    if not score_qs and fam.get("score_question"):
+                        score_qs = [fam["score_question"]]
+                    if score_qs:
+                        criteria = score_qs[0].get("criteria", template.get("score_template", {}).get("criteria", []))
+                        if not (1.0 <= float(cf["score_label"]) <= float(len(criteria))):
+                            bad_cf_score += 1
+
+        logger.info(
+            "%-25s %8d %8d %8d %10.1f %10d %+5.0f%%",
+            domain, n_fam, n_var, n_items, per_fam, expected, gap_pct,
+        )
+        logger.info(
+            "  types: noul=%-5d choice=%-5d score=%-5d",
+            types["noul"], types["choice"], types["score"],
+        )
+        logger.info(
+            "  variants: base=%-5d cf=%-5d para-s=%-5d para-q=%-5d neg=%-5d shuffle=%-5d",
+            v_counts["base"], v_counts["cf"], v_counts["para-state"],
+            v_counts["para-q"], v_counts["neg"], v_counts["shuffle"],
+        )
+        if bad_cf_choice or bad_cf_score:
+            logger.info(
+                "  bad labels: cf-choice=%d cf-score=%d (run --stages repair to fix)",
+                bad_cf_choice, bad_cf_score,
+            )
+
+        total_families += n_fam
+        total_items += n_items
+
+    logger.info("-" * 72)
+    logger.info(
+        "%-25s %8d %8s %8d %10.1f %10d %+5.0f%%",
+        "TOTAL", total_families, "",  total_items,
+        total_items / total_families if total_families else 0,
+        EXPECTED_PER_FAMILY * total_families,
+        ((total_items - EXPECTED_PER_FAMILY * total_families) / (EXPECTED_PER_FAMILY * total_families) * 100) if total_families else 0,
+    )
+    logger.info(
+        "  types: noul=%-5d choice=%-5d score=%-5d",
+        all_types["noul"], all_types["choice"], all_types["score"],
+    )
+
+
 def push_to_hf(repo_id: str, path: Path | None = None) -> None:
     """Push synthetic data to a HuggingFace dataset repository."""
     import subprocess
@@ -976,16 +1089,21 @@ def main() -> int:
             stages -= VARIANT_STAGES
             stages.discard("shuffle")
 
-    asyncio.run(
-        run_pipeline(
-            domains=args.domains,
-            families_per_domain=args.families_per_domain,
-            stages=stages,
-            pilot=args.pilot,
-            seed=args.seed,
-            max_concurrent=args.max_concurrent,
+    pipeline_stages = stages - {"report"}
+    if pipeline_stages:
+        asyncio.run(
+            run_pipeline(
+                domains=args.domains,
+                families_per_domain=args.families_per_domain,
+                stages=pipeline_stages,
+                pilot=args.pilot,
+                seed=args.seed,
+                max_concurrent=args.max_concurrent,
+            )
         )
-    )
+
+    if "report" in stages:
+        run_report(args.domains or list(DOMAIN_TEMPLATES.keys()))
 
     if args.push_to_hf:
         push_to_hf(args.push_to_hf)
