@@ -13,6 +13,7 @@ Composable stages — run all at once or independently:
     python -m model.data.synthetic                                   # all stages
 
 Each stage reads/writes to DATA_DIR. Stages can be rerun independently.
+Resume: cached families/variants on disk are reused automatically.
 """
 
 from __future__ import annotations
@@ -82,6 +83,12 @@ def _save_jsonl(items: list[dict], path: Path) -> int:
         for item in items:
             f.write(json.dumps(item, ensure_ascii=False) + "\n")
     return len(items)
+
+
+def _append_jsonl(item: dict, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(item, ensure_ascii=False) + "\n")
 
 
 def _load_jsonl(path: Path) -> list[dict]:
@@ -229,7 +236,7 @@ async def run_base_stage(
     seed: int,
     semaphore: asyncio.Semaphore,
 ) -> dict[str, list[dict]]:
-    """Generate base families per domain. Returns {domain: [family_dicts]}."""
+    """Generate base families per domain. Resumes from cached families on disk."""
     rng = random.Random(seed)
     all_cog_types = list(COGNITIVE_TYPE_DESCRIPTIONS.keys())
     result: dict[str, list[dict]] = {}
@@ -239,29 +246,51 @@ async def run_base_stage(
         is_seeded = template.get("seed_source") is not None
         t0 = time.monotonic()
 
-        print(
-            f"\n{'=' * 60}\n"
-            f"Domain: {domain} ({'seeded' if is_seeded else 'generated'})\n"
-            f"{'=' * 60}"
-        )
+        logger.info("=" * 60)
+        logger.info("Domain: %s (%s)", domain, "seeded" if is_seeded else "generated")
+        logger.info("=" * 60)
+
+        # Check for cached families
+        families_path = DATA_DIR / f"{domain}_families.jsonl"
+        cached = _load_jsonl(families_path)
+        if len(cached) >= families_per_domain:
+            logger.info("  Resuming: %d families already cached, skipping base generation", len(cached))
+            result[domain] = cached[:families_per_domain]
+            # Advance rng to keep determinism
+            for _ in range(families_per_domain):
+                rng.sample(all_cog_types, min(NOUL_QUESTIONS_PER_FAMILY, len(all_cog_types)))
+            continue
 
         seed_states: list[str] = []
         if is_seeded:
-            print(f"  Loading seed states from {template['seed_source']}...")
+            logger.info("  Loading seed states from %s...", template["seed_source"])
             try:
                 seed_states = _load_seed_states(domain, families_per_domain, seed)
-                print(f"  Loaded {len(seed_states)} seed states")
+                logger.info("  Loaded %d seed states", len(seed_states))
             except Exception as exc:
-                print(f"  Failed to load seeds: {exc}, falling back to pure generation")
+                logger.warning("  Failed to load seeds: %s, falling back to pure generation", exc)
 
         actual_count = min(
             families_per_domain,
             len(seed_states) if seed_states else families_per_domain,
         )
 
-        print(f"  Generating {actual_count} families...")
+        # Resume: generate only missing families
+        start_idx = len(cached)
+        if start_idx > 0:
+            logger.info("  Resuming from family %d (have %d cached)", start_idx, start_idx)
+            # Advance rng past cached families
+            for _ in range(start_idx):
+                rng.sample(all_cog_types, min(NOUL_QUESTIONS_PER_FAMILY, len(all_cog_types)))
+
+        remaining = actual_count - start_idx
+        if remaining <= 0:
+            result[domain] = cached[:actual_count]
+            continue
+
+        logger.info("  Generating %d families (%d-%d)...", remaining, start_idx, actual_count - 1)
         tasks = []
-        for i in range(actual_count):
+        for i in range(start_idx, actual_count):
             cog_types = rng.sample(
                 all_cog_types, min(NOUL_QUESTIONS_PER_FAMILY, len(all_cog_types))
             )
@@ -275,14 +304,18 @@ async def run_base_stage(
                 )
 
         families = await asyncio.gather(*tasks)
-        valid = [f for f in families if f is not None]
-        result[domain] = valid
+        new_valid = [f for f in families if f is not None]
 
-        # Save intermediate
-        families_path = DATA_DIR / f"{domain}_families.jsonl"
-        _save_jsonl(valid, families_path)
+        # Append new families to cache
+        all_families = cached + new_valid
+        _save_jsonl(all_families, families_path)
+        result[domain] = all_families
 
-        print(f"  Done: {len(valid)}/{actual_count} families ({time.monotonic() - t0:.1f}s)")
+        total_valid = len(all_families)
+        logger.info(
+            "  Done: %d/%d families (%.1fs, %d new, %d cached)",
+            total_valid, actual_count, time.monotonic() - t0, len(new_valid), len(cached),
+        )
 
     return result
 
@@ -313,33 +346,56 @@ async def run_variant_stage(
     variant_types: set[str],
     semaphore: asyncio.Semaphore,
 ) -> dict[str, list[dict[str, dict | None]]]:
-    """Generate requested variant types for each family.
-
-    Returns {domain: [{variant_type: result_dict, ...}, ...]} aligned with families.
-    """
+    """Generate requested variant types for each family. Resumes from cache."""
     result: dict[str, list[dict]] = {}
 
     for domain, families in families_by_domain.items():
         t0 = time.monotonic()
         ordered_types = sorted(variant_types & VARIANT_STAGES)
-        print(f"  Generating variants ({', '.join(ordered_types)}) for {len(families)} families in {domain}...")
 
-        domain_variants: list[dict[str, dict | None]] = []
-        for family in families:
+        # Load cached variants
+        variants_path = DATA_DIR / f"{domain}_variants.jsonl"
+        cached_variants = _load_jsonl(variants_path)
+        start_idx = len(cached_variants)
+
+        if start_idx >= len(families):
+            logger.info("  %s: all %d variant sets cached, skipping", domain, len(families))
+            result[domain] = cached_variants[:len(families)]
+            continue
+
+        if start_idx > 0:
+            logger.info(
+                "  %s: resuming variants from family %d (have %d cached)",
+                domain, start_idx, start_idx,
+            )
+
+        remaining = len(families) - start_idx
+        logger.info(
+            "  Generating variants (%s) for %d families in %s...",
+            ", ".join(ordered_types), remaining, domain,
+        )
+
+        domain_variants = list(cached_variants)
+        for fi in range(start_idx, len(families)):
+            family = families[fi]
             tasks = {
                 vt: _gen_single_variant(client, family, vt, semaphore)
                 for vt in ordered_types
             }
             results = await asyncio.gather(*tasks.values())
-            domain_variants.append(dict(zip(tasks.keys(), results)))
+            variant_data = dict(zip(tasks.keys(), results))
+            domain_variants.append(variant_data)
+            _append_jsonl(variant_data, variants_path)
+
+            done = fi - start_idx + 1
+            if done % 10 == 0 or fi == len(families) - 1:
+                logger.info(
+                    "  %s: variants %d/%d (%.1fs)",
+                    domain, fi + 1, len(families), time.monotonic() - t0,
+                )
 
         result[domain] = domain_variants
-
-        # Save intermediate
-        variants_path = DATA_DIR / f"{domain}_variants.jsonl"
-        _save_jsonl(domain_variants, variants_path)
-
-        print(f"  Done ({time.monotonic() - t0:.1f}s)")
+        logger.info("  %s: variants complete (%.1fs)", domain, time.monotonic() - t0)
 
     return result
 
@@ -356,7 +412,7 @@ async def run_validate_stage(
     result: dict[str, list[dict]] = {}
 
     for domain, families in families_by_domain.items():
-        print(f"  Validating {len(families)} families in {domain}...")
+        logger.info("  Validating %d families in %s...", len(families), domain)
         val_tasks = [
             validate_family(client, f, LLM_JUDGE_MODEL, LLM_BASE_URL)
             for f in families
@@ -365,7 +421,7 @@ async def run_validate_stage(
         valid = [f for f, (passed, _) in zip(families, val_results) if passed]
         rejected = len(families) - len(valid)
         result[domain] = valid
-        print(f"  {len(valid)}/{len(families)} passed ({rejected} rejected)")
+        logger.info("  %d/%d passed (%d rejected)", len(valid), len(families), rejected)
 
     return result
 
@@ -675,7 +731,7 @@ async def run_pipeline(
 
     if needs_llm:
         if not LLM_BASE_URL:
-            print("ERROR: LLM_BASE_URL not set. Set it in .env or environment.", file=sys.stderr)
+            logger.error("LLM_BASE_URL not set. Set it in .env or environment.")
             return []
         client_headers = {"Content-Type": "application/json"}
         if LLM_API_KEY:
@@ -702,7 +758,7 @@ async def run_pipeline(
                     loaded = _load_jsonl(DATA_DIR / f"{domain}_families.jsonl")
                     if loaded:
                         families_by_domain[domain] = loaded
-                        print(f"  Loaded {len(loaded)} families for {domain} from cache")
+                        logger.info("  Loaded %d families for %s from cache", len(loaded), domain)
 
             # Variant generation
             requested_variants = stages & VARIANT_STAGES
@@ -744,7 +800,7 @@ async def run_pipeline(
 
     # Jev API soft labels
     if "jev-label" in stages and all_items:
-        print(f"\nJev API labeling ({len(all_items)} items)...")
+        logger.info("Jev API labeling (%d items)...", len(all_items))
         from jev_client import JevClient
         jev = JevClient()
         label_results = label_items_sync(all_items, jev, batch_size=10)
@@ -764,12 +820,12 @@ async def run_pipeline(
     from collections import Counter
     type_counts = Counter(item["question"]["type"] for item in all_items)
 
-    print(f"\n{'=' * 60}")
-    print(f"SUMMARY")
-    print(f"{'=' * 60}")
-    print(f"  Total items:  {len(all_items):,}")
-    print(f"  By type:      noul={type_counts['noul']}  choice={type_counts['choice']}  score={type_counts['score']}")
-    print(f"  Output:       {out_path}")
+    logger.info("=" * 60)
+    logger.info("SUMMARY")
+    logger.info("=" * 60)
+    logger.info("  Total items:  %d", len(all_items))
+    logger.info("  By type:      noul=%d  choice=%d  score=%d", type_counts["noul"], type_counts["choice"], type_counts["score"])
+    logger.info("  Output:       %s", out_path)
 
     return all_items
 
@@ -782,7 +838,7 @@ def push_to_hf(repo_id: str, path: Path | None = None) -> None:
         path = DATA_DIR / "synthetic.jsonl"
 
     if not path.exists():
-        print(f"ERROR: {path} does not exist. Generate data first.", file=sys.stderr)
+        logger.error("%s does not exist. Generate data first.", path)
         return
 
     try:
@@ -795,7 +851,7 @@ def push_to_hf(repo_id: str, path: Path | None = None) -> None:
             repo_type="dataset",
             commit_message=f"Update synthetic data ({path.stat().st_size // 1024}KB)",
         )
-        print(f"  Pushed {path} to https://huggingface.co/datasets/{repo_id}")
+        logger.info("Pushed %s to https://huggingface.co/datasets/%s", path, repo_id)
     except ImportError:
         result = subprocess.run(
             ["huggingface-cli", "upload", "--repo-type", "dataset",
@@ -803,10 +859,10 @@ def push_to_hf(repo_id: str, path: Path | None = None) -> None:
             capture_output=True, text=True,
         )
         if result.returncode == 0:
-            print(f"  Pushed {path} to https://huggingface.co/datasets/{repo_id}")
+            logger.info("Pushed %s to https://huggingface.co/datasets/%s", path, repo_id)
         else:
-            print(f"ERROR: HF upload failed: {result.stderr}", file=sys.stderr)
-            print("Install huggingface_hub: pip install huggingface_hub", file=sys.stderr)
+            logger.error("HF upload failed: %s", result.stderr)
+            logger.error("Install huggingface_hub: pip install huggingface_hub")
 
 
 def main() -> int:
