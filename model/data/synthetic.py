@@ -290,26 +290,30 @@ async def run_base_stage(
             continue
 
         logger.info("  Generating %d families (%d-%d)...", remaining, start_idx, actual_count - 1)
+
+        async def _generate_and_save(idx: int, cog_types: list[str]) -> dict | None:
+            if seed_states:
+                family = await generate_seeded_family(
+                    client, domain, seed_states[idx], cog_types, idx, semaphore
+                )
+            else:
+                family = await generate_pure_family(
+                    client, domain, cog_types, idx, semaphore
+                )
+            if family:
+                _append_jsonl(family, families_path)
+            return family
+
         tasks = []
         for i in range(start_idx, actual_count):
             cog_types = rng.sample(
                 all_cog_types, min(NOUL_QUESTIONS_PER_FAMILY, len(all_cog_types))
             )
-            if seed_states:
-                tasks.append(
-                    generate_seeded_family(client, domain, seed_states[i], cog_types, i, semaphore)
-                )
-            else:
-                tasks.append(
-                    generate_pure_family(client, domain, cog_types, i, semaphore)
-                )
+            tasks.append(_generate_and_save(i, cog_types))
 
-        families = await asyncio.gather(*tasks)
-        new_valid = [f for f in families if f is not None]
-
-        # Append new families to cache
+        new_families = await asyncio.gather(*tasks)
+        new_valid = [f for f in new_families if f is not None]
         all_families = cached + new_valid
-        _save_jsonl(all_families, families_path)
         result[domain] = all_families
 
         total_valid = len(all_families)
