@@ -11,6 +11,12 @@ import json
 import pytest
 
 from model.data.format import TypedQuestion
+from model.data.synthetic_dedup import (
+    LSHIndex,
+    MinHash,
+    _char_ngrams,
+    dedup_families,
+)
 from model.data.synthetic_label import (
     CONFIDENCE_BUCKETS,
     LabelResult,
@@ -352,6 +358,75 @@ class TestValidationResult:
 
 
 # --- JSON utility ---
+
+
+class TestDedup:
+    def test_identical_states_deduped(self):
+        families = [
+            {"state": "The library is north of the park.", "_family_idx": 0, "_domain": "test"},
+            {"state": "The library is north of the park.", "_family_idx": 1, "_domain": "test"},
+            {"state": "A completely different scene with a river.", "_family_idx": 2, "_domain": "test"},
+        ]
+        kept, dropped = dedup_families(families, threshold=0.7)
+        assert len(kept) == 2
+        assert len(dropped) == 1
+        assert dropped[0] == 1
+
+    def test_unique_states_kept(self):
+        families = [
+            {"state": "The museum has a large marble statue in the center.", "_family_idx": 0},
+            {"state": "A chemistry student answers a question about boiling points.", "_family_idx": 1},
+            {"state": "User posted a heated comment about politics.", "_family_idx": 2},
+        ]
+        kept, dropped = dedup_families(families, threshold=0.7)
+        assert len(kept) == 3
+        assert len(dropped) == 0
+
+    def test_near_duplicate_detected(self):
+        families = [
+            {"state": "The building has three floors. The cafe is on the ground floor, the office is on the second floor, and the gym is on the top floor.", "_family_idx": 0},
+            {"state": "The building has three floors. The cafe is on the ground floor, the office is on the second floor, and the pool is on the top floor.", "_family_idx": 1},
+        ]
+        kept, dropped = dedup_families(families, threshold=0.7)
+        # These are very similar — only "gym" vs "pool" differs
+        assert len(kept) == 1
+        assert len(dropped) == 1
+
+    def test_empty_input(self):
+        kept, dropped = dedup_families([], threshold=0.7)
+        assert kept == []
+        assert dropped == []
+
+    def test_threshold_controls_sensitivity(self):
+        families = [
+            {"state": "A red ball is on the table near the window.", "_family_idx": 0},
+            {"state": "A blue ball is on the table near the window.", "_family_idx": 1},
+        ]
+        # Low threshold — more aggressive dedup
+        kept_low, _ = dedup_families(families, threshold=0.5)
+        # High threshold — more permissive
+        kept_high, _ = dedup_families(families, threshold=0.95)
+        assert len(kept_high) >= len(kept_low)
+
+
+class TestMinHash:
+    def test_identical_texts_high_similarity(self):
+        lsh = LSHIndex(num_perm=128, bands=16)
+        mh1 = lsh.make_minhash("The quick brown fox jumps over the lazy dog")
+        mh2 = lsh.make_minhash("The quick brown fox jumps over the lazy dog")
+        assert mh1.jaccard(mh2) == 1.0
+
+    def test_different_texts_low_similarity(self):
+        lsh = LSHIndex(num_perm=128, bands=16)
+        mh1 = lsh.make_minhash("The quick brown fox jumps over the lazy dog")
+        mh2 = lsh.make_minhash("A completely unrelated sentence about quantum physics")
+        assert mh1.jaccard(mh2) < 0.3
+
+    def test_char_ngrams(self):
+        ngrams = _char_ngrams("hello world", n=3)
+        assert "hel" in ngrams
+        assert "llo" in ngrams
+        assert "wor" in ngrams
 
 
 class TestJsonCompact:
