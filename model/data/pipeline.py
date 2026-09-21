@@ -679,6 +679,16 @@ def load_codesearchnet() -> Iterator[TypedQuestion]:
 
 # --- Unified loader ---
 
+def load_synthetic() -> Iterator[TypedQuestion]:
+    synth_path = DATA_DIR / "synthetic" / "synthetic.jsonl"
+    if not synth_path.exists():
+        return
+    with synth_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            d = json.loads(line)
+            yield TypedQuestion(**d)
+
+
 LOADERS = {
     "banking77": load_banking77,
     "sst2": load_sst2,
@@ -698,6 +708,7 @@ LOADERS = {
     "mednli": load_mednli,
     "contractnli": load_contractnli,
     "codesearchnet": load_codesearchnet,
+    "synthetic": load_synthetic,
 }
 
 
