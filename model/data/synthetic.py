@@ -28,16 +28,13 @@ import time
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "probing" / "scripts"))
+_repo_root = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(_repo_root / "probing" / "scripts"))
+sys.path.insert(0, str(_repo_root / "_vendor"))
 
-_dotenv = Path(__file__).resolve().parents[2] / ".env"
-if _dotenv.exists():
-    with open(_dotenv) as _f:
-        for _line in _f:
-            _line = _line.strip()
-            if _line and not _line.startswith("#") and "=" in _line:
-                _key, _, _val = _line.partition("=")
-                os.environ.setdefault(_key.strip(), _val.strip())
+from dotenv import load_dotenv
+
+load_dotenv(_repo_root / ".env")
 
 from .format import TypedQuestion
 from .synthetic_label import LabelResult, label_items_sync, print_bucket_report
