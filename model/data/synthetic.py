@@ -369,6 +369,7 @@ async def _gen_single_variant(
     family: dict,
     variant_type: str,
     semaphore: asyncio.Semaphore,
+    model: str | None = None,
 ) -> dict | None:
     family_json = json.dumps(
         {k: v for k, v in family.items() if not k.startswith("_")},
@@ -377,7 +378,7 @@ async def _gen_single_variant(
     )
     async with semaphore:
         prompt = build_variant_prompt(family_json, variant_type)
-        content = await _llm_chat(client, LLM_VARIANT_MODEL, prompt)
+        content = await _llm_chat(client, model or LLM_VARIANT_MODEL, prompt)
         return _parse_json_response(content)
 
 

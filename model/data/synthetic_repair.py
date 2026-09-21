@@ -288,7 +288,7 @@ async def fill_variant_gaps(
     failed = 0
 
     async def _fill_one(fi: int, vt: str) -> tuple[int, str, bool]:
-        result = await _gen_single_variant(client, families[fi], vt, semaphore)
+        result = await _gen_single_variant(client, families[fi], vt, semaphore, model=model)
         if result:
             variants[fi][vt] = result
             return fi, vt, True
