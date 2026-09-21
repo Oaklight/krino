@@ -51,6 +51,7 @@ from .synthetic_templates import (
     build_variant_prompt,
     json_compact,
 )
+from .synthetic_dedup import dedup_families
 from .synthetic_validate import validate_family
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ LLM_JUDGE_MODEL = os.environ.get("LLM_JUDGE_MODEL", "gemini-2.0-flash")
 MAX_CONCURRENT = int(os.environ.get("SYNTH_MAX_CONCURRENT", "20"))
 MAX_RETRIES = 3
 
-ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "validate", "jev-label"]
+ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "dedup", "validate", "jev-label"]
 VARIANT_STAGES = {"counterfactual", "paraphrase", "negation"}
 
 
@@ -772,6 +773,15 @@ async def run_pipeline(
                     if loaded:
                         variants_by_domain[domain] = loaded
 
+            # Dedup
+            if "dedup" in stages and families_by_domain:
+                for domain in list(families_by_domain.keys()):
+                    families = families_by_domain[domain]
+                    kept, dropped = dedup_families(families, threshold=0.7)
+                    if dropped:
+                        families_by_domain[domain] = kept
+                        _save_jsonl(kept, DATA_DIR / f"{domain}_families.jsonl")
+
             # Validation
             if "validate" in stages and families_by_domain:
                 families_by_domain = await run_validate_stage(
@@ -785,6 +795,15 @@ async def run_pipeline(
             loaded_v = _load_jsonl(DATA_DIR / f"{domain}_variants.jsonl")
             if loaded_v:
                 variants_by_domain[domain] = loaded_v
+
+    # Dedup (works in both LLM and non-LLM paths)
+    if "dedup" in stages and families_by_domain and not needs_llm:
+        for domain in list(families_by_domain.keys()):
+            families = families_by_domain[domain]
+            kept, dropped = dedup_families(families, threshold=0.7)
+            if dropped:
+                families_by_domain[domain] = kept
+                _save_jsonl(kept, DATA_DIR / f"{domain}_families.jsonl")
 
     # Convert to TypedQuestion items
     all_items: list[dict[str, Any]] = []
