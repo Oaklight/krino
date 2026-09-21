@@ -130,6 +130,7 @@ def _forward_and_extract(
         return _ItemResult(task_loss, confidence, correctness, brier)
 
     elif q_type == "score":
+        # Local import to avoid circular dependency (calibration imports supervised.eval_epoch)
         from .supervised import _score_target, _soft_cross_entropy, _teacher_loss
 
         criteria = question["criteria"]
@@ -142,6 +143,7 @@ def _forward_and_extract(
         target_idx = max(0, min(n_levels - 1, target_idx))
         target = torch.tensor([target_idx], device=logits.device)
 
+        label_f = float(label)
         if teacher_probs:
             level_keys = [str(i) for i in range(n_levels)]
             task_loss = _teacher_loss(logits, teacher_probs, level_keys)
@@ -149,7 +151,7 @@ def _forward_and_extract(
             task_loss = focal_loss(
                 logits, target, gamma=cfg.gamma, label_smoothing=cfg.label_smoothing
             )
-        elif target_dist.argmax() == target_dist.sum():
+        elif label_f == int(label_f):
             task_loss = F.cross_entropy(logits, target)
         else:
             task_loss = _soft_cross_entropy(logits, target_dist.unsqueeze(0))

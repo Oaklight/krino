@@ -48,8 +48,8 @@ def _teacher_loss(logits: torch.Tensor, teacher_probs: dict, keys: list[str]) ->
     """KL-divergence against Jev teacher probability distribution."""
     teacher = torch.tensor([teacher_probs.get(k, 0.0) for k in keys], device=logits.device)
     teacher = teacher / teacher.sum().clamp(min=1e-9)
-    log_probs = F.log_softmax(logits, dim=-1).squeeze(0)
-    return F.kl_div(log_probs, teacher, reduction="batchmean")
+    log_probs = F.log_softmax(logits, dim=-1)
+    return F.kl_div(log_probs, teacher.unsqueeze(0), reduction="batchmean")
 
 
 def compute_loss(
@@ -102,8 +102,9 @@ def compute_loss(
         if teacher_probs:
             level_keys = [str(i) for i in range(n_levels)]
             return _teacher_loss(logits, teacher_probs, level_keys)
+        label_f = float(label)
         target = _score_target(label, n_levels, logits.device)
-        if target.argmax() == target.sum():
+        if label_f == int(label_f):
             return F.cross_entropy(logits, target.argmax().unsqueeze(0))
         return _soft_cross_entropy(logits, target.unsqueeze(0))
 
@@ -215,8 +216,9 @@ def eval_epoch(model: nn.Module, eval_items: list) -> dict[str, Any]:
             criteria = question["criteria"]
             n_levels = len(criteria)
             logits = model.forward_score(state, instructions, criteria)
+            label_f = float(label)
             target = _score_target(label, n_levels, logits.device)
-            if target.argmax() == target.sum():
+            if label_f == int(label_f):
                 loss = F.cross_entropy(logits, target.argmax().unsqueeze(0))
             else:
                 loss = _soft_cross_entropy(logits, target.unsqueeze(0))
