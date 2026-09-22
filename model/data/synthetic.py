@@ -346,6 +346,10 @@ async def run_base_stage(
         new_families = await asyncio.gather(*tasks)
         new_valid = [f for f in new_families if f is not None]
         all_families = cached + new_valid
+
+        # Sort by _family_idx to ensure stable ordering for variant alignment
+        all_families.sort(key=lambda f: f.get("_family_idx", 0))
+        _save_jsonl(all_families, families_path)
         result[domain] = all_families
 
         if dedup_dropped:
