@@ -138,21 +138,19 @@ def _compute_choice_batch(
     model: nn.Module,
     items: list,
 ) -> list[torch.Tensor | None]:
-    """Batch-compute choice losses: batch context encoding, per-item options + head."""
-    contexts = [f"{it.state} {it.question.get('instructions', '')}" for it in items]
-    ctx_pooled = model._encode_text(contexts)  # [N, hidden]
-
+    """Batch-compute choice losses: per-item full-sequence context + batched options."""
     losses: list[torch.Tensor | None] = []
-    for i, item in enumerate(items):
+    for item in items:
         criteria = item.question["criteria"]
         keys = list(criteria.keys())
         option_texts = [v or k for k, v in criteria.items()]
         teacher_probs = getattr(item, "teacher_probs", None)
 
+        context_text = f"{item.state} {item.question.get('instructions', '')}"
+        context_hidden = model._encode_with_sequence(context_text)  # [1, seq_len, hidden]
         option_pooled = model._encode_text(option_texts)  # [K, hidden]
-        ctx_seq = ctx_pooled[i:i+1].unsqueeze(1)  # [1, 1, hidden] — pooled as single-token sequence
         opt_hidden = option_pooled.unsqueeze(0)  # [1, K, hidden]
-        logits = model.choice_head(ctx_seq, opt_hidden)
+        logits = model.choice_head(context_hidden, opt_hidden)
 
         if teacher_probs:
             losses.append(_teacher_loss(logits, teacher_probs, keys))
@@ -169,20 +167,18 @@ def _compute_score_batch(
     model: nn.Module,
     items: list,
 ) -> list[torch.Tensor | None]:
-    """Batch-compute score losses: batch context encoding, per-item levels + head."""
-    contexts = [f"{it.state} {it.question.get('instructions', '')}" for it in items]
-    ctx_pooled = model._encode_text(contexts)  # [N, hidden]
-
+    """Batch-compute score losses: per-item full-sequence context + batched levels."""
     losses: list[torch.Tensor | None] = []
-    for i, item in enumerate(items):
+    for item in items:
         criteria = item.question["criteria"]
         n_levels = len(criteria)
         teacher_probs = getattr(item, "teacher_probs", None)
 
+        context_text = f"{item.state} {item.question.get('instructions', '')}"
+        context_hidden = model._encode_with_sequence(context_text)  # [1, seq_len, hidden]
         level_pooled = model._encode_text(criteria)  # [L, hidden]
-        ctx_seq = ctx_pooled[i:i+1].unsqueeze(1)  # [1, 1, hidden]
         lvl_hidden = level_pooled.unsqueeze(0)  # [1, L, hidden]
-        logits = model.score_head(ctx_seq, lvl_hidden)
+        logits = model.score_head(context_hidden, lvl_hidden)
 
         if teacher_probs:
             level_keys = [str(j) for j in range(n_levels)]
