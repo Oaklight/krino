@@ -344,8 +344,8 @@ def train(
     cosine = CosineAnnealingLR(optimizer, T_max=max(1, epochs - warmup_epochs))
     scheduler = SequentialLR(optimizer, schedulers=[warmup, cosine], milestones=[warmup_epochs])
 
-    print(f"Training: {sum(p.numel() for p in trainable)} trainable params")
-    print(f"  {len(train_items)} train items, {len(eval_items)} eval items, {epochs} epochs")
+    print(f"Training: {sum(p.numel() for p in trainable)} trainable params", flush=True)
+    print(f"  {len(train_items)} train items, {len(eval_items)} eval items, {epochs} epochs", flush=True)
 
     best_eval_loss = float("inf")
     history = []
@@ -384,7 +384,7 @@ def train(
                         "best_eval_loss": best_eval_loss,
                     }, checkpoint_dir / "training_state.pt")
         else:
-            print(f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} ({elapsed:.1f}s)")
+            print(f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} ({elapsed:.1f}s)", flush=True)
 
         history.append(log)
 
@@ -579,9 +579,9 @@ def train_multitask(
 
     sampler = MultitaskSampler(train_items, sampler_config, seed=seed)
 
-    print(f"Multi-task training: {sum(p.numel() for p in trainable)} trainable params")
-    print(f"  {len(train_items)} train items, {len(eval_items)} eval items")
-    print(f"  {epochs} epochs, epoch_size={sampler.epoch_size}, accumulation_steps={accumulation_steps}")
+    print(f"Multi-task training: {sum(p.numel() for p in trainable)} trainable params", flush=True)
+    print(f"  {len(train_items)} train items, {len(eval_items)} eval items", flush=True)
+    print(f"  {epochs} epochs, epoch_size={sampler.epoch_size}, accumulation_steps={accumulation_steps}", flush=True)
 
     best_eval_loss = float("inf")
     history: list[dict[str, Any]] = []
@@ -621,7 +621,7 @@ def train_multitask(
                 ts = by_type[t]
                 type_parts.append(f"{t}={ts['accuracy']:.3f}({ts['n_items']})")
             if type_parts:
-                print(f"    by_type: {' | '.join(type_parts)}")
+                print(f"    by_type: {' | '.join(type_parts)}", flush=True)
 
             if agg["mean_loss"] < best_eval_loss:
                 best_eval_loss = agg["mean_loss"]
@@ -638,7 +638,7 @@ def train_multitask(
                         checkpoint_dir / "training_state.pt",
                     )
         else:
-            print(f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} ({elapsed:.1f}s)")
+            print(f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} ({elapsed:.1f}s)", flush=True)
 
         history.append(log)
 
