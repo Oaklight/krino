@@ -1267,22 +1267,37 @@ def push_to_hf(repo_id: str, domains: list[str] | None = None) -> None:
     for fpath, repo_path in changed:
         logger.info("  %s (%dKB)", repo_path, fpath.stat().st_size // 1024)
 
-    # Upload via hf CLI (one file at a time for differential push)
+    # Upload files
     failed = 0
-    for fpath, repo_path in changed:
-        result = subprocess.run(
-            ["hf", "upload", repo_id, str(fpath), repo_path,
-             "--repo-type", "dataset"],
-            capture_output=True, text=True,
-        )
-        if result.returncode != 0:
-            logger.error("Failed to push %s: %s", repo_path, result.stderr[:200])
-            failed += 1
+    try:
+        from huggingface_hub import HfApi
+        api = HfApi()
+        for fpath, repo_path in changed:
+            try:
+                api.upload_file(
+                    path_or_fileobj=str(fpath),
+                    path_in_repo=repo_path,
+                    repo_id=repo_id,
+                    repo_type="dataset",
+                    commit_message=f"Update {repo_path}",
+                )
+            except Exception as exc:
+                logger.error("Failed to push %s: %s", repo_path, exc)
+                failed += 1
+    except ImportError:
+        for fpath, repo_path in changed:
+            result = subprocess.run(
+                ["hf", "upload", repo_id, str(fpath), repo_path,
+                 "--repo-type", "dataset"],
+                capture_output=True, text=True,
+            )
+            if result.returncode != 0:
+                logger.error("Failed to push %s: %s", repo_path, result.stderr[:200])
+                failed += 1
 
     if failed:
         logger.error("%d/%d files failed to push", failed, len(changed))
     else:
-        # Update manifest
         import json
         manifest_path.write_text(json.dumps(new_manifest, indent=2))
         logger.info(
