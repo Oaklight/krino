@@ -191,6 +191,7 @@ def main() -> int:
     seed = args.seed if args.seed is not None else cfg.get("seed", 42)
     device = args.device or cfg.get("device")
     accumulation_steps = cfg.get("accumulation_steps", 8)
+    batch_backbone = cfg.get("batch_backbone", 16)
     eval_every = cfg.get("eval_every", 2)
     rival_aware = cfg.get("rival_aware", False)
 
@@ -287,6 +288,7 @@ def main() -> int:
         eval_every=eval_every,
         accumulation_steps=accumulation_steps,
         seed=seed,
+        batch_backbone=batch_backbone,
     )
 
     # Print final eval summary
