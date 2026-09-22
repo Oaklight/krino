@@ -941,6 +941,17 @@ async def run_pipeline(
                     ]
                     _save_jsonl(variants_by_domain[domain], DATA_DIR / f"{domain}_variants.jsonl")
 
+    # Verify alignment before conversion
+    for domain, families in families_by_domain.items():
+        domain_variants = variants_by_domain.get(domain, [])
+        if domain_variants:
+            ok, issues = verify_alignment(families, domain_variants, domain)
+            if not ok:
+                logger.warning(
+                    "  %s: proceeding with %d misaligned family-variant pairs",
+                    domain, len(issues),
+                )
+
     # Convert to TypedQuestion items
     all_items: list[dict[str, Any]] = []
     for domain, families in families_by_domain.items():
@@ -1025,6 +1036,65 @@ async def run_pipeline(
 EXPECTED_PER_FAMILY = 35  # 9 base + 6 cf + 9 para-state + 4 para-q + 4 neg + ~3 shuffle
 
 
+def verify_alignment(
+    families: list[dict],
+    variants: list[dict],
+    domain: str,
+) -> tuple[bool, list[str]]:
+    """Check that families and variants are correctly paired.
+
+    Verifies that each variant's paraphrase original_instructions match the
+    corresponding family's actual instructions. Returns (ok, issues).
+    """
+    issues: list[str] = []
+
+    if len(families) != len(variants):
+        issues.append(
+            f"Count mismatch: {len(families)} families vs {len(variants)} variants"
+        )
+
+    for i in range(min(len(families), len(variants))):
+        fam = families[i]
+        var = variants[i]
+        if not var:
+            continue
+
+        fam_instrs = set()
+        for nq in fam.get("noul_questions", []):
+            fam_instrs.add(nq["instructions"])
+        for cq in fam.get("choice_questions", []):
+            fam_instrs.add(cq.get("instructions", ""))
+        for sq in fam.get("score_questions", []):
+            fam_instrs.add(sq.get("instructions", ""))
+
+        para = var.get("paraphrase") or {}
+        para_originals = set()
+        for qp in para.get("question_paraphrases") or []:
+            para_originals.add(qp["original_instructions"])
+
+        if not para_originals:
+            continue
+
+        overlap = len(fam_instrs & para_originals)
+        if overlap == 0:
+            fam_idx = fam.get("_family_idx", "?")
+            issues.append(
+                f"pos={i} fam_idx={fam_idx}: zero instruction overlap between family and variant"
+            )
+
+    ok = len(issues) == 0
+    if ok:
+        logger.info("  %s: alignment OK (%d families, %d variants)", domain, len(families), len(variants))
+    else:
+        logger.warning("  %s: %d alignment issues found", domain, len(issues))
+        for issue in issues[:5]:
+            logger.warning("    %s", issue)
+        if len(issues) > 5:
+            logger.warning("    ... and %d more", len(issues) - 5)
+
+    return ok, issues
+
+
 def run_report(domains: list[str]) -> None:
     """Report generation status for each domain from cached files."""
     from collections import Counter
@@ -1045,6 +1115,9 @@ def run_report(domains: list[str]) -> None:
         variants = _load_jsonl(DATA_DIR / f"{domain}_variants.jsonl")
         n_fam = len(families)
         n_var = len(variants)
+
+        # Alignment check
+        verify_alignment(families, variants, domain)
 
         items: list[dict] = []
         for idx, fam in enumerate(families):
