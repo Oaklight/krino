@@ -4,9 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "model/data/benchmarks/synthetic/**_families.jsonl"
-      - "model/data/benchmarks/synthetic/**_variants.jsonl"
-      - "model/data/benchmarks/synthetic/README*.md"
+      - "model/data/benchmarks/synthetic/**"
   workflow_dispatch:
 
 jobs:
