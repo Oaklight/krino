@@ -77,7 +77,7 @@ def load_source_items(
     path = resolve_path(path_str)
 
     if not path.exists():
-        print(f"  WARNING: {path} not found, skipping {source_name}", file=sys.stderr)
+        print(f"  WARNING: {path} not found, skipping {source_name}", file=sys.stderr, flush=True)
         return [], []
 
     items = load_jsonl(path)
@@ -153,17 +153,17 @@ def print_data_summary(
     for item in eval_items:
         eval_by_source[item.source] += 1
 
-    print("\n  Data summary:")
-    print(f"  {'Source':<20} {'Train':>8} {'Eval':>8}")
-    print(f"  {'-'*20} {'-'*8} {'-'*8}")
+    print("\n  Data summary:", flush=True)
+    print(f"  {'Source':<20} {'Train':>8} {'Eval':>8}", flush=True)
+    print(f"  {'-'*20} {'-'*8} {'-'*8}", flush=True)
     all_sources = sorted(set(list(train_by_source.keys()) + list(eval_by_source.keys())))
     for source in all_sources:
         t = train_by_source.get(source, 0)
         e = eval_by_source.get(source, 0)
-        print(f"  {source:<20} {t:>8,} {e:>8,}")
-    print(f"  {'TOTAL':<20} {len(train_items):>8,} {len(eval_items):>8,}")
+        print(f"  {source:<20} {t:>8,} {e:>8,}", flush=True)
+    print(f"  {'TOTAL':<20} {len(train_items):>8,} {len(eval_items):>8,}", flush=True)
 
-    print(f"\n  Type distribution (train): {dict(train_by_type)}")
+    print(f"\n  Type distribution (train): {dict(train_by_type)}", flush=True)
 
 
 def main() -> int:
@@ -208,14 +208,14 @@ def main() -> int:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-    print(f"=== Multi-task training ===")
-    print(f"Backbone: {model_name} ({'encoder' if use_encoder else 'causal'})")
-    print(f"Config: {args.config}")
+    print(f"=== Multi-task training ===", flush=True)
+    print(f"Backbone: {model_name} ({'encoder' if use_encoder else 'causal'})", flush=True)
+    print(f"Config: {args.config}", flush=True)
 
     # Load data from all sources
     sources_cfg = cfg.get("sources", {})
     if not sources_cfg:
-        print("Error: no sources defined in config", file=sys.stderr)
+        print("Error: no sources defined in config", file=sys.stderr, flush=True)
         return 1
 
     rng = random.Random(seed)
@@ -231,12 +231,12 @@ def main() -> int:
         n_train = len(train_items)
         n_eval = len(eval_items)
         if n_train > 0 or n_eval > 0:
-            print(f"  {source_name}: {n_train} train, {n_eval} eval")
+            print(f"  {source_name}: {n_train} train, {n_eval} eval", flush=True)
 
     print_data_summary(all_train, all_eval)
 
     # Load backbone and build model
-    print(f"\nLoading backbone: {model_name}")
+    print(f"\nLoading backbone: {model_name}", flush=True)
     if use_encoder:
         backbone, tokenizer = load_encoder(model_name, device=device, freeze=True)
     else:
@@ -248,17 +248,17 @@ def main() -> int:
         rank=rank,
         rival_aware=rival_aware,
     )
-    print(f"Trainable: {model.trainable_parameters():,} params")
-    print(f"Frozen:    {model.frozen_parameters():,} params")
+    print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
+    print(f"Frozen:    {model.frozen_parameters():,} params", flush=True)
 
     # Load heads if specified
     if args.load_heads:
-        print(f"Loading heads from {args.load_heads}")
+        print(f"Loading heads from {args.load_heads}", flush=True)
         model.load_heads(args.load_heads)
 
     # Eval-only mode
     if args.eval_only:
-        print("\n=== Eval-only mode ===")
+        print("\n=== Eval-only mode ===", flush=True)
         eval_stats = eval_epoch_detailed(model, all_eval)
         _print_detailed_eval(eval_stats)
 
@@ -266,7 +266,7 @@ def main() -> int:
             output = Path(output)
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_text(json.dumps(eval_stats, indent=2, default=str))
-            print(f"\nResults saved to {output}")
+            print(f"\nResults saved to {output}", flush=True)
         return 0
 
     # Build sampler config
@@ -299,7 +299,7 @@ def main() -> int:
             break
 
     if last_eval:
-        print("\n=== Final eval ===")
+        print("\n=== Final eval ===", flush=True)
         _print_detailed_eval(last_eval)
 
     # Save results
@@ -307,7 +307,7 @@ def main() -> int:
         output = Path(output)
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(results, indent=2, default=str))
-        print(f"\nResults saved to {output}")
+        print(f"\nResults saved to {output}", flush=True)
 
     return 0
 
@@ -315,19 +315,19 @@ def main() -> int:
 def _print_detailed_eval(eval_stats: dict) -> None:
     """Print formatted detailed eval results."""
     agg = eval_stats["aggregate"]
-    print(f"  Aggregate: loss={agg['mean_loss']:.4f} acc={agg['accuracy']:.4f} ({agg['n_items']} items)")
+    print(f"  Aggregate: loss={agg['mean_loss']:.4f} acc={agg['accuracy']:.4f} ({agg['n_items']} items)", flush=True)
 
     by_type = eval_stats.get("by_type", {})
     if by_type:
-        print("\n  By type:")
+        print("\n  By type:", flush=True)
         for t in sorted(by_type):
             ts = by_type[t]
-            print(f"    {t:<10} loss={ts['mean_loss']:.4f} acc={ts['accuracy']:.4f} ({ts['n_items']} items)")
+            print(f"    {t:<10} loss={ts['mean_loss']:.4f} acc={ts['accuracy']:.4f} ({ts['n_items']} items)", flush=True)
 
     by_source = eval_stats.get("by_source", {})
     if by_source:
-        print(f"\n  {'Source':<20} {'Type':<8} {'Loss':>8} {'Acc':>8} {'N':>6}")
-        print(f"  {'-'*20} {'-'*8} {'-'*8} {'-'*8} {'-'*6}")
+        print(f"\n  {'Source':<20} {'Type':<8} {'Loss':>8} {'Acc':>8} {'N':>6}", flush=True)
+        print(f"  {'-'*20} {'-'*8} {'-'*8} {'-'*8} {'-'*6}", flush=True)
         for src in sorted(by_source):
             ss = by_source[src]
             print(
