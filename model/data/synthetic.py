@@ -1208,39 +1208,87 @@ def run_report(domains: list[str]) -> None:
     )
 
 
-def push_to_hf(repo_id: str, path: Path | None = None) -> None:
-    """Push synthetic data to a HuggingFace dataset repository."""
+def push_to_hf(repo_id: str, domains: list[str] | None = None) -> None:
+    """Push per-domain data files to HuggingFace. Only uploads files that exist locally.
+
+    Each machine pushes its own domains — HF repo is the merge point.
+    READMEs are always pushed if present.
+    """
+    import hashlib
     import subprocess
 
-    if path is None:
-        path = DATA_DIR / "synthetic.jsonl"
+    files_to_push: list[tuple[Path, str]] = []
 
-    if not path.exists():
-        logger.error("%s does not exist. Generate data first.", path)
+    # Per-domain files
+    target_domains = domains or list(DOMAIN_TEMPLATES.keys())
+    for domain in target_domains:
+        for suffix in ("_families.jsonl", "_variants.jsonl"):
+            fpath = DATA_DIR / f"{domain}{suffix}"
+            if fpath.exists():
+                files_to_push.append((fpath, f"{domain}{suffix}"))
+
+    # READMEs
+    for readme in ("README.md", "README_en.md", "README_zh.md"):
+        rpath = DATA_DIR / readme
+        if rpath.exists():
+            files_to_push.append((rpath, readme))
+
+    if not files_to_push:
+        logger.warning("No files to push. Generate data first.")
         return
 
-    try:
-        from huggingface_hub import HfApi
-        api = HfApi()
-        api.upload_file(
-            path_or_fileobj=str(path),
-            path_in_repo="synthetic.jsonl",
-            repo_id=repo_id,
-            repo_type="dataset",
-            commit_message=f"Update synthetic data ({path.stat().st_size // 1024}KB)",
-        )
-        logger.info("Pushed %s to https://huggingface.co/datasets/%s", path, repo_id)
-    except ImportError:
+    # Check manifest for differential push
+    manifest_path = DATA_DIR / ".hf_manifest.json"
+    old_manifest: dict[str, str] = {}
+    if manifest_path.exists():
+        import json
+        old_manifest = json.loads(manifest_path.read_text())
+
+    def _file_hash(path: Path) -> str:
+        return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+
+    changed: list[tuple[Path, str]] = []
+    new_manifest: dict[str, str] = dict(old_manifest)
+    for fpath, repo_path in files_to_push:
+        h = _file_hash(fpath)
+        if old_manifest.get(repo_path) != h:
+            changed.append((fpath, repo_path))
+        new_manifest[repo_path] = h
+
+    if not changed:
+        logger.info("All files up to date on HF. Nothing to push.")
+        return
+
+    total_kb = sum(f.stat().st_size for f, _ in changed) // 1024
+    logger.info(
+        "Pushing %d changed files (%dKB) to %s...",
+        len(changed), total_kb, repo_id,
+    )
+    for fpath, repo_path in changed:
+        logger.info("  %s (%dKB)", repo_path, fpath.stat().st_size // 1024)
+
+    # Upload via hf CLI (one file at a time for differential push)
+    failed = 0
+    for fpath, repo_path in changed:
         result = subprocess.run(
-            ["huggingface-cli", "upload", "--repo-type", "dataset",
-             repo_id, str(path), "synthetic.jsonl"],
+            ["hf", "upload", repo_id, str(fpath), repo_path,
+             "--repo-type", "dataset"],
             capture_output=True, text=True,
         )
-        if result.returncode == 0:
-            logger.info("Pushed %s to https://huggingface.co/datasets/%s", path, repo_id)
-        else:
-            logger.error("HF upload failed: %s", result.stderr)
-            logger.error("Install huggingface_hub: pip install huggingface_hub")
+        if result.returncode != 0:
+            logger.error("Failed to push %s: %s", repo_path, result.stderr[:200])
+            failed += 1
+
+    if failed:
+        logger.error("%d/%d files failed to push", failed, len(changed))
+    else:
+        # Update manifest
+        import json
+        manifest_path.write_text(json.dumps(new_manifest, indent=2))
+        logger.info(
+            "Pushed %d files to https://huggingface.co/datasets/%s",
+            len(changed), repo_id,
+        )
 
 
 def main() -> int:
@@ -1340,7 +1388,7 @@ def main() -> int:
         run_report(args.domains or list(DOMAIN_TEMPLATES.keys()))
 
     if args.push_to_hf:
-        push_to_hf(args.push_to_hf)
+        push_to_hf(args.push_to_hf, domains=args.domains)
 
     return 0
 
