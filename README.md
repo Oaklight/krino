@@ -76,8 +76,8 @@ python model/scripts/eval_logit.py --model Qwen/Qwen3-0.6B
 
 # Train decision heads on a frozen backbone
 python model/scripts/train.py --encoder --model answerdotai/ModernBERT-base \
-    --train-data model/data/benchmarks/banking77.jsonl \
-    --eval-data model/data/benchmarks/banking77.jsonl \
+    --train-data data/benchmarks/banking77.jsonl \
+    --eval-data data/benchmarks/banking77.jsonl \
     --epochs 5
 ```
 
