@@ -695,14 +695,43 @@ def family_to_typed_questions(
                         ).to_dict()
                     )
 
-            q_paras = {
-                qp["original_instructions"]: qp["paraphrased_instructions"]
-                for qp in para.get("question_paraphrases", [])
-            }
-            if q_paras:
+            q_paras_list = para.get("question_paraphrases", [])
+            if q_paras_list:
+                def _normalize(s: str) -> str:
+                    return " ".join(s.lower().split())
+
+                def _fuzzy_match_para(target: str, paras: list[dict]) -> str | None:
+                    target_norm = _normalize(target)
+                    # Exact match first
+                    for qp in paras:
+                        if qp["original_instructions"] == target:
+                            return qp["paraphrased_instructions"]
+                    # Normalized match
+                    for qp in paras:
+                        if _normalize(qp["original_instructions"]) == target_norm:
+                            return qp["paraphrased_instructions"]
+                    # Substring containment (either direction)
+                    for qp in paras:
+                        orig_norm = _normalize(qp["original_instructions"])
+                        if target_norm in orig_norm or orig_norm in target_norm:
+                            return qp["paraphrased_instructions"]
+                    # Token overlap (Jaccard > 0.6)
+                    target_tokens = set(target_norm.split())
+                    best_score, best_para = 0.0, None
+                    for qp in paras:
+                        orig_tokens = set(_normalize(qp["original_instructions"]).split())
+                        inter = len(target_tokens & orig_tokens)
+                        union = len(target_tokens | orig_tokens)
+                        score = inter / union if union else 0
+                        if score > best_score:
+                            best_score, best_para = score, qp["paraphrased_instructions"]
+                    if best_score >= 0.6:
+                        return best_para
+                    return None
+
                 for nq in family.get("noul_questions", []):
                     ct = nq.get("cognitive_type", "unknown")
-                    new_instr = q_paras.get(nq["instructions"])
+                    new_instr = _fuzzy_match_para(nq["instructions"], q_paras_list)
                     if new_instr:
                         items.append(
                             TypedQuestion.noul(

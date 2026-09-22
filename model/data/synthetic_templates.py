@@ -531,10 +531,20 @@ IMPORTANT:
 - Output ONLY the JSON object, no other text"""
 
 
+_VARIANT_CONTEXT = (
+    "You are generating synthetic training data for a machine learning model "
+    "that evaluates typed decisions. The data is used for academic research "
+    "on model calibration and decision quality. All content is fictional and "
+    "for training purposes only."
+)
+
+
 def build_variant_prompt(family_json: str, variant_type: str) -> str:
     """Build prompt for generating a variant of an existing family."""
     if variant_type == "counterfactual":
-        return f"""Given this training example, create a COUNTERFACTUAL variant.
+        return f"""{_VARIANT_CONTEXT}
+
+Given this training example, create a COUNTERFACTUAL variant.
 
 ORIGINAL:
 {family_json}
@@ -559,7 +569,9 @@ Respond with a JSON object:
 Output ONLY the JSON object."""
 
     elif variant_type == "paraphrase":
-        return f"""Given this training example, create TWO paraphrase variants.
+        return f"""{_VARIANT_CONTEXT}
+
+Given this training example, create TWO paraphrase variants.
 
 ORIGINAL:
 {family_json}
@@ -583,7 +595,9 @@ Respond with a JSON object:
 Output ONLY the JSON object."""
 
     elif variant_type == "negation":
-        return f"""Given this training example, create NEGATION variants for each noul question.
+        return f"""{_VARIANT_CONTEXT}
+
+Given this training example, create NEGATION variants for each noul question.
 
 ORIGINAL:
 {family_json}
