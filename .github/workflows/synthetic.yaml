@@ -1,0 +1,68 @@
+name: Sync Synthetic Data to HuggingFace
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "model/data/benchmarks/synthetic/**_families.jsonl"
+      - "model/data/benchmarks/synthetic/**_variants.jsonl"
+      - "model/data/benchmarks/synthetic/README*.md"
+  workflow_dispatch:
+
+jobs:
+  sync-to-hf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: List synthetic data files
+        run: |
+          echo "=== Domain files ==="
+          for f in model/data/benchmarks/synthetic/*_families.jsonl; do
+            domain=$(basename "$f" _families.jsonl)
+            fam=$(wc -l < "$f")
+            var=$(wc -l < "model/data/benchmarks/synthetic/${domain}_variants.jsonl" 2>/dev/null || echo 0)
+            echo "  $domain: families=$fam variants=$var"
+          done
+          echo "=== Total size ==="
+          du -sh model/data/benchmarks/synthetic/
+
+      - name: Push to HuggingFace
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          pip install -q huggingface_hub
+          python3 - << 'PYEOF'
+          import os
+          from pathlib import Path
+          from huggingface_hub import HfApi
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          repo_id = "oaklight/open-decisions-synthetic"
+          data_dir = Path("model/data/benchmarks/synthetic")
+
+          # Collect files to upload
+          files = []
+          for f in sorted(data_dir.glob("*_families.jsonl")):
+              files.append((f, f.name))
+          for f in sorted(data_dir.glob("*_variants.jsonl")):
+              files.append((f, f.name))
+          for f in sorted(data_dir.glob("README*.md")):
+              files.append((f, f.name))
+
+          print(f"Uploading {len(files)} files to {repo_id}")
+          for fpath, repo_path in files:
+              print(f"  {repo_path} ({fpath.stat().st_size // 1024}KB)")
+
+          # Upload as a single commit
+          commit = os.environ.get("GITHUB_SHA", "unknown")[:8]
+          api.upload_folder(
+              folder_path=str(data_dir),
+              repo_id=repo_id,
+              repo_type="dataset",
+              path_in_repo=".",
+              commit_message=f"Sync synthetic data @ {commit}",
+              allow_patterns=["*_families.jsonl", "*_variants.jsonl", "README*.md"],
+          )
+          print(f"Pushed to https://huggingface.co/datasets/{repo_id}")
+          PYEOF
