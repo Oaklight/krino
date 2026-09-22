@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "probing" / "scripts"))
 
 from jev_client import JevClient
-from model.data.pipeline import load_jsonl
+from data.pipeline import load_jsonl
 from model.evaluation.accuracy import noul_accuracy, choice_accuracy, score_mae
 from model.evaluation.calibration import expected_calibration_error, brier_score
 
@@ -165,7 +165,7 @@ def main() -> int:
             str(p) for p in benchmarks.rglob("*.jsonl") if not p.stem.endswith("_raw")
         )
         if not dataset_paths:
-            print("No datasets found. Run data pipeline first: python -m model.data.pipeline")
+            print("No datasets found. Run data pipeline first: python -m data.pipeline")
             return 1
 
     all_results = {}

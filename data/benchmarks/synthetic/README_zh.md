@@ -60,30 +60,30 @@ Family {
 
 ```bash
 # 完整运行：全部 10 个领域，每个 200 个家族
-python -m model.data.synthetic
+python -m data.synthetic
 
 # 试运行：单领域 10 个家族
-python -m model.data.synthetic --domains spatial_reasoning --pilot
+python -m data.synthetic --domains spatial_reasoning --pilot
 
 # 仅生成基础家族（不生成变体）
-python -m model.data.synthetic --stages base --domains education_assessment
+python -m data.synthetic --stages base --domains education_assessment
 
 # 为已有家族添加变体
-python -m model.data.synthetic --stages counterfactual,paraphrase,negation
+python -m data.synthetic --stages counterfactual,paraphrase,negation
 
 # 仅去重（无 LLM 调用）
-python -m model.data.synthetic --stages dedup
+python -m data.synthetic --stages dedup
 
 # 仅 Jev 软标签
-python -m model.data.synthetic --stages jev-label
+python -m data.synthetic --stages jev-label
 
 # 推送到 HuggingFace
-python -m model.data.synthetic --push-to-hf Oaklight/jev-synthetic
+python -m data.synthetic --push-to-hf Oaklight/jev-synthetic
 
 # 自定义并发和模型
 LLM_GEN_MODEL="argo:claude-sonnet-4.6" \
 LLM_VARIANT_MODEL="argo:gpt-4.1" \
-python -m model.data.synthetic --max-concurrent 10
+python -m data.synthetic --max-concurrent 10
 ```
 
 ## 配置
@@ -101,7 +101,7 @@ LLM_JUDGE_MODEL=gemini-2.0-flash
 ## 文件结构
 
 ```
-model/data/benchmarks/synthetic/
+data/benchmarks/synthetic/
 ├── README_en.md                         # 英文版
 ├── README_zh.md                         # 本文件
 ├── README.md -> README_en.md            # 符号链接

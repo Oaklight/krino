@@ -4,9 +4,9 @@ on:
   push:
     branches: [main]
     paths:
-      - "model/data/benchmarks/synthetic/**_families.jsonl"
-      - "model/data/benchmarks/synthetic/**_variants.jsonl"
-      - "model/data/benchmarks/synthetic/README*.md"
+      - "data/benchmarks/synthetic/**_families.jsonl"
+      - "data/benchmarks/synthetic/**_variants.jsonl"
+      - "data/benchmarks/synthetic/README*.md"
   workflow_dispatch:
 
 jobs:
@@ -18,14 +18,14 @@ jobs:
       - name: List synthetic data files
         run: |
           echo "=== Domain files ==="
-          for f in model/data/benchmarks/synthetic/*_families.jsonl; do
+          for f in data/benchmarks/synthetic/*_families.jsonl; do
             domain=$(basename "$f" _families.jsonl)
             fam=$(wc -l < "$f")
-            var=$(wc -l < "model/data/benchmarks/synthetic/${domain}_variants.jsonl" 2>/dev/null || echo 0)
+            var=$(wc -l < "data/benchmarks/synthetic/${domain}_variants.jsonl" 2>/dev/null || echo 0)
             echo "  $domain: families=$fam variants=$var"
           done
           echo "=== Total size ==="
-          du -sh model/data/benchmarks/synthetic/
+          du -sh data/benchmarks/synthetic/
 
       - name: Push to HuggingFace
         env:
@@ -39,7 +39,7 @@ jobs:
 
           api = HfApi(token=os.environ["HF_TOKEN"])
           repo_id = "oaklight/open-decisions-synthetic"
-          data_dir = Path("model/data/benchmarks/synthetic")
+          data_dir = Path("data/benchmarks/synthetic")
 
           # Collect files to upload
           files = []

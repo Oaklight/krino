@@ -6,11 +6,11 @@ Hybrid approach:
 - All items get Jev API soft labels
 
 Composable stages — run all at once or independently:
-    python -m model.data.synthetic --stages base                     # families only
-    python -m model.data.synthetic --stages counterfactual,paraphrase,negation  # variants
-    python -m model.data.synthetic --stages validate                 # cross-model check
-    python -m model.data.synthetic --stages jev-label                # Jev soft labels
-    python -m model.data.synthetic                                   # all stages
+    python -m data.synthetic --stages base                     # families only
+    python -m data.synthetic --stages counterfactual,paraphrase,negation  # variants
+    python -m data.synthetic --stages validate                 # cross-model check
+    python -m data.synthetic --stages jev-label                # Jev soft labels
+    python -m data.synthetic                                   # all stages
 
 Each stage reads/writes to DATA_DIR. Stages can be rerun independently.
 Resume: cached families/variants on disk are reused automatically.
@@ -29,7 +29,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-_repo_root = Path(__file__).resolve().parents[2]
+_repo_root = Path(__file__).resolve().parents[1]
 # _vendor contains zerodep httpclient (async HTTP) and dotenv
 # probing/scripts contains jev_client (Jev API, used by jev-label stage)
 sys.path.insert(0, str(_repo_root / "_vendor"))

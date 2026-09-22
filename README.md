@@ -69,7 +69,7 @@ pip install -e '.[train]'   # + training dependencies
 
 ```bash
 # Download and convert benchmarks
-python -m model.data.pipeline banking77 sst2
+python -m data.pipeline banking77 sst2
 
 # Evaluate a backbone (zero-training logit readout)
 python model/scripts/eval_logit.py --model Qwen/Qwen3-0.6B

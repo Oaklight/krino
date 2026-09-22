@@ -16,7 +16,7 @@ sys.path.insert(0, str(ROOT))
 
 from model.src.backbone import load_causal_lm, load_encoder
 from model.src.decision_model import DecisionModel
-from model.data.pipeline import load_jsonl
+from data.pipeline import load_jsonl
 from model.training.supervised import train
 
 
