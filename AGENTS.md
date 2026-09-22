@@ -14,7 +14,7 @@ This is a research project replicating TypeSafe AI's Jev "System One" model. The
 
 ## Working With Data
 
-- Synthetic data pipeline: `python -m model.data.synthetic --help`
+- Synthetic data pipeline: `python -m data.synthetic --help`
 - Data is gitignored — stored on HuggingFace (`oaklight/open-decisions-synthetic`)
 - After generating data, push to HF: `--push-to-hf oaklight/open-decisions-synthetic`
 - Use `--stages report` to check generation status without running anything
@@ -23,13 +23,13 @@ This is a research project replicating TypeSafe AI's Jev "System One" model. The
 
 | Path | Purpose |
 |---|---|
-| `model/data/format.py` | `TypedQuestion` dataclass — the universal data format |
-| `model/data/synthetic.py` | Synthetic data generation pipeline orchestrator |
-| `model/data/pipeline.py` | Benchmark data loaders (18 sources + synthetic) |
+| `data/format.py` | `TypedQuestion` dataclass — the universal data format |
+| `data/synthetic.py` | Synthetic data generation pipeline orchestrator |
+| `data/pipeline.py` | Benchmark data loaders (18 sources + synthetic) |
 | `probing/scripts/jev_client.py` | Jev API client (stdlib only) |
 | `_vendor/httpclient.py` | Zerodep async/sync HTTP client |
 | `_vendor/dotenv.py` | Zerodep .env parser |
-| `model/data/lsh.py` | Standalone MinHash/LSH module |
+| `data/lsh.py` | Standalone MinHash/LSH module |
 
 ## Before Committing
 

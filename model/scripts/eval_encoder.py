@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from model.src.encoder_scorer import EncoderScorer, load_encoder
-from model.data.pipeline import load_jsonl
+from data.pipeline import load_jsonl
 from model.evaluation.accuracy import noul_accuracy, choice_accuracy, score_mae
 from model.evaluation.calibration import expected_calibration_error, brier_score
 

@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 from model.src.backbone import load_causal_lm, load_encoder
 from model.src.decision_model import DecisionModel
-from model.data.pipeline import load_jsonl
+from data.pipeline import load_jsonl
 from model.evaluation.accuracy import noul_accuracy, choice_accuracy
 from model.evaluation.calibration import expected_calibration_error, brier_score
 

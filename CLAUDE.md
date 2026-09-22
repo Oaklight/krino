@@ -28,9 +28,9 @@ tests/            — pytest test suite
 
 ### Synthetic Data Pipeline
 
-- Pipeline entry: `python -m model.data.synthetic`
+- Pipeline entry: `python -m data.synthetic`
 - Composable stages: `--stages base,counterfactual,paraphrase,negation,shuffle,fill-variants,repair,dedup,validate,llm-label,jev-label,report`
-- Data lives in `model/data/benchmarks/synthetic/` (gitignored)
+- Data lives in `data/benchmarks/synthetic/` (gitignored)
 - Data is stored on HuggingFace: `oaklight/open-decisions-synthetic` (private)
 - Config via `.env` at repo root (LLM_BASE_URL, LLM_API_KEY, etc.)
 
@@ -42,7 +42,7 @@ tests/            — pytest test suite
 
 ### Data Format
 
-- `TypedQuestion` dataclass in `model/data/format.py` — the universal format
+- `TypedQuestion` dataclass in `data/format.py` — the universal format
 - Three question types: noul (bool), choice (str), score (float)
 - `teacher_probs` field: multi-teacher namespaced dict `{"jev": {...}, "gpt_5_6_luna": {...}}`
 
@@ -63,8 +63,8 @@ tests/            — pytest test suite
 
 ```bash
 # Push synthetic data to HF
-python -m model.data.synthetic --push-to-hf oaklight/open-decisions-synthetic
+python -m data.synthetic --push-to-hf oaklight/open-decisions-synthetic
 
 # Or via CLI
-hf upload oaklight/open-decisions-synthetic model/data/benchmarks/synthetic/ . --repo-type dataset
+hf upload oaklight/open-decisions-synthetic data/benchmarks/synthetic/ . --repo-type dataset
 ```

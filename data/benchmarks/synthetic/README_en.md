@@ -60,30 +60,30 @@ Each stage is independently runnable and resumes from cached intermediates:
 
 ```bash
 # Full run: all 10 domains, 200 families each, all stages
-python -m model.data.synthetic
+python -m data.synthetic
 
 # Pilot: 10 families in one domain
-python -m model.data.synthetic --domains spatial_reasoning --pilot
+python -m data.synthetic --domains spatial_reasoning --pilot
 
 # Base families only (no variants)
-python -m model.data.synthetic --stages base --domains education_assessment
+python -m data.synthetic --stages base --domains education_assessment
 
 # Add variants to existing families
-python -m model.data.synthetic --stages counterfactual,paraphrase,negation
+python -m data.synthetic --stages counterfactual,paraphrase,negation
 
 # Dedup only (no LLM calls)
-python -m model.data.synthetic --stages dedup
+python -m data.synthetic --stages dedup
 
 # Jev soft labels only
-python -m model.data.synthetic --stages jev-label
+python -m data.synthetic --stages jev-label
 
 # Push to HuggingFace
-python -m model.data.synthetic --push-to-hf Oaklight/jev-synthetic
+python -m data.synthetic --push-to-hf Oaklight/jev-synthetic
 
 # Custom concurrency and models
 LLM_GEN_MODEL="argo:claude-sonnet-4.6" \
 LLM_VARIANT_MODEL="argo:gpt-4.1" \
-python -m model.data.synthetic --max-concurrent 10
+python -m data.synthetic --max-concurrent 10
 ```
 
 ## Configuration
@@ -101,7 +101,7 @@ LLM_JUDGE_MODEL=gemini-2.0-flash
 ## File Layout
 
 ```
-model/data/benchmarks/synthetic/
+data/benchmarks/synthetic/
 ├── README_en.md                         # This file
 ├── README_zh.md                         # Chinese version
 ├── README.md -> README_en.md            # Symlink

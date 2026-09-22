@@ -82,8 +82,8 @@ The final `TypedQuestion` items are assembled deterministically from these files
 
 ```bash
 pip install jev-explore
-python -m model.data.synthetic --stages report   # verify data
-python -m model.data.pipeline synthetic           # load as TypedQuestion objects
+python -m data.synthetic --stages report   # verify data
+python -m data.pipeline synthetic           # load as TypedQuestion objects
 ```
 
 ## Item Format

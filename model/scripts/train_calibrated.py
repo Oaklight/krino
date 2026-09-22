@@ -32,7 +32,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from model.data.pipeline import load_jsonl
+from data.pipeline import load_jsonl
 from model.src.backbone import load_causal_lm, load_encoder
 from model.src.decision_model import DecisionModel
 from model.training.calibration import CalibrationLossConfig, train

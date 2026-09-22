@@ -21,7 +21,7 @@ def compare_on_dataset(
         jev_api_key: if provided, also run through Jev API for comparison
         max_items: limit items for quick tests
     """
-    from model.data.pipeline import load_jsonl
+    from data.pipeline import load_jsonl
 
     items = load_jsonl(dataset_path)
     if max_items:
