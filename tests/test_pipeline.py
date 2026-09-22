@@ -17,8 +17,8 @@ from unittest.mock import patch
 
 import pytest
 
-from model.data import pipeline
-from model.data.format import TypedQuestion
+from data import pipeline
+from data.format import TypedQuestion
 
 # ---------------------------------------------------------------------------
 # Mock data factories
@@ -458,14 +458,14 @@ class TestBalanceCaps:
     """Verify balance.py DEFAULT_CAPS are consistent with registered loaders."""
 
     def test_caps_reference_valid_sources(self):
-        from model.data.balance import DEFAULT_CAPS
+        from data.balance import DEFAULT_CAPS
         for source in DEFAULT_CAPS:
             assert source in pipeline.LOADERS, (
                 f"DEFAULT_CAPS references unknown source '{source}'"
             )
 
     def test_caps_are_positive(self):
-        from model.data.balance import DEFAULT_CAPS
+        from data.balance import DEFAULT_CAPS
         for source, cap in DEFAULT_CAPS.items():
             assert isinstance(cap, int) and cap > 0, (
                 f"DEFAULT_CAPS['{source}'] should be positive int, got {cap}"
