@@ -10,16 +10,16 @@ import json
 
 import pytest
 
-from model.data.format import TypedQuestion
-from model.data.lsh import LSHIndex, MinHash, char_ngrams
-from model.data.synthetic_dedup import dedup_families
-from model.data.synthetic_label import (
+from data.format import TypedQuestion
+from data.lsh import LSHIndex, MinHash, char_ngrams
+from data.synthetic_dedup import dedup_families
+from data.synthetic_label import (
     CONFIDENCE_BUCKETS,
     LabelResult,
     _bucket_confidence,
     _extract_probs,
 )
-from model.data.synthetic_templates import (
+from data.synthetic_templates import (
     COGNITIVE_TYPE_DESCRIPTIONS,
     COGNITIVE_TYPES,
     DOMAIN_TEMPLATES,
@@ -31,7 +31,7 @@ from model.data.synthetic_templates import (
     build_variant_prompt,
     json_compact,
 )
-from model.data.synthetic_validate import ValidationResult
+from data.synthetic_validate import ValidationResult
 
 
 # --- Template tests ---
@@ -61,7 +61,7 @@ class TestDomainTemplates:
             assert len(st["criteria"]) >= 2, f"{domain} score needs >= 2 levels"
 
     def test_seeded_domains_have_valid_source(self):
-        from model.data.pipeline import LOADERS
+        from data.pipeline import LOADERS
         for domain in SEEDED_DOMAINS:
             source = DOMAIN_TEMPLATES[domain]["seed_source"]
             assert source in LOADERS, f"{domain} seed_source {source!r} not in LOADERS"
@@ -170,7 +170,7 @@ class TestFamilyConversion:
     }
 
     def test_base_items_count(self):
-        from model.data.synthetic import family_to_typed_questions
+        from data.synthetic import family_to_typed_questions
         items = family_to_typed_questions(
             self.SAMPLE_FAMILY, {}, "medical_triage", 0
         )
@@ -178,7 +178,7 @@ class TestFamilyConversion:
         assert len(items) == 7
 
     def test_base_items_types(self):
-        from model.data.synthetic import family_to_typed_questions
+        from data.synthetic import family_to_typed_questions
         items = family_to_typed_questions(
             self.SAMPLE_FAMILY, {}, "medical_triage", 0
         )
@@ -188,14 +188,14 @@ class TestFamilyConversion:
         assert types.count("score") == 2
 
     def test_items_have_correct_source(self):
-        from model.data.synthetic import family_to_typed_questions
+        from data.synthetic import family_to_typed_questions
         items = family_to_typed_questions(
             self.SAMPLE_FAMILY, {}, "medical_triage", 0
         )
         assert all(item["source"] == "synthetic" for item in items)
 
     def test_items_have_group(self):
-        from model.data.synthetic import family_to_typed_questions
+        from data.synthetic import family_to_typed_questions
         items = family_to_typed_questions(
             self.SAMPLE_FAMILY, {}, "medical_triage", 0
         )
@@ -204,7 +204,7 @@ class TestFamilyConversion:
         assert len(groups) == 1
 
     def test_items_have_unique_ids(self):
-        from model.data.synthetic import family_to_typed_questions
+        from data.synthetic import family_to_typed_questions
         items = family_to_typed_questions(
             self.SAMPLE_FAMILY, {}, "medical_triage", 0
         )
@@ -212,7 +212,7 @@ class TestFamilyConversion:
         assert len(ids) == len(set(ids))
 
     def test_counterfactual_variants_added(self):
-        from model.data.synthetic import family_to_typed_questions
+        from data.synthetic import family_to_typed_questions
         variants = {
             "counterfactual": {
                 "state": "Patient has BP 120/80 and no chest pain.",
@@ -235,7 +235,7 @@ class TestFamilyConversion:
         assert len(cf_items) == 4
 
     def test_invalid_choice_label_dropped(self):
-        from model.data.synthetic import family_to_typed_questions
+        from data.synthetic import family_to_typed_questions
         bad_family = dict(self.SAMPLE_FAMILY)
         bad_family["choice_questions"] = [
             {"instructions": "Q?", "criteria": {"a": "A", "b": "B"}, "label": "nonexistent"},
@@ -247,7 +247,7 @@ class TestFamilyConversion:
         assert len(choice_items) == 0
 
     def test_negation_variants_added(self):
-        from model.data.synthetic import family_to_typed_questions
+        from data.synthetic import family_to_typed_questions
         variants = {
             "counterfactual": None,
             "paraphrase": None,
@@ -271,7 +271,7 @@ class TestFamilyConversion:
         assert neg_items[0]["label"] is False
 
     def test_score_labels_converted_to_0based(self):
-        from model.data.synthetic import family_to_typed_questions
+        from data.synthetic import family_to_typed_questions
         items = family_to_typed_questions(
             self.SAMPLE_FAMILY, {}, "medical_triage", 0
         )
@@ -282,7 +282,7 @@ class TestFamilyConversion:
         assert all(l >= 0.0 for l in labels)
 
     def test_roundtrip_to_typed_question(self):
-        from model.data.synthetic import family_to_typed_questions
+        from data.synthetic import family_to_typed_questions
         items = family_to_typed_questions(
             self.SAMPLE_FAMILY, {}, "medical_triage", 0
         )
