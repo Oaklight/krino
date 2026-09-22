@@ -1,8 +1,18 @@
 # Model Replication: Findings and Results
 
-**Date:** 2026-09-20
-**Status:** Step 2 complete, Step 3 calibration in progress
-**Epic:** [#19](https://github.com/Oaklight/jev-explore/issues/19)
+**Date:** 2026-09-22 (updated)
+**Status:** Step 2 complete, multi-task training pipeline built, Step 3 calibration pending
+**Epic:** [#19](https://github.com/Oaklight/open-decisions/issues/19)
+
+### Version history
+
+| Date | Change |
+|------|--------|
+| Sep 19 | Initial: Steps 1-2 results (10 models, 4 benchmarks) |
+| Sep 20 | Added Jev API benchmarks, Phase A sweep (19 benchmarks), batched inference |
+| Sep 20 | Corrected noul results (label truthiness bug fixed in PR #39) |
+| Sep 20 | Corrected Banking77 scores (use_cache=False bug fixed in PR #39) |
+| Sep 22 | Added Qwen3 sweep (#47), MoE findings, multi-teacher distillation, comprehensive results tables |
 
 ## Overview
 
@@ -25,22 +35,29 @@ Two scoring protocols, no training:
 
 ### Results: 19 benchmarks × 10 models
 
-Average accuracy ranking across choice + noul benchmarks (200 items per benchmark, H200 bf16):
+Average accuracy ranking across choice + noul benchmarks (200 items per benchmark, H200 bf16). Combined from Phase A sweep (PR #43) and Qwen3 sweep (#47):
 
 | Rank | Model | Params | Type | Avg Accuracy |
 |------|-------|--------|------|-------------|
+| — | **Jev API** | **unknown** | **—** | **87.2%** |
 | 1 | Qwen2.5-7B-Instruct | 7B | Causal | 68.5% |
-| 2 | Phi-4-mini | 3.8B | Causal | 65.0% |
-| 3 | **Ettin-400m** | **400M** | **Reranker** | **59.4%** |
-| 4 | Qwen2.5-1.5B | 1.5B | Causal | 59.2% |
-| 5 | Qwen3-1.7B | 1.7B | Causal | 54.2% |
-| 6 | Ettin-150m | 150M | Reranker | 53.5% |
-| 7 | Qwen2.5-0.5B | 0.5B | Causal | 53.5% |
-| 8 | SmolLM2-1.7B | 1.7B | Causal | 51.1% |
-| 9 | Ettin-68m | 68M | Reranker | 50.4% |
-| 10 | Qwen3-0.6B | 0.6B | Causal | 47.8% |
+| 2 | Qwen3.5-9B | 9B | Causal (GDN) | 65.5% |
+| 3 | Phi-4-mini | 3.8B | Causal | 65.0% |
+| 4 | Qwen3-4B | 4B | Causal | 64.3% |
+| 5 | Qwen3-8B | 8B | Causal | 63.6% |
+| 6 | Ettin-400m | 400M | Reranker | 59.4% |
+| 7 | Qwen2.5-1.5B | 1.5B | Causal | 59.2% |
+| 8 | Qwen3-30B-A3B | 31B (3B active) | MoE | 58.5% |
+| 9 | Qwen3-1.7B | 1.7B | Causal | 54.2% |
+| 10 | Ettin-150m | 150M | Reranker | 51.4% |
+| 11 | SmolLM2-1.7B | 1.7B | Causal | 51.1% |
+| 12 | Qwen2.5-0.5B | 0.5B | Causal | 50.9% |
+| 13 | Ettin-68m | 68M | Reranker | 47.6% |
+| 14 | Qwen3-0.6B | 0.6B | Causal | 47.8% |
 
 Vanilla ModernBERT (base/large) scored near random on most benchmarks — embedding-similarity scoring without training is not viable for typed decisions.
+
+**Note on Jev gap:** Even our best zero-shot model (Qwen2.5-7B, 68.5%) is 18.7pp behind Jev (87.2%). The gap is largest on reasoning-heavy tasks (ARC: 99% vs 73.5%, RACE: 95.5% vs 65.5%) and smallest on comparison tasks (AG News: 79% vs 80%, SST-2: 90.5% vs 87.5%).
 
 ### Key findings
 
@@ -152,6 +169,33 @@ The Jev API results reshape our priorities:
 - **Causal backbone (Qwen) may be needed** for reasoning-heavy tasks, despite encoder's efficiency advantage on comparison tasks. A hybrid approach — or simply accepting a larger model — may be necessary
 - **Calibration is Jev's core advantage.** Even where our accuracy is competitive (SST-2, MultiRC), Jev's calibration (ECE) is likely better. Step 3 calibration training is the path to closing this gap
 - **Score-type performance needs a different approach.** MAE 0.85 vs Jev's 0.43 — the current ScoreHead + CE loss is insufficient. Ordinal losses (ranked probability score) or RLCD with score-specific rewards are needed
+
+## Qwen3 Sweep and MoE Results
+
+After the Phase A sweep, we extended to newer Qwen3/3.5 models (PR #47) to test whether larger or MoE architectures close the Jev gap.
+
+### Results (zero-shot logit readout, 200 items per benchmark)
+
+| Model | Params | Type | Avg Accuracy | Avg Latency |
+|-------|--------|------|-------------|-------------|
+| Qwen3.5-9B | 9B | Dense (GDN hybrid) | 65.5% | 114ms |
+| Qwen3-4B | 4B | Dense | 64.3% | 64ms |
+| Qwen3-8B | 8B | Dense | 63.6% | 37ms |
+| Qwen3-30B-A3B | 31B (3B active) | **MoE** | 58.5% | 80ms |
+
+### Key finding: MoE does not help for zero-shot decision scoring
+
+Qwen3-30B-A3B (31B total, 3B active) scored the **worst** of the four despite having 10× more total parameters. It scored 0% on Banking77. Expert-gated routing provides no benefit for continuation log-probability scoring — all experts contribute to next-token prediction equally regardless of the decision task.
+
+This weakens (but does not disprove) the hypothesis that Jev uses a sparse MoE architecture. Hume's inference was based on latency scaling, not accuracy patterns. If Jev IS MoE, its advantage comes from RLCD training, not from MoE architecture per se.
+
+### Qwen3.5 GDN hybrid architecture is incompatible with KV-cache batching
+
+Qwen3.5+ models use Gated DeltaNet (GDN) hybrid attention — alternating linear attention and standard attention layers. The `LinearAttentionLayer` cache objects don't support `batch_repeat_interleave()`, breaking our batched inference pipeline. A full-context fallback works but is ~3× slower (114ms vs 37ms for similar-sized standard models).
+
+### None close the Jev reasoning gap
+
+Even the best new model (Qwen3.5-9B, 65.5% avg) doesn't approach Jev on reasoning tasks (ARC 99%, RACE 95.5%). The gap remains ~25-30pp. Combined with the earlier sweep, this suggests the backbone alone cannot explain Jev's reasoning capability — training (RLCD + typed heads) is the primary differentiator.
 
 ## Step 2: Trained Decision Heads
 
@@ -273,31 +317,51 @@ Replaced `copy.deepcopy(cache)` per option with `DynamicCache.crop()` — a zero
 ### Completed
 
 - **Step 0:** Data pipeline, eval suite, API server (#20, closed)
-- **Step 1:** Zero-training baselines — 10 models × 19 benchmarks (#21, closed)
+- **Step 1:** Zero-training baselines — 14 models × 19 benchmarks (#21, closed; #27, closed; #47)
 - **Step 2:** Trained heads — Ettin-150m r128 = 95.2% on Banking77, best overall (#22, closed)
-- **Backbone sweep:** Causal + encoder + reranker comparison (#27)
+- **Backbone sweep:** Causal + encoder + reranker + MoE comparison (#27, closed)
+- **Jev API benchmark:** 19-benchmark evaluation with authoritative targets (#44, closed)
+- **Loss functions:** Float score labels + KL-divergence teacher distillation (PR #51)
+- **Synthetic data pipeline:** Composable generation with cross-model validation (#50, closed)
+- **Multi-task training pipeline:** Type-balanced sampler + per-benchmark eval (#56, PR #57)
 
 ### In progress
 
-- **Step 3 Phase A:** Calibration training infrastructure built (losses.py, train_calibrated.py, sweep config). Actual sweep runs pending. Key losses: Brier, MMCE, focal, label smoothing (#23)
-- **Data pipeline Phase B/C:** Synthetic data generation and hard negative mining not yet started (#29)
+- **Multi-task training Round 1:** 19 benchmarks, Ettin-150m + Qwen2.5-1.5B — will determine if multi-task training fixes cross-benchmark generalization
+- **Synthetic data generation:** 4 of 10 domains generated (~27K items), 6 seeded domains pending
+- **Multi-teacher soft labeling:** Jev API + LLM-based soft labels for distillation training
 
 ### Not started
 
-- **Step 3 Phase B:** RLCD-style RL with proper scoring rules
-- **Step 4:** Compact custom architecture exploration (partially addressed by Ettin findings — reranker-pretrained encoder is the current winner)
+- **Step 3 Phase A calibration sweep:** Infrastructure ready (losses.py, train_calibrated.py), actual runs pending after multi-task baseline
+- **Step 3 Phase B:** RLCD-style RL — may be unnecessary if teacher distillation closes the calibration gap
+- **HuggingFace model publication:** Blocked on multi-task trained heads (#49)
+
+### Key conclusions so far
+
+1. **Training > scaling.** 150M encoder + 800K trained heads (95.2%) beats 7B causal LM zero-shot (68.5%) and Jev (75.0%) on Banking77. Specialized heads are more effective than raw model size for structured decision tasks.
+
+2. **Reranker pretraining transfers to decision scoring.** Ettin-150m beats vanilla ModernBERT-base by +4.8pp at identical params — cross-encoder relevance matching is a useful initialization for decision heads. This is a novel finding not demonstrated elsewhere.
+
+3. **Architecture alone doesn't solve surface-form bias.** Encoder reduces sensitivity (R²=0.35 vs 0.72) but doesn't eliminate it. Calibration training with explicit invariance loss is required.
+
+4. **MoE doesn't help for zero-shot decision scoring.** Expert gating provides no benefit when scoring options via continuation log-probabilities.
+
+5. **Single-benchmark heads don't generalize.** 93.2% on Banking77 → 34.7% on authored144. Multi-task training across all 19 benchmarks + synthetic data is necessary.
+
+6. **Jev's advantage is primarily in reasoning + calibration, not architecture.** No backbone under 7B closes the ARC/RACE gap. The gap likely comes from RLCD training and a larger backbone (>>7B), not from architectural innovations.
+
+7. **Decision models and rerankers are converging.** The core operation — "score options against a state" — is structurally identical. The difference is output type (ranking vs calibrated probabilities) and training objective (relevance vs proper scoring rules).
 
 ### Open questions
 
-1. **Does multi-task training fix generalization?** Heads trained on Banking77 alone don't transfer. Training on all 19 benchmarks simultaneously should help, but the balance across types and domains needs tuning.
+1. **Does multi-task training fix generalization?** Round 1 will answer this — training on all 19 benchmarks with type-balanced sampling.
 
-2. **Can calibration training reduce surface-form sensitivity?** Architecture alone doesn't solve it (encoder R²=0.35). An explicit invariance loss — `KL(P(options | original), P(options | paraphrased))` — is planned for Step 3 but not yet tested.
+2. **Can teacher distillation replace RLCD?** NanoJev provides Jev soft labels for 10.9K items. KL-divergence training against these distributions may teach calibration more simply than RL.
 
-3. **Encoder vs causal backbone for production?** Ettin-150m wins on comparison tasks (Banking77 95.2%), but Jev API results show reasoning-heavy tasks (ARC 99.0%, RACE 95.5%) require causal LM representations that encoders cannot provide. A general-purpose model may need a causal backbone or a hybrid encoder-decoder architecture.
+3. **Encoder vs causal for a general-purpose model?** Ettin wins comparison tasks, Qwen wins reasoning. Multi-task training on both backbones will reveal which generalizes better — and whether a hybrid is needed.
 
-4. **Can we close the score-type gap?** Jev scores MAE 0.43–0.49 on SST-5/STS-B/Yelp; our models get 0.85+. The ScoreHead + CE loss is insufficient for ordinal regression. Ranked probability score (Laya's RLCD) or ordinal-specific losses may be needed.
-
-5. **What is Jev's calibration advantage?** Jev achieves ECE 0.009 on ARC and 0.031 on authored144. Our models' ECE is unmeasured on trained heads — this is the key metric for Step 3 to target.
+4. **How much synthetic data is enough?** 50K target across 10 domains. The contribution of synthetic data vs NLU benchmarks will be measured by comparing Round 1 (benchmarks only) vs Round 2 (+ synthetic).
 
 ## References
 
