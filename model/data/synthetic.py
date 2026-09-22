@@ -1371,6 +1371,11 @@ def main() -> int:
     if args.llm_teacher:
         os.environ["LLM_TEACHER_MODEL"] = args.llm_teacher
 
+    # --push-to-hf is a standalone command, not a pipeline stage
+    if args.push_to_hf:
+        push_to_hf(args.push_to_hf, domains=args.domains)
+        return 0
+
     pipeline_stages = stages - {"report"}
     if pipeline_stages:
         asyncio.run(
@@ -1386,9 +1391,6 @@ def main() -> int:
 
     if "report" in stages:
         run_report(args.domains or list(DOMAIN_TEMPLATES.keys()))
-
-    if args.push_to_hf:
-        push_to_hf(args.push_to_hf, domains=args.domains)
 
     return 0
 
