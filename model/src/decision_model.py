@@ -74,7 +74,7 @@ class DecisionModel(nn.Module):
             text, return_tensors="pt", truncation=True, max_length=max_length, padding=True
         ).to(self.device)
         with torch.no_grad():
-            outputs = self.backbone(**inputs, output_hidden_states=True)
+            outputs = self.backbone(**inputs, output_hidden_states=True, use_cache=False)
         hidden = outputs.hidden_states[-1]
         if self.is_encoder:
             mask = inputs["attention_mask"].unsqueeze(-1).float()
@@ -90,7 +90,7 @@ class DecisionModel(nn.Module):
             text, return_tensors="pt", truncation=True, max_length=max_length
         ).to(self.device)
         with torch.no_grad():
-            outputs = self.backbone(**inputs, output_hidden_states=True)
+            outputs = self.backbone(**inputs, output_hidden_states=True, use_cache=False)
         hidden = outputs.hidden_states[-1]
         return hidden.float()
 
