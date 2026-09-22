@@ -111,18 +111,107 @@ def compute_loss(
     return None
 
 
+def _compute_noul_batch(
+    model: nn.Module,
+    items: list,
+) -> list[torch.Tensor]:
+    """Batch-compute noul losses: one backbone call for all contexts."""
+    texts = [f"{it.state} {it.question.get('instructions', '')}" for it in items]
+    pooled = model._encode_text(texts)  # [N, hidden]
+
+    losses = []
+    for i, item in enumerate(items):
+        label = item.label
+        if isinstance(label, str):
+            label = label.lower() in ("true", "yes", "1")
+        teacher_probs = getattr(item, "teacher_probs", None)
+        logit = model.noul_head(pooled[i:i+1])
+        if teacher_probs and "noul" in teacher_probs:
+            target = torch.tensor([[float(teacher_probs["noul"])]], device=logit.device)
+        else:
+            target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
+        losses.append(F.binary_cross_entropy_with_logits(logit, target))
+    return losses
+
+
+def _compute_choice_batch(
+    model: nn.Module,
+    items: list,
+) -> list[torch.Tensor | None]:
+    """Batch-compute choice losses: batch context encoding, per-item options + head."""
+    contexts = [f"{it.state} {it.question.get('instructions', '')}" for it in items]
+    ctx_pooled = model._encode_text(contexts)  # [N, hidden]
+
+    losses: list[torch.Tensor | None] = []
+    for i, item in enumerate(items):
+        criteria = item.question["criteria"]
+        keys = list(criteria.keys())
+        option_texts = [v or k for k, v in criteria.items()]
+        teacher_probs = getattr(item, "teacher_probs", None)
+
+        option_pooled = model._encode_text(option_texts)  # [K, hidden]
+        ctx_seq = ctx_pooled[i:i+1].unsqueeze(1)  # [1, 1, hidden] — pooled as single-token sequence
+        opt_hidden = option_pooled.unsqueeze(0)  # [1, K, hidden]
+        logits = model.choice_head(ctx_seq, opt_hidden)
+
+        if teacher_probs:
+            losses.append(_teacher_loss(logits, teacher_probs, keys))
+        elif item.label not in keys:
+            losses.append(None)
+        else:
+            target_idx = keys.index(item.label)
+            target = torch.tensor([target_idx], device=logits.device)
+            losses.append(F.cross_entropy(logits, target))
+    return losses
+
+
+def _compute_score_batch(
+    model: nn.Module,
+    items: list,
+) -> list[torch.Tensor | None]:
+    """Batch-compute score losses: batch context encoding, per-item levels + head."""
+    contexts = [f"{it.state} {it.question.get('instructions', '')}" for it in items]
+    ctx_pooled = model._encode_text(contexts)  # [N, hidden]
+
+    losses: list[torch.Tensor | None] = []
+    for i, item in enumerate(items):
+        criteria = item.question["criteria"]
+        n_levels = len(criteria)
+        teacher_probs = getattr(item, "teacher_probs", None)
+
+        level_pooled = model._encode_text(criteria)  # [L, hidden]
+        ctx_seq = ctx_pooled[i:i+1].unsqueeze(1)  # [1, 1, hidden]
+        lvl_hidden = level_pooled.unsqueeze(0)  # [1, L, hidden]
+        logits = model.score_head(ctx_seq, lvl_hidden)
+
+        if teacher_probs:
+            level_keys = [str(j) for j in range(n_levels)]
+            losses.append(_teacher_loss(logits, teacher_probs, level_keys))
+        else:
+            label_f = float(item.label)
+            target = _score_target(item.label, n_levels, logits.device)
+            if label_f == int(label_f):
+                losses.append(F.cross_entropy(logits, target.argmax().unsqueeze(0)))
+            else:
+                losses.append(_soft_cross_entropy(logits, target.unsqueeze(0)))
+    return losses
+
+
 def train_epoch(
     model: nn.Module,
     train_items: list,
     optimizer: torch.optim.Optimizer,
     max_grad_norm: float = 1.0,
     accumulation_steps: int = 1,
+    batch_backbone: int = 0,
 ) -> dict[str, float]:
     """Train for one epoch. Returns loss statistics.
 
     Args:
         accumulation_steps: number of items to accumulate gradients over
             before an optimizer step. Default 1 preserves per-item SGD.
+        batch_backbone: if > 0, group items by type and batch backbone
+            forward passes in chunks of this size. 0 = per-item (legacy).
     """
     model.train()
     total_loss = 0.0
@@ -132,28 +221,65 @@ def train_epoch(
 
     optimizer.zero_grad()
 
-    for item in train_items:
-        loss = compute_loss(model, item)
-        if loss is None:
-            n_skipped += 1
-            continue
+    if batch_backbone > 0:
+        # Group items by type, process in batches
+        i = 0
+        while i < len(train_items):
+            # Collect a window of items, group by type
+            window = train_items[i:i + batch_backbone]
+            i += len(window)
 
-        scaled_loss = loss / accumulation_steps
-        scaled_loss.backward()
-        total_loss += loss.item()
-        n_items += 1
-        accum_count += 1
+            noul_items = [it for it in window if it.question.get("type") == "noul"]
+            choice_items = [it for it in window if it.question.get("type") == "choice"]
+            score_items = [it for it in window if it.question.get("type") == "score"]
 
-        if accum_count >= accumulation_steps:
-            torch.nn.utils.clip_grad_norm_(
-                [p for p in model.parameters() if p.requires_grad], max_grad_norm
-            )
-            optimizer.step()
-            optimizer.zero_grad()
-            accum_count = 0
+            all_losses: list[torch.Tensor | None] = []
+            if noul_items:
+                all_losses.extend(_compute_noul_batch(model, noul_items))
+            if choice_items:
+                all_losses.extend(_compute_choice_batch(model, choice_items))
+            if score_items:
+                all_losses.extend(_compute_score_batch(model, score_items))
+
+            for loss in all_losses:
+                if loss is None:
+                    n_skipped += 1
+                    continue
+                scaled_loss = loss / accumulation_steps
+                scaled_loss.backward()
+                total_loss += loss.item()
+                n_items += 1
+                accum_count += 1
+
+                if accum_count >= accumulation_steps:
+                    torch.nn.utils.clip_grad_norm_(
+                        [p for p in model.parameters() if p.requires_grad], max_grad_norm
+                    )
+                    optimizer.step()
+                    optimizer.zero_grad()
+                    accum_count = 0
+    else:
+        for item in train_items:
+            loss = compute_loss(model, item)
+            if loss is None:
+                n_skipped += 1
+                continue
+
+            scaled_loss = loss / accumulation_steps
+            scaled_loss.backward()
+            total_loss += loss.item()
+            n_items += 1
+            accum_count += 1
+
+            if accum_count >= accumulation_steps:
+                torch.nn.utils.clip_grad_norm_(
+                    [p for p in model.parameters() if p.requires_grad], max_grad_norm
+                )
+                optimizer.step()
+                optimizer.zero_grad()
+                accum_count = 0
 
     if accum_count > 0:
-        # Re-scale so the partial batch has the same effective LR as full batches
         if accum_count < accumulation_steps:
             scale = accumulation_steps / accum_count
             for p in model.parameters():
@@ -428,6 +554,7 @@ def train_multitask(
     eval_every: int = 1,
     accumulation_steps: int = 1,
     seed: int = 42,
+    batch_backbone: int = 0,
 ) -> dict[str, Any]:
     """Multi-task training loop with type-balanced sampling and detailed eval.
 
@@ -464,7 +591,7 @@ def train_multitask(
 
         epoch_items = sampler.sample_epoch(epoch - 1)
 
-        train_stats = train_epoch(model, epoch_items, optimizer, max_grad_norm, accumulation_steps)
+        train_stats = train_epoch(model, epoch_items, optimizer, max_grad_norm, accumulation_steps, batch_backbone)
         scheduler.step()
 
         elapsed = time.monotonic() - t0
