@@ -1,0 +1,55 @@
+name: Deploy dashboard to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "model/experiments/**"
+      - "scripts/transform_results.py"
+      - "docs_en/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Transform experiment results
+        run: python scripts/transform_results.py
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: web
+
+      - name: Build dashboard
+        run: npm run build
+        working-directory: web
+
+      - name: Build docs and include in output
+        run: |
+          pip install -r docs_en/requirements.txt
+          mkdocs build -f docs_en/mkdocs.yml
+          cp -r docs_en/site web/out/docs
+
+      - name: Deploy to jev-explore-site
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.SITE_DEPLOY_KEY }}
+          external_repository: Oaklight/jev-explore-site
+          publish_branch: main
+          publish_dir: web/out
