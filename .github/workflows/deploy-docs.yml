@@ -1,10 +1,8 @@
-name: Deploy docs to GitHub Pages
+name: Deploy docs to GitHub Pages (legacy)
 
+# Docs are now deployed via deploy-dashboard.yml at /docs/ path.
+# This workflow is kept for manual fallback only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "docs_en/**"
   workflow_dispatch:
 
 jobs:
