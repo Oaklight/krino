@@ -35,19 +35,25 @@ class LogitScorer:
         device: str | None = None,
         norm: str = "mean",
         strategy: str = "description",
+        batch_size: int = 64,
     ) -> None:
         self.model = model
         self.tokenizer = tokenizer
         self.device = device or next(model.parameters()).device
         self.norm = norm
         self.strategy = strategy
+        self.batch_size = batch_size
 
-    def _score_options(self, context: str, options: list[str], batch_size: int = 64) -> list[float]:
+    def _score_options(
+        self, context: str, options: list[str], batch_size: int | None = None
+    ) -> list[float]:
         """Compute normalized log-probability scores for each option.
 
         Batches options into a single forward pass per sub-batch to minimize
-        GPU kernel launch overhead (77 sequential passes → 1-2 batched passes).
+        GPU kernel launch overhead (77 sequential passes -> 1-2 batched passes).
         """
+        if batch_size is None:
+            batch_size = self.batch_size
         ctx_ids = self.tokenizer(context, return_tensors="pt").input_ids.to(self.device)
 
         cache = DynamicCache()
@@ -59,9 +65,11 @@ class LogitScorer:
 
         all_opt_ids = []
         for opt_text in options:
-            ids = self.tokenizer(
-                opt_text, add_special_tokens=False, return_tensors="pt"
-            ).input_ids[0].to(self.device)
+            ids = (
+                self.tokenizer(opt_text, add_special_tokens=False, return_tensors="pt")
+                .input_ids[0]
+                .to(self.device)
+            )
             all_opt_ids.append(ids)
 
         scores = [float("-inf")] * len(options)
@@ -71,7 +79,9 @@ class LogitScorer:
             batch_indices = valid_indices[batch_start : batch_start + batch_size]
             batch_ids = [all_opt_ids[i] for i in batch_indices]
             is_last = batch_start + batch_size >= len(valid_indices)
-            batch_scores = self._score_batch(cache, prefix_len, last_logit, batch_ids, copy_cache=not is_last)
+            batch_scores = self._score_batch(
+                cache, prefix_len, last_logit, batch_ids, copy_cache=not is_last
+            )
             for i, idx in enumerate(batch_indices):
                 scores[idx] = batch_scores[i]
 
@@ -95,7 +105,9 @@ class LogitScorer:
             padded[i, : len(ids)] = ids
 
         # Attention mask: 1 for prefix + real tokens, 0 for padding
-        attn_mask = torch.zeros((n, prefix_len + max_len), dtype=torch.long, device=self.device)
+        attn_mask = torch.zeros(
+            (n, prefix_len + max_len), dtype=torch.long, device=self.device
+        )
         for i, length in enumerate(lengths):
             attn_mask[i, : prefix_len + length] = 1
 
@@ -116,7 +128,10 @@ class LogitScorer:
         # Shifted logits: last_logit predicts token 0, out.logits[:, t-1] predicts token t
         # Build [n, max_len, vocab] prediction logits
         pred_logits = torch.cat(
-            [last_logit.unsqueeze(0).unsqueeze(0).expand(n, 1, -1), out.logits[:, :-1, :]],
+            [
+                last_logit.unsqueeze(0).unsqueeze(0).expand(n, 1, -1),
+                out.logits[:, :-1, :],
+            ],
             dim=1,
         )
         logp = torch.log_softmax(pred_logits.float(), dim=-1)
@@ -157,11 +172,17 @@ class LogitScorer:
             instructions = question.get("instructions", "")
 
             if q_type == "noul":
-                answers[qid] = self._eval_noul(state, instructions, question.get("criteria"))
+                answers[qid] = self._eval_noul(
+                    state, instructions, question.get("criteria")
+                )
             elif q_type == "choice":
-                answers[qid] = self._eval_choice(state, instructions, question["criteria"])
+                answers[qid] = self._eval_choice(
+                    state, instructions, question["criteria"]
+                )
             elif q_type == "score":
-                answers[qid] = self._eval_score(state, instructions, question["criteria"])
+                answers[qid] = self._eval_score(
+                    state, instructions, question["criteria"]
+                )
 
         return answers
 
@@ -193,7 +214,9 @@ class LogitScorer:
             if len(keys) <= 10:
                 labels = [str(i) for i in range(len(keys))]
             else:
-                labels = [chr(65 + i) if i < 26 else f"opt{i}" for i in range(len(keys))]
+                labels = [
+                    chr(65 + i) if i < 26 else f"opt{i}" for i in range(len(keys))
+                ]
             context = f"State: {state}\nQuestion: {instructions}\nOptions:\n"
             context += "\n".join(
                 f"{labels[i]}. {descriptions[i] or keys[i]}" for i in range(len(keys))

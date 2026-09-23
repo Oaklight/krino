@@ -36,7 +36,7 @@ sys.path.insert(0, str(ROOT))
 from data.format import TypedQuestion
 from data.pipeline import load_jsonl
 from data.sampler import SamplerConfig
-from model.src.backbone import load_causal_lm, load_encoder
+from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
 from model.training.supervised import eval_epoch_detailed, train_multitask
 
@@ -77,7 +77,11 @@ def load_source_items(
     path = resolve_path(path_str)
 
     if not path.exists():
-        print(f"  WARNING: {path} not found, skipping {source_name}", file=sys.stderr, flush=True)
+        print(
+            f"  WARNING: {path} not found, skipping {source_name}",
+            file=sys.stderr,
+            flush=True,
+        )
         return [], []
 
     items = load_jsonl(path)
@@ -116,7 +120,9 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
     """
     sampling = cfg.get("sampling", {})
 
-    type_ratios = sampling.get("type_ratios", {"noul": 1.0, "choice": 1.0, "score": 1.0})
+    type_ratios = sampling.get(
+        "type_ratios", {"noul": 1.0, "choice": 1.0, "score": 1.0}
+    )
     epoch_size = sampling.get("epoch_size")
     accumulation_steps = cfg.get("accumulation_steps", 8)
 
@@ -155,8 +161,10 @@ def print_data_summary(
 
     print("\n  Data summary:", flush=True)
     print(f"  {'Source':<20} {'Train':>8} {'Eval':>8}", flush=True)
-    print(f"  {'-'*20} {'-'*8} {'-'*8}", flush=True)
-    all_sources = sorted(set(list(train_by_source.keys()) + list(eval_by_source.keys())))
+    print(f"  {'-' * 20} {'-' * 8} {'-' * 8}", flush=True)
+    all_sources = sorted(
+        set(list(train_by_source.keys()) + list(eval_by_source.keys()))
+    )
     for source in all_sources:
         t = train_by_source.get(source, 0)
         e = eval_by_source.get(source, 0)
@@ -174,10 +182,16 @@ def main() -> int:
     parser.add_argument("--lr", type=float, default=None, help="Override learning rate")
     parser.add_argument("--seed", type=int, default=None, help="Override random seed")
     parser.add_argument("--device", default=None, help="Override device")
-    parser.add_argument("--checkpoint-dir", type=Path, default=None, help="Checkpoint directory")
+    parser.add_argument(
+        "--checkpoint-dir", type=Path, default=None, help="Checkpoint directory"
+    )
     parser.add_argument("--output", type=Path, default=None, help="Output results JSON")
-    parser.add_argument("--eval-only", action="store_true", help="Skip training, just evaluate")
-    parser.add_argument("--load-heads", type=Path, default=None, help="Load heads from checkpoint")
+    parser.add_argument(
+        "--eval-only", action="store_true", help="Skip training, just evaluate"
+    )
+    parser.add_argument(
+        "--load-heads", type=Path, default=None, help="Load heads from checkpoint"
+    )
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -185,6 +199,7 @@ def main() -> int:
     # Resolve values with CLI overrides
     model_name = args.model or cfg.get("model", "Qwen/Qwen3-0.6B")
     use_encoder = cfg.get("encoder", False)
+    qwen35_base = cfg.get("qwen35_base", False)
     rank = cfg.get("rank", 64)
     epochs = args.epochs if args.epochs is not None else cfg.get("epochs", 20)
     lr = args.lr if args.lr is not None else cfg.get("lr", 1e-3)
@@ -208,8 +223,14 @@ def main() -> int:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-    print(f"=== Multi-task training ===", flush=True)
-    print(f"Backbone: {model_name} ({'encoder' if use_encoder else 'causal'})", flush=True)
+    print("=== Multi-task training ===", flush=True)
+    if qwen35_base:
+        arch_label = "qwen35-base (GDN hybrid)"
+    elif use_encoder:
+        arch_label = "encoder"
+    else:
+        arch_label = "causal"
+    print(f"Backbone: {model_name} ({arch_label})", flush=True)
     print(f"Config: {args.config}", flush=True)
 
     # Load data from all sources
@@ -237,7 +258,9 @@ def main() -> int:
 
     # Load backbone and build model
     print(f"\nLoading backbone: {model_name}", flush=True)
-    if use_encoder:
+    if qwen35_base:
+        backbone, tokenizer = load_qwen35_base(model_name, device=device, freeze=True)
+    elif use_encoder:
         backbone, tokenizer = load_encoder(model_name, device=device, freeze=True)
     else:
         backbone, tokenizer = load_causal_lm(model_name, device=device, freeze=True)
@@ -315,19 +338,28 @@ def main() -> int:
 def _print_detailed_eval(eval_stats: dict) -> None:
     """Print formatted detailed eval results."""
     agg = eval_stats["aggregate"]
-    print(f"  Aggregate: loss={agg['mean_loss']:.4f} acc={agg['accuracy']:.4f} ({agg['n_items']} items)", flush=True)
+    print(
+        f"  Aggregate: loss={agg['mean_loss']:.4f} acc={agg['accuracy']:.4f} ({agg['n_items']} items)",
+        flush=True,
+    )
 
     by_type = eval_stats.get("by_type", {})
     if by_type:
         print("\n  By type:", flush=True)
         for t in sorted(by_type):
             ts = by_type[t]
-            print(f"    {t:<10} loss={ts['mean_loss']:.4f} acc={ts['accuracy']:.4f} ({ts['n_items']} items)", flush=True)
+            print(
+                f"    {t:<10} loss={ts['mean_loss']:.4f} acc={ts['accuracy']:.4f} ({ts['n_items']} items)",
+                flush=True,
+            )
 
     by_source = eval_stats.get("by_source", {})
     if by_source:
-        print(f"\n  {'Source':<20} {'Type':<8} {'Loss':>8} {'Acc':>8} {'N':>6}", flush=True)
-        print(f"  {'-'*20} {'-'*8} {'-'*8} {'-'*8} {'-'*6}", flush=True)
+        print(
+            f"\n  {'Source':<20} {'Type':<8} {'Loss':>8} {'Acc':>8} {'N':>6}",
+            flush=True,
+        )
+        print(f"  {'-' * 20} {'-' * 8} {'-' * 8} {'-' * 8} {'-' * 6}", flush=True)
         for src in sorted(by_source):
             ss = by_source[src]
             print(
