@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { EvalRun, JevComparison } from "@/lib/types";
 import { pct, fmtMae } from "@/lib/format";
 
@@ -211,7 +211,7 @@ export default function BenchmarkTable({ runs, benchmarkTypes, jevComparison }: 
               const isJev = run.method === "jev_api";
               const isExpanded = expandedRows.has(run.run_id);
               return (
-                <RowGroup key={run.run_id}>
+                <React.Fragment key={run.run_id}>
                   <tr
                     className={`border-b border-border hover:bg-bg-hover cursor-pointer transition-colors ${
                       isJev ? "row-jev" : ""
@@ -260,7 +260,7 @@ export default function BenchmarkTable({ runs, benchmarkTypes, jevComparison }: 
                   {isExpanded && (
                     <tr className="bg-bg-card">
                       <td
-                        colSpan={5 + [...visibleBenchmarks].length}
+                        colSpan={5 + visibleBenchmarks.size}
                         className="px-6 py-3"
                       >
                         <ExpandedDetails
@@ -271,7 +271,7 @@ export default function BenchmarkTable({ runs, benchmarkTypes, jevComparison }: 
                       </td>
                     </tr>
                   )}
-                </RowGroup>
+                </React.Fragment>
               );
             })}
           </tbody>
@@ -282,10 +282,6 @@ export default function BenchmarkTable({ runs, benchmarkTypes, jevComparison }: 
       </div>
     </div>
   );
-}
-
-function RowGroup({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
 }
 
 function Th({

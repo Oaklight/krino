@@ -6,6 +6,7 @@ Reads model/experiments/*.json and writes web/public/results/eval_results.json.
 
 import json
 import statistics
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -318,7 +319,7 @@ def main() -> None:
     jev_comparison = build_jev_comparison(eval_runs)
 
     output = {
-        "generated_at": None,  # filled by CI or manually
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "eval_runs": eval_runs,
         "training_runs": training_runs,
         "jev_comparison": jev_comparison,
