@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
+from .backbone import is_hybrid_model
 from .heads import ChoiceHead, NoulHead, ScoreHead
 
 
@@ -45,6 +46,7 @@ class DecisionModel(nn.Module):
         self.tokenizer = tokenizer
         self.hidden_size = hidden_size or backbone.config.hidden_size
         self.is_encoder = _is_encoder_model(backbone)
+        self.is_hybrid = is_hybrid_model(backbone.config)
 
         self.noul_head = NoulHead(self.hidden_size, dropout)
         self.choice_head = ChoiceHead(self.hidden_size, rank, rival_aware, dropout)
@@ -62,7 +64,9 @@ class DecisionModel(nn.Module):
     def device(self) -> torch.device:
         return next(self.backbone.parameters()).device
 
-    def _encode_text(self, text: str | list[str], max_length: int = 512) -> torch.Tensor:
+    def _encode_text(
+        self, text: str | list[str], max_length: int = 512
+    ) -> torch.Tensor:
         """Encode text and return pooled hidden state per sequence.
 
         Causal LM: last-token pooling (last token attended to full sequence).
@@ -71,17 +75,25 @@ class DecisionModel(nn.Module):
         if isinstance(text, str):
             text = [text]
         inputs = self.tokenizer(
-            text, return_tensors="pt", truncation=True, max_length=max_length, padding=True
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=max_length,
+            padding=True,
         ).to(self.device)
         with torch.no_grad():
-            outputs = self.backbone(**inputs, output_hidden_states=True, use_cache=False)
+            outputs = self.backbone(
+                **inputs, output_hidden_states=True, use_cache=False
+            )
         hidden = outputs.hidden_states[-1]
         if self.is_encoder:
             mask = inputs["attention_mask"].unsqueeze(-1).float()
             pooled = (hidden * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
         else:
             seq_lengths = inputs["attention_mask"].sum(dim=1) - 1
-            pooled = hidden[torch.arange(hidden.size(0), device=hidden.device), seq_lengths]
+            pooled = hidden[
+                torch.arange(hidden.size(0), device=hidden.device), seq_lengths
+            ]
         return pooled.float()
 
     def _encode_with_sequence(self, text: str, max_length: int = 512) -> torch.Tensor:
@@ -90,7 +102,9 @@ class DecisionModel(nn.Module):
             text, return_tensors="pt", truncation=True, max_length=max_length
         ).to(self.device)
         with torch.no_grad():
-            outputs = self.backbone(**inputs, output_hidden_states=True, use_cache=False)
+            outputs = self.backbone(
+                **inputs, output_hidden_states=True, use_cache=False
+            )
         hidden = outputs.hidden_states[-1]
         return hidden.float()
 
@@ -137,7 +151,11 @@ class DecisionModel(nn.Module):
             logits = self.forward_choice(state, instructions, option_texts)
             probs = torch.softmax(logits, dim=-1)[0].tolist()
             prob_dict = {k: round(p, 2) for k, p in zip(keys, probs)}
-            return {"type": "choice", "choice": max(prob_dict, key=prob_dict.get), "probabilities": prob_dict}
+            return {
+                "type": "choice",
+                "choice": max(prob_dict, key=prob_dict.get),
+                "probabilities": prob_dict,
+            }
 
         elif q_type == "score":
             criteria = question["criteria"]
@@ -146,7 +164,12 @@ class DecisionModel(nn.Module):
             prob_dict = {str(i): round(p, 2) for i, p in enumerate(probs)}
             legend = {str(i): desc for i, desc in enumerate(criteria)}
             score_val = sum(i * p for i, p in enumerate(probs))
-            return {"type": "score", "score": round(score_val, 2), "probabilities": prob_dict, "legend": legend}
+            return {
+                "type": "score",
+                "score": round(score_val, 2),
+                "probabilities": prob_dict,
+                "legend": legend,
+            }
 
         raise ValueError(f"Unknown question type: {q_type}")
 

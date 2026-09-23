@@ -1,0 +1,124 @@
+# Multi-task training config for Qwen3.5-2B-Base (GDN hybrid backbone).
+# NOTE: sources section duplicated from multitask_ettin150m.yaml — YAML has no
+# native include mechanism. Keep both files in sync when changing sources.
+#
+# Usage:
+#   python model/scripts/train_multitask.py --config model/configs/multitask_qwen35_2b.yaml
+#
+# Round 1: 19 NLU benchmarks with type-balanced sampling.
+# Backbone: Qwen/Qwen3.5-2B-Base (GDN hybrid, 2B params)
+# Head rank: 64 (~300K trainable params)
+
+model: Qwen/Qwen3.5-2B-Base
+encoder: false
+qwen35_base: true
+rank: 64
+epochs: 20
+lr: 0.001
+accumulation_steps: 8
+eval_every: 2
+seed: 42
+
+sources:
+  # --- Choice benchmarks ---
+  banking77:
+    path: data/benchmarks/banking77.jsonl
+    weight: 0.5
+    max_train: 5000
+    max_eval: 500
+  agnews:
+    path: data/benchmarks/agnews.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  arc:
+    path: data/benchmarks/arc.jsonl
+    weight: 2.0
+    max_eval: 500
+  race:
+    path: data/benchmarks/race.jsonl
+    weight: 1.5
+    max_train: 5000
+    max_eval: 500
+  hellaswag:
+    path: data/benchmarks/hellaswag.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  codesearchnet:
+    path: data/benchmarks/codesearchnet.jsonl
+    weight: 0.5
+    max_train: 3000
+    max_eval: 300
+  swag:
+    path: data/benchmarks/swag.jsonl
+    weight: 0.8
+    max_train: 5000
+    max_eval: 500
+  fever:
+    path: data/benchmarks/fever.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+
+  # --- Noul benchmarks ---
+  sst2:
+    path: data/benchmarks/sst2.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  mnli:
+    path: data/benchmarks/mnli.jsonl
+    weight: 0.3
+    max_train: 10000
+    max_eval: 500
+  tabfact:
+    path: data/benchmarks/tabfact.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  multirc:
+    path: data/benchmarks/multirc.jsonl
+    weight: 1.5
+    max_eval: 500
+  mednli:
+    path: data/benchmarks/mednli.jsonl
+    weight: 2.0
+    max_eval: 500
+  contractnli:
+    path: data/benchmarks/contractnli.jsonl
+    weight: 2.0
+    max_eval: 500
+
+  # --- Score benchmarks ---
+  sst5:
+    path: data/benchmarks/sst5.jsonl
+    weight: 1.0
+    max_eval: 500
+  stsb:
+    path: data/benchmarks/stsb.jsonl
+    weight: 1.5
+    max_eval: 500
+  yelp:
+    path: data/benchmarks/yelp.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+
+  # --- Eval-only ---
+  authored144:
+    path: data/benchmarks/openjev/authored144.jsonl
+    weight: 0
+    max_eval: 144
+  typed_decisions:
+    path: data/benchmarks/typed_decisions.jsonl
+    weight: 1.0
+    max_train: 2000
+    max_eval: 500
+
+sampling:
+  type_ratios:
+    noul: 1.0
+    choice: 1.0
+    score: 1.0
+  epoch_size: 15000
