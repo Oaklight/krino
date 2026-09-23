@@ -1,5 +1,6 @@
 import { loadDashboardData } from "@/lib/data";
 import BenchmarkTable from "@/components/BenchmarkTable";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function BenchmarksPage() {
   const data = loadDashboardData();
@@ -11,11 +12,13 @@ export default function BenchmarksPage() {
         Zero-shot and trained evaluation results across {Object.keys(data.benchmarks).length}{" "}
         benchmarks. Click a row to expand per-benchmark details.
       </p>
-      <BenchmarkTable
-        runs={data.eval_runs}
-        benchmarkTypes={data.benchmarks}
-        jevComparison={data.jev_comparison}
-      />
+      <ErrorBoundary>
+        <BenchmarkTable
+          runs={data.eval_runs}
+          benchmarkTypes={data.benchmarks}
+          jevComparison={data.jev_comparison}
+        />
+      </ErrorBoundary>
     </div>
   );
 }
