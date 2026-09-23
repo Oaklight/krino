@@ -14,7 +14,7 @@ export default function HomePage() {
     data.eval_runs.flatMap((r) => Object.keys(r.results.by_source))
   );
 
-  // Top 5 runs by accuracy (prefer full-coverage)
+  // Top runs by accuracy (prefer full-coverage)
   const topRuns = [...data.eval_runs]
     .filter((r) => r.results.aggregate.accuracy != null)
     .sort((a, b) => {
@@ -25,9 +25,9 @@ export default function HomePage() {
     })
     .slice(0, 7);
 
-  // Best training result
+  // Best training result on Banking77 specifically
   const bestTrained = data.training_runs
-    .filter((t) => t.best_accuracy != null)
+    .filter((t) => t.benchmark === "banking77" && t.best_accuracy != null)
     .sort((a, b) => (b.best_accuracy ?? 0) - (a.best_accuracy ?? 0))[0];
 
   // Jev API benchmark-specific accuracies for key findings

@@ -93,7 +93,8 @@ export default function BenchmarkTable({ runs, benchmarkTypes, jevComparison }: 
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
-      setSortDir(key === "model" || key === "method" ? "asc" : "desc");
+      const isScoreCol = key in benchmarkTypes && benchmarkTypes[key] === "score";
+      setSortDir(key === "model" || key === "method" || isScoreCol ? "asc" : "desc");
     }
   };
 
@@ -216,7 +217,16 @@ export default function BenchmarkTable({ runs, benchmarkTypes, jevComparison }: 
                     className={`border-b border-border hover:bg-bg-hover cursor-pointer transition-colors ${
                       isJev ? "row-jev" : ""
                     }`}
+                    tabIndex={0}
+                    role="button"
+                    aria-expanded={isExpanded}
                     onClick={() => toggleExpand(run.run_id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleExpand(run.run_id);
+                      }
+                    }}
                   >
                     <td className="px-3 py-2 font-medium whitespace-nowrap">
                       <span
