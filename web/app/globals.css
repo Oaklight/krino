@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: var(--bg);
+  --color-bg-card: var(--bg-card);
+  --color-bg-hover: var(--bg-hover);
+  --color-border: var(--border-color);
+  --color-text: var(--text-color);
+  --color-text-dim: var(--text-dim);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-green: var(--green-color);
+  --color-red: var(--red-color);
+  --color-blue: var(--blue-color);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
+}
+
+:root {
+  --bg: #fff;
+  --bg-card: #fafafa;
+  --bg-hover: #f3f3f3;
+  --border-color: #e4e5e7;
+  --text-color: #18191b;
+  --text-dim: #616469;
+  --text-muted: #949798;
+  --accent: #34d59a;
+  --accent-hover: #2bc48c;
+  --accent-subtle: rgba(52, 213, 154, 0.06);
+  --green-color: #059669;
+  --red-color: #ff3621;
+  --blue-color: #2563eb;
+  --radius: 4px;
+}
+
+.dark {
+  --bg: #0a0a0b;
+  --bg-card: #131315;
+  --bg-hover: #1a1a1c;
+  --border-color: #242628;
+  --text-color: #e4e5e7;
+  --text-dim: #949798;
+  --text-muted: #616469;
+  --accent: #34d59a;
+  --accent-hover: #4de0ab;
+  --accent-subtle: rgba(52, 213, 154, 0.08);
+  --green-color: #34d399;
+  --red-color: #ff5647;
+  --blue-color: #60a5fa;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-color);
+  font-family: var(--font-sans);
+}
+
+/* Table header style (Material-inspired from llm-rosetta emerald) */
+.th-material {
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Jev API row highlight */
+.row-jev {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-subtle);
+}
