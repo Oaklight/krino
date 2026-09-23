@@ -14,7 +14,7 @@ import torch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from model.src.backbone import load_causal_lm
+from model.src.backbone import is_hybrid_model, load_causal_lm
 from model.src.logit_scorer import LogitScorer
 from data.pipeline import load_jsonl
 from model.evaluation.accuracy import noul_accuracy, choice_accuracy, score_mae
@@ -46,7 +46,11 @@ def evaluate_dataset(
         q_type = item.question["type"]
         if q_type == "noul":
             noul_val = answer.get("noul", 0.5)
-            label = item.label if isinstance(item.label, bool) else str(item.label).lower() == "true"
+            label = (
+                item.label
+                if isinstance(item.label, bool)
+                else str(item.label).lower() == "true"
+            )
             noul_preds.append(noul_val)
             noul_labels.append(label)
             conf = noul_val if label else 1 - noul_val
@@ -100,19 +104,51 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Evaluate logit readout baseline")
     parser.add_argument("--model", default="Qwen/Qwen3-0.6B", help="Model name")
     parser.add_argument("--device", default=None, help="Device (default: auto)")
-    parser.add_argument("--datasets", nargs="+", default=None, help="Dataset JSONL paths")
-    parser.add_argument("--max-items", type=int, default=None, help="Max items per dataset")
+    parser.add_argument(
+        "--datasets", nargs="+", default=None, help="Dataset JSONL paths"
+    )
+    parser.add_argument(
+        "--max-items", type=int, default=None, help="Max items per dataset"
+    )
     parser.add_argument("--output", type=Path, default=None, help="Output JSON path")
-    parser.add_argument("--norm", default="mean", choices=["mean", "sum"], help="Log-prob normalization")
-    parser.add_argument("--strategy", default="description", choices=["description", "label"], help="Choice scoring strategy")
-    parser.add_argument("--dtype", default="bfloat16", choices=["float16", "bfloat16", "float32"], help="Model dtype (use float16 for V100)")
+    parser.add_argument(
+        "--norm", default="mean", choices=["mean", "sum"], help="Log-prob normalization"
+    )
+    parser.add_argument(
+        "--strategy",
+        default="description",
+        choices=["description", "label"],
+        help="Choice scoring strategy",
+    )
+    parser.add_argument(
+        "--dtype",
+        default="bfloat16",
+        choices=["float16", "bfloat16", "float32"],
+        help="Model dtype (use float16 for V100)",
+    )
     args = parser.parse_args()
 
-    dtype_map = {"float16": torch.float16, "bfloat16": torch.bfloat16, "float32": torch.float32}
+    dtype_map = {
+        "float16": torch.float16,
+        "bfloat16": torch.bfloat16,
+        "float32": torch.float32,
+    }
 
     print(f"Loading {args.model}...")
-    model, tokenizer = load_causal_lm(args.model, device=args.device, dtype=dtype_map[args.dtype])
-    scorer = LogitScorer(model, tokenizer, norm=args.norm, strategy=args.strategy)
+    model, tokenizer = load_causal_lm(
+        args.model, device=args.device, dtype=dtype_map[args.dtype]
+    )
+
+    # Hybrid models (GDN, e.g. Qwen3.5) don't support KV-cache batching —
+    # force sequential scoring (batch_size=1) to avoid cache shape mismatches.
+    hybrid = is_hybrid_model(model.config)
+    batch_size = 1 if hybrid else 64
+    if hybrid:
+        print("Hybrid model detected — using sequential scoring (no KV cache batching)")
+
+    scorer = LogitScorer(
+        model, tokenizer, norm=args.norm, strategy=args.strategy, batch_size=batch_size
+    )
     print(f"Strategy: {args.strategy}, norm: {args.norm}")
     print(f"Model loaded on {next(model.parameters()).device}")
 
@@ -128,9 +164,9 @@ def main() -> int:
     for ds_path in dataset_paths:
         path = Path(ds_path)
         name = path.stem
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Evaluating: {name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         results = evaluate_dataset(scorer, path, max_items=args.max_items)
 
@@ -140,7 +176,9 @@ def main() -> int:
             if "accuracy" in data:
                 acc = data["accuracy"]
                 if isinstance(acc, dict):
-                    print(f"  {section} accuracy: {acc.get('accuracy', 'N/A'):.4f} (n={acc.get('n', 0)})")
+                    print(
+                        f"  {section} accuracy: {acc.get('accuracy', 'N/A'):.4f} (n={acc.get('n', 0)})"
+                    )
                 ece = data.get("ece", {})
                 if isinstance(ece, dict):
                     print(f"  {section} ECE: {ece.get('ece', 'N/A'):.4f}")
@@ -149,7 +187,9 @@ def main() -> int:
 
         if "latency" in results:
             lat = results["latency"]
-            print(f"  latency: mean={lat['mean_s']:.3f}s median={lat['median_s']:.3f}s p95={lat['p95_s']:.3f}s")
+            print(
+                f"  latency: mean={lat['mean_s']:.3f}s median={lat['median_s']:.3f}s p95={lat['p95_s']:.3f}s"
+            )
 
         all_results[name] = results
 
