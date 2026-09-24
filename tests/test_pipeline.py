@@ -192,6 +192,34 @@ def _mock_codesearchnet(dataset, config, split):
 
 
 # Dispatch table: (dataset, config) prefix → mock factory
+def _mock_mmlu(dataset, config, split):
+    return [{"question": "What is 2+2?", "choices": ["3", "4", "5", "6"], "answer": 1, "subject": "math"}]
+
+
+def _mock_winogrande(dataset, config, split):
+    return [{"sentence": "The _ was heavy.", "option1": "bag", "option2": "feather", "answer": "1"}]
+
+
+def _mock_piqa(dataset, config, split):
+    return [{"goal": "Boil water", "sol1": "Use a kettle", "sol2": "Use a fork", "label": 0}]
+
+
+def _mock_commonsenseqa(dataset, config, split):
+    return [{"question": "Where do you keep food cold?", "choices": {"label": ["A", "B", "C", "D", "E"], "text": ["fridge", "oven", "table", "bed", "car"]}, "answerKey": "A"}]
+
+
+def _mock_logiqa(dataset, config, split):
+    return [{"context": "All cats are animals.", "query": "Is a cat an animal?", "options": ["Yes", "No", "Maybe", "Unknown"], "correct_option": 0}]
+
+
+def _mock_anli(dataset, config, split):
+    return [{"premise": "The sun is bright.", "hypothesis": "It is daytime.", "label": 0}]
+
+
+def _mock_boolq(dataset, config, split):
+    return [{"passage": "Paris is the capital of France.", "question": "Is Paris the capital of France?", "answer": True}]
+
+
 _MOCK_DISPATCH: dict[str, callable] = {
     "legacy-datasets/banking77": _mock_banking77,
     "stanfordnlp/sst2": _mock_sst2,
@@ -211,6 +239,13 @@ _MOCK_DISPATCH: dict[str, callable] = {
     "presencesw/mednli": _mock_mednli,
     "kiddothe2b/contract-nli": _mock_contractnli,
     "code-search-net/code_search_net": _mock_codesearchnet,
+    "cais/mmlu": _mock_mmlu,
+    "allenai/winogrande": _mock_winogrande,
+    "ybisk/piqa": _mock_piqa,
+    "tau/commonsense_qa": _mock_commonsenseqa,
+    "lucasmccabe/logiqa": _mock_logiqa,
+    "facebook/anli": _mock_anli,
+    "google/boolq": _mock_boolq,
 }
 
 
@@ -244,6 +279,13 @@ EXPECTED_TYPES: dict[str, set[str]] = {
     "mednli": {"noul"},
     "contractnli": {"noul"},
     "codesearchnet": {"choice"},
+    "mmlu": {"choice"},
+    "winogrande": {"choice"},
+    "piqa": {"choice"},
+    "commonsenseqa": {"choice"},
+    "logiqa": {"choice"},
+    "anli": {"noul"},
+    "boolq": {"noul"},
     "synthetic": {"noul", "choice", "score"},
 }
 
@@ -432,18 +474,19 @@ class TestLoaderRegistry:
             "banking77", "sst2", "agnews", "mnli", "typed_decisions",
             "stsb", "sst5", "arc", "race", "hellaswag", "tabfact", "fever",
             "yelp", "swag", "multirc", "mednli", "contractnli", "codesearchnet",
+            "mmlu", "winogrande", "piqa", "commonsenseqa", "logiqa", "anli", "boolq",
             "synthetic",
         }
         assert set(pipeline.LOADERS.keys()) == expected
 
     def test_loader_count(self):
-        assert len(pipeline.LOADERS) == 19
+        assert len(pipeline.LOADERS) == 26
 
     def test_load_all_works(self):
         items = pipeline.load_all()
         assert len(items) > 0
         sources = {item.source for item in items}
-        assert len(sources) == 19
+        assert len(sources) == 26
 
     def test_load_all_single_source(self):
         items = pipeline.load_all(["sst2"])
