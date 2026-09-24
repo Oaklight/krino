@@ -551,6 +551,7 @@ def train_multitask(
     accumulation_steps: int = 1,
     seed: int = 42,
     batch_backbone: int = 0,
+    save_every_epoch: bool = False,
 ) -> dict[str, Any]:
     """Multi-task training loop with type-balanced sampling and detailed eval.
 
@@ -559,10 +560,14 @@ def train_multitask(
     - Calls eval_epoch_detailed() for per-type/per-source breakdowns
     - Prints per-type accuracy summary at each eval checkpoint
     - Uses aggregate mean_loss for best-eval checkpointing
+    - Optionally saves per-epoch checkpoints for post-hoc analysis
 
     Args:
         sampler_config: SamplerConfig for MultitaskSampler.
         seed: Base seed for the sampler.
+        save_every_epoch: If True and checkpoint_dir is set, save head weights
+            at every eval epoch (epoch_N.pt) in addition to best_heads.pt.
+            Cost: ~4MB per save. Enables post-hoc eval on new benchmarks.
     """
     from data.sampler import MultitaskSampler
 
@@ -633,6 +638,9 @@ def train_multitask(
                         },
                         checkpoint_dir / "training_state.pt",
                     )
+
+            if save_every_epoch and checkpoint_dir:
+                model.save_heads(checkpoint_dir / f"epoch_{epoch:03d}.pt")
         else:
             print(f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} ({elapsed:.1f}s)", flush=True)
 
