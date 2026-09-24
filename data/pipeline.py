@@ -898,10 +898,12 @@ def load_quality() -> Iterator[TypedQuestion]:
             article = row.get("article", "")
             question = row.get("question", "")
             options = row.get("options", [])
-            answer = row.get("gold_label", -1)
+            answer = row.get("answer", row.get("gold_label", -1))
             if not article or not question or len(options) != 4:
                 continue
-            if isinstance(answer, int) and answer in range(1, 5):
+            if isinstance(answer, int) and answer in range(4):
+                answer_idx = answer
+            elif isinstance(answer, int) and answer in range(1, 5):
                 answer_idx = answer - 1
             else:
                 continue
