@@ -216,9 +216,15 @@ def _load_seed_states(domain: str, count: int, seed: int = 42) -> list[str]:
     if not train_items:
         train_items = items
 
+    min_len = template.get("seed_min_length", 50)
+    max_len = template.get("seed_max_length", 0)
+
     states = sorted({item.state for item in train_items})
     rng.shuffle(states)
-    states = [s for s in states if len(s) >= 50]
+    states = [s for s in states if len(s) >= min_len]
+
+    if max_len > 0:
+        states = [s[:max_len] for s in states]
 
     return states[:count]
 
