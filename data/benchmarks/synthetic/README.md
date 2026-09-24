@@ -81,7 +81,7 @@ Each family generates ~35 items through:
 The final `TypedQuestion` items are assembled deterministically from these files using:
 
 ```bash
-pip install jev-explore
+pip install krino
 python -m data.synthetic --stages report   # verify data
 python -m data.pipeline synthetic           # load as TypedQuestion objects
 ```
@@ -117,16 +117,16 @@ python -m data.pipeline synthetic           # load as TypedQuestion objects
 base → counterfactual,paraphrase,negation → shuffle → fill-variants → repair → dedup → validate → llm-label → jev-label
 ```
 
-Source code: [Oaklight/open-decisions](https://github.com/Oaklight/open-decisions)
+Source code: [Oaklight/krino](https://github.com/Oaklight/krino)
 
 ## Citation
 
 ```bibtex
-@misc{open-decisions-synthetic-2026,
+@misc{krino-synthetic-2026,
     title={Open Decisions Synthetic Dataset},
     author={Peng Ding},
     year={2026},
-    url={https://huggingface.co/datasets/oaklight/open-decisions-synthetic}
+    url={https://huggingface.co/datasets/oaklight/krino-synthetic}
 }
 ```
 

@@ -1,4 +1,6 @@
-# jev-explore
+# Krino
+
+*κρίνω — to judge, to separate, to decide*
 
 Probing, analysis, and open replication of [TypeSafe.ai](https://typesafe.ai)'s Jev — the first System One model for typed, probabilistic decisions.
 
@@ -46,7 +48,7 @@ Jev is a "System One" model that returns typed, probabilistic decisions instead 
 
 ## Links
 
-- [GitHub Repository](https://github.com/Oaklight/jev-explore)
+- [GitHub Repository](https://github.com/Oaklight/krino)
 - [TypeSafe docs](https://docs.typesafe.ai)
 - [Python SDK](https://github.com/typesafe-ai/typesafe-sdk-python)
 - [awesome-typesafe](https://github.com/AbdelStark/awesome-typesafe)

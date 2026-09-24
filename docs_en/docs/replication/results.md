@@ -1,7 +1,7 @@
 # Model Replication: Findings and Results
 
 !!! info "Status"
-    Step 2 complete, Step 3 calibration in progress. Epic: [#19](https://github.com/Oaklight/jev-explore/issues/19)
+    Step 2 complete, Step 3 calibration in progress. Epic: [#19](https://github.com/Oaklight/krino/issues/19)
 
 ## Overview
 
@@ -11,7 +11,7 @@ This document consolidates findings from our effort to build an open typed decis
 State → shared encoding → per-option token-level scoring → softmax → calibrated probabilities
 ```
 
-We evaluated 10 backbone models across 19 benchmarks, trained lightweight decision heads, and tested cross-benchmark generalization and surface-form sensitivity. We then benchmarked the Jev API on the exact same eval suite to get authoritative comparison targets (PR [#45](https://github.com/Oaklight/jev-explore/pull/45), issue [#44](https://github.com/Oaklight/jev-explore/issues/44)). The headline results: a 150M reranker-pretrained encoder with trained heads achieves 95.2% on Banking77 (vs Jev's 75.0%), but Jev dominates on reasoning-heavy tasks (ARC 99.0%, RACE 95.5%, authored144 97.9%).
+We evaluated 10 backbone models across 19 benchmarks, trained lightweight decision heads, and tested cross-benchmark generalization and surface-form sensitivity. We then benchmarked the Jev API on the exact same eval suite to get authoritative comparison targets (PR [#45](https://github.com/Oaklight/krino/pull/45), issue [#44](https://github.com/Oaklight/krino/issues/44)). The headline results: a 150M reranker-pretrained encoder with trained heads achieves 95.2% on Banking77 (vs Jev's 75.0%), but Jev dominates on reasoning-heavy tasks (ARC 99.0%, RACE 95.5%, authored144 97.9%).
 
 ## Step 1: Zero-Training Baselines
 
@@ -64,7 +64,7 @@ Vanilla ModernBERT (base/large) scored near random on most benchmarks — embedd
 | Ettin-400m | 400M | 38ms | 9ms |
 | Qwen2.5-7B-Inst | 7B | 50ms | 19ms |
 
-All models meet the <100ms target. Batched inference (PR [#42](https://github.com/Oaklight/jev-explore/pull/42)) reduced Banking77 latency from 1848ms to ~35ms per item — a 39× speedup via padding options and expanding the prefix KV cache with `batch_repeat_interleave`.
+All models meet the <100ms target. Batched inference (PR [#42](https://github.com/Oaklight/krino/pull/42)) reduced Banking77 latency from 1848ms to ~35ms per item — a 39× speedup via padding options and expanding the prefix KV cache with `batch_repeat_interleave`.
 
 ### Measured Jev API latency (for comparison)
 
@@ -77,7 +77,7 @@ From 5,564 timed API calls across 21 probing experiments (16 standard + 5 contro
 
 ## Jev API Benchmark Results
 
-We ran the Jev API against all 19 benchmarks using the exact same 200-item eval subsets (PR [#45](https://github.com/Oaklight/jev-explore/pull/45), issue [#44](https://github.com/Oaklight/jev-explore/issues/44)). This gives authoritative comparison targets on identical data.
+We ran the Jev API against all 19 benchmarks using the exact same 200-item eval subsets (PR [#45](https://github.com/Oaklight/krino/pull/45), issue [#44](https://github.com/Oaklight/krino/issues/44)). This gives authoritative comparison targets on identical data.
 
 ### Full results
 
@@ -237,7 +237,7 @@ The key difference from standard LTR: decision models need **calibrated probabil
 
 ## Infrastructure and Performance
 
-### Batched inference (PR [#42](https://github.com/Oaklight/jev-explore/pull/42))
+### Batched inference (PR [#42](https://github.com/Oaklight/krino/pull/42))
 
 Replaced sequential per-option forward passes with batched inference. Options are padded to equal length, the prefix KV cache is expanded via `batch_repeat_interleave`, and all options are scored in a single forward pass per sub-batch.
 
@@ -246,11 +246,11 @@ Replaced sequential per-option forward passes with batched inference. Options ar
 | Banking77 | 77 | 1,848ms | 35ms | **53×** |
 | SST-2 | 2 | 42ms | 15ms | 2.8× |
 
-### KV cache optimization (PR [#41](https://github.com/Oaklight/jev-explore/pull/41))
+### KV cache optimization (PR [#41](https://github.com/Oaklight/krino/pull/41))
 
 Replaced `copy.deepcopy(cache)` per option with `DynamicCache.crop()` — a zero-copy operation that slices the cache back to prefix length after each option's forward pass. Eliminated 15,400 multi-GB tensor copies per Banking77 evaluation run.
 
-### Data pipeline (PR [#34](https://github.com/Oaklight/jev-explore/pull/34), [#40](https://github.com/Oaklight/jev-explore/pull/40))
+### Data pipeline (PR [#34](https://github.com/Oaklight/krino/pull/34), [#40](https://github.com/Oaklight/krino/pull/40))
 
 19 benchmarks across 6 domains converted to unified TypedQuestion format:
 
@@ -264,15 +264,15 @@ Replaced `copy.deepcopy(cache)` per option with `DynamicCache.crop()` — a zero
 
 ### Completed
 
-- **Step 0:** Data pipeline, eval suite, API server ([#20](https://github.com/Oaklight/jev-explore/issues/20), closed)
-- **Step 1:** Zero-training baselines — 10 models × 19 benchmarks ([#21](https://github.com/Oaklight/jev-explore/issues/21), closed)
-- **Step 2:** Trained heads — Ettin-150m r128 = 95.2% on Banking77, best overall ([#22](https://github.com/Oaklight/jev-explore/issues/22), closed)
-- **Backbone sweep:** Causal + encoder + reranker comparison ([#27](https://github.com/Oaklight/jev-explore/issues/27))
+- **Step 0:** Data pipeline, eval suite, API server ([#20](https://github.com/Oaklight/krino/issues/20), closed)
+- **Step 1:** Zero-training baselines — 10 models × 19 benchmarks ([#21](https://github.com/Oaklight/krino/issues/21), closed)
+- **Step 2:** Trained heads — Ettin-150m r128 = 95.2% on Banking77, best overall ([#22](https://github.com/Oaklight/krino/issues/22), closed)
+- **Backbone sweep:** Causal + encoder + reranker comparison ([#27](https://github.com/Oaklight/krino/issues/27))
 
 ### In progress
 
-- **Step 3 Phase A:** Calibration training infrastructure built (losses.py, train_calibrated.py, sweep config). Actual sweep runs pending ([#23](https://github.com/Oaklight/jev-explore/issues/23))
-- **Data pipeline Phase B/C:** Synthetic data generation and hard negative mining not yet started ([#29](https://github.com/Oaklight/jev-explore/issues/29))
+- **Step 3 Phase A:** Calibration training infrastructure built (losses.py, train_calibrated.py, sweep config). Actual sweep runs pending ([#23](https://github.com/Oaklight/krino/issues/23))
+- **Data pipeline Phase B/C:** Synthetic data generation and hard negative mining not yet started ([#29](https://github.com/Oaklight/krino/issues/29))
 
 ### Not started
 

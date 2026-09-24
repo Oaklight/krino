@@ -31,7 +31,7 @@ See [Model Replication Results](results.md) for full analysis.
 ## Status
 
 Step 2 (trained heads) complete. Step 3 (calibration training) infrastructure ready, sweep pending.
-See epic [#19](https://github.com/Oaklight/jev-explore/issues/19) for details.
+See epic [#19](https://github.com/Oaklight/krino/issues/19) for details.
 
 ## Structure
 
@@ -48,7 +48,7 @@ model/
 
 ## Tracks
 
-1. **Logit readout** ([#21](https://github.com/Oaklight/jev-explore/issues/21)) — frozen Qwen3-0.6B, direct log-prob scoring
-2. **Trained heads** ([#22](https://github.com/Oaklight/jev-explore/issues/22)) — frozen backbone + lightweight decision heads
-3. **Calibration** ([#23](https://github.com/Oaklight/jev-explore/issues/23)) — Brier/MMCE/focal + RLCD-style RL
-4. **Fresh architecture** ([#24](https://github.com/Oaklight/jev-explore/issues/24)) — bidirectional encoder comparison
+1. **Logit readout** ([#21](https://github.com/Oaklight/krino/issues/21)) — frozen Qwen3-0.6B, direct log-prob scoring
+2. **Trained heads** ([#22](https://github.com/Oaklight/krino/issues/22)) — frozen backbone + lightweight decision heads
+3. **Calibration** ([#23](https://github.com/Oaklight/krino/issues/23)) — Brier/MMCE/focal + RLCD-style RL
+4. **Fresh architecture** ([#24](https://github.com/Oaklight/krino/issues/24)) — bidirectional encoder comparison

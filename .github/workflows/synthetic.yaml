@@ -38,7 +38,7 @@ jobs:
           from huggingface_hub import HfApi
 
           api = HfApi(token=os.environ["HF_TOKEN"])
-          repo_id = "oaklight/open-decisions-synthetic"
+          repo_id = "oaklight/krino-synthetic"
           data_dir = Path("data/benchmarks/synthetic")
 
           # Collect files to upload
