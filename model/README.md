@@ -31,7 +31,7 @@ See [research/04-model-replication.md](../research/04-model-replication.md) for 
 ## Status
 
 Step 2 (trained heads) complete. Step 3 (calibration training) infrastructure ready, sweep pending.
-See epic [#19](https://github.com/Oaklight/jev-explore/issues/19) for details.
+See epic [#19](https://github.com/Oaklight/krino/issues/19) for details.
 
 ## Structure
 

@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-22 (updated)
 **Status:** Step 2 complete, multi-task training pipeline built, Step 3 calibration pending
-**Epic:** [#19](https://github.com/Oaklight/open-decisions/issues/19)
+**Epic:** [#19](https://github.com/Oaklight/krino/issues/19)
 
 ### Version history
 

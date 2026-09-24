@@ -4,7 +4,7 @@
     3 rounds of behavioral probing + 5 controlled probes + cross-model validation; ~5,800 API calls + H200 GPU runs. Operational pipeline identified through controlled experiments; exact backbone and training remain hypotheses.
 
 !!! warning "Correction (2026-09-18)"
-    Earlier revisions described "causal Qwen" as confirmed, declared encoder/diffusion alternatives "ruled out," and treated reduced ordering bias as confirmation of RLCD debiasing. Those conclusions exceeded what black-box HTTP measurements identify. The recorded tokenizer similarities, language behavior, ordering effects, timing, and Qwen comparison remain valid observations, but they do not uniquely determine the backbone, attention mask, readout path, or cause of debiasing. Throughout this document, "confirmed," "resolved," and "ruled out" architecture language should be read as historical hypotheses unless backed by TypeSafe disclosure. The new [controlled suite](https://github.com/Oaklight/jev-explore/blob/main/probing/controlled/README.md) preregisters discriminating tests and explicitly tracks non-identifiable alternatives.
+    Earlier revisions described "causal Qwen" as confirmed, declared encoder/diffusion alternatives "ruled out," and treated reduced ordering bias as confirmation of RLCD debiasing. Those conclusions exceeded what black-box HTTP measurements identify. The recorded tokenizer similarities, language behavior, ordering effects, timing, and Qwen comparison remain valid observations, but they do not uniquely determine the backbone, attention mask, readout path, or cause of debiasing. Throughout this document, "confirmed," "resolved," and "ruled out" architecture language should be read as historical hypotheses unless backed by TypeSafe disclosure. The new [controlled suite](https://github.com/Oaklight/krino/blob/main/probing/controlled/README.md) preregisters discriminating tests and explicitly tracks non-identifiable alternatives.
 
 ## What TypeSafe Has Confirmed
 
@@ -22,7 +22,7 @@
 
 ## Our Probing Results
 
-We ran 13 systematic probes across 3 rounds against the Jev API (jev-1.13.0), totaling ~1,800 API calls. Each round included a rigor self-audit, and flawed probes were re-designed and re-run. Raw data in [`probing/results/`](https://github.com/Oaklight/jev-explore/tree/main/probing/results). Full methodology and scripts in [`probing/scripts/`](https://github.com/Oaklight/jev-explore/tree/main/probing/scripts).
+We ran 13 systematic probes across 3 rounds against the Jev API (jev-1.13.0), totaling ~1,800 API calls. Each round included a rigor self-audit, and flawed probes were re-designed and re-run. Raw data in [`probing/results/`](https://github.com/Oaklight/krino/tree/main/probing/results). Full methodology and scripts in [`probing/scripts/`](https://github.com/Oaklight/krino/tree/main/probing/scripts).
 
 ### Methodological review
 
@@ -169,7 +169,7 @@ Hard idioms/grammar (Probe 9b): 100% across all 8 languages. **ZH confidence (0.
 
 ## Controlled Probe Results (3,757 requests)
 
-Five preregistered probes with matched controls, interval-censored analysis, and explicit non-identifiability tracking. Raw data in [`probing/results/controlled/`](https://github.com/Oaklight/jev-explore/tree/main/probing/results/controlled). Scripts in [`probing/scripts/controlled/`](https://github.com/Oaklight/jev-explore/tree/main/probing/scripts/controlled). Preregistration in [`probing/controlled/README.md`](https://github.com/Oaklight/jev-explore/blob/main/probing/controlled/README.md).
+Five preregistered probes with matched controls, interval-censored analysis, and explicit non-identifiability tracking. Raw data in [`probing/results/controlled/`](https://github.com/Oaklight/krino/tree/main/probing/results/controlled). Scripts in [`probing/scripts/controlled/`](https://github.com/Oaklight/krino/tree/main/probing/scripts/controlled). Preregistration in [`probing/controlled/README.md`](https://github.com/Oaklight/krino/blob/main/probing/controlled/README.md).
 
 ### Probe 1: Output Serialization (360 records)
 

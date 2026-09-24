@@ -29,7 +29,7 @@ def _read_parquet(path: Path) -> "pyarrow.Table":
     try:
         import pyarrow.parquet as pq
     except ImportError:
-        raise ImportError("pyarrow is required for data preparation: pip install 'jev-explore[data]'")
+        raise ImportError("pyarrow is required for data preparation: pip install 'krino[data]'")
     return pq.read_table(path)
 
 
@@ -55,7 +55,7 @@ def _load_hf_parquet(dataset: str, config: str, split: str) -> list[dict[str, An
     try:
         import pyarrow as pa
     except ImportError:
-        raise ImportError("pyarrow is required for data preparation: pip install 'jev-explore[data]'")
+        raise ImportError("pyarrow is required for data preparation: pip install 'krino[data]'")
 
     MAX_SHARDS = 1000
     tables: list[pa.Table] = []
