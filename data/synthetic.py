@@ -1059,7 +1059,17 @@ async def run_pipeline(
                     tp[teacher_key] = lr.teacher_probs
                     item["teacher_probs"] = tp
 
-            logger.info("  %s: %d/%d items labeled", teacher_key, len(label_results), len(all_items))
+            # Save per-domain label files for durability
+            labels_by_domain: dict[str, list] = {}
+            for r in label_results:
+                domain = r.item_id.split("-")[1]  # synthetic-{domain}-...
+                labels_by_domain.setdefault(domain, []).append(
+                    {"id": r.item_id, "teacher_probs": {teacher_key: r.teacher_probs}}
+                )
+            for domain, labels in labels_by_domain.items():
+                _save_jsonl(labels, DATA_DIR / f"{domain}_{teacher_key}_labels.jsonl")
+
+            logger.info("  %s: %d/%d items labeled, saved to %d domain files", teacher_key, len(label_results), len(all_items), len(labels_by_domain))
 
     # Jev API soft labels
     if "jev-label" in stages and all_items:
@@ -1078,6 +1088,41 @@ async def run_pipeline(
                 tp["jev"] = lr.teacher_probs
                 item["teacher_probs"] = tp
         print_bucket_report(label_results)
+
+        # Save per-domain label files
+        jev_by_domain: dict[str, list] = {}
+        for r in label_results:
+            if r.teacher_probs:
+                domain = r.question_id.split("-")[1]
+                jev_by_domain.setdefault(domain, []).append(
+                    {"id": r.question_id, "teacher_probs": {"jev": r.teacher_probs}}
+                )
+        for domain, labels in jev_by_domain.items():
+            _save_jsonl(labels, DATA_DIR / f"{domain}_jev_labels.jsonl")
+        logger.info("  Jev labels saved to %d domain files", len(jev_by_domain))
+
+    # Merge persisted labels from per-domain label files
+    label_cache: dict[str, dict] = {}  # item_id → {teacher: probs}
+    for label_file in sorted(DATA_DIR.glob("*_labels.jsonl")):
+        for lbl in _load_jsonl(label_file):
+            item_id = lbl["id"]
+            label_cache.setdefault(item_id, {}).update(lbl.get("teacher_probs", {}))
+    if label_cache:
+        merged = 0
+        for item in all_items:
+            cached = label_cache.get(item["id"])
+            if not cached:
+                continue
+            tp = item.get("teacher_probs")
+            if not isinstance(tp, dict):
+                tp = {}
+            for teacher, probs in cached.items():
+                if teacher not in tp:
+                    tp[teacher] = probs
+                    merged += 1
+            if tp:
+                item["teacher_probs"] = tp
+        logger.info("  Merged %d labels from %d cached label files", merged, len(list(DATA_DIR.glob("*_labels.jsonl"))))
 
     # Save final output
     out_path = DATA_DIR / "synthetic.jsonl"
