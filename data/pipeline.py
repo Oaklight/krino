@@ -931,6 +931,8 @@ def load_hotpotqa() -> Iterator[TypedQuestion]:
         out_split = "test" if split_name == "validation" else "train"
         if split_name == "train" and len(rows) > 10_000:
             rows = rng.sample(rows, 10_000)
+        # Collect answers for negative sampling
+        all_answers = [r.get("answer", "") for r in rows if r.get("answer", "").lower() not in ("yes", "no", "")]
         for i, row in enumerate(rows):
             question = row.get("question", "")
             answer = row.get("answer", "")
@@ -954,8 +956,9 @@ def load_hotpotqa() -> Iterator[TypedQuestion]:
                     group=f"hotpotqa-{row.get('type', 'bridge')}",
                 )
             else:
+                # True example
                 yield TypedQuestion.noul(
-                    id=f"hotpotqa-{split_name}-{i:05d}",
+                    id=f"hotpotqa-{split_name}-{i:05d}-t",
                     state=state,
                     instructions=f"Based on the passages, is '{answer}' the correct answer?",
                     label=True,
@@ -963,6 +966,19 @@ def load_hotpotqa() -> Iterator[TypedQuestion]:
                     split=out_split,
                     group=f"hotpotqa-{row.get('type', 'bridge')}",
                 )
+                # False example with a wrong answer from another row
+                if all_answers:
+                    wrong = all_answers[rng.randint(0, len(all_answers) - 1)]
+                    if wrong.lower() != answer.lower():
+                        yield TypedQuestion.noul(
+                            id=f"hotpotqa-{split_name}-{i:05d}-f",
+                            state=state,
+                            instructions=f"Based on the passages, is '{wrong}' the correct answer?",
+                            label=False,
+                            source="hotpotqa",
+                            split=out_split,
+                            group=f"hotpotqa-{row.get('type', 'bridge')}",
+                        )
 
 
 # --- DROP (Discrete Reasoning Over Paragraphs, Noul/Score) ---
