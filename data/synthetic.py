@@ -80,12 +80,46 @@ VARIANT_STAGES = {"counterfactual", "paraphrase", "negation"}
 # --- File I/O helpers ---
 
 
+def _lockfile(path: Path) -> Path:
+    return path.parent / f".{path.name}.lock"
+
+
+def _acquire_lock(path: Path, timeout: float = 5.0) -> bool:
+    """Acquire a lockfile. Returns True if lock acquired, False if already locked."""
+    lock = _lockfile(path)
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        fd = os.open(str(lock), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        os.write(fd, str(os.getpid()).encode())
+        os.close(fd)
+        return True
+    except FileExistsError:
+        # Check if the locking process is still alive
+        try:
+            pid = int(lock.read_text().strip())
+            os.kill(pid, 0)
+            return False  # process alive, lock is valid
+        except (ValueError, ProcessLookupError, PermissionError):
+            lock.unlink(missing_ok=True)
+            return _acquire_lock(path, timeout)
+
+
+def _release_lock(path: Path) -> None:
+    _lockfile(path).unlink(missing_ok=True)
+
+
 def _save_jsonl(items: list[dict], path: Path) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        for item in items:
-            f.write(json.dumps(item, ensure_ascii=False) + "\n")
-    return len(items)
+    if not _acquire_lock(path):
+        logger.error("Cannot acquire lock for %s — another process is writing", path)
+        return 0
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            for item in items:
+                f.write(json.dumps(item, ensure_ascii=False) + "\n")
+        return len(items)
+    finally:
+        _release_lock(path)
 
 
 def _append_jsonl(item: dict, path: Path) -> None:
@@ -253,12 +287,17 @@ async def run_base_stage(
         logger.info("Domain: %s (%s)", domain, "seeded" if is_seeded else "generated")
         logger.info("=" * 60)
 
-        # Check for cached families
+        # Acquire domain lock to prevent concurrent writes
         families_path = DATA_DIR / f"{domain}_families.jsonl"
+        if not _acquire_lock(families_path):
+            logger.warning("  %s: locked by another process, skipping", domain)
+            continue
+
         cached = _load_jsonl(families_path)
         if len(cached) >= families_per_domain:
             logger.info("  Resuming: %d families already cached, skipping base generation", len(cached))
             result[domain] = cached[:families_per_domain]
+            _release_lock(families_path)
             # Advance rng to keep determinism
             for _ in range(families_per_domain):
                 rng.sample(all_cog_types, min(NOUL_QUESTIONS_PER_FAMILY, len(all_cog_types)))
@@ -289,6 +328,7 @@ async def run_base_stage(
         remaining = actual_count - start_idx
         if remaining <= 0:
             result[domain] = cached[:actual_count]
+            _release_lock(families_path)
             continue
 
         logger.info("  Generating %d families (%d-%d)...", remaining, start_idx, actual_count - 1)
@@ -355,6 +395,8 @@ async def run_base_stage(
         if dedup_dropped:
             logger.info("  Dedup: dropped %d near-duplicate families during generation", dedup_dropped)
 
+        _release_lock(families_path)
+
         total_valid = len(all_families)
         logger.info(
             "  Done: %d/%d families (%.1fs, %d new, %d cached)",
@@ -398,14 +440,19 @@ async def run_variant_stage(
         t0 = time.monotonic()
         ordered_types = sorted(variant_types & VARIANT_STAGES)
 
-        # Load cached variants
+        # Acquire domain lock for variants
         variants_path = DATA_DIR / f"{domain}_variants.jsonl"
+        if not _acquire_lock(variants_path):
+            logger.warning("  %s: variants locked by another process, skipping", domain)
+            continue
+
         cached_variants = _load_jsonl(variants_path)
         start_idx = len(cached_variants)
 
         if start_idx >= len(families):
             logger.info("  %s: all %d variant sets cached, skipping", domain, len(families))
             result[domain] = cached_variants[:len(families)]
+            _release_lock(variants_path)
             continue
 
         if start_idx > 0:
@@ -455,6 +502,7 @@ async def run_variant_stage(
                 )
 
         result[domain] = domain_variants
+        _release_lock(variants_path)
         logger.info("  %s: variants complete (%.1fs)", domain, time.monotonic() - t0)
 
     return result
