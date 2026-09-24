@@ -220,6 +220,31 @@ def _mock_boolq(dataset, config, split):
     return [{"passage": "Paris is the capital of France.", "question": "Is Paris the capital of France?", "answer": True}]
 
 
+def _mock_quality(dataset, config, split):
+    return [
+        {"article": f"Long article about topic {i}. " * 50, "question": f"What about {i}?",
+         "options": ["opt A", "opt B", "opt C", "opt D"], "gold_label": (i % 4) + 1, "set_unique_id": f"q{i}"}
+        for i in range(10)
+    ]
+
+
+def _mock_hotpotqa(dataset, config, split):
+    return [
+        {"question": f"Who did X in Y?", "answer": ["yes", "no", "John"][i % 3],
+         "context": {"title": [f"Title{j}" for j in range(3)], "sentences": [[f"Sent {j}."] for j in range(3)]},
+         "type": "bridge"}
+        for i in range(20)
+    ]
+
+
+def _mock_drop(dataset, config, split):
+    return [
+        {"passage": f"In 2020, team scored {10+i} points.", "question": f"How many points?",
+         "answers_spans": {"spans": [str(10 + i)]}}
+        for i in range(20)
+    ]
+
+
 _MOCK_DISPATCH: dict[str, callable] = {
     "legacy-datasets/banking77": _mock_banking77,
     "stanfordnlp/sst2": _mock_sst2,
@@ -246,6 +271,9 @@ _MOCK_DISPATCH: dict[str, callable] = {
     "lucasmccabe/logiqa": _mock_logiqa,
     "facebook/anli": _mock_anli,
     "google/boolq": _mock_boolq,
+    "emozilla/quality": _mock_quality,
+    "hotpotqa/hotpot_qa": _mock_hotpotqa,
+    "ucinlp/drop": _mock_drop,
 }
 
 
@@ -286,6 +314,9 @@ EXPECTED_TYPES: dict[str, set[str]] = {
     "logiqa": {"choice"},
     "anli": {"noul"},
     "boolq": {"noul"},
+    "quality": {"choice"},
+    "hotpotqa": {"noul"},
+    "drop": {"noul", "score"},
     "synthetic": {"noul", "choice", "score"},
 }
 
@@ -475,18 +506,19 @@ class TestLoaderRegistry:
             "stsb", "sst5", "arc", "race", "hellaswag", "tabfact", "fever",
             "yelp", "swag", "multirc", "mednli", "contractnli", "codesearchnet",
             "mmlu", "winogrande", "piqa", "commonsenseqa", "logiqa", "anli", "boolq",
+            "quality", "hotpotqa", "drop",
             "synthetic",
         }
         assert set(pipeline.LOADERS.keys()) == expected
 
     def test_loader_count(self):
-        assert len(pipeline.LOADERS) == 26
+        assert len(pipeline.LOADERS) == 29
 
     def test_load_all_works(self):
         items = pipeline.load_all()
         assert len(items) > 0
         sources = {item.source for item in items}
-        assert len(sources) == 26
+        assert len(sources) == 29
 
     def test_load_all_single_source(self):
         items = pipeline.load_all(["sst2"])
