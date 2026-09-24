@@ -677,6 +677,212 @@ def load_codesearchnet() -> Iterator[TypedQuestion]:
                 )
 
 
+# --- MMLU (Massive Multitask Language Understanding) ---
+
+MMLU_KEYS = ["A", "B", "C", "D"]
+
+
+def load_mmlu() -> Iterator[TypedQuestion]:
+    for split_name in ("test", "validation"):
+        rows = _load_hf_parquet("cais/mmlu", "all", split_name)
+        out_split = "test" if split_name == "validation" else split_name
+        for i, row in enumerate(rows):
+            question_text = row.get("question", "")
+            choices = row.get("choices", [])
+            answer_idx = row.get("answer", 0)
+            subject = row.get("subject", "")
+            if len(choices) != 4:
+                continue
+            criteria = {k: c for k, c in zip(MMLU_KEYS, choices)}
+            label = MMLU_KEYS[answer_idx] if isinstance(answer_idx, int) and 0 <= answer_idx < 4 else None
+            if label is None:
+                continue
+            yield TypedQuestion.choice(
+                id=f"mmlu-{split_name}-{i:05d}",
+                state=question_text,
+                instructions=f"Answer this {subject.replace('_', ' ')} question.",
+                criteria=criteria,
+                label=label,
+                source="mmlu",
+                split=out_split,
+                group=f"mmlu-{subject}",
+            )
+
+
+# --- WinoGrande (Commonsense Pronoun Resolution) ---
+
+WINOGRANDE_KEYS = ["1", "2"]
+
+
+def load_winogrande() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation"):
+        rows = _load_hf_parquet("allenai/winogrande", "winogrande_xl", split_name)
+        out_split = "test" if split_name == "validation" else "train"
+        for i, row in enumerate(rows):
+            sentence = row.get("sentence", "")
+            option1 = row.get("option1", "")
+            option2 = row.get("option2", "")
+            answer = str(row.get("answer", ""))
+            if answer not in ("1", "2") or not sentence:
+                continue
+            criteria = {"1": option1, "2": option2}
+            yield TypedQuestion.choice(
+                id=f"winogrande-{split_name}-{i:05d}",
+                state=sentence,
+                instructions="Which option best fills the blank in the sentence?",
+                criteria=criteria,
+                label=answer,
+                source="winogrande",
+                split=out_split,
+                group=f"winogrande-{i % 100}",
+            )
+
+
+# --- PIQA (Physical Intuition QA) ---
+
+PIQA_KEYS = ["A", "B"]
+
+
+def load_piqa() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation"):
+        rows = _load_hf_parquet("ybisk/piqa", "plain_text", split_name)
+        out_split = "test" if split_name == "validation" else "train"
+        for i, row in enumerate(rows):
+            goal = row.get("goal", "")
+            sol1 = row.get("sol1", "")
+            sol2 = row.get("sol2", "")
+            label_idx = row.get("label", -1)
+            if not isinstance(label_idx, int) or label_idx not in (0, 1):
+                continue
+            if not goal or not sol1 or not sol2:
+                continue
+            criteria = {"A": sol1, "B": sol2}
+            yield TypedQuestion.choice(
+                id=f"piqa-{split_name}-{i:05d}",
+                state=goal,
+                instructions="Which solution best achieves the goal?",
+                criteria=criteria,
+                label=PIQA_KEYS[label_idx],
+                source="piqa",
+                split=out_split,
+                group=f"piqa-{i % 100}",
+            )
+
+
+# --- CommonsenseQA (5-way Commonsense Reasoning) ---
+
+
+def load_commonsenseqa() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation"):
+        rows = _load_hf_parquet("tau/commonsense_qa", "default", split_name)
+        out_split = "test" if split_name == "validation" else "train"
+        for i, row in enumerate(rows):
+            question_text = row.get("question", "")
+            choices = row.get("choices", {})
+            answer_key = row.get("answerKey", "")
+            labels = choices.get("label", [])
+            texts = choices.get("text", [])
+            if len(labels) != len(texts) or len(labels) == 0:
+                continue
+            criteria = {lbl: txt for lbl, txt in zip(labels, texts)}
+            if answer_key not in criteria:
+                continue
+            yield TypedQuestion.choice(
+                id=f"commonsenseqa-{split_name}-{i:05d}",
+                state=question_text,
+                instructions="Answer this commonsense reasoning question.",
+                criteria=criteria,
+                label=answer_key,
+                source="commonsenseqa",
+                split=out_split,
+                group=f"commonsenseqa-{i % 100}",
+            )
+
+
+# --- LogiQA (Logical Reasoning) ---
+
+LOGIQA_KEYS = ["A", "B", "C", "D"]
+
+
+def load_logiqa() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation", "test"):
+        rows = _load_hf_parquet("lucasmccabe/logiqa", "default", split_name)
+        out_split = "test" if split_name in ("validation", "test") else "train"
+        for i, row in enumerate(rows):
+            context = row.get("context", "")
+            query = row.get("query", "")
+            options = row.get("options", [])
+            correct_option = row.get("correct_option", -1)
+            if len(options) != 4:
+                continue
+            if not isinstance(correct_option, int) or not (0 <= correct_option < 4):
+                continue
+            criteria = {k: opt for k, opt in zip(LOGIQA_KEYS, options)}
+            state = f"{context}\n\nQuestion: {query}" if context else query
+            yield TypedQuestion.choice(
+                id=f"logiqa-{split_name}-{i:05d}",
+                state=state,
+                instructions="Which answer is correct based on logical reasoning?",
+                criteria=criteria,
+                label=LOGIQA_KEYS[correct_option],
+                source="logiqa",
+                split=out_split,
+                group=f"logiqa-{i % 100}",
+            )
+
+
+# --- ANLI (Adversarial NLI) ---
+
+
+def load_anli() -> Iterator[TypedQuestion]:
+    for round_num in (1, 2, 3):
+        for split_prefix in ("train", "dev"):
+            split_name = f"{split_prefix}_r{round_num}"
+            out_split = "test" if split_prefix == "dev" else "train"
+            rows = _load_hf_parquet("facebook/anli", "plain_text", split_name)
+            for i, row in enumerate(rows):
+                premise = row.get("premise", "")
+                hypothesis = row.get("hypothesis", "")
+                label_idx = row.get("label", -1)
+                if label_idx not in (0, 1, 2):
+                    continue
+                state = f"Premise: {premise}\nHypothesis: {hypothesis}"
+                yield TypedQuestion.noul(
+                    id=f"anli-r{round_num}-{split_prefix}-{i:05d}",
+                    state=state,
+                    instructions="Does the premise entail the hypothesis?",
+                    label=(label_idx == 0),
+                    source="anli",
+                    split=out_split,
+                    group=f"anli-r{round_num}",
+                )
+
+
+# --- BoolQ (Boolean Questions) ---
+
+
+def load_boolq() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation"):
+        rows = _load_hf_parquet("google/boolq", "default", split_name)
+        out_split = "test" if split_name == "validation" else "train"
+        for i, row in enumerate(rows):
+            passage = row.get("passage", "")
+            question = row.get("question", "")
+            answer = row.get("answer", None)
+            if answer is None or not passage or not question:
+                continue
+            state = f"Passage: {passage}\n\nQuestion: {question}"
+            yield TypedQuestion.noul(
+                id=f"boolq-{split_name}-{i:05d}",
+                state=state,
+                instructions="Based on the passage, is the answer yes?",
+                label=bool(answer),
+                source="boolq",
+                split=out_split,
+                group=f"boolq-{i % 100}",
+            )
+
+
 # --- Unified loader ---
 
 def load_synthetic() -> Iterator[TypedQuestion]:
@@ -708,6 +914,13 @@ LOADERS = {
     "mednli": load_mednli,
     "contractnli": load_contractnli,
     "codesearchnet": load_codesearchnet,
+    "mmlu": load_mmlu,
+    "winogrande": load_winogrande,
+    "piqa": load_piqa,
+    "commonsenseqa": load_commonsenseqa,
+    "logiqa": load_logiqa,
+    "anli": load_anli,
+    "boolq": load_boolq,
     "synthetic": load_synthetic,
 }
 
