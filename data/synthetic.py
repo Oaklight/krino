@@ -614,7 +614,11 @@ def family_to_typed_questions(
         if not isinstance(sq_criteria, list):
             logger.warning("Dropped score-%d for %s-%04d: criteria is %s, not list", si, domain, family_idx, type(sq_criteria).__name__)
             continue
-        sq_label_raw = float(sq["label"])
+        try:
+            sq_label_raw = float(sq["label"])
+        except (ValueError, TypeError):
+            logger.warning("Dropped score-%d for %s-%04d: label %r is not numeric", si, domain, family_idx, sq["label"])
+            continue
         if 1.0 <= sq_label_raw <= float(len(sq_criteria)):
             sq_label = sq_label_raw - 1.0  # convert 1-based LLM output to 0-based training index
             if do_base:
