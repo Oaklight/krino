@@ -57,6 +57,28 @@ sources:
     weight: 1.0
     max_train: 5000
     max_eval: 500
+  mmlu:
+    path: data/benchmarks/mmlu.jsonl
+    weight: 2.0
+    max_eval: 500
+  winogrande:
+    path: data/benchmarks/winogrande.jsonl
+    weight: 1.5
+    max_train: 5000
+    max_eval: 500
+  piqa:
+    path: data/benchmarks/piqa.jsonl
+    weight: 1.5
+    max_train: 5000
+    max_eval: 500
+  commonsenseqa:
+    path: data/benchmarks/commonsenseqa.jsonl
+    weight: 2.0
+    max_eval: 500
+  logiqa:
+    path: data/benchmarks/logiqa.jsonl
+    weight: 2.0
+    max_eval: 500
 
   # --- Noul benchmarks ---
   sst2:
@@ -85,6 +107,16 @@ sources:
   contractnli:
     path: data/benchmarks/contractnli.jsonl
     weight: 2.0
+    max_eval: 500
+  anli:
+    path: data/benchmarks/anli.jsonl
+    weight: 2.0
+    max_train: 5000
+    max_eval: 500
+  boolq:
+    path: data/benchmarks/boolq.jsonl
+    weight: 1.5
+    max_train: 5000
     max_eval: 500
 
   # --- Score benchmarks ---
