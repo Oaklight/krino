@@ -48,10 +48,10 @@ jobs:
           mkdocs build -f docs_en/mkdocs.yml
           cp -r docs_en/site web/out/docs
 
-      - name: Deploy to jev-explore-site
+      - name: Deploy to krino-site
         uses: peaceiris/actions-gh-pages@v4
         with:
           deploy_key: ${{ secrets.SITE_DEPLOY_KEY }}
-          external_repository: Oaklight/jev-explore-site
+          external_repository: Oaklight/krino-site
           publish_branch: main
           publish_dir: web/out

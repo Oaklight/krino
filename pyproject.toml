@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "jev-explore"
-version = "0.1.0"
-description = "Exploration, probing, and replication of typed decision models"
+name = "krino"
+dynamic = ["version"]
+description = "Krino (κρίνω) — probing, analysis, and replication toolkit for JEV-class decision models"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -30,8 +30,11 @@ dev = [
     "pytest>=8.0",
 ]
 
+[tool.setuptools.dynamic]
+version = { attr = "krino.__version__" }
+
 [tool.setuptools.packages.find]
-include = ["model*", "data*", "probing*"]
+include = ["krino*", "model*", "data*", "probing*"]
 
 [tool.ruff]
 exclude = ["probing/scripts/httpclient.py"]

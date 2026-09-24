@@ -1,4 +1,6 @@
-# jev-explore
+# Krino
+
+*κρίνω — to judge, to separate, to decide*
 
 Probing, analysis, and open replication of [TypeSafe.ai](https://typesafe.ai)'s Jev — the first System One model for typed, probabilistic decisions.
 
@@ -63,6 +65,12 @@ See [research/04-model-replication.md](research/04-model-replication.md) for ful
 ```bash
 pip install -e '.[data]'    # core + data pipeline
 pip install -e '.[train]'   # + training dependencies
+```
+
+Or from PyPI (placeholder for now):
+
+```bash
+pip install krino
 ```
 
 ## Quick start
