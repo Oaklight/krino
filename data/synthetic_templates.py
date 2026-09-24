@@ -513,6 +513,291 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
             ],
         },
     },
+    # --- Long context seeded domains ---
+    "long_document": {
+        "description": "Long-form document comprehension requiring full-text reasoning",
+        "seed_source": "quality",
+        "state_prompt": (
+            "Create a long-form article or story (5-15 paragraphs). Include:\n"
+            "- A clear narrative or argument with multiple sections\n"
+            "- Specific details, names, dates, and numbers throughout\n"
+            "- Information relevant to the question spread across multiple paragraphs\n"
+            "- At least one subtle detail that could be easily missed"
+        ),
+        "choice_template": {
+            "instructions": "What comprehension strategy is most needed to answer questions about this document?",
+            "criteria": {
+                "detail_retrieval": "Finding a specific fact stated in the text",
+                "synthesis": "Combining information from multiple sections",
+                "inference": "Drawing conclusions not explicitly stated",
+                "structural": "Understanding the document's organization and flow",
+                "critical": "Evaluating the author's claims or reasoning",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate the complexity of reasoning required to understand this document.",
+            "criteria": [
+                "Simple: single-paragraph comprehension sufficient",
+                "Moderate: need to connect 2-3 sections",
+                "Complex: requires synthesizing across most of the document",
+                "Advanced: requires inference beyond what is explicitly stated",
+                "Expert: requires domain knowledge plus multi-section synthesis",
+            ],
+        },
+    },
+    "multi_hop_reasoning": {
+        "description": "Multi-paragraph reasoning requiring chain of evidence across sources",
+        "seed_source": "hotpotqa",
+        "state_prompt": (
+            "Create a multi-source reasoning scenario. Include:\n"
+            "- 3-5 short paragraphs from different sources about related topics\n"
+            "- A question that requires combining facts from at least 2 paragraphs\n"
+            "- Some paragraphs that are distractors (relevant topic but not needed)\n"
+            "- The answer should NOT be findable in any single paragraph"
+        ),
+        "choice_template": {
+            "instructions": "What type of multi-hop reasoning is required?",
+            "criteria": {
+                "bridge": "Fact from paragraph A connects to fact in paragraph B",
+                "comparison": "Comparing attributes mentioned in different paragraphs",
+                "composition": "Combining multiple facts to derive a new fact",
+                "temporal": "Ordering events described across paragraphs",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate how many reasoning hops are needed to answer.",
+            "criteria": [
+                "Single hop: answer is in one paragraph",
+                "Two hops: need to connect two paragraphs",
+                "Three hops: chain across three sources",
+                "Four+ hops: complex chain requiring most sources",
+                "Unanswerable: information is insufficient even with all sources",
+            ],
+        },
+    },
+    "numerical_reasoning": {
+        "description": "Quantitative reasoning over text requiring counting, arithmetic, or comparison",
+        "seed_source": "drop",
+        "state_prompt": (
+            "Create a passage with embedded numerical information. Include:\n"
+            "- A factual passage (sports, history, science, business) with specific numbers\n"
+            "- At least 5 numerical facts (dates, counts, percentages, scores)\n"
+            "- Questions answerable through arithmetic operations on these numbers\n"
+            "Keep it to 3-6 sentences with dense numerical content."
+        ),
+        "choice_template": {
+            "instructions": "What numerical operation is needed to answer the question?",
+            "criteria": {
+                "counting": "Count occurrences of items matching criteria",
+                "arithmetic": "Add, subtract, multiply, or divide values",
+                "comparison": "Compare two or more numerical values",
+                "sorting": "Order items by a numerical attribute",
+                "extraction": "Simply find and extract a stated number",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate the computational complexity of the numerical reasoning.",
+            "criteria": [
+                "Trivial: direct extraction of a single number",
+                "Simple: one arithmetic operation",
+                "Moderate: two operations or comparison with filtering",
+                "Complex: multi-step calculation or conditional counting",
+                "Advanced: requires combining multiple operations with interpretation",
+            ],
+        },
+    },
+    # --- Sequential decision domains (pure generation) ---
+    "game_strategy": {
+        "description": "Turn-based game state requiring strategic next-move decision",
+        "seed_source": None,
+        "state_prompt": (
+            "Create a turn-based game scenario (board game, card game, or strategy game). Include:\n"
+            "- Current board/game state with specific positions, scores, or resources\n"
+            "- Action history: 3-6 previous moves with their outcomes\n"
+            "- Available actions for the current turn (3-5 options)\n"
+            "- Win condition or objective\n"
+            "Format as:\n"
+            "Environment: <game state>\n"
+            "History: <action_1 → outcome_1, action_2 → outcome_2, ...>\n"
+            "Available actions: <list>\n"
+            "Objective: <goal>\n"
+            "Keep it to 8-15 sentences. Use specific numbers and positions."
+        ),
+        "choice_template": {
+            "instructions": "Which action is the strongest strategic move?",
+            "criteria": {
+                "aggressive": "High-risk move that maximizes potential gain",
+                "defensive": "Conservative move that minimizes potential loss",
+                "positional": "Move that improves long-term position without immediate gain",
+                "tactical": "Move that exploits a specific short-term opportunity",
+                "neutral": "No clearly superior option — all moves are roughly equal",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate the current player's winning probability given the game state.",
+            "criteria": [
+                "Losing: opponent has decisive advantage",
+                "Disadvantaged: opponent has moderate advantage",
+                "Even: neither side has clear advantage",
+                "Advantaged: current player has moderate advantage",
+                "Winning: current player has decisive advantage",
+            ],
+        },
+    },
+    "navigation_planning": {
+        "description": "Spatial navigation with obstacles requiring path planning",
+        "seed_source": None,
+        "state_prompt": (
+            "Create a navigation/pathfinding scenario. Include:\n"
+            "- Environment layout (grid, map, or spatial description with dimensions)\n"
+            "- Current position and destination/goal\n"
+            "- Obstacles, hazards, or blocked paths (at least 3)\n"
+            "- Movement history: 3-5 previous moves and what was encountered\n"
+            "- Available movement options from current position\n"
+            "Format as:\n"
+            "Environment: <layout description>\n"
+            "Position: <current>, Goal: <target>\n"
+            "History: <move_1 → result_1, move_2 → result_2, ...>\n"
+            "Available moves: <list with consequences>\n"
+            "Keep it to 8-15 sentences. Be precise about spatial relationships."
+        ),
+        "choice_template": {
+            "instructions": "Which navigation strategy should be used next?",
+            "criteria": {
+                "shortest_path": "Take the most direct available route to goal",
+                "safest_path": "Avoid known hazards even if longer",
+                "explore": "Investigate unknown area that might reveal a shortcut",
+                "backtrack": "Return to a previous position and try alternate route",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate how close the agent is to reaching the goal.",
+            "criteria": [
+                "Very far: many steps and obstacles remain",
+                "Far: significant distance with known obstacles",
+                "Moderate: roughly halfway with manageable obstacles",
+                "Close: few steps remain with clear path",
+                "Arrived: goal is adjacent or reachable in one move",
+            ],
+        },
+    },
+    "resource_management": {
+        "description": "Resource allocation under constraints requiring optimization",
+        "seed_source": None,
+        "state_prompt": (
+            "Create a resource management scenario. Include:\n"
+            "- Available resources with specific quantities (budget, materials, time, personnel)\n"
+            "- At least 3 competing demands or projects requiring resources\n"
+            "- Constraints (deadlines, minimum allocations, dependencies between tasks)\n"
+            "- History: 2-4 previous allocation decisions and their outcomes\n"
+            "- Current decision point: what needs to be allocated now\n"
+            "Format as:\n"
+            "Resources: <inventory with quantities>\n"
+            "Demands: <project_1 needs X, project_2 needs Y, ...>\n"
+            "Constraints: <rules and deadlines>\n"
+            "History: <decision_1 → outcome_1, ...>\n"
+            "Decision: <what to allocate now>\n"
+            "Keep it to 8-15 sentences with specific numbers."
+        ),
+        "choice_template": {
+            "instructions": "What is the best resource allocation strategy?",
+            "criteria": {
+                "prioritize_urgent": "Allocate to the most time-critical demand first",
+                "maximize_roi": "Allocate to the demand with highest expected return",
+                "balanced": "Distribute resources proportionally across demands",
+                "reserve": "Hold back resources for anticipated future needs",
+                "concentrate": "Put all available resources into a single high-impact demand",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate how well the current resource position supports the objectives.",
+            "criteria": [
+                "Critical: resources are severely insufficient for key objectives",
+                "Strained: resources are tight, trade-offs are painful",
+                "Adequate: resources can cover priorities with careful allocation",
+                "Comfortable: resources allow flexibility and contingency",
+                "Abundant: resources exceed needs across all demands",
+            ],
+        },
+    },
+    "sequential_action": {
+        "description": "Multi-step action planning in a dynamic environment",
+        "seed_source": None,
+        "state_prompt": (
+            "Create a multi-step action planning scenario (robot task, cooking, assembly, etc.). Include:\n"
+            "- Current environment state with specific object positions and conditions\n"
+            "- Goal state to achieve (what the end result should look like)\n"
+            "- Completed steps so far (3-5) with outcomes and any unexpected results\n"
+            "- Available actions at current step (4-5 options)\n"
+            "- Any preconditions or dependencies between actions\n"
+            "Format as:\n"
+            "Environment: <current state of objects and conditions>\n"
+            "Goal: <desired end state>\n"
+            "Completed: <step_1 → result_1, step_2 → result_2, ...>\n"
+            "Available actions: <list with preconditions>\n"
+            "Keep it to 8-15 sentences. Include at least one unexpected result in history."
+        ),
+        "choice_template": {
+            "instructions": "What should the next action be?",
+            "criteria": {
+                "proceed_planned": "Continue with the originally planned next step",
+                "adapt": "Modify the plan to account for unexpected results",
+                "recover": "Take corrective action to fix a problem from a previous step",
+                "skip": "Skip the current planned step as it is no longer necessary",
+                "verify": "Check or test the current state before proceeding further",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate progress toward the goal state.",
+            "criteria": [
+                "Blocked: cannot proceed without resolving a problem",
+                "Behind: fewer steps completed than expected, issues present",
+                "On track: progressing as planned with minor deviations",
+                "Ahead: more progress than expected, goal is near",
+                "Complete: goal state is achieved or achievable in one step",
+            ],
+        },
+    },
+    "multi_agent_coordination": {
+        "description": "Coordinated decision-making between multiple agents",
+        "seed_source": None,
+        "state_prompt": (
+            "Create a multi-agent coordination scenario (emergency response, team sports, "
+            "logistics, military, or collaborative robotics). Include:\n"
+            "- 3-4 named agents with their current positions, capabilities, and status\n"
+            "- Shared objective that requires cooperation\n"
+            "- Communication history: 3-5 messages between agents\n"
+            "- Current decision: what one specific agent should do next\n"
+            "- Constraints: limited communication, partial information, timing\n"
+            "Format as:\n"
+            "Agents: <name, position, capability, status for each>\n"
+            "Objective: <shared goal>\n"
+            "Comms: <agent_A → agent_B: message, ...>\n"
+            "Decision for [agent_name]: <what to decide>\n"
+            "Constraints: <limitations>\n"
+            "Keep it to 10-18 sentences. Each agent should have distinct capabilities."
+        ),
+        "choice_template": {
+            "instructions": "What coordination strategy should the deciding agent adopt?",
+            "criteria": {
+                "lead": "Take initiative and direct other agents",
+                "support": "Assist another agent's ongoing action",
+                "independent": "Act alone on a subtask that contributes to the objective",
+                "communicate": "Share critical information before acting",
+                "wait": "Hold position until other agents complete their actions",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate the team's overall coordination effectiveness.",
+            "criteria": [
+                "Chaotic: agents are working at cross-purposes",
+                "Fragmented: some coordination but significant gaps",
+                "Functional: basic coordination with room for improvement",
+                "Effective: agents are well-coordinated with clear roles",
+                "Optimal: agents are perfectly synchronized toward the objective",
+            ],
+        },
+    },
 }
 
 SEEDED_DOMAINS = [d for d, t in DOMAIN_TEMPLATES.items() if t.get("seed_source")]

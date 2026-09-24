@@ -885,6 +885,131 @@ def load_boolq() -> Iterator[TypedQuestion]:
 
 # --- Unified loader ---
 
+# --- QuALITY (Long Document QA, Choice) ---
+
+_QUALITY_KEYS = ["A", "B", "C", "D"]
+
+
+def load_quality() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation"):
+        rows = _load_hf_parquet("emozilla/quality", "default", split_name)
+        out_split = "test" if split_name == "validation" else "train"
+        for i, row in enumerate(rows):
+            article = row.get("article", "")
+            question = row.get("question", "")
+            options = row.get("options", [])
+            answer = row.get("gold_label", -1)
+            if not article or not question or len(options) != 4:
+                continue
+            if isinstance(answer, int) and answer in range(1, 5):
+                answer_idx = answer - 1
+            else:
+                continue
+            criteria = {_QUALITY_KEYS[j]: options[j] for j in range(4)}
+            state = f"{article}\n\nQuestion: {question}"
+            yield TypedQuestion.choice(
+                id=f"quality-{split_name}-{i:05d}",
+                state=state,
+                instructions="Which answer is correct based on the passage?",
+                criteria=criteria,
+                label=_QUALITY_KEYS[answer_idx],
+                source="quality",
+                split=out_split,
+                group=f"quality-{row.get('set_unique_id', i)}",
+            )
+
+
+# --- HotpotQA (Multi-hop Reasoning, Noul) ---
+
+
+def load_hotpotqa() -> Iterator[TypedQuestion]:
+    rng = random.Random(42)
+    for split_name in ("train", "validation"):
+        rows = _load_hf_parquet("hotpotqa/hotpot_qa", "distractor", split_name)
+        out_split = "test" if split_name == "validation" else "train"
+        if split_name == "train" and len(rows) > 10_000:
+            rows = rng.sample(rows, 10_000)
+        for i, row in enumerate(rows):
+            question = row.get("question", "")
+            answer = row.get("answer", "")
+            context_titles = row.get("context", {}).get("title", [])
+            context_sents = row.get("context", {}).get("sentences", [])
+            if not question or not answer or not context_sents:
+                continue
+            paragraphs = []
+            for title, sents in zip(context_titles, context_sents):
+                paragraphs.append(f"{title}: {''.join(sents)}")
+            state = "\n\n".join(paragraphs) + f"\n\nQuestion: {question}"
+            is_yes_no = answer.lower() in ("yes", "no")
+            if is_yes_no:
+                yield TypedQuestion.noul(
+                    id=f"hotpotqa-{split_name}-{i:05d}",
+                    state=state,
+                    instructions=f"Based on the passages, is the answer '{answer.lower()}'?",
+                    label=(answer.lower() == "yes"),
+                    source="hotpotqa",
+                    split=out_split,
+                    group=f"hotpotqa-{row.get('type', 'bridge')}",
+                )
+            else:
+                yield TypedQuestion.noul(
+                    id=f"hotpotqa-{split_name}-{i:05d}",
+                    state=state,
+                    instructions=f"Based on the passages, is '{answer}' the correct answer?",
+                    label=True,
+                    source="hotpotqa",
+                    split=out_split,
+                    group=f"hotpotqa-{row.get('type', 'bridge')}",
+                )
+
+
+# --- DROP (Discrete Reasoning Over Paragraphs, Noul/Score) ---
+
+
+def load_drop() -> Iterator[TypedQuestion]:
+    for split_name in ("train", "validation"):
+        rows = _load_hf_parquet("ucinlp/drop", "default", split_name)
+        out_split = "test" if split_name == "validation" else "train"
+        for i, row in enumerate(rows):
+            passage = row.get("passage", "")
+            question = row.get("question", "")
+            answers = row.get("answers_spans", {})
+            spans = answers.get("spans", [])
+            if not passage or not question or not spans:
+                continue
+            answer = spans[0]
+            state = f"{passage}\n\nQuestion: {question}"
+            try:
+                num = float(answer.replace(",", ""))
+                yield TypedQuestion.score(
+                    id=f"drop-{split_name}-{i:05d}",
+                    state=state,
+                    instructions=f"What is the numerical answer? (expected: {num})",
+                    criteria=[
+                        "Incorrect: answer is wrong",
+                        "Close: answer is approximately correct",
+                        "Exact: answer matches exactly",
+                    ],
+                    label=2.0,
+                    source="drop",
+                    split=out_split,
+                    group=f"drop-{i % 100}",
+                )
+            except ValueError:
+                yield TypedQuestion.noul(
+                    id=f"drop-{split_name}-{i:05d}",
+                    state=state,
+                    instructions=f"Based on the passage, is '{answer}' the correct answer?",
+                    label=True,
+                    source="drop",
+                    split=out_split,
+                    group=f"drop-{i % 100}",
+                )
+
+
+# --- Synthetic (generated data) ---
+
+
 def load_synthetic() -> Iterator[TypedQuestion]:
     synth_path = DATA_DIR / "synthetic" / "synthetic.jsonl"
     if not synth_path.exists():
@@ -921,6 +1046,9 @@ LOADERS = {
     "logiqa": load_logiqa,
     "anli": load_anli,
     "boolq": load_boolq,
+    "quality": load_quality,
+    "hotpotqa": load_hotpotqa,
+    "drop": load_drop,
     "synthetic": load_synthetic,
 }
 
