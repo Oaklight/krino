@@ -360,6 +360,159 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
             ],
         },
     },
+    # --- Reasoning benchmark seeded domains ---
+    "academic_reasoning": {
+        "description": "Academic exam questions requiring subject-matter reasoning",
+        "seed_source": "mmlu",
+        "state_prompt": (
+            "Create a realistic academic exam question. Include:\n"
+            "- Subject area (physics, history, biology, law, etc.)\n"
+            "- A clear question with 4 answer choices\n"
+            "- Enough context to reason about the answer\n"
+            "Keep it to 2-4 sentences."
+        ),
+        "choice_template": {
+            "instructions": "What type of reasoning error, if any, is present in this question's common wrong answers?",
+            "criteria": {
+                "conceptual": "Fundamental misunderstanding of the concept",
+                "calculation": "Arithmetic or computational mistake",
+                "misapplication": "Correct concept applied to wrong context",
+                "correct": "No reasoning error — the question is straightforward",
+                "off_topic": "Answer choices are irrelevant to the question",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate the difficulty level of this question.",
+            "criteria": [
+                "Elementary: basic recall or simple application",
+                "Intermediate: requires connecting two concepts",
+                "Advanced: multi-step reasoning or synthesis required",
+                "Expert: requires deep domain knowledge and analysis",
+                "Research-level: requires novel reasoning beyond standard curriculum",
+            ],
+        },
+    },
+    "commonsense_decision": {
+        "description": "Everyday scenarios requiring commonsense reasoning",
+        "seed_source": "commonsenseqa",
+        "state_prompt": (
+            "Create a realistic everyday scenario requiring commonsense reasoning. Include:\n"
+            "- A concrete situation or observation\n"
+            "- Implicit knowledge needed to reason about it\n"
+            "- 3-5 plausible interpretations or outcomes\n"
+            "Keep it to 2-3 sentences."
+        ),
+        "choice_template": {
+            "instructions": "What type of commonsense reasoning best explains this scenario?",
+            "criteria": {
+                "causal": "Understanding cause and effect relationships",
+                "temporal": "Understanding time and sequence of events",
+                "spatial": "Understanding physical layout and movement",
+                "social": "Understanding human behavior and intentions",
+                "physical": "Understanding physical properties and interactions",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate confidence in the most plausible answer.",
+            "criteria": [
+                "Very low: multiple answers are equally plausible",
+                "Low: best answer is only slightly more likely",
+                "Moderate: best answer is clearly better but alternatives exist",
+                "High: best answer is strongly favored",
+                "Very high: only one answer is remotely plausible",
+            ],
+        },
+    },
+    "logical_inference": {
+        "description": "Logic puzzles requiring formal or informal reasoning",
+        "seed_source": "logiqa",
+        "state_prompt": (
+            "Create a logical reasoning scenario. Include:\n"
+            "- A set of premises or given statements\n"
+            "- A question about what can be concluded\n"
+            "- Multiple possible conclusions (some valid, some not)\n"
+            "Keep it to 3-5 sentences."
+        ),
+        "choice_template": {
+            "instructions": "What type of logical relationship applies here?",
+            "criteria": {
+                "deduction": "Conclusion necessarily follows from premises",
+                "induction": "Conclusion is probable but not certain from evidence",
+                "abduction": "Best explanation for observed facts",
+                "analogy": "Reasoning from similar cases",
+                "none": "No valid logical relationship supports the conclusion",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate the strength of the argument.",
+            "criteria": [
+                "Invalid: conclusion does not follow from premises",
+                "Weak: conclusion is possible but poorly supported",
+                "Moderate: conclusion is plausible with some gaps",
+                "Strong: conclusion is well-supported with minor reservations",
+                "Deductively valid: conclusion necessarily follows from premises",
+            ],
+        },
+    },
+    "adversarial_inference": {
+        "description": "Adversarial natural language inference requiring careful reasoning",
+        "seed_source": "anli",
+        "state_prompt": (
+            "Create a natural language inference example designed to be tricky. Include:\n"
+            "- A premise containing specific details\n"
+            "- A hypothesis that requires careful reading to evaluate\n"
+            "- Subtle distinctions (negation, quantifiers, temporal scope)\n"
+            "Keep it to 2-4 sentences."
+        ),
+        "choice_template": {
+            "instructions": "What is the relationship between premise and hypothesis?",
+            "criteria": {
+                "entailment": "Premise guarantees the hypothesis is true",
+                "neutral": "Premise neither supports nor contradicts the hypothesis",
+                "contradiction": "Premise guarantees the hypothesis is false",
+                "ambiguous": "Relationship depends on interpretation of key terms",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate the strength of evidence for the relationship.",
+            "criteria": [
+                "No evidence: premise and hypothesis are unrelated",
+                "Weak: slight connection but mostly independent",
+                "Moderate: reasonable connection with room for doubt",
+                "Strong: clear connection with minor ambiguity",
+                "Definitive: relationship is unambiguous and certain",
+            ],
+        },
+    },
+    "passage_decision": {
+        "description": "Passage-based yes/no questions requiring reading comprehension",
+        "seed_source": "boolq",
+        "state_prompt": (
+            "Create a passage with a yes/no question about it. Include:\n"
+            "- A factual passage (3-5 sentences) about a specific topic\n"
+            "- A clear yes/no question answerable from the passage\n"
+            "- The answer should require reading comprehension, not just keyword matching"
+        ),
+        "choice_template": {
+            "instructions": "What is the quality of evidence in the passage for answering the question?",
+            "criteria": {
+                "strong": "Passage directly and clearly answers the question",
+                "moderate": "Passage implies the answer but requires inference",
+                "weak": "Passage has relevant info but answer is uncertain",
+                "insufficient": "Passage does not contain enough information",
+            },
+        },
+        "score_template": {
+            "instructions": "Rate certainty of the answer based on the passage.",
+            "criteria": [
+                "Very uncertain: passage is ambiguous about the answer",
+                "Somewhat uncertain: passage leans one way but not clearly",
+                "Moderate: passage supports the answer with some qualification",
+                "Confident: passage clearly supports the answer",
+                "Definitive: passage leaves no room for doubt",
+            ],
+        },
+    },
 }
 
 SEEDED_DOMAINS = [d for d, t in DOMAIN_TEMPLATES.items() if t.get("seed_source")]
