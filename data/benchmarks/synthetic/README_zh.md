@@ -1,3 +1,7 @@
+<p align="center">
+  <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
+</p>
+
 # 合成数据生成流水线
 
 在 10 个领域、12 种认知类型下生成约 50K 条类型化决策训练数据，包含对比对、表面形式变体和 Jev API 软标签标注。
