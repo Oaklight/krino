@@ -19,7 +19,7 @@ State → shared encoding → per-option scoring → softmax → calibrated prob
 | Qwen3-0.6B r64 | Causal LM | 596M + 402K | 93.2% |
 | Ettin-400m r64 | Reranker-pretrained encoder | 400M + ~400K | 91.6% |
 | ModernBERT-base r64 | Vanilla encoder | 149M + 301K | 89.0% |
-| Jev (reference) | — | — | 77.8% |
+| Jev (reference) | — | — | 75.0% |
 
 ### Key findings
 
