@@ -147,7 +147,10 @@ async def label_items_llm(
             "max_tokens": 200,
         }
         # Reasoning models (o1, o3, gpt-5.6-*) don't support temperature=0
-        if not any(tag in model.lower() for tag in ("o1", "o3", "o4", "5.6", "5.5")):
+        is_reasoning = any(tag in model.lower() for tag in ("o1", "o3", "o4", "5.6", "5.5"))
+        if is_reasoning:
+            payload["reasoning_effort"] = "high"
+        else:
             payload["temperature"] = 0
 
         for attempt in range(max_retries):
