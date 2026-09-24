@@ -1,4 +1,6 @@
-> For English version, see [README_en.md](README_en.md)
+<p align="center">
+  <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
+</p>
 
 # 数据管道
 

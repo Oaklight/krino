@@ -1,4 +1,6 @@
-> 中文版本请见 [README_zh.md](README_zh.md)
+<p align="center">
+  <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
+</p>
 
 # Probing
 
