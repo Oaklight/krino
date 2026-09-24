@@ -517,6 +517,8 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
     "long_document": {
         "description": "Long-form document comprehension requiring full-text reasoning",
         "seed_source": "quality",
+        "seed_min_length": 2000,
+        "seed_max_length": 8000,
         "state_prompt": (
             "Create a long-form article or story (5-15 paragraphs). Include:\n"
             "- A clear narrative or argument with multiple sections\n"
@@ -548,6 +550,7 @@ DOMAIN_TEMPLATES: dict[str, dict] = {
     "multi_hop_reasoning": {
         "description": "Multi-paragraph reasoning requiring chain of evidence across sources",
         "seed_source": "hotpotqa",
+        "seed_min_length": 500,
         "state_prompt": (
             "Create a multi-source reasoning scenario. Include:\n"
             "- 3-5 short paragraphs from different sources about related topics\n"
