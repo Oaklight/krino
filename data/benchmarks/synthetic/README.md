@@ -15,10 +15,10 @@ tags:
   - score
 size_categories:
   - 10K<n<100K
-pretty_name: Open Decisions Synthetic
+pretty_name: Krino Synthetic
 ---
 
-# Open Decisions Synthetic Dataset
+# Krino Synthetic Dataset
 
 Synthetic training data for typed decision models — models that output structured probabilistic answers (yes/no probabilities, categorical distributions, ordinal ratings) instead of free text.
 
@@ -123,7 +123,7 @@ Source code: [Oaklight/krino](https://github.com/Oaklight/krino)
 
 ```bibtex
 @misc{krino-synthetic-2026,
-    title={Open Decisions Synthetic Dataset},
+    title={Krino Synthetic Dataset},
     author={Peng Ding},
     year={2026},
     url={https://huggingface.co/datasets/oaklight/krino-synthetic}
