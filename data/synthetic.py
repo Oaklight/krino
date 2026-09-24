@@ -84,7 +84,7 @@ def _lockfile(path: Path) -> Path:
     return path.parent / f".{path.name}.lock"
 
 
-def _acquire_lock(path: Path, timeout: float = 5.0) -> bool:
+def _acquire_lock(path: Path) -> bool:
     """Acquire a lockfile. Returns True if lock acquired, False if already locked."""
     lock = _lockfile(path)
     lock.parent.mkdir(parents=True, exist_ok=True)
