@@ -579,6 +579,9 @@ def family_to_typed_questions(
     choice_questions_valid = []
     for ci, cq in enumerate(choice_questions_raw):
         cq_criteria = cq.get("criteria", template["choice_template"]["criteria"])
+        if not isinstance(cq_criteria, dict):
+            logger.warning("Dropped choice-%d for %s-%04d: criteria is %s, not dict", ci, domain, family_idx, type(cq_criteria).__name__)
+            continue
         cq_label = cq["label"]
         if cq_label in cq_criteria:
             if do_base:
@@ -608,6 +611,9 @@ def family_to_typed_questions(
     score_questions_valid = []
     for si, sq in enumerate(score_questions_raw):
         sq_criteria = sq.get("criteria", template["score_template"]["criteria"])
+        if not isinstance(sq_criteria, list):
+            logger.warning("Dropped score-%d for %s-%04d: criteria is %s, not list", si, domain, family_idx, type(sq_criteria).__name__)
+            continue
         sq_label_raw = float(sq["label"])
         if 1.0 <= sq_label_raw <= float(len(sq_criteria)):
             sq_label = sq_label_raw - 1.0  # convert 1-based LLM output to 0-based training index
