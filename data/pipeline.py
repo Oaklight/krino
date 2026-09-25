@@ -1029,13 +1029,37 @@ def load_drop() -> Iterator[TypedQuestion]:
 
 
 def load_synthetic() -> Iterator[TypedQuestion]:
-    synth_path = DATA_DIR / "synthetic" / "synthetic.jsonl"
-    if not synth_path.exists():
+    """Load synthetic data by assembling from families + variants + labels on the fly."""
+    synth_dir = DATA_DIR / "synthetic"
+    if not synth_dir.exists():
         return
-    with synth_path.open("r", encoding="utf-8") as f:
-        for line in f:
-            d = json.loads(line)
-            yield TypedQuestion(**d)
+
+    from .synthetic import family_to_typed_questions, _load_jsonl
+    from .synthetic_templates import DOMAIN_TEMPLATES
+
+    # Load all label files into a single lookup
+    label_cache: dict[str, dict] = {}
+    for label_file in sorted(synth_dir.glob("*_labels.jsonl")):
+        for lbl in _load_jsonl(label_file):
+            label_cache.setdefault(lbl["id"], {}).update(lbl.get("teacher_probs", {}))
+
+    for domain in DOMAIN_TEMPLATES:
+        families_path = synth_dir / f"{domain}_families.jsonl"
+        variants_path = synth_dir / f"{domain}_variants.jsonl"
+        if not families_path.exists():
+            continue
+
+        families = _load_jsonl(families_path)
+        variants = _load_jsonl(variants_path) if variants_path.exists() else []
+
+        for idx, fam in enumerate(families):
+            vd = variants[idx] if idx < len(variants) else {}
+            items = family_to_typed_questions(fam, vd, domain, fam.get("_family_idx", idx))
+            for item_dict in items:
+                cached = label_cache.get(item_dict["id"])
+                if cached:
+                    item_dict["teacher_probs"] = cached
+                yield TypedQuestion(**item_dict)
 
 
 LOADERS = {
