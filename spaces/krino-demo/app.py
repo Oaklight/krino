@@ -20,6 +20,7 @@ MODELS = {
     "oaklight/krino-qwen3-0.6b-heads": "Qwen3-0.6B",
     "oaklight/krino-qwen3.5-4b-heads": "Qwen3.5-4B",
     "oaklight/krino-qwen3-reranker-4b-heads": "Qwen3-reranker-4B",
+    "oaklight/krino-qwen3-reranker-0.6b-heads": "Qwen3-reranker-0.6B",
 }
 
 loaded_models: dict = {}
