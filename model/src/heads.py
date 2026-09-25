@@ -38,8 +38,8 @@ class MLPProjector(nn.Module):
         for i in range(num_layers):
             out_dim = hidden_size if i < num_layers - 1 else input_size
             layers.append(nn.Linear(in_dim, out_dim))
+            layers.append(nn.GELU())
             if i < num_layers - 1:
-                layers.append(nn.GELU())
                 layers.append(nn.Dropout(dropout))
             in_dim = out_dim
         self.net = nn.Sequential(*layers)
@@ -53,8 +53,10 @@ class NoulHead(nn.Module):
 
     def __init__(self, hidden_size: int, rank: int | None = None, dropout: float = 0.1) -> None:
         super().__init__()
+        self._has_mlp = rank is not None
         if rank:
             self.proj = nn.Sequential(
+                nn.Dropout(dropout),
                 nn.Linear(hidden_size, rank),
                 nn.GELU(),
                 nn.Dropout(dropout),
@@ -62,10 +64,12 @@ class NoulHead(nn.Module):
             )
         else:
             self.proj = nn.Linear(hidden_size, 1)
-        self.dropout = nn.Dropout(dropout)
+            self.dropout = nn.Dropout(dropout)
 
     def forward(self, hidden_state: torch.Tensor) -> torch.Tensor:
         """Args: hidden_state [batch, hidden_size]. Returns: logits [batch, 1]."""
+        if self._has_mlp:
+            return self.proj(hidden_state)
         return self.proj(self.dropout(hidden_state))
 
     def predict(self, hidden_state: torch.Tensor) -> torch.Tensor:
