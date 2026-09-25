@@ -328,45 +328,33 @@ EXPECTED_TYPES: dict[str, set[str]] = {
 
 @pytest.fixture(autouse=True)
 def _patch_hf(tmp_path):
-    # Write mock synthetic JSONL so load_synthetic() finds data
+    # Write mock family + variant files so load_synthetic() can assemble
     synth_dir = tmp_path / "synthetic"
     synth_dir.mkdir()
-    synth_path = synth_dir / "synthetic.jsonl"
     import json
-    mock_items = [
-        TypedQuestion.noul(
-            id="synthetic-test-0000-noul-entailment",
-            state="Patient presents with chest pain.",
-            instructions="Is this urgent?",
-            label=True,
-            source="synthetic",
-            split="train",
-            group="synthetic-test-0000",
-        ).to_dict(),
-        TypedQuestion.choice(
-            id="synthetic-test-0000-choice",
-            state="Patient presents with chest pain.",
-            instructions="What is the triage level?",
-            criteria={"immediate": "Life-threatening", "urgent": "Serious", "non_urgent": "Minor"},
-            label="immediate",
-            source="synthetic",
-            split="train",
-            group="synthetic-test-0000",
-        ).to_dict(),
-        TypedQuestion.score(
-            id="synthetic-test-0000-score",
-            state="Patient presents with chest pain.",
-            instructions="Rate urgency.",
-            criteria=["Low", "Medium", "High", "Critical"],
-            label=4.0,
-            source="synthetic",
-            split="train",
-            group="synthetic-test-0000",
-        ).to_dict(),
-    ]
-    with open(synth_path, "w") as f:
-        for item in mock_items:
-            f.write(json.dumps(item) + "\n")
+    mock_family = {
+        "state": "Patient presents with chest pain.",
+        "noul_questions": [
+            {"cognitive_type": "entailment", "instructions": "Is this urgent?", "label": True},
+        ],
+        "choice_questions": [
+            {"instructions": "What is the triage level?",
+             "criteria": {"immediate": "Life-threatening", "urgent": "Serious", "non_urgent": "Minor"},
+             "label": "immediate"},
+        ],
+        "score_questions": [
+            {"instructions": "Rate urgency.",
+             "criteria": ["Low", "Medium", "High", "Critical"],
+             "label": 4.0},
+        ],
+        "_domain": "medical_triage",
+        "_family_idx": 0,
+        "_seeded": False,
+    }
+    with open(synth_dir / "medical_triage_families.jsonl", "w") as f:
+        f.write(json.dumps(mock_family) + "\n")
+    with open(synth_dir / "medical_triage_variants.jsonl", "w") as f:
+        f.write(json.dumps({}) + "\n")
 
     with patch.object(pipeline, "_load_hf_parquet", side_effect=_mock_load_hf_parquet), \
          patch.object(pipeline, "DATA_DIR", tmp_path):
