@@ -1,132 +1,197 @@
-# 合成数据生成流水线
+# Krino 合成数据集
 
-[English](README_en.md) | [中文](README_zh.md)
+用于类型化决策模型的合成训练数据——模型输出结构化概率答案（是/否概率、分类分布、有序评分），而非自由文本。
 
-在 10 个领域、12 种认知类型下生成约 50K 条类型化决策训练数据，包含对比对、表面形式变体和 Jev API 软标签标注。
+## 快速开始
 
-## 流水线设计
+```python
+# 安装
+pip install krino
 
-### 混合策略
+# 加载全部 154K 合成数据（含教师标签）
+from data.pipeline import load_all
+items = load_all(["synthetic"])
+print(f"{len(items)} 条数据已加载")
 
-| 方法 | 领域 | 数据来源 |
+# 每条数据都有多教师软标签
+item = items[0]
+print(item.question)        # {"type": "noul", "instructions": "..."}
+print(item.label)           # True/False（金标签）
+print(item.teacher_probs)   # {"jev": {"true": 0.92, ...}, "gpt_5_6_luna": {"true": 0.98, ...}}
+```
+
+无需中间文件——数据从各领域源文件实时组装。
+
+## 数据集概要
+
+- **154K 条数据**，覆盖 23 个领域、12 种认知类型
+- **多教师标签**：Jev (System One) + GPT-5.6 Luna (reasoning_effort=high)
+- **86% 教师一致率**——14% 分歧数据是校准训练的核心
+- **混合生成**：14 个种子驱动领域（真实基准数据）+ 9 个纯生成领域
+- **家族结构**：每个 state 产生约 35 条相关数据（基础 + 反事实 + 释义 + 否定 + 选项打乱变体）
+
+## 领域一览
+
+### 原始领域（10 个）
+
+| 领域 | 类型 | 种子来源 | 数据量 |
+|---|---|---|---|
+| 医疗分诊 | 种子 | MedNLI | 6,849 |
+| 法律判断 | 种子 | ContractNLI | 6,382 |
+| 代码审查 | 种子 | CodeSearchNet | 6,980 |
+| 金融分析 | 种子 | TabFact | 6,860 |
+| 科学推理 | 种子 | ARC | 6,983 |
+| 内容分析 | 种子 | FEVER | 6,969 |
+| 空间推理 | 纯生成 | — | 6,968 |
+| 产品分类 | 纯生成 | — | 6,985 |
+| 教育评估 | 纯生成 | — | 6,899 |
+| 安全审核 | 纯生成 | — | 6,980 |
+
+### 推理领域（5 个）
+
+| 领域 | 类型 | 种子来源 | 数据量 |
+|---|---|---|---|
+| 学术推理 | 种子 | MMLU | 6,917 |
+| 常识决策 | 种子 | CommonsenseQA | 6,984 |
+| 逻辑推断 | 种子 | LogiQA | 6,916 |
+| 对抗推理 | 种子 | ANLI | 6,941 |
+| 段落决策 | 种子 | BoolQ | 6,978 |
+
+### 序列决策领域（5 个）
+
+| 领域 | 类型 | 数据量 |
 |---|---|---|
-| **种子驱动** | 医疗 (MedNLI)、法律 (ContractNLI)、金融 (TabFact)、科学 (ARC)、代码 (CodeSearchNet)、内容 (FEVER) | 真实基准测试的 state + LLM 生成的问题 |
-| **纯生成** | 空间推理、产品分类、教育评估、安全审核 | LLM 同时生成 state 和问题 |
-| **增强** | 所有领域 | 反事实、释义、否定、选项顺序打乱变体 |
+| 游戏策略 | 纯生成 | 6,722 |
+| 导航规划 | 纯生成 | 6,972 |
+| 资源管理 | 纯生成 | 6,988 |
+| 序列动作 | 纯生成 | 6,978 |
+| 多智能体协调 | 纯生成 | 6,957 |
 
-### 跨模型生成
+### 长上下文领域（3 个）
 
-每个阶段使用不同的 LLM，避免单模型偏差：
+| 领域 | 类型 | 种子来源 | 数据量 |
+|---|---|---|---|
+| 长文档 | 种子 | QuALITY | 2,374 |
+| 多跳推理 | 种子 | HotpotQA | 6,704 |
+| 数值推理 | 种子 | DROP | 6,806 |
 
-- **基础家族**: Claude Sonnet（通过 `LLM_GEN_MODEL`）
-- **变体**: GPT-4.1（通过 `LLM_VARIANT_MODEL`）
-- **验证**: Gemini Flash（通过 `LLM_JUDGE_MODEL`）
+## 多教师标签
 
-### 家族结构
+每条数据都有两个教师的概率分布：
 
-每个家族从一个基础 state 生成约 20 条训练数据：
+| 教师 | 模型 | 智能度 | 校准度 | 覆盖率 |
+|---|---|---|---|---|
+| Jev | System One (jev-1.13.0) | 基准 | 基准 | 99.3% |
+| Luna | GPT-5.6 Luna (reasoning_effort=high) | 96.8 | 89.8 | 91.7% |
 
-```
-Family {
-    base:           4 noul + 3 choice + 2 score 问题
-    counterfactual: 修改 state → 翻转标签
-    paraphrase:     改写 state/问题 → 标签不变
-    negation:       翻转问题极性 → 翻转 noul 标签
-    shuffle:        打乱 choice 选项顺序 → 标签不变
-}
-```
+**教师一致率：86.1%**。分歧集中在模糊领域（导航 79%、空间 81%、安全 82%）——正是校准训练最有价值的地方。
 
-### 可组合的阶段
+## 问题类型
 
-每个阶段可独立运行，自动从缓存的中间文件恢复：
+遵循 [TypeSafe System One](https://docs.typesafe.ai) API 的三种类型化问题：
 
-| 阶段 | 描述 | 中间文件 |
-|---|---|---|
-| `base` | 生成家族（state + 问题 + 金标签） | `{domain}_families.jsonl` |
-| `counterfactual` | 修改 state 并翻转标签 | `{domain}_variants.jsonl` |
-| `paraphrase` | 改写 state/问题，保持标签不变 | `{domain}_variants.jsonl` |
-| `negation` | 翻转 noul 问题的极性 | `{domain}_variants.jsonl` |
-| `shuffle` | 打乱 choice 选项顺序 | （转换时计算） |
-| `dedup` | 基于 LSH 的近重复检测 | 覆盖 `_families.jsonl` |
-| `validate` | 使用裁判模型进行跨模型验证 | 内存中过滤 |
-| `jev-label` | Jev API 软标签标注 | 添加 `teacher_probs` 字段 |
+- **Noul**（伯努利）：是/否命题 → P(true) ∈ [0, 1]
+- **Choice**：从标记选项中选一个 → 分类概率分布
+- **Score**：在有序等级上评分 → 有序概率分布
 
-### 质量控制
+类型比例：noul 57% / choice 28% / score 14%
 
-- **标签验证**：choice 标签对照选项键检查，score 标签对照范围检查
-- **防泄露提示**：state 只包含原始场景，不含解释或判断
-- **置信度分桶**：Jev 软标签分为高（>0.9）、中（0.6–0.9）、不确定（<0.6）
-- **LSH 去重**：基于字符 n-gram 的 MinHash 检测近重复 state
-
-## CLI 使用
-
-```bash
-# 完整运行：全部 10 个领域，每个 200 个家族
-python -m data.synthetic
-
-# 试运行：单领域 10 个家族
-python -m data.synthetic --domains spatial_reasoning --pilot
-
-# 仅生成基础家族（不生成变体）
-python -m data.synthetic --stages base --domains education_assessment
-
-# 为已有家族添加变体
-python -m data.synthetic --stages counterfactual,paraphrase,negation
-
-# 仅去重（无 LLM 调用）
-python -m data.synthetic --stages dedup
-
-# 仅 Jev 软标签
-python -m data.synthetic --stages jev-label
-
-# 推送到 HuggingFace
-python -m data.synthetic --push-to-hf Oaklight/jev-synthetic
-
-# 自定义并发和模型
-LLM_GEN_MODEL="argo:claude-sonnet-4.6" \
-LLM_VARIANT_MODEL="argo:gpt-4.1" \
-python -m data.synthetic --max-concurrent 10
-```
-
-## 配置
-
-在仓库根目录的 `.env` 中设置：
+## 上下文长度分布
 
 ```
-LLM_BASE_URL=http://your-llm-endpoint:port
-LLM_API_KEY=your-key-if-needed
-LLM_GEN_MODEL=claude-sonnet-4-20250514
-LLM_VARIANT_MODEL=GPT-4.1-mini
-LLM_JUDGE_MODEL=gemini-2.0-flash
+     0-100 字符     354 条 (  8%)  短句状态
+   100-500          1354     ( 30%)  段落级状态
+   500-1K           1020     ( 23%)  多段落状态
+  1K-2K             1021     ( 23%)  序列决策状态
+  2K-5K              398     (  9%)  长文本状态
+  5K-10K             282     (  6%)  长上下文（文档、多跳）
+  10K+                47     (  1%)  超长（法律合同）
 ```
+
+中位数：695 字符。平均：1,441 字符。
 
 ## 文件结构
 
 ```
-data/benchmarks/synthetic/
-├── README_en.md                         # 英文版
-├── README_zh.md                         # 本文件
-├── README.md -> README_en.md            # 符号链接
-├── {domain}_families.jsonl              # 原始家族数据（可恢复）
-├── {domain}_variants.jsonl              # 原始变体数据（可恢复）
-└── synthetic.jsonl                      # 最终 TypedQuestion 数据
+{domain}_families.jsonl              — 原始家族数据（state + 问题 + 金标签）
+{domain}_variants.jsonl              — 变体数据（反事实、释义、否定）
+{domain}_jev_labels.jsonl            — Jev 软标签标注
+{domain}_gpt_5_6_luna_labels.jsonl   — Luna 软标签标注
 ```
 
-## 输出格式
+数据由 `load_synthetic()` 实时组装——无需单独的输出文件。避免了重复（每个家族约 35 条变体数据共享相同的 state）。
 
-每条数据是一个 `TypedQuestion` 字典：
+## CLI 使用
+
+```bash
+# 查看生成状态
+python -m data.synthetic --stages report
+
+# 生成新领域数据
+python -m data.synthetic --domains game_strategy --families-per-domain 200 \
+    --stages base,counterfactual,paraphrase,negation,shuffle
+
+# 添加 Jev 标签
+python -m data.synthetic --domains game_strategy --stages jev-label
+
+# 添加 Luna 标签
+python -m data.synthetic --domains game_strategy --stages llm-label \
+    --llm-teacher argo:gpt-5.6-luna
+
+# 推送到 HuggingFace
+python -m data.synthetic --push-to-hf oaklight/open-decisions-synthetic
+```
+
+## 数据格式
 
 ```json
 {
-    "id": "synthetic-spatial_reasoning-0042-noul-causal",
-    "state": "一个长方形博物馆展厅，东西方向 20 米...",
-    "question": {"type": "noul", "instructions": "重新排列展品是否会导致瓶颈？"},
+    "id": "synthetic-medical_triage-0042-noul-causal",
+    "state": "前提：78 岁女性高血压患者左下腹疼痛就诊...",
+    "question": {
+        "type": "noul",
+        "instructions": "高血压是否可能加重腹部症状？"
+    },
     "label": true,
     "source": "synthetic",
     "split": "train",
-    "group": "synthetic-spatial_reasoning-0042",
-    "teacher_probs": {"true": 0.82, "false": 0.18}
+    "group": "synthetic-medical_triage-0042",
+    "teacher_probs": {
+        "jev": {"true": 0.82, "false": 0.18},
+        "gpt_5_6_luna": {"true": 0.95, "false": 0.05}
+    }
 }
 ```
 
-`teacher_probs` 字段（由 `jev-label` 阶段添加）包含 Jev 的完整概率分布，用于蒸馏训练。
+## 训练集成
+
+```python
+from data.pipeline import load_all
+
+# 加载合成 + 基准数据
+items = load_all(["synthetic", "banking77", "mnli", "arc"])
+
+# 使用 teacher_probs 进行蒸馏
+for item in items:
+    if item.teacher_probs:
+        jev_probs = item.teacher_probs.get("jev")
+        luna_probs = item.teacher_probs.get("gpt_5_6_luna")
+        # 选择教师或集成
+```
+
+## 引用
+
+```bibtex
+@misc{krino-synthetic-2026,
+    title={Krino Synthetic Dataset},
+    author={Peng Ding},
+    year={2026},
+    url={https://huggingface.co/datasets/oaklight/open-decisions-synthetic}
+}
+```
+
+源代码：[Oaklight/krino](https://github.com/Oaklight/krino)
+
+---
+
+[English version](README.md)
