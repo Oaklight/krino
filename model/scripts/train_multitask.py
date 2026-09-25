@@ -192,6 +192,9 @@ def main() -> int:
     parser.add_argument(
         "--load-heads", type=Path, default=None, help="Load heads from checkpoint"
     )
+    parser.add_argument("--rank", type=int, default=None, help="Override attention rank")
+    parser.add_argument("--mlp-layers", type=int, default=None, help="Override MLP projector layers")
+    parser.add_argument("--noul-rank", type=int, default=None, help="Override NoulHead MLP rank")
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -200,7 +203,7 @@ def main() -> int:
     model_name = args.model or cfg.get("model", "Qwen/Qwen3-0.6B")
     use_encoder = cfg.get("encoder", False)
     qwen35_base = cfg.get("qwen35_base", False)
-    rank = cfg.get("rank", 64)
+    rank = args.rank if args.rank is not None else cfg.get("rank", 64)
     epochs = args.epochs if args.epochs is not None else cfg.get("epochs", 20)
     lr = args.lr if args.lr is not None else cfg.get("lr", 1e-3)
     seed = args.seed if args.seed is not None else cfg.get("seed", 42)
@@ -210,6 +213,9 @@ def main() -> int:
     save_every_epoch = cfg.get("save_every_epoch", False)
     eval_every = cfg.get("eval_every", 2)
     rival_aware = cfg.get("rival_aware", False)
+    mlp_layers = args.mlp_layers if args.mlp_layers is not None else cfg.get("mlp_layers", 0)
+    mlp_dim = cfg.get("mlp_dim", None)
+    noul_rank = args.noul_rank if args.noul_rank is not None else cfg.get("noul_rank", None)
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -271,6 +277,9 @@ def main() -> int:
         tokenizer=tokenizer,
         rank=rank,
         rival_aware=rival_aware,
+        mlp_layers=mlp_layers,
+        mlp_dim=mlp_dim,
+        noul_rank=noul_rank,
     )
     print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
     print(f"Frozen:    {model.frozen_parameters():,} params", flush=True)
