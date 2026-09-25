@@ -1079,6 +1079,7 @@ def _download_text(url: str, cache_path: Path) -> Path:
 
 
 def load_jevbench() -> Iterator[TypedQuestion]:
+    """Load JevBench public data (easy/hard/original tiers) as TypedQuestion items."""
     cache_dir = DATA_DIR / "jevbench"
     for tier in JEVBENCH_TIERS:
         url = f"{JEVBENCH_BASE_URL}/{tier}.jsonl"
