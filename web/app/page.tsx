@@ -38,10 +38,10 @@ export default function HomePage() {
     <div className="max-w-7xl mx-auto px-4 py-12">
       {/* Hero */}
       <div className="mb-12">
-        <h1 className="text-4xl font-bold tracking-tight mb-3">open-decisions</h1>
+        <h1 className="text-4xl font-bold tracking-tight mb-3">krino</h1>
         <p className="text-lg text-text-dim max-w-2xl">
-          Open replication of TypeSafe&apos;s Jev — typed decision models that output
-          calibrated probabilities instead of free text.
+          Typed decision models that output calibrated probabilities instead of
+          free text. Open replication of TypeSafe&apos;s Jev.
         </p>
         <div className="mt-4 flex gap-3">
           <Link
@@ -51,7 +51,7 @@ export default function HomePage() {
             View Benchmarks
           </Link>
           <a
-            href="https://github.com/Oaklight/open-decisions"
+            href="https://github.com/Oaklight/krino"
             target="_blank"
             rel="noopener noreferrer"
             className="px-4 py-2 rounded-[var(--radius)] border border-border text-sm hover:bg-bg-hover transition-colors"
