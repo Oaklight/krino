@@ -1,8 +1,6 @@
-<p align="center">
-  <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
-</p>
-
 # Decision Model
+
+[English](README_en.md) | [中文](README_zh.md)
 
 Open typed decision model replication. Implements the operational pipeline identified through black-box probing of TypeSafe's Jev:
 

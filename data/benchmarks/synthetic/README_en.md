@@ -1,8 +1,6 @@
-<p align="center">
-  <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
-</p>
-
 # Synthetic Data Generation Pipeline
+
+[English](README_en.md) | [中文](README_zh.md)
 
 Generates ~50K typed decision training items across 10 domains and 12 cognitive types, with contrastive pairs, surface-form variants, and Jev API soft-label annotations.
 

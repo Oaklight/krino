@@ -1,8 +1,6 @@
-<p align="center">
-  <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
-</p>
-
 # 数据管道
+
+[English](README_en.md) | [中文](README_zh.md)
 
 下载、转换和管理决策模型评估的基准数据集。所有基准数据统一转换为 `TypedQuestion` 格式。
 

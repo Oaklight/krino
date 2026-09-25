@@ -1,8 +1,6 @@
-<p align="center">
-  <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
-</p>
-
 # Probing
+
+[English](README_en.md) | [中文](README_zh.md)
 
 Black-box probing suite for TypeSafe AI's Jev decision model. All experiments observe external HTTP behavior — no model weights or internal access required.
 

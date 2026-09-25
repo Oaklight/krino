@@ -1,8 +1,6 @@
-<p align="center">
-  <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
-</p>
-
 # 探测（Probing）
+
+[English](README_en.md) | [中文](README_zh.md)
 
 TypeSafe AI Jev 决策模型的黑箱探测套件。所有实验仅观察外部 HTTP 行为——不需要模型权重或内部访问。
 
