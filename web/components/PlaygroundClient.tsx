@@ -60,9 +60,10 @@ export default function PlaygroundClient() {
       const clientLatency = Math.round(performance.now() - t0);
       setLatency(clientLatency);
 
-      const data = typeof response.data === "string"
-        ? JSON.parse(response.data)
-        : (response.data as InferenceResult);
+      const rawData = (response.data as unknown[])[0];
+      const data = typeof rawData === "string"
+        ? JSON.parse(rawData)
+        : (rawData as InferenceResult);
 
       if (data.error) {
         setError(data.error);
