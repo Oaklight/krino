@@ -64,7 +64,8 @@ python model/scripts/train.py --encoder --model answerdotai/ModernBERT-base \
 |---|---|
 | 论文 | [Oaklight/krino-paper](https://github.com/Oaklight/krino-paper) |
 | PyPI | [krino](https://pypi.org/project/krino/) |
-| 数据集 | [oaklight/krino-synthetic](https://huggingface.co/datasets/oaklight/krino-synthetic)（私有） |
+| 模型 | [oaklight/krino-*](https://huggingface.co/models?search=oaklight/krino) |
+| 数据集 | [oaklight/krino-synthetic](https://huggingface.co/datasets/oaklight/krino-synthetic) |
 | 文档 | [oaklight.github.io/krino](https://oaklight.github.io/krino) |
 | TypeSafe 文档 | [docs.typesafe.ai](https://docs.typesafe.ai) |
 
@@ -78,6 +79,10 @@ python model/scripts/train.py --encoder --model answerdotai/ModernBERT-base \
     url={https://github.com/Oaklight/krino}
 }
 ```
+
+## 参与贡献
+
+这是我个人持续更新的研究探索项目。欢迎提 Issue、参与讨论或提交 Pull Request——如果你对决策模型感兴趣，随时加入。
 
 ## 许可证
 

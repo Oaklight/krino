@@ -64,7 +64,8 @@ python model/scripts/train.py --encoder --model answerdotai/ModernBERT-base \
 |---|---|
 | Paper | [Oaklight/krino-paper](https://github.com/Oaklight/krino-paper) |
 | PyPI | [krino](https://pypi.org/project/krino/) |
-| Dataset | [oaklight/krino-synthetic](https://huggingface.co/datasets/oaklight/krino-synthetic) (private) |
+| Models | [oaklight/krino-*](https://huggingface.co/models?search=oaklight/krino) |
+| Dataset | [oaklight/krino-synthetic](https://huggingface.co/datasets/oaklight/krino-synthetic) |
 | Docs | [oaklight.github.io/krino](https://oaklight.github.io/krino) |
 | TypeSafe docs | [docs.typesafe.ai](https://docs.typesafe.ai) |
 
@@ -78,6 +79,10 @@ python model/scripts/train.py --encoder --model answerdotai/ModernBERT-base \
     url={https://github.com/Oaklight/krino}
 }
 ```
+
+## Contributing
+
+This is a personal research exploration that I keep updating. Issues, discussions, and pull requests are welcome — if you're interested in decision models, feel free to jump in.
 
 ## License
 
