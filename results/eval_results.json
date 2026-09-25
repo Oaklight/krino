@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-25T11:37:08.268863+00:00",
+  "generated_at": "2026-09-25T14:10:25.080113+00:00",
   "eval_runs": [
     {
       "run_id": "cross-encoder-bert",
@@ -3623,6 +3623,344 @@
           "best": true
         }
       ]
+    }
+  ],
+  "jevbench_runs": [
+    {
+      "run_id": "jevbench-krino-ettin-150m-heads",
+      "model": {
+        "name": "Ettin-150m (trained)",
+        "params": "150M",
+        "type": "reranker"
+      },
+      "method": "trained-heads",
+      "benchmark": "jevbench",
+      "accuracy": 0.368,
+      "correct": 85,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.3237,
+          "correct": 45,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.4459,
+          "correct": 33,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.3889,
+          "correct": 7,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.5625,
+          "correct": 27,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3153,
+          "correct": 35,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.3194,
+          "correct": 23,
+          "total": 72
+        }
+      },
+      "latency_ms": 278.3
+    },
+    {
+      "run_id": "jevbench-krino-modernbert-base-heads",
+      "model": {
+        "name": "ModernBERT-base (trained)",
+        "params": "149M",
+        "type": "encoder"
+      },
+      "method": "trained-heads",
+      "benchmark": "jevbench",
+      "accuracy": 0.3247,
+      "correct": 75,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.2014,
+          "correct": 28,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.527,
+          "correct": 39,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.4444,
+          "correct": 8,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.3333,
+          "correct": 16,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3153,
+          "correct": 35,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.3333,
+          "correct": 24,
+          "total": 72
+        }
+      },
+      "latency_ms": 282.7
+    },
+    {
+      "run_id": "jevbench-krino-qwen3-0.6b-heads",
+      "model": {
+        "name": "Qwen3-0.6B (trained)",
+        "params": "0.6B",
+        "type": "causal"
+      },
+      "method": "trained-heads",
+      "benchmark": "jevbench",
+      "accuracy": 0.342,
+      "correct": 79,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.2734,
+          "correct": 38,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.473,
+          "correct": 35,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.3333,
+          "correct": 6,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.5,
+          "correct": 24,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.2973,
+          "correct": 33,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.3056,
+          "correct": 22,
+          "total": 72
+        }
+      },
+      "latency_ms": 1315.1
+    },
+    {
+      "run_id": "jevbench-krino-qwen3-reranker-0.6b-heads",
+      "model": {
+        "name": "Qwen3-reranker-0.6B (trained)",
+        "params": "0.6B",
+        "type": "reranker"
+      },
+      "method": "trained-heads",
+      "benchmark": "jevbench",
+      "accuracy": 0.3636,
+      "correct": 84,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.3165,
+          "correct": 44,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5,
+          "correct": 37,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.1667,
+          "correct": 3,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.4792,
+          "correct": 23,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3243,
+          "correct": 36,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.3472,
+          "correct": 25,
+          "total": 72
+        }
+      },
+      "latency_ms": 1326.7
+    },
+    {
+      "run_id": "jevbench-krino-qwen3-reranker-4b-heads",
+      "model": {
+        "name": "Qwen3-reranker-4B (trained)",
+        "params": "4B",
+        "type": "reranker"
+      },
+      "method": "trained-heads",
+      "benchmark": "jevbench",
+      "accuracy": 0.4286,
+      "correct": 99,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.3813,
+          "correct": 53,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.527,
+          "correct": 39,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.3889,
+          "correct": 7,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.6667,
+          "correct": 32,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3604,
+          "correct": 40,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.375,
+          "correct": 27,
+          "total": 72
+        }
+      },
+      "latency_ms": 8593.6
+    },
+    {
+      "run_id": "jevbench-krino-qwen3.5-4b-heads",
+      "model": {
+        "name": "Qwen3.5-4B (trained)",
+        "params": "4B",
+        "type": "causal"
+      },
+      "method": "trained-heads",
+      "benchmark": "jevbench",
+      "accuracy": 0.3463,
+      "correct": 80,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.2158,
+          "correct": 30,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5946,
+          "correct": 44,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.3333,
+          "correct": 6,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.3125,
+          "correct": 15,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3423,
+          "correct": 38,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.375,
+          "correct": 27,
+          "total": 72
+        }
+      },
+      "latency_ms": 8408.3
+    },
+    {
+      "run_id": "jevbench-raw-qwen3-reranker-4b",
+      "model": {
+        "name": "Qwen3-reranker-4B (zero-shot)",
+        "params": "4B",
+        "type": "reranker"
+      },
+      "method": "trained-heads",
+      "benchmark": "jevbench",
+      "accuracy": 0.6277,
+      "correct": 145,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.6043,
+          "correct": 84,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6216,
+          "correct": 46,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.8333,
+          "correct": 15,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4414,
+          "correct": 49,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.6667,
+          "correct": 48,
+          "total": 72
+        }
+      },
+      "latency_ms": null
     }
   ],
   "jev_comparison": {
