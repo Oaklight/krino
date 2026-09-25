@@ -282,10 +282,15 @@ export default function PlaygroundClient() {
               className="w-full px-3 py-2 text-sm border border-border rounded-[var(--radius)] bg-bg-card text-text placeholder:text-text-muted font-mono"
               placeholder="https://....trycloudflare.com" />
             <p className="text-xs text-text-muted mt-1">
+              Free GPU via{" "}
               <a href="https://colab.research.google.com/github/Oaklight/krino/blob/main/notebooks/krino_inference_server.ipynb"
                 target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent-hover">
-                Colab notebook
-              </a> for free GPU
+                Colab
+              </a>{" / "}
+              <a href="https://www.kaggle.com/code/pengding/krino-inference-server"
+                target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent-hover">
+                Kaggle
+              </a>
             </p>
           </div>
           <div>
