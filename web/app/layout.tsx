@@ -4,9 +4,9 @@ import Footer from "@/components/Footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "open-decisions",
+  title: "krino",
   description:
-    "Open replication of TypeSafe's Jev — typed decision models that output calibrated probabilities",
+    "Krino — typed decision models that output calibrated probabilities",
 };
 
 export default function RootLayout({

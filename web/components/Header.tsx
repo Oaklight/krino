@@ -12,7 +12,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="font-semibold text-lg tracking-tight">
-            open-decisions
+            krino
           </Link>
           <nav className="hidden sm:flex items-center gap-4 text-sm text-text-dim">
             <Link href="/" className="hover:text-text transition-colors">
@@ -26,7 +26,7 @@ export default function Header() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <a
-            href="https://github.com/Oaklight/open-decisions"
+            href="https://github.com/Oaklight/krino"
             target="_blank"
             rel="noopener noreferrer"
             className="p-2 rounded-[var(--radius)] hover:bg-bg-hover transition-colors text-text-dim hover:text-text"
