@@ -92,10 +92,11 @@ class DecisionModel(nn.Module):
             max_length=max_length,
             padding=True,
         ).to(self.device)
+        fwd_kwargs = dict(**inputs, output_hidden_states=True)
+        if not self.is_encoder:
+            fwd_kwargs["use_cache"] = False
         with torch.no_grad():
-            outputs = self.backbone(
-                **inputs, output_hidden_states=True, use_cache=False
-            )
+            outputs = self.backbone(**fwd_kwargs)
         hidden = outputs.hidden_states[-1]
         if self.is_encoder:
             mask = inputs["attention_mask"].unsqueeze(-1).float()
@@ -112,10 +113,11 @@ class DecisionModel(nn.Module):
         inputs = self.tokenizer(
             text, return_tensors="pt", truncation=True, max_length=max_length
         ).to(self.device)
+        fwd_kwargs = dict(**inputs, output_hidden_states=True)
+        if not self.is_encoder:
+            fwd_kwargs["use_cache"] = False
         with torch.no_grad():
-            outputs = self.backbone(
-                **inputs, output_hidden_states=True, use_cache=False
-            )
+            outputs = self.backbone(**fwd_kwargs)
         hidden = outputs.hidden_states[-1]
         return self.projector(hidden.float())
 

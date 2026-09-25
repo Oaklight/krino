@@ -318,6 +318,7 @@ EXPECTED_TYPES: dict[str, set[str]] = {
     "hotpotqa": {"noul"},
     "drop": {"noul", "score"},
     "synthetic": {"noul", "choice", "score"},
+    "jevbench": {"noul", "choice", "score"},
 }
 
 
@@ -495,18 +496,18 @@ class TestLoaderRegistry:
             "yelp", "swag", "multirc", "mednli", "contractnli", "codesearchnet",
             "mmlu", "winogrande", "piqa", "commonsenseqa", "logiqa", "anli", "boolq",
             "quality", "hotpotqa", "drop",
-            "synthetic",
+            "synthetic", "jevbench",
         }
         assert set(pipeline.LOADERS.keys()) == expected
 
     def test_loader_count(self):
-        assert len(pipeline.LOADERS) == 29
+        assert len(pipeline.LOADERS) == 30
 
     def test_load_all_works(self):
         items = pipeline.load_all()
         assert len(items) > 0
         sources = {item.source for item in items}
-        assert len(sources) == 29
+        assert len(sources) == 30
 
     def test_load_all_single_source(self):
         items = pipeline.load_all(["sst2"])
