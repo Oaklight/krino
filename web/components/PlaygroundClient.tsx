@@ -40,7 +40,11 @@ async function callGradioApi(
     throw new Error(`Result fetch failed: ${resultRes.status}`);
   }
   const text = await resultRes.text();
-  const dataLine = text.split("\n").find((l) => l.startsWith("data: "));
+  const lines = text.split("\n");
+  const completeIdx = lines.findIndex((l) => l === "event: complete");
+  const dataLine = completeIdx >= 0
+    ? lines.slice(completeIdx).find((l) => l.startsWith("data: "))
+    : lines.filter((l) => l.startsWith("data: ") && l !== "data: null").pop();
   if (!dataLine) throw new Error("No data in response");
   const parsed = JSON.parse(dataLine.slice(6));
   const raw = Array.isArray(parsed) ? parsed[0] : parsed;
