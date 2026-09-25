@@ -21,6 +21,9 @@ export default function Header() {
             <Link href="/benchmarks" className="hover:text-text transition-colors">
               Benchmarks
             </Link>
+            <Link href="/playground" className="hover:text-text transition-colors">
+              Playground
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-2">
@@ -59,6 +62,9 @@ export default function Header() {
           </Link>
           <Link href="/benchmarks" className="py-1 text-text-dim hover:text-text transition-colors" onClick={() => setMenuOpen(false)}>
             Benchmarks
+          </Link>
+          <Link href="/playground" className="py-1 text-text-dim hover:text-text transition-colors" onClick={() => setMenuOpen(false)}>
+            Playground
           </Link>
         </nav>
       )}
