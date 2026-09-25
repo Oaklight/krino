@@ -118,20 +118,22 @@ def _compute_noul_batch(
     """Batch-compute noul losses: one backbone call for all contexts."""
     texts = [f"{it.state} {it.question.get('instructions', '')}" for it in items]
     pooled = model._encode_text(texts)  # [N, hidden]
+    logits = model.noul_head(pooled)  # [N, 1]
 
-    losses = []
-    for i, item in enumerate(items):
+    targets = []
+    for item in items:
         label = item.label
         if isinstance(label, str):
             label = label.lower() in ("true", "yes", "1")
         teacher_probs = getattr(item, "teacher_probs", None)
-        logit = model.noul_head(pooled[i:i+1])
         if teacher_probs and "noul" in teacher_probs:
-            target = torch.tensor([[float(teacher_probs["noul"])]], device=logit.device)
+            targets.append(float(teacher_probs["noul"]))
         else:
-            target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
-        losses.append(F.binary_cross_entropy_with_logits(logit, target))
-    return losses
+            targets.append(1.0 if label else 0.0)
+
+    target_t = torch.tensor(targets, device=logits.device).unsqueeze(1)  # [N, 1]
+    batch_loss = F.binary_cross_entropy_with_logits(logits, target_t, reduction="none")
+    return [batch_loss[i] for i in range(len(items))]
 
 
 def _compute_choice_batch(
@@ -237,23 +239,25 @@ def train_epoch(
             if score_items:
                 all_losses.extend(_compute_score_batch(model, score_items))
 
-            for loss in all_losses:
-                if loss is None:
-                    n_skipped += 1
-                    continue
-                scaled_loss = loss / accumulation_steps
+            # Accumulate valid losses and backward once per window to avoid
+            # graph-reuse issues when a trainable projector is shared.
+            valid_losses = [l for l in all_losses if l is not None]
+            n_skipped += len(all_losses) - len(valid_losses)
+            if valid_losses:
+                window_loss = torch.stack([l.squeeze() for l in valid_losses]).sum()
+                scaled_loss = window_loss / accumulation_steps
                 scaled_loss.backward()
-                total_loss += loss.item()
-                n_items += 1
-                accum_count += 1
+                total_loss += window_loss.item()
+                n_items += len(valid_losses)
+                accum_count += len(valid_losses)
 
-                if accum_count >= accumulation_steps:
-                    torch.nn.utils.clip_grad_norm_(
-                        [p for p in model.parameters() if p.requires_grad], max_grad_norm
-                    )
-                    optimizer.step()
-                    optimizer.zero_grad()
-                    accum_count = 0
+            if accum_count >= accumulation_steps:
+                torch.nn.utils.clip_grad_norm_(
+                    [p for p in model.parameters() if p.requires_grad], max_grad_norm
+                )
+                optimizer.step()
+                optimizer.zero_grad()
+                accum_count = 0
     else:
         for item in train_items:
             loss = compute_loss(model, item)
