@@ -49,9 +49,9 @@ export const PRESETS: Preset[] = [
 ];
 
 export const MODELS = [
-  { id: "Ettin-150m (fastest)", label: "Ettin-150m", params: "150M" },
-  { id: "ModernBERT-base", label: "ModernBERT-base", params: "149M" },
-  { id: "Qwen3-0.6B", label: "Qwen3-0.6B", params: "0.6B" },
-  { id: "Qwen3.5-4B", label: "Qwen3.5-4B", params: "4B" },
-  { id: "Qwen3-reranker-4B", label: "Qwen3-reranker-4B", params: "4B" },
+  { id: "oaklight/krino-ettin-150m-heads", label: "Ettin-150m (fastest)", params: "150M" },
+  { id: "oaklight/krino-modernbert-base-heads", label: "ModernBERT-base", params: "149M" },
+  { id: "oaklight/krino-qwen3-0.6b-heads", label: "Qwen3-0.6B", params: "0.6B" },
+  { id: "oaklight/krino-qwen3.5-4b-heads", label: "Qwen3.5-4B", params: "4B" },
+  { id: "oaklight/krino-qwen3-reranker-4b-heads", label: "Qwen3-reranker-4B", params: "4B" },
 ];

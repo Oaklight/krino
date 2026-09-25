@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Client } from "@gradio/client";
+import { useState, useCallback, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { PRESETS, MODELS, type Preset } from "@/lib/presets";
 
-const HF_SPACE = "oaklight/krino-demo";
+const BACKEND_STORAGE_KEY = "krino-backend-url";
 
 interface InferenceResult {
   type: string;
@@ -20,7 +19,27 @@ interface InferenceResult {
   error?: string;
 }
 
+async function callGradioApi(
+  backendUrl: string,
+  args: unknown[]
+): Promise<InferenceResult> {
+  const url = `${backendUrl.replace(/\/+$/, "")}/api/predict`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: args }),
+  });
+  if (!res.ok) {
+    throw new Error(`Server returned ${res.status}: ${await res.text()}`);
+  }
+  const json = await res.json();
+  const raw = json.data?.[0];
+  if (typeof raw === "string") return JSON.parse(raw);
+  return raw as InferenceResult;
+}
+
 export default function PlaygroundClient() {
+  const [backendUrl, setBackendUrl] = useState("");
   const [model, setModel] = useState(MODELS[0].id);
   const [state, setState] = useState("");
   const [questionType, setQuestionType] = useState<"noul" | "choice" | "score">("choice");
@@ -32,6 +51,20 @@ export default function PlaygroundClient() {
   const [showJson, setShowJson] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const stored = localStorage.getItem(BACKEND_STORAGE_KEY);
+    if (stored) setBackendUrl(stored);
+  }, []);
+
+  const saveBackendUrl = useCallback((url: string) => {
+    setBackendUrl(url);
+    if (url.trim()) {
+      localStorage.setItem(BACKEND_STORAGE_KEY, url.trim());
+    } else {
+      localStorage.removeItem(BACKEND_STORAGE_KEY);
+    }
+  }, []);
+
   const applyPreset = useCallback((preset: Preset) => {
     setState(preset.state);
     setQuestionType(preset.questionType);
@@ -42,28 +75,21 @@ export default function PlaygroundClient() {
   }, []);
 
   const runInference = useCallback(async () => {
+    if (!backendUrl.trim()) {
+      setError("Enter a backend URL. Run the Colab/Kaggle notebook to get one.");
+      return;
+    }
     setLoading(true);
     setError(null);
     setResult(null);
     const t0 = performance.now();
 
     try {
-      const client = await Client.connect(HF_SPACE);
-      const response = await client.predict("/predict", {
-        model_name: model,
-        state: state,
-        question_type: questionType,
-        instructions: instructions,
-        options_text: options,
-      });
-
+      const data = await callGradioApi(backendUrl.trim(), [
+        model, state, questionType, instructions, options,
+      ]);
       const clientLatency = Math.round(performance.now() - t0);
       setLatency(clientLatency);
-
-      const rawData = (response.data as unknown[])[0];
-      const data = typeof rawData === "string"
-        ? JSON.parse(rawData)
-        : (rawData as InferenceResult);
 
       if (data.error) {
         setError(data.error);
@@ -75,7 +101,7 @@ export default function PlaygroundClient() {
     } finally {
       setLoading(false);
     }
-  }, [model, state, questionType, instructions, options]);
+  }, [backendUrl, model, state, questionType, instructions, options]);
 
   const chartData = result?.probabilities
     ? Object.entries(result.probabilities)
@@ -87,6 +113,30 @@ export default function PlaygroundClient() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Left panel — inputs */}
       <div className="space-y-4">
+        {/* Backend URL */}
+        <div>
+          <label className="th-material block mb-2">Backend URL</label>
+          <input
+            type="url"
+            value={backendUrl}
+            onChange={(e) => saveBackendUrl(e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-border rounded-[var(--radius)] bg-bg-card text-text placeholder:text-text-muted font-mono"
+            placeholder="https://your-tunnel-url.trycloudflare.com"
+          />
+          <p className="text-xs text-text-muted mt-1">
+            Run the{" "}
+            <a
+              href="https://colab.research.google.com/github/Oaklight/krino/blob/main/notebooks/krino_inference_server.ipynb"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:text-accent-hover"
+            >
+              Colab notebook
+            </a>{" "}
+            to get a free GPU backend URL.
+          </p>
+        </div>
+
         {/* Presets */}
         <div>
           <label className="th-material block mb-2">Presets</label>
@@ -205,7 +255,7 @@ export default function PlaygroundClient() {
               <div className="flex items-center justify-between mb-3">
                 <span className="th-material">Result</span>
                 <div className="flex items-center gap-3 text-xs text-text-muted">
-                  {latency != null && <span>{latency}ms (client)</span>}
+                  {latency != null && <span>{latency}ms (round-trip)</span>}
                   {result.latency_ms != null && <span>{result.latency_ms}ms (server)</span>}
                 </div>
               </div>
@@ -261,7 +311,7 @@ export default function PlaygroundClient() {
                     <Tooltip formatter={(v) => `${v}%`}
                       contentStyle={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius)" }} />
                     <Bar dataKey="value" radius={[0, 3, 3, 0]}>
-                      {chartData.map((entry, i) => (
+                      {chartData.map((_, i) => (
                         <Cell key={i} fill={i === 0 ? "var(--accent)" : "var(--text-muted)"} fillOpacity={i === 0 ? 1 : 0.4} />
                       ))}
                     </Bar>
@@ -295,7 +345,7 @@ export default function PlaygroundClient() {
 
         {loading && (
           <div className="border border-border rounded-[var(--radius)] p-8 text-center text-text-muted animate-pulse">
-            <p className="text-sm">Running inference on HuggingFace Spaces...</p>
+            <p className="text-sm">Running inference...</p>
           </div>
         )}
       </div>
