@@ -53,7 +53,7 @@ def _parse_question(question_type: str, instructions: str, options_text: str) ->
     question: dict = {"type": question_type, "instructions": instructions}
     if question_type in ("choice", "score"):
         parsed = {}
-        for line in options_text.strip().splitlines():
+        for line in (options_text or "").strip().splitlines():
             line = line.strip()
             if not line:
                 continue
@@ -62,6 +62,8 @@ def _parse_question(question_type: str, instructions: str, options_text: str) ->
                 parsed[key.strip()] = desc.strip()
             else:
                 parsed[line] = line
+        if not parsed:
+            raise ValueError(f"{question_type} requires at least one option")
         question["criteria" if question_type == "choice" else "legend"] = parsed
     return question
 
