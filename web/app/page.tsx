@@ -30,9 +30,6 @@ export default function HomePage() {
     .filter((t) => t.benchmark === "banking77" && t.best_accuracy != null)
     .sort((a, b) => (b.best_accuracy ?? 0) - (a.best_accuracy ?? 0))[0];
 
-  // Jev API benchmark-specific accuracies for key findings
-  const jevArc = jevRun?.results.by_source.arc?.accuracy;
-  const jevHellaswag = jevRun?.results.by_source.hellaswag?.accuracy;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
@@ -131,34 +128,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Key findings */}
-      <div className="mb-12">
-        <h2 className="text-xl font-semibold mb-4">Key Findings</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-bg-card border border-border rounded-[var(--radius)] p-5">
-            <h3 className="font-medium mb-2">Training &gt; Scaling</h3>
-            <p className="text-sm text-text-dim">
-              A 150M-parameter Ettin reranker with trained heads reaches{" "}
-              {bestTrained ? pct(bestTrained.best_accuracy) : "95%+"} on Banking77
-              — outperforming 7B causal models at zero-shot.
-            </p>
-          </div>
-          <div className="bg-bg-card border border-border rounded-[var(--radius)] p-5">
-            <h3 className="font-medium mb-2">Reranker Pretraining Transfers</h3>
-            <p className="text-sm text-text-dim">
-              Cross-encoder rerankers show strong zero-shot baselines, suggesting
-              passage-relevance pretraining aligns well with probability estimation.
-            </p>
-          </div>
-          <div className="bg-bg-card border border-border rounded-[var(--radius)] p-5">
-            <h3 className="font-medium mb-2">Jev Leads on Reasoning</h3>
-            <p className="text-sm text-text-dim">
-              Jev API dominates ARC ({pct(jevArc)}), HellaSwag ({pct(jevHellaswag)}),
-              and other reasoning benchmarks — a gap no open model has closed yet.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
