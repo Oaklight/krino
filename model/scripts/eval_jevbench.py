@@ -80,6 +80,7 @@ def load_krino_from_hf(
 
 
 def tier_from_id(item_id: str) -> str:
+    """Extract tier prefix (easy/hard/original) from a jevbench item ID."""
     return item_id.split("-")[0]
 
 
