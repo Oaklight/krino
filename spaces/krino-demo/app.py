@@ -159,5 +159,13 @@ with gr.Blocks(title="Krino — Decision Model Demo") as demo:
     jev_btn = gr.Button(visible=False)
     jev_btn.click(jev_proxy, inputs=[jev_key_tb, jev_payload_tb], outputs=jev_result, api_name="jev_proxy")
 
+    def shutdown():
+        import os, signal, threading
+        threading.Timer(1.0, lambda: os.kill(os.getpid(), signal.SIGINT)).start()
+        return {"status": "shutting_down"}
+    shutdown_result = gr.JSON(visible=False)
+    shutdown_btn = gr.Button(visible=False)
+    shutdown_btn.click(shutdown, inputs=[], outputs=shutdown_result, api_name="shutdown")
+
 if __name__ == "__main__":
     demo.launch()

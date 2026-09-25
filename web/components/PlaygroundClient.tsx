@@ -315,9 +315,33 @@ export default function PlaygroundClient() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="th-material block mb-2">Krino Backend URL</label>
-            <input type="url" value={backendUrl} onChange={(e) => saveBackendUrl(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border rounded-[var(--radius)] bg-bg-card text-text placeholder:text-text-muted font-mono"
-              placeholder="https://....trycloudflare.com" />
+            <div className="flex gap-2">
+              <input type="url" value={backendUrl} onChange={(e) => saveBackendUrl(e.target.value)}
+                className="flex-1 px-3 py-2 text-sm border border-border rounded-[var(--radius)] bg-bg-card text-text placeholder:text-text-muted font-mono"
+                placeholder="https://....trycloudflare.com" />
+              {backendUrl.trim() && (
+                <button
+                  onClick={async () => {
+                    if (!confirm("Stop the remote GPU server?")) return;
+                    try {
+                      const base = backendUrl.trim().replace(/\/+$/, "");
+                      const res = await fetch(`${base}/gradio_api/call/shutdown`, {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ data: [] }),
+                      });
+                      if (res.ok) setError("Server shutting down.");
+                      else setError("Shutdown failed — server may not support this.");
+                    } catch { setError("Could not reach server."); }
+                  }}
+                  className="px-2 py-2 text-xs border border-red text-red rounded-[var(--radius)] hover:bg-[var(--red-subtle,rgba(255,54,33,0.06))] transition-colors"
+                  title="Stop remote server"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
+                  </svg>
+                </button>
+              )}
+            </div>
             <p className="text-xs text-text-muted mt-1">
               Free GPU via{" "}
               <a href="https://colab.research.google.com/github/Oaklight/krino/blob/main/notebooks/krino_inference_server.ipynb"
