@@ -1,0 +1,2354 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Krino (κρίνω) — probing, analysis, and replication toolkit for JEV-class decision models">
+      
+      
+        <meta name="author" content="Peng Ding">
+      
+      
+        <link rel="canonical" href="https://oaklight.github.io/krino/replication/results/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../model/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Results - Krino</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#model-replication-findings-and-results" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Krino" class="md-header__button md-logo" aria-label="Krino" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Krino
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Results
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Oaklight/krino" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Oaklight/krino
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../overview/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../probing/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Probing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Replication
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Krino" class="md-nav__button md-logo" aria-label="Krino" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Krino
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Oaklight/krino" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Oaklight/krino
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../probing/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Probing
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Probing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../probing/api-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../probing/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Replication
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Replication
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Results
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-zero-training-baselines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Zero-Training Baselines
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 1: Zero-Training Baselines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Approach
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#results-19-benchmarks-10-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Results: 19 benchmarks × 10 models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key findings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#latency-batched-inference-h200-bf16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Latency (batched inference, H200 bf16)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#measured-jev-api-latency-for-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured Jev API latency (for comparison)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jev-api-benchmark-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jev API Benchmark Results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Jev API Benchmark Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#full-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-observations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key observations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implications-for-training-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implications for training strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-trained-decision-heads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Trained Decision Heads
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Trained Decision Heads">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training protocol
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#results-banking77-in-domain-accuracy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Results: Banking77 in-domain accuracy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-findings_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key findings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cross-benchmark-generalization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-benchmark generalization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#surface-form-sensitivity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Surface-form sensitivity
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connection-to-learning-to-rank" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection to Learning-to-Rank
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#infrastructure-and-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure and Performance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Infrastructure and Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#batched-inference-pr-42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batched inference (PR #42)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kv-cache-optimization-pr-41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KV cache optimization (PR #41)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-pipeline-pr-34-40" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data pipeline (PR #34, #40)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-status-and-next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Status and Next Steps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Current Status and Next Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#completed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Completed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not started
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open questions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Open Decision Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-zero-training-baselines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Zero-Training Baselines
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 1: Zero-Training Baselines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Approach
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#results-19-benchmarks-10-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Results: 19 benchmarks × 10 models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key findings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#latency-batched-inference-h200-bf16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Latency (batched inference, H200 bf16)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#measured-jev-api-latency-for-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured Jev API latency (for comparison)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jev-api-benchmark-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jev API Benchmark Results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Jev API Benchmark Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#full-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-observations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key observations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implications-for-training-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implications for training strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-trained-decision-heads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Trained Decision Heads
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Trained Decision Heads">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training protocol
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#results-banking77-in-domain-accuracy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Results: Banking77 in-domain accuracy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-findings_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key findings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cross-benchmark-generalization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-benchmark generalization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#surface-form-sensitivity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Surface-form sensitivity
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connection-to-learning-to-rank" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection to Learning-to-Rank
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#infrastructure-and-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure and Performance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Infrastructure and Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#batched-inference-pr-42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batched inference (PR #42)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kv-cache-optimization-pr-41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KV cache optimization (PR #41)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-pipeline-pr-34-40" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data pipeline (PR #34, #40)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-status-and-next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Status and Next Steps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Current Status and Next Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#completed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Completed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not started
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open questions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="model-replication-findings-and-results">Model Replication: Findings and Results<a class="headerlink" href="#model-replication-findings-and-results" title="Permanent link">&para;</a></h1>
+<div class="admonition info">
+<p class="admonition-title">Status</p>
+<p>Step 2 complete, Step 3 calibration in progress. Epic: <a href="https://github.com/Oaklight/krino/issues/19">#19</a></p>
+</div>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>This document consolidates findings from our effort to build an open typed decision model reproducing the pipeline identified through <a href="../../probing/architecture/">black-box probing</a> of TypeSafe's Jev:</p>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>State → shared encoding → per-option token-level scoring → softmax → calibrated probabilities
+</code></pre></div>
+<p>We evaluated 10 backbone models across 19 benchmarks, trained lightweight decision heads, and tested cross-benchmark generalization and surface-form sensitivity. We then benchmarked the Jev API on the exact same eval suite to get authoritative comparison targets (PR <a href="https://github.com/Oaklight/krino/pull/45">#45</a>, issue <a href="https://github.com/Oaklight/krino/issues/44">#44</a>). The headline results: a 150M reranker-pretrained encoder with trained heads achieves 95.2% on Banking77 (vs Jev's 75.0%), but Jev dominates on reasoning-heavy tasks (ARC 99.0%, RACE 95.5%, authored144 97.9%).</p>
+<h2 id="step-1-zero-training-baselines">Step 1: Zero-Training Baselines<a class="headerlink" href="#step-1-zero-training-baselines" title="Permanent link">&para;</a></h2>
+<h3 id="approach">Approach<a class="headerlink" href="#approach" title="Permanent link">&para;</a></h3>
+<p>Two scoring protocols, no training:</p>
+<ul>
+<li><strong>Causal LM logit readout (Route B):</strong> Present state + question as a prompt prefix, score each option as a continuation by summing per-token log-probabilities, normalize across options.</li>
+<li><strong>Encoder cross-scoring:</strong> Encode (state+question, option) pairs via a cross-encoder and score by embedding similarity (vanilla encoder) or relevance score (reranker).</li>
+</ul>
+<h3 id="results-19-benchmarks-10-models">Results: 19 benchmarks × 10 models<a class="headerlink" href="#results-19-benchmarks-10-models" title="Permanent link">&para;</a></h3>
+<p>Average accuracy ranking across choice + noul benchmarks (200 items per benchmark, H200 bf16):</p>
+<table>
+<thead>
+<tr>
+<th>Rank</th>
+<th>Model</th>
+<th>Params</th>
+<th>Type</th>
+<th>Avg Accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Qwen2.5-7B-Instruct</td>
+<td>7B</td>
+<td>Causal</td>
+<td>68.5%</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Phi-4-mini</td>
+<td>3.8B</td>
+<td>Causal</td>
+<td>65.0%</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Ettin-400m</strong></td>
+<td><strong>400M</strong></td>
+<td><strong>Reranker</strong></td>
+<td><strong>59.4%</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Qwen2.5-1.5B</td>
+<td>1.5B</td>
+<td>Causal</td>
+<td>59.2%</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Qwen3-1.7B</td>
+<td>1.7B</td>
+<td>Causal</td>
+<td>54.2%</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Ettin-150m</td>
+<td>150M</td>
+<td>Reranker</td>
+<td>53.5%</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Qwen2.5-0.5B</td>
+<td>0.5B</td>
+<td>Causal</td>
+<td>53.5%</td>
+</tr>
+<tr>
+<td>8</td>
+<td>SmolLM2-1.7B</td>
+<td>1.7B</td>
+<td>Causal</td>
+<td>51.1%</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Ettin-68m</td>
+<td>68M</td>
+<td>Reranker</td>
+<td>50.4%</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Qwen3-0.6B</td>
+<td>0.6B</td>
+<td>Causal</td>
+<td>47.8%</td>
+</tr>
+</tbody>
+</table>
+<p>Vanilla ModernBERT (base/large) scored near random on most benchmarks — embedding-similarity scoring without training is not viable for typed decisions.</p>
+<h3 id="key-findings">Key findings<a class="headerlink" href="#key-findings" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Reranker pretraining is remarkably effective.</strong> Ettin-400m (400M) matches Qwen2.5-1.5B (1.5B) at 1/4 the params. Cross-encoder relevance scoring naturally maps to option discrimination.</p>
+</li>
+<li>
+<p><strong>Qwen2.5 &gt; Qwen3 at matched scale.</strong> Qwen2.5-1.5B beats Qwen3-1.7B on 12/15 benchmarks. The Qwen3 "thinking" architecture doesn't help for logit readout — its internal reasoning tokens are not exposed in the continuation log-probabilities.</p>
+</li>
+<li>
+<p><strong>Banking77 (77-class) is the hardest discriminator.</strong> All causal models score 0–3% (random = 1.3%) — logit readout completely fails at this cardinality due to surface-form bias. Only Ettin rerankers show meaningful zero-shot discrimination: Ettin-400m (49.0%), Ettin-68m (27.0%).</p>
+</li>
+<li>
+<p><strong>Rerankers underperform on noul.</strong> Binary yes/no scoring via cross-encoder relevance doesn't work well — the "documents" are just "yes" and "no," which don't carry enough semantic signal for relevance matching.</p>
+</li>
+<li>
+<p><strong>CodeSearchNet 100% for rerankers is a length-bias artifact.</strong> The correct code snippet is 2× longer on average than distractors. Rerankers exploit length/lexical overlap rather than semantic understanding.</p>
+</li>
+</ol>
+<h3 id="latency-batched-inference-h200-bf16">Latency (batched inference, H200 bf16)<a class="headerlink" href="#latency-batched-inference-h200-bf16" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Banking77 (77-opt)</th>
+<th>SST-2 (2-opt)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ettin-68m</td>
+<td>68M</td>
+<td><strong>29ms</strong></td>
+<td>6ms</td>
+</tr>
+<tr>
+<td>Ettin-150m</td>
+<td>150M</td>
+<td>31ms</td>
+<td>6ms</td>
+</tr>
+<tr>
+<td>Qwen2.5-0.5B</td>
+<td>0.5B</td>
+<td>35ms</td>
+<td>15ms</td>
+</tr>
+<tr>
+<td>SmolLM2-1.7B</td>
+<td>1.7B</td>
+<td>34ms</td>
+<td>14ms</td>
+</tr>
+<tr>
+<td>Ettin-400m</td>
+<td>400M</td>
+<td>38ms</td>
+<td>9ms</td>
+</tr>
+<tr>
+<td>Qwen2.5-7B-Inst</td>
+<td>7B</td>
+<td>50ms</td>
+<td>19ms</td>
+</tr>
+</tbody>
+</table>
+<p>All models meet the &lt;100ms target. Batched inference (PR <a href="https://github.com/Oaklight/krino/pull/42">#42</a>) reduced Banking77 latency from 1848ms to ~35ms per item — a 39× speedup via padding options and expanding the prefix KV cache with <code>batch_repeat_interleave</code>.</p>
+<h3 id="measured-jev-api-latency-for-comparison">Measured Jev API latency (for comparison)<a class="headerlink" href="#measured-jev-api-latency-for-comparison" title="Permanent link">&para;</a></h3>
+<p>From 5,564 timed API calls across 21 probing experiments (16 standard + 5 controlled):</p>
+<ul>
+<li><strong>Median:</strong> 166ms (end-to-end, includes network)</li>
+<li><strong>Mean:</strong> 174ms</li>
+<li><strong>p5–p95:</strong> 83ms–288ms</li>
+<li><strong>Estimated server-side compute:</strong> ~60–100ms (network overhead varies by payload size)</li>
+</ul>
+<h2 id="jev-api-benchmark-results">Jev API Benchmark Results<a class="headerlink" href="#jev-api-benchmark-results" title="Permanent link">&para;</a></h2>
+<p>We ran the Jev API against all 19 benchmarks using the exact same 200-item eval subsets (PR <a href="https://github.com/Oaklight/krino/pull/45">#45</a>, issue <a href="https://github.com/Oaklight/krino/issues/44">#44</a>). This gives authoritative comparison targets on identical data.</p>
+<h3 id="full-results">Full results<a class="headerlink" href="#full-results" title="Permanent link">&para;</a></h3>
+<p><strong>Choice benchmarks:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Options</th>
+<th>Jev API</th>
+<th>Best zero-shot (ours)</th>
+<th>Best model (ours)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ARC</td>
+<td>4</td>
+<td><strong>99.0%</strong></td>
+<td>73.5% (Ettin-400m / Phi-4-mini)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>authored144</td>
+<td>3</td>
+<td><strong>97.9%</strong></td>
+<td>54.9% (Qwen2.5-7B)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>RACE</td>
+<td>4</td>
+<td><strong>95.5%</strong></td>
+<td>65.5% (Phi-4-mini)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>FEVER</td>
+<td>3</td>
+<td><strong>91.0%</strong></td>
+<td>66.5% (Qwen2.5-7B)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>HellaSwag</td>
+<td>4</td>
+<td><strong>89.5%</strong></td>
+<td>68.0% (Qwen2.5-7B)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>AG News</td>
+<td>4</td>
+<td>79.0%</td>
+<td>80.0% (SmolLM2-1.7B)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>SWAG</td>
+<td>4</td>
+<td>77.5%</td>
+<td>71.0% (Qwen2.5-7B)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Banking77</td>
+<td>77</td>
+<td>75.0%</td>
+<td>49.0% (Ettin-400m)</td>
+<td><strong>95.2%</strong> (Ettin-150m r128 trained)</td>
+</tr>
+<tr>
+<td>CodeSearchNet</td>
+<td>4</td>
+<td><strong>100.0%</strong></td>
+<td>100.0% (Ettin, length bias)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Noul benchmarks:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Jev API</th>
+<th>Best zero-shot (ours)</th>
+<th>Gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SST-2</td>
+<td>90.5%</td>
+<td>87.5% (Qwen2.5-1.5B)</td>
+<td>+3.0pp</td>
+</tr>
+<tr>
+<td>MultiRC</td>
+<td><strong>90.0%</strong></td>
+<td>88.0% (Qwen2.5-7B)</td>
+<td>+2.0pp</td>
+</tr>
+<tr>
+<td>MedNLI</td>
+<td><strong>89.5%</strong></td>
+<td>86.0% (Qwen2.5-7B)</td>
+<td>+3.5pp</td>
+</tr>
+<tr>
+<td>TabFact</td>
+<td>82.0%</td>
+<td>78.0% (Qwen3-1.7B / Ettin-400m)</td>
+<td>+4.0pp</td>
+</tr>
+<tr>
+<td>ContractNLI</td>
+<td><strong>80.5%</strong></td>
+<td>79.5% (Phi-4-mini)</td>
+<td>+1.0pp</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Score benchmarks (MAE, lower is better):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Jev API</th>
+<th>Best zero-shot (ours)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Yelp</td>
+<td><strong>0.432</strong></td>
+<td>0.85+ (all models)</td>
+</tr>
+<tr>
+<td>SST-5</td>
+<td><strong>0.489</strong></td>
+<td>0.85+ (all models)</td>
+</tr>
+<tr>
+<td>STS-B</td>
+<td><strong>0.494</strong></td>
+<td>0.85+ (all models)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Jev calibration (ECE):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Jev ECE</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ARC</td>
+<td><strong>0.009</strong></td>
+<td>Near-perfect calibration</td>
+</tr>
+<tr>
+<td>authored144</td>
+<td>0.031</td>
+<td>Excellent</td>
+</tr>
+<tr>
+<td>RACE</td>
+<td>0.025</td>
+<td>Excellent</td>
+</tr>
+<tr>
+<td>Banking77</td>
+<td>0.163</td>
+<td>Weaker — 77-class is hard to calibrate</td>
+</tr>
+<tr>
+<td>SST-2</td>
+<td>0.133</td>
+<td>Moderate</td>
+</tr>
+<tr>
+<td>AG News</td>
+<td>0.153</td>
+<td>Moderate</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Jev latency:</strong> Consistent ~305ms TTFB across all benchmarks (measured from our client). Higher than the probing-era measurements (median 166ms) — likely due to benchmark payloads being larger than typical probing payloads, or API infrastructure changes.</p>
+<h3 id="key-observations">Key observations<a class="headerlink" href="#key-observations" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Jev dominates on reasoning-heavy tasks.</strong> ARC (99.0%), authored144 (97.9%), RACE (95.5%), HellaSwag (89.5%) — these all require multi-hop reasoning, reading comprehension, or commonsense inference. Our best zero-shot models are 20-43pp behind. This strongly suggests Jev uses a large causal backbone with substantial reasoning capability — an encoder-only model cannot achieve 99% on ARC.</p>
+</li>
+<li>
+<p><strong>We beat Jev on Banking77 with trained heads</strong> (95.2% vs 75.0%), but this is in-domain trained. Jev's 75.0% is zero-shot generalization across 77 classes — impressive given no task-specific training. The comparison is not apples-to-apples until we have multi-task trained heads that generalize.</p>
+</li>
+<li>
+<p><strong>Jev's calibration varies by task.</strong> ARC ECE=0.009 (excellent) vs Banking77 ECE=0.163 (weaker). High-cardinality choice tasks are harder to calibrate, consistent with information-theoretic expectations.</p>
+</li>
+<li>
+<p><strong>Score-type tasks are where Jev's advantage is clearest.</strong> Our zero-shot models get MAE 0.85+ on SST-5/STS-B/Yelp; Jev gets 0.43-0.49. The logit-readout and cross-encoder approaches don't handle ordinal regression well.</p>
+</li>
+<li>
+<p><strong>The causal backbone question is settled.</strong> A pure encoder (Ettin-150m) cannot reach Jev-level performance on ARC, RACE, or authored144 — these require sequential reasoning that causal LMs excel at.</p>
+</li>
+</ol>
+<h3 id="implications-for-training-strategy">Implications for training strategy<a class="headerlink" href="#implications-for-training-strategy" title="Permanent link">&para;</a></h3>
+<p>The Jev API results reshape our priorities:</p>
+<ul>
+<li><strong>Multi-task training on all 19 benchmarks</strong> is the immediate next step</li>
+<li><strong>Causal backbone (Qwen) may be needed</strong> for reasoning-heavy tasks, despite encoder's efficiency advantage on comparison tasks</li>
+<li><strong>Calibration is Jev's core advantage.</strong> Step 3 calibration training is the path to closing this gap</li>
+<li><strong>Score-type performance needs a different approach.</strong> MAE 0.85 vs Jev's 0.43 — ordinal losses or RLCD with score-specific rewards are needed</li>
+</ul>
+<h2 id="step-2-trained-decision-heads">Step 2: Trained Decision Heads<a class="headerlink" href="#step-2-trained-decision-heads" title="Permanent link">&para;</a></h2>
+<h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h3>
+<p>Three lightweight heads on a frozen backbone:</p>
+<ul>
+<li><strong>NoulHead:</strong> Linear projection → sigmoid → P(yes). ~1K params.</li>
+<li><strong>ChoiceHead:</strong> AttentionHead (option queries cross-attend to context, dot-product scoring) → softmax. Optional rival-aware attention where options attend to each other before scoring (adapted from jevbetter, equivalent to SetRank inter-document attention). ~200K params at rank 64.</li>
+<li><strong>ScoreHead:</strong> Same as ChoiceHead over ordered levels, plus expected-value computation. ~200K params at rank 64.</li>
+</ul>
+<p>Total trainable: ~301K–402K params depending on backbone hidden size. Backbone remains frozen — no gradients flow through it.</p>
+<h3 id="training-protocol">Training protocol<a class="headerlink" href="#training-protocol" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Loss: cross-entropy (BCE for noul, CE for choice/score — equivalent to ListNet top-1 probability)</li>
+<li>Optimizer: AdamW with linear warmup + cosine decay</li>
+<li>Data: Banking77 (5000 train, 500 eval), 5 epochs</li>
+<li>Hardware: single H200 GPU, ~3 min/epoch</li>
+</ul>
+<h3 id="results-banking77-in-domain-accuracy">Results: Banking77 in-domain accuracy<a class="headerlink" href="#results-banking77-in-domain-accuracy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Backbone</th>
+<th>Type</th>
+<th>Backbone params</th>
+<th>Head rank</th>
+<th>Head params</th>
+<th>Accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ettin-150m r128</strong></td>
+<td><strong>Reranker</strong></td>
+<td><strong>150M</strong></td>
+<td><strong>128</strong></td>
+<td><strong>~800K</strong></td>
+<td><strong>95.2%</strong></td>
+</tr>
+<tr>
+<td>Ettin-150m r64</td>
+<td>Reranker</td>
+<td>150M</td>
+<td>64</td>
+<td>~400K</td>
+<td>93.8%</td>
+</tr>
+<tr>
+<td>Qwen3-0.6B r64</td>
+<td>Causal</td>
+<td>596M</td>
+<td>64</td>
+<td>402K</td>
+<td>93.2%</td>
+</tr>
+<tr>
+<td>Ettin-400m r64</td>
+<td>Reranker</td>
+<td>400M</td>
+<td>64</td>
+<td>~400K</td>
+<td>91.6%</td>
+</tr>
+<tr>
+<td>ModernBERT-large r64</td>
+<td>Encoder</td>
+<td>395M</td>
+<td>64</td>
+<td>402K</td>
+<td>89.2%</td>
+</tr>
+<tr>
+<td>ModernBERT-base r64</td>
+<td>Encoder</td>
+<td>149M</td>
+<td>64</td>
+<td>301K</td>
+<td>89.0%</td>
+</tr>
+<tr>
+<td>ModernBERT-base r128</td>
+<td>Encoder</td>
+<td>149M</td>
+<td>128</td>
+<td>~600K</td>
+<td>88.4%</td>
+</tr>
+<tr>
+<td>Jev API (measured)</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>75.0%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-findings_1">Key findings<a class="headerlink" href="#key-findings_1" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Reranker pretraining transfers to decision scoring.</strong> Ettin-150m (93.8%) beats vanilla ModernBERT-base (89.0%) at identical param count (150M). Same architecture, different pretraining — the only variable is whether the backbone was pretrained on 143M relevance-scoring triples. This is a +4.8pp improvement.</p>
+</li>
+<li>
+<p><strong>Head capacity matters for reranker backbones but not vanilla encoders.</strong> Ettin-150m improves from 93.8% (rank 64) to 95.2% (rank 128). ModernBERT-base stays flat (89.0% → 88.4%). The reranker backbone has richer representations that only manifest with sufficient head capacity.</p>
+</li>
+<li>
+<p><strong>Training &gt; scaling.</strong> A 0.6B causal LM with 402K trained heads (93.2%) beats a 7B causal LM with zero-training logit readout (68.5% average across 19 benchmarks).</p>
+</li>
+<li>
+<p><strong>Ettin-400m underperforms Ettin-150m</strong> (91.6% vs 93.8%). Training instability at epoch 4 (accuracy dropped 89.0% → 75.2% before recovering) suggests the 1e-3 learning rate is too aggressive for the larger backbone.</p>
+</li>
+</ol>
+<h3 id="cross-benchmark-generalization">Cross-benchmark generalization<a class="headerlink" href="#cross-benchmark-generalization" title="Permanent link">&para;</a></h3>
+<p>Heads trained on Banking77 (77-class intent), evaluated on other tasks without retraining:</p>
+<table>
+<thead>
+<tr>
+<th>Eval dataset</th>
+<th>Type</th>
+<th>Qwen3-0.6B</th>
+<th>ModernBERT-base</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>authored144</td>
+<td>Choice (3-opt)</td>
+<td>34.7%</td>
+<td>36.8%</td>
+</tr>
+<tr>
+<td>SST-2</td>
+<td>Noul (binary)</td>
+<td>48.2%</td>
+<td>51.8%</td>
+</tr>
+<tr>
+<td>typed-decisions</td>
+<td>Choice</td>
+<td>20.0%</td>
+<td>19.5%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Heads trained on one benchmark do not generalize.</strong> They memorize the task structure (77 banking intents), not general decision-making. This directly motivates multi-task training and the calibration stage (Step 3).</p>
+<h3 id="surface-form-sensitivity">Surface-form sensitivity<a class="headerlink" href="#surface-form-sensitivity" title="Permanent link">&para;</a></h3>
+<p>R² of surface-form features vs assigned probability, measured on semantically equivalent options with varied wording:</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Length R²</th>
+<th>Grammaticality R²</th>
+<th>Commonness R²</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen logit readout</td>
+<td>0.024</td>
+<td>0.959</td>
+<td>0.040</td>
+</tr>
+<tr>
+<td>Qwen + trained heads</td>
+<td>0.715</td>
+<td>0.101</td>
+<td>0.645</td>
+</tr>
+<tr>
+<td>ModernBERT + trained heads</td>
+<td>0.354</td>
+<td>0.252</td>
+<td>0.335</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Trained heads change which surface-form dimensions matter but do not eliminate sensitivity:</strong></p>
+<ul>
+<li><strong>Logit readout</strong> is dominated by grammaticality (R²=0.96) — the causal LM assigns near-zero probability to ungrammatical continuations.</li>
+<li><strong>Trained causal heads</strong> shift to length and commonness (R²=0.72, 0.65) — the heads partially learn to ignore grammaticality but pick up different biases.</li>
+<li><strong>Trained encoder heads</strong> show moderate sensitivity across all dimensions (R²=0.25–0.35) — no single dominant bias, but none eliminated either.</li>
+</ul>
+<p><strong>Implication:</strong> Architecture choice (causal vs encoder) reduces surface-form sensitivity but does not solve it. Calibration training (Step 3) must explicitly include a surface-form invariance objective.</p>
+<h2 id="connection-to-learning-to-rank">Connection to Learning-to-Rank<a class="headerlink" href="#connection-to-learning-to-rank" title="Permanent link">&para;</a></h2>
+<p>The decision model's ChoiceHead is structurally equivalent to a listwise learning-to-rank model:</p>
+<ul>
+<li>The softmax-over-options IS ListNet's top-1 probability model (Cao et al. 2007).</li>
+<li>The rival-aware attention IS SetRank's inter-document attention (Pang et al. 2020).</li>
+<li>The cross-entropy loss IS the ListNet loss.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Training stage</th>
+<th>Loss</th>
+<th>LTR equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Step 2 (supervised warmup)</td>
+<td>Cross-entropy</td>
+<td>ListNet top-1</td>
+</tr>
+<tr>
+<td>Step 3 Phase A (calibration)</td>
+<td>CE + Brier/MMCE/focal</td>
+<td>ListNet + calibration</td>
+</tr>
+<tr>
+<td>Step 3 Phase B (RL)</td>
+<td>REINFORCE + proper scoring rules</td>
+<td>— (no LTR equivalent)</td>
+</tr>
+</tbody>
+</table>
+<p>The key difference from standard LTR: decision models need <strong>calibrated probabilities</strong>, not just correct ranking. A reranker only needs to order documents correctly; a decision model's probabilities must be trustworthy.</p>
+<h2 id="infrastructure-and-performance">Infrastructure and Performance<a class="headerlink" href="#infrastructure-and-performance" title="Permanent link">&para;</a></h2>
+<h3 id="batched-inference-pr-42">Batched inference (PR <a href="https://github.com/Oaklight/krino/pull/42">#42</a>)<a class="headerlink" href="#batched-inference-pr-42" title="Permanent link">&para;</a></h3>
+<p>Replaced sequential per-option forward passes with batched inference. Options are padded to equal length, the prefix KV cache is expanded via <code>batch_repeat_interleave</code>, and all options are scored in a single forward pass per sub-batch.</p>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Options</th>
+<th>Sequential</th>
+<th>Batched</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Banking77</td>
+<td>77</td>
+<td>1,848ms</td>
+<td>35ms</td>
+<td><strong>53×</strong></td>
+</tr>
+<tr>
+<td>SST-2</td>
+<td>2</td>
+<td>42ms</td>
+<td>15ms</td>
+<td>2.8×</td>
+</tr>
+</tbody>
+</table>
+<h3 id="kv-cache-optimization-pr-41">KV cache optimization (PR <a href="https://github.com/Oaklight/krino/pull/41">#41</a>)<a class="headerlink" href="#kv-cache-optimization-pr-41" title="Permanent link">&para;</a></h3>
+<p>Replaced <code>copy.deepcopy(cache)</code> per option with <code>DynamicCache.crop()</code> — a zero-copy operation that slices the cache back to prefix length after each option's forward pass. Eliminated 15,400 multi-GB tensor copies per Banking77 evaluation run.</p>
+<h3 id="data-pipeline-pr-34-40">Data pipeline (PR <a href="https://github.com/Oaklight/krino/pull/34">#34</a>, <a href="https://github.com/Oaklight/krino/pull/40">#40</a>)<a class="headerlink" href="#data-pipeline-pr-34-40" title="Permanent link">&para;</a></h3>
+<p>19 benchmarks across 6 domains converted to unified TypedQuestion format:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Benchmarks</th>
+<th>Total items</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Choice</td>
+<td>Banking77, AG News, ARC, RACE, HellaSwag, CodeSearchNet, SWAG, FEVER, authored144</td>
+<td>~690K</td>
+</tr>
+<tr>
+<td>Noul</td>
+<td>SST-2, TabFact, MultiRC, MedNLI, ContractNLI, MNLI</td>
+<td>~655K</td>
+</tr>
+<tr>
+<td>Score</td>
+<td>SST-5, STS-B, Yelp</td>
+<td>~90K</td>
+</tr>
+</tbody>
+</table>
+<h2 id="current-status-and-next-steps">Current Status and Next Steps<a class="headerlink" href="#current-status-and-next-steps" title="Permanent link">&para;</a></h2>
+<h3 id="completed">Completed<a class="headerlink" href="#completed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Step 0:</strong> Data pipeline, eval suite, API server (<a href="https://github.com/Oaklight/krino/issues/20">#20</a>, closed)</li>
+<li><strong>Step 1:</strong> Zero-training baselines — 10 models × 19 benchmarks (<a href="https://github.com/Oaklight/krino/issues/21">#21</a>, closed)</li>
+<li><strong>Step 2:</strong> Trained heads — Ettin-150m r128 = 95.2% on Banking77, best overall (<a href="https://github.com/Oaklight/krino/issues/22">#22</a>, closed)</li>
+<li><strong>Backbone sweep:</strong> Causal + encoder + reranker comparison (<a href="https://github.com/Oaklight/krino/issues/27">#27</a>)</li>
+</ul>
+<h3 id="in-progress">In progress<a class="headerlink" href="#in-progress" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Step 3 Phase A:</strong> Calibration training infrastructure built (losses.py, train_calibrated.py, sweep config). Actual sweep runs pending (<a href="https://github.com/Oaklight/krino/issues/23">#23</a>)</li>
+<li><strong>Data pipeline Phase B/C:</strong> Synthetic data generation and hard negative mining not yet started (<a href="https://github.com/Oaklight/krino/issues/29">#29</a>)</li>
+</ul>
+<h3 id="not-started">Not started<a class="headerlink" href="#not-started" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Step 3 Phase B:</strong> RLCD-style RL with proper scoring rules</li>
+<li><strong>Step 4:</strong> Compact custom architecture exploration (partially addressed by Ettin findings)</li>
+</ul>
+<h3 id="open-questions">Open questions<a class="headerlink" href="#open-questions" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Does multi-task training fix generalization?</strong> Heads trained on Banking77 alone don't transfer. Training on all 19 benchmarks simultaneously should help, but the balance across types and domains needs tuning.</p>
+</li>
+<li>
+<p><strong>Can calibration training reduce surface-form sensitivity?</strong> Architecture alone doesn't solve it (encoder R²=0.35). An explicit invariance loss — <code>KL(P(options | original), P(options | paraphrased))</code> — is planned for Step 3 but not yet tested.</p>
+</li>
+<li>
+<p><strong>Encoder vs causal backbone for production?</strong> Ettin-150m wins on comparison tasks (Banking77 95.2%), but Jev API results show reasoning-heavy tasks require causal LM representations.</p>
+</li>
+<li>
+<p><strong>Can we close the score-type gap?</strong> Jev scores MAE 0.43–0.49 on SST-5/STS-B/Yelp; our models get 0.85+. Ranked probability score or ordinal-specific losses may be needed.</p>
+</li>
+<li>
+<p><strong>What is Jev's calibration advantage?</strong> Jev achieves ECE 0.009 on ARC and 0.031 on authored144. Our models' ECE is unmeasured on trained heads — this is the key metric for Step 3.</p>
+</li>
+</ol>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Relevance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://huggingface.co/convaiinnovations/laya">Laya</a></td>
+<td>Only true RLCD reproduction. ModernBERT-large + REINFORCE. typed-decisions 0.766 vs Jev 0.727</td>
+</tr>
+<tr>
+<td><a href="https://github.com/TianyuCodings/NanoJev">NanoJev</a></td>
+<td>Qwen backbone, decision heads, RLCD experiment, game eval</td>
+</tr>
+<tr>
+<td><a href="https://github.com/vinnylarouge/jevlike">jevlike</a></td>
+<td>AttentionHead architecture we adapted</td>
+</tr>
+<tr>
+<td><a href="https://github.com/olanotolu/jevbetter">jevbetter</a></td>
+<td>Rival-aware attention we incorporated</td>
+</tr>
+<tr>
+<td><a href="https://huggingface.co/cross-encoder">Ettin rerankers</a></td>
+<td>ModernBERT-arch rerankers trained on 143M triples. Our top backbone</td>
+</tr>
+<tr>
+<td><a href="https://dl.acm.org/doi/10.1145/3397271.3401104">SetRank</a></td>
+<td>Inter-document attention for listwise LTR — same mechanism as rival-aware</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Replication">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Replication
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../model/" class="md-footer__link md-footer__link--next" aria-label="Next: Open Decision Model">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Open Decision Model
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Peng Ding
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Oaklight/krino" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "navigation.tracking", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.progress", "toc.follow", "search.highlight", "search.suggest", "content.code.copy", "content.code.annotate", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

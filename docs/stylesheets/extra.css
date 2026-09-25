@@ -1,0 +1,6 @@
+/* Allow wide tables to scroll horizontally */
+.md-typeset table:not([class]) {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+}
