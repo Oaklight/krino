@@ -16,12 +16,52 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+
+class MLPProjector(nn.Module):
+    """Optional MLP layers between backbone output and decision heads.
+
+    Projects hidden states through one or more Linear+GELU layers.
+    Output size equals input size so existing heads work unchanged.
+    """
+
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int | None = None,
+        num_layers: int = 1,
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        hidden_size = hidden_size or input_size
+        layers: list[nn.Module] = []
+        in_dim = input_size
+        for i in range(num_layers):
+            out_dim = hidden_size if i < num_layers - 1 else input_size
+            layers.append(nn.Linear(in_dim, out_dim))
+            if i < num_layers - 1:
+                layers.append(nn.GELU())
+                layers.append(nn.Dropout(dropout))
+            in_dim = out_dim
+        self.net = nn.Sequential(*layers)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.net(x)
+
+
 class NoulHead(nn.Module):
     """Binary probability head. Maps hidden state to P(yes) via sigmoid."""
 
-    def __init__(self, hidden_size: int, dropout: float = 0.1) -> None:
+    def __init__(self, hidden_size: int, rank: int | None = None, dropout: float = 0.1) -> None:
         super().__init__()
-        self.proj = nn.Linear(hidden_size, 1)
+        if rank:
+            self.proj = nn.Sequential(
+                nn.Linear(hidden_size, rank),
+                nn.GELU(),
+                nn.Dropout(dropout),
+                nn.Linear(rank, 1),
+            )
+        else:
+            self.proj = nn.Linear(hidden_size, 1)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, hidden_state: torch.Tensor) -> torch.Tensor:

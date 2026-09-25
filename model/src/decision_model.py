@@ -15,7 +15,7 @@ import torch.nn as nn
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 from .backbone import is_hybrid_model
-from .heads import ChoiceHead, NoulHead, ScoreHead
+from .heads import ChoiceHead, MLPProjector, NoulHead, ScoreHead
 
 
 def _is_encoder_model(backbone: PreTrainedModel) -> bool:
@@ -40,6 +40,9 @@ class DecisionModel(nn.Module):
         rank: int = 64,
         rival_aware: bool = False,
         dropout: float = 0.1,
+        mlp_layers: int = 0,
+        mlp_dim: int | None = None,
+        noul_rank: int | None = None,
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -48,7 +51,14 @@ class DecisionModel(nn.Module):
         self.is_encoder = _is_encoder_model(backbone)
         self.is_hybrid = is_hybrid_model(backbone.config)
 
-        self.noul_head = NoulHead(self.hidden_size, dropout)
+        if mlp_layers > 0:
+            self.projector = MLPProjector(
+                self.hidden_size, mlp_dim, mlp_layers, dropout
+            )
+        else:
+            self.projector = nn.Identity()
+
+        self.noul_head = NoulHead(self.hidden_size, rank=noul_rank, dropout=dropout)
         self.choice_head = ChoiceHead(self.hidden_size, rank, rival_aware, dropout)
         self.score_head = ScoreHead(self.hidden_size, rank, dropout)
 
@@ -56,6 +66,7 @@ class DecisionModel(nn.Module):
             param.requires_grad_(False)
 
         device = next(self.backbone.parameters()).device
+        self.projector = self.projector.to(device).float()
         self.noul_head = self.noul_head.to(device).float()
         self.choice_head = self.choice_head.to(device).float()
         self.score_head = self.score_head.to(device).float()
@@ -94,7 +105,7 @@ class DecisionModel(nn.Module):
             pooled = hidden[
                 torch.arange(hidden.size(0), device=hidden.device), seq_lengths
             ]
-        return pooled.float()
+        return self.projector(pooled.float())
 
     def _encode_with_sequence(self, text: str, max_length: int = 512) -> torch.Tensor:
         """Encode text and return full sequence hidden states [1, seq_len, hidden]."""
@@ -106,7 +117,7 @@ class DecisionModel(nn.Module):
                 **inputs, output_hidden_states=True, use_cache=False
             )
         hidden = outputs.hidden_states[-1]
-        return hidden.float()
+        return self.projector(hidden.float())
 
     def forward_noul(self, state: str, instructions: str) -> torch.Tensor:
         """Returns logit [1, 1] for noul prediction."""
