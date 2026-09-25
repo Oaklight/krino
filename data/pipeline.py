@@ -1062,7 +1062,61 @@ def load_synthetic() -> Iterator[TypedQuestion]:
                 yield TypedQuestion(**item_dict)
 
 
+# --- JevBench ---
+
+JEVBENCH_TIERS = ("easy", "hard", "original")
+JEVBENCH_BASE_URL = "https://raw.githubusercontent.com/fstandhartinger/jevbench/main/datasets/public"
+
+
+def _download_text(url: str, cache_path: Path) -> Path:
+    if cache_path.exists():
+        return cache_path
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    with urllib.request.urlopen(url, timeout=120) as resp:
+        cache_path.write_bytes(resp.read())
+    print(f"  downloaded {cache_path.name} ({cache_path.stat().st_size // 1024} KB)", file=sys.stderr)
+    return cache_path
+
+
+def load_jevbench() -> Iterator[TypedQuestion]:
+    cache_dir = DATA_DIR / "jevbench"
+    for tier in JEVBENCH_TIERS:
+        url = f"{JEVBENCH_BASE_URL}/{tier}.jsonl"
+        path = _download_text(url, cache_dir / f"{tier}.jsonl")
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                task = json.loads(line)
+                q_type = task["question"]["type"]
+                raw_expected = task["expected"]
+
+                if q_type == "noul":
+                    label: Any = raw_expected == "yes"
+                elif q_type == "score":
+                    label = float(raw_expected)
+                else:
+                    label = raw_expected
+
+                criteria = task["question"].get("criteria")
+                q: dict[str, Any] = {
+                    "type": q_type,
+                    "instructions": task["question"]["instructions"],
+                }
+                if criteria is not None:
+                    q["criteria"] = criteria
+
+                yield TypedQuestion(
+                    id=task["id"],
+                    state=task["state"],
+                    question=q,
+                    label=label,
+                    source="jevbench",
+                    split="test",
+                    group=task.get("group") or task.get("family"),
+                )
+
+
 LOADERS = {
+    "jevbench": load_jevbench,
     "banking77": load_banking77,
     "sst2": load_sst2,
     "agnews": load_agnews,

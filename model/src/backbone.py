@@ -29,7 +29,7 @@ def load_causal_lm(
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype=dtype,
+        dtype=dtype,
         device_map=device if device == "auto" else None,
     )
     if device != "auto":
@@ -54,7 +54,7 @@ def load_encoder(
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name, torch_dtype=dtype)
+    model = AutoModel.from_pretrained(model_name, dtype=dtype)
     if device != "auto":
         model = model.to(device)
     model.eval()
@@ -96,7 +96,7 @@ def load_qwen35_base(
 
     # Load as causal LM, then extract the text backbone
     # (.model strips the vocab/lm_head — we only need hidden states)
-    full_model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=dtype)
+    full_model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype)
     backbone = full_model.model
 
     # Attach text config so hidden_size etc. are accessible
