@@ -54,4 +54,5 @@ export const MODELS = [
   { id: "oaklight/krino-qwen3-0.6b-heads", label: "Qwen3-0.6B", params: "0.6B" },
   { id: "oaklight/krino-qwen3.5-4b-heads", label: "Qwen3.5-4B", params: "4B" },
   { id: "oaklight/krino-qwen3-reranker-4b-heads", label: "Qwen3-reranker-4B", params: "4B" },
+  { id: "oaklight/krino-qwen3-reranker-0.6b-heads", label: "Qwen3-reranker-0.6B", params: "0.6B" },
 ];
