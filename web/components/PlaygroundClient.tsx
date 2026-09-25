@@ -336,7 +336,8 @@ export default function PlaygroundClient() {
               className="w-full px-3 py-2 text-sm border border-border rounded-[var(--radius)] bg-bg-card text-text placeholder:text-text-muted font-mono"
               placeholder="ts_..." />
             <p className="text-xs text-text-muted mt-1">
-              From <a href="https://app.typesafe.ai" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent-hover">app.typesafe.ai</a> — requires Krino backend as proxy
+              From <a href="https://app.typesafe.ai" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent-hover">app.typesafe.ai</a> — requires Krino backend as proxy.
+              Your key stays in your browser and is only sent to your own backend.
             </p>
           </div>
         </div>
