@@ -1,8 +1,6 @@
-<p align="center">
-  <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
-</p>
-
 # Data Pipeline
+
+[English](README_en.md) | [中文](README_zh.md)
 
 Downloads, converts, and manages benchmark datasets for decision model evaluation. All benchmarks are converted to a unified `TypedQuestion` format.
 

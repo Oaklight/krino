@@ -1,10 +1,10 @@
+<h1 align="center">Krino</h1>
+
 <p align="center">
   <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
 </p>
 
-# Krino
-
-*κρίνω — to judge, to separate, to decide*
+<p align="center"><em>κρίνω — to judge, to separate, to decide</em></p>
 
 Krino is a research project studying **decision models** — a new class of AI systems that return calibrated probabilities over structured options instead of generating text. The project reverse-engineers, replicates, and extends [TypeSafe AI](https://typesafe.ai)'s Jev, the first commercially deployed decision model.
 

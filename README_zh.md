@@ -1,10 +1,10 @@
+<h1 align="center">Krino</h1>
+
 <p align="center">
   <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
 </p>
 
-# Krino
-
-*κρίνω — 判断、分离、决定*
+<p align="center"><em>κρίνω — 判断、分离、决定</em></p>
 
 Krino 是一个研究**决策模型（decision model）**的项目——这是一类新型 AI 系统，输出结构化选项上的校准概率，而非生成文本。本项目对 [TypeSafe AI](https://typesafe.ai) 的 Jev（首个商用决策模型）进行逆向工程、复现和扩展研究。
 

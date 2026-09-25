@@ -1,8 +1,6 @@
-<p align="center">
-  <a href="README_en.md">English</a> | <a href="README_zh.md">中文</a>
-</p>
-
 # 决策模型
+
+[English](README_en.md) | [中文](README_zh.md)
 
 开源类型化决策模型复现。实现了通过 TypeSafe Jev 黑箱探测识别出的操作管道：
 
