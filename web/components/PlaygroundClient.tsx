@@ -23,17 +23,31 @@ async function callGradioApi(
   backendUrl: string,
   args: unknown[]
 ): Promise<InferenceResult> {
-  const url = `${backendUrl.replace(/\/+$/, "")}/api/predict`;
-  const res = await fetch(url, {
+  const base = backendUrl.replace(/\/+$/, "");
+
+  // Gradio 6.x two-step API: POST to submit, GET to stream result
+  const submitRes = await fetch(`${base}/gradio_api/call/predict`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data: args }),
   });
-  if (!res.ok) {
-    throw new Error(`Server returned ${res.status}: ${await res.text()}`);
+  if (!submitRes.ok) {
+    throw new Error(`Server returned ${submitRes.status}: ${await submitRes.text()}`);
   }
-  const json = await res.json();
-  const raw = json.data?.[0];
+  const { event_id } = await submitRes.json();
+
+  // Poll for result via SSE endpoint
+  const resultRes = await fetch(`${base}/gradio_api/call/predict/${event_id}`);
+  if (!resultRes.ok) {
+    throw new Error(`Result fetch failed: ${resultRes.status}`);
+  }
+  const text = await resultRes.text();
+
+  // Parse SSE response: "event: complete\ndata: [...]"
+  const dataLine = text.split("\n").find((l) => l.startsWith("data: "));
+  if (!dataLine) throw new Error("No data in response");
+  const parsed = JSON.parse(dataLine.slice(6));
+  const raw = Array.isArray(parsed) ? parsed[0] : parsed;
   if (typeof raw === "string") return JSON.parse(raw);
   return raw as InferenceResult;
 }
