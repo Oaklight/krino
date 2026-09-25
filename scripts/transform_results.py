@@ -294,6 +294,55 @@ def build_jev_comparison(eval_runs: list[dict]) -> dict:
     return comparison
 
 
+JEVBENCH_DIR = REPO_ROOT / "results" / "jevbench"
+
+JEVBENCH_META: dict[str, tuple[str, str, str]] = {
+    "krino-ettin-150m-heads": ("Ettin-150m (trained)", "150M", "reranker"),
+    "krino-modernbert-base-heads": ("ModernBERT-base (trained)", "149M", "encoder"),
+    "krino-qwen3-0.6b-heads": ("Qwen3-0.6B (trained)", "0.6B", "causal"),
+    "krino-qwen3.5-4b-heads": ("Qwen3.5-4B (trained)", "4B", "causal"),
+    "krino-qwen3-reranker-4b-heads": ("Qwen3-reranker-4B (trained)", "4B", "reranker"),
+    "krino-qwen3-reranker-0.6b-heads": ("Qwen3-reranker-0.6B (trained)", "0.6B", "reranker"),
+    "raw-qwen3-reranker-4b": ("Qwen3-reranker-4B (zero-shot)", "4B", "reranker"),
+}
+
+
+def transform_jevbench() -> list[dict]:
+    """Transform JevBench result files into dashboard format."""
+    runs = []
+    for filepath in sorted(JEVBENCH_DIR.glob("*.json")):
+        stem = filepath.stem
+        if stem not in JEVBENCH_META:
+            print(f"  WARNING: no metadata for jevbench/{stem}, skipping")
+            continue
+
+        raw = json.loads(filepath.read_text())
+        display_name, params, model_type = JEVBENCH_META[stem]
+
+        overall = raw.get("overall", {})
+        by_type = raw.get("by_type", {})
+        by_tier = raw.get("by_tier", {})
+        latency = raw.get("latency", {})
+
+        runs.append({
+            "run_id": f"jevbench-{stem}",
+            "model": {"name": display_name, "params": params, "type": model_type},
+            "method": "trained-heads",
+            "benchmark": "jevbench",
+            "accuracy": round(overall.get("accuracy", 0), 4),
+            "correct": overall.get("correct", 0),
+            "total": overall.get("total", 0),
+            "by_type": {k: {"accuracy": round(v["accuracy"], 4), "correct": v["correct"], "total": v["total"]}
+                        for k, v in by_type.items()},
+            "by_tier": {k: {"accuracy": round(v["accuracy"], 4), "correct": v["correct"], "total": v["total"]}
+                        for k, v in by_tier.items()},
+            "latency_ms": round(latency.get("mean_s", 0) * 1000, 1) if latency else None,
+        })
+        print(f"  {stem}: {overall.get('accuracy', 0):.1%} ({overall.get('correct')}/{overall.get('total')})")
+
+    return runs
+
+
 def main() -> None:
     eval_runs = []
     training_runs = []
@@ -316,12 +365,16 @@ def main() -> None:
             print(f"  {filepath.stem}: {result['n_epochs']} epochs, "
                   f"best_acc={result['best_accuracy']}")
 
+    print(f"\nProcessing JevBench files...")
+    jevbench_runs = transform_jevbench() if JEVBENCH_DIR.exists() else []
+
     jev_comparison = build_jev_comparison(eval_runs)
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "eval_runs": eval_runs,
         "training_runs": training_runs,
+        "jevbench_runs": jevbench_runs,
         "jev_comparison": jev_comparison,
         "benchmarks": dict(sorted(BENCHMARK_TYPES.items())),
     }

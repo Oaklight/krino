@@ -59,6 +59,24 @@ export interface DashboardData {
   generated_at: string | null;
   eval_runs: EvalRun[];
   training_runs: TrainingRun[];
+  jevbench_runs: JevBenchRun[];
   jev_comparison: Record<string, JevComparison>;
   benchmarks: Record<string, string>;
+}
+
+export interface JevBenchRun {
+  run_id: string;
+  model: {
+    name: string;
+    params: string;
+    type: "causal" | "encoder" | "reranker" | "moe" | "api";
+  };
+  method: string;
+  benchmark: string;
+  accuracy: number;
+  correct: number;
+  total: number;
+  by_type: Record<string, { accuracy: number; correct: number; total: number }>;
+  by_tier: Record<string, { accuracy: number; correct: number; total: number }>;
+  latency_ms: number | null;
 }
