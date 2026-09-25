@@ -77,26 +77,63 @@ function buildJevQuestion(qType: string, instructions: string, optionsText: stri
   return question;
 }
 
-async function callJevApi(apiKey: string, state: string, qType: string, instructions: string, optionsText: string): Promise<InferenceResult> {
+async function callJevApi(apiKey: string, state: string, qType: string, instructions: string, optionsText: string, proxyUrl?: string): Promise<InferenceResult> {
   const question = buildJevQuestion(qType, instructions, optionsText);
   const payload = { state, model: "jev-latest", questions: { q1: question } };
   const t0 = performance.now();
+
+  // Jev API lacks Access-Control-Allow-Origin on POST responses,
+  // so we proxy through the Gradio backend if available
+  let data: Record<string, unknown>;
+  if (proxyUrl) {
+    const base = proxyUrl.replace(/\/+$/, "");
+    const submitRes = await fetch(`${base}/gradio_api/call/jev_proxy`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: [apiKey, JSON.stringify(payload)] }),
+    });
+    if (!submitRes.ok) {
+      // Proxy endpoint doesn't exist — fall back to direct call
+      data = await callJevDirect(apiKey, payload);
+    } else {
+      const { event_id } = await submitRes.json();
+      const resultRes = await fetch(`${base}/gradio_api/call/jev_proxy/${event_id}`);
+      const text = await resultRes.text();
+      const lines = text.split("\n");
+      const completeIdx = lines.findIndex((l) => l === "event: complete");
+      const dataLine = completeIdx >= 0
+        ? lines.slice(completeIdx).find((l) => l.startsWith("data: "))
+        : lines.filter((l) => l.startsWith("data: ") && l !== "data: null").pop();
+      if (!dataLine) throw new Error("No data from Jev proxy");
+      const parsed = JSON.parse(dataLine.slice(6));
+      const raw = Array.isArray(parsed) ? parsed[0] : parsed;
+      data = typeof raw === "string" ? JSON.parse(raw) : raw;
+    }
+  } else {
+    data = await callJevDirect(apiKey, payload);
+  }
+
+  const latency = Math.round(performance.now() - t0);
+  const answer = (data as Record<string, Record<string, unknown>>).answers?.q1 ?? data;
+  if (!answer || (answer as Record<string, unknown>).error) {
+    throw new Error((answer as Record<string, string>)?.error ?? "No answer from Jev API");
+  }
+  (answer as Record<string, unknown>).latency_ms = latency;
+  (answer as Record<string, unknown>).model = "Jev (TypeSafe)";
+  return answer as InferenceResult;
+}
+
+async function callJevDirect(apiKey: string, payload: unknown): Promise<Record<string, unknown>> {
   const res = await fetch(JEV_API_URL, {
     method: "POST",
     headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  const latency = Math.round(performance.now() - t0);
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Jev API ${res.status}: ${text.slice(0, 200)}`);
   }
-  const data = await res.json();
-  const answer = data.answers?.q1;
-  if (!answer) throw new Error("No answer from Jev API");
-  answer.latency_ms = latency;
-  answer.model = "Jev (TypeSafe)";
-  return answer as InferenceResult;
+  return await res.json();
 }
 
 function ResultCard({ result, latency, label }: { result: InferenceResult; latency: number | null; label: string }) {
@@ -245,7 +282,7 @@ export default function PlaygroundClient() {
       promises.push(
         (async () => {
           try {
-            const data = await callJevApi(jevApiKey.trim(), state, qType, instr, opts);
+            const data = await callJevApi(jevApiKey.trim(), state, qType, instr, opts, backendUrl.trim() || undefined);
             setResults((prev) => ({ ...prev, [qType]: { ...prev[qType], jev: { result: data, latency: data.latency_ms ?? 0 } } }));
           } catch (e) {
             setError((prev) => prev ? prev : (e instanceof Error ? e.message : "Jev API failed"));
@@ -299,7 +336,7 @@ export default function PlaygroundClient() {
               className="w-full px-3 py-2 text-sm border border-border rounded-[var(--radius)] bg-bg-card text-text placeholder:text-text-muted font-mono"
               placeholder="ts_..." />
             <p className="text-xs text-text-muted mt-1">
-              From <a href="https://app.typesafe.ai" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent-hover">app.typesafe.ai</a> for comparison
+              From <a href="https://app.typesafe.ai" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent-hover">app.typesafe.ai</a> — requires Krino backend as proxy
             </p>
           </div>
         </div>

@@ -122,22 +122,42 @@ EXAMPLES = [
     ],
 ]
 
-demo = gr.Interface(
-    fn=predict,
-    inputs=[
-        gr.Dropdown(choices=list(MODELS.keys()), value=DEFAULT_MODEL_ID, label="Model"),
-        gr.Textbox(label="State / Input Text", lines=4, placeholder="Enter the text to analyze..."),
-        gr.Radio(choices=["noul", "choice", "score"], value="choice", label="Question Type"),
-        gr.Textbox(label="Instructions", placeholder="What question should the model answer?"),
-        gr.Textbox(label="Options (one per line, format: key: description)", lines=5,
-                   placeholder="option1: Description\noption2: Description"),
-    ],
-    outputs=gr.JSON(label="Result"),
-    title="Krino — Decision Model Demo",
-    description="Run typed decision queries against open Krino models. Returns calibrated probabilities instead of free text.",
-    examples=EXAMPLES,
-    cache_examples=False,
-)
+def jev_proxy(api_key: str, payload_json: str):
+    """Proxy Jev API calls to work around CORS restrictions."""
+    import urllib.request
+    req = urllib.request.Request(
+        "https://api.typesafe.ai/v1/systemone",
+        data=payload_json.encode("utf-8"),
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+    )
+    try:
+        resp = urllib.request.urlopen(req, timeout=30)
+        return json.loads(resp.read())
+    except Exception as e:
+        return {"error": str(e)}
+
+
+with gr.Blocks(title="Krino — Decision Model Demo") as demo:
+    gr.Markdown("# Krino — Decision Model Demo\nRun typed decision queries against open Krino models.")
+    with gr.Row():
+        model_dd = gr.Dropdown(choices=list(MODELS.keys()), value=DEFAULT_MODEL_ID, label="Model")
+        qtype_radio = gr.Radio(choices=["noul", "choice", "score"], value="choice", label="Question Type")
+    state_tb = gr.Textbox(label="State / Input Text", lines=4, placeholder="Enter the text to analyze...")
+    instr_tb = gr.Textbox(label="Instructions", placeholder="What question should the model answer?")
+    opts_tb = gr.Textbox(label="Options (one per line, format: key: description)", lines=5,
+                         placeholder="option1: Description\noption2: Description")
+    result_json = gr.JSON(label="Result")
+    run_btn = gr.Button("Run")
+    run_btn.click(predict, inputs=[model_dd, state_tb, qtype_radio, instr_tb, opts_tb],
+                  outputs=result_json, api_name="predict")
+    gr.Examples(examples=EXAMPLES, inputs=[model_dd, state_tb, qtype_radio, instr_tb, opts_tb],
+                cache_examples=False)
+
+    jev_key_tb = gr.Textbox(visible=False)
+    jev_payload_tb = gr.Textbox(visible=False)
+    jev_result = gr.JSON(visible=False)
+    jev_btn = gr.Button(visible=False)
+    jev_btn.click(jev_proxy, inputs=[jev_key_tb, jev_payload_tb], outputs=jev_result, api_name="jev_proxy")
 
 if __name__ == "__main__":
     demo.launch()
