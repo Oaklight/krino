@@ -152,9 +152,10 @@ class TestGPUConfigWithDecisionModel:
         backbone.config.hidden_size = 768
         backbone.config.is_decoder = True
         backbone.config.max_position_embeddings = 32768
-        backbone.parameters.return_value = iter(
-            [torch.nn.Parameter(torch.zeros(1))]
-        )
+        # Use lambda to return fresh iterators (backbone.parameters() is
+        # called multiple times during __init__)
+        _param = torch.nn.Parameter(torch.zeros(1))
+        backbone.parameters = lambda: iter([_param])
         # is_hybrid_model checks layer_types
         backbone.config.layer_types = []
 
@@ -185,9 +186,8 @@ class TestGPUConfigWithDecisionModel:
         backbone.config.hidden_size = 768
         backbone.config.is_decoder = True
         backbone.config.max_position_embeddings = 32768
-        backbone.parameters.return_value = iter(
-            [torch.nn.Parameter(torch.zeros(1))]
-        )
+        _param = torch.nn.Parameter(torch.zeros(1))
+        backbone.parameters = lambda: iter([_param])
         backbone.config.layer_types = []
 
         tokenizer = MagicMock()

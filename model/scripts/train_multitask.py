@@ -203,6 +203,10 @@ def main() -> int:
     parser.add_argument("--noul-rank", type=int, default=None, help="Override NoulHead MLP rank")
     parser.add_argument("--max-length", type=int, default=None, help="Override max sequence length")
     parser.add_argument("--mlp-lr", type=float, default=None, help="Separate LR for MLP projector")
+    parser.add_argument("--noul-lr", type=float, default=None, help="Separate LR for noul head")
+    parser.add_argument("--choice-lr", type=float, default=None, help="Separate LR for choice head")
+    parser.add_argument("--score-lr", type=float, default=None, help="Separate LR for score head")
+    parser.add_argument("--uncertainty-weighting", action="store_true", default=None, help="Enable uncertainty-based loss weighting (Kendall et al. 2018)")
     parser.add_argument("--save-every-epoch", action="store_true", default=None, help="Save checkpoint at every eval epoch")
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
 
@@ -260,6 +264,10 @@ def main() -> int:
     noul_rank = args.noul_rank if args.noul_rank is not None else cfg.get("noul_rank", None)
     max_length = args.max_length if args.max_length is not None else cfg.get("max_length", None)
     mlp_lr = args.mlp_lr if args.mlp_lr is not None else cfg.get("mlp_lr", None)
+    noul_lr = args.noul_lr if args.noul_lr is not None else cfg.get("noul_lr", None)
+    choice_lr = args.choice_lr if args.choice_lr is not None else cfg.get("choice_lr", None)
+    score_lr = args.score_lr if args.score_lr is not None else cfg.get("score_lr", None)
+    uncertainty_weighting = args.uncertainty_weighting if args.uncertainty_weighting is not None else cfg.get("uncertainty_weighting", False)
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -410,6 +418,10 @@ def main() -> int:
         batch_backbone=batch_backbone,
         save_every_epoch=save_every_epoch,
         mlp_lr=mlp_lr,
+        noul_lr=noul_lr,
+        choice_lr=choice_lr,
+        score_lr=score_lr,
+        uncertainty_weighting=uncertainty_weighting,
     )
 
     # Print final eval summary

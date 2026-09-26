@@ -52,9 +52,31 @@ def _teacher_loss(logits: torch.Tensor, teacher_probs: dict, keys: list[str]) ->
     return F.kl_div(log_probs, teacher.unsqueeze(0), reduction="batchmean")
 
 
+def _apply_uncertainty_weight(
+    loss: torch.Tensor,
+    log_var: nn.Parameter,
+) -> torch.Tensor:
+    """Apply homoscedastic uncertainty weighting to a loss (Kendall et al. 2018).
+
+    Computes: loss / (2 * exp(log_var)) + log_var / 2
+
+    The learned log_var acts as a task-specific uncertainty parameter that
+    automatically balances loss magnitudes across tasks.
+
+    Args:
+        loss: Scalar loss tensor for a single item.
+        log_var: Learnable log-variance parameter for this task type.
+
+    Returns:
+        Uncertainty-weighted loss tensor.
+    """
+    return loss / (2 * torch.exp(log_var)) + log_var / 2
+
+
 def compute_loss(
     model: nn.Module,
     item: Any,
+    log_vars: dict[str, nn.Parameter] | None = None,
 ) -> torch.Tensor | None:
     """Compute loss for a single typed-question item.
 
@@ -62,6 +84,9 @@ def compute_loss(
     - Standard: one-hot CE (noul→BCE, choice→CE, score→CE or interpolated soft CE)
     - Teacher distillation: KL-divergence against item.teacher_probs when available
     - Float score labels: interpolated soft targets between adjacent levels
+
+    When log_vars is provided, applies homoscedastic uncertainty weighting
+    (Kendall et al. 2018) to the computed loss using the type-specific log_var.
     """
     state = item.state
     question = item.question
@@ -69,6 +94,8 @@ def compute_loss(
     q_type = question.get("type", "noul")
     instructions = question.get("instructions", "")
     teacher_probs = getattr(item, "teacher_probs", None)
+
+    loss: torch.Tensor | None = None
 
     if q_type == "noul":
         logit = model.forward_noul(state, instructions)
@@ -79,7 +106,7 @@ def compute_loss(
             target = torch.tensor([[teacher_p]], device=logit.device)
         else:
             target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
-        return F.binary_cross_entropy_with_logits(logit, target)
+        loss = F.binary_cross_entropy_with_logits(logit, target)
 
     elif q_type == "choice":
         criteria = question["criteria"]
@@ -87,12 +114,13 @@ def compute_loss(
         option_texts = [v or k for k, v in criteria.items()]
         logits = model.forward_choice(state, instructions, option_texts)
         if teacher_probs:
-            return _teacher_loss(logits, teacher_probs, keys)
-        if label not in keys:
+            loss = _teacher_loss(logits, teacher_probs, keys)
+        elif label not in keys:
             return None
-        target_idx = keys.index(label)
-        target = torch.tensor([target_idx], device=logits.device)
-        return F.cross_entropy(logits, target)
+        else:
+            target_idx = keys.index(label)
+            target = torch.tensor([target_idx], device=logits.device)
+            loss = F.cross_entropy(logits, target)
 
     elif q_type == "score":
         criteria = question["criteria"]
@@ -101,14 +129,19 @@ def compute_loss(
         n_levels = len(criteria)
         if teacher_probs:
             level_keys = [str(i) for i in range(n_levels)]
-            return _teacher_loss(logits, teacher_probs, level_keys)
-        label_f = float(label)
-        target = _score_target(label, n_levels, logits.device)
-        if label_f == int(label_f):
-            return F.cross_entropy(logits, target.argmax().unsqueeze(0))
-        return _soft_cross_entropy(logits, target.unsqueeze(0))
+            loss = _teacher_loss(logits, teacher_probs, level_keys)
+        else:
+            label_f = float(label)
+            target = _score_target(label, n_levels, logits.device)
+            if label_f == int(label_f):
+                loss = F.cross_entropy(logits, target.argmax().unsqueeze(0))
+            else:
+                loss = _soft_cross_entropy(logits, target.unsqueeze(0))
 
-    return None
+    if loss is not None and log_vars is not None and q_type in log_vars:
+        loss = _apply_uncertainty_weight(loss, log_vars[q_type])
+
+    return loss
 
 
 def _compute_noul_batch(
@@ -202,6 +235,7 @@ def train_epoch(
     max_grad_norm: float = 1.0,
     accumulation_steps: int = 1,
     batch_backbone: int = 0,
+    log_vars: dict[str, nn.Parameter] | None = None,
 ) -> dict[str, float]:
     """Train for one epoch. Returns loss statistics.
 
@@ -210,6 +244,8 @@ def train_epoch(
             before an optimizer step. Default 1 preserves per-item SGD.
         batch_backbone: if > 0, group items by type and batch backbone
             forward passes in chunks of this size. 0 = per-item (legacy).
+        log_vars: per-type learnable log-variance parameters for uncertainty
+            weighting (Kendall et al. 2018). None disables weighting.
     """
     model.train()
     total_loss = 0.0
@@ -231,25 +267,51 @@ def train_epoch(
             choice_items = [it for it in window if it.question.get("type") == "choice"]
             score_items = [it for it in window if it.question.get("type") == "score"]
 
-            all_losses: list[torch.Tensor | None] = []
+            # Compute losses per type, applying uncertainty weighting if enabled
+            all_weighted: list[torch.Tensor] = []
+            n_window_skipped = 0
+
             if noul_items:
-                all_losses.extend(_compute_noul_batch(model, noul_items))
+                noul_losses = _compute_noul_batch(model, noul_items)
+                for loss in noul_losses:
+                    if loss is not None:
+                        if log_vars is not None and "noul" in log_vars:
+                            loss = _apply_uncertainty_weight(loss, log_vars["noul"])
+                        all_weighted.append(loss.squeeze())
+                    else:
+                        n_window_skipped += 1
+
             if choice_items:
-                all_losses.extend(_compute_choice_batch(model, choice_items))
+                choice_losses = _compute_choice_batch(model, choice_items)
+                for loss in choice_losses:
+                    if loss is not None:
+                        if log_vars is not None and "choice" in log_vars:
+                            loss = _apply_uncertainty_weight(loss, log_vars["choice"])
+                        all_weighted.append(loss.squeeze())
+                    else:
+                        n_window_skipped += 1
+
             if score_items:
-                all_losses.extend(_compute_score_batch(model, score_items))
+                score_losses = _compute_score_batch(model, score_items)
+                for loss in score_losses:
+                    if loss is not None:
+                        if log_vars is not None and "score" in log_vars:
+                            loss = _apply_uncertainty_weight(loss, log_vars["score"])
+                        all_weighted.append(loss.squeeze())
+                    else:
+                        n_window_skipped += 1
+
+            n_skipped += n_window_skipped
 
             # Accumulate valid losses and backward once per window to avoid
             # graph-reuse issues when a trainable projector is shared.
-            valid_losses = [l for l in all_losses if l is not None]
-            n_skipped += len(all_losses) - len(valid_losses)
-            if valid_losses:
-                window_loss = torch.stack([l.squeeze() for l in valid_losses]).sum()
+            if all_weighted:
+                window_loss = torch.stack(all_weighted).sum()
                 scaled_loss = window_loss / accumulation_steps
                 scaled_loss.backward()
                 total_loss += window_loss.item()
-                n_items += len(valid_losses)
-                accum_count += len(valid_losses)
+                n_items += len(all_weighted)
+                accum_count += len(all_weighted)
 
             if accum_count >= accumulation_steps:
                 torch.nn.utils.clip_grad_norm_(
@@ -260,7 +322,7 @@ def train_epoch(
                 accum_count = 0
     else:
         for item in train_items:
-            loss = compute_loss(model, item)
+            loss = compute_loss(model, item, log_vars=log_vars)
             if loss is None:
                 n_skipped += 1
                 continue
@@ -567,6 +629,10 @@ def train_multitask(
     batch_backbone: int = 0,
     save_every_epoch: bool = False,
     mlp_lr: float | None = None,
+    noul_lr: float | None = None,
+    choice_lr: float | None = None,
+    score_lr: float | None = None,
+    uncertainty_weighting: bool = False,
 ) -> dict[str, Any]:
     """Multi-task training loop with type-balanced sampling and detailed eval.
 
@@ -583,21 +649,71 @@ def train_multitask(
         save_every_epoch: If True and checkpoint_dir is set, save head weights
             at every eval epoch (epoch_N.pt) in addition to best_heads.pt.
             Cost: ~4MB per save. Enables post-hoc eval on new benchmarks.
+        mlp_lr: Separate learning rate for MLP projector. None uses base lr.
+        noul_lr: Separate learning rate for noul head. None uses base lr.
+        choice_lr: Separate learning rate for choice head. None uses base lr.
+        score_lr: Separate learning rate for score head. None uses base lr.
+        uncertainty_weighting: If True, learn per-type homoscedastic uncertainty
+            parameters (Kendall et al. 2018) to automatically balance losses.
     """
     from data.sampler import MultitaskSampler
 
-    trainable = [p for p in model.parameters() if p.requires_grad]
-    if mlp_lr is not None and hasattr(model, "projector") and not isinstance(model.projector, nn.Identity):
-        projector_params = list(model.projector.parameters())
-        projector_ids = {id(p) for p in projector_params}
-        head_params = [p for p in trainable if id(p) not in projector_ids]
-        optimizer = AdamW([
-            {"params": head_params, "lr": lr},
-            {"params": projector_params, "lr": mlp_lr},
-        ], weight_decay=weight_decay)
-        print(f"  Per-component LR: heads={lr}, mlp={mlp_lr}", flush=True)
+    device = next(model.parameters()).device
+    use_per_type_lr = any(x is not None for x in [noul_lr, choice_lr, score_lr])
+    has_mlp = hasattr(model, "projector") and not isinstance(model.projector, nn.Identity)
+
+    # Build optimizer param groups
+    if use_per_type_lr or (mlp_lr is not None and has_mlp):
+        # Collect param id sets for each component
+        noul_params = list(model.noul_head.parameters())
+        choice_params = list(model.choice_head.parameters())
+        score_params = list(model.score_head.parameters())
+        assigned_ids = {id(p) for p in noul_params + choice_params + score_params}
+
+        if has_mlp:
+            projector_params = list(model.projector.parameters())
+            assigned_ids.update(id(p) for p in projector_params)
+
+        param_groups = [
+            {"params": noul_params, "lr": noul_lr or lr},
+            {"params": choice_params, "lr": choice_lr or lr},
+            {"params": score_params, "lr": score_lr or lr},
+        ]
+
+        if has_mlp:
+            param_groups.append({"params": projector_params, "lr": mlp_lr or lr})
+
+        # Remaining trainable params (if any)
+        remaining = [p for p in model.parameters() if p.requires_grad and id(p) not in assigned_ids]
+        if remaining:
+            param_groups.append({"params": remaining, "lr": lr})
+
+        optimizer = AdamW(param_groups, weight_decay=weight_decay)
+
+        if use_per_type_lr:
+            print(
+                f"  Per-type LR: noul={noul_lr or lr}, choice={choice_lr or lr}, "
+                f"score={score_lr or lr}",
+                flush=True,
+            )
+        if mlp_lr is not None and has_mlp:
+            print(f"  Per-component LR: mlp={mlp_lr}", flush=True)
     else:
+        trainable = [p for p in model.parameters() if p.requires_grad]
         optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)
+
+    # Setup uncertainty weighting (Kendall et al. 2018)
+    log_vars: dict[str, nn.Parameter] | None = None
+    if uncertainty_weighting:
+        log_vars = {
+            "noul": nn.Parameter(torch.zeros(1, device=device)),
+            "choice": nn.Parameter(torch.zeros(1, device=device)),
+            "score": nn.Parameter(torch.zeros(1, device=device)),
+        }
+        for lv in log_vars.values():
+            optimizer.add_param_group({"params": [lv], "lr": lr})
+        print("  Uncertainty weighting: enabled (3 learnable log_var params)", flush=True)
+
     warmup_epochs = max(1, epochs // 10)
     warmup = LinearLR(optimizer, start_factor=0.1, total_iters=warmup_epochs)
     cosine = CosineAnnealingLR(optimizer, T_max=max(1, epochs - warmup_epochs))
@@ -605,7 +721,8 @@ def train_multitask(
 
     sampler = MultitaskSampler(train_items, sampler_config, seed=seed)
 
-    print(f"Multi-task training: {sum(p.numel() for p in trainable)} trainable params", flush=True)
+    trainable_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Multi-task training: {trainable_count} trainable params", flush=True)
     print(f"  {len(train_items)} train items, {len(eval_items)} eval items", flush=True)
     print(f"  {epochs} epochs, epoch_size={sampler.epoch_size}, accumulation_steps={accumulation_steps}", flush=True)
 
@@ -617,7 +734,10 @@ def train_multitask(
 
         epoch_items = sampler.sample_epoch(epoch - 1)
 
-        train_stats = train_epoch(model, epoch_items, optimizer, max_grad_norm, accumulation_steps, batch_backbone)
+        train_stats = train_epoch(
+            model, epoch_items, optimizer, max_grad_norm,
+            accumulation_steps, batch_backbone, log_vars=log_vars,
+        )
         scheduler.step()
 
         elapsed = time.monotonic() - t0
@@ -648,6 +768,17 @@ def train_multitask(
                 type_parts.append(f"{t}={ts['accuracy']:.3f}({ts['n_items']})")
             if type_parts:
                 print(f"    by_type: {' | '.join(type_parts)}", flush=True)
+
+            # Log uncertainty weights if enabled
+            if log_vars is not None:
+                lv_parts = []
+                lv_snapshot: dict[str, float] = {}
+                for t in sorted(log_vars):
+                    val = log_vars[t].item()
+                    lv_parts.append(f"{t}={val:.4f}")
+                    lv_snapshot[t] = round(val, 6)
+                print(f"    log_var: {' | '.join(lv_parts)}", flush=True)
+                log["log_vars"] = lv_snapshot
 
             if agg["mean_loss"] < best_eval_loss:
                 best_eval_loss = agg["mean_loss"]
