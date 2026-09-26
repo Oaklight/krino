@@ -155,3 +155,7 @@ sampling:
     score: 1.0
   epoch_size: 15000
   # sampling_temperature: 0.5  # size-based source weighting (mT5/PaLM style, 0.3-0.7)
+  # difficulty_weights:  # override type_ratios with inverse-accuracy weights
+  #   noul: 0.5     # ~80% accuracy → low weight
+  #   choice: 1.0   # ~61% accuracy → medium weight
+  #   score: 2.0    # ~50% accuracy → high weight
