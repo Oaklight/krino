@@ -196,6 +196,7 @@ def main() -> int:
     parser.add_argument("--mlp-layers", type=int, default=None, help="Override MLP projector layers")
     parser.add_argument("--noul-rank", type=int, default=None, help="Override NoulHead MLP rank")
     parser.add_argument("--max-length", type=int, default=None, help="Override max sequence length")
+    parser.add_argument("--mlp-lr", type=float, default=None, help="Separate LR for MLP projector")
     parser.add_argument("--save-every-epoch", action="store_true", default=None, help="Save checkpoint at every eval epoch")
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
     args = parser.parse_args()
@@ -220,6 +221,7 @@ def main() -> int:
     mlp_dim = cfg.get("mlp_dim", None)
     noul_rank = args.noul_rank if args.noul_rank is not None else cfg.get("noul_rank", None)
     max_length = args.max_length if args.max_length is not None else cfg.get("max_length", None)
+    mlp_lr = args.mlp_lr if args.mlp_lr is not None else cfg.get("mlp_lr", None)
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -328,6 +330,7 @@ def main() -> int:
         seed=seed,
         batch_backbone=batch_backbone,
         save_every_epoch=save_every_epoch,
+        mlp_lr=mlp_lr,
     )
 
     # Print final eval summary
