@@ -83,6 +83,94 @@ class TestNoulHeadMLP:
         assert (probs >= 0).all() and (probs <= 1).all()
 
 
+class TestSharedAttention:
+    """Tests for shared AttentionHead between ChoiceHead and ScoreHead."""
+
+    def test_shared_attention_same_instance(self):
+        """ChoiceHead and ScoreHead should reference the exact same AttentionHead."""
+        shared = AttentionHead(768, rank=64)
+        choice = ChoiceHead(768, attention=shared)
+        score = ScoreHead(768, attention=shared)
+        assert choice.attention is score.attention
+
+    def test_shared_attention_param_count(self):
+        """Shared heads should have fewer total params than separate heads."""
+        shared_attn = AttentionHead(768, rank=64)
+        choice_shared = ChoiceHead(768, attention=shared_attn)
+        score_shared = ScoreHead(768, attention=shared_attn)
+        choice_sep = ChoiceHead(768, rank=64)
+        score_sep = ScoreHead(768, rank=64)
+
+        # Use set() on data_ptr to deduplicate shared params
+        shared_params = sum(
+            p.numel()
+            for p in {
+                id(p): p
+                for p in list(choice_shared.parameters())
+                + list(score_shared.parameters())
+            }.values()
+        )
+        sep_params = sum(p.numel() for p in choice_sep.parameters()) + sum(
+            p.numel() for p in score_sep.parameters()
+        )
+        assert shared_params < sep_params
+
+    def test_shared_attention_output_shapes(self):
+        """Both heads should produce correct output shapes with shared attention."""
+        shared = AttentionHead(768, rank=64)
+        choice = ChoiceHead(768, attention=shared)
+        score = ScoreHead(768, attention=shared)
+        ctx = torch.randn(1, 10, 768)
+        opts = torch.randn(1, 4, 768)
+        lvls = torch.randn(1, 5, 768)
+        assert choice(ctx, opts).shape == (1, 4)
+        assert score(ctx, lvls).shape == (1, 5)
+
+    def test_shared_attention_gradient_flows_to_both(self):
+        """Gradients from both heads should reach the shared attention weights."""
+        shared = AttentionHead(768, rank=64)
+        choice = ChoiceHead(768, attention=shared)
+        score = ScoreHead(768, attention=shared)
+
+        # Choice forward + backward
+        ctx = torch.randn(1, 10, 768, requires_grad=True)
+        choice_out = choice(ctx, torch.randn(1, 4, 768))
+        choice_out.sum().backward()
+        grad1 = shared.query.weight.grad.clone()
+        shared.query.weight.grad.zero_()
+
+        # Score forward + backward
+        ctx2 = torch.randn(1, 10, 768, requires_grad=True)
+        score_out = score(ctx2, torch.randn(1, 5, 768))
+        score_out.sum().backward()
+        grad2 = shared.query.weight.grad.clone()
+
+        # Both should produce non-zero gradients on shared params
+        assert grad1.abs().sum() > 0
+        assert grad2.abs().sum() > 0
+
+    def test_no_duplicate_params_in_module(self):
+        """PyTorch should not double-count shared params in nn.Module.parameters()."""
+        shared = AttentionHead(768, rank=64)
+        choice = ChoiceHead(768, attention=shared)
+        score = ScoreHead(768, attention=shared)
+
+        # Build a parent module containing both heads
+        parent = nn.Module()
+        parent.choice_head = choice
+        parent.score_head = score
+
+        # parameters() should deduplicate shared attention params
+        param_ids = [id(p) for p in parent.parameters()]
+        assert len(param_ids) == len(set(param_ids)), "Duplicate parameters detected"
+
+    def test_backward_compat_no_shared(self):
+        """Default construction (no shared attention) should create independent heads."""
+        choice = ChoiceHead(768, rank=64)
+        score = ScoreHead(768, rank=64)
+        assert choice.attention is not score.attention
+
+
 class TestHeadBackwardCompat:
     def test_choice_head_unchanged(self):
         head = ChoiceHead(768, rank=64)
