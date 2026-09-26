@@ -21,6 +21,10 @@ class SamplerConfig:
     Args:
         type_ratios: Relative sampling ratio per question type.
             E.g. {"noul": 1.0, "choice": 1.0, "score": 1.0} for equal balance.
+        difficulty_weights: Per-type difficulty weights (e.g. inverse accuracy).
+            When set, overrides type_ratios for sampling. For example,
+            {"noul": 0.5, "choice": 1.0, "score": 2.0} gives harder types
+            more training data.
         source_weights: Relative sampling weight per source within each type pool.
             Higher weight = more likely to be drawn. Sources not listed default to 1.0.
         source_caps: Maximum items per source before sampling. Applied once during
@@ -35,6 +39,7 @@ class SamplerConfig:
     """
 
     type_ratios: dict[str, float] = field(default_factory=lambda: {"noul": 1.0, "choice": 1.0, "score": 1.0})
+    difficulty_weights: dict[str, float] | None = None
     source_weights: dict[str, float] = field(default_factory=dict)
     source_caps: dict[str, int] = field(default_factory=dict)
     epoch_size: int | None = None
@@ -171,8 +176,11 @@ class MultitaskSampler:
         if not self._active_types:
             return []
 
-        # Compute items per type from type_ratios
-        total_ratio = sum(self._config.type_ratios.get(t, 0.0) for t in self._active_types)
+        # Use difficulty weights as type_ratios if provided
+        effective_ratios = self._config.difficulty_weights or self._config.type_ratios
+
+        # Compute items per type from effective ratios
+        total_ratio = sum(effective_ratios.get(t, 0.0) for t in self._active_types)
         if total_ratio <= 0:
             return []
 
@@ -180,7 +188,7 @@ class MultitaskSampler:
         remaining = self._epoch_size
         sorted_types = sorted(self._active_types)
         for i, q_type in enumerate(sorted_types):
-            ratio = self._config.type_ratios.get(q_type, 0.0)
+            ratio = effective_ratios.get(q_type, 0.0)
             if ratio <= 0:
                 items_per_type[q_type] = 0
                 continue
@@ -218,14 +226,14 @@ class MultitaskSampler:
             window_size = min(acc, remaining_items)
 
             # Allocate slots proportionally, guarding against over-allocation
-            total_r = sum(self._config.type_ratios.get(t, 0.0) for t in active)
+            total_r = sum(effective_ratios.get(t, 0.0) for t in active)
             if total_r <= 0:
                 break
 
             slots: dict[str, int] = {}
             slot_remaining = window_size
             for i, t in enumerate(active):
-                r = self._config.type_ratios.get(t, 0.0)
+                r = effective_ratios.get(t, 0.0)
                 if i == len(active) - 1:
                     slots[t] = min(slot_remaining, len(type_queues[t]))
                 else:

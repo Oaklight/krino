@@ -129,6 +129,7 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
     type_ratios = sampling.get(
         "type_ratios", {"noul": 1.0, "choice": 1.0, "score": 1.0}
     )
+    difficulty_weights = sampling.get("difficulty_weights")
     epoch_size = sampling.get("epoch_size")
     sampling_temperature = sampling.get("sampling_temperature")
     accumulation_steps = cfg.get("accumulation_steps", 8)
@@ -142,6 +143,7 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
     # No source_caps — capping already done in load_source_items
     return SamplerConfig(
         type_ratios=type_ratios,
+        difficulty_weights=difficulty_weights,
         source_weights=source_weights,
         source_caps={},
         epoch_size=epoch_size,
@@ -210,6 +212,7 @@ def main() -> int:
     parser.add_argument("--score-lr", type=float, default=None, help="Separate LR for score head")
     parser.add_argument("--uncertainty-weighting", action="store_true", default=None, help="Enable uncertainty-based loss weighting (Kendall et al. 2018)")
     parser.add_argument("--sampling-temperature", type=float, default=None, help="Temperature for size-based source weighting (mT5/PaLM style, typical 0.3-0.7)")
+    parser.add_argument("--difficulty-weights", type=str, default=None, help="JSON string of per-type difficulty weights, e.g. '{\"noul\": 0.5, \"choice\": 1.0, \"score\": 2.0}'")
     parser.add_argument("--save-every-epoch", action="store_true", default=None, help="Save checkpoint at every eval epoch")
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
     parser.add_argument("--shared-attention", action="store_true", default=None, help="Share AttentionHead weights between choice and score heads")
@@ -406,6 +409,10 @@ def main() -> int:
     if args.sampling_temperature is not None:
         sampling_section = cfg.setdefault("sampling", {})
         sampling_section["sampling_temperature"] = args.sampling_temperature
+    # Apply CLI difficulty_weights override to sampling config
+    if args.difficulty_weights is not None:
+        sampling_section = cfg.setdefault("sampling", {})
+        sampling_section["difficulty_weights"] = json.loads(args.difficulty_weights)
 
     # Build sampler config
     sampler_cfg = build_sampler_config(cfg, sources_cfg)

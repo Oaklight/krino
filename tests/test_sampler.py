@@ -169,6 +169,81 @@ class TestTemperatureSampling:
         s1 = MultitaskSampler(items, config, seed=42)
         s2 = MultitaskSampler(items, config, seed=42)
         assert [it.id for it in s1.sample_epoch(0)] == [it.id for it in s2.sample_epoch(0)]
+class TestDifficultyWeighting:
+    def test_difficulty_weights_override_type_ratios(self):
+        items = (
+            _make_items("s1", "noul", 200)
+            + _make_items("s2", "choice", 200)
+            + _make_items("s3", "score", 200)
+        )
+        config = SamplerConfig(
+            type_ratios={"noul": 1.0, "choice": 1.0, "score": 1.0},
+            difficulty_weights={"noul": 0.5, "choice": 1.0, "score": 2.0},
+            epoch_size=210,
+        )
+        sampler = MultitaskSampler(items, config, seed=42)
+        epoch = sampler.sample_epoch(0)
+        types: dict[str, int] = {}
+        for it in epoch:
+            t = it.question["type"]
+            types[t] = types.get(t, 0) + 1
+        assert len(epoch) == 210
+        # score (weight 2.0) should get ~4x noul (weight 0.5)
+        assert types["score"] > types["noul"] * 3, (
+            f"score={types['score']} should be ~4x noul={types['noul']}"
+        )
+        # choice (weight 1.0) should be between noul and score
+        assert types["choice"] > types["noul"], (
+            f"choice={types['choice']} should exceed noul={types['noul']}"
+        )
+
+    def test_difficulty_weights_none_uses_type_ratios(self):
+        items = (
+            _make_items("s1", "noul", 200)
+            + _make_items("s2", "choice", 200)
+            + _make_items("s3", "score", 200)
+        )
+        config = SamplerConfig(
+            type_ratios={"noul": 1.0, "choice": 1.0, "score": 1.0},
+            difficulty_weights=None,
+            epoch_size=90,
+        )
+        sampler = MultitaskSampler(items, config, seed=42)
+        epoch = sampler.sample_epoch(0)
+        types: dict[str, int] = {}
+        for it in epoch:
+            t = it.question["type"]
+            types[t] = types.get(t, 0) + 1
+        assert len(epoch) == 90
+        # Equal type_ratios → roughly equal counts
+        for t in ("noul", "choice", "score"):
+            assert 25 <= types.get(t, 0) <= 35, (
+                f"{t} count {types.get(t, 0)} out of expected range"
+            )
+
+    def test_difficulty_weights_with_missing_type(self):
+        # Only noul and choice items, but difficulty_weights includes score
+        items = (
+            _make_items("s1", "noul", 100)
+            + _make_items("s2", "choice", 100)
+        )
+        config = SamplerConfig(
+            difficulty_weights={"noul": 0.5, "choice": 1.0, "score": 2.0},
+            epoch_size=90,
+        )
+        sampler = MultitaskSampler(items, config, seed=42)
+        epoch = sampler.sample_epoch(0)
+        types: dict[str, int] = {}
+        for it in epoch:
+            t = it.question["type"]
+            types[t] = types.get(t, 0) + 1
+        assert len(epoch) == 90
+        # No score items exist, so all items are noul or choice
+        assert "score" not in types
+        # choice (weight 1.0) should get ~2x noul (weight 0.5)
+        assert types["choice"] > types["noul"] * 1.5, (
+            f"choice={types['choice']} should be ~2x noul={types['noul']}"
+        )
 
 
 class TestSamplerEdgeCases:
