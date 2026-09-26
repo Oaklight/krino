@@ -130,6 +130,7 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
         "type_ratios", {"noul": 1.0, "choice": 1.0, "score": 1.0}
     )
     epoch_size = sampling.get("epoch_size")
+    sampling_temperature = sampling.get("sampling_temperature")
     accumulation_steps = cfg.get("accumulation_steps", 8)
 
     source_weights: dict[str, float] = {}
@@ -145,6 +146,7 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
         source_caps={},
         epoch_size=epoch_size,
         accumulation_steps=accumulation_steps,
+        sampling_temperature=sampling_temperature,
     )
 
 
@@ -207,6 +209,7 @@ def main() -> int:
     parser.add_argument("--choice-lr", type=float, default=None, help="Separate LR for choice head")
     parser.add_argument("--score-lr", type=float, default=None, help="Separate LR for score head")
     parser.add_argument("--uncertainty-weighting", action="store_true", default=None, help="Enable uncertainty-based loss weighting (Kendall et al. 2018)")
+    parser.add_argument("--sampling-temperature", type=float, default=None, help="Temperature for size-based source weighting (mT5/PaLM style, typical 0.3-0.7)")
     parser.add_argument("--save-every-epoch", action="store_true", default=None, help="Save checkpoint at every eval epoch")
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
 
@@ -395,6 +398,11 @@ def main() -> int:
             output.write_text(json.dumps(eval_stats, indent=2, default=str))
             print(f"\nResults saved to {output}", flush=True)
         return 0
+
+    # Apply CLI sampling_temperature override
+    if args.sampling_temperature is not None:
+        sampling_section = cfg.setdefault("sampling", {})
+        sampling_section["sampling_temperature"] = args.sampling_temperature
 
     # Build sampler config
     sampler_cfg = build_sampler_config(cfg, sources_cfg)

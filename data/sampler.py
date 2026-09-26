@@ -28,6 +28,10 @@ class SamplerConfig:
         epoch_size: Total items per epoch. None = sum of all capped source sizes.
         accumulation_steps: Window size for type interleaving. Each window of this
             size has slots allocated proportionally to type_ratios.
+        sampling_temperature: Temperature for size-based source weighting (mT5/PaLM
+            style). Weight for source i = n_i^(1/T) where n_i is pool size after
+            caps. T=1: proportional to size, T→∞: uniform, T<1: amplifies size
+            differences. Typical range: 0.3-0.7. Overrides manual source_weights.
     """
 
     type_ratios: dict[str, float] = field(default_factory=lambda: {"noul": 1.0, "choice": 1.0, "score": 1.0})
@@ -35,6 +39,7 @@ class SamplerConfig:
     source_caps: dict[str, int] = field(default_factory=dict)
     epoch_size: int | None = None
     accumulation_steps: int = 8
+    sampling_temperature: float | None = None
 
 
 class MultitaskSampler:
@@ -79,10 +84,14 @@ class MultitaskSampler:
 
         # Compute per-source sampling weights within each type pool
         self._source_weights: dict[str, list[tuple[str, float]]] = {}
+        temp = config.sampling_temperature
         for q_type, sources in self._pools.items():
             weighted = []
-            for source in sources:
-                w = config.source_weights.get(source, 1.0)
+            for source, source_items in sources.items():
+                if temp is not None and temp > 0:
+                    w = len(source_items) ** (1.0 / temp)
+                else:
+                    w = config.source_weights.get(source, 1.0)
                 weighted.append((source, w))
             self._source_weights[q_type] = weighted
 
