@@ -586,17 +586,17 @@ def train_multitask(
     """
     from data.sampler import MultitaskSampler
 
+    trainable = [p for p in model.parameters() if p.requires_grad]
     if mlp_lr is not None and hasattr(model, "projector") and not isinstance(model.projector, nn.Identity):
         projector_params = list(model.projector.parameters())
         projector_ids = {id(p) for p in projector_params}
-        head_params = [p for p in model.parameters() if p.requires_grad and id(p) not in projector_ids]
+        head_params = [p for p in trainable if id(p) not in projector_ids]
         optimizer = AdamW([
             {"params": head_params, "lr": lr},
             {"params": projector_params, "lr": mlp_lr},
         ], weight_decay=weight_decay)
         print(f"  Per-component LR: heads={lr}, mlp={mlp_lr}", flush=True)
     else:
-        trainable = [p for p in model.parameters() if p.requires_grad]
         optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)
     warmup_epochs = max(1, epochs // 10)
     warmup = LinearLR(optimizer, start_factor=0.1, total_iters=warmup_epochs)
