@@ -55,7 +55,7 @@ class GPUConfig:
             )
 
         props = torch.cuda.get_device_properties(0)
-        gpu_mem_gb = props.total_mem / 1e9
+        gpu_mem_gb = props.total_memory / 1e9
         compute_cap = torch.cuda.get_device_capability(0)
 
         # Flash Attention 2 requires compute capability >= 8.0 (Ampere+)
@@ -126,7 +126,7 @@ def print_gpu_info(gpu_config: GPUConfig) -> None:
     if torch.cuda.is_available():
         props = torch.cuda.get_device_properties(0)
         gpu_name = props.name
-        gpu_mem_gb = props.total_mem / 1e9
+        gpu_mem_gb = props.total_memory / 1e9
         compute_cap = torch.cuda.get_device_capability(0)
         print(
             f"GPU: {gpu_name}  |  {gpu_mem_gb:.1f} GB  |  "
