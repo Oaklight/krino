@@ -158,3 +158,5 @@ sampling:
   #   noul: 0.5     # ~80% accuracy → low weight
   #   choice: 1.0   # ~61% accuracy → medium weight
   #   score: 2.0    # ~50% accuracy → high weight
+  # synthetic_ratio: 0.4  # 40% synthetic, 60% benchmark (CLM-inspired)
+  # synthetic_sources: [synthetic]  # source names treated as synthetic
