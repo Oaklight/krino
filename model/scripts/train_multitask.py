@@ -195,6 +195,7 @@ def main() -> int:
     parser.add_argument("--rank", type=int, default=None, help="Override attention rank")
     parser.add_argument("--mlp-layers", type=int, default=None, help="Override MLP projector layers")
     parser.add_argument("--noul-rank", type=int, default=None, help="Override NoulHead MLP rank")
+    parser.add_argument("--max-length", type=int, default=None, help="Override max sequence length")
     parser.add_argument("--save-every-epoch", action="store_true", default=None, help="Save checkpoint at every eval epoch")
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
     args = parser.parse_args()
@@ -218,6 +219,7 @@ def main() -> int:
     mlp_layers = args.mlp_layers if args.mlp_layers is not None else cfg.get("mlp_layers", 0)
     mlp_dim = cfg.get("mlp_dim", None)
     noul_rank = args.noul_rank if args.noul_rank is not None else cfg.get("noul_rank", None)
+    max_length = args.max_length if args.max_length is not None else cfg.get("max_length", None)
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -282,6 +284,7 @@ def main() -> int:
         mlp_layers=mlp_layers,
         mlp_dim=mlp_dim,
         noul_rank=noul_rank,
+        max_length=max_length,
     )
     print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
     print(f"Frozen:    {model.frozen_parameters():,} params", flush=True)
