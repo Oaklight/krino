@@ -2,8 +2,36 @@
 
 from __future__ import annotations
 
+import logging
+
 import torch
 from transformers import AutoConfig, AutoModel, AutoModelForCausalLM, AutoTokenizer
+
+logger = logging.getLogger(__name__)
+
+
+def _flash_attention_kwargs(flash_attention: bool) -> dict:
+    """Build ``attn_implementation`` kwarg if Flash Attention 2 is requested.
+
+    Args:
+        flash_attention: Whether to attempt Flash Attention 2.
+
+    Returns:
+        Dict to merge into ``from_pretrained`` kwargs.
+    """
+    if not flash_attention:
+        return {}
+    try:
+        # Verify the flash_attn package is available before requesting it
+        import flash_attn as _  # noqa: F401
+
+        return {"attn_implementation": "flash_attention_2"}
+    except ImportError:
+        logger.warning(
+            "flash_attention requested but flash_attn package not installed; "
+            "falling back to default attention"
+        )
+        return {}
 
 
 def load_causal_lm(
@@ -11,6 +39,7 @@ def load_causal_lm(
     device: str | None = None,
     dtype: torch.dtype = torch.bfloat16,
     freeze: bool = True,
+    flash_attention: bool = False,
 ) -> tuple[AutoModelForCausalLM, AutoTokenizer]:
     """Load a causal language model and tokenizer.
 
@@ -19,6 +48,8 @@ def load_causal_lm(
         device: Target device. None uses "cuda" if available, else "cpu".
         dtype: Model precision.
         freeze: If True, freeze all parameters (no gradients).
+        flash_attention: If True, attempt to use Flash Attention 2
+            (requires ``flash_attn`` package and Ampere+ GPU).
 
     Returns:
         (model, tokenizer) tuple.
@@ -27,11 +58,12 @@ def load_causal_lm(
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        dtype=dtype,
-        device_map=device if device == "auto" else None,
-    )
+    kwargs = {
+        "dtype": dtype,
+        "device_map": device if device == "auto" else None,
+        **_flash_attention_kwargs(flash_attention),
+    }
+    model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
     if device != "auto":
         model = model.to(device)
     model.eval()
@@ -48,13 +80,29 @@ def load_encoder(
     device: str | None = None,
     dtype: torch.dtype = torch.bfloat16,
     freeze: bool = True,
+    flash_attention: bool = False,
 ) -> tuple[AutoModel, AutoTokenizer]:
-    """Load a bidirectional encoder model and tokenizer."""
+    """Load a bidirectional encoder model and tokenizer.
+
+    Args:
+        model_name: HuggingFace model identifier.
+        device: Target device. None uses "cuda" if available, else "cpu".
+        dtype: Model precision.
+        freeze: If True, freeze all parameters (no gradients).
+        flash_attention: If True, attempt to use Flash Attention 2.
+
+    Returns:
+        (model, tokenizer) tuple.
+    """
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name, dtype=dtype)
+    kwargs = {
+        "dtype": dtype,
+        **_flash_attention_kwargs(flash_attention),
+    }
+    model = AutoModel.from_pretrained(model_name, **kwargs)
     if device != "auto":
         model = model.to(device)
     model.eval()
@@ -71,6 +119,7 @@ def load_qwen35_base(
     device: str | None = None,
     dtype: torch.dtype = torch.bfloat16,
     freeze: bool = True,
+    flash_attention: bool = False,
 ) -> tuple[AutoModel, AutoTokenizer]:
     """Load Qwen3.5 Base model (GDN hybrid architecture).
 
@@ -85,6 +134,7 @@ def load_qwen35_base(
         device: Target device. None uses "cuda" if available, else "cpu".
         dtype: Model precision.
         freeze: If True, freeze all parameters (no gradients).
+        flash_attention: If True, attempt to use Flash Attention 2.
 
     Returns:
         (backbone, tokenizer) tuple where backbone is the text model.
@@ -96,7 +146,11 @@ def load_qwen35_base(
 
     # Load as causal LM, then extract the text backbone
     # (.model strips the vocab/lm_head — we only need hidden states)
-    full_model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype)
+    kwargs = {
+        "dtype": dtype,
+        **_flash_attention_kwargs(flash_attention),
+    }
+    full_model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
     backbone = full_model.model
 
     # Attach text config so hidden_size etc. are accessible
