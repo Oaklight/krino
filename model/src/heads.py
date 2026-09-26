@@ -169,11 +169,29 @@ class AttentionHead(nn.Module):
 
 
 class ChoiceHead(nn.Module):
-    """Choice head: scores K options via AttentionHead, returns softmax probabilities."""
+    """Choice head: scores K options via AttentionHead, returns softmax probabilities.
 
-    def __init__(self, hidden_size: int, rank: int = 64, rival_aware: bool = False, dropout: float = 0.1) -> None:
+    Args:
+        hidden_size: Backbone hidden dimension.
+        rank: Low-rank projection dimension for attention.
+        rival_aware: Enable rival-aware inter-option attention.
+        dropout: Dropout probability.
+        attention: Optional pre-built AttentionHead instance.  When provided,
+            this head reuses the given module instead of creating its own.
+            This enables weight sharing between heads (e.g. ChoiceHead and
+            ScoreHead sharing the same Q/K/V weights).
+    """
+
+    def __init__(
+        self,
+        hidden_size: int,
+        rank: int = 64,
+        rival_aware: bool = False,
+        dropout: float = 0.1,
+        attention: AttentionHead | None = None,
+    ) -> None:
         super().__init__()
-        self.attention = AttentionHead(hidden_size, rank, rival_aware, dropout)
+        self.attention = attention or AttentionHead(hidden_size, rank, rival_aware, dropout)
 
     def forward(
         self,
@@ -196,11 +214,27 @@ class ChoiceHead(nn.Module):
 
 
 class ScoreHead(nn.Module):
-    """Score head: same as ChoiceHead over ordered levels, plus expected-value computation."""
+    """Score head: same as ChoiceHead over ordered levels, plus expected-value computation.
 
-    def __init__(self, hidden_size: int, rank: int = 64, dropout: float = 0.1) -> None:
+    Args:
+        hidden_size: Backbone hidden dimension.
+        rank: Low-rank projection dimension for attention.
+        dropout: Dropout probability.
+        attention: Optional pre-built AttentionHead instance.  When provided,
+            this head reuses the given module instead of creating its own.
+            This enables weight sharing with ChoiceHead so both heads
+            train the same Q/K/V weights.
+    """
+
+    def __init__(
+        self,
+        hidden_size: int,
+        rank: int = 64,
+        dropout: float = 0.1,
+        attention: AttentionHead | None = None,
+    ) -> None:
         super().__init__()
-        self.attention = AttentionHead(hidden_size, rank, rival_aware=False, dropout=dropout)
+        self.attention = attention or AttentionHead(hidden_size, rank, rival_aware=False, dropout=dropout)
 
     def forward(
         self,
