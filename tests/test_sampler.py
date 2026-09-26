@@ -94,6 +94,83 @@ class TestSamplerOversampling:
         assert len(epoch) == 20
 
 
+class TestTemperatureSampling:
+    def test_temperature_upweights_small_sources(self):
+        items = _make_items("big", "noul", 500) + _make_items("small", "noul", 50)
+        # Without temperature, equal manual weights → ~50/50 by weight.
+        # With T=1.0 (proportional): big gets 500/550 ≈ 91%
+        # With T=5.0 (near-uniform): weights are 500^0.2≈3.47 vs 50^0.2≈2.19
+        # so small gets ~2.19/(3.47+2.19) ≈ 39% — much more than proportional 9%
+        config_proportional = SamplerConfig(
+            type_ratios={"noul": 1.0},
+            sampling_temperature=1.0,
+            epoch_size=1000,
+        )
+        config_balanced = SamplerConfig(
+            type_ratios={"noul": 1.0},
+            sampling_temperature=5.0,
+            epoch_size=1000,
+        )
+        s_prop = MultitaskSampler(items, config_proportional, seed=42)
+        s_bal = MultitaskSampler(items, config_balanced, seed=42)
+        small_prop = sum(1 for it in s_prop.sample_epoch(0) if it.source == "small")
+        small_bal = sum(1 for it in s_bal.sample_epoch(0) if it.source == "small")
+        assert small_bal > small_prop, (
+            f"higher T should upweight small sources: T=5.0 got {small_bal}, T=1.0 got {small_prop}"
+        )
+
+    def test_temperature_1_is_proportional(self):
+        items = _make_items("big", "noul", 900) + _make_items("small", "noul", 100)
+        config = SamplerConfig(
+            type_ratios={"noul": 1.0},
+            sampling_temperature=1.0,
+            epoch_size=1000,
+        )
+        sampler = MultitaskSampler(items, config, seed=42)
+        epoch = sampler.sample_epoch(0)
+        big_count = sum(1 for it in epoch if it.source == "big")
+        # T=1.0: weights proportional to size, so big≈900/1000=90%
+        assert 850 <= big_count <= 950, f"T=1 should be ~proportional: big={big_count}/1000"
+
+    def test_temperature_none_uses_manual_weights(self):
+        items = _make_items("a", "noul", 100) + _make_items("b", "noul", 100)
+        config = SamplerConfig(
+            type_ratios={"noul": 1.0},
+            source_weights={"a": 10.0, "b": 1.0},
+            epoch_size=200,
+        )
+        sampler = MultitaskSampler(items, config, seed=42)
+        epoch = sampler.sample_epoch(0)
+        a_count = sum(1 for it in epoch if it.source == "a")
+        assert a_count > 150, f"manual weights should apply: a={a_count}/200"
+
+    def test_temperature_overrides_manual_weights(self):
+        items = _make_items("big", "noul", 500) + _make_items("small", "noul", 500)
+        config = SamplerConfig(
+            type_ratios={"noul": 1.0},
+            source_weights={"big": 10.0, "small": 1.0},
+            sampling_temperature=1.0,
+            epoch_size=200,
+        )
+        sampler = MultitaskSampler(items, config, seed=42)
+        epoch = sampler.sample_epoch(0)
+        big_count = sum(1 for it in epoch if it.source == "big")
+        # T=1.0 with equal sizes: weights are equal (500^1 == 500^1), ~50/50
+        # Manual weights (10:1) should be ignored
+        assert 80 <= big_count <= 120, f"temperature should override manual weights: big={big_count}/200"
+
+    def test_temperature_reproducible(self):
+        items = _make_items("a", "noul", 100) + _make_items("b", "noul", 50)
+        config = SamplerConfig(
+            type_ratios={"noul": 1.0},
+            sampling_temperature=0.5,
+            epoch_size=100,
+        )
+        s1 = MultitaskSampler(items, config, seed=42)
+        s2 = MultitaskSampler(items, config, seed=42)
+        assert [it.id for it in s1.sample_epoch(0)] == [it.id for it in s2.sample_epoch(0)]
+
+
 class TestSamplerEdgeCases:
     def test_empty_items(self):
         config = SamplerConfig(epoch_size=10)
