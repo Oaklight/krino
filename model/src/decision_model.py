@@ -15,6 +15,7 @@ import torch.nn as nn
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 from .backbone import is_hybrid_model
+from .gpu_config import GPUConfig, print_gpu_info
 from .heads import ChoiceHead, MLPProjector, NoulHead, ScoreHead
 
 
@@ -44,6 +45,7 @@ class DecisionModel(nn.Module):
         mlp_dim: int | None = None,
         noul_rank: int | None = None,
         max_length: int | None = None,
+        gpu_config: GPUConfig | None = None,
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -51,10 +53,29 @@ class DecisionModel(nn.Module):
         self.hidden_size = hidden_size or backbone.config.hidden_size
         self.is_encoder = _is_encoder_model(backbone)
         self.is_hybrid = is_hybrid_model(backbone.config)
-        self.max_length = max_length or min(
-            getattr(backbone.config, "max_position_embeddings", 32768),
-            32768,
-        )
+
+        # GPU optimization config — auto-detect if not provided
+        if gpu_config is None:
+            gpu_config = GPUConfig.auto_detect()
+        self.gpu_config = gpu_config
+
+        # max_length priority: explicit arg > gpu_config > backbone native (capped at 32768)
+        if max_length is not None:
+            self.max_length = max_length
+        else:
+            backbone_max = min(
+                getattr(backbone.config, "max_position_embeddings", 32768),
+                32768,
+            )
+            self.max_length = min(gpu_config.max_length, backbone_max)
+
+        # Enable gradient checkpointing on backbone if configured
+        if gpu_config.gradient_checkpointing:
+            if hasattr(backbone, "gradient_checkpointing_enable"):
+                backbone.gradient_checkpointing_enable()
+
+        print_gpu_info(gpu_config)
+        print(f"  max_length={self.max_length} (effective)", flush=True)
 
         if mlp_layers > 0:
             self.projector = MLPProjector(
@@ -80,6 +101,30 @@ class DecisionModel(nn.Module):
     def device(self) -> torch.device:
         return next(self.backbone.parameters()).device
 
+    def _backbone_forward(self, inputs: dict) -> Any:
+        """Run backbone forward pass with optional bf16 autocast.
+
+        Args:
+            inputs: Tokenized inputs dict (on device).
+
+        Returns:
+            Model outputs with hidden states.
+        """
+        fwd_kwargs = dict(**inputs, output_hidden_states=True)
+        if not self.is_encoder:
+            fwd_kwargs["use_cache"] = False
+
+        use_autocast = (
+            self.gpu_config.bf16_compute
+            and self.device.type == "cuda"
+        )
+        with torch.no_grad():
+            if use_autocast:
+                with torch.autocast("cuda", dtype=torch.bfloat16):
+                    return self.backbone(**fwd_kwargs)
+            else:
+                return self.backbone(**fwd_kwargs)
+
     def _encode_text(
         self, text: str | list[str], max_length: int | None = None
     ) -> torch.Tensor:
@@ -98,11 +143,7 @@ class DecisionModel(nn.Module):
             max_length=max_length,
             padding=True,
         ).to(self.device)
-        fwd_kwargs = dict(**inputs, output_hidden_states=True)
-        if not self.is_encoder:
-            fwd_kwargs["use_cache"] = False
-        with torch.no_grad():
-            outputs = self.backbone(**fwd_kwargs)
+        outputs = self._backbone_forward(inputs)
         hidden = outputs.hidden_states[-1]
         if self.is_encoder:
             mask = inputs["attention_mask"].unsqueeze(-1).float()
@@ -120,11 +161,7 @@ class DecisionModel(nn.Module):
         inputs = self.tokenizer(
             text, return_tensors="pt", truncation=True, max_length=max_length
         ).to(self.device)
-        fwd_kwargs = dict(**inputs, output_hidden_states=True)
-        if not self.is_encoder:
-            fwd_kwargs["use_cache"] = False
-        with torch.no_grad():
-            outputs = self.backbone(**fwd_kwargs)
+        outputs = self._backbone_forward(inputs)
         hidden = outputs.hidden_states[-1]
         return self.projector(hidden.float())
 

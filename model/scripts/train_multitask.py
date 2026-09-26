@@ -17,6 +17,11 @@ Usage:
     python model/scripts/train_multitask.py \
         --config model/configs/multitask_ettin150m.yaml \
         --eval-only --load-heads model/experiments/best_heads.pt
+
+    # GPU memory overrides:
+    python model/scripts/train_multitask.py \
+        --config model/configs/multitask_ettin150m.yaml \
+        --no-flash-attention --bf16 --max-length 4096
 """
 
 from __future__ import annotations
@@ -38,6 +43,7 @@ from data.pipeline import load_jsonl
 from data.sampler import SamplerConfig
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
+from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info
 from model.training.supervised import eval_epoch_detailed, train_multitask
 
 
@@ -199,6 +205,38 @@ def main() -> int:
     parser.add_argument("--mlp-lr", type=float, default=None, help="Separate LR for MLP projector")
     parser.add_argument("--save-every-epoch", action="store_true", default=None, help="Save checkpoint at every eval epoch")
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
+
+    # GPU memory optimization flags
+    flash_group = parser.add_mutually_exclusive_group()
+    flash_group.add_argument(
+        "--flash-attention", action="store_true", default=None,
+        help="Enable Flash Attention 2 (override auto-detection)",
+    )
+    flash_group.add_argument(
+        "--no-flash-attention", action="store_true", default=None,
+        help="Disable Flash Attention 2",
+    )
+
+    bf16_group = parser.add_mutually_exclusive_group()
+    bf16_group.add_argument(
+        "--bf16", action="store_true", default=None,
+        help="Enable bf16 autocast for backbone (override auto-detection)",
+    )
+    bf16_group.add_argument(
+        "--no-bf16", action="store_true", default=None,
+        help="Disable bf16 autocast for backbone",
+    )
+
+    gc_group = parser.add_mutually_exclusive_group()
+    gc_group.add_argument(
+        "--gradient-checkpointing", action="store_true", default=None,
+        help="Enable gradient checkpointing on backbone (override auto-detection)",
+    )
+    gc_group.add_argument(
+        "--no-gradient-checkpointing", action="store_true", default=None,
+        help="Disable gradient checkpointing",
+    )
+
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -246,6 +284,39 @@ def main() -> int:
     print(f"Backbone: {model_name} ({arch_label})", flush=True)
     print(f"Config: {args.config}", flush=True)
 
+    # Auto-detect GPU config, then apply CLI overrides
+    model_billions = estimate_model_billions(model_name)
+    gpu_config = GPUConfig.auto_detect(model_billions)
+
+    # Resolve CLI boolean flags (mutually exclusive groups)
+    flash_override: bool | None = None
+    if args.flash_attention:
+        flash_override = True
+    elif args.no_flash_attention:
+        flash_override = False
+
+    bf16_override: bool | None = None
+    if args.bf16:
+        bf16_override = True
+    elif args.no_bf16:
+        bf16_override = False
+
+    gc_override: bool | None = None
+    if args.gradient_checkpointing:
+        gc_override = True
+    elif args.no_gradient_checkpointing:
+        gc_override = False
+
+    gpu_config = gpu_config.apply_overrides(
+        flash_attention=flash_override,
+        bf16=bf16_override,
+        gradient_checkpointing=gc_override,
+        max_length=max_length,
+    )
+
+    print(f"\nGPU optimization config (model ~{model_billions:.1f}B params):", flush=True)
+    print_gpu_info(gpu_config)
+
     # Load data from all sources
     sources_cfg = cfg.get("sources", {})
     if not sources_cfg:
@@ -271,12 +342,19 @@ def main() -> int:
 
     # Load backbone and build model
     print(f"\nLoading backbone: {model_name}", flush=True)
+    flash_att = gpu_config.flash_attention
     if qwen35_base:
-        backbone, tokenizer = load_qwen35_base(model_name, device=device, freeze=True)
+        backbone, tokenizer = load_qwen35_base(
+            model_name, device=device, freeze=True, flash_attention=flash_att,
+        )
     elif use_encoder:
-        backbone, tokenizer = load_encoder(model_name, device=device, freeze=True)
+        backbone, tokenizer = load_encoder(
+            model_name, device=device, freeze=True, flash_attention=flash_att,
+        )
     else:
-        backbone, tokenizer = load_causal_lm(model_name, device=device, freeze=True)
+        backbone, tokenizer = load_causal_lm(
+            model_name, device=device, freeze=True, flash_attention=flash_att,
+        )
 
     model = DecisionModel(
         backbone=backbone,
@@ -287,6 +365,7 @@ def main() -> int:
         mlp_dim=mlp_dim,
         noul_rank=noul_rank,
         max_length=max_length,
+        gpu_config=gpu_config,
     )
     print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
     print(f"Frozen:    {model.frozen_parameters():,} params", flush=True)
