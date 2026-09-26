@@ -337,8 +337,18 @@ def train(
     accumulation_steps: int = 1,
 ) -> dict[str, Any]:
     """Full training loop with evaluation and checkpointing."""
-    trainable = [p for p in model.parameters() if p.requires_grad]
-    optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)
+    if mlp_lr is not None and hasattr(model, "projector") and not isinstance(model.projector, nn.Identity):
+        projector_params = list(model.projector.parameters())
+        projector_ids = {id(p) for p in projector_params}
+        head_params = [p for p in model.parameters() if p.requires_grad and id(p) not in projector_ids]
+        optimizer = AdamW([
+            {"params": head_params, "lr": lr},
+            {"params": projector_params, "lr": mlp_lr},
+        ], weight_decay=weight_decay)
+        print(f"  Per-component LR: heads={lr}, mlp={mlp_lr}", flush=True)
+    else:
+        trainable = [p for p in model.parameters() if p.requires_grad]
+        optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)
     warmup_epochs = max(1, epochs // 10)
     warmup = LinearLR(optimizer, start_factor=0.1, total_iters=warmup_epochs)
     cosine = CosineAnnealingLR(optimizer, T_max=max(1, epochs - warmup_epochs))
@@ -556,6 +566,7 @@ def train_multitask(
     seed: int = 42,
     batch_backbone: int = 0,
     save_every_epoch: bool = False,
+    mlp_lr: float | None = None,
 ) -> dict[str, Any]:
     """Multi-task training loop with type-balanced sampling and detailed eval.
 
@@ -575,8 +586,18 @@ def train_multitask(
     """
     from data.sampler import MultitaskSampler
 
-    trainable = [p for p in model.parameters() if p.requires_grad]
-    optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)
+    if mlp_lr is not None and hasattr(model, "projector") and not isinstance(model.projector, nn.Identity):
+        projector_params = list(model.projector.parameters())
+        projector_ids = {id(p) for p in projector_params}
+        head_params = [p for p in model.parameters() if p.requires_grad and id(p) not in projector_ids]
+        optimizer = AdamW([
+            {"params": head_params, "lr": lr},
+            {"params": projector_params, "lr": mlp_lr},
+        ], weight_decay=weight_decay)
+        print(f"  Per-component LR: heads={lr}, mlp={mlp_lr}", flush=True)
+    else:
+        trainable = [p for p in model.parameters() if p.requires_grad]
+        optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)
     warmup_epochs = max(1, epochs // 10)
     warmup = LinearLR(optimizer, start_factor=0.1, total_iters=warmup_epochs)
     cosine = CosineAnnealingLR(optimizer, T_max=max(1, epochs - warmup_epochs))
