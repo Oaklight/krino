@@ -138,6 +138,19 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
         if weight > 0:
             source_weights[source_name] = weight
 
+    # Synthetic replay ratio
+    synthetic_ratio = sampling.get("synthetic_ratio")
+    synthetic_sources_cfg = sampling.get("synthetic_sources")
+    if synthetic_sources_cfg is not None:
+        synthetic_sources = set(synthetic_sources_cfg)
+    else:
+        # Auto-detect: any source whose name or path contains "synthetic"
+        synthetic_sources = set()
+        for source_name, source_cfg in sources_cfg.items():
+            path_str = (source_cfg or {}).get("path", "")
+            if "synthetic" in source_name or "synthetic" in path_str:
+                synthetic_sources.add(source_name)
+
     # No source_caps — capping already done in load_source_items
     return SamplerConfig(
         type_ratios=type_ratios,
@@ -145,6 +158,8 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
         source_caps={},
         epoch_size=epoch_size,
         accumulation_steps=accumulation_steps,
+        synthetic_sources=synthetic_sources,
+        synthetic_ratio=synthetic_ratio,
     )
 
 
@@ -210,6 +225,7 @@ def main() -> int:
     parser.add_argument("--save-every-epoch", action="store_true", default=None, help="Save checkpoint at every eval epoch")
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
     parser.add_argument("--shared-attention", action="store_true", default=None, help="Share AttentionHead weights between choice and score heads")
+    parser.add_argument("--synthetic-ratio", type=float, default=None, help="Target proportion of synthetic data (0.0 to 1.0)")
 
     # GPU memory optimization flags
     flash_group = parser.add_mutually_exclusive_group()
@@ -399,7 +415,10 @@ def main() -> int:
             print(f"\nResults saved to {output}", flush=True)
         return 0
 
-    # Build sampler config
+    # Build sampler config (apply CLI override for synthetic_ratio)
+    synthetic_ratio = args.synthetic_ratio
+    if synthetic_ratio is not None:
+        cfg.setdefault("sampling", {})["synthetic_ratio"] = synthetic_ratio
     sampler_cfg = build_sampler_config(cfg, sources_cfg)
 
     if checkpoint_dir:

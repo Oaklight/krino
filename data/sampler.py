@@ -28,6 +28,9 @@ class SamplerConfig:
         epoch_size: Total items per epoch. None = sum of all capped source sizes.
         accumulation_steps: Window size for type interleaving. Each window of this
             size has slots allocated proportionally to type_ratios.
+        synthetic_sources: Source names that are considered synthetic data.
+        synthetic_ratio: Target proportion of synthetic data per type (0.0 to 1.0).
+            None means no synthetic/benchmark split — all sources sampled together.
     """
 
     type_ratios: dict[str, float] = field(default_factory=lambda: {"noul": 1.0, "choice": 1.0, "score": 1.0})
@@ -35,6 +38,8 @@ class SamplerConfig:
     source_caps: dict[str, int] = field(default_factory=dict)
     epoch_size: int | None = None
     accumulation_steps: int = 8
+    synthetic_sources: set[str] = field(default_factory=set)
+    synthetic_ratio: float | None = None
 
 
 class MultitaskSampler:
@@ -146,6 +151,58 @@ class MultitaskSampler:
 
         return result
 
+    def _split_sample(
+        self,
+        q_type: str,
+        n: int,
+        rng: random.Random,
+    ) -> list[TypedQuestion]:
+        """Draw n items split between synthetic and benchmark sources.
+
+        Splits the type's source weights into synthetic and benchmark groups,
+        then draws from each group proportionally to synthetic_ratio. Falls
+        back to the available group when one side has no sources.
+
+        Args:
+            q_type: Question type to sample from.
+            n: Total number of items to draw.
+            rng: Random instance for reproducible sampling.
+
+        Returns:
+            Combined list of items from both synthetic and benchmark sources.
+        """
+        assert self._config.synthetic_ratio is not None
+        ratio = self._config.synthetic_ratio
+        syn_sources = self._config.synthetic_sources
+
+        all_sources = self._source_weights.get(q_type, [])
+        if not all_sources:
+            return []
+
+        syn_list = [(s, w) for s, w in all_sources if s in syn_sources]
+        bench_list = [(s, w) for s, w in all_sources if s not in syn_sources]
+
+        # If one side is empty, draw everything from the other
+        if not syn_list:
+            return self._weighted_sample(q_type, n, rng)
+        if not bench_list:
+            return self._weighted_sample(q_type, n, rng)
+
+        n_synthetic = int(n * ratio)
+        n_benchmark = n - n_synthetic
+
+        # Temporarily swap source_weights to draw from each group
+        orig = self._source_weights[q_type]
+
+        self._source_weights[q_type] = syn_list
+        syn_items = self._weighted_sample(q_type, n_synthetic, rng)
+
+        self._source_weights[q_type] = bench_list
+        bench_items = self._weighted_sample(q_type, n_benchmark, rng)
+
+        self._source_weights[q_type] = orig
+        return syn_items + bench_items
+
     def sample_epoch(self, epoch: int) -> list[TypedQuestion]:
         """Sample items for one epoch with type-balanced interleaving.
 
@@ -184,11 +241,15 @@ class MultitaskSampler:
                 remaining -= count
 
         # Draw items for each type with weighted sampling
+        use_split = self._config.synthetic_ratio is not None
         type_items: dict[str, list[TypedQuestion]] = {}
         for q_type in sorted_types:
             n = items_per_type.get(q_type, 0)
             if n > 0:
-                type_items[q_type] = self._weighted_sample(q_type, n, rng)
+                if use_split:
+                    type_items[q_type] = self._split_sample(q_type, n, rng)
+                else:
+                    type_items[q_type] = self._weighted_sample(q_type, n, rng)
             else:
                 type_items[q_type] = []
 
