@@ -43,6 +43,7 @@ class DecisionModel(nn.Module):
         mlp_layers: int = 0,
         mlp_dim: int | None = None,
         noul_rank: int | None = None,
+        max_length: int | None = None,
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -50,6 +51,10 @@ class DecisionModel(nn.Module):
         self.hidden_size = hidden_size or backbone.config.hidden_size
         self.is_encoder = _is_encoder_model(backbone)
         self.is_hybrid = is_hybrid_model(backbone.config)
+        self.max_length = max_length or min(
+            getattr(backbone.config, "max_position_embeddings", 32768),
+            32768,
+        )
 
         if mlp_layers > 0:
             self.projector = MLPProjector(
@@ -76,13 +81,14 @@ class DecisionModel(nn.Module):
         return next(self.backbone.parameters()).device
 
     def _encode_text(
-        self, text: str | list[str], max_length: int = 512
+        self, text: str | list[str], max_length: int | None = None
     ) -> torch.Tensor:
         """Encode text and return pooled hidden state per sequence.
 
         Causal LM: last-token pooling (last token attended to full sequence).
         Encoder: mean pooling (all tokens see all tokens bidirectionally).
         """
+        max_length = max_length or self.max_length
         if isinstance(text, str):
             text = [text]
         inputs = self.tokenizer(
@@ -108,8 +114,9 @@ class DecisionModel(nn.Module):
             ]
         return self.projector(pooled.float())
 
-    def _encode_with_sequence(self, text: str, max_length: int = 512) -> torch.Tensor:
+    def _encode_with_sequence(self, text: str, max_length: int | None = None) -> torch.Tensor:
         """Encode text and return full sequence hidden states [1, seq_len, hidden]."""
+        max_length = max_length or self.max_length
         inputs = self.tokenizer(
             text, return_tensors="pt", truncation=True, max_length=max_length
         ).to(self.device)
