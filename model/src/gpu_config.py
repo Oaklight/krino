@@ -58,24 +58,39 @@ class GPUConfig:
         gpu_mem_gb = props.total_memory / 1e9
         compute_cap = torch.cuda.get_device_capability(0)
 
-        # Flash Attention 2 requires compute capability >= 8.0 (Ampere+)
+        # Flash Attention 2 / SDPA requires compute capability >= 8.0 (Ampere+)
         flash_ok = compute_cap[0] >= 8
         # Native bf16 requires compute capability >= 8.0 (Ampere+)
         bf16_ok = compute_cap[0] >= 8
+
+        # Check if SDPA Flash kernel is available (PyTorch built-in, no extra package)
+        has_efficient_attn = flash_ok and torch.backends.cuda.flash_sdp_enabled()
 
         # Estimate available memory after model loading.
         # Rough heuristic: bf16 model ~ 2 bytes/param, but with framework
         # overhead ~7 bytes/param is a conservative upper bound.
         available_gb = gpu_mem_gb - model_params_billions * 7
 
-        if available_gb > 100:
-            safe_max_length = 32768
-        elif available_gb > 30:
-            safe_max_length = 8192
-        elif available_gb > 10:
-            safe_max_length = 4096
+        # With SDPA/Flash Attention, attention memory is O(n) not O(n²),
+        # so we can safely use much longer sequences.
+        if has_efficient_attn:
+            if available_gb > 100:
+                safe_max_length = 32768
+            elif available_gb > 20:
+                safe_max_length = 16384
+            elif available_gb > 8:
+                safe_max_length = 8192
+            else:
+                safe_max_length = 4096
         else:
-            safe_max_length = 2048
+            if available_gb > 100:
+                safe_max_length = 16384
+            elif available_gb > 30:
+                safe_max_length = 8192
+            elif available_gb > 10:
+                safe_max_length = 4096
+            else:
+                safe_max_length = 2048
 
         return cls(
             flash_attention=flash_ok,

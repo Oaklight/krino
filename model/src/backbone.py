@@ -11,10 +11,14 @@ logger = logging.getLogger(__name__)
 
 
 def _flash_attention_kwargs(flash_attention: bool) -> dict:
-    """Build ``attn_implementation`` kwarg if Flash Attention 2 is requested.
+    """Build ``attn_implementation`` kwarg for efficient attention.
+
+    Tries flash_attn package first (Flash Attention 2), falls back to
+    PyTorch's built-in SDPA which includes Flash, math, and mem-efficient
+    kernels without any extra installation.
 
     Args:
-        flash_attention: Whether to attempt Flash Attention 2.
+        flash_attention: Whether to enable efficient attention.
 
     Returns:
         Dict to merge into ``from_pretrained`` kwargs.
@@ -22,16 +26,11 @@ def _flash_attention_kwargs(flash_attention: bool) -> dict:
     if not flash_attention:
         return {}
     try:
-        # Verify the flash_attn package is available before requesting it
         import flash_attn as _  # noqa: F401
 
         return {"attn_implementation": "flash_attention_2"}
     except ImportError:
-        logger.warning(
-            "flash_attention requested but flash_attn package not installed; "
-            "falling back to default attention"
-        )
-        return {}
+        return {"attn_implementation": "sdpa"}
 
 
 def load_causal_lm(
