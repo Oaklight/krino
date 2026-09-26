@@ -1,0 +1,165 @@
+# Round 2: Reranker-0.6B — full dataset, optimal config from all experiments
+#
+# Findings applied:
+#   - Rank: r64 (head-size sweep — higher rank hurts for 0.6B)
+#   - MLP: mlp=0 (MLP+LR targeted runs — MLP doesn't help for small backbone)
+#   - LR: 1e-3 uniform (MTL optimization — baseline wins)
+#   - Attention: SDPA auto-detect (PR #94)
+#   - Data: 26 benchmarks + 154K synthetic (23 domains)
+#   - Shared attention: TBD (pending #98 verification)
+#
+# Usage:
+#   python model/scripts/train_multitask.py --config model/configs/r2_reranker0.6b.yaml
+
+model: Qwen/Qwen3-Reranker-0.6B
+encoder: false
+rank: 64
+epochs: 20
+lr: 0.001
+accumulation_steps: 8
+eval_every: 1
+seed: 42
+save_every_epoch: true
+# shared_attention: true  # uncomment after #98 verification
+
+sources:
+  # --- Choice benchmarks (13 sources) ---
+  banking77:
+    path: data/benchmarks/banking77.jsonl
+    weight: 0.5
+    max_train: 5000
+    max_eval: 500
+  agnews:
+    path: data/benchmarks/agnews.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  arc:
+    path: data/benchmarks/arc.jsonl
+    weight: 2.0
+    max_eval: 500
+  race:
+    path: data/benchmarks/race.jsonl
+    weight: 1.5
+    max_train: 5000
+    max_eval: 500
+  hellaswag:
+    path: data/benchmarks/hellaswag.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  codesearchnet:
+    path: data/benchmarks/codesearchnet.jsonl
+    weight: 0.5
+    max_train: 3000
+    max_eval: 300
+  swag:
+    path: data/benchmarks/swag.jsonl
+    weight: 0.8
+    max_train: 5000
+    max_eval: 500
+  fever:
+    path: data/benchmarks/fever.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  mmlu:
+    path: data/benchmarks/mmlu.jsonl
+    weight: 2.0
+    max_eval: 500
+  winogrande:
+    path: data/benchmarks/winogrande.jsonl
+    weight: 1.5
+    max_train: 5000
+    max_eval: 500
+  piqa:
+    path: data/benchmarks/piqa.jsonl
+    weight: 1.5
+    max_train: 5000
+    max_eval: 500
+  commonsenseqa:
+    path: data/benchmarks/commonsenseqa.jsonl
+    weight: 2.0
+    max_eval: 500
+  logiqa:
+    path: data/benchmarks/logiqa.jsonl
+    weight: 2.0
+    max_eval: 500
+
+  # --- Noul benchmarks (8 sources) ---
+  sst2:
+    path: data/benchmarks/sst2.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  mnli:
+    path: data/benchmarks/mnli.jsonl
+    weight: 0.3
+    max_train: 10000
+    max_eval: 500
+  tabfact:
+    path: data/benchmarks/tabfact.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  multirc:
+    path: data/benchmarks/multirc.jsonl
+    weight: 1.5
+    max_eval: 500
+  mednli:
+    path: data/benchmarks/mednli.jsonl
+    weight: 2.0
+    max_eval: 500
+  contractnli:
+    path: data/benchmarks/contractnli.jsonl
+    weight: 2.0
+    max_eval: 500
+  anli:
+    path: data/benchmarks/anli.jsonl
+    weight: 2.0
+    max_train: 5000
+    max_eval: 500
+  boolq:
+    path: data/benchmarks/boolq.jsonl
+    weight: 1.5
+    max_train: 5000
+    max_eval: 500
+
+  # --- Score benchmarks (3 sources) ---
+  sst5:
+    path: data/benchmarks/sst5.jsonl
+    weight: 1.0
+    max_eval: 500
+  stsb:
+    path: data/benchmarks/stsb.jsonl
+    weight: 1.5
+    max_eval: 500
+  yelp:
+    path: data/benchmarks/yelp.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+
+  # --- Synthetic (23 domains, 154K items assembled on-the-fly) ---
+  synthetic:
+    weight: 1.0
+    max_train: 10000
+    max_eval: 1000
+
+  # --- Eval-only ---
+  authored144:
+    path: data/benchmarks/openjev/authored144.jsonl
+    weight: 0
+    max_eval: 144
+  typed_decisions:
+    path: data/benchmarks/typed_decisions.jsonl
+    weight: 1.0
+    max_train: 2000
+    max_eval: 500
+
+sampling:
+  type_ratios:
+    noul: 1.0
+    choice: 1.0
+    score: 1.0
+  epoch_size: 15000
