@@ -209,6 +209,7 @@ def main() -> int:
     parser.add_argument("--uncertainty-weighting", action="store_true", default=None, help="Enable uncertainty-based loss weighting (Kendall et al. 2018)")
     parser.add_argument("--save-every-epoch", action="store_true", default=None, help="Save checkpoint at every eval epoch")
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
+    parser.add_argument("--shared-attention", action="store_true", default=None, help="Share AttentionHead weights between choice and score heads")
 
     # GPU memory optimization flags
     flash_group = parser.add_mutually_exclusive_group()
@@ -268,6 +269,7 @@ def main() -> int:
     choice_lr = args.choice_lr if args.choice_lr is not None else cfg.get("choice_lr", None)
     score_lr = args.score_lr if args.score_lr is not None else cfg.get("score_lr", None)
     uncertainty_weighting = args.uncertainty_weighting if args.uncertainty_weighting is not None else cfg.get("uncertainty_weighting", False)
+    shared_attention = args.shared_attention if args.shared_attention is not None else cfg.get("shared_attention", False)
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -374,6 +376,7 @@ def main() -> int:
         noul_rank=noul_rank,
         max_length=max_length,
         gpu_config=gpu_config,
+        shared_attention=shared_attention,
     )
     print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
     print(f"Frozen:    {model.frozen_parameters():,} params", flush=True)

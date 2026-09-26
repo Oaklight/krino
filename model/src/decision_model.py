@@ -16,7 +16,7 @@ from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 from .backbone import is_hybrid_model
 from .gpu_config import GPUConfig, print_gpu_info
-from .heads import ChoiceHead, MLPProjector, NoulHead, ScoreHead
+from .heads import AttentionHead, ChoiceHead, MLPProjector, NoulHead, ScoreHead
 
 
 def _is_encoder_model(backbone: PreTrainedModel) -> bool:
@@ -46,6 +46,7 @@ class DecisionModel(nn.Module):
         noul_rank: int | None = None,
         max_length: int | None = None,
         gpu_config: GPUConfig | None = None,
+        shared_attention: bool = False,
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -53,6 +54,7 @@ class DecisionModel(nn.Module):
         self.hidden_size = hidden_size or backbone.config.hidden_size
         self.is_encoder = _is_encoder_model(backbone)
         self.is_hybrid = is_hybrid_model(backbone.config)
+        self.shared_attention = shared_attention
 
         # GPU optimization config — auto-detect if not provided
         if gpu_config is None:
@@ -85,8 +87,23 @@ class DecisionModel(nn.Module):
             self.projector = nn.Identity()
 
         self.noul_head = NoulHead(self.hidden_size, rank=noul_rank, dropout=dropout)
-        self.choice_head = ChoiceHead(self.hidden_size, rank, rival_aware, dropout)
-        self.score_head = ScoreHead(self.hidden_size, rank, dropout)
+
+        if shared_attention:
+            shared_attn = AttentionHead(self.hidden_size, rank, rival_aware, dropout)
+            self.choice_head = ChoiceHead(
+                self.hidden_size, rank, rival_aware, dropout, attention=shared_attn
+            )
+            self.score_head = ScoreHead(
+                self.hidden_size, rank, dropout, attention=shared_attn
+            )
+            saved = sum(p.numel() for p in AttentionHead(self.hidden_size, rank, rival_aware=False, dropout=dropout).parameters())
+            print(
+                f"  Shared attention: choice+score share AttentionHead (saved {saved:,} params)",
+                flush=True,
+            )
+        else:
+            self.choice_head = ChoiceHead(self.hidden_size, rank, rival_aware, dropout)
+            self.score_head = ScoreHead(self.hidden_size, rank, dropout)
 
         for param in self.backbone.parameters():
             param.requires_grad_(False)
