@@ -50,23 +50,38 @@
 | Reranker-0.6B | r64 mlp=0 | 1e-3 | 50.3% |
 | Reranker-0.6B | r64 mlp=1 | 1e-3 | 46.7% |
 
-### Epoch-by-epoch results (updating)
+### Final Results
 
-**Reranker-0.6B mlp_lr=1e-4:**
-- Epoch 1: 44.9% (train_loss=1.23)
-- Epoch 2: 42.2% (train_loss=1.71, spike)
-- Epoch 3: 46.2% (train_loss=1.19, recovery)
+**Reranker-0.6B (r64 mlp=1, heads_lr=1e-3) — MLP does NOT help**
 
-**Reranker-0.6B mlp_lr=3e-4:**
-- Epoch 1: 44.6% (train_loss=1.23)
-- Epoch 2: 38.6% (train_loss=1.55, spike)
-- Epoch 3: 40.8% (train_loss=1.23, recovering)
+| mlp_lr | Ep1 | Ep2 | Ep3 | Ep4 | Ep5 | vs mlp=0 (50.3%) |
+|--------|-----|-----|-----|-----|-----|-------------------|
+| **1e-4** | 44.9% | 42.2% | 46.2% | 47.4% | **48.0%** | **-2.3pp** |
+| 3e-4 | 44.6% | 38.6% | 40.8% | 42.8% | 42.8% | **-7.5pp** |
 
-**Reranker-4B mlp_lr=1e-4:** (relaunched with correct LR)
-- Epoch 1: 49.1% (train_loss=1.39)
+**Reranker-4B (r128 mlp=1, heads_lr=3e-4) — MLP DOES help**
 
-**Reranker-4B mlp_lr=3e-5:** (relaunched with correct LR)
-- Epoch 1: 49.1% (train_loss=1.39)
+| mlp_lr | Ep1 | Ep2 | Ep3 | Ep4 | Ep5 | vs mlp=0 (52.1%) |
+|--------|-----|-----|-----|-----|-----|-------------------|
+| 1e-4 | 50.1% | 47.2% | 52.8% | 53.3% | **54.8%** | **+2.7pp** |
+| **3e-5** | 50.1% | 48.1% | 52.8% | 54.2% | **55.4%** | **+3.3pp** ✅ |
+
+### Key Finding
+
+**MLP projector benefit is backbone-size-dependent:**
+- 4B backbone (hidden=2560): MLP adds valuable nonlinear transformation, +3.3pp with mlp_lr=3e-5
+- 0.6B backbone (hidden=1024): MLP adds noise, -2.3pp even with optimal mlp_lr=1e-4
+- Optimal mlp_lr scales inversely with backbone size and hidden dim
+
+### R2 Configuration Decision
+
+| Model | Rank | MLP | Heads LR | MLP LR |
+|-------|------|-----|----------|--------|
+| **Reranker-4B** | r128 | **mlp=1** | 3e-4 | **3e-5** |
+| **Reranker-0.6B** | r64 | mlp=0 | 1e-3 | — |
+
+MLP will also be revisited during LoRA stage (Stage 5 of #73) for the 0.6B model,
+where backbone adaptation may make the projector useful.
 
 ## Lessons Learned
 

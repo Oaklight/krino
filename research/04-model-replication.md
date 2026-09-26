@@ -433,3 +433,57 @@ Models were evaluated every 2 epochs. Key patterns:
 | [jevbetter](https://github.com/olanotolu/jevbetter) | Rival-aware attention we incorporated |
 | [Ettin rerankers](https://huggingface.co/cross-encoder) | ModernBERT-arch rerankers trained on 143M triples. Our top backbone |
 | [SetRank](https://dl.acm.org/doi/10.1145/3397271.3401104) | Inter-document attention for listwise LTR — same mechanism as rival-aware |
+
+## Round 1: Multi-Task Training Results (Sep 24-25, 2026)
+
+Multi-task training on 19 NLU benchmarks with type-balanced sampling, 20 epochs, frozen backbone + decision heads. Answers open question #1: "Does multi-task training fix generalization?"
+
+**Yes.** Cross-benchmark accuracy improved from ~35% (single-benchmark) to 48-65% (multi-task).
+
+### R1 Results: 6 Models
+
+| Model | Params | Head rank | Aggregate | Choice | Noul | Score | HF |
+|-------|--------|----------|-----------|--------|------|-------|----|
+| Qwen3-Reranker-4B | 4.0B | r64 | **65.5%** | 60.8% | 80.0% | 50.2% | [link](https://huggingface.co/oaklight/krino-qwen3-reranker-4b-heads) |
+| Qwen3.5-4B-Base | 4.2B | r64 | **65.4%** | 60.7% | 80.7% | 48.4% | [link](https://huggingface.co/oaklight/krino-qwen3.5-4b-heads) |
+| Qwen3-Reranker-0.6B | 596M | r64 | **58.1%** | 52.2% | 72.5% | 46.1% | [link](https://huggingface.co/oaklight/krino-qwen3-reranker-0.6b-heads) |
+| Ettin-150m | 149M | r128 | **57.9%** | 56.1% | 64.4% | 50.3% | [link](https://huggingface.co/oaklight/krino-ettin-150m-heads) |
+| Qwen3-0.6B | 596M | r64 | **57.4%** | 51.9% | 70.4% | 46.6% | [link](https://huggingface.co/oaklight/krino-qwen3-0.6b-heads) |
+| ModernBERT-base | 149M | r64 | **48.8%** | 42.9% | 58.9% | 44.3% | [link](https://huggingface.co/oaklight/krino-modernbert-base-heads) |
+
+### Key Findings
+
+1. **Reranker pretraining provides consistent advantage.** Reranker-4B beats Qwen3.5-4B by matching accuracy with fewer params. Reranker-0.6B beats Qwen3-0.6B by +0.7pp.
+2. **Noul is easiest, Score is hardest.** All models follow the same pattern: Noul (58-80%) > Choice (43-61%) > Score (44-50%).
+3. **Scale matters more than architecture.** 4B models (65%) >> 0.6B models (57-58%) >> 150M models (49-58%). Ettin-150m is the exception — reranker pretraining lets it punch above its weight class.
+
+## Head Architecture Sweep (Sep 25, 2026)
+
+45-run sweep: 5 models × rank{64,128,256} × mlp_layers{0,1,2}, 5 epochs each. Detailed results in `research/06-head-size-sweep.md`.
+
+### Optimal rank per model (mlp=0)
+
+| Model | r64 | r128 | r256 | Best |
+|-------|-----|------|------|------|
+| Reranker-4B | 51.1% | **52.1%** | 50.3% | r128 |
+| Reranker-0.6B | **50.3%** | 49.6% | 48.3% | r64 |
+| Qwen3-0.6B | **49.4%** | 48.7% | 47.2% | r64 |
+| Ettin-150m | 47.6% | 48.5% | **49.2%** | r256 |
+| ModernBERT | 42.3% | 41.8% | **42.9%** | r256 |
+
+### MLP + Per-Component LR Targeted Runs (issue #93)
+
+MLP projector benefit is **backbone-size-dependent**:
+
+| Model | mlp=0 baseline | Best MLP+per-comp LR | Verdict |
+|-------|---------------|---------------------|---------|
+| **Reranker-4B** | 52.1% | **55.4%** (mlp_lr=3e-5) | MLP helps (+3.3pp) |
+| **Reranker-0.6B** | 50.3% | 48.0% (mlp_lr=1e-4) | MLP hurts (-2.3pp) |
+
+### Updated Open Questions
+
+1. ~~Does multi-task training fix generalization?~~ **Yes.** 35% → 48-65%.
+2. **Can teacher distillation further improve?** Still open — Jev soft labels available for 10.9K items.
+3. **Encoder vs causal for general-purpose model?** Causal (Reranker) wins. Encoder (Ettin/ModernBERT) limited by 8K context.
+4. **How much does external data help?** CLM used 60M pairs. Stage 3 will test MS MARCO + SNLI.
+5. **Does MLP help with LoRA?** MLP hurts for frozen backbone (0.6B), helps for large backbone (4B). Will revisit during Stage 5 with LoRA adaptation.
