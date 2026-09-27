@@ -1,0 +1,831 @@
+{"id": "synthetic-multi_hop_reasoning-0000-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0000-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0001-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0001-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0001-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0001-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0001-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0002-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0002-neg-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0003-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0003-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.9, "1": 0.1, "2": 0.0, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0003-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0003-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0003-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0003-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0003-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0005-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0005-choice-1", "teacher_probs": {"gpt_5_6_luna": {"direct_siblings": 0.05, "cousin_channels": 0.9, "no_relation": 0.02, "parent_child": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0005-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"direct_siblings": 0.05, "cousin_channels": 0.9, "no_relation": 0.02, "parent_child": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0005-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0005-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"direct_siblings": 0.05, "no_relation": 0.05, "parent_child": 0.05, "cousin_channels": 0.85}}}
+{"id": "synthetic-multi_hop_reasoning-0005-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0006-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0006-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.95, "comparison": 0.02, "composition": 0.02, "temporal": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0006-para-q-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0006-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"temporal": 0.05, "bridge": 0.85, "composition": 0.05, "comparison": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0006-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0007-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0007-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0007-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0007-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0007-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0007-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0007-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0007-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0008-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0008-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0008-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.1, "1": 0.8, "2": 0.1, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0008-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0009-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0009-cf-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0009-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0009-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0009-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"temporal": 0.05, "comparison": 0.1, "composition": 0.15, "bridge": 0.7}}}
+{"id": "synthetic-multi_hop_reasoning-0009-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0010-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0010-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0010-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0010-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0010-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0010-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0010-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0010-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0012-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0012-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0013-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0013-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0013-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0013-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0014-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0014-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0015-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0015-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0016-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0016-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.85, "2": 0.05, "3": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0016-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.9, "2": 0.1, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0016-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0016-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0016-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0017-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0017-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0018-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.0, "2": 0.9, "3": 0.1, "4": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0018-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0019-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0019-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0019-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0019-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0020-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0021-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0021-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0021-para-q-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0022-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0022-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0022-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0022-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0022-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0022-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0022-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0022-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0023-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0023-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0023-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0024-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0024-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0025-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0025-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0025-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0025-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0025-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0026-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0026-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0028-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0028-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 1.0, "false": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0028-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0028-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0028-para-state-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0028-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0029-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0029-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0032-para-q-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0033-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0033-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"City of Norwood Payneham & St Peters": 0.05, "Glostrup Municipality": 0.9, "City of Belmont": 0.02, "Cannot be determined": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0033-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0035-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0035-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0035-para-state-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0035-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0036-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0036-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0036-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0037-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0037-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0038-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0038-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0038-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0038-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0038-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0038-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0039-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0039-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0039-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0040-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0041-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_hop_reasoning-0041-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0041-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_hop_reasoning-0041-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0041-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0042-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0042-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0042-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0042-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0042-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.95, "comparison": 0.02, "composition": 0.02, "temporal": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0042-cf-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0042-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.95, "comparison": 0.02, "composition": 0.02, "temporal": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0042-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.92, "comparison": 0.02, "composition": 0.03, "temporal": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0042-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.1, "1": 0.8, "2": 0.1, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0042-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0042-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0042-para-q-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0042-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0042-neg-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0042-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0042-neg-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0042-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0043-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0043-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0044-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0044-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.92, "comparison": 0.02, "composition": 0.03, "temporal": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0044-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0045-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0045-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0045-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.85, "2": 0.15, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0045-neg-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0045-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0046-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0046-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0047-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"alice_walton": 0.95, "barry_lam": 0.03, "robert_kuok": 0.01, "jorge_lemann": 0.005, "wu_yajun": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0047-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0048-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0048-para-q-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0049-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0049-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0050-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0050-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0050-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0050-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0051-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0051-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0051-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0051-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0051-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0051-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0051-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0051-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0051-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0051-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0051-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0052-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0052-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0052-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0052-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0052-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0052-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.1, "2": 0.7, "3": 0.15, "4": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0052-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0053-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0053-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0053-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0053-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0053-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0053-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0053-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0053-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0054-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0054-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0054-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0054-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0055-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0055-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0055-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0055-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0055-para-state-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0055-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0055-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0055-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0055-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0055-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0055-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0056-cf-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0056-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0057-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0057-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0058-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0058-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0059-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0059-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0059-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0059-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0059-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0059-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0060-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0060-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0060-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0061-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0061-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0061-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0062-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0062-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0062-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0062-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0063-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0063-cf-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 1.0, "false": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0063-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0064-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0064-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0064-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0064-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0064-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0066-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0066-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0066-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0066-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0067-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.85, "2": 0.1, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0067-cf-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0067-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0067-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0067-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0067-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0067-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0069-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0069-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0069-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0071-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0072-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0072-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0072-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0072-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0072-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0072-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Tomahawk": 0.05, "Taarka": 0.05, "Reverie Sound Revue": 0.85, "Girlicious": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0072-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0072-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0073-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0073-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0073-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0073-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0074-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0074-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0074-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0074-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0074-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0074-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0074-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0074-para-q-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0074-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"poppets": 0.02, "froot_loops": 0.96, "nasi_goreng": 0.01, "skittles": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0074-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0074-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0075-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.85, "2": 0.1, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0075-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0075-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0075-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0076-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0076-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0076-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0076-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0076-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0076-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"NY 293": 0.05, "NY 31": 0.85, "CR 31B": 0.05, "CR 99": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0076-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0076-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0076-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0077-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0077-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"brian_cox": 0.95, "philip_arditti": 0.02, "helen_mirren": 0.01, "anthony_hopkins": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0078-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0078-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0079-cf-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0079-neg-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0080-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0080-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0080-cf-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0080-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0080-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0080-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.92, "comparison": 0.02, "composition": 0.03, "temporal": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0080-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"king_henry_ii": 0.95, "ranulf_de_glanvill": 0.02, "richard_of_ilchester": 0.01, "hubert_walter": 0.01, "theobald_walter": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0080-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0080-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"richard_of_ilchester": 0.02, "theobald_walter": 0.02, "king_henry_ii": 0.05, "hubert_walter": 0.02, "ranulf_de_glanvill": 0.89}}}
+{"id": "synthetic-multi_hop_reasoning-0080-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0081-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0081-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0081-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0081-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0081-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0081-cf-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 1.0, "false": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0081-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0081-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0081-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0081-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 1.0, "false": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0081-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0081-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0081-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0081-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0081-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"comparison": 0.05, "temporal": 0.05, "bridge": 0.85, "composition": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0082-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Wildwood": 0.95, "Wilmette": 0.02, "Oak Park": 0.01, "Prospect Heights": 0.01, "Palatine": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0082-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0082-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0082-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Wildwood": 0.95, "Wilmette": 0.02, "Oak Park": 0.01, "Prospect Heights": 0.01, "Palatine": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0082-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Palatine": 0.01, "Prospect Heights": 0.01, "Wildwood": 0.95, "Wilmette": 0.01, "Oak Park": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0083-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0084-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0084-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0084-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0084-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0085-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0085-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0085-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0085-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0086-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0086-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.05, "2": 0.85, "3": 0.1}}}
+{"id": "synthetic-multi_hop_reasoning-0086-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0086-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0087-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0087-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0087-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0087-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0089-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0089-para-q-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0089-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0090-cf-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0090-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0091-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0091-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0091-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0091-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0091-cf-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0091-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0091-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0091-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.95, "1": 0.05, "2": 0.0, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0091-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0091-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0091-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0091-para-q-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0091-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0091-neg-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0092-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_hop_reasoning-0092-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Polaroid Corporation": 0.98, "Epson": 0.01, "UnoAErre": 0.005, "Damon Corporation": 0.003, "Klassik Radio": 0.002}}}
+{"id": "synthetic-multi_hop_reasoning-0092-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_hop_reasoning-0092-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_hop_reasoning-0092-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Polaroid Corporation": 0.98, "Epson": 0.01, "UnoAErre": 0.005, "Damon Corporation": 0.003, "Klassik Radio": 0.002}}}
+{"id": "synthetic-multi_hop_reasoning-0092-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_hop_reasoning-0092-para-q-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0092-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_hop_reasoning-0094-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0094-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0094-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0094-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0094-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0094-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0094-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0095-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0095-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Michael Jackson": 0.05, "James Brown": 0.9, "Chris Isaak": 0.03, "Amos Milburn": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0095-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0097-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0098-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0098-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0099-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0099-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0100-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0102-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0102-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0102-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0102-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0103-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0103-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "composition": 0.05, "comparison": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0104-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 1.0, "false": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0104-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 1.0, "false": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0104-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 1.0, "false": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0104-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0105-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0106-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0106-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0106-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0106-neg-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0107-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0107-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0107-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0107-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0108-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0108-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0110-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0110-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0110-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0111-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.92, "comparison": 0.02, "composition": 0.03, "temporal": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0111-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0112-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0112-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0112-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0112-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0112-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0114-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0114-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0114-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0114-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0114-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0114-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0114-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0114-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0114-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0114-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0114-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0115-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0115-neg-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0117-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0117-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0118-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Charles d'Abancour": 0.05, "Armand Marc, comte de Montmorin": 0.9, "Antoine de Sartine": 0.02, "Guillaume-Chrétien de Lamoignon de Malesherbes": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0118-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0118-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0118-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0118-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Charles d'Abancour": 0.15, "Armand Marc, comte de Montmorin": 0.75, "Antoine de Sartine": 0.05, "Guillaume-Chrétien de Lamoignon de Malesherbes": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0118-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0118-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Armand Marc, comte de Montmorin": 0.45, "Charles d'Abancour": 0.45, "Guillaume-Chrétien de Lamoignon de Malesherbes": 0.05, "Antoine de Sartine": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0118-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0119-cf-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0120-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Patita": 0.02, "Do Bigha Zamin": 0.95, "Jhamela": 0.01, "Footpath": 0.01, "Baaz": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0120-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0120-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0120-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0120-para-state-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0120-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0120-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0120-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0121-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0121-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0121-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.92, "comparison": 0.02, "composition": 0.03, "temporal": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0121-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0122-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0122-choice-1", "teacher_probs": {"gpt_5_6_luna": {"roger_hansen": 0.95, "heino_hansen": 0.01, "carl_hansen": 0.01, "ashley_hansen": 0.01, "warren_hansen": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0122-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0122-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"roger_hansen": 0.95, "heino_hansen": 0.01, "carl_hansen": 0.01, "ashley_hansen": 0.01, "warren_hansen": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0122-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"heino_hansen": 0.05, "carl_hansen": 0.05, "ashley_hansen": 0.05, "roger_hansen": 0.8, "warren_hansen": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0122-neg-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0123-choice-1", "teacher_probs": {"gpt_5_6_luna": {"one": 0.05, "two": 0.1, "three": 0.85, "four": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0123-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0123-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0123-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0123-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0123-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0124-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0125-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0125-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0125-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0125-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.92, "comparison": 0.02, "composition": 0.03, "temporal": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0125-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0126-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0126-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"comparison": 0.05, "composition": 0.1, "bridge": 0.8, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0127-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0127-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0127-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0127-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0128-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0128-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0129-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0129-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0129-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0129-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0130-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0130-cf-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0130-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0130-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0130-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0131-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0131-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0131-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0131-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0132-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0133-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0133-cf-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0133-cf-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0134-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0134-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0134-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0134-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0135-choice-2", "teacher_probs": {"gpt_5_6_luna": {"vcu": 0.02, "butler": 0.95, "connecticut": 0.02, "kansas": 0.0, "florida_state": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0135-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"vcu": 0.02, "connecticut": 0.03, "florida_state": 0.02, "butler": 0.9, "kansas": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0136-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0136-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0136-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0136-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0137-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0137-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0137-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0137-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0137-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0139-choice-1", "teacher_probs": {"gpt_5_6_luna": {"RKO Radio Pictures": 0.02, "Walt Disney Pictures": 0.95, "Mayhem Pictures": 0.01, "Walt Disney Productions": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0139-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0139-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0139-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.9, "2": 0.05, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0139-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0139-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0140-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0141-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.95, "comparison": 0.02, "composition": 0.02, "temporal": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0142-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0142-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0142-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0143-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0144-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0144-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0144-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0145-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0145-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0145-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0145-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0146-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0146-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0146-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0146-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0146-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0146-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0146-para-state-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0146-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0146-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.1, "2": 0.8, "3": 0.1}}}
+{"id": "synthetic-multi_hop_reasoning-0146-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0146-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0146-neg-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0147-cf-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0147-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0147-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"Neve Tzedek Tower": 0.0, "One Detroit Center": 0.0, "Americas Tower": 1.0, "Palazzo Las Vegas": 0.0, "Bionic Tower": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0147-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0149-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0149-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0149-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0149-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0149-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0149-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0150-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0150-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0150-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0150-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_hop_reasoning-0151-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"del_amo": 0.02, "kci": 0.02, "limestone_road": 0.02, "mcas_yuma": 0.02, "brio": 0.92}}}
+{"id": "synthetic-multi_hop_reasoning-0152-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0152-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0152-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0152-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0152-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "comparison": 0.05, "composition": 0.05, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0152-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0152-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.85, "temporal": 0.05, "composition": 0.05, "comparison": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0152-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 1.0, "false": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0153-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0154-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0154-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0155-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0155-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0155-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0155-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0155-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0157-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"same_person": 0.98, "different_persons": 0.01, "family_relation": 0.005, "unclear": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0157-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0158-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0158-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0158-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0158-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0158-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0158-para-q-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0158-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0158-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0159-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0160-choice-1", "teacher_probs": {"gpt_5_6_luna": {"sex_book": 0.05, "gonzo_photos": 0.85, "winding_paths": 0.05, "notes_outernet": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0160-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.05, "comparison": 0.05, "composition": 0.85, "temporal": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0160-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0160-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"sex_book": 0.05, "gonzo_photos": 0.15, "winding_paths": 0.05, "notes_outernet": 0.75}}}
+{"id": "synthetic-multi_hop_reasoning-0160-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"winding_paths": 0.05, "sex_book": 0.05, "gonzo_photos": 0.85, "notes_outernet": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0160-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0160-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0160-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0161-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0161-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0161-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0161-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_hop_reasoning-0161-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0161-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0161-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0162-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0162-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0162-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 1.0, "2": 0.0, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0163-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0163-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0163-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0164-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0164-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0165-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0165-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0165-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0166-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0166-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0166-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0166-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0166-cf-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0166-cf-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0166-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0166-para-q-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0166-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0166-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0166-neg-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0167-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0168-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0168-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0168-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0168-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0168-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0168-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0168-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0169-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0169-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0170-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.85, "2": 0.1, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0170-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0170-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0171-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0171-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0171-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0171-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0172-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0172-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0172-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0172-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0172-neg-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0172-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0172-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0173-choice-1", "teacher_probs": {"gpt_5_6_luna": {"socialist": 0.15, "conservative_right": 0.8, "communist": 0.02, "centrist": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0173-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0173-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"socialist": 0.15, "conservative_right": 0.8, "communist": 0.02, "centrist": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0173-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"centrist": 0.05, "communist": 0.05, "conservative_right": 0.85, "socialist": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0174-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0174-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0174-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0175-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0176-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0177-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0177-para-state-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0177-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0177-para-q-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0177-neg-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0178-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0178-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0178-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0178-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0178-neg-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0179-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0179-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0180-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0181-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0181-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0181-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0181-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0181-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0182-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0182-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0183-neg-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0185-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0185-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0186-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0186-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0186-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0187-cf-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0187-para-state-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0187-para-state-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0187-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0187-para-q-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0187-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0187-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0187-neg-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0188-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0188-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0188-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0188-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0188-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0188-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0188-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0189-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0189-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0189-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0190-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0190-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0190-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0191-cf-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0191-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0191-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0192-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0193-choice-1", "teacher_probs": {"gpt_5_6_luna": {"hans_zimmer": 0.05, "michael_small": 0.9, "richard_rodney_bennett": 0.05, "ilaiyaraaja": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0193-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0193-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0193-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.95, "comparison": 0.02, "composition": 0.02, "temporal": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0193-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"hans_zimmer": 0.05, "michael_small": 0.85, "richard_rodney_bennett": 0.05, "ilaiyaraaja": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0193-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0193-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"hans_zimmer": 0.05, "richard_rodney_bennett": 0.05, "ilaiyaraaja": 0.05, "michael_small": 0.85}}}
+{"id": "synthetic-multi_hop_reasoning-0195-choice-2", "teacher_probs": {"gpt_5_6_luna": {"Mall": 0.05, "Nynne": 0.05, "Elle": 0.05, "War Eagle, Arkansas": 0.85}}}
+{"id": "synthetic-multi_hop_reasoning-0195-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0195-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.010000000000000009}}}
+{"id": "synthetic-multi_hop_reasoning-0196-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0196-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0196-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0196-para-q-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0196-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_hop_reasoning-0197-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_hop_reasoning-0198-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
+{"id": "synthetic-multi_hop_reasoning-0000-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.04, "2": 0.9, "3": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0010-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.96, "2": 0.02, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0032-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.01, "2": 0.09, "3": 0.9}}}
+{"id": "synthetic-multi_hop_reasoning-0055-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.15, "1": 0.8, "2": 0.04, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0055-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.08, "2": 0.88, "3": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0067-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.84, "2": 0.06, "3": 0.01, "4": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0078-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.0, "2": 0.05, "3": 0.95}}}
+{"id": "synthetic-multi_hop_reasoning-0102-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.94, "comparison": 0.01, "composition": 0.04, "temporal": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0127-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.92, "comparison": 0.02, "composition": 0.03, "temporal": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0142-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.96, "2": 0.02, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0146-choice-1", "teacher_probs": {"gpt_5_6_luna": {"founder_effect": 0.03, "city_of_brisbane": 0.86, "statistical_inference": 0.02, "riverview_growth": 0.09}}}
+{"id": "synthetic-multi_hop_reasoning-0152-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.998, "1": 0.002, "2": 0.0, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0158-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.97, "2": 0.01, "3": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0167-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.9, "2": 0.04, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0167-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.08, "comparison": 0.86, "composition": 0.04, "temporal": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0167-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.9, "2": 0.04, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0169-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.92, "2": 0.04, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0188-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.99, "1": 0.008, "2": 0.001, "3": 0.0005, "4": 0.0005}}}
+{"id": "synthetic-multi_hop_reasoning-0194-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.98, "comparison": 0.005, "composition": 0.005, "temporal": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0006-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.04, "2": 0.9, "3": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0006-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.03, "2": 0.16, "3": 0.8}}}
+{"id": "synthetic-multi_hop_reasoning-0010-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.94, "2": 0.02, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0011-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.94, "1": 0.05, "2": 0.01, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0011-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.9, "1": 0.08, "2": 0.015, "3": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0020-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.97, "2": 0.02, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0028-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.84, "2": 0.06, "3": 0.01, "4": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0028-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.15, "1": 0.68, "2": 0.14, "3": 0.02, "4": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0028-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"comparison": 0.08, "bridge": 0.82, "temporal": 0.04, "composition": 0.06}}}
+{"id": "synthetic-multi_hop_reasoning-0036-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.27, "2": 0.55, "3": 0.15}}}
+{"id": "synthetic-multi_hop_reasoning-0036-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.04, "1": 0.68, "2": 0.22, "3": 0.06}}}
+{"id": "synthetic-multi_hop_reasoning-0041-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.08, "2": 0.85, "3": 0.06}}}
+{"id": "synthetic-multi_hop_reasoning-0041-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.04, "2": 0.9, "3": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0047-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.27, "2": 0.68, "3": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0049-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.2, "1": 0.58, "2": 0.17, "3": 0.04, "4": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0050-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.94, "2": 0.01, "3": 0.0, "4": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0051-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.98, "2": 0.02, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0055-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.1, "1": 0.85, "2": 0.04, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0055-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.12, "2": 0.83, "3": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0060-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.08, "2": 0.82, "3": 0.08}}}
+{"id": "synthetic-multi_hop_reasoning-0061-choice-2", "teacher_probs": {"gpt_5_6_luna": {"two": 0.001, "three": 0.002, "four": 0.002, "five": 0.995}}}
+{"id": "synthetic-multi_hop_reasoning-0061-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"two": 0.001, "three": 0.002, "four": 0.007, "five": 0.99}}}
+{"id": "synthetic-multi_hop_reasoning-0061-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"five": 0.001, "four": 0.001, "two": 0.001, "three": 0.997}}}
+{"id": "synthetic-multi_hop_reasoning-0065-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.08, "2": 0.87, "3": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0067-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.86, "comparison": 0.04, "composition": 0.08, "temporal": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0067-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.8, "2": 0.1, "3": 0.015, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0067-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.9, "2": 0.04, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0067-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.62, "comparison": 0.08, "composition": 0.27, "temporal": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0071-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.0, "2": 0.0, "3": 0.01, "4": 0.99}}}
+{"id": "synthetic-multi_hop_reasoning-0075-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.7, "2": 0.23, "3": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0076-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.12, "1": 0.58, "2": 0.18, "3": 0.04, "4": 0.08}}}
+{"id": "synthetic-multi_hop_reasoning-0084-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.93, "2": 0.04, "3": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0087-choice-2", "teacher_probs": {"gpt_5_6_luna": {"fewer_than_five": 0.001, "exactly_five": 0.004, "six_to_seven": 0.005, "eight_or_more": 0.99}}}
+{"id": "synthetic-multi_hop_reasoning-0087-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"exactly_five": 0.005, "eight_or_more": 0.99, "six_to_seven": 0.004, "fewer_than_five": 0.001}}}
+{"id": "synthetic-multi_hop_reasoning-0102-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.9, "2": 0.04, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0102-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.9, "2": 0.04, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0102-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.15, "1": 0.8, "2": 0.04, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0103-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.7, "comparison": 0.02, "composition": 0.2, "temporal": 0.08}}}
+{"id": "synthetic-multi_hop_reasoning-0103-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.2, "comparison": 0.08, "composition": 0.68, "temporal": 0.04}}}
+{"id": "synthetic-multi_hop_reasoning-0104-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.02, "2": 0.07, "3": 0.9}}}
+{"id": "synthetic-multi_hop_reasoning-0118-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.08, "2": 0.88, "3": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0118-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.93, "2": 0.03, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0118-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.25, "2": 0.67, "3": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0120-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.27, "2": 0.55, "3": 0.1}}}
+{"id": "synthetic-multi_hop_reasoning-0120-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.85, "2": 0.08, "3": 0.01, "4": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0120-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.1, "1": 0.25, "2": 0.55, "3": 0.1}}}
+{"id": "synthetic-multi_hop_reasoning-0127-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.8, "1": 0.03, "2": 0.01, "3": 0.01, "4": 0.15}}}
+{"id": "synthetic-multi_hop_reasoning-0130-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.78, "2": 0.18, "3": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0133-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"two": 0.005, "five_or_more": 0.98, "four": 0.01, "three": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0149-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.08, "2": 0.78, "3": 0.12, "4": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0149-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.12, "2": 0.58, "3": 0.27, "4": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0150-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.01, "2": 0.08, "3": 0.9, "4": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0152-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.96, "1": 0.03, "2": 0.005, "3": 0.001, "4": 0.004}}}
+{"id": "synthetic-multi_hop_reasoning-0152-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.8, "1": 0.18, "2": 0.015, "3": 0.004, "4": 0.001}}}
+{"id": "synthetic-multi_hop_reasoning-0153-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.02, "2": 0.03, "3": 0.05, "4": 0.9}}}
+{"id": "synthetic-multi_hop_reasoning-0154-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.99, "1": 0.01, "2": 0.0, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0158-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.001, "1": 0.997, "2": 0.001, "3": 0.001}}}
+{"id": "synthetic-multi_hop_reasoning-0161-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.0, "2": 0.03, "3": 0.97}}}
+{"id": "synthetic-multi_hop_reasoning-0165-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.99, "1": 0.01, "2": 0.0, "3": 0.0}}}
+{"id": "synthetic-multi_hop_reasoning-0165-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.98, "1": 0.015, "2": 0.004, "3": 0.001}}}
+{"id": "synthetic-multi_hop_reasoning-0166-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"Austin": 0.01, "San Antonio": 0.97, "Hamburg": 0.01, "Naples": 0.005, "Orlando": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0167-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.93, "2": 0.03, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0168-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.2, "2": 0.7, "3": 0.05}}}
+{"id": "synthetic-multi_hop_reasoning-0171-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.92, "2": 0.02, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0185-choice-2", "teacher_probs": {"gpt_5_6_luna": {"L'honestà negli amori → Il Pompeo → Mitridate Eupatore → Tigrane → Il trionfo dell'onore → Griselda": 0.999, "Il Pompeo → L'honestà negli amori → Mitridate Eupatore → Tigrane → Griselda → Il trionfo dell'onore": 0.0003, "Griselda → Il trionfo dell'onore → Tigrane → Mitridate Eupatore → Il Pompeo → L'honestà negli amori": 0.0004, "L'honestà negli amori → Il Pompeo → Tigrane → Mitridate Eupatore → Il trionfo dell'onore → Griselda": 0.0003}}}
+{"id": "synthetic-multi_hop_reasoning-0185-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.12, "2": 0.72, "3": 0.12, "4": 0.02}}}
+{"id": "synthetic-multi_hop_reasoning-0185-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.85, "2": 0.08, "3": 0.01, "4": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0185-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"L'honestà negli amori → Il Pompeo → Mitridate Eupatore → Tigrane → Il trionfo dell'onore → Griselda": 0.999, "Il Pompeo → L'honestà negli amori → Mitridate Eupatore → Tigrane → Griselda → Il trionfo dell'onore": 0.0003, "Griselda → Il trionfo dell'onore → Tigrane → Mitridate Eupatore → Il Pompeo → L'honestà negli amori": 0.0002, "L'honestà negli amori → Il Pompeo → Tigrane → Mitridate Eupatore → Il trionfo dell'onore → Griselda": 0.0005}}}
+{"id": "synthetic-multi_hop_reasoning-0185-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.12, "2": 0.68, "3": 0.14, "4": 0.03}}}
+{"id": "synthetic-multi_hop_reasoning-0185-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"L'honestà negli amori → Il Pompeo → Mitridate Eupatore → Tigrane → Il trionfo dell'onore → Griselda": 0.999, "Griselda → Il trionfo dell'onore → Tigrane → Mitridate Eupatore → Il Pompeo → L'honestà negli amori": 0.0002, "Il Pompeo → L'honestà negli amori → Mitridate Eupatore → Tigrane → Griselda → Il trionfo dell'onore": 0.0003, "L'honestà negli amori → Il Pompeo → Tigrane → Mitridate Eupatore → Il trionfo dell'onore → Griselda": 0.0005}}}
+{"id": "synthetic-multi_hop_reasoning-0193-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.04, "2": 0.2, "3": 0.75}}}
+{"id": "synthetic-multi_hop_reasoning-0193-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.12, "2": 0.8, "3": 0.06}}}
+{"id": "synthetic-multi_hop_reasoning-0194-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.08, "2": 0.86, "3": 0.03, "4": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0194-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.08, "2": 0.86, "3": 0.04, "4": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0008-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.68, "2": 0.12, "3": 0.03, "4": 0.15}}}
+{"id": "synthetic-multi_hop_reasoning-0080-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.03, "2": 0.05, "3": 0.1, "4": 0.8}}}
+{"id": "synthetic-multi_hop_reasoning-0084-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.82, "2": 0.12, "3": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0103-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.28, "comparison": 0.04, "composition": 0.5, "temporal": 0.18}}}
+{"id": "synthetic-multi_hop_reasoning-0138-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.93, "2": 0.04, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-multi_hop_reasoning-0163-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.01, "2": 0.02, "3": 0.06, "4": 0.9}}}
+{"id": "synthetic-multi_hop_reasoning-0183-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"bridge": 0.24, "comparison": 0.46, "composition": 0.29, "temporal": 0.01}}}
+{"id": "synthetic-multi_hop_reasoning-0184-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.02, "2": 0.02, "3": 0.05, "4": 0.9}}}
