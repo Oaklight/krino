@@ -1,12 +1,15 @@
 """Fill missing GPT-5.6 Luna teacher labels for synthetic data items.
 
 Identifies items that have Jev labels but no Luna labels, then calls
-the LLM labeling pipeline to fill the gaps.
+the LLM labeling pipeline to fill the gaps. Supports sharding for
+parallel execution and arbitrary model/endpoint override.
 
 Usage:
     python data/scripts/fill_luna_gaps.py              # dry-run: report gaps only
     python data/scripts/fill_luna_gaps.py --apply       # call Luna and fill gaps
     python data/scripts/fill_luna_gaps.py --domain game_strategy --apply  # one domain
+    python data/scripts/fill_luna_gaps.py --apply --model Qwen/Qwen3.8-27B --base-url http://rbdgx3:8765
+    python data/scripts/fill_luna_gaps.py --apply --shard 0 --num-shards 4
 """
 
 from __future__ import annotations
@@ -261,11 +264,13 @@ def assemble_items_for_labeling(
 async def fill_gaps(
     gaps: dict[str, set[str]],
     max_concurrent: int = 10,
+    model_override: str | None = None,
+    base_url_override: str | None = None,
 ) -> None:
-    """Call Luna to label missing items and append results to label files."""
-    base_url = os.environ.get("LLM_BASE_URL", "")
-    api_key = os.environ.get("LLM_API_KEY", "")
-    teacher_model = os.environ.get("LLM_TEACHER_MODEL", "argo:gpt-5.6-luna")
+    """Call LLM to label missing items and append results to label files."""
+    base_url = base_url_override or os.environ.get("LLM_BASE_URL", "")
+    api_key = os.environ.get("LLM_API_KEY", "") if not base_url_override else ""
+    teacher_model = model_override or os.environ.get("LLM_TEACHER_MODEL", "argo:gpt-5.6-luna")
 
     if not base_url:
         logger.error("LLM_BASE_URL not set — cannot call Luna for labeling")
@@ -331,7 +336,7 @@ def main() -> None:
     parser.add_argument(
         "--apply",
         action="store_true",
-        help="Actually call Luna and fill gaps (default: dry-run report only)",
+        help="Actually call LLM and fill gaps (default: dry-run report only)",
     )
     parser.add_argument(
         "--domain",
@@ -344,6 +349,30 @@ def main() -> None:
         type=int,
         default=10,
         help="Max concurrent LLM requests (default: 10)",
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default=None,
+        help="Override LLM model (e.g. Qwen/Qwen3.8-27B)",
+    )
+    parser.add_argument(
+        "--base-url",
+        type=str,
+        default=None,
+        help="Override LLM base URL (e.g. http://rbdgx3:8765)",
+    )
+    parser.add_argument(
+        "--shard",
+        type=int,
+        default=None,
+        help="Shard index (0-based) for parallel execution",
+    )
+    parser.add_argument(
+        "--num-shards",
+        type=int,
+        default=None,
+        help="Total number of shards",
     )
     args = parser.parse_args()
 
@@ -358,6 +387,16 @@ def main() -> None:
     # Step 1: Find gaps
     logger.info("Scanning for Luna label gaps ...")
     gaps = find_gaps(domains=domains)
+
+    # Apply sharding if requested
+    if args.shard is not None and args.num_shards is not None:
+        all_domains = sorted(gaps.keys())
+        shard_domains = [d for i, d in enumerate(all_domains) if i % args.num_shards == args.shard]
+        gaps = {d: gaps[d] for d in shard_domains if d in gaps}
+        logger.info("Shard %d/%d: processing %d domains: %s",
+                     args.shard, args.num_shards, len(shard_domains),
+                     ", ".join(shard_domains))
+
     print_gap_report(gaps)
 
     if not gaps:
@@ -365,11 +404,16 @@ def main() -> None:
 
     if not args.apply:
         logger.info("")
-        logger.info("Dry-run mode. Use --apply to actually call Luna and fill gaps.")
+        logger.info("Dry-run mode. Use --apply to fill gaps.")
         return
 
     # Step 2: Fill gaps
-    asyncio.run(fill_gaps(gaps, max_concurrent=args.max_concurrent))
+    asyncio.run(fill_gaps(
+        gaps,
+        max_concurrent=args.max_concurrent,
+        model_override=args.model,
+        base_url_override=args.base_url,
+    ))
 
     # Step 3: Verify remaining gaps
     logger.info("")

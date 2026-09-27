@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -87,8 +88,11 @@ def _build_score_prompt(state: str, instructions: str, criteria: list[str]) -> s
     )
 
 
+_THINK_RE = re.compile(r"<think>.*?</think>\s*", re.DOTALL)
+
+
 def _parse_json_content(content: str) -> dict | None:
-    text = content.strip()
+    text = _THINK_RE.sub("", content).strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
     try:
@@ -181,6 +185,9 @@ async def label_items_llm(
             payload["reasoning_effort"] = "high"
         else:
             payload["temperature"] = 0
+        # Qwen3.8 models: disable thinking mode for clean JSON output
+        if "qwen" in model.lower():
+            payload["chat_template_kwargs"] = {"enable_thinking": False}
 
         for attempt in range(max_retries):
             try:
