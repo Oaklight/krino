@@ -6791,3 +6791,190 @@
 {"id": "synthetic-code_review-0199-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.78, "false": 0.21999999999999997}}}
 {"id": "synthetic-code_review-0199-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
 {"id": "synthetic-code_review-0199-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-code_review-0004-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.08, "performance": 0.04, "style": 0.15, "clean": 0.72}}}
+{"id": "synthetic-code_review-0004-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.03, "logic_bug": 0.12, "performance": 0.02, "style": 0.23, "clean": 0.6}}}
+{"id": "synthetic-code_review-0004-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.04, "logic_bug": 0.16, "performance": 0.08, "style": 0.02, "clean": 0.7}}}
+{"id": "synthetic-code_review-0004-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"style": 0.06, "performance": 0.04, "security": 0.02, "logic_bug": 0.08, "clean": 0.8}}}
+{"id": "synthetic-code_review-0008-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.02, "logic_bug": 0.08, "performance": 0.01, "style": 0.09, "clean": 0.8}}}
+{"id": "synthetic-code_review-0010-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.62, "minor_risk": 0.04, "context_dependent": 0.22, "insufficient_safety_data": 0.1}}}
+{"id": "synthetic-code_review-0013-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.55, "false": 0.25, "partially_different": 0.05, "unpredictable": 0.05, "depends_on_assumptions": 0.1}}}
+{"id": "synthetic-code_review-0022-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.001, "logic_bug": 0.015, "performance": 0.001, "style": 0.033, "clean": 0.95}}}
+{"id": "synthetic-code_review-0027-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.72, "false": 0.08, "theoretically_possible": 0.1, "conditionally_possible": 0.08, "practically_infeasible": 0.02}}}
+{"id": "synthetic-code_review-0028-para-state-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.005, "mostly_consistent": 0.01, "trivially_inconsistent": 0.003, "cannot_determine": 0.002}}}
+{"id": "synthetic-code_review-0029-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.15, "partially_different": 0.05, "unpredictable": 0.45, "depends_on_assumptions": 0.3}}}
+{"id": "synthetic-code_review-0030-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.03, "logic_bug": 0.2, "performance": 0.01, "style": 0.01, "clean": 0.75}}}
+{"id": "synthetic-code_review-0036-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.001, "false": 0.997, "theoretically_possible": 0.001, "conditionally_possible": 0.001, "practically_infeasible": 0.0}}}
+{"id": "synthetic-code_review-0036-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.72, "partially_different": 0.08, "unpredictable": 0.04, "depends_on_assumptions": 0.08}}}
+{"id": "synthetic-code_review-0036-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.2, "false": 0.35, "partially_different": 0.1, "unpredictable": 0.1, "depends_on_assumptions": 0.25}}}
+{"id": "synthetic-code_review-0036-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.95, "theoretically_possible": 0.015, "conditionally_possible": 0.02, "practically_infeasible": 0.005}}}
+{"id": "synthetic-code_review-0036-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.62, "false": 0.2, "partially_different": 0.12, "unpredictable": 0.02, "depends_on_assumptions": 0.04}}}
+{"id": "synthetic-code_review-0036-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.98, "theoretically_possible": 0.005, "conditionally_possible": 0.004, "practically_infeasible": 0.001}}}
+{"id": "synthetic-code_review-0036-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.03, "partially_different": 0.02, "unpredictable": 0.01, "depends_on_assumptions": 0.02}}}
+{"id": "synthetic-code_review-0036-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.01, "theoretically_possible": 0.003, "conditionally_possible": 0.005, "practically_infeasible": 0.002}}}
+{"id": "synthetic-code_review-0038-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.03, "approximately_equal": 0.7, "depends_on_metric": 0.1, "insufficient_data": 0.05}}}
+{"id": "synthetic-code_review-0038-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.97, "1": 0.025, "2": 0.004, "3": 0.001, "4": 0.0}}}
+{"id": "synthetic-code_review-0038-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.97, "1": 0.025, "2": 0.004, "3": 0.001, "4": 0.0}}}
+{"id": "synthetic-code_review-0038-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.12, "approximately_equal": 0.72, "depends_on_metric": 0.08, "insufficient_data": 0.05}}}
+{"id": "synthetic-code_review-0038-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.72, "false": 0.08, "approximately_equal": 0.15, "depends_on_metric": 0.03, "insufficient_data": 0.02}}}
+{"id": "synthetic-code_review-0038-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.001, "style": 0.004, "logic_bug": 0.003, "clean": 0.99, "performance": 0.002}}}
+{"id": "synthetic-code_review-0038-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.95, "approximately_equal": 0.02, "depends_on_metric": 0.01, "insufficient_data": 0.01}}}
+{"id": "synthetic-code_review-0039-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.18, "performance": 0.02, "style": 0.04, "clean": 0.75}}}
+{"id": "synthetic-code_review-0042-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.7, "borderline": 0.07, "overlapping_categories": 0.01, "insufficient_criteria": 0.14}}}
+{"id": "synthetic-code_review-0044-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.04, "performance": 0.0, "style": 0.3, "clean": 0.65}}}
+{"id": "synthetic-code_review-0050-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.08, "performance": 0.01, "style": 0.2, "clean": 0.7}}}
+{"id": "synthetic-code_review-0050-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.97, "partially_different": 0.005, "unpredictable": 0.005, "depends_on_assumptions": 0.01}}}
+{"id": "synthetic-code_review-0050-para-state-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.58, "false": 0.08, "mostly_consistent": 0.05, "trivially_inconsistent": 0.04, "cannot_determine": 0.25}}}
+{"id": "synthetic-code_review-0050-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"clean": 0.78, "performance": 0.01, "security": 0.0, "logic_bug": 0.16, "style": 0.05}}}
+{"id": "synthetic-code_review-0053-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.3, "false": 0.3, "partially_different": 0.05, "unpredictable": 0.1, "depends_on_assumptions": 0.25}}}
+{"id": "synthetic-code_review-0053-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.03, "logic_bug": 0.12, "performance": 0.03, "style": 0.07, "clean": 0.75}}}
+{"id": "synthetic-code_review-0053-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.72, "partially_different": 0.03, "unpredictable": 0.02, "depends_on_assumptions": 0.15}}}
+{"id": "synthetic-code_review-0055-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.3, "approximately_equal": 0.2, "depends_on_metric": 0.1, "insufficient_data": 0.35}}}
+{"id": "synthetic-code_review-0055-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.2, "approximately_equal": 0.2, "depends_on_metric": 0.1, "insufficient_data": 0.45}}}
+{"id": "synthetic-code_review-0055-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.72, "approximately_equal": 0.18, "depends_on_metric": 0.04, "insufficient_data": 0.03}}}
+{"id": "synthetic-code_review-0055-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.2, "simultaneous": 0.0, "ambiguous_timeline": 0.07, "insufficient_temporal_data": 0.72}}}
+{"id": "synthetic-code_review-0055-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.78, "false": 0.05, "approximately_equal": 0.1, "depends_on_metric": 0.04, "insufficient_data": 0.03}}}
+{"id": "synthetic-code_review-0056-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.65, "1": 0.33, "2": 0.02, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-code_review-0056-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.72, "1": 0.25, "2": 0.03, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-code_review-0056-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.001, "logic_bug": 0.001, "performance": 0.001, "style": 0.002, "clean": 0.995}}}
+{"id": "synthetic-code_review-0056-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.35, "1": 0.62, "2": 0.03, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-code_review-0057-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.04, "performance": 0.01, "style": 0.09, "clean": 0.85}}}
+{"id": "synthetic-code_review-0058-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.82, "theoretically_possible": 0.08, "conditionally_possible": 0.06, "practically_infeasible": 0.01}}}
+{"id": "synthetic-code_review-0059-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.98, "borderline": 0.005, "overlapping_categories": 0.001, "insufficient_criteria": 0.004}}}
+{"id": "synthetic-code_review-0059-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.55, "1": 0.3, "2": 0.14, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-code_review-0060-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.04, "false": 0.93, "borderline": 0.02, "overlapping_categories": 0.0, "insufficient_criteria": 0.01}}}
+{"id": "synthetic-code_review-0062-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.03, "logic_bug": 0.08, "performance": 0.01, "style": 0.03, "clean": 0.85}}}
+{"id": "synthetic-code_review-0063-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.0, "logic_bug": 0.2, "performance": 0.01, "style": 0.07, "clean": 0.72}}}
+{"id": "synthetic-code_review-0063-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.04, "simultaneous": 0.01, "ambiguous_timeline": 0.14, "insufficient_temporal_data": 0.8}}}
+{"id": "synthetic-code_review-0063-para-state-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.12, "simultaneous": 0.03, "ambiguous_timeline": 0.22, "insufficient_temporal_data": 0.55}}}
+{"id": "synthetic-code_review-0063-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.0, "logic_bug": 0.03, "performance": 0.01, "style": 0.04, "clean": 0.92}}}
+{"id": "synthetic-code_review-0063-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.9, "1": 0.08, "2": 0.02, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-code_review-0066-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.35, "false": 0.55, "borderline": 0.05, "overlapping_categories": 0.01, "insufficient_criteria": 0.04}}}
+{"id": "synthetic-code_review-0068-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.08, "performance": 0.12, "style": 0.04, "clean": 0.75}}}
+{"id": "synthetic-code_review-0068-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"style": 0.52, "clean": 0.43, "logic_bug": 0.03, "security": 0.01, "performance": 0.01}}}
+{"id": "synthetic-code_review-0070-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.45, "performance": 0.02, "style": 0.35, "clean": 0.17}}}
+{"id": "synthetic-code_review-0074-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.0, "logic_bug": 0.05, "performance": 0.01, "style": 0.01, "clean": 0.93}}}
+{"id": "synthetic-code_review-0076-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.001, "logic_bug": 0.002, "performance": 0.001, "style": 0.72, "clean": 0.276}}}
+{"id": "synthetic-code_review-0076-choice-1", "teacher_probs": {"gpt_5_6_luna": {"fully_accurate": 0.42, "mostly_accurate": 0.4, "partially_accurate": 0.15, "inaccurate": 0.03}}}
+{"id": "synthetic-code_review-0076-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"fully_accurate": 0.35, "mostly_accurate": 0.5, "partially_accurate": 0.12, "inaccurate": 0.03}}}
+{"id": "synthetic-code_review-0076-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"inaccurate": 0.03, "mostly_accurate": 0.47, "partially_accurate": 0.17, "fully_accurate": 0.33}}}
+{"id": "synthetic-code_review-0081-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.02, "borderline": 0.005, "approaching": 0.003, "measurement_uncertain": 0.002}}}
+{"id": "synthetic-code_review-0085-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.06, "false": 0.12, "contributing_factor": 0.15, "correlation_not_causation": 0.02, "insufficient_evidence": 0.65}}}
+{"id": "synthetic-code_review-0085-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.005, "logic_bug": 0.97, "performance": 0.005, "style": 0.01, "clean": 0.01}}}
+{"id": "synthetic-code_review-0085-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.9, "1": 0.08, "2": 0.015, "3": 0.004, "4": 0.001}}}
+{"id": "synthetic-code_review-0085-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.12, "contributing_factor": 0.12, "correlation_not_causation": 0.03, "insufficient_evidence": 0.65}}}
+{"id": "synthetic-code_review-0085-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.01, "performance": 0.01, "style": 0.02, "clean": 0.95}}}
+{"id": "synthetic-code_review-0085-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.8, "1": 0.18, "2": 0.015, "3": 0.004, "4": 0.001}}}
+{"id": "synthetic-code_review-0085-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"clean": 0.01, "security": 0.005, "logic_bug": 0.97, "performance": 0.005, "style": 0.01}}}
+{"id": "synthetic-code_review-0087-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.72, "performance": 0.02, "style": 0.2, "clean": 0.05}}}
+{"id": "synthetic-code_review-0087-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "style": 0.2, "logic_bug": 0.6, "clean": 0.18, "performance": 0.01}}}
+{"id": "synthetic-code_review-0088-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.2, "false": 0.07, "theoretically_possible": 0.45, "conditionally_possible": 0.25, "practically_infeasible": 0.03}}}
+{"id": "synthetic-code_review-0093-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.28, "minor_risk": 0.48, "context_dependent": 0.18, "insufficient_safety_data": 0.05}}}
+{"id": "synthetic-code_review-0093-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.07, "false": 0.02, "minor_risk": 0.01, "context_dependent": 0.25, "insufficient_safety_data": 0.65}}}
+{"id": "synthetic-code_review-0094-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.74, "contributing_factor": 0.03, "correlation_not_causation": 0.02, "insufficient_evidence": 0.13}}}
+{"id": "synthetic-code_review-0095-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"javadoc": 0.35, "python_docstring": 0.01, "jsdoc": 0.55, "inline": 0.09}}}
+{"id": "synthetic-code_review-0097-cf-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.25, "false": 0.02, "partially_supported": 0.55, "neutral": 0.03, "insufficient_evidence": 0.15}}}
+{"id": "synthetic-code_review-0099-choice-1", "teacher_probs": {"gpt_5_6_luna": {"fully_accurate": 0.3, "mostly_accurate": 0.55, "vague": 0.1, "misleading": 0.05}}}
+{"id": "synthetic-code_review-0099-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.02, "logic_bug": 0.3, "performance": 0.08, "style": 0.05, "clean": 0.55}}}
+{"id": "synthetic-code_review-0099-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"fully_accurate": 0.72, "mostly_accurate": 0.24, "vague": 0.03, "misleading": 0.01}}}
+{"id": "synthetic-code_review-0099-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"mostly_accurate": 0.7, "misleading": 0.02, "fully_accurate": 0.2, "vague": 0.08}}}
+{"id": "synthetic-code_review-0099-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.07, "approximately_equal": 0.03, "depends_on_metric": 0.04, "insufficient_data": 0.78}}}
+{"id": "synthetic-code_review-0100-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.0, "logic_bug": 0.2, "performance": 0.0, "style": 0.55, "clean": 0.25}}}
+{"id": "synthetic-code_review-0100-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.15, "1": 0.7, "2": 0.14, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-code_review-0100-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.82, "1": 0.16, "2": 0.02, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-code_review-0102-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.02, "logic_bug": 0.1, "performance": 0.03, "style": 0.1, "clean": 0.75}}}
+{"id": "synthetic-code_review-0103-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.96, "contributing_factor": 0.01, "correlation_not_causation": 0.005, "insufficient_evidence": 0.015}}}
+{"id": "synthetic-code_review-0108-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.01, "partially_different": 0.005, "unpredictable": 0.002, "depends_on_assumptions": 0.003}}}
+{"id": "synthetic-code_review-0108-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"wrong_param_description": 0.5, "broken_url": 0.01, "misspelled_param_name": 0.34, "missing_return_description": 0.15}}}
+{"id": "synthetic-code_review-0109-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.08, "performance": 0.01, "style": 0.2, "clean": 0.7}}}
+{"id": "synthetic-code_review-0109-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.96, "simultaneous": 0.0, "ambiguous_timeline": 0.01, "insufficient_temporal_data": 0.01}}}
+{"id": "synthetic-code_review-0111-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.68, "false": 0.03, "borderline": 0.1, "sufficient_with_caveats": 0.14, "more_info_needed": 0.05}}}
+{"id": "synthetic-code_review-0113-choice-1", "teacher_probs": {"gpt_5_6_luna": {"fully_accurate": 0.18, "mostly_accurate": 0.72, "partially_accurate": 0.09, "inaccurate": 0.01}}}
+{"id": "synthetic-code_review-0113-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.58, "performance": 0.02, "style": 0.27, "clean": 0.12}}}
+{"id": "synthetic-code_review-0113-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.1, "2": 0.45, "3": 0.35, "4": 0.05}}}
+{"id": "synthetic-code_review-0113-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.18, "performance": 0.02, "style": 0.04, "clean": 0.75}}}
+{"id": "synthetic-code_review-0113-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"fully_accurate": 0.25, "mostly_accurate": 0.62, "partially_accurate": 0.12, "inaccurate": 0.01}}}
+{"id": "synthetic-code_review-0113-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"logic_bug": 0.05, "style": 0.03, "clean": 0.9, "security": 0.01, "performance": 0.01}}}
+{"id": "synthetic-code_review-0113-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"partially_accurate": 0.34, "mostly_accurate": 0.57, "inaccurate": 0.01, "fully_accurate": 0.08}}}
+{"id": "synthetic-code_review-0113-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.9, "approximately_equal": 0.03, "depends_on_metric": 0.03, "insufficient_data": 0.01}}}
+{"id": "synthetic-code_review-0120-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.03, "performance": 0.01, "style": 0.1, "clean": 0.85}}}
+{"id": "synthetic-code_review-0122-cf-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.82, "mostly_consistent": 0.04, "trivially_inconsistent": 0.03, "cannot_determine": 0.08}}}
+{"id": "synthetic-code_review-0128-choice-2", "teacher_probs": {"gpt_5_6_luna": {"missing_return": 0.78, "missing_exceptions": 0.05, "ambiguous_types": 0.12, "no_examples": 0.04, "wrong_description": 0.01}}}
+{"id": "synthetic-code_review-0130-choice-1", "teacher_probs": {"gpt_5_6_luna": {"fully_accurate": 0.05, "mostly_accurate": 0.3, "misleading": 0.1, "missing_detail": 0.55}}}
+{"id": "synthetic-code_review-0130-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"misleading": 0.2, "missing_detail": 0.55, "fully_accurate": 0.1, "mostly_accurate": 0.15}}}
+{"id": "synthetic-code_review-0131-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.72, "logic_bug": 0.03, "performance": 0.01, "style": 0.18, "clean": 0.06}}}
+{"id": "synthetic-code_review-0131-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"style": 0.18, "performance": 0.01, "clean": 0.14, "security": 0.62, "logic_bug": 0.05}}}
+{"id": "synthetic-code_review-0133-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.86, "false": 0.04, "approximately_equal": 0.03, "depends_on_metric": 0.03, "insufficient_data": 0.04}}}
+{"id": "synthetic-code_review-0133-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"logic_bug": 0.08, "performance": 0.15, "security": 0.01, "style": 0.04, "clean": 0.72}}}
+{"id": "synthetic-code_review-0134-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.35, "false": 0.4, "partially_different": 0.1, "unpredictable": 0.05, "depends_on_assumptions": 0.1}}}
+{"id": "synthetic-code_review-0135-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.0, "logic_bug": 0.2, "performance": 0.0, "style": 0.65, "clean": 0.15}}}
+{"id": "synthetic-code_review-0135-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.04, "performance": 0.01, "style": 0.08, "clean": 0.86}}}
+{"id": "synthetic-code_review-0135-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.2, "performance": 0.01, "style": 0.48, "clean": 0.3}}}
+{"id": "synthetic-code_review-0135-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.65, "2": 0.25, "3": 0.02, "4": 0.0}}}
+{"id": "synthetic-code_review-0135-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"style": 0.55, "performance": 0.02, "security": 0.01, "logic_bug": 0.22, "clean": 0.2}}}
+{"id": "synthetic-code_review-0137-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.28, "false": 0.08, "borderline": 0.08, "overlapping_categories": 0.01, "insufficient_criteria": 0.55}}}
+{"id": "synthetic-code_review-0137-choice-1", "teacher_probs": {"gpt_5_6_luna": {"accurate": 0.25, "misleading": 0.2, "missing": 0.0, "partial": 0.55}}}
+{"id": "synthetic-code_review-0137-choice-2", "teacher_probs": {"gpt_5_6_luna": {"param_name": 0.62, "function_description": 0.37, "example_caption": 0.005, "memberof": 0.005}}}
+{"id": "synthetic-code_review-0137-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.35, "false": 0.2, "borderline": 0.1, "overlapping_categories": 0.02, "insufficient_criteria": 0.33}}}
+{"id": "synthetic-code_review-0137-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.96, "false": 0.02, "partially_different": 0.01, "unpredictable": 0.005, "depends_on_assumptions": 0.005}}}
+{"id": "synthetic-code_review-0137-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.35, "false": 0.2, "borderline": 0.05, "overlapping_categories": 0.01, "insufficient_criteria": 0.39}}}
+{"id": "synthetic-code_review-0137-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.34, "false": 0.08, "borderline": 0.03, "overlapping_categories": 0.01, "insufficient_criteria": 0.54}}}
+{"id": "synthetic-code_review-0137-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.3, "borderline": 0.03, "overlapping_categories": 0.01, "insufficient_criteria": 0.54}}}
+{"id": "synthetic-code_review-0138-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"typo": 0.02, "missing_param": 0.01, "missing_return": 0.01, "ambiguous_behavior": 0.93, "no_issue": 0.03}}}
+{"id": "synthetic-code_review-0140-choice-2", "teacher_probs": {"gpt_5_6_luna": {"incomplete": 0.06, "redundant": 0.05, "accurate": 0.88, "malformed": 0.01}}}
+{"id": "synthetic-code_review-0140-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.86, "theoretically_possible": 0.03, "conditionally_possible": 0.08, "practically_infeasible": 0.01}}}
+{"id": "synthetic-code_review-0140-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.25, "theoretically_possible": 0.08, "conditionally_possible": 0.62, "practically_infeasible": 0.04}}}
+{"id": "synthetic-code_review-0140-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.84, "theoretically_possible": 0.04, "conditionally_possible": 0.09, "practically_infeasible": 0.01}}}
+{"id": "synthetic-code_review-0140-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"malformed": 0.001, "redundant": 0.004, "accurate": 0.97, "incomplete": 0.025}}}
+{"id": "synthetic-code_review-0140-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.18, "false": 0.48, "theoretically_possible": 0.08, "conditionally_possible": 0.24, "practically_infeasible": 0.02}}}
+{"id": "synthetic-code_review-0143-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.18, "performance": 0.01, "style": 0.72, "clean": 0.08}}}
+{"id": "synthetic-code_review-0143-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.57, "performance": 0.01, "style": 0.39, "clean": 0.02}}}
+{"id": "synthetic-code_review-0143-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"logic_bug": 0.05, "security": 0.01, "style": 0.87, "performance": 0.01, "clean": 0.06}}}
+{"id": "synthetic-code_review-0145-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.2, "logic_bug": 0.32, "performance": 0.01, "style": 0.05, "clean": 0.42}}}
+{"id": "synthetic-code_review-0145-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.2, "logic_bug": 0.25, "performance": 0.1, "style": 0.1, "clean": 0.35}}}
+{"id": "synthetic-code_review-0146-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.88, "theoretically_possible": 0.05, "conditionally_possible": 0.04, "practically_infeasible": 0.02}}}
+{"id": "synthetic-code_review-0146-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"ambiguity": 0.7, "duplication": 0.2, "data_loss": 0.08, "no_concern": 0.02}}}
+{"id": "synthetic-code_review-0149-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.82, "partially_different": 0.04, "unpredictable": 0.02, "depends_on_assumptions": 0.04}}}
+{"id": "synthetic-code_review-0149-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.0, "logic_bug": 0.05, "performance": 0.0, "style": 0.85, "clean": 0.1}}}
+{"id": "synthetic-code_review-0149-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.01, "partially_different": 0.01, "unpredictable": 0.005, "depends_on_assumptions": 0.005}}}
+{"id": "synthetic-code_review-0149-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.2, "performance": 0.01, "style": 0.08, "clean": 0.7}}}
+{"id": "synthetic-code_review-0149-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"logic_bug": 0.12, "style": 0.68, "security": 0.02, "clean": 0.16, "performance": 0.02}}}
+{"id": "synthetic-code_review-0149-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.25, "false": 0.55, "partially_different": 0.1, "unpredictable": 0.05, "depends_on_assumptions": 0.05}}}
+{"id": "synthetic-code_review-0151-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.18, "1": 0.12, "2": 0.6, "3": 0.08, "4": 0.02}}}
+{"id": "synthetic-code_review-0151-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.005, "logic_bug": 0.01, "performance": 0.005, "style": 0.03, "clean": 0.95}}}
+{"id": "synthetic-code_review-0151-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.28, "1": 0.68, "2": 0.035, "3": 0.004, "4": 0.001}}}
+{"id": "synthetic-code_review-0152-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.78, "false": 0.12, "borderline": 0.08, "overlapping_categories": 0.005, "insufficient_criteria": 0.015}}}
+{"id": "synthetic-code_review-0152-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.4, "false": 0.55, "borderline": 0.03, "overlapping_categories": 0.01, "insufficient_criteria": 0.01}}}
+{"id": "synthetic-code_review-0153-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.03, "performance": 0.01, "style": 0.02, "clean": 0.93}}}
+{"id": "synthetic-code_review-0153-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.55, "false": 0.03, "minor_risk": 0.05, "context_dependent": 0.17, "insufficient_safety_data": 0.2}}}
+{"id": "synthetic-code_review-0153-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.28, "minor_risk": 0.04, "context_dependent": 0.2, "insufficient_safety_data": 0.45}}}
+{"id": "synthetic-code_review-0155-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.03, "performance": 0.01, "style": 0.01, "clean": 0.94}}}
+{"id": "synthetic-code_review-0156-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"appropriate": 0.62, "too_broad": 0.23, "too_narrow": 0.02, "incorrect": 0.13}}}
+{"id": "synthetic-code_review-0157-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.08, "performance": 0.01, "style": 0.12, "clean": 0.78}}}
+{"id": "synthetic-code_review-0160-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.005, "partially_true": 0.003, "unverifiable": 0.002, "outdated": 0.0}}}
+{"id": "synthetic-code_review-0160-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.06, "minor_risk": 0.08, "context_dependent": 0.24, "insufficient_safety_data": 0.5}}}
+{"id": "synthetic-code_review-0160-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.02, "logic_bug": 0.08, "performance": 0.01, "style": 0.09, "clean": 0.8}}}
+{"id": "synthetic-code_review-0160-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.65, "false": 0.03, "minor_risk": 0.02, "context_dependent": 0.1, "insufficient_safety_data": 0.2}}}
+{"id": "synthetic-code_review-0160-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.96, "false": 0.01, "minor_risk": 0.005, "context_dependent": 0.015, "insufficient_safety_data": 0.01}}}
+{"id": "synthetic-code_review-0160-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.93, "false": 0.02, "partially_true": 0.03, "unverifiable": 0.02, "outdated": 0.0}}}
+{"id": "synthetic-code_review-0160-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.72, "false": 0.04, "minor_risk": 0.01, "context_dependent": 0.13, "insufficient_safety_data": 0.1}}}
+{"id": "synthetic-code_review-0160-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"clean": 0.72, "style": 0.08, "logic_bug": 0.15, "performance": 0.03, "security": 0.02}}}
+{"id": "synthetic-code_review-0163-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.17, "contributing_factor": 0.05, "correlation_not_causation": 0.02, "insufficient_evidence": 0.68}}}
+{"id": "synthetic-code_review-0164-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.01, "performance": 0.0, "style": 0.03, "clean": 0.95}}}
+{"id": "synthetic-code_review-0167-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.72, "false": 0.02, "borderline": 0.2, "overlapping_categories": 0.0, "insufficient_criteria": 0.06}}}
+{"id": "synthetic-code_review-0168-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.005, "theoretically_possible": 0.005, "conditionally_possible": 0.008, "practically_infeasible": 0.002}}}
+{"id": "synthetic-code_review-0168-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.005, "false": 0.98, "theoretically_possible": 0.01, "conditionally_possible": 0.004, "practically_infeasible": 0.001}}}
+{"id": "synthetic-code_review-0168-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"incorrect": 0.03, "missing": 0.01, "precise": 0.82, "ambiguous": 0.14}}}
+{"id": "synthetic-code_review-0175-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.001, "logic_bug": 0.004, "performance": 0.001, "style": 0.62, "clean": 0.374}}}
+{"id": "synthetic-code_review-0175-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.001, "logic_bug": 0.002, "performance": 0.001, "style": 0.006, "clean": 0.99}}}
+{"id": "synthetic-code_review-0178-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.001, "false": 0.995, "contributing_factor": 0.001, "correlation_not_causation": 0.001, "insufficient_evidence": 0.002}}}
+{"id": "synthetic-code_review-0178-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"fully_accurate": 0.78, "absent": 0.01, "misleading": 0.06, "mostly_accurate": 0.15}}}
+{"id": "synthetic-code_review-0178-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.998, "false": 0.001, "contributing_factor": 0.0002, "correlation_not_causation": 0.0001, "insufficient_evidence": 0.0007}}}
+{"id": "synthetic-code_review-0180-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.01, "logic_bug": 0.03, "performance": 0.01, "style": 0.01, "clean": 0.94}}}
+{"id": "synthetic-code_review-0180-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"performance": 0.03, "clean": 0.9, "security": 0.01, "style": 0.03, "logic_bug": 0.03}}}
+{"id": "synthetic-code_review-0183-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.005, "partially_different": 0.002, "unpredictable": 0.001, "depends_on_assumptions": 0.002}}}
+{"id": "synthetic-code_review-0183-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.03, "logic_bug": 0.05, "performance": 0.01, "style": 0.03, "clean": 0.88}}}
+{"id": "synthetic-code_review-0183-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"style": 0.08, "clean": 0.8, "logic_bug": 0.08, "performance": 0.03, "security": 0.01}}}
+{"id": "synthetic-code_review-0188-choice-0", "teacher_probs": {"gpt_5_6_luna": {"security": 0.08, "logic_bug": 0.08, "performance": 0.02, "style": 0.07, "clean": 0.75}}}
+{"id": "synthetic-code_review-0188-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.93, "approximately_equal": 0.02, "depends_on_metric": 0.01, "insufficient_data": 0.01}}}
+{"id": "synthetic-code_review-0193-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.9, "partially_different": 0.05, "unpredictable": 0.01, "depends_on_assumptions": 0.02}}}
+{"id": "synthetic-code_review-0196-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"purposes": 0.78, "groups": 0.03, "model_ids": 0.08, "classes": 0.06, "protocol": 0.05}}}

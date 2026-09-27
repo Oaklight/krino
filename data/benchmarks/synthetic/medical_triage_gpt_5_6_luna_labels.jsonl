@@ -6785,3 +6785,65 @@
 {"id": "synthetic-medical_triage-0199-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.99}}}
 {"id": "synthetic-medical_triage-0199-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0}}}
 {"id": "synthetic-medical_triage-0199-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.9, "false": 0.09999999999999998}}}
+{"id": "synthetic-medical_triage-0001-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.15, "emergent": 0.4, "urgent": 0.3, "less_urgent": 0.1, "non_urgent": 0.05}}}
+{"id": "synthetic-medical_triage-0001-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"less_urgent": 0.08, "non_urgent": 0.04, "urgent": 0.46, "emergent": 0.3, "immediate": 0.12}}}
+{"id": "synthetic-medical_triage-0002-choice-1", "teacher_probs": {"gpt_5_6_luna": {"vascular_surgery": 0.5, "colorectal_surgery": 0.17, "gastroenterology": 0.1, "interventional_radiology": 0.03, "multidisciplinary": 0.2}}}
+{"id": "synthetic-medical_triage-0002-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"vascular_surgery": 0.5, "colorectal_surgery": 0.2, "gastroenterology": 0.15, "interventional_radiology": 0.05, "multidisciplinary": 0.1}}}
+{"id": "synthetic-medical_triage-0002-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"gastroenterology": 0.08, "vascular_surgery": 0.38, "multidisciplinary": 0.22, "colorectal_surgery": 0.3, "interventional_radiology": 0.02}}}
+{"id": "synthetic-medical_triage-0004-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.14, "2": 0.7, "3": 0.15}}}
+{"id": "synthetic-medical_triage-0005-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.1, "borderline": 0.2, "overlapping_categories": 0.04, "insufficient_criteria": 0.65}}}
+{"id": "synthetic-medical_triage-0007-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.08, "emergent": 0.38, "urgent": 0.43, "less_urgent": 0.09, "non_urgent": 0.02}}}
+{"id": "synthetic-medical_triage-0021-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.06, "simultaneous": 0.01, "ambiguous_timeline": 0.2, "insufficient_temporal_data": 0.7}}}
+{"id": "synthetic-medical_triage-0025-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"under_resuscitated": 0.07, "appropriately_resuscitated": 0.25, "over_resuscitated": 0.46, "unclear": 0.22}}}
+{"id": "synthetic-medical_triage-0031-cf-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.005, "false": 0.97, "mostly_consistent": 0.01, "trivially_inconsistent": 0.005, "cannot_determine": 0.01}}}
+{"id": "synthetic-medical_triage-0033-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.12, "emergent": 0.72, "urgent": 0.12, "less_urgent": 0.03, "non_urgent": 0.01}}}
+{"id": "synthetic-medical_triage-0033-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.02, "2": 0.12, "3": 0.38, "4": 0.47}}}
+{"id": "synthetic-medical_triage-0033-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.65, "false": 0.08, "borderline": 0.02, "overlapping_categories": 0.01, "insufficient_criteria": 0.24}}}
+{"id": "synthetic-medical_triage-0033-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.88, "false": 0.04, "borderline": 0.04, "approaching": 0.02, "measurement_uncertain": 0.02}}}
+{"id": "synthetic-medical_triage-0041-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.72, "borderline": 0.1, "sufficient_with_caveats": 0.08, "more_info_needed": 0.02}}}
+{"id": "synthetic-medical_triage-0042-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.08, "emergent": 0.27, "urgent": 0.4, "less_urgent": 0.17, "non_urgent": 0.08}}}
+{"id": "synthetic-medical_triage-0042-cf-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.18, "false": 0.25, "partially_true": 0.02, "unverifiable": 0.55, "outdated": 0.0}}}
+{"id": "synthetic-medical_triage-0042-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.2, "emergent": 0.45, "urgent": 0.3, "less_urgent": 0.04, "non_urgent": 0.01}}}
+{"id": "synthetic-medical_triage-0042-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"bleeding_complication": 0.55, "procedure_preparation": 0.25, "overdose_correction": 0.15, "end_of_therapy": 0.05}}}
+{"id": "synthetic-medical_triage-0042-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.2, "less_urgent": 0.05, "emergent": 0.45, "non_urgent": 0.05, "urgent": 0.25}}}
+{"id": "synthetic-medical_triage-0048-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.08, "simultaneous": 0.03, "ambiguous_timeline": 0.24, "insufficient_temporal_data": 0.57}}}
+{"id": "synthetic-medical_triage-0048-para-state-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.07, "simultaneous": 0.01, "ambiguous_timeline": 0.12, "insufficient_temporal_data": 0.72}}}
+{"id": "synthetic-medical_triage-0048-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.08, "simultaneous": 0.02, "ambiguous_timeline": 0.22, "insufficient_temporal_data": 0.6}}}
+{"id": "synthetic-medical_triage-0058-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"non_urgent": 0.18, "immediate": 0.08, "less_urgent": 0.18, "emergent": 0.2, "urgent": 0.36}}}
+{"id": "synthetic-medical_triage-0060-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.01, "emergent": 0.18, "urgent": 0.4, "less_urgent": 0.06, "non_urgent": 0.35}}}
+{"id": "synthetic-medical_triage-0076-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"seizure_postictal": 0.05, "global_hypoperfusion": 0.5, "hemorrhagic_stroke": 0.05, "acute_ischemic_stroke": 0.35, "metabolic_encephalopathy": 0.05}}}
+{"id": "synthetic-medical_triage-0079-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"non_urgent": 0.02, "immediate": 0.08, "less_urgent": 0.1, "emergent": 0.3, "urgent": 0.5}}}
+{"id": "synthetic-medical_triage-0081-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.55, "false": 0.15, "borderline": 0.12, "sufficient_with_caveats": 0.08, "more_info_needed": 0.1}}}
+{"id": "synthetic-medical_triage-0085-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"non_urgent": 0.08, "immediate": 0.08, "less_urgent": 0.12, "emergent": 0.25, "urgent": 0.47}}}
+{"id": "synthetic-medical_triage-0086-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.9, "contributing_factor": 0.03, "correlation_not_causation": 0.01, "insufficient_evidence": 0.04}}}
+{"id": "synthetic-medical_triage-0087-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.04, "false": 0.72, "partially_different": 0.02, "unpredictable": 0.08, "depends_on_assumptions": 0.14}}}
+{"id": "synthetic-medical_triage-0103-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.01, "emergent": 0.04, "urgent": 0.45, "less_urgent": 0.15, "non_urgent": 0.35}}}
+{"id": "synthetic-medical_triage-0110-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.005, "emergent": 0.025, "urgent": 0.12, "less_urgent": 0.3, "non_urgent": 0.55}}}
+{"id": "synthetic-medical_triage-0110-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.01, "emergent": 0.02, "urgent": 0.08, "less_urgent": 0.24, "non_urgent": 0.65}}}
+{"id": "synthetic-medical_triage-0114-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.72, "false": 0.01, "mostly_consistent": 0.06, "trivially_inconsistent": 0.01, "cannot_determine": 0.2}}}
+{"id": "synthetic-medical_triage-0114-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.04, "emergent": 0.2, "urgent": 0.62, "less_urgent": 0.12, "non_urgent": 0.02}}}
+{"id": "synthetic-medical_triage-0114-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.02, "partially_true": 0.03, "unverifiable": 0.03, "outdated": 0.0}}}
+{"id": "synthetic-medical_triage-0119-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.03, "emergent": 0.08, "urgent": 0.62, "less_urgent": 0.24, "non_urgent": 0.03}}}
+{"id": "synthetic-medical_triage-0119-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.06, "false": 0.55, "borderline": 0.12, "sufficient_with_caveats": 0.25, "more_info_needed": 0.02}}}
+{"id": "synthetic-medical_triage-0123-choice-2", "teacher_probs": {"gpt_5_6_luna": {"acute": 0.01, "subacute": 0.02, "recent": 0.12, "old": 0.85}}}
+{"id": "synthetic-medical_triage-0127-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.04, "emergent": 0.3, "urgent": 0.55, "less_urgent": 0.1, "non_urgent": 0.01}}}
+{"id": "synthetic-medical_triage-0127-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.03, "emergent": 0.3, "urgent": 0.55, "less_urgent": 0.1, "non_urgent": 0.02}}}
+{"id": "synthetic-medical_triage-0132-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.9, "theoretically_possible": 0.04, "conditionally_possible": 0.02, "practically_infeasible": 0.01}}}
+{"id": "synthetic-medical_triage-0137-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"upper_gi_bleed": 0.35, "lower_gi_bleed": 0.01, "swallowed_blood": 0.14, "factitious": 0.5}}}
+{"id": "synthetic-medical_triage-0137-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"lower_gi_bleed": 0.005, "factitious": 0.005, "upper_gi_bleed": 0.97, "swallowed_blood": 0.02}}}
+{"id": "synthetic-medical_triage-0138-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.08, "theoretically_possible": 0.7, "conditionally_possible": 0.15, "practically_infeasible": 0.04}}}
+{"id": "synthetic-medical_triage-0140-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.12, "emergent": 0.58, "urgent": 0.25, "less_urgent": 0.04, "non_urgent": 0.01}}}
+{"id": "synthetic-medical_triage-0140-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.02, "emergent": 0.08, "urgent": 0.2, "less_urgent": 0.4, "non_urgent": 0.3}}}
+{"id": "synthetic-medical_triage-0140-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"emergent": 0.48, "less_urgent": 0.06, "immediate": 0.15, "urgent": 0.28, "non_urgent": 0.03}}}
+{"id": "synthetic-medical_triage-0143-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.3, "contributing_factor": 0.04, "correlation_not_causation": 0.02, "insufficient_evidence": 0.52}}}
+{"id": "synthetic-medical_triage-0151-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.12, "emergent": 0.48, "urgent": 0.3, "less_urgent": 0.07, "non_urgent": 0.03}}}
+{"id": "synthetic-medical_triage-0151-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"emergent": 0.09, "less_urgent": 0.27, "immediate": 0.04, "urgent": 0.38, "non_urgent": 0.22}}}
+{"id": "synthetic-medical_triage-0155-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.62, "false": 0.12, "borderline": 0.08, "sufficient_with_caveats": 0.1, "more_info_needed": 0.08}}}
+{"id": "synthetic-medical_triage-0159-choice-1", "teacher_probs": {"gpt_5_6_luna": {"gestational_age": 0.02, "test_date": 0.94, "bpp_score": 0.05, "patient_id": 0.01}}}
+{"id": "synthetic-medical_triage-0159-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"gestational_age": 0.02, "test_date": 0.96, "bpp_score": 0.015, "patient_id": 0.005}}}
+{"id": "synthetic-medical_triage-0162-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.52, "false": 0.01, "borderline": 0.07, "sufficient_with_caveats": 0.2, "more_info_needed": 0.2}}}
+{"id": "synthetic-medical_triage-0170-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.02, "emergent": 0.48, "urgent": 0.4, "less_urgent": 0.09, "non_urgent": 0.01}}}
+{"id": "synthetic-medical_triage-0185-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.02, "emergent": 0.3, "urgent": 0.4, "less_urgent": 0.2, "non_urgent": 0.08}}}
+{"id": "synthetic-medical_triage-0194-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"immediate": 0.12, "emergent": 0.3, "urgent": 0.5, "less_urgent": 0.06, "non_urgent": 0.02}}}
+{"id": "synthetic-medical_triage-0194-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.03, "2": 0.16, "3": 0.62, "4": 0.18}}}
+{"id": "synthetic-medical_triage-0199-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.62, "theoretically_possible": 0.16, "conditionally_possible": 0.13, "practically_infeasible": 0.01}}}

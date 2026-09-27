@@ -6660,3 +6660,319 @@
 {"id": "synthetic-sequential_action-0199-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
 {"id": "synthetic-sequential_action-0199-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.88}}}
 {"id": "synthetic-sequential_action-0199-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-sequential_action-0000-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.08, "adapt": 0.86, "recover": 0.03, "skip": 0.01, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0000-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"oven_first_batch_then_sear_second": 0.97, "sear_second_batch_first": 0.02, "combine_all_in_oven_unseared": 0.009, "discard_torn_thigh": 0.001}}}
+{"id": "synthetic-sequential_action-0001-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.62, "2": 0.28, "3": 0.02}}}
+{"id": "synthetic-sequential_action-0001-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.34, "false": 0.28, "borderline": 0.34, "overlapping_categories": 0.01, "insufficient_criteria": 0.03}}}
+{"id": "synthetic-sequential_action-0001-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.04, "false": 0.78, "borderline": 0.15, "overlapping_categories": 0.01, "insufficient_criteria": 0.02}}}
+{"id": "synthetic-sequential_action-0002-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.72, "false": 0.12, "theoretically_possible": 0.06, "conditionally_possible": 0.06, "practically_infeasible": 0.04}}}
+{"id": "synthetic-sequential_action-0003-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.78, "recover": 0.15, "skip": 0.01, "verify": 0.04}}}
+{"id": "synthetic-sequential_action-0003-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.08, "adapt": 0.55, "recover": 0.3, "skip": 0.01, "verify": 0.06}}}
+{"id": "synthetic-sequential_action-0003-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.04, "skip": 0.01, "recover": 0.58, "adapt": 0.35, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0004-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.08, "borderline": 0.12, "sufficient_with_caveats": 0.65, "more_info_needed": 0.07}}}
+{"id": "synthetic-sequential_action-0004-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.18, "borderline": 0.1, "sufficient_with_caveats": 0.38, "more_info_needed": 0.22}}}
+{"id": "synthetic-sequential_action-0004-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.22, "false": 0.01, "borderline": 0.08, "sufficient_with_caveats": 0.62, "more_info_needed": 0.07}}}
+{"id": "synthetic-sequential_action-0004-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.28, "false": 0.01, "borderline": 0.04, "sufficient_with_caveats": 0.53, "more_info_needed": 0.14}}}
+{"id": "synthetic-sequential_action-0004-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.28, "false": 0.05, "borderline": 0.18, "sufficient_with_caveats": 0.36, "more_info_needed": 0.13}}}
+{"id": "synthetic-sequential_action-0007-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.01, "borderline": 0.04, "sufficient_with_caveats": 0.14, "more_info_needed": 0.8}}}
+{"id": "synthetic-sequential_action-0007-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.96, "adapt": 0.02, "recover": 0.01, "skip": 0.005, "verify": 0.005}}}
+{"id": "synthetic-sequential_action-0010-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"keep_low": 0.78, "increase_high": 0.08, "turn_off": 0.04, "increase_after_fix": 0.1}}}
+{"id": "synthetic-sequential_action-0010-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.82, "false": 0.04, "theoretically_possible": 0.04, "conditionally_possible": 0.08, "practically_infeasible": 0.02}}}
+{"id": "synthetic-sequential_action-0012-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"re_cream_room_temp": 0.72, "microwave_soften": 0.06, "add_eggs_proceed": 0.08, "discard_restart": 0.02, "parallel_dry": 0.12}}}
+{"id": "synthetic-sequential_action-0013-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.27, "recover": 0.65, "skip": 0.01, "verify": 0.05}}}
+{"id": "synthetic-sequential_action-0013-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.62, "partially_different": 0.08, "unpredictable": 0.07, "depends_on_assumptions": 0.15}}}
+{"id": "synthetic-sequential_action-0014-choice-1", "teacher_probs": {"gpt_5_6_luna": {"add_to_batter": 0.01, "discard": 0.05, "reserve_for_dusting": 0.03, "set_aside": 0.91}}}
+{"id": "synthetic-sequential_action-0014-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.04, "2": 0.78, "3": 0.16, "4": 0.01}}}
+{"id": "synthetic-sequential_action-0014-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.2, "false": 0.01, "mostly_consistent": 0.55, "trivially_inconsistent": 0.2, "cannot_determine": 0.04}}}
+{"id": "synthetic-sequential_action-0014-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"set_aside": 0.9, "discard": 0.04, "reserve_for_dusting": 0.04, "add_to_batter": 0.02}}}
+{"id": "synthetic-sequential_action-0019-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.12, "adapt": 0.68, "recover": 0.03, "skip": 0.01, "verify": 0.16}}}
+{"id": "synthetic-sequential_action-0019-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.3, "1": 0.58, "2": 0.11, "3": 0.01}}}
+{"id": "synthetic-sequential_action-0019-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.78, "false": 0.03, "theoretically_possible": 0.08, "conditionally_possible": 0.08, "practically_infeasible": 0.03}}}
+{"id": "synthetic-sequential_action-0020-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.02, "borderline": 0.005, "approaching": 0.004, "measurement_uncertain": 0.001}}}
+{"id": "synthetic-sequential_action-0020-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.005, "false": 0.34, "borderline": 0.65, "approaching": 0.003, "measurement_uncertain": 0.002}}}
+{"id": "synthetic-sequential_action-0021-choice-2", "teacher_probs": {"gpt_5_6_luna": {"wrong_oil_type": 0.27, "wok_too_hot": 0.62, "oil_quantity": 0.08, "residual_moisture": 0.03}}}
+{"id": "synthetic-sequential_action-0021-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"wrong_oil_type": 0.08, "wok_too_hot": 0.88, "oil_quantity": 0.03, "residual_moisture": 0.01}}}
+{"id": "synthetic-sequential_action-0022-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.01, "adapt": 0.96, "recover": 0.01, "skip": 0.0, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0022-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.12, "adapt": 0.64, "recover": 0.18, "skip": 0.01, "verify": 0.05}}}
+{"id": "synthetic-sequential_action-0022-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.01, "adapt": 0.72, "recover": 0.22, "skip": 0.01, "verify": 0.04}}}
+{"id": "synthetic-sequential_action-0022-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"adapt": 0.58, "skip": 0.02, "proceed_planned": 0.18, "verify": 0.08, "recover": 0.14}}}
+{"id": "synthetic-sequential_action-0023-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.62, "false": 0.01, "simultaneous": 0.01, "ambiguous_timeline": 0.06, "insufficient_temporal_data": 0.3}}}
+{"id": "synthetic-sequential_action-0023-para-state-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.03, "simultaneous": 0.01, "ambiguous_timeline": 0.13, "insufficient_temporal_data": 0.8}}}
+{"id": "synthetic-sequential_action-0023-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"compromised": 0.01, "minor_flaw": 0.08, "needs_intervention": 0.9, "no_issue": 0.01}}}
+{"id": "synthetic-sequential_action-0023-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.25, "2": 0.6, "3": 0.1}}}
+{"id": "synthetic-sequential_action-0023-para-q-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.08, "simultaneous": 0.01, "ambiguous_timeline": 0.18, "insufficient_temporal_data": 0.7}}}
+{"id": "synthetic-sequential_action-0024-choice-2", "teacher_probs": {"gpt_5_6_luna": {"immediately": 0.82, "after_herbs": 0.03, "after_tasting": 0.05, "simultaneously": 0.1}}}
+{"id": "synthetic-sequential_action-0024-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"immediately": 0.82, "after_herbs": 0.02, "after_tasting": 0.04, "simultaneously": 0.12}}}
+{"id": "synthetic-sequential_action-0025-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"after_draining": 0.78, "delegate": 0.12, "immediately": 0.03, "while_browning": 0.07}}}
+{"id": "synthetic-sequential_action-0026-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.03, "theoretically_possible": 0.68, "conditionally_possible": 0.2, "practically_infeasible": 0.08}}}
+{"id": "synthetic-sequential_action-0026-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"no_risk": 0.03, "low_risk": 0.22, "moderate_risk": 0.67, "high_risk": 0.08}}}
+{"id": "synthetic-sequential_action-0027-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.001, "false": 0.995, "theoretically_possible": 0.001, "conditionally_possible": 0.002, "practically_infeasible": 0.001}}}
+{"id": "synthetic-sequential_action-0027-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.18, "recover": 0.04, "skip": 0.01, "verify": 0.75}}}
+{"id": "synthetic-sequential_action-0027-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.75, "2": 0.19, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0027-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.35, "1": 0.5, "2": 0.14, "3": 0.01}}}
+{"id": "synthetic-sequential_action-0027-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.97, "theoretically_possible": 0.01, "conditionally_possible": 0.01, "practically_infeasible": 0.0}}}
+{"id": "synthetic-sequential_action-0027-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.06, "1": 0.7, "2": 0.23, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0027-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.25, "2": 0.6, "3": 0.14}}}
+{"id": "synthetic-sequential_action-0027-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"recover": 0.2, "adapt": 0.18, "skip": 0.02, "verify": 0.55, "proceed_planned": 0.05}}}
+{"id": "synthetic-sequential_action-0027-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.82, "false": 0.03, "borderline": 0.12, "overlapping_categories": 0.01, "insufficient_criteria": 0.02}}}
+{"id": "synthetic-sequential_action-0028-choice-2", "teacher_probs": {"gpt_5_6_luna": {"add_to_risotto_now": 0.08, "reserve_for_finishing": 0.76, "discard": 0.03, "add_incrementally": 0.02, "no_action": 0.11}}}
+{"id": "synthetic-sequential_action-0028-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.03, "theoretically_possible": 0.52, "conditionally_possible": 0.27, "practically_infeasible": 0.1}}}
+{"id": "synthetic-sequential_action-0028-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.22, "adapt": 0.58, "recover": 0.04, "skip": 0.01, "verify": 0.15}}}
+{"id": "synthetic-sequential_action-0028-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.58, "adapt": 0.22, "recover": 0.08, "skip": 0.02, "verify": 0.1}}}
+{"id": "synthetic-sequential_action-0028-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"adapt": 0.62, "recover": 0.2, "verify": 0.05, "proceed_planned": 0.12, "skip": 0.01}}}
+{"id": "synthetic-sequential_action-0031-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.12, "adapt": 0.3, "recover": 0.48, "skip": 0.04, "verify": 0.06}}}
+{"id": "synthetic-sequential_action-0033-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.3, "1": 0.6, "2": 0.1, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0033-para-state-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.9, "false": 0.01, "partially_supported": 0.06, "neutral": 0.0, "insufficient_evidence": 0.03}}}
+{"id": "synthetic-sequential_action-0033-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.78, "1": 0.2, "2": 0.02, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0033-para-q-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.55, "false": 0.1, "partially_supported": 0.3, "neutral": 0.01, "insufficient_evidence": 0.04}}}
+{"id": "synthetic-sequential_action-0034-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.04, "adapt": 0.14, "recover": 0.04, "skip": 0.01, "verify": 0.77}}}
+{"id": "synthetic-sequential_action-0034-choice-1", "teacher_probs": {"gpt_5_6_luna": {"discard_restart": 0.04, "continue_monitor": 0.58, "drain_early": 0.03, "add_water": 0.35}}}
+{"id": "synthetic-sequential_action-0034-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.26, "adapt": 0.48, "recover": 0.06, "skip": 0.01, "verify": 0.19}}}
+{"id": "synthetic-sequential_action-0034-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"discard_restart": 0.03, "continue_monitor": 0.75, "drain_early": 0.02, "add_water": 0.2}}}
+{"id": "synthetic-sequential_action-0034-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"recover": 0.04, "adapt": 0.2, "proceed_planned": 0.07, "skip": 0.01, "verify": 0.68}}}
+{"id": "synthetic-sequential_action-0035-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.96, "adapt": 0.02, "recover": 0.01, "skip": 0.0, "verify": 0.01}}}
+{"id": "synthetic-sequential_action-0035-choice-2", "teacher_probs": {"gpt_5_6_luna": {"cutting_board": 0.08, "wooden_spoon": 0.08, "boiling_water_pot": 0.72, "olive_oil_bottle": 0.12}}}
+{"id": "synthetic-sequential_action-0035-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.9, "adapt": 0.04, "recover": 0.03, "skip": 0.01, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0035-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.93, "adapt": 0.03, "recover": 0.01, "skip": 0.01, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0035-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"olive_oil_bottle": 0.58, "cutting_board": 0.12, "wooden_spoon": 0.12, "boiling_water_pot": 0.18}}}
+{"id": "synthetic-sequential_action-0039-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"level_corrected": 0.01, "bolt_shear": 0.01, "misalignment": 0.12, "panel_detach": 0.01, "no_effect": 0.85}}}
+{"id": "synthetic-sequential_action-0040-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"adapt": 0.68, "recover": 0.2, "proceed_planned": 0.1, "skip": 0.01, "verify": 0.01}}}
+{"id": "synthetic-sequential_action-0043-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.08, "adapt": 0.22, "recover": 0.64, "skip": 0.01, "verify": 0.05}}}
+{"id": "synthetic-sequential_action-0044-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.32, "adapt": 0.58, "recover": 0.04, "skip": 0.02, "verify": 0.04}}}
+{"id": "synthetic-sequential_action-0045-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.2, "adapt": 0.45, "recover": 0.3, "skip": 0.02, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0045-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.08, "adapt": 0.58, "recover": 0.3, "skip": 0.01, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0045-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"skip": 0.01, "proceed_planned": 0.12, "verify": 0.02, "adapt": 0.5, "recover": 0.35}}}
+{"id": "synthetic-sequential_action-0048-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.18, "false": 0.68, "borderline": 0.08, "overlapping_categories": 0.01, "insufficient_criteria": 0.05}}}
+{"id": "synthetic-sequential_action-0049-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.58, "1": 0.38, "2": 0.04, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0049-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.78, "1": 0.2, "2": 0.02, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0049-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.18, "1": 0.62, "2": 0.18, "3": 0.02, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0049-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"skip": 0.01, "adapt": 0.68, "proceed_planned": 0.03, "verify": 0.06, "recover": 0.22}}}
+{"id": "synthetic-sequential_action-0050-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.002, "false": 0.992, "borderline": 0.002, "sufficient_with_caveats": 0.002, "more_info_needed": 0.002}}}
+{"id": "synthetic-sequential_action-0051-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.12, "recover": 0.82, "skip": 0.01, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0051-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.06, "adapt": 0.2, "recover": 0.72, "skip": 0.005, "verify": 0.015}}}
+{"id": "synthetic-sequential_action-0051-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"recover": 0.82, "skip": 0.01, "adapt": 0.1, "verify": 0.04, "proceed_planned": 0.03}}}
+{"id": "synthetic-sequential_action-0052-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.3, "1": 0.65, "2": 0.05, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0053-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.22, "adapt": 0.08, "recover": 0.68, "skip": 0.0, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0053-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.72, "minor_risk": 0.1, "context_dependent": 0.07, "insufficient_safety_data": 0.03}}}
+{"id": "synthetic-sequential_action-0055-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.18, "adapt": 0.76, "recover": 0.03, "skip": 0.01, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0055-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"recover": 0.05, "adapt": 0.72, "skip": 0.02, "proceed_planned": 0.18, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0056-choice-2", "teacher_probs": {"gpt_5_6_luna": {"grease_then_shred_then_noodles": 0.82, "noodles_then_grease_then_shred": 0.05, "shred_then_noodles_then_grease": 0.03, "grease_then_noodles_then_shred": 0.1}}}
+{"id": "synthetic-sequential_action-0056-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"grease_then_shred_then_noodles": 0.93, "noodles_then_grease_then_shred": 0.02, "shred_then_noodles_then_grease": 0.02, "grease_then_noodles_then_shred": 0.03}}}
+{"id": "synthetic-sequential_action-0056-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"noodles_then_grease_then_shred": 0.03, "shred_then_noodles_then_grease": 0.04, "grease_then_shred_then_noodles": 0.78, "grease_then_noodles_then_shred": 0.15}}}
+{"id": "synthetic-sequential_action-0057-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.04, "1": 0.28, "2": 0.56, "3": 0.11, "4": 0.01}}}
+{"id": "synthetic-sequential_action-0059-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.78, "adapt": 0.14, "recover": 0.03, "skip": 0.01, "verify": 0.04}}}
+{"id": "synthetic-sequential_action-0059-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.58, "adapt": 0.25, "recover": 0.08, "skip": 0.01, "verify": 0.08}}}
+{"id": "synthetic-sequential_action-0059-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.22, "adapt": 0.54, "recover": 0.08, "skip": 0.04, "verify": 0.12}}}
+{"id": "synthetic-sequential_action-0059-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"skip": 0.02, "recover": 0.04, "proceed_planned": 0.22, "verify": 0.08, "adapt": 0.64}}}
+{"id": "synthetic-sequential_action-0060-choice-2", "teacher_probs": {"gpt_5_6_luna": {"carrots_then_spices": 0.12, "spices_then_carrots": 0.05, "taste_first": 0.03, "simultaneous": 0.8}}}
+{"id": "synthetic-sequential_action-0062-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.01, "borderline": 0.08, "sufficient_with_caveats": 0.22, "more_info_needed": 0.66}}}
+{"id": "synthetic-sequential_action-0062-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.98, "adapt": 0.01, "recover": 0.005, "skip": 0.003, "verify": 0.002}}}
+{"id": "synthetic-sequential_action-0062-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.02, "borderline": 0.1, "sufficient_with_caveats": 0.32, "more_info_needed": 0.55}}}
+{"id": "synthetic-sequential_action-0062-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.03, "borderline": 0.1, "sufficient_with_caveats": 0.34, "more_info_needed": 0.45}}}
+{"id": "synthetic-sequential_action-0062-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.08, "borderline": 0.12, "sufficient_with_caveats": 0.32, "more_info_needed": 0.45}}}
+{"id": "synthetic-sequential_action-0062-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.98, "recover": 0.005, "adapt": 0.01, "verify": 0.003, "skip": 0.002}}}
+{"id": "synthetic-sequential_action-0062-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.08, "borderline": 0.04, "sufficient_with_caveats": 0.15, "more_info_needed": 0.7}}}
+{"id": "synthetic-sequential_action-0065-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.4, "recover": 0.55, "skip": 0.01, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0065-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.08, "adapt": 0.62, "recover": 0.25, "skip": 0.01, "verify": 0.04}}}
+{"id": "synthetic-sequential_action-0065-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"skip": 0.01, "proceed_planned": 0.08, "verify": 0.03, "recover": 0.83, "adapt": 0.05}}}
+{"id": "synthetic-sequential_action-0066-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"recover": 0.8, "proceed_planned": 0.03, "skip": 0.01, "verify": 0.04, "adapt": 0.12}}}
+{"id": "synthetic-sequential_action-0067-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.01, "adapt": 0.12, "recover": 0.82, "skip": 0.01, "verify": 0.04}}}
+{"id": "synthetic-sequential_action-0067-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.01, "adapt": 0.08, "recover": 0.87, "skip": 0.01, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0067-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.55, "2": 0.32, "3": 0.04, "4": 0.01}}}
+{"id": "synthetic-sequential_action-0068-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.05, "adapt": 0.9, "recover": 0.01, "skip": 0.01, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0068-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.03, "adapt": 0.48, "recover": 0.4, "skip": 0.01, "verify": 0.08}}}
+{"id": "synthetic-sequential_action-0070-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.04, "adapt": 0.25, "recover": 0.58, "skip": 0.01, "verify": 0.12}}}
+{"id": "synthetic-sequential_action-0070-choice-2", "teacher_probs": {"gpt_5_6_luna": {"grease_second_pan": 0.35, "verify_oven_temp": 0.08, "reposition_filled_pan": 0.52, "begin_baking_first_layer": 0.05}}}
+{"id": "synthetic-sequential_action-0070-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.58, "2": 0.36, "3": 0.03}}}
+{"id": "synthetic-sequential_action-0070-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.12, "2": 0.62, "3": 0.25}}}
+{"id": "synthetic-sequential_action-0070-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.04, "verify": 0.07, "recover": 0.1, "adapt": 0.78, "skip": 0.01}}}
+{"id": "synthetic-sequential_action-0070-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"begin_baking_first_layer": 0.08, "reposition_filled_pan": 0.62, "verify_oven_temp": 0.08, "grease_second_pan": 0.22}}}
+{"id": "synthetic-sequential_action-0071-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.88, "false": 0.05, "borderline": 0.04, "overlapping_categories": 0.01, "insufficient_criteria": 0.02}}}
+{"id": "synthetic-sequential_action-0071-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.04, "adapt": 0.3, "recover": 0.5, "skip": 0.01, "verify": 0.15}}}
+{"id": "synthetic-sequential_action-0072-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.78, "1": 0.2, "2": 0.02, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0073-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.15, "borderline": 0.2, "sufficient_with_caveats": 0.55, "more_info_needed": 0.02}}}
+{"id": "synthetic-sequential_action-0073-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.72, "false": 0.02, "borderline": 0.05, "sufficient_with_caveats": 0.18, "more_info_needed": 0.03}}}
+{"id": "synthetic-sequential_action-0077-choice-1", "teacher_probs": {"gpt_5_6_luna": {"bolt_shortage": 0.08, "tilt_propagation": 0.52, "screwdriver_failure": 0.15, "panel_d_omission": 0.22, "time_overrun": 0.03}}}
+{"id": "synthetic-sequential_action-0077-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"bolt_shortage": 0.06, "tilt_propagation": 0.34, "screwdriver_failure": 0.14, "panel_d_omission": 0.43, "time_overrun": 0.03}}}
+{"id": "synthetic-sequential_action-0079-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.12, "recover": 0.83, "skip": 0.01, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0079-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.93, "false": 0.005, "borderline": 0.01, "sufficient_with_caveats": 0.045, "more_info_needed": 0.01}}}
+{"id": "synthetic-sequential_action-0079-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.87, "false": 0.01, "borderline": 0.03, "sufficient_with_caveats": 0.08, "more_info_needed": 0.01}}}
+{"id": "synthetic-sequential_action-0081-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.01, "adapt": 0.96, "recover": 0.02, "skip": 0.005, "verify": 0.005}}}
+{"id": "synthetic-sequential_action-0081-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.04, "1": 0.3, "2": 0.55, "3": 0.1, "4": 0.01}}}
+{"id": "synthetic-sequential_action-0082-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.08, "theoretically_possible": 0.18, "conditionally_possible": 0.16, "practically_infeasible": 0.55}}}
+{"id": "synthetic-sequential_action-0082-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.03, "theoretically_possible": 0.12, "conditionally_possible": 0.08, "practically_infeasible": 0.76}}}
+{"id": "synthetic-sequential_action-0082-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.72, "theoretically_possible": 0.1, "conditionally_possible": 0.1, "practically_infeasible": 0.07}}}
+{"id": "synthetic-sequential_action-0082-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"patch_technique": 0.62, "abandon": 0.01, "reduce_layers": 0.12, "boil_new": 0.25}}}
+{"id": "synthetic-sequential_action-0082-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.18, "theoretically_possible": 0.1, "conditionally_possible": 0.06, "practically_infeasible": 0.63}}}
+{"id": "synthetic-sequential_action-0086-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.01, "adapt": 0.1, "recover": 0.82, "skip": 0.01, "verify": 0.06}}}
+{"id": "synthetic-sequential_action-0086-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.12, "1": 0.58, "2": 0.27, "3": 0.03, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0086-para-q-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.86, "false": 0.01, "partially_supported": 0.1, "neutral": 0.01, "insufficient_evidence": 0.02}}}
+{"id": "synthetic-sequential_action-0089-choice-1", "teacher_probs": {"gpt_5_6_luna": {"attach_brackets": 0.48, "connect_psu_cables": 0.4, "install_cooler": 0.05, "reseat_ram": 0.04, "install_gpu": 0.03}}}
+{"id": "synthetic-sequential_action-0089-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.2, "adapt": 0.62, "recover": 0.08, "skip": 0.02, "verify": 0.08}}}
+{"id": "synthetic-sequential_action-0089-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"ignore_continue": 0.2, "correct_immediately": 0.65, "log_defer": 0.12, "restart_ram": 0.03}}}
+{"id": "synthetic-sequential_action-0089-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"adapt": 0.68, "recover": 0.18, "proceed_planned": 0.08, "skip": 0.02, "verify": 0.04}}}
+{"id": "synthetic-sequential_action-0090-choice-2", "teacher_probs": {"gpt_5_6_luna": {"screws_first": 0.88, "paste_first": 0.08, "simultaneous": 0.02, "neither_yet": 0.02}}}
+{"id": "synthetic-sequential_action-0091-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.01, "theoretically_possible": 0.12, "conditionally_possible": 0.75, "practically_infeasible": 0.04}}}
+{"id": "synthetic-sequential_action-0092-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.78, "recover": 0.08, "verify": 0.03, "adapt": 0.09, "skip": 0.02}}}
+{"id": "synthetic-sequential_action-0093-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.58, "adapt": 0.24, "recover": 0.12, "skip": 0.01, "verify": 0.05}}}
+{"id": "synthetic-sequential_action-0093-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.52, "adapt": 0.28, "recover": 0.15, "skip": 0.02, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0094-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.05, "2": 0.86, "3": 0.07, "4": 0.01}}}
+{"id": "synthetic-sequential_action-0096-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.002, "false": 0.003, "approximately_equal": 0.002, "depends_on_metric": 0.001, "insufficient_data": 0.992}}}
+{"id": "synthetic-sequential_action-0096-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.03, "approximately_equal": 0.01, "depends_on_metric": 0.01, "insufficient_data": 0.93}}}
+{"id": "synthetic-sequential_action-0096-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.001, "false": 0.001, "approximately_equal": 0.001, "depends_on_metric": 0.001, "insufficient_data": 0.996}}}
+{"id": "synthetic-sequential_action-0097-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.16, "adapt": 0.76, "recover": 0.04, "skip": 0.01, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0097-para-state-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.78, "mostly_consistent": 0.06, "trivially_inconsistent": 0.03, "cannot_determine": 0.05}}}
+{"id": "synthetic-sequential_action-0097-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.72, "adapt": 0.18, "recover": 0.03, "skip": 0.01, "verify": 0.06}}}
+{"id": "synthetic-sequential_action-0097-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"skip": 0.01, "recover": 0.08, "verify": 0.08, "proceed_planned": 0.28, "adapt": 0.55}}}
+{"id": "synthetic-sequential_action-0100-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.12, "1": 0.68, "2": 0.19, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0100-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.48, "recover": 0.22, "skip": 0.01, "verify": 0.27}}}
+{"id": "synthetic-sequential_action-0101-choice-1", "teacher_probs": {"gpt_5_6_luna": {"handlebar_misalignment": 0.46, "unclamped_cables": 0.36, "front_wheel_missing": 0.17, "uncalibrated_gauge": 0.01}}}
+{"id": "synthetic-sequential_action-0101-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"handlebar_misalignment": 0.28, "front_wheel_missing": 0.38, "uncalibrated_gauge": 0.03, "unclamped_cables": 0.31}}}
+{"id": "synthetic-sequential_action-0102-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.1, "2": 0.6, "3": 0.27, "4": 0.02}}}
+{"id": "synthetic-sequential_action-0102-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.05, "adapt": 0.62, "recover": 0.25, "skip": 0.05, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0102-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.04, "2": 0.18, "3": 0.72, "4": 0.05}}}
+{"id": "synthetic-sequential_action-0103-choice-2", "teacher_probs": {"gpt_5_6_luna": {"cooler_gpu_psu_fans": 0.4, "fans_cooler_psu_gpu": 0.27, "cooler_psu_gpu_fans": 0.32, "gpu_cooler_fans_psu": 0.01}}}
+{"id": "synthetic-sequential_action-0103-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"cooler_gpu_psu_fans": 0.5, "fans_cooler_psu_gpu": 0.24, "cooler_psu_gpu_fans": 0.25, "gpu_cooler_fans_psu": 0.01}}}
+{"id": "synthetic-sequential_action-0103-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"gpu_cooler_fans_psu": 0.01, "fans_cooler_psu_gpu": 0.19, "cooler_gpu_psu_fans": 0.45, "cooler_psu_gpu_fans": 0.35}}}
+{"id": "synthetic-sequential_action-0104-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.04, "adapt": 0.64, "recover": 0.03, "skip": 0.01, "verify": 0.28}}}
+{"id": "synthetic-sequential_action-0104-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.88, "1": 0.1, "2": 0.02, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0105-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.01, "adapt": 0.39, "recover": 0.57, "skip": 0.01, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0107-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.03, "adapt": 0.86, "recover": 0.09, "skip": 0.01, "verify": 0.01}}}
+{"id": "synthetic-sequential_action-0107-cf-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.9, "partially_supported": 0.07, "neutral": 0.01, "insufficient_evidence": 0.01}}}
+{"id": "synthetic-sequential_action-0107-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.08, "adapt": 0.7, "recover": 0.17, "skip": 0.03, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0107-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"verify": 0.02, "proceed_planned": 0.08, "recover": 0.22, "skip": 0.03, "adapt": 0.65}}}
+{"id": "synthetic-sequential_action-0109-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.18, "adapt": 0.12, "recover": 0.62, "skip": 0.01, "verify": 0.07}}}
+{"id": "synthetic-sequential_action-0110-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.75, "2": 0.2, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0111-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.01, "adapt": 0.12, "recover": 0.84, "skip": 0.01, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0111-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.62, "borderline": 0.2, "overlapping_categories": 0.01, "insufficient_criteria": 0.05}}}
+{"id": "synthetic-sequential_action-0111-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.04, "1": 0.65, "2": 0.3, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0113-choice-2", "teacher_probs": {"gpt_5_6_luna": {"ram_then_ssd": 0.003, "standoff_then_continue": 0.01, "psu_then_gpu": 0.986, "gpu_first": 0.001}}}
+{"id": "synthetic-sequential_action-0113-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.28, "recover": 0.62, "skip": 0.01, "verify": 0.07}}}
+{"id": "synthetic-sequential_action-0113-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"ram_then_ssd": 0.03, "standoff_then_continue": 0.05, "psu_then_gpu": 0.9, "gpu_first": 0.02}}}
+{"id": "synthetic-sequential_action-0114-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.35, "adapt": 0.55, "recover": 0.05, "skip": 0.01, "verify": 0.04}}}
+{"id": "synthetic-sequential_action-0115-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.9, "false": 0.02, "mostly_consistent": 0.05, "trivially_inconsistent": 0.02, "cannot_determine": 0.01}}}
+{"id": "synthetic-sequential_action-0115-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.34, "adapt": 0.46, "recover": 0.16, "skip": 0.01, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0115-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.12, "adapt": 0.2, "recover": 0.62, "skip": 0.01, "verify": 0.05}}}
+{"id": "synthetic-sequential_action-0116-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.28, "false": 0.08, "borderline": 0.12, "sufficient_with_caveats": 0.42, "more_info_needed": 0.1}}}
+{"id": "synthetic-sequential_action-0116-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.03, "adapt": 0.32, "recover": 0.6, "skip": 0.02, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0116-choice-1", "teacher_probs": {"gpt_5_6_luna": {"pasta_clumping": 0.12, "onion_garlic_unsauteed": 0.3, "mozzarella_unretrieved": 0.08, "sauce_incomplete": 0.45, "baking_dish_empty": 0.05}}}
+{"id": "synthetic-sequential_action-0116-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.03, "borderline": 0.12, "sufficient_with_caveats": 0.27, "more_info_needed": 0.5}}}
+{"id": "synthetic-sequential_action-0116-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.76, "false": 0.01, "borderline": 0.04, "sufficient_with_caveats": 0.15, "more_info_needed": 0.04}}}
+{"id": "synthetic-sequential_action-0116-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"pasta_clumping": 0.42, "onion_garlic_unsauteed": 0.32, "mozzarella_unretrieved": 0.03, "sauce_incomplete": 0.18, "baking_dish_empty": 0.05}}}
+{"id": "synthetic-sequential_action-0116-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"sauce_incomplete": 0.35, "onion_garlic_unsauteed": 0.43, "baking_dish_empty": 0.03, "pasta_clumping": 0.14, "mozzarella_unretrieved": 0.05}}}
+{"id": "synthetic-sequential_action-0116-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.56, "borderline": 0.12, "sufficient_with_caveats": 0.14, "more_info_needed": 0.06}}}
+{"id": "synthetic-sequential_action-0118-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.58, "recover": 0.34, "skip": 0.01, "verify": 0.05}}}
+{"id": "synthetic-sequential_action-0124-choice-1", "teacher_probs": {"gpt_5_6_luna": {"boil_and_stir": 0.32, "chop_and_boil": 0.58, "grate_and_pasta": 0.01, "stir_and_grate": 0.07, "boil_only": 0.02}}}
+{"id": "synthetic-sequential_action-0125-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.08, "theoretically_possible": 0.04, "conditionally_possible": 0.02, "practically_infeasible": 0.85}}}
+{"id": "synthetic-sequential_action-0126-para-state-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.3, "borderline": 0.1, "overlapping_categories": 0.0, "insufficient_criteria": 0.55}}}
+{"id": "synthetic-sequential_action-0126-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"deglaze": 0.68, "restart": 0.08, "proceed_ignore": 0.06, "fresh_garlic": 0.18}}}
+{"id": "synthetic-sequential_action-0128-choice-1", "teacher_probs": {"gpt_5_6_luna": {"resume_and_whip": 0.37, "fold_as_is": 0.02, "discard_and_restart": 0.01, "add_sugar_and_whip": 0.6}}}
+{"id": "synthetic-sequential_action-0128-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"resume_and_whip": 0.16, "discard_and_restart": 0.005, "fold_as_is": 0.015, "add_sugar_and_whip": 0.82}}}
+{"id": "synthetic-sequential_action-0130-choice-2", "teacher_probs": {"gpt_5_6_luna": {"10uf_capacitors": 0.82, "100_ohm_resistors": 0.06, "47uf_capacitors": 0.05, "mixed_components": 0.07}}}
+{"id": "synthetic-sequential_action-0130-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"10uf_capacitors": 0.08, "100_ohm_resistors": 0.7, "47uf_capacitors": 0.07, "mixed_components": 0.15}}}
+{"id": "synthetic-sequential_action-0130-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"47uf_capacitors": 0.01, "10uf_capacitors": 0.02, "mixed_components": 0.03, "100_ohm_resistors": 0.94}}}
+{"id": "synthetic-sequential_action-0132-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.32, "recover": 0.62, "skip": 0.01, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0132-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.84, "recover": 0.12, "skip": 0.0, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0132-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"adapt": 0.04, "recover": 0.92, "skip": 0.01, "verify": 0.02, "proceed_planned": 0.01}}}
+{"id": "synthetic-sequential_action-0133-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.28, "theoretically_possible": 0.08, "conditionally_possible": 0.52, "practically_infeasible": 0.09}}}
+{"id": "synthetic-sequential_action-0133-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.08, "adapt": 0.82, "recover": 0.05, "skip": 0.02, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0133-choice-1", "teacher_probs": {"gpt_5_6_luna": {"béchamel_texture": 0.58, "ricotta_shortage": 0.16, "sauce_shortage": 0.2, "structural_integrity": 0.05, "oven_temperature": 0.01}}}
+{"id": "synthetic-sequential_action-0133-choice-2", "teacher_probs": {"gpt_5_6_luna": {"use_all_now": 0.3, "split_evenly": 0.58, "reserve_for_top": 0.04, "substitute_béchamel": 0.08}}}
+{"id": "synthetic-sequential_action-0133-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.94, "theoretically_possible": 0.02, "conditionally_possible": 0.02, "practically_infeasible": 0.01}}}
+{"id": "synthetic-sequential_action-0133-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"use_all_now": 0.08, "split_evenly": 0.84, "reserve_for_top": 0.03, "substitute_béchamel": 0.05}}}
+{"id": "synthetic-sequential_action-0133-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.12, "1": 0.62, "2": 0.25, "3": 0.01}}}
+{"id": "synthetic-sequential_action-0133-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"skip": 0.005, "recover": 0.76, "verify": 0.01, "proceed_planned": 0.015, "adapt": 0.21}}}
+{"id": "synthetic-sequential_action-0133-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"structural_integrity": 0.04, "oven_temperature": 0.01, "sauce_shortage": 0.46, "ricotta_shortage": 0.3, "béchamel_texture": 0.19}}}
+{"id": "synthetic-sequential_action-0133-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.2, "false": 0.12, "theoretically_possible": 0.18, "conditionally_possible": 0.38, "practically_infeasible": 0.12}}}
+{"id": "synthetic-sequential_action-0134-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.34, "false": 0.14, "partially_different": 0.1, "unpredictable": 0.08, "depends_on_assumptions": 0.34}}}
+{"id": "synthetic-sequential_action-0138-choice-1", "teacher_probs": {"gpt_5_6_luna": {"time": 0.62, "ingredient_availability": 0.08, "equipment": 0.02, "structural_integrity": 0.12, "none": 0.16}}}
+{"id": "synthetic-sequential_action-0138-cf-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.78, "mostly_consistent": 0.08, "trivially_inconsistent": 0.06, "cannot_determine": 0.05}}}
+{"id": "synthetic-sequential_action-0138-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.68, "false": 0.01, "borderline": 0.08, "sufficient_with_caveats": 0.18, "more_info_needed": 0.05}}}
+{"id": "synthetic-sequential_action-0138-para-state-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.25, "false": 0.2, "mostly_consistent": 0.4, "trivially_inconsistent": 0.1, "cannot_determine": 0.05}}}
+{"id": "synthetic-sequential_action-0138-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"time": 0.3, "ingredient_availability": 0.55, "equipment": 0.1, "structural_integrity": 0.03, "none": 0.02}}}
+{"id": "synthetic-sequential_action-0138-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"none": 0.55, "ingredient_availability": 0.15, "structural_integrity": 0.04, "time": 0.25, "equipment": 0.01}}}
+{"id": "synthetic-sequential_action-0138-neg-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.18, "false": 0.28, "mostly_consistent": 0.18, "trivially_inconsistent": 0.12, "cannot_determine": 0.24}}}
+{"id": "synthetic-sequential_action-0139-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.48, "adapt": 0.34, "recover": 0.14, "skip": 0.01, "verify": 0.03}}}
+{"id": "synthetic-sequential_action-0139-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.7, "borderline": 0.05, "sufficient_with_caveats": 0.14, "more_info_needed": 0.1}}}
+{"id": "synthetic-sequential_action-0139-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"skip": 0.01, "adapt": 0.25, "recover": 0.62, "proceed_planned": 0.08, "verify": 0.04}}}
+{"id": "synthetic-sequential_action-0141-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"install_ssd": 0.55, "install_ram": 0.25, "retrieve_paste": 0.08, "clean_cpu": 0.02, "assess_paste": 0.1}}}
+{"id": "synthetic-sequential_action-0142-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.96, "false": 0.005, "borderline": 0.01, "sufficient_with_caveats": 0.02, "more_info_needed": 0.005}}}
+{"id": "synthetic-sequential_action-0142-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.62, "false": 0.01, "borderline": 0.08, "sufficient_with_caveats": 0.24, "more_info_needed": 0.05}}}
+{"id": "synthetic-sequential_action-0143-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.05, "adapt": 0.62, "recover": 0.25, "skip": 0.01, "verify": 0.07}}}
+{"id": "synthetic-sequential_action-0144-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"add_immediately": 0.7, "finish_prep_first": 0.18, "skip_bell_pepper": 0.08, "roast_separately": 0.04}}}
+{"id": "synthetic-sequential_action-0144-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"finish_prep_first": 0.3, "skip_bell_pepper": 0.08, "roast_separately": 0.04, "add_immediately": 0.58}}}
+{"id": "synthetic-sequential_action-0145-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.4, "adapt": 0.08, "recover": 0.04, "skip": 0.01, "verify": 0.47}}}
+{"id": "synthetic-sequential_action-0149-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"undercooked_interior": 0.18, "burned_skin": 0.45, "uneven_crust": 0.12, "oil_smoke": 0.22, "handle_burn": 0.03}}}
+{"id": "synthetic-sequential_action-0150-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.96, "false": 0.01, "approximately_equal": 0.01, "depends_on_metric": 0.01, "insufficient_data": 0.01}}}
+{"id": "synthetic-sequential_action-0150-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.28, "recover": 0.67, "skip": 0.01, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0152-neg-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.84, "false": 0.03, "mostly_consistent": 0.06, "trivially_inconsistent": 0.01, "cannot_determine": 0.06}}}
+{"id": "synthetic-sequential_action-0155-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"bench_test": 0.03, "gpu": 0.9, "side_panel": 0.01, "ssds": 0.05, "cpu_cooler": 0.01}}}
+{"id": "synthetic-sequential_action-0156-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.78, "partially_supported": 0.12, "neutral": 0.01, "insufficient_evidence": 0.08}}}
+{"id": "synthetic-sequential_action-0156-choice-2", "teacher_probs": {"gpt_5_6_luna": {"thin_with_egg": 0.84, "skip_one_layer": 0.08, "use_marinara_substitute": 0.05, "reduce_layers": 0.03}}}
+{"id": "synthetic-sequential_action-0156-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.36, "false": 0.12, "partially_different": 0.01, "unpredictable": 0.03, "depends_on_assumptions": 0.48}}}
+{"id": "synthetic-sequential_action-0156-cf-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.8, "partially_supported": 0.1, "neutral": 0.0, "insufficient_evidence": 0.02}}}
+{"id": "synthetic-sequential_action-0156-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.7, "2": 0.24, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0156-neg-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.18, "false": 0.32, "partially_supported": 0.45, "neutral": 0.01, "insufficient_evidence": 0.04}}}
+{"id": "synthetic-sequential_action-0161-choice-2", "teacher_probs": {"gpt_5_6_luna": {"shade_first": 0.0, "cable_then_head": 0.92, "head_then_cable": 0.06, "verify_all_first": 0.02}}}
+{"id": "synthetic-sequential_action-0161-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"verify_all_first": 0.03, "cable_then_head": 0.58, "head_then_cable": 0.38, "shade_first": 0.01}}}
+{"id": "synthetic-sequential_action-0163-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.08, "adapt": 0.72, "recover": 0.03, "skip": 0.01, "verify": 0.16}}}
+{"id": "synthetic-sequential_action-0163-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.18, "false": 0.04, "minor_risk": 0.27, "context_dependent": 0.4, "insufficient_safety_data": 0.11}}}
+{"id": "synthetic-sequential_action-0165-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.9, "adapt": 0.05, "recover": 0.02, "skip": 0.01, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0165-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.12, "1": 0.78, "2": 0.1, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0165-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.18, "borderline": 0.08, "sufficient_with_caveats": 0.24, "more_info_needed": 0.42}}}
+{"id": "synthetic-sequential_action-0165-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.08, "adapt": 0.68, "recover": 0.18, "skip": 0.02, "verify": 0.04}}}
+{"id": "synthetic-sequential_action-0165-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.1, "1": 0.8, "2": 0.1, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0165-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.01, "adapt": 0.02, "recover": 0.95, "skip": 0.01, "verify": 0.01}}}
+{"id": "synthetic-sequential_action-0165-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.05, "adapt": 0.25, "skip": 0.01, "recover": 0.67, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0165-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.58, "false": 0.1, "borderline": 0.08, "sufficient_with_caveats": 0.12, "more_info_needed": 0.12}}}
+{"id": "synthetic-sequential_action-0165-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.93, "borderline": 0.04, "overlapping_categories": 0.005, "insufficient_criteria": 0.005}}}
+{"id": "synthetic-sequential_action-0167-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.8, "2": 0.119, "3": 0.001, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0167-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.12, "1": 0.7, "2": 0.17, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0167-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.12, "1": 0.7, "2": 0.18, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0167-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.74, "false": 0.01, "theoretically_possible": 0.04, "conditionally_possible": 0.2, "practically_infeasible": 0.01}}}
+{"id": "synthetic-sequential_action-0168-choice-2", "teacher_probs": {"gpt_5_6_luna": {"mozzarella": 0.78, "bolognese": 0.12, "ricotta": 0.08, "parmesan": 0.02}}}
+{"id": "synthetic-sequential_action-0168-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.12, "1": 0.72, "2": 0.14, "3": 0.015, "4": 0.005}}}
+{"id": "synthetic-sequential_action-0168-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.03, "adapt": 0.34, "recover": 0.52, "skip": 0.01, "verify": 0.1}}}
+{"id": "synthetic-sequential_action-0168-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"mozzarella": 0.72, "bolognese": 0.08, "ricotta": 0.15, "parmesan": 0.05}}}
+{"id": "synthetic-sequential_action-0168-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"parmesan": 0.08, "bolognese": 0.68, "mozzarella": 0.18, "ricotta": 0.06}}}
+{"id": "synthetic-sequential_action-0169-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.93, "adapt": 0.04, "recover": 0.01, "skip": 0.0, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0169-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"recover": 0.72, "skip": 0.01, "verify": 0.04, "proceed_planned": 0.13, "adapt": 0.1}}}
+{"id": "synthetic-sequential_action-0171-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.08, "recover": 0.84, "skip": 0.01, "verify": 0.05}}}
+{"id": "synthetic-sequential_action-0171-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"shred_first": 0.32, "layer_first": 0.66, "delegate": 0.01, "skip_mozzarella": 0.01}}}
+{"id": "synthetic-sequential_action-0174-choice-2", "teacher_probs": {"gpt_5_6_luna": {"no_impact": 0.03, "thermal_throttle": 0.72, "boot_failure": 0.08, "short_circuit": 0.17}}}
+{"id": "synthetic-sequential_action-0175-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.96, "false": 0.01, "partially_different": 0.01, "unpredictable": 0.005, "depends_on_assumptions": 0.015}}}
+{"id": "synthetic-sequential_action-0175-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"fix_lumps_first": 0.55, "prepare_pan_first": 0.3, "address_simultaneously": 0.05, "ignore_lumps_proceed": 0.1}}}
+{"id": "synthetic-sequential_action-0175-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.06, "1": 0.8, "2": 0.13, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0175-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"skip": 0.01, "verify": 0.03, "adapt": 0.78, "proceed_planned": 0.05, "recover": 0.13}}}
+{"id": "synthetic-sequential_action-0183-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.08, "adapt": 0.72, "recover": 0.14, "skip": 0.01, "verify": 0.05}}}
+{"id": "synthetic-sequential_action-0183-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.03, "adapt": 0.7, "recover": 0.2, "skip": 0.01, "verify": 0.06}}}
+{"id": "synthetic-sequential_action-0183-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"recover": 0.72, "skip": 0.01, "proceed_planned": 0.08, "verify": 0.1, "adapt": 0.09}}}
+{"id": "synthetic-sequential_action-0184-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.06, "adapt": 0.2, "recover": 0.55, "skip": 0.01, "verify": 0.18}}}
+{"id": "synthetic-sequential_action-0184-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.12, "adapt": 0.18, "recover": 0.5, "skip": 0.02, "verify": 0.18}}}
+{"id": "synthetic-sequential_action-0184-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.62, "2": 0.3, "3": 0.03, "4": 0.0}}}
+{"id": "synthetic-sequential_action-0184-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"skip": 0.0, "proceed_planned": 0.88, "adapt": 0.04, "verify": 0.03, "recover": 0.05}}}
+{"id": "synthetic-sequential_action-0185-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.04, "1": 0.62, "2": 0.31, "3": 0.02, "4": 0.01}}}
+{"id": "synthetic-sequential_action-0186-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.82, "2": 0.09, "3": 0.005, "4": 0.005}}}
+{"id": "synthetic-sequential_action-0187-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.82, "partially_different": 0.03, "unpredictable": 0.02, "depends_on_assumptions": 0.1}}}
+{"id": "synthetic-sequential_action-0191-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.03, "borderline": 0.27, "sufficient_with_caveats": 0.38, "more_info_needed": 0.2}}}
+{"id": "synthetic-sequential_action-0191-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.62, "false": 0.12, "theoretically_possible": 0.14, "conditionally_possible": 0.08, "practically_infeasible": 0.04}}}
+{"id": "synthetic-sequential_action-0191-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.05, "adapt": 0.38, "recover": 0.52, "skip": 0.03, "verify": 0.02}}}
+{"id": "synthetic-sequential_action-0191-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.42, "2": 0.5, "3": 0.025, "4": 0.005}}}
+{"id": "synthetic-sequential_action-0191-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.04, "false": 0.01, "borderline": 0.01, "sufficient_with_caveats": 0.22, "more_info_needed": 0.72}}}
+{"id": "synthetic-sequential_action-0191-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.005, "theoretically_possible": 0.01, "conditionally_possible": 0.01, "practically_infeasible": 0.005}}}
+{"id": "synthetic-sequential_action-0191-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.22, "2": 0.68, "3": 0.06, "4": 0.01}}}
+{"id": "synthetic-sequential_action-0191-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.22, "false": 0.04, "borderline": 0.12, "sufficient_with_caveats": 0.42, "more_info_needed": 0.2}}}
+{"id": "synthetic-sequential_action-0191-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.62, "false": 0.12, "theoretically_possible": 0.18, "conditionally_possible": 0.06, "practically_infeasible": 0.02}}}
+{"id": "synthetic-sequential_action-0191-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.01, "borderline": 0.07, "sufficient_with_caveats": 0.25, "more_info_needed": 0.65}}}
+{"id": "synthetic-sequential_action-0191-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.08, "borderline": 0.04, "sufficient_with_caveats": 0.15, "more_info_needed": 0.7}}}
+{"id": "synthetic-sequential_action-0191-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.96, "theoretically_possible": 0.01, "conditionally_possible": 0.01, "practically_infeasible": 0.01}}}
+{"id": "synthetic-sequential_action-0194-choice-1", "teacher_probs": {"gpt_5_6_luna": {"solder_u1": 0.78, "recalibrate_first": 0.17, "reseat_u1": 0.04, "run_continuity": 0.01}}}
+{"id": "synthetic-sequential_action-0194-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"run_continuity": 0.01, "solder_u1": 0.18, "recalibrate_first": 0.62, "reseat_u1": 0.19}}}
+{"id": "synthetic-sequential_action-0196-choice-0", "teacher_probs": {"gpt_5_6_luna": {"proceed_planned": 0.02, "adapt": 0.15, "recover": 0.78, "skip": 0.01, "verify": 0.04}}}
+{"id": "synthetic-sequential_action-0196-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"reserve_all_for_top": 0.05, "distribute_evenly_two": 0.85, "use_parmesan_between": 0.05, "maintain_original_ratio": 0.05}}}
+{"id": "synthetic-sequential_action-0196-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"skip": 0.01, "adapt": 0.4, "proceed_planned": 0.03, "verify": 0.08, "recover": 0.48}}}
+{"id": "synthetic-sequential_action-0197-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.01, "partially_different": 0.01, "unpredictable": 0.005, "depends_on_assumptions": 0.005}}}
+{"id": "synthetic-sequential_action-0197-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"overbrowning_exterior": 0.24, "dense_crumb": 0.16, "insufficient_fat": 0.57, "pan_sticking": 0.03}}}
+{"id": "synthetic-sequential_action-0197-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"overbrowning_exterior": 0.55, "pan_sticking": 0.03, "dense_crumb": 0.2, "insufficient_fat": 0.22}}}
+{"id": "synthetic-sequential_action-0198-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"no_compensation": 0.08, "extra_cheese_top": 0.03, "add_ricotta_layer": 0.07, "increase_sauce": 0.82}}}
+{"id": "synthetic-sequential_action-0198-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"skip": 0.02, "verify": 0.04, "proceed_planned": 0.1, "recover": 0.62, "adapt": 0.22}}}
