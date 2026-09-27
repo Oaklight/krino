@@ -6535,3 +6535,372 @@
 {"id": "synthetic-logical_inference-0199-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
 {"id": "synthetic-logical_inference-0199-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.1, "false": 0.9}}}
 {"id": "synthetic-logical_inference-0199-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.35, "false": 0.65}}}
+{"id": "synthetic-logical_inference-0000-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.93, "false": 0.01, "borderline": 0.01, "sufficient_with_caveats": 0.03, "more_info_needed": 0.02}}}
+{"id": "synthetic-logical_inference-0000-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.3, "induction": 0.1, "abduction": 0.2, "analogy": 0.02, "none": 0.38}}}
+{"id": "synthetic-logical_inference-0000-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.78, "1": 0.16, "2": 0.05, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-logical_inference-0000-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.03, "2": 0.1, "3": 0.35, "4": 0.5}}}
+{"id": "synthetic-logical_inference-0000-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.25, "induction": 0.08, "abduction": 0.52, "analogy": 0.02, "none": 0.13}}}
+{"id": "synthetic-logical_inference-0000-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.01, "2": 0.03, "3": 0.07, "4": 0.88}}}
+{"id": "synthetic-logical_inference-0000-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.03, "borderline": 0.08, "sufficient_with_caveats": 0.16, "more_info_needed": 0.65}}}
+{"id": "synthetic-logical_inference-0000-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"induction": 0.04, "analogy": 0.01, "abduction": 0.55, "none": 0.25, "deduction": 0.15}}}
+{"id": "synthetic-logical_inference-0000-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.2, "false": 0.25, "approximately_equal": 0.05, "depends_on_metric": 0.1, "insufficient_data": 0.4}}}
+{"id": "synthetic-logical_inference-0002-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.14, "induction": 0.3, "abduction": 0.42, "analogy": 0.03, "none": 0.11}}}
+{"id": "synthetic-logical_inference-0002-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.1, "1": 0.35, "2": 0.4, "3": 0.13, "4": 0.02}}}
+{"id": "synthetic-logical_inference-0002-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"none": 0.1, "induction": 0.12, "analogy": 0.03, "deduction": 0.3, "abduction": 0.45}}}
+{"id": "synthetic-logical_inference-0005-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.96, "false": 0.03, "partially_true": 0.005, "unverifiable": 0.005, "outdated": 0.0}}}
+{"id": "synthetic-logical_inference-0005-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.002, "partially_different": 0.002, "unpredictable": 0.003, "depends_on_assumptions": 0.003}}}
+{"id": "synthetic-logical_inference-0005-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.0, "2": 0.0, "3": 0.0, "4": 1.0}}}
+{"id": "synthetic-logical_inference-0005-cf-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0, "partially_true": 0.0, "unverifiable": 0.0, "outdated": 0.0}}}
+{"id": "synthetic-logical_inference-0005-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.004, "false": 0.994, "partially_different": 0.0005, "unpredictable": 0.001, "depends_on_assumptions": 0.0005}}}
+{"id": "synthetic-logical_inference-0005-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0005, "false": 0.999, "borderline": 0.0002, "overlapping_categories": 0.0001, "insufficient_criteria": 0.0002}}}
+{"id": "synthetic-logical_inference-0005-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.78, "partially_different": 0.03, "unpredictable": 0.04, "depends_on_assumptions": 0.07}}}
+{"id": "synthetic-logical_inference-0005-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"runway_2": 0.0, "runway_4": 1.0, "runway_3": 0.0, "runway_6": 0.0, "runway_1": 0.0}}}
+{"id": "synthetic-logical_inference-0005-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"constraint_1": 0.7, "constraint_4": 0.2, "constraint_2": 0.08, "constraint_5": 0.02}}}
+{"id": "synthetic-logical_inference-0005-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.0, "2": 0.0, "3": 0.01, "4": 0.99}}}
+{"id": "synthetic-logical_inference-0005-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.0, "false": 1.0, "partially_true": 0.0, "unverifiable": 0.0, "outdated": 0.0}}}
+{"id": "synthetic-logical_inference-0005-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.995, "false": 0.001, "partially_different": 0.001, "unpredictable": 0.001, "depends_on_assumptions": 0.002}}}
+{"id": "synthetic-logical_inference-0005-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"constraint_2": 0.08, "constraint_4": 0.3, "constraint_1": 0.6, "constraint_5": 0.02}}}
+{"id": "synthetic-logical_inference-0005-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.001, "false": 0.997, "contributing_factor": 0.001, "correlation_not_causation": 0.0005, "insufficient_evidence": 0.0005}}}
+{"id": "synthetic-logical_inference-0005-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.998, "false": 0.001, "partially_true": 0.0005, "unverifiable": 0.0005, "outdated": 0.0}}}
+{"id": "synthetic-logical_inference-0005-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.965, "false": 0.025, "partially_different": 0.003, "unpredictable": 0.002, "depends_on_assumptions": 0.005}}}
+{"id": "synthetic-logical_inference-0005-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.001, "false": 0.998, "borderline": 0.0005, "overlapping_categories": 0.0001, "insufficient_criteria": 0.0004}}}
+{"id": "synthetic-logical_inference-0006-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.18, "false": 0.08, "theoretically_possible": 0.48, "conditionally_possible": 0.24, "practically_infeasible": 0.02}}}
+{"id": "synthetic-logical_inference-0006-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.1, "false": 0.04, "theoretically_possible": 0.65, "conditionally_possible": 0.2, "practically_infeasible": 0.01}}}
+{"id": "synthetic-logical_inference-0006-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.78, "false": 0.08, "mostly_consistent": 0.03, "trivially_inconsistent": 0.01, "cannot_determine": 0.1}}}
+{"id": "synthetic-logical_inference-0006-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.04, "theoretically_possible": 0.62, "conditionally_possible": 0.25, "practically_infeasible": 0.01}}}
+{"id": "synthetic-logical_inference-0006-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.18, "false": 0.62, "minor_risk": 0.03, "context_dependent": 0.15, "insufficient_safety_data": 0.02}}}
+{"id": "synthetic-logical_inference-0007-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.15, "induction": 0.2, "abduction": 0.05, "analogy": 0.1, "none": 0.5}}}
+{"id": "synthetic-logical_inference-0007-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.2, "induction": 0.4, "analogy": 0.12, "none": 0.2, "abduction": 0.08}}}
+{"id": "synthetic-logical_inference-0008-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.04, "2": 0.18, "3": 0.62, "4": 0.15}}}
+{"id": "synthetic-logical_inference-0009-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.2, "2": 0.5, "3": 0.2, "4": 0.02}}}
+{"id": "synthetic-logical_inference-0015-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.93, "partially_different": 0.02, "unpredictable": 0.02, "depends_on_assumptions": 0.02}}}
+{"id": "synthetic-logical_inference-0015-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.1, "false": 0.08, "borderline": 0.8, "approaching": 0.01, "measurement_uncertain": 0.01}}}
+{"id": "synthetic-logical_inference-0015-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.72, "borderline": 0.03, "sufficient_with_caveats": 0.04, "more_info_needed": 0.2}}}
+{"id": "synthetic-logical_inference-0015-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.002, "partially_true": 0.003, "unverifiable": 0.004, "outdated": 0.001}}}
+{"id": "synthetic-logical_inference-0015-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.98, "induction": 0.01, "abduction": 0.005, "analogy": 0.001, "none": 0.004}}}
+{"id": "synthetic-logical_inference-0015-choice-2", "teacher_probs": {"gpt_5_6_luna": {"only_A": 0.01, "A_and_B": 0.78, "neither_A_nor_B": 0.12, "all_four": 0.08, "only_B": 0.01}}}
+{"id": "synthetic-logical_inference-0015-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.72, "1": 0.2, "2": 0.06, "3": 0.015, "4": 0.005}}}
+{"id": "synthetic-logical_inference-0015-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.94, "2": 0.03, "3": 0.0}}}
+{"id": "synthetic-logical_inference-0015-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.94, "partially_different": 0.02, "unpredictable": 0.01, "depends_on_assumptions": 0.02}}}
+{"id": "synthetic-logical_inference-0015-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.12, "borderline": 0.74, "approaching": 0.03, "measurement_uncertain": 0.0}}}
+{"id": "synthetic-logical_inference-0015-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.72, "borderline": 0.03, "sufficient_with_caveats": 0.04, "more_info_needed": 0.2}}}
+{"id": "synthetic-logical_inference-0015-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.93, "partially_different": 0.02, "unpredictable": 0.01, "depends_on_assumptions": 0.02}}}
+{"id": "synthetic-logical_inference-0015-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.04, "borderline": 0.15, "approaching": 0.0, "measurement_uncertain": 0.8}}}
+{"id": "synthetic-logical_inference-0015-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.005, "false": 0.005, "borderline": 0.01, "sufficient_with_caveats": 0.01, "more_info_needed": 0.97}}}
+{"id": "synthetic-logical_inference-0015-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.98, "induction": 0.005, "abduction": 0.005, "analogy": 0.002, "none": 0.008}}}
+{"id": "synthetic-logical_inference-0015-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"only_A": 0.0, "A_and_B": 0.4, "neither_A_nor_B": 0.35, "all_four": 0.25, "only_B": 0.0}}}
+{"id": "synthetic-logical_inference-0015-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.9, "1": 0.08, "2": 0.015, "3": 0.004, "4": 0.001}}}
+{"id": "synthetic-logical_inference-0015-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 1.0, "2": 0.0, "3": 0.0}}}
+{"id": "synthetic-logical_inference-0015-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.68, "partially_different": 0.02, "unpredictable": 0.07, "depends_on_assumptions": 0.08}}}
+{"id": "synthetic-logical_inference-0015-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.06, "false": 0.34, "borderline": 0.58, "approaching": 0.01, "measurement_uncertain": 0.01}}}
+{"id": "synthetic-logical_inference-0015-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.08, "borderline": 0.03, "sufficient_with_caveats": 0.08, "more_info_needed": 0.8}}}
+{"id": "synthetic-logical_inference-0015-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.005, "partially_true": 0.003, "unverifiable": 0.002, "outdated": 0.0}}}
+{"id": "synthetic-logical_inference-0015-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"neither_A_nor_B": 0.1, "only_B": 0.02, "all_four": 0.08, "only_A": 0.02, "A_and_B": 0.78}}}
+{"id": "synthetic-logical_inference-0015-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.62, "false": 0.3, "partially_different": 0.02, "unpredictable": 0.02, "depends_on_assumptions": 0.04}}}
+{"id": "synthetic-logical_inference-0015-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.2, "false": 0.05, "borderline": 0.7, "approaching": 0.03, "measurement_uncertain": 0.02}}}
+{"id": "synthetic-logical_inference-0015-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.005, "borderline": 0.005, "sufficient_with_caveats": 0.003, "more_info_needed": 0.007}}}
+{"id": "synthetic-logical_inference-0015-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.97, "partially_true": 0.01, "unverifiable": 0.01, "outdated": 0.0}}}
+{"id": "synthetic-logical_inference-0019-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.45, "induction": 0.1, "abduction": 0.05, "analogy": 0.02, "none": 0.38}}}
+{"id": "synthetic-logical_inference-0019-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.02, "induction": 0.18, "abduction": 0.7, "analogy": 0.06, "none": 0.04}}}
+{"id": "synthetic-logical_inference-0019-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.05, "induction": 0.25, "abduction": 0.6, "analogy": 0.08, "none": 0.02}}}
+{"id": "synthetic-logical_inference-0020-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"analogy": 0.01, "none": 0.02, "abduction": 0.14, "induction": 0.82, "deduction": 0.01}}}
+{"id": "synthetic-logical_inference-0027-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.15, "2": 0.55, "3": 0.23, "4": 0.02}}}
+{"id": "synthetic-logical_inference-0027-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.15, "1": 0.5, "2": 0.25, "3": 0.09, "4": 0.01}}}
+{"id": "synthetic-logical_inference-0027-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.12, "induction": 0.58, "abduction": 0.18, "analogy": 0.02, "none": 0.1}}}
+{"id": "synthetic-logical_inference-0027-neg-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.93, "borderline": 0.02, "overlapping_categories": 0.01, "insufficient_criteria": 0.01}}}
+{"id": "synthetic-logical_inference-0028-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.001, "false": 0.995, "borderline": 0.001, "approaching": 0.001, "measurement_uncertain": 0.002}}}
+{"id": "synthetic-logical_inference-0032-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.12, "borderline": 0.1, "sufficient_with_caveats": 0.2, "more_info_needed": 0.5}}}
+{"id": "synthetic-logical_inference-0033-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.06, "false": 0.01, "theoretically_possible": 0.62, "conditionally_possible": 0.28, "practically_infeasible": 0.03}}}
+{"id": "synthetic-logical_inference-0040-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.02, "induction": 0.28, "abduction": 0.04, "analogy": 0.48, "none": 0.18}}}
+{"id": "synthetic-logical_inference-0040-cf-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.82, "false": 0.08, "partially_true": 0.05, "unverifiable": 0.04, "outdated": 0.01}}}
+{"id": "synthetic-logical_inference-0040-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.72, "false": 0.2, "borderline": 0.05, "overlapping_categories": 0.01, "insufficient_criteria": 0.02}}}
+{"id": "synthetic-logical_inference-0040-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.78, "borderline": 0.08, "approaching": 0.03, "measurement_uncertain": 0.03}}}
+{"id": "synthetic-logical_inference-0040-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.82, "abduction": 0.04, "analogy": 0.06, "none": 0.05}}}
+{"id": "synthetic-logical_inference-0040-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"abduction": 0.03, "induction": 0.3, "none": 0.08, "analogy": 0.55, "deduction": 0.04}}}
+{"id": "synthetic-logical_inference-0042-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.7, "induction": 0.08, "abduction": 0.08, "analogy": 0.02, "none": 0.12}}}
+{"id": "synthetic-logical_inference-0045-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.62, "false": 0.18, "simultaneous": 0.01, "ambiguous_timeline": 0.12, "insufficient_temporal_data": 0.07}}}
+{"id": "synthetic-logical_inference-0046-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.001, "borderline": 0.002, "sufficient_with_caveats": 0.002, "more_info_needed": 0.005}}}
+{"id": "synthetic-logical_inference-0046-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.98, "induction": 0.01, "abduction": 0.005, "analogy": 0.001, "none": 0.004}}}
+{"id": "synthetic-logical_inference-0046-choice-1", "teacher_probs": {"gpt_5_6_luna": {"A": 0.03, "B": 0.03, "C": 0.03, "D": 0.18, "E or F": 0.73}}}
+{"id": "synthetic-logical_inference-0046-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.0, "2": 0.005, "3": 0.015, "4": 0.98}}}
+{"id": "synthetic-logical_inference-0046-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.22, "2": 0.5, "3": 0.25}}}
+{"id": "synthetic-logical_inference-0046-cf-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.005, "partially_supported": 0.002, "neutral": 0.001, "insufficient_evidence": 0.002}}}
+{"id": "synthetic-logical_inference-0046-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.995, "induction": 0.002, "abduction": 0.001, "analogy": 0.001, "none": 0.001}}}
+{"id": "synthetic-logical_inference-0046-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.005, "1": 0.005, "2": 0.01, "3": 0.02, "4": 0.96}}}
+{"id": "synthetic-logical_inference-0046-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.005, "borderline": 0.005, "sufficient_with_caveats": 0.005, "more_info_needed": 0.005}}}
+{"id": "synthetic-logical_inference-0046-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.995, "induction": 0.002, "abduction": 0.001, "analogy": 0.001, "none": 0.001}}}
+{"id": "synthetic-logical_inference-0046-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"A": 0.001, "B": 0.001, "C": 0.001, "D": 0.001, "E or F": 0.996}}}
+{"id": "synthetic-logical_inference-0046-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.0, "2": 0.01, "3": 0.02, "4": 0.97}}}
+{"id": "synthetic-logical_inference-0046-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.15, "2": 0.58, "3": 0.25}}}
+{"id": "synthetic-logical_inference-0046-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.995, "false": 0.001, "borderline": 0.001, "sufficient_with_caveats": 0.001, "more_info_needed": 0.002}}}
+{"id": "synthetic-logical_inference-0046-para-q-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.005, "partially_supported": 0.01, "neutral": 0.0, "insufficient_evidence": 0.005}}}
+{"id": "synthetic-logical_inference-0046-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"induction": 0.01, "none": 0.01, "deduction": 0.96, "abduction": 0.01, "analogy": 0.01}}}
+{"id": "synthetic-logical_inference-0046-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"D": 0.98, "C": 0.005, "E or F": 0.005, "B": 0.005, "A": 0.005}}}
+{"id": "synthetic-logical_inference-0046-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.001, "false": 0.995, "borderline": 0.001, "sufficient_with_caveats": 0.001, "more_info_needed": 0.002}}}
+{"id": "synthetic-logical_inference-0047-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.3, "abduction": 0.52, "analogy": 0.03, "none": 0.12}}}
+{"id": "synthetic-logical_inference-0047-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.08, "induction": 0.62, "abduction": 0.2, "analogy": 0.04, "none": 0.06}}}
+{"id": "synthetic-logical_inference-0047-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.07, "induction": 0.55, "abduction": 0.2, "analogy": 0.03, "none": 0.15}}}
+{"id": "synthetic-logical_inference-0047-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.13, "1": 0.55, "2": 0.3, "3": 0.02}}}
+{"id": "synthetic-logical_inference-0048-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.2, "2": 0.44, "3": 0.25, "4": 0.03}}}
+{"id": "synthetic-logical_inference-0048-cf-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.22, "false": 0.08, "partially_supported": 0.62, "neutral": 0.03, "insufficient_evidence": 0.05}}}
+{"id": "synthetic-logical_inference-0048-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.03, "theoretically_possible": 0.75, "conditionally_possible": 0.16, "practically_infeasible": 0.01}}}
+{"id": "synthetic-logical_inference-0048-para-state-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.01, "partially_supported": 0.68, "neutral": 0.01, "insufficient_evidence": 0.15}}}
+{"id": "synthetic-logical_inference-0048-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.12, "approximately_equal": 0.62, "depends_on_metric": 0.08, "insufficient_data": 0.1}}}
+{"id": "synthetic-logical_inference-0048-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.7, "theoretically_possible": 0.2, "conditionally_possible": 0.05, "practically_infeasible": 0.02}}}
+{"id": "synthetic-logical_inference-0049-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.2, "induction": 0.62, "abduction": 0.06, "analogy": 0.04, "none": 0.08}}}
+{"id": "synthetic-logical_inference-0052-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.04, "1": 0.2, "2": 0.18, "3": 0.55, "4": 0.03}}}
+{"id": "synthetic-logical_inference-0053-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.002, "partially_true": 0.003, "unverifiable": 0.004, "outdated": 0.001}}}
+{"id": "synthetic-logical_inference-0053-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.84, "partially_different": 0.07, "unpredictable": 0.02, "depends_on_assumptions": 0.06}}}
+{"id": "synthetic-logical_inference-0053-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.02, "induction": 0.08, "abduction": 0.18, "analogy": 0.52, "none": 0.2}}}
+{"id": "synthetic-logical_inference-0053-choice-1", "teacher_probs": {"gpt_5_6_luna": {"deflection": 0.98, "flattery": 0.01, "concession": 0.005, "evasion": 0.005}}}
+{"id": "synthetic-logical_inference-0053-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.68, "1": 0.2, "2": 0.1, "3": 0.02, "4": 0.0}}}
+{"id": "synthetic-logical_inference-0053-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.78, "partially_different": 0.12, "unpredictable": 0.04, "depends_on_assumptions": 0.04}}}
+{"id": "synthetic-logical_inference-0053-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.02, "induction": 0.05, "abduction": 0.08, "analogy": 0.7, "none": 0.15}}}
+{"id": "synthetic-logical_inference-0053-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.22, "2": 0.48, "3": 0.2, "4": 0.02}}}
+{"id": "synthetic-logical_inference-0053-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.12, "abduction": 0.1, "analogy": 0.03, "none": 0.72}}}
+{"id": "synthetic-logical_inference-0053-para-q-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.005, "partially_true": 0.003, "unverifiable": 0.002, "outdated": 0.0}}}
+{"id": "synthetic-logical_inference-0053-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.02, "induction": 0.15, "none": 0.25, "abduction": 0.48, "analogy": 0.1}}}
+{"id": "synthetic-logical_inference-0053-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"flattery": 0.01, "concession": 0.08, "deflection": 0.9, "evasion": 0.01}}}
+{"id": "synthetic-logical_inference-0053-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"linguistic_barrier": 0.01, "political_hostility": 0.005, "observer_bias": 0.98, "cultural_superiority": 0.005}}}
+{"id": "synthetic-logical_inference-0054-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"induction": 0.9, "none": 0.05, "abduction": 0.02, "analogy": 0.01, "deduction": 0.02}}}
+{"id": "synthetic-logical_inference-0054-neg-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.7, "false": 0.08, "partially_supported": 0.15, "neutral": 0.03, "insufficient_evidence": 0.04}}}
+{"id": "synthetic-logical_inference-0056-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.08, "induction": 0.62, "abduction": 0.12, "analogy": 0.03, "none": 0.15}}}
+{"id": "synthetic-logical_inference-0056-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.02, "induction": 0.04, "abduction": 0.01, "analogy": 0.01, "none": 0.92}}}
+{"id": "synthetic-logical_inference-0056-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.88, "1": 0.08, "2": 0.03, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-logical_inference-0056-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"abduction": 0.08, "none": 0.2, "induction": 0.68, "analogy": 0.01, "deduction": 0.03}}}
+{"id": "synthetic-logical_inference-0059-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.94, "induction": 0.02, "abduction": 0.01, "analogy": 0.01, "none": 0.02}}}
+{"id": "synthetic-logical_inference-0064-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.1, "induction": 0.2, "abduction": 0.02, "analogy": 0.03, "none": 0.65}}}
+{"id": "synthetic-logical_inference-0064-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.78, "induction": 0.08, "abduction": 0.03, "analogy": 0.02, "none": 0.09}}}
+{"id": "synthetic-logical_inference-0064-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.08, "induction": 0.18, "abduction": 0.07, "analogy": 0.02, "none": 0.65}}}
+{"id": "synthetic-logical_inference-0064-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.65, "1": 0.2, "2": 0.1, "3": 0.04, "4": 0.01}}}
+{"id": "synthetic-logical_inference-0064-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"abduction": 0.02, "induction": 0.12, "analogy": 0.01, "none": 0.15, "deduction": 0.7}}}
+{"id": "synthetic-logical_inference-0074-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.55, "2": 0.28, "3": 0.08, "4": 0.01}}}
+{"id": "synthetic-logical_inference-0074-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"induction": 0.4, "deduction": 0.3, "abduction": 0.08, "none": 0.18, "analogy": 0.04}}}
+{"id": "synthetic-logical_inference-0076-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.85, "1": 0.1, "2": 0.04, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-logical_inference-0076-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.12, "minor_risk": 0.05, "context_dependent": 0.3, "insufficient_safety_data": 0.5}}}
+{"id": "synthetic-logical_inference-0076-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.45, "1": 0.3, "2": 0.15, "3": 0.08, "4": 0.02}}}
+{"id": "synthetic-logical_inference-0078-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.08, "2": 0.27, "3": 0.6, "4": 0.02}}}
+{"id": "synthetic-logical_inference-0078-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.28, "false": 0.03, "approximately_equal": 0.02, "depends_on_metric": 0.12, "insufficient_data": 0.55}}}
+{"id": "synthetic-logical_inference-0078-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.16, "2": 0.55, "3": 0.24, "4": 0.02}}}
+{"id": "synthetic-logical_inference-0078-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.9, "approximately_equal": 0.06, "depends_on_metric": 0.01, "insufficient_data": 0.01}}}
+{"id": "synthetic-logical_inference-0078-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.18, "2": 0.52, "3": 0.2, "4": 0.02}}}
+{"id": "synthetic-logical_inference-0078-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.82, "false": 0.03, "borderline": 0.05, "sufficient_with_caveats": 0.08, "more_info_needed": 0.02}}}
+{"id": "synthetic-logical_inference-0084-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.2, "false": 0.05, "theoretically_possible": 0.6, "conditionally_possible": 0.14, "practically_infeasible": 0.01}}}
+{"id": "synthetic-logical_inference-0084-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.3, "2": 0.48, "3": 0.13, "4": 0.01}}}
+{"id": "synthetic-logical_inference-0086-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.18, "induction": 0.72, "abduction": 0.02, "analogy": 0.01, "none": 0.07}}}
+{"id": "synthetic-logical_inference-0092-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.04, "false": 0.04, "minor_risk": 0.04, "context_dependent": 0.25, "insufficient_safety_data": 0.63}}}
+{"id": "synthetic-logical_inference-0092-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.04, "false": 0.78, "theoretically_possible": 0.1, "conditionally_possible": 0.06, "practically_infeasible": 0.02}}}
+{"id": "synthetic-logical_inference-0093-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.2, "induction": 0.15, "abduction": 0.55, "analogy": 0.02, "none": 0.08}}}
+{"id": "synthetic-logical_inference-0094-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.06, "induction": 0.12, "abduction": 0.55, "analogy": 0.02, "none": 0.25}}}
+{"id": "synthetic-logical_inference-0094-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.68, "induction": 0.16, "abduction": 0.1, "analogy": 0.01, "none": 0.05}}}
+{"id": "synthetic-logical_inference-0094-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.03, "2": 0.12, "3": 0.64, "4": 0.2}}}
+{"id": "synthetic-logical_inference-0094-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"none": 0.08, "analogy": 0.03, "induction": 0.25, "deduction": 0.12, "abduction": 0.52}}}
+{"id": "synthetic-logical_inference-0094-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.12, "partially_different": 0.12, "unpredictable": 0.3, "depends_on_assumptions": 0.38}}}
+{"id": "synthetic-logical_inference-0097-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.1, "1": 0.3, "2": 0.43, "3": 0.16, "4": 0.01}}}
+{"id": "synthetic-logical_inference-0097-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.08, "induction": 0.52, "abduction": 0.18, "analogy": 0.12, "none": 0.1}}}
+{"id": "synthetic-logical_inference-0098-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.82, "theoretically_possible": 0.04, "conditionally_possible": 0.04, "practically_infeasible": 0.02}}}
+{"id": "synthetic-logical_inference-0098-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.58, "induction": 0.08, "abduction": 0.04, "analogy": 0.02, "none": 0.28}}}
+{"id": "synthetic-logical_inference-0098-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.72, "induction": 0.08, "abduction": 0.03, "analogy": 0.02, "none": 0.15}}}
+{"id": "synthetic-logical_inference-0098-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.72, "false": 0.2, "theoretically_possible": 0.05, "conditionally_possible": 0.02, "practically_infeasible": 0.01}}}
+{"id": "synthetic-logical_inference-0098-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.005, "false": 0.005, "contributing_factor": 0.01, "correlation_not_causation": 0.02, "insufficient_evidence": 0.96}}}
+{"id": "synthetic-logical_inference-0098-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.05, "theoretically_possible": 0.8, "conditionally_possible": 0.05, "practically_infeasible": 0.02}}}
+{"id": "synthetic-logical_inference-0099-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.01, "simultaneous": 0.005, "ambiguous_timeline": 0.01, "insufficient_temporal_data": 0.005}}}
+{"id": "synthetic-logical_inference-0104-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.12, "1": 0.36, "2": 0.4, "3": 0.11, "4": 0.01}}}
+{"id": "synthetic-logical_inference-0104-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.7, "induction": 0.12, "abduction": 0.05, "analogy": 0.03, "none": 0.1}}}
+{"id": "synthetic-logical_inference-0104-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.08, "induction": 0.62, "abduction": 0.2, "analogy": 0.02, "none": 0.08}}}
+{"id": "synthetic-logical_inference-0104-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"none": 0.24, "induction": 0.38, "deduction": 0.08, "abduction": 0.24, "analogy": 0.06}}}
+{"id": "synthetic-logical_inference-0105-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.18, "false": 0.27, "partially_different": 0.38, "unpredictable": 0.07, "depends_on_assumptions": 0.1}}}
+{"id": "synthetic-logical_inference-0108-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.97, "theoretically_possible": 0.01, "conditionally_possible": 0.005, "practically_infeasible": 0.005}}}
+{"id": "synthetic-logical_inference-0108-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.95, "theoretically_possible": 0.02, "conditionally_possible": 0.019, "practically_infeasible": 0.001}}}
+{"id": "synthetic-logical_inference-0108-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.94, "approximately_equal": 0.01, "depends_on_metric": 0.01, "insufficient_data": 0.02}}}
+{"id": "synthetic-logical_inference-0108-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.94, "false": 0.03, "theoretically_possible": 0.01, "conditionally_possible": 0.01, "practically_infeasible": 0.01}}}
+{"id": "synthetic-logical_inference-0109-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"mixed": 0.7, "no_relationship": 0.02, "positive_correlation": 0.08, "negative_correlation": 0.2}}}
+{"id": "synthetic-logical_inference-0109-neg-noul-fact_verification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.9, "partially_true": 0.07, "unverifiable": 0.01, "outdated": 0.0}}}
+{"id": "synthetic-logical_inference-0110-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.2, "induction": 0.08, "abduction": 0.58, "analogy": 0.04, "none": 0.1}}}
+{"id": "synthetic-logical_inference-0110-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.55, "1": 0.3, "2": 0.12, "3": 0.03, "4": 0.0}}}
+{"id": "synthetic-logical_inference-0110-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.12, "induction": 0.55, "abduction": 0.25, "analogy": 0.02, "none": 0.06}}}
+{"id": "synthetic-logical_inference-0110-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.1, "1": 0.48, "2": 0.36, "3": 0.05, "4": 0.01}}}
+{"id": "synthetic-logical_inference-0110-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.08, "induction": 0.18, "abduction": 0.62, "analogy": 0.02, "none": 0.1}}}
+{"id": "synthetic-logical_inference-0110-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.005, "1": 0.005, "2": 0.01, "3": 0.08, "4": 0.9}}}
+{"id": "synthetic-logical_inference-0110-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"induction": 0.03, "abduction": 0.2, "deduction": 0.62, "none": 0.14, "analogy": 0.01}}}
+{"id": "synthetic-logical_inference-0111-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.22, "induction": 0.58, "abduction": 0.08, "analogy": 0.02, "none": 0.1}}}
+{"id": "synthetic-logical_inference-0111-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.12, "induction": 0.68, "abduction": 0.04, "analogy": 0.01, "none": 0.15}}}
+{"id": "synthetic-logical_inference-0111-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.07, "2": 0.24, "3": 0.58, "4": 0.1}}}
+{"id": "synthetic-logical_inference-0111-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"induction": 0.8, "analogy": 0.01, "abduction": 0.02, "none": 0.05, "deduction": 0.12}}}
+{"id": "synthetic-logical_inference-0113-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.12, "induction": 0.62, "abduction": 0.08, "analogy": 0.03, "none": 0.15}}}
+{"id": "synthetic-logical_inference-0113-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"analogy": 0.02, "deduction": 0.2, "induction": 0.45, "abduction": 0.15, "none": 0.18}}}
+{"id": "synthetic-logical_inference-0115-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.58, "induction": 0.25, "abduction": 0.1, "analogy": 0.02, "none": 0.05}}}
+{"id": "synthetic-logical_inference-0115-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.04, "2": 0.18, "3": 0.65, "4": 0.12}}}
+{"id": "synthetic-logical_inference-0115-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.25, "2": 0.62, "3": 0.08}}}
+{"id": "synthetic-logical_inference-0115-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.95, "induction": 0.02, "abduction": 0.02, "analogy": 0.005, "none": 0.005}}}
+{"id": "synthetic-logical_inference-0115-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.01, "2": 0.03, "3": 0.1, "4": 0.85}}}
+{"id": "synthetic-logical_inference-0115-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"analogy": 0.005, "abduction": 0.12, "none": 0.01, "induction": 0.065, "deduction": 0.8}}}
+{"id": "synthetic-logical_inference-0118-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.02, "induction": 0.2, "abduction": 0.05, "analogy": 0.01, "none": 0.72}}}
+{"id": "synthetic-logical_inference-0121-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.96, "approximately_equal": 0.01, "depends_on_metric": 0.005, "insufficient_data": 0.015}}}
+{"id": "synthetic-logical_inference-0121-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.005, "minor_risk": 0.001, "context_dependent": 0.004, "insufficient_safety_data": 0.01}}}
+{"id": "synthetic-logical_inference-0121-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.99, "induction": 0.005, "abduction": 0.002, "analogy": 0.001, "none": 0.002}}}
+{"id": "synthetic-logical_inference-0121-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.001, "1": 0.001, "2": 0.002, "3": 0.006, "4": 0.99}}}
+{"id": "synthetic-logical_inference-0121-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.45, "2": 0.45, "3": 0.05, "4": 0.0}}}
+{"id": "synthetic-logical_inference-0121-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.97, "approximately_equal": 0.01, "depends_on_metric": 0.005, "insufficient_data": 0.005}}}
+{"id": "synthetic-logical_inference-0121-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.005, "minor_risk": 0.002, "context_dependent": 0.008, "insufficient_safety_data": 0.005}}}
+{"id": "synthetic-logical_inference-0121-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.98, "induction": 0.01, "abduction": 0.005, "analogy": 0.001, "none": 0.004}}}
+{"id": "synthetic-logical_inference-0121-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.97, "1": 0.02, "2": 0.01, "3": 0.0, "4": 0.0}}}
+{"id": "synthetic-logical_inference-0121-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.08, "approximately_equal": 0.87, "depends_on_metric": 0.02, "insufficient_data": 0.02}}}
+{"id": "synthetic-logical_inference-0121-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.9, "false": 0.02, "minor_risk": 0.01, "context_dependent": 0.04, "insufficient_safety_data": 0.03}}}
+{"id": "synthetic-logical_inference-0121-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.96, "borderline": 0.01, "sufficient_with_caveats": 0.01, "more_info_needed": 0.01}}}
+{"id": "synthetic-logical_inference-0121-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.001, "1": 0.001, "2": 0.002, "3": 0.006, "4": 0.99}}}
+{"id": "synthetic-logical_inference-0121-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.12, "2": 0.78, "3": 0.07, "4": 0.01}}}
+{"id": "synthetic-logical_inference-0121-para-q-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.005, "false": 0.985, "approximately_equal": 0.002, "depends_on_metric": 0.003, "insufficient_data": 0.005}}}
+{"id": "synthetic-logical_inference-0121-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.005, "minor_risk": 0.002, "context_dependent": 0.005, "insufficient_safety_data": 0.008}}}
+{"id": "synthetic-logical_inference-0121-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"analogy": 0.002, "deduction": 0.985, "induction": 0.004, "none": 0.006, "abduction": 0.003}}}
+{"id": "synthetic-logical_inference-0121-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.01, "approximately_equal": 0.005, "depends_on_metric": 0.005, "insufficient_data": 0.01}}}
+{"id": "synthetic-logical_inference-0121-neg-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.9, "minor_risk": 0.02, "context_dependent": 0.04, "insufficient_safety_data": 0.02}}}
+{"id": "synthetic-logical_inference-0123-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"none": 0.03, "induction": 0.7, "abduction": 0.12, "deduction": 0.1, "analogy": 0.05}}}
+{"id": "synthetic-logical_inference-0125-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.04, "partially_different": 0.03, "unpredictable": 0.4, "depends_on_assumptions": 0.45}}}
+{"id": "synthetic-logical_inference-0125-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.02, "partially_different": 0.01, "unpredictable": 0.07, "depends_on_assumptions": 0.82}}}
+{"id": "synthetic-logical_inference-0127-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.92, "induction": 0.02, "abduction": 0.01, "analogy": 0.01, "none": 0.04}}}
+{"id": "synthetic-logical_inference-0128-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.08, "induction": 0.28, "abduction": 0.52, "analogy": 0.02, "none": 0.1}}}
+{"id": "synthetic-logical_inference-0128-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.25, "2": 0.5, "3": 0.18, "4": 0.02}}}
+{"id": "synthetic-logical_inference-0128-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.5, "abduction": 0.4, "analogy": 0.02, "none": 0.05}}}
+{"id": "synthetic-logical_inference-0128-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "analogy": 0.01, "induction": 0.78, "abduction": 0.16, "none": 0.02}}}
+{"id": "synthetic-logical_inference-0129-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.78, "minor_risk": 0.03, "context_dependent": 0.06, "insufficient_safety_data": 0.01}}}
+{"id": "synthetic-logical_inference-0130-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.8, "false": 0.01, "simultaneous": 0.01, "ambiguous_timeline": 0.1, "insufficient_temporal_data": 0.08}}}
+{"id": "synthetic-logical_inference-0132-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"technical_complexity": 0.45, "financial_risk": 0.2, "time_and_uncertainty": 0.32, "market_demand": 0.03}}}
+{"id": "synthetic-logical_inference-0137-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.1, "borderline": 0.04, "sufficient_with_caveats": 0.17, "more_info_needed": 0.68}}}
+{"id": "synthetic-logical_inference-0137-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.58, "induction": 0.12, "abduction": 0.08, "analogy": 0.04, "none": 0.18}}}
+{"id": "synthetic-logical_inference-0139-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.18, "induction": 0.57, "abduction": 0.08, "analogy": 0.12, "none": 0.05}}}
+{"id": "synthetic-logical_inference-0139-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.22, "1": 0.58, "2": 0.17, "3": 0.03, "4": 0.0}}}
+{"id": "synthetic-logical_inference-0141-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.86, "induction": 0.08, "abduction": 0.03, "analogy": 0.01, "none": 0.02}}}
+{"id": "synthetic-logical_inference-0143-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.02, "induction": 0.75, "abduction": 0.04, "analogy": 0.01, "none": 0.18}}}
+{"id": "synthetic-logical_inference-0143-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.93, "theoretically_possible": 0.02, "conditionally_possible": 0.02, "practically_infeasible": 0.01}}}
+{"id": "synthetic-logical_inference-0143-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.72, "abduction": 0.08, "analogy": 0.03, "none": 0.14}}}
+{"id": "synthetic-logical_inference-0143-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.12, "abduction": 0.08, "analogy": 0.02, "none": 0.75}}}
+{"id": "synthetic-logical_inference-0147-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.04, "1": 0.34, "2": 0.58, "3": 0.04}}}
+{"id": "synthetic-logical_inference-0148-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.18, "induction": 0.62, "abduction": 0.1, "analogy": 0.05, "none": 0.05}}}
+{"id": "synthetic-logical_inference-0149-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.18, "induction": 0.03, "abduction": 0.02, "analogy": 0.01, "none": 0.76}}}
+{"id": "synthetic-logical_inference-0149-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.55, "1": 0.2, "2": 0.1, "3": 0.05, "4": 0.1}}}
+{"id": "synthetic-logical_inference-0149-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"induction": 0.01, "abduction": 0.01, "analogy": 0.01, "none": 0.95, "deduction": 0.02}}}
+{"id": "synthetic-logical_inference-0150-choice-1", "teacher_probs": {"gpt_5_6_luna": {"modus_ponens": 0.001, "modus_tollens": 0.001, "denying_the_antecedent": 0.997, "affirming_the_consequent": 0.001}}}
+{"id": "synthetic-logical_inference-0150-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.72, "induction": 0.03, "abduction": 0.01, "analogy": 0.01, "none": 0.23}}}
+{"id": "synthetic-logical_inference-0152-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.65, "false": 0.02, "borderline": 0.03, "sufficient_with_caveats": 0.12, "more_info_needed": 0.18}}}
+{"id": "synthetic-logical_inference-0153-cf-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.25, "false": 0.55, "mostly_consistent": 0.12, "trivially_inconsistent": 0.03, "cannot_determine": 0.05}}}
+{"id": "synthetic-logical_inference-0155-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.04, "induction": 0.58, "abduction": 0.25, "analogy": 0.03, "none": 0.1}}}
+{"id": "synthetic-logical_inference-0155-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.25, "abduction": 0.62, "analogy": 0.08, "none": 0.02}}}
+{"id": "synthetic-logical_inference-0155-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.03, "1": 0.12, "2": 0.7, "3": 0.15}}}
+{"id": "synthetic-logical_inference-0155-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"induction": 0.6, "deduction": 0.03, "abduction": 0.3, "analogy": 0.02, "none": 0.05}}}
+{"id": "synthetic-logical_inference-0156-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.08, "induction": 0.22, "abduction": 0.08, "analogy": 0.12, "none": 0.5}}}
+{"id": "synthetic-logical_inference-0156-cf-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.72, "false": 0.06, "borderline": 0.1, "overlapping_categories": 0.02, "insufficient_criteria": 0.1}}}
+{"id": "synthetic-logical_inference-0156-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.04, "abduction": 0.02, "analogy": 0.01, "none": 0.9}}}
+{"id": "synthetic-logical_inference-0156-para-q-noul-classification", "teacher_probs": {"gpt_5_6_luna": {"true": 0.48, "false": 0.12, "borderline": 0.08, "overlapping_categories": 0.03, "insufficient_criteria": 0.29}}}
+{"id": "synthetic-logical_inference-0156-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"induction": 0.18, "abduction": 0.08, "analogy": 0.25, "none": 0.42, "deduction": 0.07}}}
+{"id": "synthetic-logical_inference-0156-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"medical": 0.08, "administrative": 0.48, "legal": 0.34, "philosophical": 0.1}}}
+{"id": "synthetic-logical_inference-0156-neg-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.18, "false": 0.2, "approximately_equal": 0.38, "depends_on_metric": 0.2, "insufficient_data": 0.04}}}
+{"id": "synthetic-logical_inference-0158-cf-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.78, "false": 0.05, "minor_risk": 0.01, "context_dependent": 0.15, "insufficient_safety_data": 0.01}}}
+{"id": "synthetic-logical_inference-0159-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.005, "false": 0.25, "borderline": 0.015, "sufficient_with_caveats": 0.01, "more_info_needed": 0.72}}}
+{"id": "synthetic-logical_inference-0159-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.01, "borderline": 0.005, "approaching": 0.003, "measurement_uncertain": 0.002}}}
+{"id": "synthetic-logical_inference-0159-choice-2", "teacher_probs": {"gpt_5_6_luna": {"zhang_wang_li": 0.0, "wang_zhang_li": 0.0, "zhang_li_wang": 0.0, "wang_li_zhang": 0.0, "indeterminate": 1.0}}}
+{"id": "synthetic-logical_inference-0159-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.001, "false": 0.006, "borderline": 0.002, "sufficient_with_caveats": 0.001, "more_info_needed": 0.99}}}
+{"id": "synthetic-logical_inference-0159-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.015, "borderline": 0.002, "approaching": 0.001, "measurement_uncertain": 0.002}}}
+{"id": "synthetic-logical_inference-0159-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.998, "false": 0.0005, "borderline": 0.0005, "sufficient_with_caveats": 0.0005, "more_info_needed": 0.0005}}}
+{"id": "synthetic-logical_inference-0159-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.995, "false": 0.003, "borderline": 0.001, "approaching": 0.0005, "measurement_uncertain": 0.0005}}}
+{"id": "synthetic-logical_inference-0159-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"zhang_wang_li": 1.0, "wang_zhang_li": 0.0, "zhang_li_wang": 0.0, "wang_li_zhang": 0.0, "indeterminate": 0.0}}}
+{"id": "synthetic-logical_inference-0159-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.005, "1": 0.005, "2": 0.01, "3": 0.03, "4": 0.95}}}
+{"id": "synthetic-logical_inference-0159-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.93, "false": 0.04, "borderline": 0.01, "approaching": 0.01, "measurement_uncertain": 0.01}}}
+{"id": "synthetic-logical_inference-0159-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"indeterminate": 0.0, "zhang_hong": 0.0, "wang_min": 1.0, "li_cong": 0.0}}}
+{"id": "synthetic-logical_inference-0159-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"zhang_li_wang": 0.0, "wang_zhang_li": 0.0, "zhang_wang_li": 1.0, "wang_li_zhang": 0.0, "indeterminate": 0.0}}}
+{"id": "synthetic-logical_inference-0159-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.995, "false": 0.001, "borderline": 0.001, "sufficient_with_caveats": 0.001, "more_info_needed": 0.002}}}
+{"id": "synthetic-logical_inference-0160-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.01, "contributing_factor": 0.005, "correlation_not_causation": 0.005, "insufficient_evidence": 0.01}}}
+{"id": "synthetic-logical_inference-0160-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.88, "false": 0.08, "contributing_factor": 0.01, "correlation_not_causation": 0.01, "insufficient_evidence": 0.02}}}
+{"id": "synthetic-logical_inference-0163-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.06, "2": 0.18, "3": 0.68, "4": 0.07}}}
+{"id": "synthetic-logical_inference-0165-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.06, "abduction": 0.08, "analogy": 0.08, "none": 0.75}}}
+{"id": "synthetic-logical_inference-0165-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.08, "induction": 0.2, "abduction": 0.12, "analogy": 0.52, "none": 0.08}}}
+{"id": "synthetic-logical_inference-0165-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.01, "induction": 0.55, "abduction": 0.25, "analogy": 0.04, "none": 0.15}}}
+{"id": "synthetic-logical_inference-0165-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.18, "1": 0.43, "2": 0.31, "3": 0.07, "4": 0.01}}}
+{"id": "synthetic-logical_inference-0165-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"abduction": 0.44, "deduction": 0.02, "none": 0.04, "induction": 0.22, "analogy": 0.28}}}
+{"id": "synthetic-logical_inference-0169-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.15, "induction": 0.72, "abduction": 0.05, "analogy": 0.01, "none": 0.07}}}
+{"id": "synthetic-logical_inference-0170-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.2, "abduction": 0.05, "analogy": 0.02, "none": 0.7}}}
+{"id": "synthetic-logical_inference-0170-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.18, "simultaneous": 0.2, "ambiguous_timeline": 0.4, "insufficient_temporal_data": 0.1}}}
+{"id": "synthetic-logical_inference-0172-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.01, "simultaneous": 0.01, "ambiguous_timeline": 0.005, "insufficient_temporal_data": 0.005}}}
+{"id": "synthetic-logical_inference-0172-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.002, "false": 0.995, "borderline": 0.001, "approaching": 0.001, "measurement_uncertain": 0.001}}}
+{"id": "synthetic-logical_inference-0172-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.01, "borderline": 0.005, "sufficient_with_caveats": 0.01, "more_info_needed": 0.005}}}
+{"id": "synthetic-logical_inference-0172-choice-1", "teacher_probs": {"gpt_5_6_luna": {"A": 0.02, "B": 0.9, "C": 0.05, "D": 0.03}}}
+{"id": "synthetic-logical_inference-0172-choice-2", "teacher_probs": {"gpt_5_6_luna": {"A": 0.001, "B": 0.995, "C": 0.003, "D": 0.001}}}
+{"id": "synthetic-logical_inference-0172-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.02, "2": 0.05, "3": 0.1, "4": 0.82}}}
+{"id": "synthetic-logical_inference-0172-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.04, "2": 0.2, "3": 0.75}}}
+{"id": "synthetic-logical_inference-0172-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.005, "simultaneous": 0.01, "ambiguous_timeline": 0.003, "insufficient_temporal_data": 0.002}}}
+{"id": "synthetic-logical_inference-0172-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.9, "borderline": 0.03, "approaching": 0.02, "measurement_uncertain": 0.02}}}
+{"id": "synthetic-logical_inference-0172-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.9, "borderline": 0.02, "sufficient_with_caveats": 0.03, "more_info_needed": 0.03}}}
+{"id": "synthetic-logical_inference-0172-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.97, "induction": 0.01, "abduction": 0.005, "analogy": 0.001, "none": 0.014}}}
+{"id": "synthetic-logical_inference-0172-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.01, "2": 0.03, "3": 0.05, "4": 0.9}}}
+{"id": "synthetic-logical_inference-0172-para-state-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.78, "false": 0.03, "simultaneous": 0.12, "ambiguous_timeline": 0.03, "insufficient_temporal_data": 0.04}}}
+{"id": "synthetic-logical_inference-0172-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.001, "false": 0.997, "borderline": 0.001, "approaching": 0.0005, "measurement_uncertain": 0.0005}}}
+{"id": "synthetic-logical_inference-0172-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.005, "borderline": 0.005, "sufficient_with_caveats": 0.005, "more_info_needed": 0.005}}}
+{"id": "synthetic-logical_inference-0172-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"A": 0.01, "B": 0.96, "C": 0.02, "D": 0.01}}}
+{"id": "synthetic-logical_inference-0172-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"A": 0.001, "B": 0.997, "C": 0.001, "D": 0.001}}}
+{"id": "synthetic-logical_inference-0172-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.001, "1": 0.001, "2": 0.002, "3": 0.006, "4": 0.99}}}
+{"id": "synthetic-logical_inference-0172-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.04, "2": 0.93, "3": 0.02}}}
+{"id": "synthetic-logical_inference-0172-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.98, "borderline": 0.005, "approaching": 0.003, "measurement_uncertain": 0.002}}}
+{"id": "synthetic-logical_inference-0172-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.005, "borderline": 0.005, "sufficient_with_caveats": 0.005, "more_info_needed": 0.005}}}
+{"id": "synthetic-logical_inference-0172-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"D": 0.08, "C": 0.07, "B": 0.82, "A": 0.03}}}
+{"id": "synthetic-logical_inference-0172-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"D": 0.001, "A": 0.001, "C": 0.001, "B": 0.997}}}
+{"id": "synthetic-logical_inference-0172-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.85, "simultaneous": 0.12, "ambiguous_timeline": 0.015, "insufficient_temporal_data": 0.005}}}
+{"id": "synthetic-logical_inference-0172-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.93, "false": 0.04, "borderline": 0.01, "approaching": 0.01, "measurement_uncertain": 0.01}}}
+{"id": "synthetic-logical_inference-0172-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.995, "false": 0.001, "borderline": 0.001, "sufficient_with_caveats": 0.001, "more_info_needed": 0.002}}}
+{"id": "synthetic-logical_inference-0173-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.01, "partially_different": 0.002, "unpredictable": 0.003, "depends_on_assumptions": 0.005}}}
+{"id": "synthetic-logical_inference-0173-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.005, "theoretically_possible": 0.002, "conditionally_possible": 0.002, "practically_infeasible": 0.001}}}
+{"id": "synthetic-logical_inference-0173-choice-1", "teacher_probs": {"gpt_5_6_luna": {"class_a": 0.001, "class_b": 0.001, "class_c": 0.001, "class_d": 0.997}}}
+{"id": "synthetic-logical_inference-0173-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.01, "2": 0.03, "3": 0.1, "4": 0.85}}}
+{"id": "synthetic-logical_inference-0173-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.94, "false": 0.02, "partially_different": 0.01, "unpredictable": 0.01, "depends_on_assumptions": 0.02}}}
+{"id": "synthetic-logical_inference-0173-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.005, "false": 0.98, "theoretically_possible": 0.005, "conditionally_possible": 0.005, "practically_infeasible": 0.005}}}
+{"id": "synthetic-logical_inference-0173-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.9, "induction": 0.04, "abduction": 0.03, "analogy": 0.01, "none": 0.02}}}
+{"id": "synthetic-logical_inference-0173-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.72, "1": 0.2, "2": 0.06, "3": 0.018, "4": 0.002}}}
+{"id": "synthetic-logical_inference-0173-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.01, "partially_different": 0.005, "unpredictable": 0.005, "depends_on_assumptions": 0.01}}}
+{"id": "synthetic-logical_inference-0173-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.01, "theoretically_possible": 0.005, "conditionally_possible": 0.003, "practically_infeasible": 0.002}}}
+{"id": "synthetic-logical_inference-0173-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"class_a": 0.001, "class_b": 0.001, "class_c": 0.001, "class_d": 0.997}}}
+{"id": "synthetic-logical_inference-0173-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.98, "1": 0.015, "2": 0.004, "3": 0.001, "4": 0.0}}}
+{"id": "synthetic-logical_inference-0173-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.94, "false": 0.02, "partially_different": 0.01, "unpredictable": 0.01, "depends_on_assumptions": 0.02}}}
+{"id": "synthetic-logical_inference-0173-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.01, "theoretically_possible": 0.015, "conditionally_possible": 0.004, "practically_infeasible": 0.001}}}
+{"id": "synthetic-logical_inference-0173-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.97, "false": 0.01, "mostly_consistent": 0.005, "trivially_inconsistent": 0.005, "cannot_determine": 0.01}}}
+{"id": "synthetic-logical_inference-0173-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"analogy": 0.005, "abduction": 0.01, "deduction": 0.97, "induction": 0.005, "none": 0.01}}}
+{"id": "synthetic-logical_inference-0173-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"class_d": 0.99, "class_b": 0.003, "class_c": 0.004, "class_a": 0.003}}}
+{"id": "synthetic-logical_inference-0173-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.9, "partially_different": 0.02, "unpredictable": 0.02, "depends_on_assumptions": 0.03}}}
+{"id": "synthetic-logical_inference-0173-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.97, "theoretically_possible": 0.01, "conditionally_possible": 0.01, "practically_infeasible": 0.0}}}
+{"id": "synthetic-logical_inference-0175-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.05, "induction": 0.3, "abduction": 0.4, "analogy": 0.05, "none": 0.2}}}
+{"id": "synthetic-logical_inference-0177-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"abduction": 0.06, "induction": 0.1, "none": 0.28, "analogy": 0.04, "deduction": 0.52}}}
+{"id": "synthetic-logical_inference-0179-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.08, "induction": 0.32, "abduction": 0.04, "analogy": 0.01, "none": 0.55}}}
+{"id": "synthetic-logical_inference-0179-choice-1", "teacher_probs": {"gpt_5_6_luna": {"affirming_the_consequent": 0.5, "denying_the_antecedent": 0.08, "false_dilemma": 0.2, "no_fallacy": 0.17, "slippery_slope": 0.05}}}
+{"id": "synthetic-logical_inference-0179-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.22, "false": 0.2, "theoretically_possible": 0.12, "conditionally_possible": 0.4, "practically_infeasible": 0.06}}}
+{"id": "synthetic-logical_inference-0179-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"affirming_the_consequent": 0.58, "denying_the_antecedent": 0.08, "false_dilemma": 0.05, "no_fallacy": 0.24, "slippery_slope": 0.05}}}
+{"id": "synthetic-logical_inference-0179-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.8, "theoretically_possible": 0.1, "conditionally_possible": 0.05, "practically_infeasible": 0.02}}}
+{"id": "synthetic-logical_inference-0179-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"no_fallacy": 0.2, "denying_the_antecedent": 0.3, "false_dilemma": 0.05, "affirming_the_consequent": 0.25, "slippery_slope": 0.2}}}
+{"id": "synthetic-logical_inference-0179-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.82, "false": 0.08, "theoretically_possible": 0.04, "conditionally_possible": 0.04, "practically_infeasible": 0.02}}}
+{"id": "synthetic-logical_inference-0180-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.45, "induction": 0.25, "abduction": 0.05, "analogy": 0.02, "none": 0.23}}}
+{"id": "synthetic-logical_inference-0183-para-state-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.03, "2": 0.12, "3": 0.58, "4": 0.26}}}
+{"id": "synthetic-logical_inference-0185-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.88, "induction": 0.04, "abduction": 0.02, "analogy": 0.01, "none": 0.05}}}
+{"id": "synthetic-logical_inference-0185-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.72, "induction": 0.08, "abduction": 0.05, "analogy": 0.03, "none": 0.12}}}
+{"id": "synthetic-logical_inference-0187-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.005, "false": 0.99, "partially_different": 0.001, "unpredictable": 0.001, "depends_on_assumptions": 0.003}}}
+{"id": "synthetic-logical_inference-0187-choice-1", "teacher_probs": {"gpt_5_6_luna": {"law_accounting_finance": 0.01, "law_accounting_economics": 0.96, "law_accounting_finance_economics": 0.02, "law_accounting_audit": 0.005, "law_finance_economics": 0.005}}}
+{"id": "synthetic-logical_inference-0187-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.02, "2": 0.04, "3": 0.08, "4": 0.85}}}
+{"id": "synthetic-logical_inference-0187-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.08, "false": 0.62, "borderline": 0.18, "approaching": 0.08, "measurement_uncertain": 0.04}}}
+{"id": "synthetic-logical_inference-0187-para-state-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.56, "simultaneous": 0.08, "ambiguous_timeline": 0.13, "insufficient_temporal_data": 0.2}}}
+{"id": "synthetic-logical_inference-0187-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"law_accounting_finance": 0.01, "law_accounting_economics": 0.35, "law_accounting_finance_economics": 0.6, "law_accounting_audit": 0.01, "law_finance_economics": 0.03}}}
+{"id": "synthetic-logical_inference-0187-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.005, "false": 0.985, "minor_risk": 0.002, "context_dependent": 0.005, "insufficient_safety_data": 0.003}}}
+{"id": "synthetic-logical_inference-0187-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.99, "false": 0.005, "borderline": 0.002, "approaching": 0.002, "measurement_uncertain": 0.001}}}
+{"id": "synthetic-logical_inference-0187-para-q-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.04, "simultaneous": 0.02, "ambiguous_timeline": 0.08, "insufficient_temporal_data": 0.85}}}
+{"id": "synthetic-logical_inference-0187-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"law_accounting_economics": 0.93, "law_accounting_audit": 0.01, "law_accounting_finance": 0.01, "law_accounting_finance_economics": 0.04, "law_finance_economics": 0.01}}}
+{"id": "synthetic-logical_inference-0187-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.001, "false": 0.96, "borderline": 0.035, "approaching": 0.002, "measurement_uncertain": 0.002}}}
+{"id": "synthetic-logical_inference-0187-neg-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.12, "false": 0.08, "simultaneous": 0.1, "ambiguous_timeline": 0.2, "insufficient_temporal_data": 0.5}}}
+{"id": "synthetic-logical_inference-0188-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.01, "induction": 0.02, "abduction": 0.01, "analogy": 0.01, "none": 0.95}}}
+{"id": "synthetic-logical_inference-0191-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.08, "induction": 0.54, "abduction": 0.12, "analogy": 0.03, "none": 0.23}}}
+{"id": "synthetic-logical_inference-0191-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.06, "analogy": 0.01, "none": 0.24, "abduction": 0.01, "induction": 0.68}}}
+{"id": "synthetic-logical_inference-0194-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.01, "false": 0.06, "partially_different": 0.01, "unpredictable": 0.72, "depends_on_assumptions": 0.2}}}
+{"id": "synthetic-logical_inference-0194-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"random_sampling": 0.36, "disease_status": 0.02, "genetic_similarity": 0.33, "volunteer_basis": 0.29}}}
+{"id": "synthetic-logical_inference-0194-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"disease_status": 0.04, "volunteer_basis": 0.43, "genetic_similarity": 0.28, "random_sampling": 0.25}}}
+{"id": "synthetic-logical_inference-0194-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.03, "false": 0.04, "partially_different": 0.03, "unpredictable": 0.82, "depends_on_assumptions": 0.08}}}
+{"id": "synthetic-logical_inference-0195-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.02, "1": 0.08, "2": 0.35, "3": 0.5, "4": 0.05}}}
+{"id": "synthetic-logical_inference-0195-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.08, "1": 0.2, "2": 0.5, "3": 0.2, "4": 0.02}}}
+{"id": "synthetic-logical_inference-0195-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"abduction": 0.02, "none": 0.03, "induction": 0.39, "deduction": 0.01, "analogy": 0.55}}}
+{"id": "synthetic-logical_inference-0197-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.01, "1": 0.06, "2": 0.2, "3": 0.6, "4": 0.13}}}
+{"id": "synthetic-logical_inference-0198-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.04, "abduction": 0.02, "analogy": 0.01, "none": 0.9}}}
+{"id": "synthetic-logical_inference-0198-cf-score-0", "teacher_probs": {"gpt_5_6_luna": {"0": 0.8, "1": 0.15, "2": 0.04, "3": 0.01, "4": 0.0}}}
+{"id": "synthetic-logical_inference-0199-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"deduction": 0.03, "induction": 0.05, "abduction": 0.15, "analogy": 0.02, "none": 0.75}}}
