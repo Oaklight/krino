@@ -56,6 +56,11 @@ from .synthetic_templates import (
 from .lsh import LSHIndex
 from .synthetic_dedup import dedup_families
 from .synthetic_llm_label import label_items_llm
+from .synthetic_noul_augment import (
+    DEFAULT_AUGMENT_MODEL,
+    LLM_AUGMENT_MODEL_ENV,
+    augment_noul_questions,
+)
 from .synthetic_repair import fill_variant_gaps, repair_variants
 from .synthetic_validate import validate_family
 
@@ -73,7 +78,7 @@ LLM_REPAIR_MODEL = os.environ.get("LLM_REPAIR_MODEL", "argo:gpt-4.1-nano")
 MAX_CONCURRENT = int(os.environ.get("SYNTH_MAX_CONCURRENT", "20"))
 MAX_RETRIES = 3
 
-ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "fill-variants", "repair", "dedup", "validate", "llm-label", "jev-label", "report"]
+ALL_STAGES = ["base", "counterfactual", "paraphrase", "negation", "shuffle", "fill-variants", "repair", "dedup", "noul-augment", "validate", "llm-label", "jev-label", "report"]
 VARIANT_STAGES = {"counterfactual", "paraphrase", "negation"}
 
 
@@ -575,6 +580,7 @@ def family_to_typed_questions(
                     source="synthetic",
                     split="train",
                     group=group,
+                    augmented_options=nq.get("augmented_options"),
                 ).to_dict()
             )
 
@@ -670,6 +676,7 @@ def family_to_typed_questions(
                         source="synthetic",
                         split="train",
                         group=group,
+                        augmented_options=nq.get("augmented_options"),
                     ).to_dict()
                 )
             if choice_questions_valid and cf.get("choice_label"):
@@ -734,6 +741,7 @@ def family_to_typed_questions(
                             source="synthetic",
                             split="train",
                             group=group,
+                            augmented_options=nq.get("augmented_options"),
                         ).to_dict()
                     )
                 for ci, cq in enumerate(choice_questions_valid):
@@ -810,6 +818,7 @@ def family_to_typed_questions(
                                 source="synthetic",
                                 split="train",
                                 group=group,
+                                augmented_options=nq.get("augmented_options"),
                             ).to_dict()
                         )
 
@@ -840,6 +849,10 @@ def family_to_typed_questions(
     if do_all or "negation" in enabled_stages:
         neg = variants.get("negation")
         if neg:
+            noul_augment_by_ct = {
+                nq.get("cognitive_type", "unknown"): nq.get("augmented_options")
+                for nq in family.get("noul_questions", [])
+            }
             for nq_neg in neg.get("negated_questions", []):
                 ct = nq_neg.get("cognitive_type", "unknown")
                 items.append(
@@ -851,6 +864,7 @@ def family_to_typed_questions(
                         source="synthetic",
                         split="train",
                         group=group,
+                        augmented_options=noul_augment_by_ct.get(ct),
                     ).to_dict()
                 )
 
@@ -975,6 +989,21 @@ async def run_pipeline(
                             ]
                             _save_jsonl(variants_by_domain[domain], DATA_DIR / f"{domain}_variants.jsonl")
 
+            # Noul augment (inside LLM-client context)
+            if "noul-augment" in stages and families_by_domain:
+                augment_model = os.environ.get(LLM_AUGMENT_MODEL_ENV, DEFAULT_AUGMENT_MODEL)
+                for domain in list(families_by_domain.keys()):
+                    fams = families_by_domain[domain]
+                    if fams:
+                        updated, aug_count, aug_failed = await augment_noul_questions(
+                            client, fams, augment_model, LLM_BASE_URL,
+                            max_concurrent=max_concurrent,
+                        )
+                        if aug_count:
+                            families_by_domain[domain] = updated
+                            _save_jsonl(updated, DATA_DIR / f"{domain}_families.jsonl")
+                        logger.info("  %s: noul-augment %d augmented, %d failed", domain, aug_count, aug_failed)
+
             # Validation
             if "validate" in stages and families_by_domain:
                 families_by_domain = await run_validate_stage(
@@ -1004,6 +1033,20 @@ async def run_pipeline(
                         variants[i] for i in sorted(kept_set) if i < len(variants)
                     ]
                     _save_jsonl(variants_by_domain[domain], DATA_DIR / f"{domain}_variants.jsonl")
+
+    # Noul augment (non-LLM path, template-only)
+    if "noul-augment" in stages and families_by_domain and not needs_llm:
+        for domain in list(families_by_domain.keys()):
+            fams = families_by_domain[domain]
+            if fams:
+                updated, aug_count, aug_failed = await augment_noul_questions(
+                    None, fams, "", "",
+                    max_concurrent=max_concurrent,
+                )
+                if aug_count:
+                    families_by_domain[domain] = updated
+                    _save_jsonl(updated, DATA_DIR / f"{domain}_families.jsonl")
+                logger.info("  %s: noul-augment %d augmented, %d failed (template-only)", domain, aug_count, aug_failed)
 
     # Verify alignment before conversion
     for domain, families in families_by_domain.items():
