@@ -82,6 +82,13 @@ def label_items_sync(
                 qid = item["id"]
                 q = dict(item["question"])
                 q.pop("instructions_original", None)
+                # Augmented noul → send as choice to get multi-option distribution
+                if q.get("type") == "noul" and q.get("augmented_options"):
+                    q = {
+                        "type": "choice",
+                        "instructions": q["instructions"],
+                        "criteria": q["augmented_options"],
+                    }
                 questions[qid] = q
                 item_map[qid] = item
 
@@ -109,8 +116,11 @@ def label_items_sync(
                 if not item:
                     continue
                 q_type = item["question"]["type"]
+                # Augmented noul was sent as choice — extract as choice
+                q_orig = item["question"]
+                effective_type = "choice" if (q_type == "noul" and q_orig.get("augmented_options")) else q_type
                 try:
-                    probs, confidence = _extract_probs(answer, q_type)
+                    probs, confidence = _extract_probs(answer, effective_type)
                     bucket = _bucket_confidence(confidence)
                 except (KeyError, TypeError) as exc:
                     logger.warning("Failed to extract probs for %s: %s", qid, exc)
