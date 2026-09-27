@@ -156,11 +156,16 @@ async def label_items_llm(
         q_type = q["type"]
         state = item["state"]
 
-        if q_type == "noul":
+        # Augmented noul items have multi-option alternatives — label as choice
+        augmented_options = q.get("augmented_options") if q_type == "noul" else None
+        effective_type = "choice" if augmented_options else q_type
+
+        if effective_type == "noul":
             prompt = _build_noul_prompt(state, q["instructions"])
-        elif q_type == "choice":
-            prompt = _build_choice_prompt(state, q["instructions"], q["criteria"])
-        elif q_type == "score":
+        elif effective_type == "choice":
+            criteria = augmented_options if augmented_options else q["criteria"]
+            prompt = _build_choice_prompt(state, q["instructions"], criteria)
+        elif effective_type == "score":
             prompt = _build_score_prompt(state, q["instructions"], q["criteria"])
         else:
             return
@@ -196,7 +201,7 @@ async def label_items_llm(
 
                 content = resp.json()["choices"][0]["message"]["content"]
 
-                if q_type == "noul":
+                if effective_type == "noul":
                     probs = _parse_noul_response(content)
                     if probs:
                         results[idx] = LLMLabelResult(
@@ -208,8 +213,9 @@ async def label_items_llm(
                         )
                         return
 
-                elif q_type == "choice":
-                    choice, probs = _parse_choice_response(content, list(q["criteria"].keys()))
+                elif effective_type == "choice":
+                    criteria = augmented_options if augmented_options else q["criteria"]
+                    choice, probs = _parse_choice_response(content, list(criteria.keys()))
                     if probs:
                         results[idx] = LLMLabelResult(
                             item_id=item["id"],
@@ -220,7 +226,7 @@ async def label_items_llm(
                         )
                         return
 
-                elif q_type == "score":
+                elif effective_type == "score":
                     score, probs = _parse_score_response(content, len(q["criteria"]))
                     if probs:
                         results[idx] = LLMLabelResult(
