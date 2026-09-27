@@ -174,15 +174,16 @@ async def label_items_llm(
         else:
             return
 
+        max_tokens = 4096 if any(tag in model.lower() for tag in ("o1", "o3", "o4", "5.6", "5.5")) else 200
         payload = {
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 200,
+            "max_tokens": max_tokens,
         }
         # Reasoning models (o1, o3, gpt-5.6-*) don't support temperature=0
         is_reasoning = any(tag in model.lower() for tag in ("o1", "o3", "o4", "5.6", "5.5"))
         if is_reasoning:
-            payload["reasoning_effort"] = "high"
+            payload["reasoning_effort"] = "low"
         else:
             payload["temperature"] = 0
         # Qwen3.8 models: disable thinking mode for clean JSON output
