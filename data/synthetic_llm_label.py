@@ -24,11 +24,26 @@ class LLMLabelResult:
     model: str
 
 
+_SYSTEM_CONTEXT = (
+    "You are generating training labels for a faithful decision model — "
+    "a classifier that outputs calibrated probability distributions over "
+    "structured options. Your probability estimates will be used as soft "
+    "teacher labels for knowledge distillation. Accuracy and calibration "
+    "both matter: assign probabilities that reflect the true likelihood "
+    "of each option being correct given the evidence."
+)
+
+
 def _build_noul_prompt(state: str, instructions: str) -> str:
     return (
-        f"You are evaluating whether a proposition is true or false.\n\n"
+        f"{_SYSTEM_CONTEXT}\n\n"
+        f"Task: binary (true/false) decision.\n\n"
         f"State:\n{state}\n\n"
         f"Question: {instructions}\n\n"
+        f"Estimate the probability that the correct answer is true. Express "
+        f"genuine uncertainty — values like 0.75 or 0.3 are valid when the "
+        f"evidence is ambiguous. Reserve extremes (>0.95 or <0.05) for cases "
+        f"where the evidence is truly decisive.\n\n"
         f"Respond with ONLY a JSON object:\n"
         f'{{"probability_true": <float 0.0-1.0>}}'
     )
@@ -39,13 +54,18 @@ def _build_choice_prompt(state: str, instructions: str, criteria: dict[str, str]
     keys = list(criteria.keys())
     prob_fields = ", ".join(f'"{k}": <float>' for k in keys)
     return (
-        f"You are evaluating which option best applies.\n\n"
+        f"{_SYSTEM_CONTEXT}\n\n"
+        f"Task: multi-option classification.\n\n"
         f"State:\n{state}\n\n"
         f"Question: {instructions}\n\n"
         f"Options:\n{options}\n\n"
+        f"Distribute probability across these MUTUALLY EXCLUSIVE options. "
+        f"The probabilities MUST sum to exactly 1.0 — this is a categorical "
+        f"distribution, NOT independent confidence scores. Assign each option "
+        f"a share of the total probability reflecting how likely it is the "
+        f"correct answer.\n\n"
         f"Respond with ONLY a JSON object:\n"
-        f'{{"choice": "<option_key>", "probabilities": {{{prob_fields}}}}}\n'
-        f"Probabilities must sum to 1.0."
+        f'{{"choice": "<best_option_key>", "probabilities": {{{prob_fields}}}}}'
     )
 
 
@@ -53,13 +73,17 @@ def _build_score_prompt(state: str, instructions: str, criteria: list[str]) -> s
     levels = "\n".join(f"  {i}: {c}" for i, c in enumerate(criteria))
     prob_fields = ", ".join(f'"{i}": <float>' for i in range(len(criteria)))
     return (
-        f"You are rating on an ordinal scale.\n\n"
+        f"{_SYSTEM_CONTEXT}\n\n"
+        f"Task: ordinal rating.\n\n"
         f"State:\n{state}\n\n"
         f"Question: {instructions}\n\n"
         f"Score levels (0-indexed):\n{levels}\n\n"
+        f"Distribute probability across these MUTUALLY EXCLUSIVE score levels. "
+        f"The probabilities MUST sum to exactly 1.0 — this is a categorical "
+        f"distribution over ordinal levels. Adjacent levels may share "
+        f"probability when the rating is borderline.\n\n"
         f"Respond with ONLY a JSON object:\n"
-        f'{{"score": <float 0.0-{len(criteria)-1}.0>, "probabilities": {{{prob_fields}}}}}\n'
-        f"Probabilities must sum to 1.0."
+        f'{{"score": <float 0.0-{len(criteria)-1}.0>, "probabilities": {{{prob_fields}}}}}'
     )
 
 
