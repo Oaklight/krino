@@ -1,0 +1,368 @@
+{"id": "synthetic-multi_agent_coordination-0000-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.65, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0001-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.75, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0001-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"keep_hovering": 0.05, "redeploy_now": 0.15, "hand_off_relay": 0.65, "ground_nova2": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0002-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.65, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0003-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_limit": 0.15, "rover_eta": 0.55, "comms_gap": 0.15, "beacon_reliability": 0.1, "scout_speed": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0003-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"beacon_reliability": 0.15, "rover_eta": 0.55, "scout_speed": 0.05, "battery_limit": 0.1, "comms_gap": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0003-neg-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0004-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0004-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"independent": 0.05, "lead": 0.05, "communicate": 0.15, "wait": 0.1, "support": 0.65}}}
+{"id": "synthetic-multi_agent_coordination-0005-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.75, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0005-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_failure": 0.15, "comms_blackout": 0.2, "time_overrun": 0.5, "incomplete_intel": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0006-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0006-choice-1", "teacher_probs": {"gpt_5_6_luna": {"silent_signal_only": 0.15, "neutralize_then_signal": 0.25, "signal_then_neutralize": 0.55, "request_guidance": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0006-cf-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0006-para-state-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_agent_coordination-0006-para-q-noul-temporal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_agent_coordination-0007-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0007-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"support": 0.72, "wait": 0.03, "communicate": 0.15, "lead": 0.05, "independent": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0012-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"samples_incomplete": 0.15, "rover1_delayed": 0.1, "storm_timing": 0.1, "rover2_stranded": 0.65}}}
+{"id": "synthetic-multi_agent_coordination-0013-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0013-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0013-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0014-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"foam_microfracture": 0.65, "foam_main": 0.15, "thermal_scan": 0.1, "assist_weld": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0014-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"foam_main": 0.15, "assist_weld": 0.1, "foam_microfracture": 0.65, "thermal_scan": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0015-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0015-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.1, "communicate": 0.1, "wait": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0015-choice-2", "teacher_probs": {"gpt_5_6_luna": {"status_updates": 0.05, "rover3_priority": 0.15, "rover2_directive": 0.7, "thermal_relay": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0015-para-q-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0015-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"thermal_relay": 0.1, "rover3_priority": 0.25, "rover2_directive": 0.55, "status_updates": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0016-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0016-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.85, "independent": 0.05, "communicate": 0.03, "wait": 0.02}}}
+{"id": "synthetic-multi_agent_coordination-0016-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0016-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0016-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0016-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0016-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0016-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0016-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0018-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"proceed_anyway": 0.15, "defer_to_sentinel": 0.1, "redirect_east": 0.15, "hold_and_request": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0020-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0020-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0020-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"time_window": 0.55, "battery_depletion": 0.25, "authorization_gap": 0.15, "communication_delay": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0020-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0021-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.1, "communicate": 0.1, "wait": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0021-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0022-choice-1", "teacher_probs": {"gpt_5_6_luna": {"victim_count": 0.15, "handoff_point": 0.25, "falcon1_capacity": 0.1, "blackout_plan": 0.4, "secondary_route": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0022-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"falcon1_capacity": 0.05, "secondary_route": 0.15, "blackout_plan": 0.55, "victim_count": 0.1, "handoff_point": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0023-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"support": 0.85, "independent": 0.05, "wait": 0.02, "communicate": 0.05, "lead": 0.03}}}
+{"id": "synthetic-multi_agent_coordination-0024-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.02, "false": 0.98}}}
+{"id": "synthetic-multi_agent_coordination-0024-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.15, "support": 0.05, "independent": 0.15, "communicate": 0.55, "wait": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0024-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"grid7_only": 0.15, "grid9_only": 0.1, "grid7_first_then_grid9": 0.65, "split_equally": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0024-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0025-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0026-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0026-choice-1", "teacher_probs": {"gpt_5_6_luna": {"echo_offline": 0.15, "bravo_overloaded": 0.55, "structural_collapse": 0.15, "comms_blackout": 0.05, "drone_battery": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0026-choice-2", "teacher_probs": {"gpt_5_6_luna": {"request_status": 0.05, "inform_decision": 0.75, "redirect_echo": 0.1, "alert_all": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0026-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0026-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0026-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"echo_offline": 0.45, "bravo_overloaded": 0.35, "structural_collapse": 0.1, "comms_blackout": 0.05, "drone_battery": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0026-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"wait": 0.05, "independent": 0.1, "lead": 0.15, "support": 0.6, "communicate": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0026-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"redirect_echo": 0.05, "inform_decision": 0.75, "request_status": 0.05, "alert_all": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0028-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"authorize_seal": 0.15, "reposition_delta": 0.05, "hold_delta": 0.7, "use_falcon": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0030-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.05, "independent": 0.15, "communicate": 0.1, "wait": 0.65}}}
+{"id": "synthetic-multi_agent_coordination-0030-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.05, "independent": 0.15, "communicate": 0.1, "wait": 0.65}}}
+{"id": "synthetic-multi_agent_coordination-0031-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0031-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.45, "route_delay": 0.25, "medic_navigation": 0.15, "structural_collapse": 0.1, "communication_blackout": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0031-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0031-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.45, "route_delay": 0.25, "medic_navigation": 0.15, "structural_collapse": 0.1, "communication_blackout": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0031-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.45, "2": 0.45, "3": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0031-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"triage_on_arrival": 0.15, "basement": 0.1, "floor_three": 0.65, "await_rescue_bravo": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0031-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"structural_collapse": 0.15, "route_delay": 0.25, "communication_blackout": 0.05, "medic_navigation": 0.15, "battery_depletion": 0.4}}}
+{"id": "synthetic-multi_agent_coordination-0033-choice-1", "teacher_probs": {"gpt_5_6_luna": {"shortcut_route": 0.15, "nova_coordinates": 0.7, "storm_timeline": 0.05, "delta_retasking": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0033-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_expiry": 0.55, "bravo_delay": 0.25, "bandwidth_gap": 0.1, "delta_mismatch": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0033-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"shortcut_route": 0.15, "nova_coordinates": 0.65, "storm_timeline": 0.05, "delta_retasking": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0033-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_expiry": 0.55, "bravo_delay": 0.25, "bandwidth_gap": 0.1, "delta_mismatch": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0033-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"nova_coordinates": 0.72, "shortcut_route": 0.18, "delta_retasking": 0.07, "storm_timeline": 0.03}}}
+{"id": "synthetic-multi_agent_coordination-0034-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0034-choice-2", "teacher_probs": {"gpt_5_6_luna": {"monitor_only": 0.05, "reroute_rover": 0.75, "negotiate_extension": 0.05, "update_all_agents": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0034-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0034-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"reroute_rover": 0.15, "monitor_only": 0.05, "update_all_agents": 0.7, "negotiate_extension": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0035-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.75, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0035-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_constraint": 0.15, "communication_delay": 0.1, "route_obstruction": 0.6, "protocol_dependency": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0035-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.75, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0035-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.75, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0035-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_constraint": 0.15, "communication_delay": 0.1, "route_obstruction": 0.65, "protocol_dependency": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0035-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"independent": 0.72, "support": 0.08, "communicate": 0.05, "lead": 0.02, "wait": 0.13}}}
+{"id": "synthetic-multi_agent_coordination-0035-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"route_obstruction": 0.55, "protocol_dependency": 0.25, "battery_constraint": 0.15, "communication_delay": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0036-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0036-cf-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0036-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"wait": 0.05, "communicate": 0.1, "independent": 0.75, "support": 0.05, "lead": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0037-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.05, "guardian_exposure": 0.45, "chemical_breach": 0.25, "communication_delay": 0.05, "structural_collapse": 0.2}}}
+{"id": "synthetic-multi_agent_coordination-0038-choice-1", "teacher_probs": {"gpt_5_6_luna": {"move_to_C6": 0.15, "move_to_B5": 0.65, "hold_at_B6": 0.05, "move_to_C5": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0038-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0038-para-state-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0039-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"wait": 0.05, "support": 0.75, "lead": 0.05, "communicate": 0.1, "independent": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0040-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.25, "2": 0.55, "3": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0040-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.45, "2": 0.45, "3": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0041-choice-2", "teacher_probs": {"gpt_5_6_luna": {"third_hiker_location": 0.25, "structural_stability": 0.55, "falcon_battery": 0.1, "delta_fuel_range": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0041-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"third_hiker_location": 0.25, "structural_stability": 0.55, "falcon_battery": 0.1, "delta_fuel_range": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0041-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"third_hiker_location": 0.55, "structural_stability": 0.3, "falcon_battery": 0.1, "delta_fuel_range": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0042-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0042-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.65, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0042-para-q-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0042-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"support": 0.15, "lead": 0.05, "wait": 0.1, "independent": 0.6, "communicate": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0043-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"communicate": 0.65, "support": 0.15, "wait": 0.1, "independent": 0.05, "lead": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0044-choice-2", "teacher_probs": {"gpt_5_6_luna": {"comms_blackout": 0.1, "unconfirmed_casualty": 0.2, "resource_misallocation": 0.15, "time_overrun": 0.55}}}
+{"id": "synthetic-multi_agent_coordination-0044-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"comms_blackout": 0.05, "unconfirmed_casualty": 0.25, "resource_misallocation": 0.15, "time_overrun": 0.55}}}
+{"id": "synthetic-multi_agent_coordination-0045-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0045-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0046-choice-1", "teacher_probs": {"gpt_5_6_luna": {"interior_stairwell": 0.05, "exterior_ladder": 0.25, "north_entrance": 0.15, "split_resources": 0.55}}}
+{"id": "synthetic-multi_agent_coordination-0046-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0046-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0046-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.7, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0046-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"interior_stairwell": 0.05, "exterior_ladder": 0.75, "north_entrance": 0.05, "split_resources": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0046-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0046-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"independent": 0.05, "communicate": 0.15, "lead": 0.7, "support": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0046-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"north_entrance": 0.05, "exterior_ladder": 0.25, "interior_stairwell": 0.1, "split_resources": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0046-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"retain": 0.05, "transfer": 0.85, "request_backup": 0.05, "defer": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0046-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_agent_coordination-0049-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.65, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0049-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.1, "relay_delay": 0.15, "rail_gap": 0.2, "pallet_instability": 0.15, "time_overrun": 0.4}}}
+{"id": "synthetic-multi_agent_coordination-0049-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.65, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0049-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.1, "relay_delay": 0.15, "rail_gap": 0.2, "pallet_instability": 0.15, "time_overrun": 0.4}}}
+{"id": "synthetic-multi_agent_coordination-0049-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "communicate": 0.15, "independent": 0.7, "wait": 0.05, "support": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0049-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"relay_delay": 0.15, "battery_depletion": 0.1, "pallet_instability": 0.1, "time_overrun": 0.55, "rail_gap": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0050-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"delta_reroute": 0.15, "bravo_instructions": 0.1, "combined_triage": 0.7, "falcon_tasking": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0054-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0054-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"independent": 0.05, "lead": 0.1, "communicate": 0.15, "wait": 0.05, "support": 0.65}}}
+{"id": "synthetic-multi_agent_coordination-0055-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.05, "independent": 0.15, "communicate": 0.7, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0055-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"full_bravo": 0.05, "split_equal": 0.75, "partial_south_alert": 0.15, "full_south": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0056-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.75, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0057-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_failure": 0.15, "time_overrun": 0.55, "payload_gap": 0.15, "communication_breakdown": 0.1, "structural_hazard": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0057-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_failure": 0.15, "payload_gap": 0.1, "communication_breakdown": 0.15, "structural_hazard": 0.05, "time_overrun": 0.55}}}
+{"id": "synthetic-multi_agent_coordination-0058-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.85, "independent": 0.05, "communicate": 0.03, "wait": 0.02}}}
+{"id": "synthetic-multi_agent_coordination-0058-choice-1", "teacher_probs": {"gpt_5_6_luna": {"southern_direct": 0.05, "northern_bypass": 0.85, "request_guidance": 0.05, "partial_southern": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0058-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0058-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0058-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"southern_direct": 0.05, "northern_bypass": 0.85, "request_guidance": 0.05, "partial_southern": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0058-para-q-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0063-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.85, "independent": 0.05, "communicate": 0.02, "wait": 0.03}}}
+{"id": "synthetic-multi_agent_coordination-0063-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"nova1_battery": 0.05, "nova3_rotor": 0.45, "nova2_delay": 0.25, "dispatch_latency": 0.1, "wind_conditions": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0064-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0066-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0069-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.65, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0069-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.45, "relay_loss": 0.25, "path_blockage": 0.15, "structural_unknown": 0.1, "storm_arrival": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0069-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"communicate": 0.05, "wait": 0.05, "lead": 0.1, "support": 0.15, "independent": 0.65}}}
+{"id": "synthetic-multi_agent_coordination-0069-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"storm_arrival": 0.15, "structural_unknown": 0.1, "battery_depletion": 0.45, "path_blockage": 0.2, "relay_loss": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0070-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.65, "false": 0.35}}}
+{"id": "synthetic-multi_agent_coordination-0070-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0070-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.65, "false": 0.35}}}
+{"id": "synthetic-multi_agent_coordination-0070-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0070-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0070-para-q-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.65, "false": 0.35}}}
+{"id": "synthetic-multi_agent_coordination-0070-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0070-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0070-neg-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0072-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.05, "communicate": 0.1, "wait": 0.7}}}
+{"id": "synthetic-multi_agent_coordination-0072-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.05, "communicate": 0.1, "wait": 0.7}}}
+{"id": "synthetic-multi_agent_coordination-0072-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.05, "communicate": 0.1, "wait": 0.7}}}
+{"id": "synthetic-multi_agent_coordination-0072-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"split": 0.65, "request_backup": 0.1, "stay": 0.15, "forward_deploy": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0074-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.65, "independent": 0.15, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0076-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_loss": 0.15, "mobility_gap": 0.2, "data_gap": 0.15, "timing": 0.45, "bandwidth": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0078-para-q-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0078-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0079-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"b1_stationary": 0.62, "split_coverage": 0.18, "b2_moving": 0.15, "defer_to_dispatch": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0080-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0081-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.05, "independent": 0.1, "communicate": 0.7, "wait": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0081-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.25, "false": 0.75}}}
+{"id": "synthetic-multi_agent_coordination-0083-choice-1", "teacher_probs": {"gpt_5_6_luna": {"thermal_hazard": 0.15, "storm_timing": 0.45, "capability_loss": 0.1, "communication_gap": 0.1, "isolation": 0.2}}}
+{"id": "synthetic-multi_agent_coordination-0083-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0083-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"thermal_hazard": 0.15, "capability_loss": 0.1, "communication_gap": 0.1, "storm_timing": 0.5, "isolation": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0085-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_gap": 0.45, "time_collapse": 0.25, "bravo_overextension": 0.15, "delta_delay": 0.1, "comms_loss": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0087-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.65, "2": 0.25, "3": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0088-choice-1", "teacher_probs": {"gpt_5_6_luna": {"falcon1_battery": 0.15, "osprey3_fuel": 0.1, "bear7_route": 0.15, "viper2_capability": 0.1, "storm_timing": 0.5}}}
+{"id": "synthetic-multi_agent_coordination-0088-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"falcon1_battery": 0.15, "osprey3_fuel": 0.1, "bear7_route": 0.1, "viper2_capability": 0.15, "storm_timing": 0.5}}}
+{"id": "synthetic-multi_agent_coordination-0090-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.1, "communicate": 0.65, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0091-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0091-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.15, "communicate": 0.1, "wait": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0091-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0092-choice-1", "teacher_probs": {"gpt_5_6_luna": {"north_stable": 0.05, "north_risky": 0.05, "south_unconfirmed": 0.1, "south_after_sweep": 0.75, "return_to_command": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0092-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.1, "communicate": 0.1, "wait": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0092-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"north_stable": 0.05, "north_risky": 0.05, "south_unconfirmed": 0.1, "south_after_sweep": 0.75, "return_to_command": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0092-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"communicate": 0.65, "support": 0.15, "independent": 0.05, "lead": 0.05, "wait": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0094-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"d5_immediate": 0.05, "d5_staged": 0.25, "e6_guided": 0.65, "hold_position": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0095-choice-1", "teacher_probs": {"gpt_5_6_luna": {"scout_route": 0.15, "eastern_flank": 0.25, "assume_relay": 0.55, "direct_evacuation": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0095-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"assume_relay": 0.55, "scout_route": 0.25, "eastern_flank": 0.15, "direct_evacuation": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0098-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0098-choice-1", "teacher_probs": {"gpt_5_6_luna": {"roof_survivor": 0.65, "east_wing_cluster": 0.15, "dog_hit_location": 0.1, "split_teams": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0098-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0098-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"roof_survivor": 0.65, "east_wing_cluster": 0.15, "dog_hit_location": 0.1, "split_teams": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0099-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.15, "communication_blackout": 0.1, "timing_overrun": 0.6, "capability_gap": 0.05, "information_gap": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0100-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.15, "gas_ignition": 0.45, "nightfall": 0.15, "medic_delay": 0.1, "communication_loss": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0101-choice-2", "teacher_probs": {"gpt_5_6_luna": {"recharge_nova3": 0.05, "redirect_nova2": 0.1, "send_backup": 0.15, "monitor_only": 0.7}}}
+{"id": "synthetic-multi_agent_coordination-0101-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"wait": 0.05, "independent": 0.1, "communicate": 0.15, "lead": 0.1, "support": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0103-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"communicate": 0.65, "lead": 0.15, "support": 0.05, "independent": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0104-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"carry_capacity": 0.15, "time_to_site": 0.65, "personnel": 0.05, "communication": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0104-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"ECHO-3": 0.15, "DELTA-4": 0.25, "FALCON-1": 0.5, "BRAVO-2": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0105-para-state-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0106-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.1, "comms_blackout": 0.45, "subject_drift": 0.25, "wind_interference": 0.1, "bear2_delay": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0106-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.75, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0106-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.65, "support": 0.1, "independent": 0.15, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0106-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.05, "comms_blackout": 0.55, "subject_drift": 0.25, "wind_interference": 0.1, "bear2_delay": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0106-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"communicate": 0.65, "lead": 0.15, "support": 0.1, "independent": 0.08, "wait": 0.02}}}
+{"id": "synthetic-multi_agent_coordination-0106-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"wind_interference": 0.1, "bear2_delay": 0.15, "comms_blackout": 0.45, "subject_drift": 0.2, "battery_depletion": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0107-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_expiry": 0.55, "channel_commitment": 0.25, "authorization_gap": 0.1, "bravo_conflict": 0.05, "weather": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0107-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_expiry": 0.55, "channel_commitment": 0.15, "authorization_gap": 0.15, "bravo_conflict": 0.05, "weather": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0107-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"authorization_gap": 0.15, "bravo_conflict": 0.05, "battery_expiry": 0.55, "weather": 0.1, "channel_commitment": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0108-para-state-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0108-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.7, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0109-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.62, "support": 0.18, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0109-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.62, "support": 0.18, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0109-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"support": 0.72, "independent": 0.05, "wait": 0.03, "communicate": 0.15, "lead": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0110-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.75, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0114-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0115-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.15, "communicate": 0.65, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0116-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_failure": 0.15, "path_blockage": 0.1, "timing_gap": 0.15, "comm_saturation": 0.05, "resource_conflict": 0.55}}}
+{"id": "synthetic-multi_agent_coordination-0118-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.0, "1": 0.1, "2": 0.45, "3": 0.45}}}
+{"id": "synthetic-multi_agent_coordination-0118-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.65, "support": 0.1, "independent": 0.05, "communicate": 0.15, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0118-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"support": 0.05, "lead": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0121-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.1, "communicate": 0.1, "wait": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0121-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.1, "communicate": 0.1, "wait": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0121-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"wait": 0.05, "independent": 0.75, "support": 0.1, "lead": 0.05, "communicate": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0121-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"route_blockage": 0.05, "battery_failure": 0.15, "structural_collapse": 0.1, "time_overrun": 0.6, "comms_blackout": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0122-neg-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0123-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.1, "communicate": 0.1, "wait": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0123-para-state-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.45, "2": 0.45, "3": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0124-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0124-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0124-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0124-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0124-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"recharge_immediately": 0.05, "hover_and_lift_first_survivor": 0.1, "reposition_for_overwatch": 0.75, "escort_rover": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0124-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"independent": 0.05, "lead": 0.05, "support": 0.75, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0124-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"hover_and_lift_first_survivor": 0.05, "reposition_for_overwatch": 0.75, "recharge_immediately": 0.15, "escort_rover": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0124-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0125-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0125-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.1, "communicate": 0.1, "wait": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0125-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.65, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0125-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"negligible": 0.05, "minor": 0.15, "moderate": 0.3, "severe": 0.5}}}
+{"id": "synthetic-multi_agent_coordination-0125-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"support": 0.65, "communicate": 0.1, "independent": 0.15, "lead": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0126-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.15, "communicate": 0.1, "wait": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0126-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.65, "communicate": 0.15, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0127-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.35, "false": 0.65}}}
+{"id": "synthetic-multi_agent_coordination-0127-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.65, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0127-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"communication_blackout": 0.45, "battery_depletion": 0.25, "kestrel_delay": 0.15, "structural_collapse": 0.1, "payload_mismatch": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0128-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.65, "independent": 0.15, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0128-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"reconnaissance": 0.55, "relay": 0.25, "escort": 0.15, "standby": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0129-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"wait": 0.05, "independent": 0.15, "communicate": 0.1, "support": 0.6, "lead": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0130-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.65, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0130-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"scan_second_hiker": 0.15, "reposition_sector8": 0.65, "return_to_base": 0.05, "relay_position": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0131-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.05, "oxygen_expiry": 0.65, "fire_spread": 0.25, "communication_latency": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0131-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.05, "oxygen_expiry": 0.65, "fire_spread": 0.25, "communication_latency": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0132-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.05, "independent": 0.8, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0132-choice-1", "teacher_probs": {"gpt_5_6_luna": {"abort_immediately": 0.72, "complete_then_go": 0.05, "cache_and_leave": 0.18, "delegate": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0132-choice-2", "teacher_probs": {"gpt_5_6_luna": {"non_critical": 0.02, "low": 0.05, "moderate": 0.18, "high": 0.65, "mission_ending": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0132-para-state-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0132-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.05, "independent": 0.75, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0132-neg-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0133-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0136-choice-1", "teacher_probs": {"gpt_5_6_luna": {"temperature_breach": 0.15, "bay_congestion": 0.1, "communication_failure": 0.05, "time_overrun": 0.7}}}
+{"id": "synthetic-multi_agent_coordination-0136-cf-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0136-para-state-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0136-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_agent_coordination-0136-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"temperature_breach": 0.15, "communication_failure": 0.05, "time_overrun": 0.7, "bay_congestion": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0139-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0139-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0140-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"falcon1_status": 0.15, "delta4_timing": 0.25, "bravo2_checkin": 0.55, "command_report": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0140-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_loss": 0.15, "structural_collapse": 0.55, "rotor_destabilization": 0.15, "comms_blackout": 0.1, "fuel_exhaustion": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0141-noul-entailment", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0141-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0141-choice-1", "teacher_probs": {"gpt_5_6_luna": {"time": 0.45, "battery": 0.25, "coverage": 0.15, "communication": 0.05, "terrain": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0141-cf-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0141-para-state-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0141-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"support": 0.05, "communicate": 0.15, "independent": 0.7, "wait": 0.05, "lead": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0141-neg-noul-threshold", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0143-choice-2", "teacher_probs": {"gpt_5_6_luna": {"final_confirmation": 0.15, "perimeter_sweep": 0.05, "return_immediately": 0.75, "relay_comms": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0145-choice-2", "teacher_probs": {"gpt_5_6_luna": {"direct_aerial": 0.55, "intermediate_handoff": 0.15, "ground_only": 0.1, "split_payload": 0.2}}}
+{"id": "synthetic-multi_agent_coordination-0145-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"direct_aerial": 0.15, "intermediate_handoff": 0.55, "ground_only": 0.15, "split_payload": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0145-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"intermediate_handoff": 0.15, "split_payload": 0.1, "direct_aerial": 0.65, "ground_only": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0146-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0146-cf-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0146-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0146-para-state-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.95, "false": 0.050000000000000044}}}
+{"id": "synthetic-multi_agent_coordination-0147-choice-2", "teacher_probs": {"gpt_5_6_luna": {"ignore": 0.05, "reroute_via_unit3": 0.85, "reduce_traffic": 0.08, "halt_until_restored": 0.02}}}
+{"id": "synthetic-multi_agent_coordination-0147-para-state-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0150-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0150-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.62, "support": 0.08, "independent": 0.12, "communicate": 0.1, "wait": 0.08}}}
+{"id": "synthetic-multi_agent_coordination-0152-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.65, "independent": 0.1, "communicate": 0.1, "wait": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0152-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.65, "independent": 0.15, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0152-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.15, "communicate": 0.1, "wait": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0152-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_failure": 0.15, "storm_deadline": 0.55, "sensor_uncertainty": 0.15, "drone_fuel": 0.1, "communication_delay": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0153-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.1, "communicate": 0.1, "wait": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0157-choice-2", "teacher_probs": {"gpt_5_6_luna": {"hover_north": 0.15, "scan_south": 0.25, "return_base": 0.1, "broadcast_map": 0.5}}}
+{"id": "synthetic-multi_agent_coordination-0157-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0158-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"coordinate_delta": 0.15, "relay_status": 0.1, "maintain_silence": 0.1, "request_assets": 0.65}}}
+{"id": "synthetic-multi_agent_coordination-0159-neg-noul-sufficiency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0162-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.15, "structural_collapse": 0.55, "comms_blackout": 0.2, "debris_delay": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0162-para-state-choice-2", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.15, "structural_collapse": 0.55, "comms_blackout": 0.2, "debris_delay": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0162-para-q-noul-consistency", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0162-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"debris_delay": 0.15, "structural_collapse": 0.55, "battery_depletion": 0.15, "comms_blackout": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0164-noul-safety", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0164-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.75, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0164-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery": 0.55, "arm_damage": 0.25, "storm_timing": 0.1, "comm_lag": 0.05, "positioning": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0164-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.75, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0164-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"storm_timing": 0.15, "positioning": 0.05, "arm_damage": 0.25, "battery": 0.45, "comm_lag": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0165-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0166-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.65, "independent": 0.15, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0167-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.45, "structural_collapse": 0.25, "rex4_damage": 0.2, "third_survivor": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0167-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"rex4_damage": 0.15, "third_survivor": 0.25, "structural_collapse": 0.15, "battery_depletion": 0.45}}}
+{"id": "synthetic-multi_agent_coordination-0168-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0168-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0169-choice-1", "teacher_probs": {"gpt_5_6_luna": {"time": 0.75, "battery": 0.15, "capability": 0.08, "communication": 0.02}}}
+{"id": "synthetic-multi_agent_coordination-0169-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"capability": 0.15, "time": 0.65, "battery": 0.15, "communication": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0169-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"abort": 0.05, "partial_advance": 0.15, "surface_only": 0.7, "wait_for_rover2": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0170-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0170-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"communicate": 0.15, "independent": 0.1, "support": 0.6, "wait": 0.05, "lead": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0172-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0172-choice-1", "teacher_probs": {"gpt_5_6_luna": {"tunnel_clearance": 0.05, "drone_fuel": 0.15, "storm_timing": 0.65, "rover2_absence": 0.1, "authorization_lag": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0172-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0172-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.05, "independent": 0.8, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0172-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"tunnel_clearance": 0.15, "drone_fuel": 0.25, "storm_timing": 0.45, "rover2_absence": 0.1, "authorization_lag": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0172-para-q-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0172-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"independent": 0.85, "support": 0.05, "wait": 0.02, "lead": 0.03, "communicate": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0172-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"storm_timing": 0.65, "drone_fuel": 0.15, "rover2_absence": 0.1, "authorization_lag": 0.05, "tunnel_clearance": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0173-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.65, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0174-choice-1", "teacher_probs": {"gpt_5_6_luna": {"redirect_falcon": 0.15, "request_backup_drone": 0.05, "consolidate_data": 0.75, "ignore_battery": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0174-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"redirect_falcon": 0.15, "request_backup_drone": 0.05, "consolidate_data": 0.75, "ignore_battery": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0175-cf-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.15, "false": 0.85}}}
+{"id": "synthetic-multi_agent_coordination-0175-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0175-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"wait": 0.05, "communicate": 0.15, "support": 0.1, "lead": 0.1, "independent": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0177-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"establish_comms": 0.55, "treat_casualty": 0.15, "stage_for_both": 0.2, "evacuate_residents": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0179-choice-2", "teacher_probs": {"gpt_5_6_luna": {"split_tasks": 0.72, "sequential_safe": 0.18, "drone_first": 0.05, "all_converge": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0179-neg-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.92, "false": 0.07999999999999996}}}
+{"id": "synthetic-multi_agent_coordination-0180-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.1, "communicate": 0.15, "wait": 0.55}}}
+{"id": "synthetic-multi_agent_coordination-0182-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"partial_clear": 0.55, "await_confirmation": 0.25, "reposition_south": 0.05, "begin_cutting": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0182-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"south_first": 0.05, "reassess": 0.05, "floor5_first": 0.1, "parallel_tracks": 0.65, "floor3_first": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0184-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"communicate": 0.05, "independent": 0.15, "wait": 0.7, "lead": 0.05, "support": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0185-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.15, "independent": 0.1, "communicate": 0.65, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0186-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.05, "communicate": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0186-para-state-noul-possibility", "teacher_probs": {"gpt_5_6_luna": {"true": 0.05, "false": 0.95}}}
+{"id": "synthetic-multi_agent_coordination-0186-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"communicate": 0.05, "support": 0.85, "wait": 0.02, "independent": 0.05, "lead": 0.03}}}
+{"id": "synthetic-multi_agent_coordination-0187-choice-1", "teacher_probs": {"gpt_5_6_luna": {"retrieve_first": 0.05, "skip_kit": 0.75, "request_redirect": 0.15, "split_task": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0187-score-1", "teacher_probs": {"gpt_5_6_luna": {"0": 0.05, "1": 0.45, "2": 0.4, "3": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0187-cf-noul-causal", "teacher_probs": {"gpt_5_6_luna": {"true": 0.98, "false": 0.020000000000000018}}}
+{"id": "synthetic-multi_agent_coordination-0187-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"retrieve_first": 0.05, "skip_kit": 0.75, "request_redirect": 0.15, "split_task": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0187-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"request_redirect": 0.15, "split_task": 0.05, "skip_kit": 0.7, "retrieve_first": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0189-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0189-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0189-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0189-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"communicate": 0.15, "lead": 0.05, "support": 0.65, "independent": 0.1, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0190-cf-noul-counterfactual", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0190-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"survivor_extraction_delay": 0.05, "gas_ignition": 0.1, "oxygen_depletion": 0.15, "drone_coverage_gap": 0.1, "structural_collapse": 0.6}}}
+{"id": "synthetic-multi_agent_coordination-0190-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"survivor_extraction_delay": 0.05, "structural_collapse": 0.15, "gas_ignition": 0.65, "drone_coverage_gap": 0.05, "oxygen_depletion": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0191-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"nearest_first": 0.15, "floor3_first": 0.1, "floor2_first": 0.7, "simultaneous": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0194-cf-noul-comparison", "teacher_probs": {"gpt_5_6_luna": {"true": 0.85, "false": 0.15000000000000002}}}
+{"id": "synthetic-multi_agent_coordination-0195-choice-1", "teacher_probs": {"gpt_5_6_luna": {"collapse_timing": 0.25, "ignition_risk": 0.15, "survivor_deterioration": 0.5, "communication_loss": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0195-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.75, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0195-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"communication_loss": 0.05, "survivor_deterioration": 0.55, "collapse_timing": 0.25, "ignition_risk": 0.15}}}
+{"id": "synthetic-multi_agent_coordination-0196-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.1, "independent": 0.05, "communicate": 0.1, "wait": 0.7}}}
+{"id": "synthetic-multi_agent_coordination-0196-para-state-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery": 0.05, "time": 0.65, "hazmat": 0.15, "foam": 0.1, "comms": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0197-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0197-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery_depletion": 0.55, "comms_gap": 0.15, "third_civilian": 0.2, "current_speed": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0197-cf-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0197-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0198-para-state-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "support": 0.75, "independent": 0.1, "communicate": 0.05, "wait": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0199-choice-1", "teacher_probs": {"gpt_5_6_luna": {"battery": 0.15, "transit_time": 0.25, "materials": 0.45, "communication_lag": 0.05, "coverage": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0199-shuffle-choice-0", "teacher_probs": {"gpt_5_6_luna": {"lead": 0.05, "wait": 0.05, "communicate": 0.15, "independent": 0.65, "support": 0.1}}}
+{"id": "synthetic-multi_agent_coordination-0199-shuffle-choice-1", "teacher_probs": {"gpt_5_6_luna": {"coverage": 0.15, "battery": 0.1, "materials": 0.55, "transit_time": 0.15, "communication_lag": 0.05}}}
+{"id": "synthetic-multi_agent_coordination-0136-shuffle-choice-2", "teacher_probs": {"gpt_5_6_luna": {"NOVA-3": 0.65, "NOVA-1": 0.05, "DISPATCH-C": 0.12, "NOVA-2": 0.18}}}
