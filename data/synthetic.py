@@ -56,6 +56,7 @@ from .synthetic_templates import (
 from .lsh import LSHIndex
 from .synthetic_dedup import dedup_families
 from .synthetic_llm_label import label_items_llm
+from .normalize_probs import normalize_probs
 from .synthetic_noul_augment import (
     DEFAULT_AUGMENT_MODEL,
     LLM_AUGMENT_MODEL_ENV,
@@ -1152,6 +1153,7 @@ async def run_pipeline(
             label_cache.setdefault(item_id, {}).update(lbl.get("teacher_probs", {}))
     if label_cache:
         merged = 0
+        normalized = 0
         for item in all_items:
             cached = label_cache.get(item["id"])
             if not cached:
@@ -1161,11 +1163,14 @@ async def run_pipeline(
                 tp = {}
             for teacher, probs in cached.items():
                 if teacher not in tp:
-                    tp[teacher] = probs
+                    fixed = normalize_probs(probs) if isinstance(probs, dict) else probs
+                    if fixed is not probs:
+                        normalized += 1
+                    tp[teacher] = fixed
                     merged += 1
             if tp:
                 item["teacher_probs"] = tp
-        logger.info("  Merged %d labels from %d cached label files", merged, len(list(DATA_DIR.glob("*_labels.jsonl"))))
+        logger.info("  Merged %d labels from %d cached label files (%d renormalized)", merged, len(list(DATA_DIR.glob("*_labels.jsonl"))), normalized)
 
     # Save final output
     out_path = DATA_DIR / "synthetic.jsonl"
