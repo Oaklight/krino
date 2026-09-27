@@ -51,10 +51,13 @@ class TypedQuestion:
         split: str,
         group: str | None = None,
         criteria: dict[str, str] | None = None,
+        augmented_options: dict[str, str] | None = None,
     ) -> TypedQuestion:
         question: dict[str, Any] = {"type": "noul", "instructions": instructions}
         if criteria:
             question["criteria"] = criteria
+        if augmented_options:
+            question["augmented_options"] = augmented_options
         return TypedQuestion(id=id, state=state, question=question, label=label, source=source, split=split, group=group)
 
     @staticmethod
