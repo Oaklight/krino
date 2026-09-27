@@ -231,6 +231,7 @@ def main() -> int:
     parser.add_argument("--save-every-epoch", action="store_true", default=None, help="Save checkpoint at every eval epoch")
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
     parser.add_argument("--shared-attention", action="store_true", default=None, help="Share AttentionHead weights between choice and score heads")
+    parser.add_argument("--unified-head", action="store_true", default=None, help="Use single unified attention head for all types (noul via true/false options)")
     parser.add_argument("--synthetic-ratio", type=float, default=None, help="Target proportion of synthetic data (0.0 to 1.0)")
 
     # GPU memory optimization flags
@@ -292,6 +293,7 @@ def main() -> int:
     score_lr = args.score_lr if args.score_lr is not None else cfg.get("score_lr", None)
     uncertainty_weighting = args.uncertainty_weighting if args.uncertainty_weighting is not None else cfg.get("uncertainty_weighting", False)
     shared_attention = args.shared_attention if args.shared_attention is not None else cfg.get("shared_attention", False)
+    unified_head_flag = args.unified_head if args.unified_head is not None else cfg.get("unified_head", False)
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -399,6 +401,7 @@ def main() -> int:
         max_length=max_length,
         gpu_config=gpu_config,
         shared_attention=shared_attention,
+        unified_head=unified_head_flag,
     )
     print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
     print(f"Frozen:    {model.frozen_parameters():,} params", flush=True)

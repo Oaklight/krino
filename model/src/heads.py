@@ -1,9 +1,12 @@
 """Decision heads for typed-question scoring.
 
-Three heads, one per primitive:
+Three type-specific heads, one per primitive:
   NoulHead: binary probability via sigmoid
   ChoiceHead: option selection with attention-based scoring
   ScoreHead: ordered level scoring (same mechanism as ChoiceHead)
+
+Plus one unified head that handles all three types via cross-attention:
+  UnifiedHead: single AttentionHead for noul/choice/score
 
 All heads take hidden states from a frozen backbone and produce
 probability distributions over the answer space.
@@ -252,6 +255,142 @@ class ScoreHead(nn.Module):
         level_mask: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Returns (probabilities [batch, n_levels], expected_score [batch])."""
+        logits = self.forward(context_hidden, level_hidden, level_mask)
+        probs = F.softmax(logits, dim=-1)
+        n_levels = probs.shape[-1]
+        level_indices = torch.arange(n_levels, device=probs.device, dtype=probs.dtype)
+        expected = (probs * level_indices).sum(-1)
+        return probs, expected
+
+
+class UnifiedHead(nn.Module):
+    """Single attention head for all question types.
+
+    Treats every question type as scoring a set of options via softmax:
+      - Noul:   2 implicit options ("true", "false"), P sums to 1
+      - Choice: K explicit options, P sums to 1
+      - Score:  L ordered levels, P sums to 1, output = expected value
+
+    Pre-processing converts each type into an option list.  The core is a
+    shared AttentionHead cross-attention.  Post-processing extracts the
+    type-specific output from the softmax distribution.
+
+    The forward() method has the same signature as ChoiceHead/ScoreHead
+    (context_hidden, option_hidden, option_mask) so it can be used as a
+    drop-in replacement for both.
+
+    Args:
+        hidden_size: Backbone hidden dimension.
+        rank: Low-rank projection dimension for attention.
+        rival_aware: Enable rival-aware inter-option attention.
+        dropout: Dropout probability.
+    """
+
+    def __init__(
+        self,
+        hidden_size: int,
+        rank: int = 64,
+        rival_aware: bool = False,
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        self.attention = AttentionHead(hidden_size, rank, rival_aware, dropout)
+
+    def forward(
+        self,
+        context_hidden: torch.Tensor,
+        option_hidden: torch.Tensor,
+        option_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Score options against context.
+
+        Args:
+            context_hidden: [batch, seq_len, hidden_size] — backbone output.
+            option_hidden: [batch, n_options, hidden_size] — pooled option embeddings.
+            option_mask: [batch, n_options] — True for valid options.
+
+        Returns:
+            logits: [batch, n_options] — one score per option (pre-softmax).
+        """
+        return self.attention(context_hidden, option_hidden, option_mask)
+
+    def noul_logit(
+        self,
+        context_hidden: torch.Tensor,
+        option_hidden: torch.Tensor,
+    ) -> torch.Tensor:
+        """Compute a single noul logit from 2-option cross-attention.
+
+        Takes context and option_hidden where option_hidden contains exactly
+        two options: index 0 = "false", index 1 = "true".
+
+        Returns logit [batch, 1] where sigmoid(logit) = P(true).  This is
+        the difference logit_true - logit_false, which by the identity
+        sigmoid(b - a) = softmax([a, b])[1] gives exact equivalence with
+        softmax over the two options.
+
+        Args:
+            context_hidden: [batch, seq_len, hidden_size].
+            option_hidden: [batch, 2, hidden_size] — false then true.
+
+        Returns:
+            logit: [batch, 1] — compatible with BCE-with-logits loss.
+        """
+        logits = self.forward(context_hidden, option_hidden)  # [batch, 2]
+        return logits[:, 1:2] - logits[:, 0:1]  # [batch, 1]
+
+    def predict_noul(
+        self,
+        context_hidden: torch.Tensor,
+        option_hidden: torch.Tensor,
+    ) -> torch.Tensor:
+        """Returns P(true) in [0, 1] from 2-option softmax.
+
+        Args:
+            context_hidden: [batch, seq_len, hidden_size].
+            option_hidden: [batch, 2, hidden_size] — false then true.
+
+        Returns:
+            Probability tensor [batch].
+        """
+        logit = self.noul_logit(context_hidden, option_hidden)
+        return torch.sigmoid(logit).squeeze(-1)
+
+    def predict_choice(
+        self,
+        context_hidden: torch.Tensor,
+        option_hidden: torch.Tensor,
+        option_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Returns probabilities [batch, n_options].
+
+        Args:
+            context_hidden: [batch, seq_len, hidden_size].
+            option_hidden: [batch, n_options, hidden_size].
+            option_mask: [batch, n_options] — True for valid options.
+
+        Returns:
+            Probability distribution over options.
+        """
+        logits = self.forward(context_hidden, option_hidden, option_mask)
+        return F.softmax(logits, dim=-1)
+
+    def predict_score(
+        self,
+        context_hidden: torch.Tensor,
+        level_hidden: torch.Tensor,
+        level_mask: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Returns (probabilities, expected_score) for ordered levels.
+
+        Args:
+            context_hidden: [batch, seq_len, hidden_size].
+            level_hidden: [batch, n_levels, hidden_size].
+            level_mask: [batch, n_levels] — True for valid levels.
+
+        Returns:
+            Tuple of (probabilities [batch, n_levels], expected_score [batch]).
+        """
         logits = self.forward(context_hidden, level_hidden, level_mask)
         probs = F.softmax(logits, dim=-1)
         n_levels = probs.shape[-1]

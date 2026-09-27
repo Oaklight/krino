@@ -16,7 +16,7 @@ from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 from .backbone import is_hybrid_model
 from .gpu_config import GPUConfig, print_gpu_info
-from .heads import AttentionHead, ChoiceHead, MLPProjector, NoulHead, ScoreHead
+from .heads import AttentionHead, ChoiceHead, MLPProjector, NoulHead, ScoreHead, UnifiedHead
 
 
 def _is_encoder_model(backbone: PreTrainedModel) -> bool:
@@ -47,6 +47,7 @@ class DecisionModel(nn.Module):
         max_length: int | None = None,
         gpu_config: GPUConfig | None = None,
         shared_attention: bool = False,
+        unified_head: bool = False,
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -55,6 +56,7 @@ class DecisionModel(nn.Module):
         self.is_encoder = _is_encoder_model(backbone)
         self.is_hybrid = is_hybrid_model(backbone.config)
         self.shared_attention = shared_attention
+        self._unified_head = unified_head
 
         # GPU optimization config — auto-detect if not provided
         if gpu_config is None:
@@ -86,9 +88,33 @@ class DecisionModel(nn.Module):
         else:
             self.projector = nn.Identity()
 
-        self.noul_head = NoulHead(self.hidden_size, rank=noul_rank, dropout=dropout)
-
-        if shared_attention:
+        if unified_head:
+            # Single AttentionHead for all question types.  Noul is handled
+            # via "true"/"false" option encoding in forward_noul.
+            self.unified = UnifiedHead(self.hidden_size, rank, rival_aware, dropout)
+            # choice_head and score_head alias the unified head — same
+            # forward(ctx, opt, mask) signature, so training code works as-is.
+            self.choice_head = self.unified
+            self.score_head = self.unified
+            # No separate noul_head — noul is handled in forward_noul.
+            self.noul_head = None  # type: ignore[assignment]
+            noul_saved = sum(
+                p.numel()
+                for p in NoulHead(self.hidden_size, rank=noul_rank, dropout=dropout).parameters()
+            )
+            attn_saved = sum(
+                p.numel()
+                for p in AttentionHead(self.hidden_size, rank, rival_aware=False, dropout=dropout).parameters()
+            )
+            print(
+                f"  Unified head: single AttentionHead for all types "
+                f"(noul via \"true\"/\"false\" options, "
+                f"saved {noul_saved + attn_saved:,} params vs separate heads)",
+                flush=True,
+            )
+        elif shared_attention:
+            self.unified = None  # type: ignore[assignment]
+            self.noul_head = NoulHead(self.hidden_size, rank=noul_rank, dropout=dropout)
             shared_attn = AttentionHead(self.hidden_size, rank, rival_aware, dropout)
             self.choice_head = ChoiceHead(
                 self.hidden_size, rank, rival_aware, dropout, attention=shared_attn
@@ -102,6 +128,8 @@ class DecisionModel(nn.Module):
                 flush=True,
             )
         else:
+            self.unified = None  # type: ignore[assignment]
+            self.noul_head = NoulHead(self.hidden_size, rank=noul_rank, dropout=dropout)
             self.choice_head = ChoiceHead(self.hidden_size, rank, rival_aware, dropout)
             self.score_head = ScoreHead(self.hidden_size, rank, dropout)
 
@@ -110,7 +138,10 @@ class DecisionModel(nn.Module):
 
         device = next(self.backbone.parameters()).device
         self.projector = self.projector.to(device).float()
-        self.noul_head = self.noul_head.to(device).float()
+        if self.noul_head is not None:
+            self.noul_head = self.noul_head.to(device).float()
+        if self.unified is not None:
+            self.unified = self.unified.to(device).float()
         self.choice_head = self.choice_head.to(device).float()
         self.score_head = self.score_head.to(device).float()
 
@@ -183,7 +214,19 @@ class DecisionModel(nn.Module):
         return self.projector(hidden.float())
 
     def forward_noul(self, state: str, instructions: str) -> torch.Tensor:
-        """Returns logit [1, 1] for noul prediction."""
+        """Returns logit [1, 1] for noul prediction.
+
+        When unified_head is enabled, encodes "false" and "true" as two
+        options and uses cross-attention.  The returned logit is the
+        difference (true - false) so that sigmoid gives P(true), which is
+        mathematically equivalent to softmax over the two options.
+        """
+        if self.unified is not None:
+            context_text = f"{state} {instructions}"
+            context_hidden = self._encode_with_sequence(context_text)
+            option_pooled = self._encode_text(["false", "true"])
+            option_hidden = option_pooled.unsqueeze(0)  # [1, 2, hidden]
+            return self.unified.noul_logit(context_hidden, option_hidden)
         text = f"{state} {instructions}"
         pooled = self._encode_text(text)
         return self.noul_head(pooled)

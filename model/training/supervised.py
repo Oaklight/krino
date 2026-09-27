@@ -148,7 +148,30 @@ def _compute_noul_batch(
     model: nn.Module,
     items: list,
 ) -> list[torch.Tensor]:
-    """Batch-compute noul losses: one backbone call for all contexts."""
+    """Batch-compute noul losses: one backbone call for all contexts.
+
+    When the model uses a unified head (model.noul_head is None), falls back
+    to per-item forward_noul calls since noul requires cross-attention with
+    "true"/"false" option embeddings rather than a simple linear head.
+    """
+    if getattr(model, "noul_head", None) is None:
+        # Unified head path: per-item forward through cross-attention
+        losses: list[torch.Tensor] = []
+        for item in items:
+            instructions = item.question.get("instructions", "")
+            logit = model.forward_noul(item.state, instructions)
+            label = item.label
+            if isinstance(label, str):
+                label = label.lower() in ("true", "yes", "1")
+            teacher_probs = getattr(item, "teacher_probs", None)
+            if teacher_probs and "noul" in teacher_probs:
+                target = torch.tensor([[float(teacher_probs["noul"])]], device=logit.device)
+            else:
+                target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
+            losses.append(F.binary_cross_entropy_with_logits(logit, target))
+        return losses
+
+    # Standard batch path: one backbone call for all noul contexts
     texts = [f"{it.state} {it.question.get('instructions', '')}" for it in items]
     pooled = model._encode_text(texts)  # [N, hidden]
     logits = model.noul_head(pooled)  # [N, 1]
@@ -664,21 +687,39 @@ def train_multitask(
 
     # Build optimizer param groups
     if use_per_type_lr or (mlp_lr is not None and has_mlp):
-        # Collect param id sets for each component
-        noul_params = list(model.noul_head.parameters())
+        # Collect param id sets for each component.
+        # When unified_head is enabled, noul_head is None and choice_head /
+        # score_head alias the same UnifiedHead.  Deduplicate via id().
+        noul_params = list(model.noul_head.parameters()) if model.noul_head is not None else []
         choice_params = list(model.choice_head.parameters())
         score_params = list(model.score_head.parameters())
-        assigned_ids = {id(p) for p in noul_params + choice_params + score_params}
+        # Deduplicate params that appear in multiple heads (unified or shared attention)
+        seen_ids: set[int] = set()
+        deduped_choice: list[nn.Parameter] = []
+        deduped_score: list[nn.Parameter] = []
+        for p in noul_params:
+            seen_ids.add(id(p))
+        for p in choice_params:
+            if id(p) not in seen_ids:
+                deduped_choice.append(p)
+                seen_ids.add(id(p))
+        for p in score_params:
+            if id(p) not in seen_ids:
+                deduped_score.append(p)
+                seen_ids.add(id(p))
+        assigned_ids = set(seen_ids)
 
         if has_mlp:
             projector_params = list(model.projector.parameters())
             assigned_ids.update(id(p) for p in projector_params)
 
-        param_groups = [
-            {"params": noul_params, "lr": noul_lr or lr},
-            {"params": choice_params, "lr": choice_lr or lr},
-            {"params": score_params, "lr": score_lr or lr},
-        ]
+        param_groups: list[dict] = []
+        if noul_params:
+            param_groups.append({"params": noul_params, "lr": noul_lr or lr})
+        if deduped_choice:
+            param_groups.append({"params": deduped_choice, "lr": choice_lr or lr})
+        if deduped_score:
+            param_groups.append({"params": deduped_score, "lr": score_lr or lr})
 
         if has_mlp:
             param_groups.append({"params": projector_params, "lr": mlp_lr or lr})
