@@ -6,6 +6,7 @@ on:
     paths:
       - "data/benchmarks/synthetic/**_families.jsonl"
       - "data/benchmarks/synthetic/**_variants.jsonl"
+      - "data/benchmarks/synthetic/**_labels.jsonl"
       - "data/benchmarks/synthetic/README*.md"
   workflow_dispatch:
 
@@ -22,7 +23,8 @@ jobs:
             domain=$(basename "$f" _families.jsonl)
             fam=$(wc -l < "$f")
             var=$(wc -l < "data/benchmarks/synthetic/${domain}_variants.jsonl" 2>/dev/null || echo 0)
-            echo "  $domain: families=$fam variants=$var"
+            lbl=$(ls data/benchmarks/synthetic/${domain}_*_labels.jsonl 2>/dev/null | wc -l)
+            echo "  $domain: families=$fam variants=$var labels=$lbl"
           done
           echo "=== Total size ==="
           du -sh data/benchmarks/synthetic/
@@ -47,6 +49,8 @@ jobs:
               files.append((f, f.name))
           for f in sorted(data_dir.glob("*_variants.jsonl")):
               files.append((f, f.name))
+          for f in sorted(data_dir.glob("*_labels.jsonl")):
+              files.append((f, f.name))
           for f in sorted(data_dir.glob("README*.md")):
               files.append((f, f.name))
 
@@ -62,7 +66,7 @@ jobs:
               repo_type="dataset",
               path_in_repo=".",
               commit_message=f"Sync synthetic data @ {commit}",
-              allow_patterns=["*_families.jsonl", "*_variants.jsonl", "README*.md"],
+              allow_patterns=["*_families.jsonl", "*_variants.jsonl", "*_labels.jsonl", "README*.md"],
           )
           print(f"Pushed to https://huggingface.co/datasets/{repo_id}")
           PYEOF
