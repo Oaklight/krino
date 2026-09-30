@@ -98,15 +98,26 @@ def compute_loss(
     loss: torch.Tensor | None = None
 
     if q_type == "noul":
-        logit = model.forward_noul(state, instructions)
-        if isinstance(label, str):
-            label = label.lower() in ("true", "yes", "1")
-        if teacher_probs and "noul" in teacher_probs:
-            teacher_p = float(teacher_probs["noul"])
-            target = torch.tensor([[teacher_p]], device=logit.device)
+        augmented_options = question.get("augmented_options")
+        if augmented_options and teacher_probs and len(teacher_probs) > 2:
+            keys = list(augmented_options.keys())
+            option_texts = [augmented_options[k] for k in keys]
+            logits = model.forward_choice(state, instructions, option_texts)
+            loss = _teacher_loss(logits, teacher_probs, keys)
+            q_type = "choice"
         else:
-            target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
-        loss = F.binary_cross_entropy_with_logits(logit, target)
+            logit = model.forward_noul(state, instructions)
+            if isinstance(label, str):
+                label = label.lower() in ("true", "yes", "1")
+            if teacher_probs and "noul" in teacher_probs:
+                teacher_p = float(teacher_probs["noul"])
+                target = torch.tensor([[teacher_p]], device=logit.device)
+            elif teacher_probs and len(teacher_probs) == 2 and "true" in teacher_probs:
+                teacher_p = float(teacher_probs["true"])
+                target = torch.tensor([[teacher_p]], device=logit.device)
+            else:
+                target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
+            loss = F.binary_cross_entropy_with_logits(logit, target)
 
     elif q_type == "choice":
         criteria = question["criteria"]
@@ -144,18 +155,49 @@ def compute_loss(
     return loss
 
 
+def _is_augmented_noul(item: Any) -> bool:
+    """Check if a noul item has augmented options with multi-option teacher probs."""
+    ao = item.question.get("augmented_options")
+    tp = getattr(item, "teacher_probs", None)
+    return bool(ao and tp and len(tp) > 2)
+
+
 def _compute_noul_batch(
     model: nn.Module,
     items: list,
 ) -> list[torch.Tensor]:
     """Batch-compute noul losses: one backbone call for all contexts.
 
+    Augmented noul items (with augmented_options + multi-option teacher_probs)
+    are routed through the choice head instead of the binary noul head.
+
     When the model uses a unified head (model.noul_head is None), falls back
     to per-item forward_noul calls since noul requires cross-attention with
     "true"/"false" option embeddings rather than a simple linear head.
     """
+    standard = []
+    augmented = []
+    item_order: list[tuple[str, int]] = []
+    for item in items:
+        if _is_augmented_noul(item):
+            item_order.append(("aug", len(augmented)))
+            augmented.append(item)
+        else:
+            item_order.append(("std", len(standard)))
+            standard.append(item)
+
+    std_losses = _compute_standard_noul_batch(model, standard) if standard else []
+    aug_losses = _compute_augmented_noul_batch(model, augmented) if augmented else []
+
+    return [std_losses[idx] if tag == "std" else aug_losses[idx] for tag, idx in item_order]
+
+
+def _compute_standard_noul_batch(
+    model: nn.Module,
+    items: list,
+) -> list[torch.Tensor]:
+    """Binary noul path: original batch logic."""
     if getattr(model, "noul_head", None) is None:
-        # Unified head path: per-item forward through cross-attention
         losses: list[torch.Tensor] = []
         for item in items:
             instructions = item.question.get("instructions", "")
@@ -166,12 +208,13 @@ def _compute_noul_batch(
             teacher_probs = getattr(item, "teacher_probs", None)
             if teacher_probs and "noul" in teacher_probs:
                 target = torch.tensor([[float(teacher_probs["noul"])]], device=logit.device)
+            elif teacher_probs and len(teacher_probs) == 2 and "true" in teacher_probs:
+                target = torch.tensor([[float(teacher_probs["true"])]], device=logit.device)
             else:
                 target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
             losses.append(F.binary_cross_entropy_with_logits(logit, target))
         return losses
 
-    # Standard batch path: one backbone call for all noul contexts
     texts = [f"{it.state} {it.question.get('instructions', '')}" for it in items]
     pooled = model._encode_text(texts)  # [N, hidden]
     logits = model.noul_head(pooled)  # [N, 1]
@@ -184,12 +227,36 @@ def _compute_noul_batch(
         teacher_probs = getattr(item, "teacher_probs", None)
         if teacher_probs and "noul" in teacher_probs:
             targets.append(float(teacher_probs["noul"]))
+        elif teacher_probs and len(teacher_probs) == 2 and "true" in teacher_probs:
+            targets.append(float(teacher_probs["true"]))
         else:
             targets.append(1.0 if label else 0.0)
 
     target_t = torch.tensor(targets, device=logits.device).unsqueeze(1)  # [N, 1]
     batch_loss = F.binary_cross_entropy_with_logits(logits, target_t, reduction="none")
     return [batch_loss[i] for i in range(len(items))]
+
+
+def _compute_augmented_noul_batch(
+    model: nn.Module,
+    items: list,
+) -> list[torch.Tensor]:
+    """Route augmented noul items through the choice head with 5-option softmax."""
+    losses: list[torch.Tensor] = []
+    for item in items:
+        ao = item.question["augmented_options"]
+        keys = list(ao.keys())
+        option_texts = [ao[k] for k in keys]
+        teacher_probs = item.teacher_probs
+
+        context_text = f"{item.state} {item.question.get('instructions', '')}"
+        context_hidden = model._encode_with_sequence(context_text)
+        option_pooled = model._encode_text(option_texts)
+        opt_hidden = option_pooled.unsqueeze(0)
+        logits = model.choice_head(context_hidden, opt_hidden)
+
+        losses.append(_teacher_loss(logits, teacher_probs, keys))
+    return losses
 
 
 def _compute_choice_batch(
@@ -296,10 +363,12 @@ def train_epoch(
 
             if noul_items:
                 noul_losses = _compute_noul_batch(model, noul_items)
-                for loss in noul_losses:
+                for i_noul, loss in enumerate(noul_losses):
                     if loss is not None:
-                        if log_vars is not None and "noul" in log_vars:
-                            loss = _apply_uncertainty_weight(loss, log_vars["noul"])
+                        if log_vars is not None:
+                            lv_key = "choice" if _is_augmented_noul(noul_items[i_noul]) else "noul"
+                            if lv_key in log_vars:
+                                loss = _apply_uncertainty_weight(loss, log_vars[lv_key])
                         all_weighted.append(loss.squeeze())
                     else:
                         n_window_skipped += 1
@@ -507,11 +576,23 @@ def _eval_item(
     if q_type == "noul":
         if isinstance(label, str):
             label = label.lower() in ("true", "yes", "1")
-        logit = model.forward_noul(state, instructions)
-        target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
-        loss = F.binary_cross_entropy_with_logits(logit, target)
-        pred = torch.sigmoid(logit).item() > 0.5
-        return (loss.item(), pred == label)
+        augmented_options = question.get("augmented_options")
+        teacher_probs = getattr(item, "teacher_probs", None)
+        if augmented_options and teacher_probs and len(teacher_probs) > 2:
+            keys = list(augmented_options.keys())
+            option_texts = [augmented_options[k] for k in keys]
+            logits = model.forward_choice(state, instructions, option_texts)
+            loss = _teacher_loss(logits, teacher_probs, keys)
+            pred_idx = logits.argmax(dim=-1).item()
+            pred_key = keys[pred_idx]
+            target_key = "true" if label else "false"
+            return (loss.item(), pred_key == target_key)
+        else:
+            logit = model.forward_noul(state, instructions)
+            target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
+            loss = F.binary_cross_entropy_with_logits(logit, target)
+            pred = torch.sigmoid(logit).item() > 0.5
+            return (loss.item(), pred == label)
 
     elif q_type == "choice":
         criteria = question["criteria"]
