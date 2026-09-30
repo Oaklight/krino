@@ -1028,6 +1028,34 @@ def load_drop() -> Iterator[TypedQuestion]:
 # --- Synthetic (generated data) ---
 
 
+_AUGMENTED_TEACHER_PRIORITY = ("jev_augmented", "gpt_5_6_luna_augmented")
+_STANDARD_TEACHER_PRIORITY = ("jev", "gpt_5_6_luna", "qwen3_8_27b")
+
+
+def _select_teacher_probs(
+    cached: dict[str, dict[str, float]],
+    question: dict[str, Any],
+) -> dict[str, float] | None:
+    """Select the best teacher probs from the nested multi-teacher cache.
+
+    For augmented noul items (question has augmented_options), prefer
+    augmented teachers. For standard items, prefer Jev > Luna > Qwen.
+    Returns a flat ``{option_key: probability}`` dict or None.
+    """
+    is_augmented_noul = (
+        question.get("type") == "noul"
+        and question.get("augmented_options")
+    )
+    priority = _AUGMENTED_TEACHER_PRIORITY if is_augmented_noul else _STANDARD_TEACHER_PRIORITY
+    for key in priority:
+        if key in cached and cached[key]:
+            return cached[key]
+    for key in _STANDARD_TEACHER_PRIORITY:
+        if key in cached and cached[key]:
+            return cached[key]
+    return None
+
+
 def load_synthetic() -> Iterator[TypedQuestion]:
     """Load synthetic data by assembling from families + variants + labels on the fly."""
     synth_dir = DATA_DIR / "synthetic"
@@ -1058,7 +1086,9 @@ def load_synthetic() -> Iterator[TypedQuestion]:
             for item_dict in items:
                 cached = label_cache.get(item_dict["id"])
                 if cached:
-                    item_dict["teacher_probs"] = cached
+                    flat = _select_teacher_probs(cached, item_dict.get("question", {}))
+                    if flat:
+                        item_dict["teacher_probs"] = flat
                 yield TypedQuestion(**item_dict)
 
 
