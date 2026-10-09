@@ -104,6 +104,7 @@ def compute_loss(
             option_texts = [augmented_options[k] for k in keys]
             logits = model.forward_choice(state, instructions, option_texts)
             loss = _teacher_loss(logits, teacher_probs, keys)
+            # Override q_type so uncertainty weighting uses "choice" log_var
             q_type = "choice"
         else:
             logit = model.forward_noul(state, instructions)
