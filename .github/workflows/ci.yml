@@ -23,7 +23,7 @@ jobs:
         run: pip install --no-deps -e . && pip install pytest
 
       - name: Run tests
-        run: pytest tests/test_pipeline.py tests/test_transform_results.py -v
+        run: pytest tests/test_pipeline.py tests/test_transform_results.py tests/test_synthetic_source_loading.py -v
 
   build-web:
     runs-on: ubuntu-latest
