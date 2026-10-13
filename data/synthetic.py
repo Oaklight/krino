@@ -555,10 +555,15 @@ def family_to_typed_questions(
     domain: str,
     family_idx: int,
     enabled_stages: set[str] | None = None,
+    split: str = "train",
 ) -> list[dict[str, Any]]:
     """Convert a family + variants into serializable item dicts.
 
     If enabled_stages is given, only emit item types for those stages.
+
+    Args:
+        split: Split label assigned to every emitted item. The caller decides
+            this per family so that all variants of a family stay together.
     """
     state = family["state"]
     group = f"synthetic-{domain}-{family_idx:04d}"
@@ -579,7 +584,7 @@ def family_to_typed_questions(
                     instructions=nq["instructions"],
                     label=nq["label"],
                     source="synthetic",
-                    split="train",
+                    split=split,
                     group=group,
                     augmented_options=nq.get("augmented_options"),
                 ).to_dict()
@@ -606,7 +611,7 @@ def family_to_typed_questions(
                         criteria=cq_criteria,
                         label=cq_label,
                         source="synthetic",
-                        split="train",
+                        split=split,
                         group=group,
                     ).to_dict()
                 )
@@ -643,7 +648,7 @@ def family_to_typed_questions(
                         criteria=sq_criteria,
                         label=sq_label,
                         source="synthetic",
-                        split="train",
+                        split=split,
                         group=group,
                     ).to_dict()
                 )
@@ -675,7 +680,7 @@ def family_to_typed_questions(
                         instructions=nq["instructions"],
                         label=new_label,
                         source="synthetic",
-                        split="train",
+                        split=split,
                         group=group,
                         augmented_options=nq.get("augmented_options"),
                     ).to_dict()
@@ -693,7 +698,7 @@ def family_to_typed_questions(
                             criteria=cf_choice_criteria,
                             label=cf_choice_label,
                             source="synthetic",
-                            split="train",
+                            split=split,
                             group=group,
                         ).to_dict()
                     )
@@ -715,7 +720,7 @@ def family_to_typed_questions(
                             criteria=cf_score_criteria,
                             label=cf_score_label_raw - 1.0,
                             source="synthetic",
-                            split="train",
+                            split=split,
                             group=group,
                         ).to_dict()
                     )
@@ -740,7 +745,7 @@ def family_to_typed_questions(
                             instructions=nq["instructions"],
                             label=nq["label"],
                             source="synthetic",
-                            split="train",
+                            split=split,
                             group=group,
                             augmented_options=nq.get("augmented_options"),
                         ).to_dict()
@@ -754,7 +759,7 @@ def family_to_typed_questions(
                             criteria=cq["criteria"],
                             label=cq["label"],
                             source="synthetic",
-                            split="train",
+                            split=split,
                             group=group,
                         ).to_dict()
                     )
@@ -767,7 +772,7 @@ def family_to_typed_questions(
                             criteria=sq["criteria"],
                             label=sq["_label_0based"],
                             source="synthetic",
-                            split="train",
+                            split=split,
                             group=group,
                         ).to_dict()
                     )
@@ -817,7 +822,7 @@ def family_to_typed_questions(
                                 instructions=new_instr,
                                 label=nq["label"],
                                 source="synthetic",
-                                split="train",
+                                split=split,
                                 group=group,
                                 augmented_options=nq.get("augmented_options"),
                             ).to_dict()
@@ -841,7 +846,7 @@ def family_to_typed_questions(
                             criteria=shuffled_criteria,
                             label=cq["label"],
                             source="synthetic",
-                            split="train",
+                            split=split,
                             group=group,
                         ).to_dict()
                     )
@@ -863,7 +868,7 @@ def family_to_typed_questions(
                         instructions=nq_neg["negated_instructions"],
                         label=nq_neg["negated_label"],
                         source="synthetic",
-                        split="train",
+                        split=split,
                         group=group,
                         augmented_options=noul_augment_by_ct.get(ct),
                     ).to_dict()
