@@ -39,7 +39,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from data.format import TypedQuestion
-from data.pipeline import load_jsonl
+from data.pipeline import load_jsonl, load_synthetic
 from data.sampler import SamplerConfig
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
@@ -77,20 +77,24 @@ def load_source_items(
         (train_items, eval_items) tuple.
     """
     path_str = source_cfg.get("path")
-    if not path_str:
-        # Default path convention
-        path_str = f"model/data/benchmarks/{source_name}.jsonl"
-    path = resolve_path(path_str)
+    if not path_str and source_name == "synthetic":
+        # Synthetic data is assembled on the fly from families + variants + labels.
+        items = list(load_synthetic())
+    else:
+        if not path_str:
+            # Default path convention
+            path_str = f"model/data/benchmarks/{source_name}.jsonl"
+        path = resolve_path(path_str)
 
-    if not path.exists():
-        print(
-            f"  WARNING: {path} not found, skipping {source_name}",
-            file=sys.stderr,
-            flush=True,
-        )
-        return [], []
+        if not path.exists():
+            print(
+                f"  WARNING: {path} not found, skipping {source_name}",
+                file=sys.stderr,
+                flush=True,
+            )
+            return [], []
 
-    items = load_jsonl(path)
+        items = load_jsonl(path)
 
     # Filter to supported types
     supported = {"noul", "choice", "score"}
