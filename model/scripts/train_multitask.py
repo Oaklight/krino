@@ -40,7 +40,7 @@ sys.path.insert(0, str(ROOT))
 
 from data.format import TypedQuestion
 from data.sampler import SamplerConfig
-from data.sources import is_synthetic_source, load_source_items
+from data.sources import collect_synthetic_sources, load_source_items
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info
@@ -76,16 +76,9 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
 
     # Synthetic replay ratio
     synthetic_ratio = sampling.get("synthetic_ratio")
-    synthetic_sources_cfg = sampling.get("synthetic_sources")
-    if synthetic_sources_cfg is not None:
-        synthetic_sources = set(synthetic_sources_cfg)
-    else:
-        # Auto-detect: any source whose name or path contains "synthetic"
-        synthetic_sources = {
-            source_name
-            for source_name, source_cfg in sources_cfg.items()
-            if is_synthetic_source(source_name, source_cfg)
-        }
+    synthetic_sources = collect_synthetic_sources(
+        sources_cfg, sampling.get("synthetic_sources")
+    )
 
     # No source_caps — capping already done in load_source_items
     return SamplerConfig(
