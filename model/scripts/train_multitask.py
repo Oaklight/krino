@@ -39,8 +39,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from data.format import TypedQuestion
-from data.pipeline import load_jsonl, load_synthetic
 from data.sampler import SamplerConfig
+from data.sources import is_synthetic_source, load_source_items
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info
@@ -51,76 +51,6 @@ def load_config(path: Path) -> dict:
     """Load YAML config file."""
     with open(path) as f:
         return yaml.safe_load(f)
-
-
-def resolve_path(path_str: str) -> Path:
-    """Resolve a path relative to the project root."""
-    p = Path(path_str)
-    if p.is_absolute():
-        return p
-    return ROOT / p
-
-
-def load_source_items(
-    source_name: str,
-    source_cfg: dict,
-    rng: random.Random,
-) -> tuple[list[TypedQuestion], list[TypedQuestion]]:
-    """Load and split items for a single source.
-
-    Args:
-        source_name: Name of the source (e.g. "banking77").
-        source_cfg: Source config dict with keys: path, weight, max_train, max_eval.
-        rng: Random instance for deterministic sampling.
-
-    Returns:
-        (train_items, eval_items) tuple.
-    """
-    path_str = source_cfg.get("path")
-    if not path_str and source_name == "synthetic":
-        # Synthetic data is assembled on the fly from families + variants + labels.
-        items = list(load_synthetic())
-    else:
-        if not path_str:
-            # Default path convention
-            path_str = f"model/data/benchmarks/{source_name}.jsonl"
-        path = resolve_path(path_str)
-
-        if not path.exists():
-            print(
-                f"  WARNING: {path} not found, skipping {source_name}",
-                file=sys.stderr,
-                flush=True,
-            )
-            return [], []
-
-        items = load_jsonl(path)
-
-    # Filter to supported types
-    supported = {"noul", "choice", "score"}
-    items = [it for it in items if it.question.get("type") in supported]
-
-    # Split by item.split field
-    train_items = [it for it in items if it.split == "train"]
-    eval_items = [it for it in items if it.split == "test"]
-
-    # Apply max_train / max_eval caps
-    max_train = source_cfg.get("max_train")
-    if max_train is not None and len(train_items) > max_train:
-        rng.shuffle(train_items)
-        train_items = train_items[:max_train]
-
-    max_eval = source_cfg.get("max_eval")
-    if max_eval is not None and len(eval_items) > max_eval:
-        rng.shuffle(eval_items)
-        eval_items = eval_items[:max_eval]
-
-    # Sources with weight: 0 are eval-only
-    weight = source_cfg.get("weight", 1.0)
-    if weight == 0:
-        train_items = []
-
-    return train_items, eval_items
 
 
 def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
@@ -151,11 +81,11 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
         synthetic_sources = set(synthetic_sources_cfg)
     else:
         # Auto-detect: any source whose name or path contains "synthetic"
-        synthetic_sources = set()
-        for source_name, source_cfg in sources_cfg.items():
-            path_str = (source_cfg or {}).get("path", "")
-            if "synthetic" in source_name or "synthetic" in path_str:
-                synthetic_sources.add(source_name)
+        synthetic_sources = {
+            source_name
+            for source_name, source_cfg in sources_cfg.items()
+            if is_synthetic_source(source_name, source_cfg)
+        }
 
     # No source_caps — capping already done in load_source_items
     return SamplerConfig(
