@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import random
 import sys
@@ -1056,6 +1057,33 @@ def _select_teacher_probs(
     return None
 
 
+def _synthetic_family_split(
+    domain: str, family_idx: int, eval_ratio: float = 0.1
+) -> str:
+    """Assign a deterministic train/eval split to one synthetic family.
+
+    The split is computed at the family level, so every variant of a family
+    (base, counterfactual, paraphrase, negation, shuffled) lands on the same
+    side. Splitting per item would leak paraphrases across the boundary and
+    inflate eval accuracy.
+
+    Uses md5 rather than ``hash()`` because Python's string hash is randomised
+    per process (PYTHONHASHSEED), which would make the split unstable across
+    runs and machines.
+
+    Args:
+        domain: Synthetic domain name, e.g. ``"medical_triage"``.
+        family_idx: Index of the family within the domain.
+        eval_ratio: Fraction of families held out for evaluation.
+
+    Returns:
+        ``"test"`` or ``"train"`` — ``"test"`` matches the split name the
+        benchmark loaders use, which is what ``load_source_items`` filters on.
+    """
+    digest = hashlib.md5(f"{domain}-{family_idx}".encode()).hexdigest()
+    return "test" if int(digest[:8], 16) / 0xFFFFFFFF < eval_ratio else "train"
+
+
 def load_synthetic() -> Iterator[TypedQuestion]:
     """Load synthetic data by assembling from families + variants + labels on the fly."""
     synth_dir = DATA_DIR / "synthetic"
@@ -1082,7 +1110,11 @@ def load_synthetic() -> Iterator[TypedQuestion]:
 
         for idx, fam in enumerate(families):
             vd = variants[idx] if idx < len(variants) else {}
-            items = family_to_typed_questions(fam, vd, domain, fam.get("_family_idx", idx))
+            fam_idx = fam.get("_family_idx", idx)
+            fam_split = _synthetic_family_split(domain, fam_idx)
+            items = family_to_typed_questions(
+                fam, vd, domain, fam_idx, split=fam_split
+            )
             for item_dict in items:
                 cached = label_cache.get(item_dict["id"])
                 if cached:
