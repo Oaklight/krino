@@ -564,6 +564,9 @@ def family_to_typed_questions(
     Args:
         split: Split label assigned to every emitted item. The caller decides
             this per family so that all variants of a family stay together.
+            Defaults to ``"train"``: ``run_pipeline`` does not pass a split, so
+            a materialised ``synthetic.jsonl`` is all-train. Training reads
+            through ``load_synthetic``, which does pass one.
     """
     state = family["state"]
     group = f"synthetic-{domain}-{family_idx:04d}"
