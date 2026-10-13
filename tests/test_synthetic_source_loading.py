@@ -21,7 +21,9 @@ from data.sources import (
 )
 
 
-def _make_item(item_id: str, split: str = "train", qtype: str = "noul") -> TypedQuestion:
+def _make_item(
+    item_id: str, split: str = "train", qtype: str = "noul"
+) -> TypedQuestion:
     return TypedQuestion(
         id=item_id,
         state="state",
@@ -41,7 +43,10 @@ def test_synthetic_without_path_uses_load_synthetic(monkeypatch):
     """A pathless synthetic source must go through load_synthetic()."""
     import data.sources as src
 
-    sentinel = [_make_item("synthetic-a-0001-noul-x"), _make_item("synthetic-a-0002-noul-y")]
+    sentinel = [
+        _make_item("synthetic-a-0001-noul-x"),
+        _make_item("synthetic-a-0002-noul-y"),
+    ]
     called = {"n": 0}
 
     def fake_load_synthetic():
@@ -50,7 +55,9 @@ def test_synthetic_without_path_uses_load_synthetic(monkeypatch):
 
     monkeypatch.setattr(src, "load_synthetic", fake_load_synthetic)
 
-    train_items, eval_items = load_source_items("synthetic", {"weight": 1.0}, random.Random(0))
+    train_items, eval_items = load_source_items(
+        "synthetic", {"weight": 1.0}, random.Random(0)
+    )
 
     assert called["n"] == 1
     assert [it.id for it in train_items] == [it.id for it in sentinel]
@@ -64,7 +71,9 @@ def test_synthetic_respects_max_train(monkeypatch):
     items = [_make_item(f"synthetic-a-{i:04d}-noul-x") for i in range(50)]
     monkeypatch.setattr(src, "load_synthetic", lambda: iter(items))
 
-    train_items, _ = load_source_items("synthetic", {"weight": 1.0, "max_train": 10}, random.Random(0))
+    train_items, _ = load_source_items(
+        "synthetic", {"weight": 1.0, "max_train": 10}, random.Random(0)
+    )
     assert len(train_items) == 10
 
 
@@ -74,7 +83,9 @@ def test_synthetic_empty_assembly_warns_and_returns_empty(monkeypatch, capsys):
 
     monkeypatch.setattr(src, "load_synthetic", lambda: iter([]))
 
-    train_items, eval_items = load_source_items("synthetic", {"weight": 1.0}, random.Random(0))
+    train_items, eval_items = load_source_items(
+        "synthetic", {"weight": 1.0}, random.Random(0)
+    )
 
     assert train_items == []
     assert eval_items == []
@@ -93,7 +104,9 @@ def test_synthetic_explicit_path_still_read_from_file(monkeypatch, tmp_path):
     jsonl = tmp_path / "synthetic.jsonl"
     jsonl.write_text(json.dumps(_make_item("from-file").to_dict()) + "\n")
 
-    train_items, _ = load_source_items("synthetic", {"path": str(jsonl), "weight": 1.0}, random.Random(0))
+    train_items, _ = load_source_items(
+        "synthetic", {"path": str(jsonl), "weight": 1.0}, random.Random(0)
+    )
     assert [it.id for it in train_items] == ["from-file"]
 
 
@@ -123,7 +136,9 @@ def test_synthetic_named_source_without_path_uses_assembly(monkeypatch):
     sentinel = [_make_item("synthetic-aug-0001-noul-x")]
     monkeypatch.setattr(src, "load_synthetic", lambda: iter(sentinel))
 
-    train_items, _ = load_source_items("synthetic_aug", {"weight": 1.0}, random.Random(0))
+    train_items, _ = load_source_items(
+        "synthetic_aug", {"weight": 1.0}, random.Random(0)
+    )
     assert [it.id for it in train_items] == ["synthetic-aug-0001-noul-x"]
 
 
@@ -134,7 +149,9 @@ def test_synthetic_named_source_without_path_uses_assembly(monkeypatch):
 
 def test_default_path_uses_data_benchmarks_prefix(capsys):
     """A pathless non-synthetic source resolves under data/benchmarks/."""
-    train_items, eval_items = load_source_items("no_such_source", {"weight": 1.0}, random.Random(0))
+    train_items, eval_items = load_source_items(
+        "no_such_source", {"weight": 1.0}, random.Random(0)
+    )
 
     assert train_items == []
     assert eval_items == []
