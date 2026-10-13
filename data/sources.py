@@ -40,6 +40,25 @@ def is_synthetic_source(source_name: str, source_cfg: dict | None = None) -> boo
     return "synthetic" in path_str
 
 
+def collect_synthetic_sources(
+    sources_cfg: dict,
+    override: list[str] | None = None,
+) -> set[str]:
+    """Names of sources the sampler should treat as synthetic.
+
+    Args:
+        sources_cfg: Mapping of source name to its config dict.
+        override: Explicit ``sampling.synthetic_sources`` list. When not None it
+            wins outright and no auto-detection runs.
+
+    Returns:
+        Set of source names.
+    """
+    if override is not None:
+        return set(override)
+    return {name for name, cfg in sources_cfg.items() if is_synthetic_source(name, cfg)}
+
+
 def load_source_items(
     source_name: str,
     source_cfg: dict,
