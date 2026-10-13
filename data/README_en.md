@@ -70,6 +70,7 @@ data/
 ├── format.py           # TypedQuestion dataclass
 ├── pipeline.py         # 26 benchmark loaders
 ├── sampler.py          # Stratified sampling utilities
+├── sources.py          # Source loading for the multitask trainer
 ├── synthetic.py        # Synthetic data generation orchestrator
 ├── synthetic_*.py      # Stage implementations
 ├── balance.py          # Class balancing
@@ -88,3 +89,4 @@ data/
 | `synthetic.py` | Synthetic data generation pipeline orchestrator |
 | `lsh.py` | Standalone MinHash/LSH for deduplication |
 | `sampler.py` | Stratified sampling for balanced evaluation subsets |
+| `sources.py` | Source loading for the multitask trainer (torch-free) |

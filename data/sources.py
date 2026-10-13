@@ -61,8 +61,8 @@ def load_source_items(
         items = list(load_synthetic())
         if not items:
             print(
-                f"  WARNING: synthetic source assembled 0 items — check "
-                f"{DEFAULT_BENCHMARK_PREFIX}/synthetic/",
+                f"  WARNING: {source_name}: synthetic source assembled 0 items — "
+                f"check {DEFAULT_BENCHMARK_PREFIX}/synthetic/",
                 file=sys.stderr,
                 flush=True,
             )
