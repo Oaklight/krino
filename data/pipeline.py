@@ -692,11 +692,18 @@ def _mmlu_row_to_item(
         return None
     if not (isinstance(answer_idx, int) and 0 <= answer_idx < 4):
         return None
-    subject = row.get("subject", "")
+    # The "all" config fills subject; auxiliary_train carries the key with an
+    # empty value, so every train row would otherwise share the group "mmlu-".
+    subject = row.get("subject") or "unknown"
+    instructions = (
+        f"Answer this {subject.replace('_', ' ')} question."
+        if subject != "unknown"
+        else "Answer this multiple-choice question."
+    )
     return TypedQuestion.choice(
         id=f"mmlu-{tag}-{idx:05d}",
         state=row.get("question", ""),
-        instructions=f"Answer this {subject.replace('_', ' ')} question.",
+        instructions=instructions,
         criteria={k: c for k, c in zip(MMLU_KEYS, choices)},
         label=MMLU_KEYS[answer_idx],
         source="mmlu",
@@ -706,9 +713,9 @@ def _mmlu_row_to_item(
 
 
 def load_mmlu() -> Iterator[TypedQuestion]:
-    # Eval: the "all" config holds the canonical questions. Its "validation"
-    # split is the usable held-out set — the upstream "test" labels are
-    # withheld — so both splits map to the test split.
+    # Eval: both splits of the "all" config map to the test split. Its "test"
+    # split is MMLU's canonical benchmark set (14,042 labelled rows) and
+    # "validation" adds 1,531 more, so the source evaluates on 15,573 items.
     for split_name in ("test", "validation"):
         out_split = "test" if split_name == "validation" else split_name
         for i, row in enumerate(_load_hf_parquet("cais/mmlu", "all", split_name)):
