@@ -1071,6 +1071,18 @@ def _synthetic_family_split(
     per process (PYTHONHASHSEED), which would make the split unstable across
     runs and machines.
 
+    Two limits are worth knowing:
+
+    * The key is ``_family_idx``, a positional id assigned when the corpus is
+      generated. The split is therefore stable across runs and machines for a
+      fixed corpus, but not across regenerating it: reordering families shifts
+      families across the boundary (a +1 shift on every index moves ~18% of
+      families).
+    * Family-disjointness is not state-disjointness. A handful of states appear
+      in more than one family (two such states in ``safety_moderation``); if
+      those families split, the same state is evaluated on text it was trained
+      on. The effect is negligible at this scale but is not zero.
+
     Args:
         domain: Synthetic domain name, e.g. ``"medical_triage"``.
         family_idx: Index of the family within the domain.
