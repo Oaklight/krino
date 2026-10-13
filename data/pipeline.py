@@ -682,31 +682,50 @@ def load_codesearchnet() -> Iterator[TypedQuestion]:
 MMLU_KEYS = ["A", "B", "C", "D"]
 
 
+def _mmlu_row_to_item(
+    row: dict[str, Any], tag: str, idx: int, out_split: str
+) -> TypedQuestion | None:
+    """Convert one MMLU row, or return None if it is not a 4-way question."""
+    choices = row.get("choices", [])
+    answer_idx = row.get("answer", 0)
+    if len(choices) != 4:
+        return None
+    if not (isinstance(answer_idx, int) and 0 <= answer_idx < 4):
+        return None
+    subject = row.get("subject", "")
+    return TypedQuestion.choice(
+        id=f"mmlu-{tag}-{idx:05d}",
+        state=row.get("question", ""),
+        instructions=f"Answer this {subject.replace('_', ' ')} question.",
+        criteria={k: c for k, c in zip(MMLU_KEYS, choices)},
+        label=MMLU_KEYS[answer_idx],
+        source="mmlu",
+        split=out_split,
+        group=f"mmlu-{subject}",
+    )
+
+
 def load_mmlu() -> Iterator[TypedQuestion]:
+    # Eval: the "all" config holds the canonical questions. Its "validation"
+    # split is the usable held-out set — the upstream "test" labels are
+    # withheld — so both splits map to the test split.
     for split_name in ("test", "validation"):
-        rows = _load_hf_parquet("cais/mmlu", "all", split_name)
         out_split = "test" if split_name == "validation" else split_name
-        for i, row in enumerate(rows):
-            question_text = row.get("question", "")
-            choices = row.get("choices", [])
-            answer_idx = row.get("answer", 0)
-            subject = row.get("subject", "")
-            if len(choices) != 4:
-                continue
-            criteria = {k: c for k, c in zip(MMLU_KEYS, choices)}
-            label = MMLU_KEYS[answer_idx] if isinstance(answer_idx, int) and 0 <= answer_idx < 4 else None
-            if label is None:
-                continue
-            yield TypedQuestion.choice(
-                id=f"mmlu-{split_name}-{i:05d}",
-                state=question_text,
-                instructions=f"Answer this {subject.replace('_', ' ')} question.",
-                criteria=criteria,
-                label=label,
-                source="mmlu",
-                split=out_split,
-                group=f"mmlu-{subject}",
-            )
+        for i, row in enumerate(_load_hf_parquet("cais/mmlu", "all", split_name)):
+            item = _mmlu_row_to_item(row, split_name, i, out_split)
+            if item is not None:
+                yield item
+
+    # Train: MMLU ships its training questions in a separate config whose rows
+    # are nested under a single "train" column. Without this the source had
+    # zero training items and contributed eval only, despite configs listing
+    # it as a weighted training source.
+    for i, row in enumerate(
+        _load_hf_parquet("cais/mmlu", "auxiliary_train", "train")
+    ):
+        item = _mmlu_row_to_item(row.get("train") or {}, "auxiliary_train", i, "train")
+        if item is not None:
+            yield item
 
 
 # --- WinoGrande (Commonsense Pronoun Resolution) ---
