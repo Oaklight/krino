@@ -70,6 +70,7 @@ data/
 ├── format.py           # TypedQuestion 数据类
 ├── pipeline.py         # 26 个基准加载器
 ├── sampler.py          # 分层采样工具
+├── sources.py          # 多任务训练脚本的数据源加载
 ├── synthetic.py        # 合成数据生成编排器
 ├── synthetic_*.py      # 各阶段实现
 ├── balance.py          # 类别平衡
@@ -88,3 +89,4 @@ data/
 | `synthetic.py` | 合成数据生成管道编排器 |
 | `lsh.py` | 独立的 MinHash/LSH 去重模块 |
 | `sampler.py` | 分层采样，用于平衡的评估子集 |
+| `sources.py` | 多任务训练脚本的数据源加载（不依赖 torch） |
