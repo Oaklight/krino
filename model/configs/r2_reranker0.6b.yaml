@@ -66,6 +66,7 @@ sources:
   mmlu:
     path: data/benchmarks/mmlu.jsonl
     weight: 2.0
+    max_train: 5000
     max_eval: 500
   winogrande:
     path: data/benchmarks/winogrande.jsonl
