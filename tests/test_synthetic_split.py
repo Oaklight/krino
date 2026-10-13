@@ -29,12 +29,30 @@ class TestFamilySplit:
         assert _synthetic_family_split("code_review", 0) == "train"
 
     def test_domain_is_part_of_the_key(self):
-        """Two domains with the same family index are split independently."""
-        splits = {
-            _synthetic_family_split(d, 7)
-            for d in ("medical_triage", "legal_judgment", "code_review")
-        }
-        assert splits  # at least one value; not all domains may collide
+        """The domain participates in the hash, not only the index."""
+        import hashlib
+
+        def expected(domain: str, idx: int, ratio: float = 0.1) -> str:
+            d = hashlib.md5(f"{domain}-{idx}".encode()).hexdigest()
+            return "test" if int(d[:8], 16) / 0xFFFFFFFF < ratio else "train"
+
+        assert _synthetic_family_split("medical_triage", 3) == expected(
+            "medical_triage", 3
+        )
+        # If the domain were dropped from the key, no index could differ
+        # between two domains.
+        differs = any(
+            _synthetic_family_split("medical_triage", i)
+            != _synthetic_family_split("legal_judgment", i)
+            for i in range(50)
+        )
+        assert differs
+
+    def test_default_ratio_used_when_omitted(self):
+        """Omitting the ratio uses the module default."""
+        n = 2000
+        tests = sum(1 for i in range(n) if _synthetic_family_split("d", i) == "test")
+        assert 0.06 < tests / n < 0.14
 
     def test_eval_ratio_respected(self):
         """Roughly eval_ratio of families land in eval."""
