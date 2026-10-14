@@ -94,6 +94,13 @@ Kendall et al. 2018 is the strongest automatic balancing method — consistently
 | Reranker-4B | 52.1% | 59.5% | +7.4pp |
 | Reranker-0.6B | 50.3% | 51.6% | +1.3pp |
 
+> **Corrected 2026-10-14.** The Reranker-4B row is the same LR confound that
+> `06-head-size-sweep.md` corrects. Its 52.1% arm is the sweep's mlp=0 run at
+> `lr: 1e-3`, while the 59.5% arm ran at 3e-4 (this file's setup table). The
+> matched-LR re-run scores 59.31% on the 19 benchmarks alone, within 0.2pp of
+> 59.5%, so at a matched LR the extra data adds nothing measurable for this
+> model. The 0.6B row is clean — both arms ran at 1e-3 — and its +1.3pp stands.
+
 ## Decision for R2
 
 - **Use uniform LR** — simplest and best
@@ -106,4 +113,6 @@ Kendall et al. 2018 is the strongest automatic balancing method — consistently
 2. Uncertainty weighting is a strong zero-tuning baseline
 3. Reranker pretraining advantage is robust across all optimization methods
 4. Full dataset matters more than optimization tricks (+7.4pp vs -1.1pp)
+   — superseded for the 4B: see the correction note under Finding 5. At a
+   matched LR the 4B dataset effect is under 0.2pp; the +7.4pp was the LR.
 5. Epoch-2 instability is universal across all Reranker backbones
