@@ -22,7 +22,11 @@ baseline had trained with a `--lr 3e-4` CLI override. The sweep inherited the
 config value and did not reapply the override. 1e-3 is also the trainer's
 fallback (`train_multitask.py:205`) and the value in every committed config
 except `r2_reranker4b.yaml`, so the wrong LR looked unremarkable in the logs.
-The encoder and 0.6B results are unaffected — those ran at their intended LR.
+
+The encoder and 0.6B results are unaffected — their configs already specify
+1e-3 (`multitask_ettin150m.yaml`, `r2_reranker0.6b.yaml`), so no override was
+owed. That rests on the committed configs rather than a second LR measurement:
+no sweep log for those backbones survives.
 
 This is the same root cause as `05-mlp-lr-targeted-runs.md` Attempt 3 (lines
 21-25), where the targeted 4B runs "inherited the config's 0.001 without
