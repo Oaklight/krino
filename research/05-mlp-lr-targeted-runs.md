@@ -66,6 +66,13 @@
 | 1e-4 | 50.1% | 47.2% | 52.8% | 53.3% | **54.8%** | **+2.7pp** |
 | **3e-5** | 50.1% | 48.1% | 52.8% | 54.2% | **55.4%** | **+3.3pp** ✅ |
 
+> **Corrected 2026-10-14 — this conclusion is wrong.** The `vs mlp=0 (52.1%)`
+> column compares against a run at a *different* learning rate: 52.1% is the
+> sweep's mlp=0 at the config default `lr: 1e-3`, while these mlp=1 runs used
+> heads_lr=3e-4. Re-running mlp=0 at 3e-4 gives 59.3%, so the MLP loses 4.2pp
+> rather than gaining 3.3pp. See the Correction section in
+> `06-head-size-sweep.md`. The 0.6B result below is unaffected.
+
 ### Key Finding
 
 **MLP projector benefit is backbone-size-dependent:**
@@ -73,11 +80,15 @@
 - 0.6B backbone (hidden=1024): MLP adds noise, -2.3pp even with optimal mlp_lr=1e-4
 - Optimal mlp_lr scales inversely with backbone size and hidden dim
 
+> **Corrected 2026-10-14.** Only the 0.6B half stands. At a matched LR the MLP
+> also hurts the 4B backbone (−4.2pp), so there is no size-dependent benefit to
+> explain — the projector loses at both sizes.
+
 ### R2 Configuration Decision
 
 | Model | Rank | MLP | Heads LR | MLP LR |
 |-------|------|-----|----------|--------|
-| **Reranker-4B** | r128 | **mlp=1** | 3e-4 | **3e-5** |
+| **Reranker-4B** | r128 | **mlp=0** | 3e-4 | — |
 | **Reranker-0.6B** | r64 | mlp=0 | 1e-3 | — |
 
 MLP will also be revisited during LoRA stage (Stage 5 of #73) for the 0.6B model,

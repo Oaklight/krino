@@ -1,8 +1,10 @@
 # Round 2: Reranker-4B — full dataset, optimal config from all experiments
 #
 # Findings applied:
-#   - Rank: r128 (head-size sweep, 45 runs)
-#   - MLP: mlp=1, mlp_lr=3e-5 (MLP+LR targeted runs, +3.3pp over mlp=0)
+#   - Rank: r128 (head-size sweep; the corrected-LR re-run puts r64/r128/r256
+#     within ~1pp, r128 kept as the most stable of the three)
+#   - MLP: mlp=0 (corrected-LR re-run — mlp=1 loses 3.2-5.4pp at every rank;
+#     the earlier "+3.3pp" claim compared mlp=1@3e-4 against mlp=0@1e-3)
 #   - LR: 3e-4 uniform (MTL optimization, 12 runs — baseline wins)
 #   - Attention: SDPA auto-detect (PR #94)
 #   - Data: 26 benchmarks + 154K synthetic (23 domains)
@@ -14,9 +16,8 @@
 model: Qwen/Qwen3-Reranker-4B
 encoder: false
 rank: 128
-mlp_layers: 1
+mlp_layers: 0
 noul_rank: 128
-mlp_lr: 3e-5
 epochs: 20
 lr: 0.0003
 accumulation_steps: 8

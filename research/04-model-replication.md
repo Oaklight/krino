@@ -473,11 +473,14 @@ Multi-task training on 19 NLU benchmarks with type-balanced sampling, 20 epochs,
 
 ### MLP + Per-Component LR Targeted Runs (issue #93)
 
-MLP projector benefit is **backbone-size-dependent**:
+> **Corrected 2026-10-14.** The original 4B verdict below was a cross-LR
+> artifact — the mlp=1 run used heads_lr=3e-4 while its mlp=0 reference used
+> the config default 1e-3. At a matched LR the MLP loses 3.2-5.4pp at every 4B
+> rank. See the Correction section in `06-head-size-sweep.md`.
 
 | Model | mlp=0 baseline | Best MLP+per-comp LR | Verdict |
 |-------|---------------|---------------------|---------|
-| **Reranker-4B** | 52.1% | **55.4%** (mlp_lr=3e-5) | MLP helps (+3.3pp) |
+| **Reranker-4B** | 59.3% (r128, lr=3e-4) | 55.1% (mlp_lr=3e-5) | MLP hurts (−4.2pp) |
 | **Reranker-0.6B** | 50.3% | 48.0% (mlp_lr=1e-4) | MLP hurts (-2.3pp) |
 
 ### Updated Open Questions
@@ -486,4 +489,4 @@ MLP projector benefit is **backbone-size-dependent**:
 2. **Can teacher distillation further improve?** Still open — Jev soft labels available for 10.9K items.
 3. **Encoder vs causal for general-purpose model?** Causal (Reranker) wins. Encoder (Ettin/ModernBERT) limited by 8K context.
 4. **How much does external data help?** CLM used 60M pairs. Stage 3 will test MS MARCO + SNLI.
-5. **Does MLP help with LoRA?** MLP hurts for frozen backbone (0.6B), helps for large backbone (4B). Will revisit during Stage 5 with LoRA adaptation.
+5. **Does MLP help with LoRA?** MLP hurts for the frozen backbone at both sizes tested (0.6B and 4B) once the LR is matched. Will revisit during Stage 5 with LoRA adaptation.
