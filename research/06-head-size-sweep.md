@@ -16,25 +16,48 @@ below are epoch-5 accuracy unless noted otherwise.
 
 ## Correction (2026-10-14): the Reranker-4B results in this log were LR-confounded
 
-Every Reranker-4B number below was produced at the config-default `lr: 1e-3`.
-At that LR the 4B model trains in a high-loss regime (train_loss ~2.6 against
-~0.86 at 3e-4), which costs 7-9pp of absolute accuracy and distorts the rank
-and MLP comparisons. The encoder and 0.6B results are unaffected — those ran
-at their intended LR.
+The sweep's 4B runs used `multitask_qwen_reranker4b.yaml`, a host-only config
+that never entered the repo. That file carries `lr: 0.001`, while R1's 4B
+baseline had trained with a `--lr 3e-4` CLI override. The sweep inherited the
+config value and did not reapply the override. 1e-3 is also the trainer's
+fallback (`train_multitask.py:205`) and the value in every committed config
+except `r2_reranker4b.yaml`, so the wrong LR looked unremarkable in the logs.
+The encoder and 0.6B results are unaffected — those ran at their intended LR.
 
-Re-running the six 4B head configs at `lr: 3e-4` (5 epochs, same 19
-benchmarks, same seed, `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`):
+This is the same root cause as `05-mlp-lr-targeted-runs.md` Attempt 3 (lines
+21-25), where the targeted 4B runs "inherited the config's 0.001 without
+override" and blew up to train_loss 5.07/9.41 before being relaunched with
+`--lr 3e-4`. The sweep hit the same bug on a different set of runs.
 
-| | r64 | r128 | r256 |
-|---|---|---|---|
-| mlp=0 | 58.9% | 59.3% | **60.0%** |
-| mlp=1 | 55.7% | 55.1% | 54.6% |
+Re-running the six 4B head configs at heads `lr: 3e-4` (5 epochs, same 19
+benchmarks, same seed, `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`).
+The mlp=1 rows ran the projector at `mlp_lr: 3e-5`, the value Section 4 tuned,
+so the MLP loses at its best-tuned projector LR rather than an untuned one:
 
 | rank | mlp=0 | mlp=1 | Δ |
 |------|-------|-------|---|
 | r64 | 58.90 | 55.71 | **−3.19 pp** |
 | r128 | 59.31 | 55.08 | **−4.23 pp** |
 | r256 | 59.97 | 54.61 | **−5.36 pp** |
+
+Epoch-by-epoch accuracy at `lr: 3e-4`, from the per-run `history.json` now
+committed under `model/experiments/sweep_lr/` (outside the dashboard's
+`*.json` glob):
+
+| run | ep1 | ep2 | ep3 | ep4 | ep5 |
+|-----|-----|-----|-----|-----|-----|
+| r64 mlp=0 | 51.6% | 52.8% | 53.7% | 55.6% | **58.9%** |
+| r64 mlp=1 | 50.6% | 49.9% | 52.7% | 54.0% | **55.7%** |
+| r128 mlp=0 | 50.9% | 50.6% | 52.2% | 55.1% | **59.3%** |
+| r128 mlp=1 | 50.1% | 49.3% | 52.6% | 53.9% | **55.1%** |
+| r256 mlp=0 | 52.8% | 46.9% | 52.1% | 54.4% | **60.0%** |
+| r256 mlp=1 | 49.9% | 45.8% | 50.1% | 53.2% | **54.6%** |
+
+The mlp=0 ordering is r64 > r128 > r256 at epoch 4 and r256 > r128 > r64 at
+epoch 5. Train loss spikes at epoch 2 to 3.33 (r256 mlp=0) and 2.79 (r256
+mlp=1) against 1.38 (r64 mlp=0), then recovers by epoch 5. No epoch-level
+record of the 1e-3 side survives on the hosts, so the evidence for that side
+is 05's Attempt 3 above plus the accuracy tables in this file.
 
 What this changes:
 
@@ -43,23 +66,25 @@ What this changes:
    mlp=0 at 1e-3. At a matched LR, mlp=1 loses 3.2-5.4pp at *every* rank, so
    `mlp_layers: 1` is dropped from the R2 4B config.
 2. **Rank is flat within noise.** r256 > r128 > r64 by 1.1pp end-to-end, and
-   the ordering reverses between epochs 4 and 5 in both the old and the new
-   runs. r256 also spikes to train_loss 3.33 at epoch 2 (r64: 1.38), making it
-   the least stable of the three. `rank: 128` is kept.
+   the ordering reverses between epochs 4 and 5 across the six re-runs. r256
+   also spikes to train_loss 3.33 at epoch 2 (r64: 1.38), making it the least
+   stable of the three. `rank: 128` is kept.
 3. **The "r256 diverges because 3e-4 is too aggressive" story is wrong.** The
    sweep never ran at 3e-4; it ran at 1e-3. The 4B note in Section 2, the
    Reranker-4B paragraph of Finding 2, and Finding 4 are superseded by this
    section.
-4. **LR, not head configuration, dominated this sweep.** +7.0 to +13.5pp from
-   LR alone. The original 4B head-size ranking should not be read as a property
-   of the architecture.
+4. **LR, not head configuration, dominated this sweep.** Per row, the LR alone
+   moved accuracy by +7.8/+7.2/+9.7pp on the mlp=0 rows (r64/r128/r256) and
+   +13.5/+3.9/+5.6pp on the mlp=1 rows. The original 4B head-size ranking
+   should not be read as a property of the architecture.
 
 Caveat: the corrected re-run is 5 epochs and a single seed. The MLP conclusion
 rests on a consistent 3.2-5.4pp gap across three ranks; the rank ordering is
 inside seed noise and is treated as undetermined.
 
 Logs: `model/experiments/sweep_lr_r{64,128,256}_mlp{0,1}.log` on the rbdgx
-boxes (shared `lambda_home` mount).
+boxes (shared `lambda_home` mount); per-epoch `history.json` committed under
+`model/experiments/sweep_lr/`.
 
 ## 1. Sweep Setup
 
@@ -222,8 +247,8 @@ monotonic rank scaling for this model.
 
 > **Superseded — see the Correction section above.** The premise is wrong:
 > the sweep ran at `lr: 1e-3`, not 3e-4. Lowering the LR to 3e-4 does recover
-> 7-9pp, but it does not recover "monotonic rank scaling" — the corrected
-> ordering is r256 > r128 > r64 with a 1.1pp spread.
+> 7.2-9.7pp on the mlp=0 rows, but it does not recover "monotonic rank
+> scaling" — the corrected ordering is r256 > r128 > r64 with a 1.1pp spread.
 
 ## 4. MLP + Per-Component LR Targeted Runs (Issue #93)
 

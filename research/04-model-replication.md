@@ -480,8 +480,12 @@ Multi-task training on 19 NLU benchmarks with type-balanced sampling, 20 epochs,
 
 | Model | mlp=0 baseline | Best MLP+per-comp LR | Verdict |
 |-------|---------------|---------------------|---------|
-| **Reranker-4B** | 59.3% (r128, lr=3e-4) | 55.1% (mlp_lr=3e-5) | MLP hurts (−4.2pp) |
+| **Reranker-4B** | 59.31% (r128, mlp=0, heads 3e-4) | 55.08% (r128, mlp=1, mlp_lr=3e-5) | MLP hurts (−4.2pp) |
 | **Reranker-0.6B** | 50.3% | 48.0% (mlp_lr=1e-4) | MLP hurts (-2.3pp) |
+
+Both 4B cells are from the 2026-10-14 matched-LR re-run, so they are directly
+comparable; the 0.6B row is unchanged. The earlier `52.1% → 55.4%` reading of
+this table compared two different learning rates.
 
 ### Updated Open Questions
 
