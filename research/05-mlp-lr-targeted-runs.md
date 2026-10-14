@@ -45,10 +45,15 @@
 
 | Model | Config | Uniform LR | Acc@5ep |
 |-------|--------|-----------|---------|
-| Reranker-4B | r128 mlp=0 | 3e-4 | 52.1% |
-| Reranker-4B | r128 mlp=1 | 3e-4 | 51.2% |
+| Reranker-4B | r128 mlp=0 | 1e-3 | 52.1% |
+| Reranker-4B | r128 mlp=1 | 1e-3 | 51.2% |
 | Reranker-0.6B | r64 mlp=0 | 1e-3 | 50.3% |
 | Reranker-0.6B | r64 mlp=1 | 1e-3 | 46.7% |
+
+> **Corrected 2026-10-14.** The two Reranker-4B rows were not 3e-4 runs. They
+> used `multitask_qwen_reranker4b.yaml`, whose `lr: 0.001` was never
+> overridden; `3e-4` was the intent, not what ran. The 0.6B rows are correct
+> as written. See the Correction section in `06-head-size-sweep.md`.
 
 ### Final Results
 
@@ -67,11 +72,14 @@
 | **3e-5** | 50.1% | 48.1% | 52.8% | 54.2% | **55.4%** | **+3.3pp** ✅ |
 
 > **Corrected 2026-10-14 — this conclusion is wrong.** The `vs mlp=0 (52.1%)`
-> column compares against a run at a *different* learning rate: 52.1% is the
-> sweep's mlp=0 at the config default `lr: 1e-3`, while these mlp=1 runs used
-> heads_lr=3e-4. Re-running mlp=0 at 3e-4 gives 59.3%, so the MLP loses 4.2pp
-> rather than gaining 3.3pp. See the Correction section in
-> `06-head-size-sweep.md`. The 0.6B result below is unaffected.
+> column compares against a run at a *different* learning rate. 52.1% is the
+> sweep's mlp=0 run, which used `multitask_qwen_reranker4b.yaml` and inherited
+> its `lr: 0.001`; these mlp=1 runs used heads_lr=3e-4. Re-running both arms at
+> heads 3e-4 with the projector at mlp_lr=3e-5 gives 59.31% (mlp=0) against
+> 55.08% (mlp=1), so the MLP loses 4.2pp rather than gaining 3.3pp. The
+> targeted mlp_lr=3e-5 run below (55.4%) loses the same 3.9pp. See the
+> Correction section in `06-head-size-sweep.md`. The 0.6B result below is
+> unaffected.
 
 ### Key Finding
 
