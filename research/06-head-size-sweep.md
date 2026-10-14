@@ -14,6 +14,53 @@ All runs used 5 epochs, `eval_every=1`, `save_every_epoch=true`, and
 evaluated on 19 NLU benchmarks with type-balanced sampling. Accuracy values
 below are epoch-5 accuracy unless noted otherwise.
 
+## Correction (2026-10-14): the Reranker-4B results in this log were LR-confounded
+
+Every Reranker-4B number below was produced at the config-default `lr: 1e-3`.
+At that LR the 4B model trains in a high-loss regime (train_loss ~2.6 against
+~0.86 at 3e-4), which costs 7-9pp of absolute accuracy and distorts the rank
+and MLP comparisons. The encoder and 0.6B results are unaffected — those ran
+at their intended LR.
+
+Re-running the six 4B head configs at `lr: 3e-4` (5 epochs, same 19
+benchmarks, same seed, `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`):
+
+| | r64 | r128 | r256 |
+|---|---|---|---|
+| mlp=0 | 58.9% | 59.3% | **60.0%** |
+| mlp=1 | 55.7% | 55.1% | 54.6% |
+
+| rank | mlp=0 | mlp=1 | Δ |
+|------|-------|-------|---|
+| r64 | 58.90 | 55.71 | **−3.19 pp** |
+| r128 | 59.31 | 55.08 | **−4.23 pp** |
+| r256 | 59.97 | 54.61 | **−5.36 pp** |
+
+What this changes:
+
+1. **The 4B MLP result flips.** Section 4 concluded "MLP HELPS for large
+   backbones (+3.3pp)". That was a cross-LR comparison — mlp=1 at 3e-4 against
+   mlp=0 at 1e-3. At a matched LR, mlp=1 loses 3.2-5.4pp at *every* rank, so
+   `mlp_layers: 1` is dropped from the R2 4B config.
+2. **Rank is flat within noise.** r256 > r128 > r64 by 1.1pp end-to-end, and
+   the ordering reverses between epochs 4 and 5 in both the old and the new
+   runs. r256 also spikes to train_loss 3.33 at epoch 2 (r64: 1.38), making it
+   the least stable of the three. `rank: 128` is kept.
+3. **The "r256 diverges because 3e-4 is too aggressive" story is wrong.** The
+   sweep never ran at 3e-4; it ran at 1e-3. The 4B note in Section 2, the
+   Reranker-4B paragraph of Finding 2, and Finding 4 are superseded by this
+   section.
+4. **LR, not head configuration, dominated this sweep.** +7.0 to +13.5pp from
+   LR alone. The original 4B head-size ranking should not be read as a property
+   of the architecture.
+
+Caveat: the corrected re-run is 5 epochs and a single seed. The MLP conclusion
+rests on a consistent 3.2-5.4pp gap across three ranks; the rank ordering is
+inside seed noise and is treated as undetermined.
+
+Logs: `model/experiments/sweep_lr_r{64,128,256}_mlp{0,1}.log` on the rbdgx
+boxes (shared `lambda_home` mount).
+
 ## 1. Sweep Setup
 
 ### Models
@@ -113,9 +160,17 @@ optimal rank is not at the extremes — r128 outperforms both r64 and
 r256. The r256 mlp=0 result (50.3%) underperforms r128 due to the
 learning rate (3e-4) being too aggressive for 4.6M trainable params.
 
+> **Superseded — see the Correction section above.** These runs used the
+> config default `lr: 1e-3`, not 3e-4, and at a matched LR the rank ordering
+> flattens out and the MLP comparison reverses.
+
 At mlp=1, the r128 config (51.2%) nearly matches the mlp=0 best, while
 r64 mlp=1 collapses to 42.2% — suggesting the MLP projector has
 potential for this backbone but needs careful LR tuning.
+
+> **Superseded — see the Correction section above.** With the LR matched,
+> mlp=1 loses at every rank; the "potential" reading came from comparing
+> against an mlp=0 run at a different LR.
 
 ## 3. Key Findings from the Sweep
 
@@ -144,6 +199,10 @@ training time leads to underfitting.
 larger hidden dim (2560) benefits from a wider bottleneck up to a point,
 but r256 overshoots (4.6M params at 3e-4 LR).
 
+> **Superseded for Reranker-4B — see the Correction section above.** At a
+> matched LR the ordering is r256 > r128 > r64 with a 1.1pp spread, i.e. flat
+> within seed noise rather than non-monotonic.
+
 ### Finding 3: Reranker pretraining consistently outperforms vanilla
 
 At every matched config, reranker-pretrained backbones beat their vanilla
@@ -160,6 +219,11 @@ trainable parameters — the effective update magnitude is too large. This
 was confirmed by the epoch-level data showing early peaking followed by
 degradation. A lower LR or LR warmup would likely recover the expected
 monotonic rank scaling for this model.
+
+> **Superseded — see the Correction section above.** The premise is wrong:
+> the sweep ran at `lr: 1e-3`, not 3e-4. Lowering the LR to 3e-4 does recover
+> 7-9pp, but it does not recover "monotonic rank scaling" — the corrected
+> ordering is r256 > r128 > r64 with a 1.1pp spread.
 
 ## 4. MLP + Per-Component LR Targeted Runs (Issue #93)
 
@@ -193,6 +257,11 @@ uniform LR) to +3.3pp. The key is that mlp_lr must be ~10x lower than
 heads_lr — the projector needs slow, stable adaptation rather than
 aggressive updates.
 
+> **Superseded — see the Correction section above.** The "+3.3pp" is an
+> artifact of the comparison baseline: this run used heads_lr=3e-4 while the
+> "52.1% mlp=0" reference used the config default 1e-3. Against an mlp=0 run at
+> 3e-4 (59.31%), this same mlp=1 run loses 4.2pp.
+
 The epoch-2 train loss spike is consistent across all Reranker model
 runs and appears to be inherent to the architecture.
 
@@ -216,16 +285,21 @@ dynamic.
 - 4B backbone (h=2560): MLP adds +3.3pp with mlp_lr=3e-5
 - 0.6B backbone (h=1024): MLP subtracts -2.3pp even with optimal mlp_lr
 
+> **Superseded for the 4B — see the Correction section above.** The 4B half of
+> this finding was the cross-LR artifact. The 0.6B half stands: the MLP hurts
+> that backbone at every LR tested.
+
 ## 5. Optimal Configurations for Round 2
 
 | Model | Rank | MLP | Heads LR | MLP LR | Acc@5ep |
 |-------|------|-----|----------|--------|---------|
-| **Reranker-4B** | r128 | mlp=1 | 3e-4 | 3e-5 | 55.4% |
+| **Reranker-4B** | r128 | mlp=0 | 3e-4 | — | 59.3% |
 | **Reranker-0.6B** | r64 | mlp=0 | 1e-3 | — | 50.3% |
 
-These are the final head configurations entering R2 training. The 4B
-model uses MLP with a 10x-reduced learning rate; the 0.6B model drops
-the MLP entirely.
+These are the final head configurations entering R2 training. Neither model
+uses the MLP projector; the 4B entry was corrected on 2026-10-14 (see the
+Correction section) and `model/configs/r2_reranker4b.yaml` was updated to
+match.
 
 ## 6. Lessons Learned
 
@@ -240,11 +314,19 @@ the MLP entirely.
    slower updates than the decision heads. A 10x ratio (heads_lr /
    mlp_lr) worked well for the 4B model.
 
+   > **Superseded — see the Correction section above.** A per-component LR
+   > does not rescue the 4B projector: at a matched heads_lr it still loses
+   > 4.2pp. Slower projector updates help, but not enough to beat dropping it.
+
 3. **MLP benefit is backbone-size-dependent.** The projector helps for
    large backbones (h=2560) where the representation is rich enough to
    benefit from nonlinear transformation, but hurts for smaller backbones
    (h=1024) where it adds noise. This is consistent with the general
    finding that model capacity must justify architectural complexity.
+
+   > **Superseded for the 4B — see the Correction section above.** With the
+   > LR matched, the projector hurts the 4B backbone too (−4.2pp). The
+   > "size-dependent" framing came from a cross-LR comparison.
 
 4. **Epoch-2 train loss spikes are consistent across all Reranker
    models.** Both 0.6B and 4B reranker runs show a characteristic dip
