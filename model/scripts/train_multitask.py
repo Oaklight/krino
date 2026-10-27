@@ -41,7 +41,7 @@ sys.path.insert(0, str(ROOT))
 from data.format import TypedQuestion
 from data.sampler import SamplerConfig
 from data.sources import collect_synthetic_sources, load_source_items
-from model.settings import format_settings, resolve_setting
+from model.settings import describe_effective_length, format_settings, resolve_setting
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info
@@ -276,27 +276,6 @@ def main() -> int:
         arch_label = "causal"
     print(f"Backbone: {model_name} ({arch_label})", flush=True)
     print(f"Config: {args.config}", flush=True)
-    # max_length=None means "auto-detect"; DecisionModel prints the effective
-    # value it settles on.  Logging the resolved setting too is what would
-    # have surfaced an explicit --max-length that later OOMed.
-    print(
-        format_settings(
-            [
-                ("lr", lr, lr_src),
-                ("noul_lr", noul_lr, noul_lr_src),
-                ("choice_lr", choice_lr, choice_lr_src),
-                ("score_lr", score_lr, score_lr_src),
-                ("mlp_lr", mlp_lr, mlp_lr_src),
-                ("mlp_layers", mlp_layers, mlp_layers_src),
-                ("max_length", max_length, max_length_src),
-                ("epochs", epochs, epochs_src),
-                ("rank", rank, rank_src),
-                ("accumulation_steps", accumulation_steps, accumulation_steps_src),
-                ("seed", seed, seed_src),
-            ]
-        ),
-        flush=True,
-    )
 
     # Auto-detect GPU config, then apply CLI overrides
     model_billions = estimate_model_billions(model_name)
@@ -392,6 +371,32 @@ def main() -> int:
     )
     print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
     print(f"Frozen:    {model.frozen_parameters():,} params", flush=True)
+
+    # Printed after the model exists so max_length is the value training will
+    # actually use: DecisionModel clamps the request to the GPU's safe length
+    # and the backbone's native maximum.  Recording the *requested* length
+    # here would have missed exactly the case that OOMed (research/05).
+    max_length_source = describe_effective_length(
+        max_length, model.max_length, max_length_src
+    )
+    print(
+        format_settings(
+            [
+                ("lr", lr, lr_src),
+                ("noul_lr", noul_lr, noul_lr_src),
+                ("choice_lr", choice_lr, choice_lr_src),
+                ("score_lr", score_lr, score_lr_src),
+                ("mlp_lr", mlp_lr, mlp_lr_src),
+                ("mlp_layers", mlp_layers, mlp_layers_src),
+                ("max_length", model.max_length, max_length_source),
+                ("epochs", epochs, epochs_src),
+                ("rank", rank, rank_src),
+                ("accumulation_steps", accumulation_steps, accumulation_steps_src),
+                ("seed", seed, seed_src),
+            ]
+        ),
+        flush=True,
+    )
 
     # Load heads if specified
     if args.load_heads:
