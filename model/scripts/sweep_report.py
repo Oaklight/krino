@@ -4,12 +4,12 @@
 Reads the per-epoch lines that ``train_multitask.py`` prints and renders them
 as a markdown table: one row per run, one column per eval epoch.  Runs are
 grouped by backbone so a 0.6B row is never read as a delta against an 8B one,
-and the first frozen ``last``-readout run in each group is used as the
-baseline for the Δ column.
+and the plain ``frozen_last`` run in each group anchors the Δ column.
 
-Logs are the only artefact the architecture sweep keeps — the runs are
-launched without ``--checkpoint-dir``, so there is no ``history.json`` to
-parse instead.
+``train_multitask.py`` writes ``history.json`` only after the last epoch, so a
+sweep that is still running has no structured artefact — the log is the only
+place the per-epoch numbers exist.  Parsing the log also works for runs whose
+checkpoint directory was not kept.
 
 Usage:
     python model/scripts/sweep_report.py model/experiments/arch_*.log
@@ -114,11 +114,21 @@ def _pct(value: float | None) -> str:
 
 
 def _baseline_for(runs: list[Run]) -> Run | None:
-    """The frozen last-readout run a group's deltas are measured against."""
-    for run in runs:
-        if run.readout == "last" and run.lora == "none":
+    """The frozen last-readout run a group's deltas are measured against.
+
+    Prefer the plain ``frozen_last`` run over a qualified variant such as
+    ``frozen_32k``: the extra knob would make every delta in the group
+    measure two changes at once.  The name is the only signal available —
+    the logs record readout and LoRA scope, but not the context length — so
+    when no run is plainly named, fall back to the shortest one.
+    """
+    candidates = [r for r in runs if r.readout == "last" and r.lora == "none"]
+    if not candidates:
+        return None
+    for run in candidates:
+        if "frozen_last" in run.name:
             return run
-    return None
+    return min(candidates, key=lambda r: (len(r.name), r.name))
 
 
 def _sort_key(run: Run) -> tuple:

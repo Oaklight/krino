@@ -110,6 +110,19 @@ class TestDeltas:
         row = [line for line in result.stdout.splitlines() if "arch_06b_frozen_last" in line]
         assert row and row[0].rstrip().endswith("— |")
 
+    def test_qualified_variant_is_not_the_baseline(self, tmp_path):
+        """`frozen_32k` adds a second knob, so `frozen_last` must anchor the deltas."""
+        plain = _write_log(tmp_path, "arch_4b_frozen_last", "0.4908", "0.4750")
+        variant = _write_log(tmp_path, "arch_4b_frozen_32k", "0.4917", "0.4749")
+        result = _run(str(variant), str(plain))
+        assert result.returncode == 0, result.stderr
+
+        lines = result.stdout.splitlines()
+        plain_row = next(l for l in lines if "arch_4b_frozen_last" in l)
+        variant_row = next(l for l in lines if "arch_4b_frozen_32k" in l)
+        assert plain_row.rstrip().endswith("— |")
+        assert "+0.09 pp" in variant_row
+
 
 class TestGrouping:
     def test_runs_grouped_by_backbone(self, tmp_path):
