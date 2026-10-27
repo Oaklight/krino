@@ -295,11 +295,12 @@ choice, and CE or soft CE for score. What is missing:
 
 - **RPS (ranked probability score)** for the ordered score primitive. CE treats levels as
   unordered classes; it cannot distinguish "very negative" from "neutral" when the truth
-  is "negative". RPS penalizes distance and is strictly proper for ordinal outcomes. The
-  current score loss is CE on a one-hot or interpolated target
-  (`model/training/supervised.py:22-39`, `:149`, `:316`), and score evaluation is argmax
-  accuracy (`:611-624`). `score_mae` exists in `model/evaluation/accuracy.py:22` but is
-  not called by the training loop.
+  is "negative". RPS penalizes distance and is strictly proper for ordinal outcomes.
+  *Implemented:* `rps_loss` in `model/training/losses.py`, selected with
+  `--score-loss rps` (default remains CE). What is still missing is RPS as an
+  *evaluation* metric — score evaluation is argmax accuracy (`:611-624`) — and
+  `score_mae` exists in `model/evaluation/accuracy.py:22` but is not called by the
+  training loop.
 - **Brier and MMCE in the multitask loop.** `brier_loss` and `mmce_loss` exist
   (`model/training/losses.py:18-48`, `:81-129`) and `CalibrationLossConfig` composes them
   (`model/training/calibration.py:170-193`), but that is a separate training loop
