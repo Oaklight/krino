@@ -5,6 +5,10 @@ Three calibration objectives (issue #23 Phase A):
   - MMCE: Maximum Mean Calibration Error (Kumar et al. 2018)
   - Focal loss: down-weights easy examples, improves calibration indirectly
 
+Plus one ordered loss for the score primitive:
+  - RPS: ranked probability score, compares cumulative distributions so a
+    near miss costs less than a far one (see research/08 §2.6)
+
 All functions accept pre-softmax logits and integer targets to match
 the interface in supervised.py's compute_loss.
 """
@@ -192,3 +196,60 @@ def focal_loss_binary(
     p_t = target * prob + (1.0 - target) * (1.0 - prob)
     focal_weight = (1.0 - p_t) ** gamma
     return (focal_weight * bce).mean()
+
+
+def rps_from_probs(
+    probs: torch.Tensor, target: torch.Tensor, normalize: bool = True
+) -> torch.Tensor:
+    """Ranked probability score from a probability tensor.
+
+    RPS compares cumulative distribution functions, so it respects the order
+    of the levels: predicting level 3 for a true level 4 is penalised less
+    than predicting level 0.  Cross-entropy sees the levels as unordered
+    classes and cannot express that, which is the gap this closes for the
+    score primitive.
+
+    Args:
+        probs: [batch, n_levels] predicted distribution (must sum to 1).
+        target: [batch, n_levels] target distribution, one-hot or
+            interpolated between adjacent levels.
+        normalize: Divide by ``n_levels - 1`` so the worst possible prediction
+            scores 1.0 whatever the level count.  This is not a per-level
+            guarantee: an off-by-one miss costs ``1 / (n_levels - 1)``, i.e.
+            0.5 on a 3-level question and 0.25 on a 5-level one.  Normalising
+            puts questions with different level counts on one scale, at the
+            cost of making a given value mean a different physical error.
+
+    Returns:
+        Scalar score.  Lower is better.
+
+    Raises:
+        ValueError: If fewer than two levels are given.
+    """
+    n_levels = probs.shape[-1]
+    if n_levels < 2:
+        raise ValueError(f"RPS needs at least 2 levels, got {n_levels}")
+    # The last CDF entry is 1 for both distributions and contributes nothing.
+    pred_cdf = probs.cumsum(dim=-1)[..., :-1]
+    true_cdf = target.cumsum(dim=-1)[..., :-1]
+    score = ((pred_cdf - true_cdf) ** 2).sum(dim=-1).mean()
+    return score / (n_levels - 1) if normalize else score
+
+
+def rps_loss(
+    logits: torch.Tensor, target: torch.Tensor, normalize: bool = True
+) -> torch.Tensor:
+    """Ranked probability score as a differentiable loss for ordered levels.
+
+    Args:
+        logits: [batch, n_levels] pre-softmax scores.
+        target: [batch, n_levels] target distribution, one-hot or
+            interpolated between adjacent levels.
+        normalize: Divide by ``n_levels - 1`` so the worst possible prediction
+            scores 1.0 whatever the level count.  See :func:`rps_from_probs`
+            for why that is not a per-level guarantee.
+
+    Returns:
+        Scalar loss.
+    """
+    return rps_from_probs(F.softmax(logits, dim=-1), target, normalize=normalize)

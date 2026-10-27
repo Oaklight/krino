@@ -170,6 +170,7 @@ def main() -> int:
     parser.add_argument("--lora-targets", type=str, default=None, help="Comma-separated linear-layer suffixes to adapt (default: q_proj,v_proj)")
     parser.add_argument("--lora-lr", type=float, default=None, help="Separate LR for LoRA adapters (default: the heads' lr)")
     parser.add_argument("--score-form", choices=["off", "single", "candidates"], default=None, help="Convert training items to score form; evaluation keeps the original types. 'candidates' expands each choice question into one score question per option, so the in-memory list grows by the option count (epoch_size still bounds the steps) (default: off)")
+    parser.add_argument("--score-loss", choices=["ce", "rps"], default=None, help="Training loss for score questions: 'ce' treats levels as unordered classes, 'rps' uses the ranked probability score, which respects the level order (default: ce)")
     parser.add_argument("--synthetic-ratio", type=float, default=None, help="Target proportion of synthetic data (0.0 to 1.0)")
 
     # GPU memory optimization flags
@@ -259,6 +260,9 @@ def main() -> int:
     lora_lr, lora_lr_src = resolve_setting(args.lora_lr, cfg, "lora_lr", None)
     score_form, score_form_src = resolve_setting(
         args.score_form, cfg, "score_form", "off"
+    )
+    score_loss, score_loss_src = resolve_setting(
+        args.score_loss, cfg, "score_loss", "ce"
     )
 
     checkpoint_dir = args.checkpoint_dir
@@ -414,6 +418,7 @@ def main() -> int:
                 ("lora_layers", lora_layers, lora_layers_src),
                 ("lora_lr", lora_lr, lora_lr_src),
                 ("score_form", score_form, score_form_src),
+                ("score_loss", score_loss, score_loss_src),
                 ("max_length", model.max_length, max_length_source),
                 ("epochs", epochs, epochs_src),
                 ("rank", rank, rank_src),
@@ -482,6 +487,7 @@ def main() -> int:
         score_lr=score_lr,
         lora_lr=lora_lr,
         uncertainty_weighting=uncertainty_weighting,
+        score_loss=score_loss,
     )
 
     # Print final eval summary

@@ -18,6 +18,8 @@ import torch.nn.functional as F
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 
+from .losses import rps_loss
+
 
 def _score_target(label: Any, n_levels: int, device: torch.device) -> torch.Tensor:
     """Build a score target distribution.
@@ -42,6 +44,45 @@ def _soft_cross_entropy(logits: torch.Tensor, target: torch.Tensor) -> torch.Ten
     """Cross-entropy against a soft target distribution."""
     log_probs = F.log_softmax(logits, dim=-1)
     return -(target * log_probs).sum(dim=-1).mean()
+
+
+def _score_loss_for(
+    logits: torch.Tensor,
+    label: Any,
+    n_levels: int,
+    score_loss: str = "ce",
+) -> torch.Tensor:
+    """Score loss for one item's logits, honouring the configured loss.
+
+    ``"ce"`` treats levels as unordered classes: an integer label becomes a
+    one-hot target, a fractional one an interpolated soft target.  ``"rps"``
+    uses the ranked probability score, which compares cumulative
+    distributions and so still penalises mass placed on the wrong side of the
+    gold level when the argmax happens to be right.
+
+    RPS is normalised to at most 1.0 for any number of levels while CE is
+    unbounded, so the two produce different loss magnitudes — relevant when
+    score losses are summed with other types' losses.  With the remaining
+    mass spread over the other levels, CE/RPS runs from ~2.8 (2 levels,
+    p_gold=0.5) to ~67 (5 levels, middle level, p_gold=0.9): on fixed weights
+    switching to RPS turns score supervision down as the model fits, not just
+    reshaping the objective.  Pair it with ``--score-lr`` or
+    ``--uncertainty-weighting``.
+
+    Raises:
+        ValueError: If ``score_loss`` is neither ``"ce"`` nor ``"rps"``.
+    """
+    if score_loss not in ("ce", "rps"):
+        raise ValueError(
+            f"unknown score_loss {score_loss!r}; expected 'ce' or 'rps'"
+        )
+    target = _score_target(label, n_levels, logits.device)
+    if score_loss == "rps":
+        return rps_loss(logits, target.unsqueeze(0))
+    label_f = float(label)
+    if label_f == int(label_f):
+        return F.cross_entropy(logits, target.argmax().unsqueeze(0))
+    return _soft_cross_entropy(logits, target.unsqueeze(0))
 
 
 def _teacher_loss(logits: torch.Tensor, teacher_probs: dict, keys: list[str]) -> torch.Tensor:
@@ -77,11 +118,13 @@ def compute_loss(
     model: nn.Module,
     item: Any,
     log_vars: dict[str, nn.Parameter] | None = None,
+    score_loss: str = "ce",
 ) -> torch.Tensor | None:
     """Compute loss for a single typed-question item.
 
     Supports three loss modes:
-    - Standard: one-hot CE (noul→BCE, choice→CE, score→CE or interpolated soft CE)
+    - Standard: one-hot CE (noul→BCE, choice→CE, score→CE or interpolated
+      soft CE, or RPS when ``score_loss="rps"``)
     - Teacher distillation: KL-divergence against item.teacher_probs when available
     - Float score labels: interpolated soft targets between adjacent levels
 
@@ -143,12 +186,7 @@ def compute_loss(
             level_keys = [str(i) for i in range(n_levels)]
             loss = _teacher_loss(logits, teacher_probs, level_keys)
         else:
-            label_f = float(label)
-            target = _score_target(label, n_levels, logits.device)
-            if label_f == int(label_f):
-                loss = F.cross_entropy(logits, target.argmax().unsqueeze(0))
-            else:
-                loss = _soft_cross_entropy(logits, target.unsqueeze(0))
+            loss = _score_loss_for(logits, label, n_levels, score_loss)
 
     if loss is not None and log_vars is not None and q_type in log_vars:
         loss = _apply_uncertainty_weight(loss, log_vars[q_type])
@@ -292,6 +330,7 @@ def _compute_choice_batch(
 def _compute_score_batch(
     model: nn.Module,
     items: list,
+    score_loss: str = "ce",
 ) -> list[torch.Tensor | None]:
     """Batch-compute score losses: per-item full-sequence context + batched levels."""
     losses: list[torch.Tensor | None] = []
@@ -310,12 +349,7 @@ def _compute_score_batch(
             level_keys = [str(j) for j in range(n_levels)]
             losses.append(_teacher_loss(logits, teacher_probs, level_keys))
         else:
-            label_f = float(item.label)
-            target = _score_target(item.label, n_levels, logits.device)
-            if label_f == int(label_f):
-                losses.append(F.cross_entropy(logits, target.argmax().unsqueeze(0)))
-            else:
-                losses.append(_soft_cross_entropy(logits, target.unsqueeze(0)))
+            losses.append(_score_loss_for(logits, item.label, n_levels, score_loss))
     return losses
 
 
@@ -327,6 +361,7 @@ def train_epoch(
     accumulation_steps: int = 1,
     batch_backbone: int = 0,
     log_vars: dict[str, nn.Parameter] | None = None,
+    score_loss: str = "ce",
 ) -> dict[str, float]:
     """Train for one epoch. Returns loss statistics.
 
@@ -337,6 +372,8 @@ def train_epoch(
             forward passes in chunks of this size. 0 = per-item (legacy).
         log_vars: per-type learnable log-variance parameters for uncertainty
             weighting (Kendall et al. 2018). None disables weighting.
+        score_loss: ``"ce"`` for cross-entropy over levels, or ``"rps"`` for
+            the ranked probability score, which respects the level order.
     """
     model.train()
     total_loss = 0.0
@@ -385,7 +422,9 @@ def train_epoch(
                         n_window_skipped += 1
 
             if score_items:
-                score_losses = _compute_score_batch(model, score_items)
+                score_losses = _compute_score_batch(
+                    model, score_items, score_loss=score_loss
+                )
                 for loss in score_losses:
                     if loss is not None:
                         if log_vars is not None and "score" in log_vars:
@@ -415,7 +454,7 @@ def train_epoch(
                 accum_count = 0
     else:
         for item in train_items:
-            loss = compute_loss(model, item, log_vars=log_vars)
+            loss = compute_loss(model, item, log_vars=log_vars, score_loss=score_loss)
             if loss is None:
                 n_skipped += 1
                 continue
@@ -739,6 +778,7 @@ def train_multitask(
     score_lr: float | None = None,
     lora_lr: float | None = None,
     uncertainty_weighting: bool = False,
+    score_loss: str = "ce",
 ) -> dict[str, Any]:
     """Multi-task training loop with type-balanced sampling and detailed eval.
 
@@ -763,6 +803,8 @@ def train_multitask(
             the same lr as the heads.
         uncertainty_weighting: If True, learn per-type homoscedastic uncertainty
             parameters (Kendall et al. 2018) to automatically balance losses.
+        score_loss: ``"ce"`` or ``"rps"`` — how score-question levels are
+            scored during training.  Evaluation is unaffected.
     """
     from data.sampler import MultitaskSampler
 
@@ -884,6 +926,7 @@ def train_multitask(
         train_stats = train_epoch(
             model, epoch_items, optimizer, max_grad_norm,
             accumulation_steps, batch_backbone, log_vars=log_vars,
+            score_loss=score_loss,
         )
         scheduler.step()
 
