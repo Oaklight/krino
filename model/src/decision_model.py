@@ -16,7 +16,16 @@ from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 from .backbone import is_hybrid_model
 from .gpu_config import GPUConfig, print_gpu_info
-from .heads import AttentionHead, ChoiceHead, MLPProjector, NoulHead, ScoreHead, UnifiedHead
+from .heads import (
+    AttentionHead,
+    ChoiceHead,
+    LayerMixer,
+    MLPProjector,
+    NoulHead,
+    ScoreHead,
+    UnifiedHead,
+)
+from .lora import inject_lora
 
 
 def _is_encoder_model(backbone: PreTrainedModel) -> bool:
@@ -31,6 +40,13 @@ class DecisionModel(nn.Module):
     backbones. Pooling strategy is detected automatically:
       - Causal: last-token pooling (last token sees full sequence)
       - Encoder: mean pooling (all tokens see all tokens)
+
+    Three ways to attach the heads to the backbone, usable together:
+      - ``readout``: which backbone layers feed the heads (see ``LayerMixer``).
+      - ``lora_layers``: inject LoRA adapters into the backbone, either into
+        every block or only the last N, so the backbone representation can
+        adapt while the pretrained weights stay frozen.
+      - ``mlp_layers``: an MLP projector between backbone and heads.
     """
 
     def __init__(
@@ -48,6 +64,13 @@ class DecisionModel(nn.Module):
         gpu_config: GPUConfig | None = None,
         shared_attention: bool = False,
         unified_head: bool = False,
+        readout: str = "last",
+        readout_n: int = 4,
+        lora_layers: int | None = None,
+        lora_rank: int = 16,
+        lora_alpha: int = 32,
+        lora_dropout: float = 0.0,
+        lora_targets: tuple[str, ...] = ("q_proj", "v_proj"),
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -73,13 +96,32 @@ class DecisionModel(nn.Module):
             )
             self.max_length = min(gpu_config.max_length, backbone_max)
 
-        # Enable gradient checkpointing on backbone if configured
+        # Enable gradient checkpointing on backbone if configured.  With LoRA
+        # the graph starts inside the blocks rather than at the input, so the
+        # reentrant implementation (the default) would produce no gradients.
         if gpu_config.gradient_checkpointing:
             if hasattr(backbone, "gradient_checkpointing_enable"):
-                backbone.gradient_checkpointing_enable()
+                gc_kwargs: dict = {}
+                if lora_layers is not None:
+                    gc_kwargs["gradient_checkpointing_kwargs"] = {"use_reentrant": False}
+                backbone.gradient_checkpointing_enable(**gc_kwargs)
 
         print_gpu_info(gpu_config)
         print(f"  max_length={self.max_length} (effective)", flush=True)
+
+        n_hidden = getattr(backbone.config, "num_hidden_layers", 0)
+        if readout != "last" and n_hidden == 0:
+            raise ValueError(
+                f"readout={readout!r} needs backbone.config.num_hidden_layers, "
+                "which this backbone does not define"
+            )
+        self.readout = LayerMixer(n_hidden + 1, readout, readout_n)
+        if readout != "last":
+            detail = f" (n={readout_n})" if readout == "mean_last_n" else ""
+            print(
+                f"  Readout: {readout}{detail} over {n_hidden + 1} hidden states",
+                flush=True,
+            )
 
         if mlp_layers > 0:
             self.projector = MLPProjector(
@@ -136,7 +178,36 @@ class DecisionModel(nn.Module):
         for param in self.backbone.parameters():
             param.requires_grad_(False)
 
+        # Inject LoRA after the freeze pass — the adapters are the one part
+        # of the backbone that must stay trainable.  A negative value means
+        # "every block"; a positive one means "the last N blocks".
+        self.lora_layers = lora_layers
+        if lora_layers is not None:
+            adapted = inject_lora(
+                self.backbone,
+                targets=lora_targets,
+                rank=lora_rank,
+                alpha=lora_alpha,
+                dropout=lora_dropout,
+                last_n_layers=lora_layers if lora_layers > 0 else None,
+            )
+            n_lora = sum(
+                p.numel() for p in self.backbone.parameters() if p.requires_grad
+            )
+            scope = f"last {lora_layers} blocks" if lora_layers > 0 else "all blocks"
+            print(
+                f"  LoRA: {adapted} layers ({scope}, r={lora_rank}, "
+                f"alpha={lora_alpha}, targets={','.join(lora_targets)}), "
+                f"{n_lora:,} trainable params in backbone",
+                flush=True,
+            )
+
+        self.backbone_requires_grad = any(
+            p.requires_grad for p in self.backbone.parameters()
+        )
+
         device = next(self.backbone.parameters()).device
+        self.readout = self.readout.to(device)
         self.projector = self.projector.to(device).float()
         if self.noul_head is not None:
             self.noul_head = self.noul_head.to(device).float()
@@ -166,7 +237,11 @@ class DecisionModel(nn.Module):
             self.gpu_config.bf16_compute
             and self.device.type == "cuda"
         )
-        with torch.no_grad():
+        # LoRA adapters live inside the backbone, so their graph needs grad
+        # enabled even though every pretrained weight stays frozen.  An
+        # enclosing no_grad (evaluation) still wins.
+        needs_grad = self.backbone_requires_grad and torch.is_grad_enabled()
+        with torch.enable_grad() if needs_grad else torch.no_grad():
             if use_autocast:
                 with torch.autocast("cuda", dtype=torch.bfloat16):
                     return self.backbone(**fwd_kwargs)
@@ -192,7 +267,7 @@ class DecisionModel(nn.Module):
             padding=True,
         ).to(self.device)
         outputs = self._backbone_forward(inputs)
-        hidden = outputs.hidden_states[-1]
+        hidden = self.readout(outputs.hidden_states)
         if self.is_encoder:
             mask = inputs["attention_mask"].unsqueeze(-1).float()
             pooled = (hidden * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
@@ -210,7 +285,7 @@ class DecisionModel(nn.Module):
             text, return_tensors="pt", truncation=True, max_length=max_length
         ).to(self.device)
         outputs = self._backbone_forward(inputs)
-        hidden = outputs.hidden_states[-1]
+        hidden = self.readout(outputs.hidden_states)
         return self.projector(hidden.float())
 
     def forward_noul(self, state: str, instructions: str) -> torch.Tensor:
@@ -291,10 +366,20 @@ class DecisionModel(nn.Module):
         raise ValueError(f"Unknown question type: {q_type}")
 
     def save_heads(self, path: Path | str) -> None:
-        """Save only head parameters to a checkpoint."""
+        """Save the trainable parameters to a checkpoint.
+
+        Frozen backbone weights are excluded.  LoRA adapters are included even
+        though their names sit under ``backbone.`` — without them a LoRA
+        checkpoint could not be reloaded.
+        """
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        head_state = {k: v for k, v in self.state_dict().items() if "backbone" not in k}
+        trainable = {name for name, p in self.named_parameters() if p.requires_grad}
+        head_state = {
+            k: v
+            for k, v in self.state_dict().items()
+            if "backbone" not in k or k in trainable
+        }
         torch.save(head_state, path)
 
     def load_heads(self, path: Path | str) -> None:

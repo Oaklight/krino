@@ -159,6 +159,14 @@ def main() -> int:
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
     parser.add_argument("--shared-attention", action="store_true", default=None, help="Share AttentionHead weights between choice and score heads")
     parser.add_argument("--unified-head", action="store_true", default=None, help="Use single unified attention head for all types (noul via true/false options)")
+    parser.add_argument("--readout", choices=["last", "mean_last_n", "weighted"], default=None, help="Which backbone layers feed the heads (default: last)")
+    parser.add_argument("--readout-n", type=int, default=None, help="Layer window for --readout mean_last_n (default: 4)")
+    parser.add_argument("--lora-layers", type=int, default=None, help="LoRA scope: -1 = all blocks, N = last N blocks, 0 = off (default: off)")
+    parser.add_argument("--lora-rank", type=int, default=None, help="LoRA bottleneck rank (default: 16)")
+    parser.add_argument("--lora-alpha", type=int, default=None, help="LoRA scaling numerator (default: 32)")
+    parser.add_argument("--lora-dropout", type=float, default=None, help="Dropout on the LoRA input (default: 0.0)")
+    parser.add_argument("--lora-targets", type=str, default=None, help="Comma-separated linear-layer suffixes to adapt (default: q_proj,v_proj)")
+    parser.add_argument("--lora-lr", type=float, default=None, help="Separate LR for LoRA adapters (default: the heads' lr)")
     parser.add_argument("--synthetic-ratio", type=float, default=None, help="Target proportion of synthetic data (0.0 to 1.0)")
 
     # GPU memory optimization flags
@@ -221,6 +229,27 @@ def main() -> int:
     uncertainty_weighting = args.uncertainty_weighting if args.uncertainty_weighting is not None else cfg.get("uncertainty_weighting", False)
     shared_attention = args.shared_attention if args.shared_attention is not None else cfg.get("shared_attention", False)
     unified_head_flag = args.unified_head if args.unified_head is not None else cfg.get("unified_head", False)
+    readout = args.readout if args.readout is not None else cfg.get("readout", "last")
+    readout_n = args.readout_n if args.readout_n is not None else cfg.get("readout_n", 4)
+    lora_layers = args.lora_layers if args.lora_layers is not None else cfg.get("lora_layers")
+    if lora_layers == 0:
+        lora_layers = None
+    lora_rank = args.lora_rank if args.lora_rank is not None else cfg.get("lora_rank", 16)
+    lora_alpha = args.lora_alpha if args.lora_alpha is not None else cfg.get("lora_alpha", 32)
+    lora_dropout = (
+        args.lora_dropout if args.lora_dropout is not None else cfg.get("lora_dropout", 0.0)
+    )
+    lora_targets_cfg = (
+        args.lora_targets if args.lora_targets is not None else cfg.get("lora_targets", "q_proj,v_proj")
+    )
+    lora_targets = tuple(
+        part.strip()
+        for part in (
+            lora_targets_cfg.split(",") if isinstance(lora_targets_cfg, str) else lora_targets_cfg
+        )
+        if part.strip()
+    )
+    lora_lr = args.lora_lr if args.lora_lr is not None else cfg.get("lora_lr")
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -329,6 +358,13 @@ def main() -> int:
         gpu_config=gpu_config,
         shared_attention=shared_attention,
         unified_head=unified_head_flag,
+        readout=readout,
+        readout_n=readout_n,
+        lora_layers=lora_layers,
+        lora_rank=lora_rank,
+        lora_alpha=lora_alpha,
+        lora_dropout=lora_dropout,
+        lora_targets=lora_targets,
     )
     print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
     print(f"Frozen:    {model.frozen_parameters():,} params", flush=True)
@@ -389,6 +425,7 @@ def main() -> int:
         noul_lr=noul_lr,
         choice_lr=choice_lr,
         score_lr=score_lr,
+        lora_lr=lora_lr,
         uncertainty_weighting=uncertainty_weighting,
     )
 

@@ -737,6 +737,7 @@ def train_multitask(
     noul_lr: float | None = None,
     choice_lr: float | None = None,
     score_lr: float | None = None,
+    lora_lr: float | None = None,
     uncertainty_weighting: bool = False,
 ) -> dict[str, Any]:
     """Multi-task training loop with type-balanced sampling and detailed eval.
@@ -758,6 +759,8 @@ def train_multitask(
         noul_lr: Separate learning rate for noul head. None uses base lr.
         choice_lr: Separate learning rate for choice head. None uses base lr.
         score_lr: Separate learning rate for score head. None uses base lr.
+        lora_lr: Separate learning rate for LoRA adapters. None gives them
+            the same lr as the heads.
         uncertainty_weighting: If True, learn per-type homoscedastic uncertainty
             parameters (Kendall et al. 2018) to automatically balance losses.
     """
@@ -766,9 +769,16 @@ def train_multitask(
     device = next(model.parameters()).device
     use_per_type_lr = any(x is not None for x in [noul_lr, choice_lr, score_lr])
     has_mlp = hasattr(model, "projector") and not isinstance(model.projector, nn.Identity)
+    # LoRA adapters live inside the backbone, so the catch-all group below
+    # would otherwise hand them the heads' LR.  They usually need their own.
+    lora_ids = {
+        id(p)
+        for name, p in model.named_parameters()
+        if "lora_" in name and p.requires_grad
+    }
 
     # Build optimizer param groups
-    if use_per_type_lr or (mlp_lr is not None and has_mlp):
+    if use_per_type_lr or (mlp_lr is not None and has_mlp) or (lora_lr is not None and lora_ids):
         # Collect param id sets for each component.
         # When unified_head is enabled, noul_head is None and choice_head /
         # score_head alias the same UnifiedHead.  Deduplicate via id().
@@ -806,8 +816,20 @@ def train_multitask(
         if has_mlp:
             param_groups.append({"params": projector_params, "lr": mlp_lr or lr})
 
+        if lora_lr is not None and lora_ids:
+            param_groups.append(
+                {
+                    "params": [p for p in model.parameters() if id(p) in lora_ids],
+                    "lr": lora_lr,
+                }
+            )
+
         # Remaining trainable params (if any)
-        remaining = [p for p in model.parameters() if p.requires_grad and id(p) not in assigned_ids]
+        remaining = [
+            p
+            for p in model.parameters()
+            if p.requires_grad and id(p) not in assigned_ids and id(p) not in lora_ids
+        ]
         if remaining:
             param_groups.append({"params": remaining, "lr": lr})
 
@@ -821,6 +843,8 @@ def train_multitask(
             )
         if mlp_lr is not None and has_mlp:
             print(f"  Per-component LR: mlp={mlp_lr}", flush=True)
+        if lora_lr is not None and lora_ids:
+            print(f"  Per-component LR: lora={lora_lr}", flush=True)
     else:
         trainable = [p for p in model.parameters() if p.requires_grad]
         optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)

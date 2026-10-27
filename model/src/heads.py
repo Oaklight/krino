@@ -8,6 +8,10 @@ Three type-specific heads, one per primitive:
 Plus one unified head that handles all three types via cross-attention:
   UnifiedHead: single AttentionHead for noul/choice/score
 
+LayerMixer sits between the backbone and the heads and chooses which
+backbone layers feed them (final layer, a mean of the last few, or a
+learned softmax mixture over all of them).
+
 All heads take hidden states from a frozen backbone and produce
 probability distributions over the answer space.
 """
@@ -49,6 +53,56 @@ class MLPProjector(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.net(x)
+
+
+class LayerMixer(nn.Module):
+    """Combine hidden states from several backbone layers into one tensor.
+
+    ``last`` returns the final layer unchanged — the behaviour of every run
+    before this module existed.  ``mean_last_n`` averages the last ``n``
+    layers.  ``weighted`` learns a softmax mixture over every layer; it is
+    initialised to put almost all weight on the final layer, so training
+    starts from the representation the frozen baseline used and moves away
+    from it only where that helps.
+
+    Args:
+        n_layers: Number of entries in the backbone's ``hidden_states``
+            tuple, i.e. transformer layers plus the embedding output.
+        mode: ``"last"``, ``"mean_last_n"`` or ``"weighted"``.
+        n: Window size for ``mean_last_n``.  Ignored by the other modes.
+
+    Raises:
+        ValueError: If ``mode`` is unknown or ``n`` is out of range.
+    """
+
+    MODES = ("last", "mean_last_n", "weighted")
+
+    def __init__(self, n_layers: int, mode: str = "last", n: int = 4) -> None:
+        super().__init__()
+        if mode not in self.MODES:
+            raise ValueError(f"Unknown readout mode {mode!r}; expected one of {self.MODES}")
+        if mode == "mean_last_n" and not 1 <= n <= n_layers:
+            raise ValueError(f"readout n={n} outside [1, {n_layers}]")
+        self.mode = mode
+        self.n = n
+        self.n_layers = n_layers
+        if mode == "weighted":
+            logits = torch.zeros(n_layers)
+            logits[-1] = 4.0
+            self.layer_logits = nn.Parameter(logits)
+
+    def forward(self, hidden_states: tuple[torch.Tensor, ...]) -> torch.Tensor:
+        """Returns the mixed hidden states, shaped like one layer's output."""
+        if self.mode == "last":
+            return hidden_states[-1]
+        if self.mode == "mean_last_n":
+            return torch.stack(hidden_states[-self.n :]).mean(0)
+
+        weights = torch.softmax(self.layer_logits, dim=0).to(hidden_states[0].dtype)
+        out = hidden_states[0] * weights[0]
+        for weight, hidden in zip(weights[1:], hidden_states[1:]):
+            out = out + weight * hidden
+        return out
 
 
 class NoulHead(nn.Module):
