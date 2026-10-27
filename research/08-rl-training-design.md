@@ -6,8 +6,9 @@
 **Related:** `research/04-model-replication.md` (Step 3 Phase B), `research/03-open-source-ecosystem.md` (RLCD landscape), `research/02-architecture-analysis.md` (RLCD training gap).
 
 Line numbers refer to the working tree at the time of writing (2026-10-27). The design
-assumes the current frozen-backbone model; the places where a future LoRA adapter
-would change the answer are called out explicitly.
+assumes the frozen-backbone model. LoRA is not hypothetical — it ships in
+`model/src/lora.py` and `--lora-layers` (#127) — and the places where an adapter changes
+the answer, chiefly the reference policy in Section 4.2, are called out explicitly.
 
 ---
 
@@ -63,17 +64,17 @@ risk metrics, and an honest gap list.
 | choice | `criteria` keys | 2–255 | unordered | `AttentionHead` → softmax |
 | score | `criteria` levels | 2–10 | ordered | `AttentionHead` → softmax → expected value |
 
-The forward paths are `DecisionModel.forward_noul` (`model/src/decision_model.py:216`),
-`forward_choice` (`:234`), and `forward_score` (`:244`). Choice and score both call
+The forward paths are `DecisionModel.forward_noul` (`model/src/decision_model.py:305`),
+`forward_choice` (`:323`), and `forward_score` (`:333`). Choice and score both call
 `AttentionHead.forward`, which computes one logit per option
-(`model/src/heads.py:121-156`; attention softmax at `:148`, option logits at `:152`).
+(`model/src/heads.py:186-221`; attention softmax at `:213`, option logits at `:217`).
 `ScoreHead.predict` converts the level distribution to an expected value
-(`model/src/heads.py:251-263`).
+(`model/src/heads.py:316-328`).
 
 The `UnifiedHead` already treats all three primitives as the same operation: score a set
-of options and softmax (`model/src/heads.py:266-399`). Noul becomes two options,
+of options and softmax (`model/src/heads.py:331-464`). Noul becomes two options,
 `"false"` and `"true"`, and the noul logit is their difference
-(`model/src/heads.py:317-340`; `model/src/decision_model.py:216-232`).
+(`model/src/heads.py:382-405`; `model/src/decision_model.py:305-321`).
 
 This matters for the user's "score is the fundamental primitive" direction. At the
 distribution level the claim is exact: every primitive is a categorical over an
@@ -92,10 +93,10 @@ pass plus K option encodings; that is the efficiency advantage over autoregressi
 Any RL formulation that samples text tokens would reintroduce autoregressive decoding and
 destroy that advantage. The action space must stay at the typed head.
 
-The backbone is frozen in the current code (`model/src/decision_model.py:136-137`) and its
-forward pass runs under `torch.no_grad()` (`:169`). Only the heads receive gradients.
-A future LoRA adapter would change the reference-policy design (Section 4.2), not the
-bandit formulation.
+The backbone is frozen by default (`model/src/decision_model.py:192-193`) and its forward
+pass runs under `torch.no_grad()` unless an adapter is present, which switches it to
+`enable_grad` (`:258`). LoRA adapters change the reference-policy design (Section 4.2),
+not the bandit formulation.
 
 ### 1.3 Efficiency budget
 
@@ -150,7 +151,7 @@ This is a one-step objective. There is no discount factor, no value bootstrappin
 need for PPO-style ratio clipping. A baseline is still useful for variance reduction, but
 because K is small the optimal baseline can be computed exactly.
 
-### 2.2 Exact expected policy gradient (recommended default)
+### 2.2 Exact expected policy gradient (recommended default, for rewards that do not read the policy)
 
 Because `A(s)` is enumerable, differentiate the expectation directly:
 
@@ -159,10 +160,26 @@ Because `A(s)` is enumerable, differentiate the expectation directly:
       = E_{s~D} [ Σ_a π_θ(a|s) r(s,a) ∇log π_θ(a|s) ].
 ```
 
-The second line is the REINFORCE gradient with the expectation over actions computed
-exactly instead of sampled. Cost: one forward pass and K reward lookups per item. For
-K ≤ 255 this is negligible. Variance from action sampling is zero; the only variance is
-from the state minibatch.
+**This exchange is valid only when the reward does not depend on θ.** The general form
+makes the dropped term explicit:
+
+```
+∇J = E_s [ Σ_a π_θ(a|s) ∇r(s,a) ]  +  E_s [ Σ_a r(s,a) ∇π_θ(a|s) ].
+```
+
+The first term vanishes for a reward that is a lookup -- a gold label, a teacher
+probability, a fixed cost matrix -- which is the case this section covers, and it is why
+the estimator costs one forward pass. It does **not** vanish for a reward computed from
+the policy's own output. A log score `log π_θ(y|s)`, or a Brier score built from the same
+logits, has `∇r ≠ 0`, and that term dominates rather than being a correction: measured on
+a 4-way softmax with `r = log π(y)`, ‖∇J‖ is 6.4e-08 with the reward detached and 0.849
+with it attached.
+
+So a proper scoring rule belongs in the **loss**, not in this objective as a reward. With
+`r = log π_θ(y|s)` and `J = Σ_a π r`, the objective is `J = π(y) log π(y)`, which is
+stationary at `π(y) = e^-1` and decreases either side of it down to `-∞`; it is not
+cross-entropy. Negating it is exactly cross-entropy. Anything of that shape should enter
+as `-J` in the supervised loss, where the derivative is taken through `π` by construction.
 
 For a 0/1 correctness reward `r(s,a) = 1[a = y]`, the objective collapses to
 `J(θ) = E_s π_θ(y|s)`. Then
@@ -178,7 +195,8 @@ The exact estimator is also the most efficient option for a "high performant" mo
 - one backbone pass per item, unchanged from inference;
 - no G-sample rollout;
 - no learned critic (a critic would add parameters and, if kept, serving cost);
-- the reward is a lookup (label or teacher probability), not a model call.
+- the reward is a lookup (label or teacher probability), not a model call -- and, per
+  above, not a function of the logits either.
 
 ### 2.3 REINFORCE with sampling
 
@@ -460,26 +478,26 @@ L_KL = KL(π_θ(·|s) || π_ref(·|s)).
 
 The reference anchors the distribution, prevents drift, and preserves the SFT model's
 calibration. It also limits interference between question types when heads are shared
-(`shared_attention` / `unified_head`, `model/src/decision_model.py:103-128`).
+(`shared_attention` / `unified_head`, `model/src/decision_model.py:159-184`).
 
 The repository has no reference-model lifecycle. `save_heads` writes only the non-backbone
-state dict (`model/src/decision_model.py:293-298`), `load_heads` loads it into the same
-model (`:300-303`), and the trainer saves `best_heads.pt` plus optimizer state
+state dict (`model/src/decision_model.py:382-397`), `load_heads` loads it into the same
+model (`:399-402`), and the trainer saves `best_heads.pt` plus optimizer state
 (`model/training/supervised.py:906-920`). There is no second model, no frozen copy, and no
 serialized model config. To reconstruct a reference you need the backbone name and the
 constructor arguments, which are not saved with the checkpoint.
 
 With the current frozen backbone, the cheap implementation is a second `DecisionModel`
 that **shares the same backbone object** and loads the SFT heads. The backbone is already
-frozen (`model/src/decision_model.py:136-137`), so sharing is safe; only the head forward
+frozen (`model/src/decision_model.py:192-193`), so sharing is safe; only the head forward
 passes differ. Even cheaper: compute the backbone hidden states once and apply both the
 policy head and the reference head. The current `forward_*` API does not expose hidden
 states, so this needs a small refactor (Section 6.2).
 
-With a future LoRA adapter, sharing the backbone is not enough: the reference must use the
-base weights with the adapter disabled. That requires an enable/disable switch on the
-adapter (or a separate base-weight copy). This is a design constraint for the LoRA work,
-not something the current code supports.
+With a LoRA adapter, sharing the backbone is not enough: the reference must use the base
+weights with the adapter disabled. That requires an enable/disable switch on the adapter
+(or a separate base-weight copy), which `model/src/lora.py` does not provide yet — the
+adapters are always active once injected.
 
 ### 4.3 Entropy regularization
 
@@ -519,7 +537,7 @@ diagnostic and a cheap baseline, not a substitute for a calibration objective.
 - **Teacher-bias imitation.** A teacher-KL reward teaches Jev's compression and position
   bias, not truth.
 - **Hidden by the serving API.** `predict` clamps noul to `[0.01, 0.99]` and rounds all
-  probabilities to two decimals (`model/src/decision_model.py:262`, `:270`, `:281`).
+  probabilities to two decimals (`model/src/decision_model.py:351`, `:359`, `:370`).
   A collapsed model can look bounded at the API while its raw logits are extreme. Reward
   and diagnostics must use raw logits, not `predict`.
 
@@ -925,10 +943,11 @@ sampling:
 - **`model/training/supervised.py`**
   - Factor the typed dispatch into `forward_typed` and use it in `compute_loss`,
     `_compute_*_batch`, and `_eval_item`.
-  - Add calibration metrics to `eval_epoch_detailed` (`:630-719`): ECE, Brier, RPS,
-    entropy, max-probability.
-  - Add a `loss:` config block to `train_multitask` (`:721-931`), or a `loss_cfg` argument
-    that mirrors `CalibrationLossConfig`.
+  - Add calibration metrics to `eval_epoch_detailed`
+    (`model/training/supervised.py:630-719`): ECE, Brier, RPS, entropy, max-probability.
+  - Add a `loss:` config block to `train_multitask`
+    (`model/training/supervised.py:721-931`), or a `loss_cfg` argument that mirrors
+    `CalibrationLossConfig`.
 - **`model/scripts/train_multitask.py`**
   - Add `--loss-config` / `--kl-coef` / `--brier-weight` flags if the calibration losses
     are wired into the multitask trainer.
@@ -1002,7 +1021,7 @@ All tests must run offline, following the existing style
 | Missing teacher keys | `_teacher_loss` fills 0.0 and renormalizes (`model/training/supervised.py:49-50`) | key-coverage count; target-sum check | raise on missing keys; log coverage |
 | Non-stationary teacher | Jev model version changes | reward mean/variance per source; version hash | pin the model version; cache responses |
 | Numerical instability | bf16 logits, extreme rewards, log(0) | gradient norm, reward min/max, NaN count | clip rewards, use `log_softmax`, skip non-finite items |
-| Shared-head interference | choice and score share attention (`model/src/decision_model.py:103-128`) | per-type accuracy/ECE before and after RL | evaluate all types every epoch; per-type KL if needed |
+| Shared-head interference | choice and score share attention (`model/src/decision_model.py:159-184`) | per-type accuracy/ECE before and after RL | evaluate all types every epoch; per-type KL if needed |
 | Overfitting the RL state distribution | sampling only from the training pool | held-out source accuracy | hold out at least one benchmark source from RL |
 | Compute blow-up | G samples × K options × external reward calls | items/s, reward calls/s, GPU memory | exact expectation for local rewards; cache reference logits |
 
@@ -1018,9 +1037,9 @@ What the repository does **not** have today, and what it would take.
 
 | # | Gap | Why it blocks RL | Evidence | Fix |
 |---|---|---|---|---|
-| 1 | No action sampler | cannot form a policy-gradient estimate | `forward_*` return logits only (`model/src/decision_model.py:234-252`); no `torch.multinomial`/`Categorical` in `model/` | `sample_actions` |
-| 2 | No raw-probability API | rewards computed from `predict` see rounded/clamped values | `predict` clamps noul to `[0.01,0.99]` and rounds (`model/src/decision_model.py:262`, `:270`, `:281`) | `predict_probs` |
-| 3 | No reference policy | KL-to-SFT is impossible | `save_heads`/`load_heads` handle one model (`model/src/decision_model.py:293-303`); no frozen copy | `ReferencePolicy` |
+| 1 | No action sampler | cannot form a policy-gradient estimate | `forward_*` return logits only (`model/src/decision_model.py:323-341`); no `torch.multinomial`/`Categorical` in `model/` | `sample_actions` |
+| 2 | No raw-probability API | rewards computed from `predict` see rounded/clamped values | `predict` clamps noul to `[0.01,0.99]` and rounds (`model/src/decision_model.py:351`, `:359`, `:370`) | `predict_probs` |
+| 3 | No reference policy | KL-to-SFT is impossible | `save_heads`/`load_heads` handle one model (`model/src/decision_model.py:382-402`); no frozen copy | `ReferencePolicy` |
 | 4 | No model-config serialization | a reference cannot be reconstructed reliably | trainer saves `best_heads.pt` + optimizer only (`model/training/supervised.py:906-920`) | `save_checkpoint` with config |
 | 5 | No reward buffer or per-item logging | cannot diagnose hacking or credit assignment | `train_epoch` accumulates losses only (`model/training/supervised.py:322-454`) | JSONL reward log |
 | 6 | No KL-to-reference or entropy in the loop | calibration cannot be preserved | `losses.py` has Brier/MMCE/focal; `_teacher_loss` is KL to teacher (`model/training/supervised.py:47-52`) | add both |
@@ -1033,7 +1052,7 @@ What the repository does **not** have today, and what it would take.
 | 13 | Single teacher, no ensemble | reward inherits one teacher's bias | `_select_teacher_probs` priority (`data/pipeline.py:1062-1083`) | weighted multi-teacher KL |
 | 14 | No cost matrix or decision utility | no reward that is not already a label | `TypedQuestion` fields (`data/format.py:31-39`) | add a cost field |
 | 15 | No unlabeled verifiable outcomes or environment | online RL has nothing to explore against | no such code | new data source |
-| 16 | No temperature parameter in the forward path | exploration and calibration scaling are fixed at T=1 | softmax calls in `model/src/heads.py:148`, `:259`, `:395` | add `temperature` argument |
+| 16 | No temperature parameter in the forward path | exploration and calibration scaling are fixed at T=1 | softmax calls in `model/src/heads.py:213`, `:324`, `:460` | add `temperature` argument |
 | 17 | Choice/score contexts are encoded per item | RL throughput is limited | `_compute_choice_batch` / `_compute_score_batch` loop per item (`model/training/supervised.py:263-320`); only the noul path batches (`:219-237`) | batch contexts |
 | 18 | No RL tests | regressions would be invisible | `tests/` has no RL tests | add the tests in Section 6.4 |
 | 19 | No Jev API budget/rate control | external reward could be unbounded | `JevClient` (`probing/scripts/jev_client.py:58`) has no budget wrapper | add cache + budget |
