@@ -224,11 +224,11 @@ def main() -> int:
     mlp_layers, mlp_layers_src = resolve_setting(args.mlp_layers, cfg, "mlp_layers", 0)
     mlp_dim = cfg.get("mlp_dim", None)
     noul_rank = args.noul_rank if args.noul_rank is not None else cfg.get("noul_rank", None)
-    max_length = args.max_length if args.max_length is not None else cfg.get("max_length", None)
+    max_length, max_length_src = resolve_setting(args.max_length, cfg, "max_length", None)
     mlp_lr, mlp_lr_src = resolve_setting(args.mlp_lr, cfg, "mlp_lr", None)
-    noul_lr = args.noul_lr if args.noul_lr is not None else cfg.get("noul_lr", None)
-    choice_lr = args.choice_lr if args.choice_lr is not None else cfg.get("choice_lr", None)
-    score_lr = args.score_lr if args.score_lr is not None else cfg.get("score_lr", None)
+    noul_lr, noul_lr_src = resolve_setting(args.noul_lr, cfg, "noul_lr", None)
+    choice_lr, choice_lr_src = resolve_setting(args.choice_lr, cfg, "choice_lr", None)
+    score_lr, score_lr_src = resolve_setting(args.score_lr, cfg, "score_lr", None)
     uncertainty_weighting = args.uncertainty_weighting if args.uncertainty_weighting is not None else cfg.get("uncertainty_weighting", False)
     shared_attention = args.shared_attention if args.shared_attention is not None else cfg.get("shared_attention", False)
     unified_head_flag = args.unified_head if args.unified_head is not None else cfg.get("unified_head", False)
@@ -276,14 +276,21 @@ def main() -> int:
         arch_label = "causal"
     print(f"Backbone: {model_name} ({arch_label})", flush=True)
     print(f"Config: {args.config}", flush=True)
+    # max_length=None means "auto-detect"; DecisionModel prints the effective
+    # value it settles on.  Logging the resolved setting too is what would
+    # have surfaced an explicit --max-length that later OOMed.
     print(
         format_settings(
             [
                 ("lr", lr, lr_src),
+                ("noul_lr", noul_lr, noul_lr_src),
+                ("choice_lr", choice_lr, choice_lr_src),
+                ("score_lr", score_lr, score_lr_src),
+                ("mlp_lr", mlp_lr, mlp_lr_src),
+                ("mlp_layers", mlp_layers, mlp_layers_src),
+                ("max_length", max_length, max_length_src),
                 ("epochs", epochs, epochs_src),
                 ("rank", rank, rank_src),
-                ("mlp_layers", mlp_layers, mlp_layers_src),
-                ("mlp_lr", mlp_lr, mlp_lr_src),
                 ("accumulation_steps", accumulation_steps, accumulation_steps_src),
                 ("seed", seed, seed_src),
             ]
