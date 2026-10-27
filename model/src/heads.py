@@ -18,10 +18,15 @@ probability distributions over the answer space.
 
 from __future__ import annotations
 
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+#: Share of the readout weight ``LayerMixer`` puts on the final layer at
+#: initialisation, independent of how many layers the backbone has.
+_INIT_LAST_WEIGHT = 0.95
 
 
 class MLPProjector(nn.Module):
@@ -61,9 +66,9 @@ class LayerMixer(nn.Module):
     ``last`` returns the final layer unchanged — the behaviour of every run
     before this module existed.  ``mean_last_n`` averages the last ``n``
     layers.  ``weighted`` learns a softmax mixture over every layer; it is
-    initialised to put almost all weight on the final layer, so training
-    starts from the representation the frozen baseline used and moves away
-    from it only where that helps.
+    initialised to put :data:`_INIT_LAST_WEIGHT` of the weight on the final
+    layer, so training starts from the representation the frozen baseline
+    used and moves away from it only where that helps.
 
     Args:
         n_layers: Number of entries in the backbone's ``hidden_states``
@@ -88,7 +93,13 @@ class LayerMixer(nn.Module):
         self.n_layers = n_layers
         if mode == "weighted":
             logits = torch.zeros(n_layers)
-            logits[-1] = 4.0
+            if n_layers > 1:
+                # Pick the logit that yields a fixed share for the final
+                # layer instead of a fixed logit: e^4/(e^4 + N - 1) is 0.67
+                # at 29 layers and 0.85 at 37, so a constant would make the
+                # starting point depend on backbone depth.
+                weight = _INIT_LAST_WEIGHT
+                logits[-1] = math.log((n_layers - 1) * weight / (1.0 - weight))
             self.layer_logits = nn.Parameter(logits)
 
     def forward(self, hidden_states: tuple[torch.Tensor, ...]) -> torch.Tensor:
