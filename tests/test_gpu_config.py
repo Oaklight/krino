@@ -7,6 +7,43 @@ torch = pytest.importorskip("torch")
 from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info
 
 
+def _plain(**kwargs) -> GPUConfig:
+    """A config whose checkpointing value came from auto-detect, not a caller."""
+    base = dict(
+        flash_attention=False,
+        bf16_compute=False,
+        max_length=8192,
+        gradient_checkpointing=False,
+    )
+    base.update(kwargs)
+    return GPUConfig(**base)
+
+
+class TestExplicitCheckpointing:
+    """`gradient_checkpointing_explicit` records whether a caller chose it.
+
+    DecisionModel forces checkpointing on for LoRA, which is right when
+    auto-detect merely left it off and wrong when the caller asked for it off.
+    """
+
+    def test_auto_detected_value_is_not_explicit(self):
+        assert _plain().gradient_checkpointing_explicit is False
+
+    def test_override_marks_explicit(self):
+        assert _plain().apply_overrides(gradient_checkpointing=False).gradient_checkpointing_explicit
+        assert _plain().apply_overrides(gradient_checkpointing=True).gradient_checkpointing_explicit
+
+    def test_unrelated_override_does_not_mark_explicit(self):
+        assert not _plain().apply_overrides(max_length=2048).gradient_checkpointing_explicit
+        assert not _plain().apply_overrides(flash_attention=True).gradient_checkpointing_explicit
+
+    def test_explicit_survives_a_later_unrelated_override(self):
+        once = _plain().apply_overrides(gradient_checkpointing=False)
+        twice = once.apply_overrides(max_length=2048)
+        assert twice.gradient_checkpointing_explicit is True
+        assert twice.gradient_checkpointing is False
+
+
 class TestGPUConfigAutoDetect:
     """Test GPUConfig.auto_detect() returns valid configs on any hardware."""
 

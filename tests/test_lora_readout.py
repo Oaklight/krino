@@ -231,3 +231,88 @@ class TestCheckpointRoundTrip:
             if "lora_b" in name:
                 assert torch.count_nonzero(param) == 0, f"{name} did not load"
 
+
+class _RecordingBackbone(_FakeBackbone):
+    """Fake backbone that records gradient-checkpointing enable calls."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.gc_calls: list[dict] = []
+
+    def gradient_checkpointing_enable(self, **kwargs) -> None:
+        self.gc_calls.append(kwargs)
+
+
+class TestLoraGradientCheckpointing:
+    """LoRA forces checkpointing on, but an explicit "off" must be honoured.
+
+    The force exists because a frozen backbone stores no activations while an
+    adapted one does — without it the 0.6B model OOMs at 16K.  Applying the
+    same rule to a caller who asked for checkpointing *off* silently made
+    ``--no-gradient-checkpointing`` a no-op whenever LoRA was enabled, which
+    removes the only way to trade memory for speed.
+    """
+
+    def _build(self, backbone, **gpu_kwargs):
+        from model.src.decision_model import DecisionModel
+        from model.src.gpu_config import GPUConfig
+
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=False,
+            max_length=128,
+            gradient_checkpointing=gpu_kwargs.pop("gradient_checkpointing", False),
+            **gpu_kwargs,
+        )
+        return DecisionModel(
+            backbone=backbone,
+            tokenizer=None,
+            rank=8,
+            gpu_config=gpu,
+            lora_layers=-1,
+        )
+
+    def test_forced_on_when_auto_detect_left_it_off(self) -> None:
+        backbone = _RecordingBackbone()
+        self._build(backbone)
+        assert len(backbone.gc_calls) == 1
+        assert backbone.gc_calls[0]["gradient_checkpointing_kwargs"] == {
+            "use_reentrant": False
+        }
+
+    def test_explicit_off_is_honoured(self) -> None:
+        backbone = _RecordingBackbone()
+        self._build(
+            backbone,
+            gradient_checkpointing=False,
+            gradient_checkpointing_explicit=True,
+        )
+        assert backbone.gc_calls == []
+
+    def test_explicit_on_uses_non_reentrant(self) -> None:
+        backbone = _RecordingBackbone()
+        self._build(
+            backbone,
+            gradient_checkpointing=True,
+            gradient_checkpointing_explicit=True,
+        )
+        assert len(backbone.gc_calls) == 1
+        assert backbone.gc_calls[0]["gradient_checkpointing_kwargs"] == {
+            "use_reentrant": False
+        }
+
+    def test_without_lora_an_explicit_off_does_not_enable(self) -> None:
+        from model.src.decision_model import DecisionModel
+        from model.src.gpu_config import GPUConfig
+
+        backbone = _RecordingBackbone()
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=False,
+            max_length=128,
+            gradient_checkpointing=False,
+            gradient_checkpointing_explicit=True,
+        )
+        DecisionModel(backbone=backbone, tokenizer=None, rank=8, gpu_config=gpu)
+        assert backbone.gc_calls == []
+
