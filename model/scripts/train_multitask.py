@@ -234,7 +234,9 @@ def main() -> int:
     unified_head_flag = args.unified_head if args.unified_head is not None else cfg.get("unified_head", False)
     readout = args.readout if args.readout is not None else cfg.get("readout", "last")
     readout_n = args.readout_n if args.readout_n is not None else cfg.get("readout_n", 4)
-    lora_layers = args.lora_layers if args.lora_layers is not None else cfg.get("lora_layers")
+    lora_layers, lora_layers_src = resolve_setting(
+        args.lora_layers, cfg, "lora_layers", None
+    )
     if lora_layers == 0:
         lora_layers = None
     lora_rank = args.lora_rank if args.lora_rank is not None else cfg.get("lora_rank", 16)
@@ -252,7 +254,7 @@ def main() -> int:
         )
         if part.strip()
     )
-    lora_lr = args.lora_lr if args.lora_lr is not None else cfg.get("lora_lr")
+    lora_lr, lora_lr_src = resolve_setting(args.lora_lr, cfg, "lora_lr", None)
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -388,6 +390,8 @@ def main() -> int:
                 ("score_lr", score_lr, score_lr_src),
                 ("mlp_lr", mlp_lr, mlp_lr_src),
                 ("mlp_layers", mlp_layers, mlp_layers_src),
+                ("lora_layers", lora_layers, lora_layers_src),
+                ("lora_lr", lora_lr, lora_lr_src),
                 ("max_length", model.max_length, max_length_source),
                 ("epochs", epochs, epochs_src),
                 ("rank", rank, rank_src),
