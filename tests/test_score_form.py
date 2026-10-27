@@ -225,7 +225,10 @@ class TestChoiceToScore:
         )
 
     def test_label_not_in_criteria_raises(self):
-        with pytest.raises(ValueError):
+        # Pin the message, not just the exception type. Without the explicit
+        # guard, `keys.index` raises "'zzz' is not in list", which tells the
+        # caller nothing about the options that were available.
+        with pytest.raises(ValueError, match="is not one of the option keys"):
             to_score(_choice("not_an_option"))
 
     def test_empty_criteria_raises(self):
@@ -291,6 +294,46 @@ class TestChoiceCandidates:
             assert metadata["candidate_text"] == question.question["criteria"][key]
             assert metadata["option_keys"] == list(question.question["criteria"])
             assert metadata["candidate_text"] in candidate.question["instructions"]
+
+    def test_duplicate_option_texts_stay_distinct(self):
+        """Two options can share text; their prompts must not collapse.
+
+        hellaswag endings repeat, so ``{0: " a dog", 1: " a dog", ...}`` is a
+        real criteria shape.  Identical prompts force a deterministic scorer
+        to give identical scores, and the argmax tie-break then returns key 0
+        even when the gold answer is key 1.
+        """
+        question = TypedQuestion.choice(
+            id="dup",
+            state="context",
+            instructions="Which ending completes the context?",
+            criteria={"0": " a dog", "1": " a dog", "2": " a cat"},
+            label="1",
+            source="test",
+            split="train",
+        )
+        candidates = to_score_candidates(question)
+        prompts = [candidate.question["instructions"] for candidate in candidates]
+        assert len(set(prompts)) == len(prompts)
+
+        first, second = candidates[0], candidates[1]
+        assert first.question["instructions"] != second.question["instructions"]
+        assert first.question["score_form"]["candidate"] == "0"
+        assert second.question["score_form"]["candidate"] == "1"
+        # The gold label still marks the second one, so a correct scorer can
+        # now separate the two.
+        assert second.label == float(len(CHOICE_SCORE_LEVELS) - 1)
+        assert first.label == 0.0
+
+    def test_unique_texts_are_not_decorated(self):
+        """The disambiguator only appears where it is needed."""
+        for candidate in to_score_candidates(_choice()):
+            assert "Candidate answer (" not in candidate.question["instructions"]
+            assert "Candidate answer: " in candidate.question["instructions"]
+
+    def test_label_not_in_criteria_raises_with_message(self):
+        with pytest.raises(ValueError, match="is not one of the option keys"):
+            to_score_candidates(_choice("not_an_option"))
 
     def test_gold_top_others_bottom(self):
         question = _choice("cancel_transfer")

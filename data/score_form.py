@@ -186,6 +186,16 @@ def to_score_candidates(question: TypedQuestion) -> list[TypedQuestion]:
     For ``noul`` and ``score`` questions this returns
     ``[to_score(question)]``.
 
+    Teacher probabilities are dropped.  A categorical distribution over the
+    options does not map onto independent per-candidate ordinal scores, so
+    unlike :func:`to_score` there is no faithful remapping to keep.
+
+    Options whose text repeats are disambiguated in the prompt.  A
+    deterministic scorer would otherwise give two identical prompts identical
+    scores, and the ``argmax`` tie-break would return the first key even when
+    the gold answer is the other one -- hellaswag endings repeat often enough
+    for this to matter.
+
     Args:
         question: Source question of type ``noul``, ``choice``, or ``score``.
 
@@ -211,11 +221,16 @@ def to_score_candidates(question: TypedQuestion) -> list[TypedQuestion]:
 
     instructions = question.question.get("instructions", "").strip()
     top_level = float(len(CHOICE_SCORE_LEVELS) - 1)
+    texts = {key: criteria[key] or key for key in keys}
+    repeated = {
+        text for text in texts.values() if list(texts.values()).count(text) > 1
+    }
     candidates: list[TypedQuestion] = []
     for key in keys:
-        text = criteria[key] or key
+        text = texts[key]
         parts = [instructions]
-        parts.append(f"Candidate answer: {text}.")
+        heading = f"Candidate answer ({key})" if text in repeated else "Candidate answer"
+        parts.append(f"{heading}: {text}.")
         parts.append("How well does this candidate answer the question?")
         candidates.append(
             TypedQuestion(
