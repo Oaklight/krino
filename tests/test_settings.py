@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from model.settings import format_settings, resolve_setting
+from model.settings import describe_effective_length, format_settings, resolve_setting
 
 
 class TestResolveSetting:
@@ -58,3 +58,27 @@ class TestFormatSettings:
 
     def test_none_value_renders(self) -> None:
         assert format_settings([("mlp_lr", None, "config")]) == "Effective: mlp_lr=None (config)"
+
+
+class TestDescribeEffectiveLength:
+    """max_length is clamped after resolution, so the banner must show the result."""
+
+    def test_auto_detect_reports_auto(self) -> None:
+        assert describe_effective_length(None, 8192, "default") == "auto"
+
+    def test_requested_length_that_survives_keeps_its_source(self) -> None:
+        assert describe_effective_length(8192, 8192, "cli") == "cli"
+
+    def test_clamped_request_names_the_original(self) -> None:
+        # The case that matters: a 32K request on a backbone capped at 8K
+        # trains at 8K, and the banner must not claim 32K.
+        assert (
+            describe_effective_length(32768, 8192, "cli")
+            == "cli, clamped from 32768"
+        )
+
+    def test_clamped_config_request(self) -> None:
+        assert (
+            describe_effective_length(16384, 8192, "config")
+            == "config, clamped from 16384"
+        )
