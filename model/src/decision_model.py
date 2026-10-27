@@ -96,15 +96,26 @@ class DecisionModel(nn.Module):
             )
             self.max_length = min(gpu_config.max_length, backbone_max)
 
-        # Enable gradient checkpointing on backbone if configured.  With LoRA
-        # the graph starts inside the blocks rather than at the input, so the
-        # reentrant implementation (the default) would produce no gradients.
-        if gpu_config.gradient_checkpointing:
+        # Enable gradient checkpointing on backbone if configured.  LoRA keeps
+        # the backbone graph alive, so activations must be recomputed even on
+        # backbones the auto-detect leaves uncheckpointed — a frozen backbone
+        # needs no graph at all, but an adapted one does, and without this the
+        # 0.6B model OOMs at its 16K max length.  The reentrant implementation
+        # (the default) needs an input that requires grad; LoRA's adapters sit
+        # inside the blocks, so it would silently produce no gradients.
+        needs_checkpointing = gpu_config.gradient_checkpointing or lora_layers is not None
+        if needs_checkpointing:
             if hasattr(backbone, "gradient_checkpointing_enable"):
                 gc_kwargs: dict = {}
                 if lora_layers is not None:
                     gc_kwargs["gradient_checkpointing_kwargs"] = {"use_reentrant": False}
                 backbone.gradient_checkpointing_enable(**gc_kwargs)
+                if lora_layers is not None and not gpu_config.gradient_checkpointing:
+                    print(
+                        "  Gradient checkpointing: forced on for LoRA "
+                        "(auto-detect left it off)",
+                        flush=True,
+                    )
 
         print_gpu_info(gpu_config)
         print(f"  max_length={self.max_length} (effective)", flush=True)
