@@ -35,6 +35,32 @@ def resolve_setting(
     return default, "default"
 
 
+def describe_effective_length(
+    requested: int | None, effective: int, requested_source: str
+) -> str:
+    """Describe how the effective sequence length was chosen.
+
+    ``max_length`` is resolved in two stages: the CLI/config value, then a
+    clamp to the GPU's safe length and the backbone's native maximum inside
+    ``DecisionModel``.  Only the second value is what training uses, so the
+    banner has to report it.
+
+    Args:
+        requested: Value from the CLI or config, or None for auto-detect.
+        effective: Length training will actually use.
+        requested_source: Source returned by :func:`resolve_setting`.
+
+    Returns:
+        A source label: ``"auto"``, ``"<source>, clamped from <requested>"``,
+        or the requested source unchanged.
+    """
+    if requested is None:
+        return "auto"
+    if effective != requested:
+        return f"{requested_source}, clamped from {requested}"
+    return requested_source
+
+
 def format_settings(settings: list[tuple[str, Any, str]]) -> str:
     """Format resolved settings as a single startup banner line.
 
