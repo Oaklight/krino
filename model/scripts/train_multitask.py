@@ -40,6 +40,7 @@ sys.path.insert(0, str(ROOT))
 
 from data.format import TypedQuestion
 from data.sampler import SamplerConfig
+from data.score_form import convert_training_items
 from data.sources import collect_synthetic_sources, load_source_items
 from model.settings import describe_effective_length, format_settings, resolve_setting
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
@@ -168,6 +169,7 @@ def main() -> int:
     parser.add_argument("--lora-dropout", type=float, default=None, help="Dropout on the LoRA input (default: 0.0)")
     parser.add_argument("--lora-targets", type=str, default=None, help="Comma-separated linear-layer suffixes to adapt (default: q_proj,v_proj)")
     parser.add_argument("--lora-lr", type=float, default=None, help="Separate LR for LoRA adapters (default: the heads' lr)")
+    parser.add_argument("--score-form", choices=["off", "single", "candidates"], default=None, help="Convert training items to score form; evaluation keeps the original types (default: off)")
     parser.add_argument("--synthetic-ratio", type=float, default=None, help="Target proportion of synthetic data (0.0 to 1.0)")
 
     # GPU memory optimization flags
@@ -255,6 +257,7 @@ def main() -> int:
         if part.strip()
     )
     lora_lr, lora_lr_src = resolve_setting(args.lora_lr, cfg, "lora_lr", None)
+    score_form = args.score_form if args.score_form is not None else cfg.get("score_form", "off")
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -332,6 +335,17 @@ def main() -> int:
         n_eval = len(eval_items)
         if n_train > 0 or n_eval > 0:
             print(f"  {source_name}: {n_train} train, {n_eval} eval", flush=True)
+
+    if score_form != "off":
+        # Training only: evaluation keeps the original types so accuracy stays
+        # comparable with a run that trains on them directly.
+        before = len(all_train)
+        all_train = convert_training_items(all_train, score_form)
+        print(
+            f"  Score form: {score_form} — {before:,} train items became "
+            f"{len(all_train):,} score questions (eval unchanged)",
+            flush=True,
+        )
 
     print_data_summary(all_train, all_eval)
 

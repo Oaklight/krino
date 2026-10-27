@@ -60,6 +60,7 @@ __all__ = [
     "CHOICE_SCORE_LEVELS",
     "NOUL_SCORE_LEVELS",
     "ScorePrediction",
+    "convert_training_items",
     "from_score",
     "round_trip",
     "score_to_choice",
@@ -256,6 +257,40 @@ def to_score_candidates(question: TypedQuestion) -> list[TypedQuestion]:
             )
         )
     return candidates
+
+
+def convert_training_items(
+    items: list[TypedQuestion], mode: str
+) -> list[TypedQuestion]:
+    """Convert a training set into score form.
+
+    Only training items are converted.  Evaluation stays in the original task
+    shape so accuracy remains comparable between a score-form run and an
+    ordinary one; the heads are shared, so a model trained on score questions
+    still answers noul and choice items through their usual forward paths.
+
+    Args:
+        items: Training items in their original types.
+        mode: ``"single"`` gives one score question per item.  ``"candidates"``
+            expands each choice item into one score question per candidate,
+            which grows the set by roughly the average option count.
+
+    Returns:
+        The converted items.
+
+    Raises:
+        ValueError: If ``mode`` is unknown.
+    """
+    if mode == "single":
+        return [to_score(item) for item in items]
+    if mode == "candidates":
+        converted: list[TypedQuestion] = []
+        for item in items:
+            converted.extend(to_score_candidates(item))
+        return converted
+    raise ValueError(
+        f"unknown score-form mode {mode!r}; expected 'single' or 'candidates'"
+    )
 
 
 def from_score(prediction: ScorePrediction, question: TypedQuestion) -> dict[str, Any]:

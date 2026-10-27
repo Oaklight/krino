@@ -8,6 +8,7 @@ from data.format import TypedQuestion
 from data.score_form import (
     CHOICE_SCORE_LEVELS,
     NOUL_SCORE_LEVELS,
+    convert_training_items,
     from_score,
     round_trip,
     score_to_choice,
@@ -540,3 +541,36 @@ class TestConstants:
             isinstance(level, str) and level for level in CHOICE_SCORE_LEVELS
         )
         assert len(set(CHOICE_SCORE_LEVELS)) == len(CHOICE_SCORE_LEVELS)
+
+
+class TestConvertTrainingItems:
+    def test_single_preserves_count_and_makes_everything_score(self):
+        items = [_noul(), _choice(), _score()]
+        converted = convert_training_items(items, "single")
+        assert len(converted) == len(items)
+        assert all(item.question["type"] == "score" for item in converted)
+
+    def test_candidates_expands_choice_only(self):
+        items = [_noul(), _choice(), _score()]
+        converted = convert_training_items(items, "candidates")
+        # noul and score stay single; choice becomes one question per option.
+        expected = 1 + len(items[1].question["criteria"]) + 1
+        assert len(converted) == expected
+        assert all(item.question["type"] == "score" for item in converted)
+
+    def test_candidates_gold_index_is_recoverable(self):
+        question = _choice("cancel_transfer")
+        converted = convert_training_items([question], "candidates")
+        top = float(len(CHOICE_SCORE_LEVELS) - 1)
+        gold = [
+            item
+            for item in converted
+            if item.question["score_form"]["candidate"] == "cancel_transfer"
+        ]
+        assert len(gold) == 1
+        assert gold[0].label == top
+        assert sum(1 for item in converted if item.label == top) == 1
+
+    def test_unknown_mode_raises(self):
+        with pytest.raises(ValueError, match="unknown score-form mode"):
+            convert_training_items([_noul()], "bogus")
