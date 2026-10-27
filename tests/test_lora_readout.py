@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import pytest
-import torch
-import torch.nn as nn
+
+torch = pytest.importorskip("torch")
+nn = torch.nn
 
 from model.src.heads import LayerMixer
 from model.src.lora import LoRALinear, inject_lora, lora_parameters
