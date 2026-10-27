@@ -136,6 +136,29 @@ def _sort_key(run: Run) -> tuple:
     return (run.lora != "none", run.readout, run.name)
 
 
+def _delta(run: Run, baseline: Run) -> tuple[int, float] | None:
+    """Accuracy delta at the last epoch both runs evaluated, or None.
+
+    Comparing bests is wrong for a sweep in progress: an unfinished run's
+    "best" is only its best *so far*, so a run that is still climbing reads
+    as a regression against a finished baseline.  Comparing at a shared
+    epoch is the like-for-like number.
+    """
+    if run.total_epochs != baseline.total_epochs:
+        return None
+    common = [
+        epoch
+        for epoch in sorted(set(run.epochs) & set(baseline.epochs))
+        if run.epochs[epoch].accuracy is not None
+        and baseline.epochs[epoch].accuracy is not None
+    ]
+    if not common:
+        return None
+    epoch = common[-1]
+    delta = (run.epochs[epoch].accuracy - baseline.epochs[epoch].accuracy) * 100
+    return epoch, delta
+
+
 def render(runs: list[Run], by_type: bool = False) -> str:
     """Render runs as markdown, grouped by backbone."""
     out: list[str] = []
@@ -151,7 +174,7 @@ def render(runs: list[Run], by_type: bool = False) -> str:
         out.append(f"### {backbone} ({len(members)} runs)")
         out.append("")
         header = ["run", "readout", "lora"] + [f"ep{e}" for e in range(1, n_epochs + 1)]
-        header += ["best", "Δ vs baseline"]
+        header += ["best", "Δ @ common ep"]
         out.append("| " + " | ".join(header) + " |")
         out.append("|" + "|".join(["---"] * len(header)) + "|")
 
@@ -165,14 +188,16 @@ def render(runs: list[Run], by_type: bool = False) -> str:
                 row.append(f"{best[1] * 100:.2f} (ep{best[0]})")
                 # A different epoch budget means a different LR schedule
                 # (warmup and cosine both scale with `epochs`), so the two
-                # bests are not on the same curve and a delta would mislead.
+                # curves are not comparable at all.
                 if baseline is None or run is baseline or baseline.best is None:
                     row.append("—")
                 elif run.total_epochs != baseline.total_epochs:
                     row.append(f"— ({run.total_epochs} vs {baseline.total_epochs} ep)")
                 else:
-                    delta = (best[1] - baseline.best[1]) * 100
-                    row.append(f"{delta:+.2f} pp")
+                    delta = _delta(run, baseline)
+                    row.append(
+                        "—" if delta is None else f"{delta[1]:+.2f} (ep{delta[0]})"
+                    )
             out.append("| " + " | ".join(row) + " |")
         out.append("")
 

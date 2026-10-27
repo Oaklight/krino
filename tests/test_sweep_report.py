@@ -87,8 +87,26 @@ class TestDeltas:
         variant = _write_log(tmp_path, "arch_06b_frozen_weighted", "0.4333", "0.4357")
         result = _run(str(baseline), str(variant))
         assert result.returncode == 0, result.stderr
-        # baseline best = 43.42 (ep1), variant best = 43.57 (ep2) → +0.15 pp
-        assert "+0.15 pp" in result.stdout
+        # Compared at ep2, the last epoch both have: 43.57 - 41.74 = +1.83.
+        assert "+1.83 (ep2)" in result.stdout
+
+    def test_delta_uses_the_last_common_epoch(self, tmp_path):
+        """An unfinished run must be compared where the curves overlap.
+
+        Comparing bests would put a still-climbing LoRA run (ep1 only) at
+        48.48 against the frozen run's final 49.11 and read as a regression,
+        when at the one epoch both ran it is 5.06 pp ahead.
+        """
+        baseline = _write_log(tmp_path, "arch_06b_frozen_last", "0.4342", "0.4174")
+        partial = tmp_path / "arch_06b_loraAll_last.log"
+        partial.write_text(
+            "Backbone: Qwen/Qwen3-Reranker-0.6B (causal)\n"
+            "  LoRA: 56 layers (all blocks, r=16, alpha=32, targets=q, v)\n"
+            "  epoch 1/5: train_loss=1.1732 eval_loss=1.2155 eval_acc=0.4848 (5053.9s)\n"
+        )
+        result = _run(str(baseline), str(partial))
+        assert result.returncode == 0, result.stderr
+        assert "+5.06 (ep1)" in result.stdout
 
     def test_no_delta_across_different_epoch_budgets(self, tmp_path):
         """A 20-epoch run has a different LR schedule, so no delta is shown."""
@@ -121,7 +139,8 @@ class TestDeltas:
         plain_row = next(l for l in lines if "arch_4b_frozen_last" in l)
         variant_row = next(l for l in lines if "arch_4b_frozen_32k" in l)
         assert plain_row.rstrip().endswith("— |")
-        assert "+0.09 pp" in variant_row
+        # At ep2, the only shared epoch: 47.49 - 47.50 = -0.01.
+        assert "-0.01 (ep2)" in variant_row
 
 
 class TestGrouping:
