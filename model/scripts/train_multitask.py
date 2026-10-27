@@ -41,6 +41,7 @@ sys.path.insert(0, str(ROOT))
 from data.format import TypedQuestion
 from data.sampler import SamplerConfig
 from data.sources import collect_synthetic_sources, load_source_items
+from model.settings import format_settings, resolve_setting
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info
@@ -208,21 +209,23 @@ def main() -> int:
     model_name = args.model or cfg.get("model", "Qwen/Qwen3-0.6B")
     use_encoder = cfg.get("encoder", False)
     qwen35_base = cfg.get("qwen35_base", False)
-    rank = args.rank if args.rank is not None else cfg.get("rank", 64)
-    epochs = args.epochs if args.epochs is not None else cfg.get("epochs", 20)
-    lr = args.lr if args.lr is not None else cfg.get("lr", 1e-3)
-    seed = args.seed if args.seed is not None else cfg.get("seed", 42)
+    rank, rank_src = resolve_setting(args.rank, cfg, "rank", 64)
+    epochs, epochs_src = resolve_setting(args.epochs, cfg, "epochs", 20)
+    lr, lr_src = resolve_setting(args.lr, cfg, "lr", 1e-3)
+    seed, seed_src = resolve_setting(args.seed, cfg, "seed", 42)
     device = args.device or cfg.get("device")
-    accumulation_steps = cfg.get("accumulation_steps", 8)
+    accumulation_steps, accumulation_steps_src = resolve_setting(
+        None, cfg, "accumulation_steps", 8
+    )
     batch_backbone = cfg.get("batch_backbone", 16)
     save_every_epoch = args.save_every_epoch if args.save_every_epoch is not None else cfg.get("save_every_epoch", False)
     eval_every = args.eval_every if args.eval_every is not None else cfg.get("eval_every", 2)
     rival_aware = cfg.get("rival_aware", False)
-    mlp_layers = args.mlp_layers if args.mlp_layers is not None else cfg.get("mlp_layers", 0)
+    mlp_layers, mlp_layers_src = resolve_setting(args.mlp_layers, cfg, "mlp_layers", 0)
     mlp_dim = cfg.get("mlp_dim", None)
     noul_rank = args.noul_rank if args.noul_rank is not None else cfg.get("noul_rank", None)
     max_length = args.max_length if args.max_length is not None else cfg.get("max_length", None)
-    mlp_lr = args.mlp_lr if args.mlp_lr is not None else cfg.get("mlp_lr", None)
+    mlp_lr, mlp_lr_src = resolve_setting(args.mlp_lr, cfg, "mlp_lr", None)
     noul_lr = args.noul_lr if args.noul_lr is not None else cfg.get("noul_lr", None)
     choice_lr = args.choice_lr if args.choice_lr is not None else cfg.get("choice_lr", None)
     score_lr = args.score_lr if args.score_lr is not None else cfg.get("score_lr", None)
@@ -273,6 +276,20 @@ def main() -> int:
         arch_label = "causal"
     print(f"Backbone: {model_name} ({arch_label})", flush=True)
     print(f"Config: {args.config}", flush=True)
+    print(
+        format_settings(
+            [
+                ("lr", lr, lr_src),
+                ("epochs", epochs, epochs_src),
+                ("rank", rank, rank_src),
+                ("mlp_layers", mlp_layers, mlp_layers_src),
+                ("mlp_lr", mlp_lr, mlp_lr_src),
+                ("accumulation_steps", accumulation_steps, accumulation_steps_src),
+                ("seed", seed, seed_src),
+            ]
+        ),
+        flush=True,
+    )
 
     # Auto-detect GPU config, then apply CLI overrides
     model_billions = estimate_model_billions(model_name)
