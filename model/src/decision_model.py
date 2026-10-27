@@ -86,14 +86,17 @@ class DecisionModel(nn.Module):
             gpu_config = GPUConfig.auto_detect()
         self.gpu_config = gpu_config
 
-        # max_length priority: explicit arg > gpu_config > backbone native (capped at 32768)
+        # max_length priority: explicit arg > gpu_config > backbone native.
+        # Both paths clamp to the backbone's positional-embedding limit: an
+        # explicit request above it would overflow the position table at
+        # forward time, which is harder to diagnose than a shorter sequence.
+        backbone_max = min(
+            getattr(backbone.config, "max_position_embeddings", 32768),
+            32768,
+        )
         if max_length is not None:
-            self.max_length = max_length
+            self.max_length = min(max_length, backbone_max)
         else:
-            backbone_max = min(
-                getattr(backbone.config, "max_position_embeddings", 32768),
-                32768,
-            )
             self.max_length = min(gpu_config.max_length, backbone_max)
 
         # Enable gradient checkpointing on backbone if configured.  LoRA keeps
