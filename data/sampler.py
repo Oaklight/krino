@@ -52,6 +52,35 @@ class SamplerConfig:
     synthetic_ratio: float | None = None
 
 
+def sampling_type(item: TypedQuestion) -> str:
+    """Return the question type used to pool ``item`` for sampling.
+
+    Score-form conversion rewrites ``question["type"]`` to ``"score"`` and
+    records the original type in ``question["score_form"]["source_type"]``.
+    Pooling on the rewritten type would collapse every item into one pool, so
+    the configured ``type_ratios`` would stop applying and the epoch mix would
+    be decided by source weights alone -- which would confound a score-form
+    run against an ordinary one, since the objective *and* the type mix would
+    change together.
+
+    Pooling on the original type keeps the mix fixed while the objective
+    becomes score.
+
+    Args:
+        item: A training item, possibly in score form.
+
+    Returns:
+        The original type for converted items, otherwise the declared type.
+    """
+    question = item.question
+    score_form = question.get("score_form")
+    if isinstance(score_form, dict):
+        source_type = score_form.get("source_type")
+        if source_type:
+            return source_type
+    return question.get("type", "noul")
+
+
 class MultitaskSampler:
     """Type-balanced, source-weighted sampler for multi-task training.
 
@@ -73,10 +102,12 @@ class MultitaskSampler:
         self._config = config
         self._seed = seed
 
-        # Index items by type, then by source within each type
+        # Index items by type, then by source within each type.  The type is
+        # the *original* one for score-form items, so the configured ratios
+        # keep applying after conversion.
         by_type: dict[str, dict[str, list[TypedQuestion]]] = defaultdict(lambda: defaultdict(list))
         for item in items:
-            q_type = item.question.get("type", "noul")
+            q_type = sampling_type(item)
             by_type[q_type][item.source].append(item)
 
         # Apply source caps (downsample once, deterministically)

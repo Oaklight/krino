@@ -133,6 +133,7 @@ def to_score(question: TypedQuestion) -> TypedQuestion:
                 "score_form": {
                     "source_type": "noul",
                     "encoding": "boolean-as-score",
+                    "parent_id": question.id,
                 },
             },
             label=1.0 if _as_bool(question.label) else 0.0,
@@ -160,6 +161,7 @@ def to_score(question: TypedQuestion) -> TypedQuestion:
                     "source_type": "choice",
                     "encoding": "option-as-level",
                     "option_keys": keys,
+                    "parent_id": question.id,
                 },
             },
             label=float(keys.index(question.label)),
@@ -247,6 +249,7 @@ def to_score_candidates(question: TypedQuestion) -> list[TypedQuestion]:
                         "candidate": key,
                         "candidate_text": text,
                         "option_keys": keys,
+                        "parent_id": question.id,
                     },
                 },
                 label=top_level if key == question.label else 0.0,

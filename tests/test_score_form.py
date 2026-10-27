@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections import Counter
+
 import pytest
 
 from data.format import TypedQuestion
@@ -574,3 +576,51 @@ class TestConvertTrainingItems:
     def test_unknown_mode_raises(self):
         with pytest.raises(ValueError, match="unknown score-form mode"):
             convert_training_items([_noul()], "bogus")
+
+
+class TestScoreFormKeepsSamplerMix:
+    """Conversion must not change the sampler's type balance.
+
+    Every converted item declares ``type: score``.  If the sampler pooled on
+    that field, ``type_ratios`` would stop applying and the epoch mix would be
+    decided by source weights alone -- which would confound a score-form run
+    against an ordinary one, because the objective *and* the type mix would
+    change together.
+    """
+
+    def _items(self):
+        items = []
+        for source_index in range(4):
+            for item_index in range(500):
+                items.append(
+                    TypedQuestion.choice(
+                        id=f"choice-{source_index}-{item_index}",
+                        state="state",
+                        instructions="pick one",
+                        criteria={"a": "a", "b": "b", "c": "c"},
+                        label="a",
+                        source=f"choice_src_{source_index}",
+                        split="train",
+                    )
+                )
+        items.extend(_noul() for _ in range(500))
+        items.extend(_score() for _ in range(500))
+        return items
+
+    def test_type_ratios_still_apply_after_conversion(self):
+        from data.sampler import MultitaskSampler, SamplerConfig, sampling_type
+
+        items = self._items()
+        config = SamplerConfig(
+            type_ratios={"noul": 1.0, "choice": 1.0, "score": 1.0},
+            epoch_size=3000,
+        )
+        base = MultitaskSampler(items, config, seed=0).sample_epoch(0)
+        base_counts = Counter(sampling_type(item) for item in base)
+        assert set(base_counts) == {"noul", "choice", "score"}
+
+        for mode in ("single", "candidates"):
+            converted = convert_training_items(items, mode)
+            sampled = MultitaskSampler(converted, config, seed=0).sample_epoch(0)
+            counts = Counter(sampling_type(item) for item in sampled)
+            assert counts == base_counts, f"{mode} changed the type mix"

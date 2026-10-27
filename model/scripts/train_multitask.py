@@ -169,7 +169,7 @@ def main() -> int:
     parser.add_argument("--lora-dropout", type=float, default=None, help="Dropout on the LoRA input (default: 0.0)")
     parser.add_argument("--lora-targets", type=str, default=None, help="Comma-separated linear-layer suffixes to adapt (default: q_proj,v_proj)")
     parser.add_argument("--lora-lr", type=float, default=None, help="Separate LR for LoRA adapters (default: the heads' lr)")
-    parser.add_argument("--score-form", choices=["off", "single", "candidates"], default=None, help="Convert training items to score form; evaluation keeps the original types (default: off)")
+    parser.add_argument("--score-form", choices=["off", "single", "candidates"], default=None, help="Convert training items to score form; evaluation keeps the original types. 'candidates' expands each choice question into one score question per option, so the in-memory list grows by the option count (epoch_size still bounds the steps) (default: off)")
     parser.add_argument("--synthetic-ratio", type=float, default=None, help="Target proportion of synthetic data (0.0 to 1.0)")
 
     # GPU memory optimization flags
@@ -257,7 +257,9 @@ def main() -> int:
         if part.strip()
     )
     lora_lr, lora_lr_src = resolve_setting(args.lora_lr, cfg, "lora_lr", None)
-    score_form = args.score_form if args.score_form is not None else cfg.get("score_form", "off")
+    score_form, score_form_src = resolve_setting(
+        args.score_form, cfg, "score_form", "off"
+    )
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -341,9 +343,14 @@ def main() -> int:
         # comparable with a run that trains on them directly.
         before = len(all_train)
         all_train = convert_training_items(all_train, score_form)
+        # max_train bounds source questions, not converted rows: `candidates`
+        # turns each choice question into one per option, so the in-memory list
+        # grows by the option count.  epoch_size still bounds the steps; this
+        # line is where the allocation becomes visible.
         print(
             f"  Score form: {score_form} — {before:,} train items became "
-            f"{len(all_train):,} score questions (eval unchanged)",
+            f"{len(all_train):,} score questions "
+            f"({len(all_train) / max(before, 1):.1f}x; eval unchanged)",
             flush=True,
         )
 
@@ -406,6 +413,7 @@ def main() -> int:
                 ("mlp_layers", mlp_layers, mlp_layers_src),
                 ("lora_layers", lora_layers, lora_layers_src),
                 ("lora_lr", lora_lr, lora_lr_src),
+                ("score_form", score_form, score_form_src),
                 ("max_length", model.max_length, max_length_source),
                 ("epochs", epochs, epochs_src),
                 ("rank", rank, rank_src),
