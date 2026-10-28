@@ -41,6 +41,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from data.format import TypedQuestion
+from data.pool_report import print_pool_report
 from data.sampler import SamplerConfig, sampling_type
 from data.score_form import convert_training_items
 from data.sources import (
@@ -111,40 +112,6 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
     )
 
 
-def _print_pool_report(
-    pool_by_type: Counter[str],
-    sampling: dict,
-) -> None:
-    """Print how often each type's pool is resampled within one epoch.
-
-    The training mixture is defined by ``type_ratios`` over a fixed
-    ``epoch_size``, not by the pool sizes.  When one type's pool is much
-    smaller than its share of the epoch, its items are resampled far more
-    often than the others — less diverse supervision at a higher overfitting
-    risk — and nothing else in the log makes that visible.
-    """
-    ratios = sampling.get("difficulty_weights") or sampling.get("type_ratios") or {}
-    epoch_size = sampling.get("epoch_size")
-    if not ratios or not epoch_size:
-        return
-
-    total_ratio = sum(ratios.values())
-    print("\n  Pool vs per-epoch sampling:", flush=True)
-    print(
-        f"  {'Type':<8} {'Pool':>8} {'Slots':>8} {'Resampling':>11}",
-        flush=True,
-    )
-    print(f"  {'-' * 8} {'-' * 8} {'-' * 8} {'-' * 11}", flush=True)
-    for q_type in sorted(ratios):
-        pool = pool_by_type.get(q_type, 0)
-        slots = int(epoch_size * ratios[q_type] / total_ratio)
-        repeats = f"{slots / pool:.2f}x" if pool else "n/a"
-        print(
-            f"  {q_type:<8} {pool:>8,} {slots:>8,} {repeats:>11}",
-            flush=True,
-        )
-
-
 def print_data_summary(
     train_items: list[TypedQuestion],
     eval_items: list[TypedQuestion],
@@ -202,7 +169,7 @@ def print_data_summary(
         )
 
     if sampling:
-        _print_pool_report(train_by_type, sampling)
+        print_pool_report(train_by_type, sampling)
 
 
 def main() -> int:

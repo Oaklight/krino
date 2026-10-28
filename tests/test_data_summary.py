@@ -181,3 +181,7 @@ class TestPoolReport:
         )
         out = capsys.readouterr().out
         assert "n/a" in out
+        # The sampler gives the whole epoch to the types that have items, so
+        # noul takes all 100 slots; dividing by both ratios would print 50.
+        noul_line = next(row for row in out.splitlines() if "noul" in row and "100" in row)
+        assert "50 " not in noul_line
