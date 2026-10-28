@@ -1087,6 +1087,11 @@ _HELPSTEER_TRAIN_ROWS = 5_000
 _HELPSTEER_EVAL_ROWS = 1_000
 
 
+def _helpsteer_level(rating: int) -> int:
+    """HelpSteer's 0-4 rating is already the level index: 0 is the worst end."""
+    return rating
+
+
 def load_helpsteer() -> Iterator[TypedQuestion]:
     """Convert HelpSteer's human 0-4 attribute ratings into score questions.
 
@@ -1114,7 +1119,7 @@ def load_helpsteer() -> Iterator[TypedQuestion]:
                     state=state,
                     instructions=instructions,
                     criteria=levels,
-                    label=float(value),
+                    label=float(_helpsteer_level(value)),
                     source="helpsteer",
                     split=out_split,
                     group=f"helpsteer-{i % 100}",

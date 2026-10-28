@@ -643,3 +643,42 @@ class TestBalanceCaps:
             assert isinstance(cap, int) and cap > 0, (
                 f"DEFAULT_CAPS['{source}'] should be positive int, got {cap}"
             )
+
+
+class TestOrdinalDirection:
+    """The level mappings must run from the worst to the best response.
+
+    Range checks cannot see an inverted scale: `4 - level` still returns
+    0..4 and every existing ScoreLoader test passes with it, but the model is
+    then trained to answer the opposite of what every rater said.  These
+    tests pin the direction with known raw values.
+    """
+
+    def test_wmt_da_increases_with_the_raw_score(self):
+        cases = [(0.0, 0), (19.9, 0), (20.0, 1), (59.9, 2), (60.0, 3), (80.0, 4), (100.0, 4)]
+        for raw, expected in cases:
+            assert pipeline._wmt_da_level(raw) == expected, raw
+
+    def test_wmt_da_is_monotone(self):
+        levels = [pipeline._wmt_da_level(raw / 10.0) for raw in range(0, 1001)]
+        assert levels == sorted(levels)
+
+    def test_ultrafeedback_increases_with_the_overall_score(self):
+        cases = [(1.0, 0), (2.0, 0), (3.0, 1), (5.5, 2), (7.3, 3), (9.0, 4), (10.0, 4)]
+        for raw, expected in cases:
+            assert pipeline._ultrafeedback_level(raw) == expected, raw
+
+    def test_ultrafeedback_is_monotone(self):
+        levels = [
+            pipeline._ultrafeedback_level(1.0 + step / 100.0) for step in range(0, 901)
+        ]
+        assert levels == sorted(levels)
+
+    def test_helpsteer_uses_the_rating_as_the_level(self):
+        # HelpSteer rates 0-4 where 0 is the worst end of each attribute's list.
+        for value in range(5):
+            assert pipeline._helpsteer_level(value) == value
+
+    def test_each_helpsteer_attribute_has_one_level_per_rating(self):
+        for attribute, (_, levels) in pipeline.HELPSTEER_ATTRIBUTES.items():
+            assert len(levels) == 5, attribute
