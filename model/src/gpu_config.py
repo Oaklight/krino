@@ -25,12 +25,18 @@ class GPUConfig:
         bf16_compute: Use bf16 autocast for backbone forward passes.
         max_length: Safe maximum sequence length for this GPU.
         gradient_checkpointing: Enable gradient checkpointing on backbone.
+        gradient_checkpointing_explicit: True when the caller set
+            ``gradient_checkpointing`` on purpose rather than inheriting an
+            auto-detected value.  ``DecisionModel`` forces checkpointing on
+            for LoRA, but an explicit "off" is a request for the
+            memory-for-speed trade and is honoured.
     """
 
     flash_attention: bool
     bf16_compute: bool
     max_length: int
     gradient_checkpointing: bool
+    gradient_checkpointing_explicit: bool = False
 
     @classmethod
     def auto_detect(cls, model_params_billions: float = 0.6) -> GPUConfig:
@@ -128,6 +134,10 @@ class GPUConfig:
                 gradient_checkpointing
                 if gradient_checkpointing is not None
                 else self.gradient_checkpointing
+            ),
+            gradient_checkpointing_explicit=(
+                gradient_checkpointing is not None
+                or self.gradient_checkpointing_explicit
             ),
         )
 

@@ -106,7 +106,17 @@ class DecisionModel(nn.Module):
         # 0.6B model OOMs at its 16K max length.  The reentrant implementation
         # (the default) needs an input that requires grad; LoRA's adapters sit
         # inside the blocks, so it would silently produce no gradients.
-        needs_checkpointing = gpu_config.gradient_checkpointing or lora_layers is not None
+        #
+        # An *explicit* "off" is a different matter: the caller has asked for
+        # the memory-for-speed trade, and overriding it silently made
+        # --no-gradient-checkpointing a no-op whenever LoRA was on.
+        explicit_off = (
+            gpu_config.gradient_checkpointing_explicit
+            and not gpu_config.gradient_checkpointing
+        )
+        needs_checkpointing = gpu_config.gradient_checkpointing or (
+            lora_layers is not None and not explicit_off
+        )
         if needs_checkpointing:
             if hasattr(backbone, "gradient_checkpointing_enable"):
                 gc_kwargs: dict = {}
@@ -119,6 +129,13 @@ class DecisionModel(nn.Module):
                         "(auto-detect left it off)",
                         flush=True,
                     )
+        elif lora_layers is not None and explicit_off:
+            print(
+                "  Gradient checkpointing: disabled by request with LoRA — "
+                "every adapted block keeps its activations, so memory use is "
+                "much higher",
+                flush=True,
+            )
 
         print_gpu_info(gpu_config)
         print(f"  max_length={self.max_length} (effective)", flush=True)
