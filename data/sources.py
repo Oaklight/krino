@@ -91,16 +91,17 @@ def missing_sources(
 def invalid_score_labels(items: list[TypedQuestion]) -> list[TypedQuestion]:
     """Return the score items whose label cannot be a level on their own scale.
 
-    A corpus is built once and read many times, so a loader fix alone does not
-    repair an existing JSONL: `data/benchmarks/stsb.jsonl` still holds the 1,379
-    rows GLUE shipped with `label = -1.0`, clamped to 0 at build time. Those rows
-    are unlabeled, not "No similarity", and they contaminated every score metric
-    and cost 1.05 pp of overall accuracy (#176).
-
     The rule is the invariant rather than the source name: a level index has to
-    fall on `0 .. n_levels-1` for the item's own criteria list. That catches the
+    fall on `0 .. n_levels-1` for the item's own criteria list. That catches a
     negative sentinel, a label past the end of the scale, and a non-numeric
     label, for any source, without naming stsb.
+
+    It is a guard against future bad values, **not** a repair for the STS-B
+    corpus in the wild: that corpus was built with the sentinel already clamped
+    to 0, so the offending labels sit inside the valid range and no read-time
+    check can tell them from a genuine "No similarity" (#176). Those corpora
+    have to be rebuilt with the fixed loader, which is what
+    `python -m data.pipeline stsb` does.
 
     Args:
         items: Items from one source, already filtered to supported types.
