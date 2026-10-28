@@ -24,7 +24,7 @@ from .distributed import (
     gather_train_stats,
     shard,
 )
-from .losses import rps_loss
+from .losses import rps_from_probs, rps_loss
 from .memory import format_epoch_memory, peak_snapshot
 from ..evaluation.breakdown import build_eval_breakdown
 
@@ -532,7 +532,7 @@ def eval_epoch(model: nn.Module, eval_items: list) -> dict[str, Any]:
         result = _eval_item(model, item)
         if result is None:
             continue
-        loss_val, is_correct = result
+        loss_val, is_correct, _details = result
         total_loss += loss_val
         n_items += 1
         if is_correct:
@@ -629,10 +629,14 @@ def train(
 def _eval_item(
     model: nn.Module,
     item: Any,
-) -> tuple[float, bool] | None:
-    """Evaluate a single item, returning (loss, is_correct).
+) -> tuple[float, bool, dict[str, float] | None] | None:
+    """Evaluate a single item, returning (loss, is_correct, details).
 
-    Shared logic for eval_epoch and eval_epoch_detailed.
+    Shared logic for eval_epoch and eval_epoch_detailed. ``details`` carries
+    ``rps`` and ``mae`` for score items -- the two metrics that respect the
+    order of the levels, and the ones that can tell a near miss from a far one
+    -- and is ``None`` for noul and choice, whose levels are unordered.
+
     Returns None if the item was skipped (e.g. label not in option keys).
     """
     state = item.state
@@ -654,13 +658,13 @@ def _eval_item(
             pred_idx = logits.argmax(dim=-1).item()
             pred_key = keys[pred_idx]
             target_key = "true" if label else "false"
-            return (loss.item(), pred_key == target_key)
+            return (loss.item(), pred_key == target_key, None)
         else:
             logit = model.forward_noul(state, instructions)
             target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
             loss = F.binary_cross_entropy_with_logits(logit, target)
             pred = torch.sigmoid(logit).item() > 0.5
-            return (loss.item(), pred == label)
+            return (loss.item(), pred == label, None)
 
     elif q_type == "choice":
         criteria = question["criteria"]
@@ -673,7 +677,7 @@ def _eval_item(
         target = torch.tensor([target_idx], device=logits.device)
         loss = F.cross_entropy(logits, target)
         pred_idx = logits.argmax(dim=-1).item()
-        return (loss.item(), keys[pred_idx] == label)
+        return (loss.item(), keys[pred_idx] == label, None)
 
     elif q_type == "score":
         criteria = question["criteria"]
@@ -688,7 +692,11 @@ def _eval_item(
         pred_idx = logits.argmax(dim=-1).item()
         gold_idx = int(round(float(label)))
         gold_idx = max(0, min(n_levels - 1, gold_idx))
-        return (loss.item(), pred_idx == gold_idx)
+        probs = torch.softmax(logits, dim=-1)
+        rps = rps_from_probs(probs, target.unsqueeze(0)).item()
+        expected_level = (probs[0] * torch.arange(n_levels, device=probs.device)).sum()
+        mae = (expected_level - float(label)).abs().item()
+        return (loss.item(), pred_idx == gold_idx, {"rps": rps, "mae": mae})
 
     return None
 
@@ -711,15 +719,21 @@ def eval_epoch_detailed(model: nn.Module, eval_items: list) -> dict[str, Any]:
     """
     model.eval()
 
-    rows: list[tuple[str, str, float, bool]] = []
+    rows: list[tuple[Any, ...]] = []
     for item in eval_items:
         result = _eval_item(model, item)
         if result is None:
             continue
-        loss_val, is_correct = result
-        rows.append(
-            (item.source, item.question.get("type", "noul"), loss_val, is_correct)
+        loss_val, is_correct, details = result
+        row: tuple[Any, ...] = (
+            item.source,
+            item.question.get("type", "noul"),
+            loss_val,
+            is_correct,
         )
+        if details is not None:
+            row = row + (details["rps"], details["mae"])
+        rows.append(row)
 
     return build_eval_breakdown(rows)
 
