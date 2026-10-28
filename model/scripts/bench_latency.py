@@ -205,7 +205,7 @@ def main() -> int:
     )
 
     record: dict[str, Any] = {
-        "model": getattr(model, "model_name", None),
+        "model": args.model or cfg.get("model"),
         "device": torch.cuda.get_device_name(0) if use_cuda else "cpu",
         "torch": torch.__version__,
         "cuda": torch.version.cuda,
