@@ -7,6 +7,11 @@ site/
 model/docs/gpu-inventory.md
 data/benchmarks/synthetic/synthetic.jsonl
 data/benchmarks/synthetic/.hf_manifest.json
+# Derived, not source: the cluster cache is keyed by CACHE_VERSION plus a
+# content fingerprint, so a committed copy goes stale the moment either moves
+# and the loader recomputes anyway.  Tracking it also means every test run
+# rewrites a tracked file.
+data/benchmarks/synthetic/.split_clusters.json
 
 # Materialised benchmark corpora: hundreds of megabytes, rebuilt on demand by
 # `python -m data.pipeline <source>`.  The authored eval set is hand-written and
