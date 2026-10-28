@@ -48,16 +48,23 @@ import data.sources as sources_mod
 from data.sources import load_source_items
 from model.evaluation.calibration import (
     brier_score,
+    expected_calibration_error,
     fit_temperature,
     multiclass_brier,
     quadratic_weighted_kappa,
     softmax,
-    top1_calibration,
 )
 from model.evaluation.order_sensitivity import (
+    chance_accuracy,
+    duplicate_option_texts,
     make_permutation,
+    nested_option_subsets,
+    normalized_accuracy,
     option_count_bucket,
     remap_probe_probs,
+    select_items_by_option_limit,
+    tie_indices,
+    tie_stable_argmax,
     total_variation,
 )
 from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info
@@ -79,27 +86,6 @@ def _as_bool(label: Any) -> bool:
     if isinstance(label, str):
         return label.strip().lower() in ("true", "yes", "1")
     return bool(label)
-
-
-def _argmax(values: Sequence[float]) -> int:
-    return max(range(len(values)), key=values.__getitem__)
-
-
-def _option_count(item: Any) -> int:
-    """Number of options (or score levels) the forward pass will score."""
-    question = item.question
-    q_type = question.get("type", "noul")
-    if q_type == "choice":
-        return len(question.get("criteria") or {})
-    if q_type == "score":
-        return len(question.get("criteria") or [])
-    augmented = question.get("augmented_options")
-    teacher_probs = getattr(item, "teacher_probs", None)
-    # Mirrors _eval_item: the extra option list is used only when the item
-    # carries more than two teacher probabilities.
-    if augmented and teacher_probs and len(teacher_probs) > 2:
-        return len(augmented)
-    return 2
 
 
 @torch.no_grad()
@@ -152,6 +138,9 @@ def _predict_original(model: Any, item: Any) -> dict[str, Any] | None:
                 "option_count": len(keys),
                 "positive_index": keys.index(positive_key),
                 "positive": positive,
+                "label_order": list(range(len(keys))),
+                "option_texts": option_texts,
+                "source": item.source,
                 "_item": item,
             }
         logit = float(model.forward_noul(state, instructions).reshape(-1)[0].item())
@@ -164,6 +153,9 @@ def _predict_original(model: Any, item: Any) -> dict[str, Any] | None:
             "option_count": 2,
             "positive_index": 1,
             "positive": positive,
+            "label_order": [0, 1],
+            "option_texts": ["false", "true"],
+            "source": item.source,
             "_item": item,
         }
 
@@ -182,6 +174,9 @@ def _predict_original(model: Any, item: Any) -> dict[str, Any] | None:
             "label_idx": keys.index(item.label),
             "gold_label": item.label,
             "option_count": len(keys),
+            "label_order": list(range(len(keys))),
+            "option_texts": option_texts,
+            "source": item.source,
             "_item": item,
         }
 
@@ -201,6 +196,9 @@ def _predict_original(model: Any, item: Any) -> dict[str, Any] | None:
             "option_count": n_levels,
             "n_levels": n_levels,
             "score_label": label_f,
+            "label_order": list(range(n_levels)),
+            "option_texts": criteria,
+            "source": item.source,
             "_item": item,
         }
 
@@ -213,17 +211,19 @@ def _predict_probe(
 ) -> tuple[list[float], list[Any]]:
     """Re-score one item with its options reordered.
 
-    For choice items ``probe="order"`` shuffles the ``(key, description)``
-    pairs, so every option keeps its text and only its position changes.
-    ``probe="text"`` permutes the effective option texts among fixed key
-    positions.  A model that consumes only the option texts sees the same
-    thing in both cases; the different seeds just take two independent
-    permutation samples.
+    For choice items ``probe="order"`` permutes the ``(key, description)``
+    pairs, so every option keeps its text and only its position changes.  The
+    head consumes only option texts, never keys, so this is the only reordering
+    the model can observe: a "text" variant that permutes descriptions among
+    fixed keys feeds the identical text sequence.  A second ``text`` sample
+    would therefore be the same experiment, and the report does not pretend
+    otherwise.
 
     Score items are ordinal.  ``probe="order"`` reverses the level list;
-    ``probe="text"`` permutes the level descriptions.  In both cases the
-    returned source labels let the caller mirror the output back onto the
-    original level indices.
+    ``probe="text"`` uses a random permutation of the level descriptions.
+    Those are different permutations of the same operation, and the returned
+    source labels let the caller mirror the output back onto the original
+    level indices.
 
     Args:
         model: Loaded ``DecisionModel`` in eval mode.
@@ -244,10 +244,7 @@ def _predict_probe(
         criteria = question["criteria"]
         keys = list(criteria.keys())
         texts = [value or key for key, value in criteria.items()]
-        if probe == "order":
-            permutation = make_permutation(len(keys), seed, item.id, "order")
-        else:
-            permutation = make_permutation(len(keys), seed, item.id, "text")
+        permutation = make_permutation(len(keys), seed, item.id, "order")
         probe_texts = [texts[index] for index in permutation]
         source_labels = [keys[index] for index in permutation]
         logits = model.forward_choice(state, instructions, probe_texts)[0]
@@ -280,12 +277,35 @@ def _probs(record: dict[str, Any], temperature: float = 1.0) -> list[float]:
 def _type_metrics(
     records: Sequence[dict[str, Any]], temperature: float = 1.0
 ) -> dict[str, Any]:
-    """Accuracy, top-1 ECE and Brier at one temperature."""
+    """Accuracy, top-1 ECE and Brier at one temperature.
+
+    Ties at the exact maximum are broken by the option's original index, so
+    accuracy does not depend on the order the options were presented in.  The
+    number of tied items and of items with duplicated option texts is reported
+    alongside, because both make the gold label ambiguous.
+    """
     if not records:
-        return {"n": 0, "accuracy": 0.0, "ece": 0.0, "brier": 0.0}
+        return {
+            "n": 0,
+            "accuracy": 0.0,
+            "ece": 0.0,
+            "brier": 0.0,
+            "tie_count": 0,
+            "tie_rate": 0.0,
+            "duplicate_option_text_count": 0,
+            "accuracy_on_unique_options": 0.0,
+            "n_unique_options": 0,
+        }
     probabilities = [_probs(record, temperature) for record in records]
     labels = [record["label_idx"] for record in records]
-    ece = top1_calibration(probabilities, labels)["ece"]
+    predictions = [
+        tie_stable_argmax(probability, record["label_order"])
+        for probability, record in zip(probabilities, records)
+    ]
+    correct = [prediction == label for prediction, label in zip(predictions, labels)]
+    ece = expected_calibration_error(
+        [max(probability) for probability in probabilities], correct
+    )["ece"]
     if records[0]["type"] == "noul":
         positive_probs = [
             probability[record["positive_index"]]
@@ -296,15 +316,28 @@ def _type_metrics(
         ]
     else:
         brier = multiclass_brier(probabilities, labels)["brier"]
-    correct = sum(
-        _argmax(probability) == label
-        for probability, label in zip(probabilities, labels)
-    )
+
+    tie_count = sum(len(tie_indices(probability)) > 1 for probability in probabilities)
+    duplicate_flags = [
+        bool(duplicate_option_texts(record["option_texts"])) for record in records
+    ]
+    unique_correct = [
+        is_correct
+        for is_correct, duplicate in zip(correct, duplicate_flags)
+        if not duplicate
+    ]
     return {
         "n": len(records),
-        "accuracy": correct / len(records),
+        "accuracy": sum(correct) / len(records),
         "ece": ece,
         "brier": brier,
+        "tie_count": tie_count,
+        "tie_rate": tie_count / len(records),
+        "duplicate_option_text_count": sum(duplicate_flags),
+        "accuracy_on_unique_options": (
+            sum(unique_correct) / len(unique_correct) if unique_correct else 0.0
+        ),
+        "n_unique_options": len(unique_correct),
     }
 
 
@@ -366,7 +399,7 @@ def _score_metrics(
     by_levels: dict[int, tuple[list[int], list[int]]] = defaultdict(lambda: ([], []))
     for probability, record in zip(probabilities, records):
         predictions, golds = by_levels[record["n_levels"]]
-        predictions.append(_argmax(probability))
+        predictions.append(tie_stable_argmax(probability, record["label_order"]))
         golds.append(record["label_idx"])
     qwk_by_levels = {
         str(n_levels): {
@@ -391,16 +424,33 @@ def _score_metrics(
 
 
 def _bucket_metrics(records: Sequence[dict[str, Any]]) -> dict[str, Any]:
-    """Accuracy and ECE split by option count."""
+    """Accuracy and ECE split by option count, rescaled by chance.
+
+    Raw accuracy falls as options are added even when discrimination is
+    constant.  ``mean_chance`` is the mean of ``1 / option_count`` over the
+    bucket and ``normalized_accuracy`` puts the cell on the chance-to-perfect
+    scale used by JevBench-style reports.
+    """
     buckets: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for record in records:
         buckets[option_count_bucket(record["option_count"])].append(record)
     order = ["2", "3-5", "6-20", ">20"]
-    return {
-        bucket: _type_metrics(buckets[bucket])
-        for bucket in order
-        if buckets.get(bucket)
-    }
+    result: dict[str, Any] = {}
+    for bucket in order:
+        bucket_records = buckets.get(bucket)
+        if not bucket_records:
+            continue
+        metrics = _type_metrics(bucket_records)
+        mean_chance = sum(
+            chance_accuracy(record["option_count"]) for record in bucket_records
+        ) / len(bucket_records)
+        metrics["mean_chance"] = mean_chance
+        metrics["excess_accuracy"] = metrics["accuracy"] - mean_chance
+        metrics["normalized_accuracy"] = normalized_accuracy(
+            metrics["accuracy"], mean_chance
+        )
+        result[bucket] = metrics
+    return result
 
 
 def _temperature_report(
@@ -442,6 +492,20 @@ def _temperature_report(
     else:
         score_before = score_after = {}
 
+    score_holdout: dict[str, float] = {}
+    if q_type == "score":
+        score_holdout = {
+            "mae_before": score_before["mae"],
+            "mae_after": score_after["mae"],
+            "mae_delta_pct": (
+                100.0 * (score_after["mae"] - score_before["mae"]) / score_before["mae"]
+                if score_before["mae"]
+                else 0.0
+            ),
+            "rps_before": score_before["rps"],
+            "rps_after": score_after["rps"],
+        }
+
     return {
         "fitted": temperature,
         "applied": temperature,
@@ -457,15 +521,12 @@ def _temperature_report(
             "accuracy_before": before["accuracy"],
             "accuracy_after": after["accuracy"],
         },
-        "holdout_score": (
-            {
-                "mae_before": score_before["mae"],
-                "mae_after": score_after["mae"],
-                "rps_before": score_before["rps"],
-                "rps_after": score_after["rps"],
-            }
-            if q_type == "score"
-            else {}
+        "holdout_score": score_holdout,
+        "note": (
+            "Temperature scaling is monotone, so argmax accuracy is unchanged. "
+            "It is valid for probabilities and confidence; it is not valid for "
+            "the score point estimate sum(i * p_i). For score items it can "
+            "raise MAE even while ECE and Brier fall (see holdout_score)."
         ),
     }
 
@@ -476,17 +537,30 @@ def _order_report(
     seed: int,
     probe: str,
 ) -> dict[str, Any]:
-    """Run one reordering probe over a type and aggregate its three numbers."""
+    """Run one reordering probe over a type and aggregate its three numbers.
+
+    Both the unperturbed and the remapped probe prediction use a tie-break
+    keyed by the original option index, so an exact tie cannot be counted as a
+    flip.  ``tie_count`` reports how many items had such a tie, and
+    ``label_flip_rate_excluding_ties`` is the honest sensitivity number.
+    """
     if not records:
         return {
             "n": 0,
+            "tie_count": 0,
+            "n_unique_max": 0,
             "label_flip_rate": 0.0,
+            "label_flip_rate_excluding_ties": 0.0,
             "mean_tv": 0.0,
+            "max_tv": 0.0,
             "accuracy_before": 0.0,
             "accuracy_after": 0.0,
         }
 
     flips = 0
+    flips_unique = 0
+    ties = 0
+    unique = 0
     tv_total = 0.0
     max_tv = 0.0
     correct_before = 0
@@ -494,15 +568,25 @@ def _order_report(
     for record in records:
         original_probs = _probs(record)
         original_map = dict(zip(record["labels"], original_probs))
+        original_pred_idx = tie_stable_argmax(original_probs, record["label_order"])
+        original_pred = record["labels"][original_pred_idx]
+        is_tied = len(tie_indices(original_probs)) > 1
+        ties += is_tied
+        unique += not is_tied
+
         probe_logits, source_labels = _predict_probe(
             model, record["_item"], seed, probe
         )
         probe_probs = softmax(probe_logits)
         probe_map = remap_probe_probs(probe_probs, source_labels)
+        probe_in_order = [probe_map[label] for label in record["labels"]]
+        probe_pred_idx = tie_stable_argmax(probe_in_order, record["label_order"])
+        probe_pred = record["labels"][probe_pred_idx]
 
-        original_pred = record["labels"][_argmax(original_probs)]
-        probe_pred = source_labels[_argmax(probe_probs)]
-        flips += probe_pred != original_pred
+        flipped = probe_pred != original_pred
+        flips += flipped
+        if not is_tied:
+            flips_unique += flipped
         distance = total_variation(original_map, probe_map)
         tv_total += distance
         max_tv = max(max_tv, distance)
@@ -511,11 +595,117 @@ def _order_report(
 
     return {
         "n": len(records),
+        "tie_count": ties,
+        "n_unique_max": unique,
         "label_flip_rate": flips / len(records),
+        "label_flip_rate_excluding_ties": flips_unique / unique if unique else 0.0,
         "mean_tv": tv_total / len(records),
         "max_tv": max_tv,
         "accuracy_before": correct_before / len(records),
         "accuracy_after": correct_after / len(records),
+    }
+
+
+@torch.no_grad()
+def _nested_option_report(
+    model: Any,
+    records: Sequence[dict[str, Any]],
+    source_name: str,
+    sizes: Sequence[int],
+    seed: int,
+) -> dict[str, Any]:
+    """Score nested option subsets of the same items, varying only K.
+
+    Bucketing whole sources by option count confounds K with source
+    difficulty.  On a source that already carries many options (banking77 has
+    77), keeping the state, question and gold fixed and scoring subsets of
+    size K isolates the many-option regime.  For every item the subset is
+    seeded from its id, so the curve is reproducible.
+    """
+    selected = [record for record in records if record.get("source") == source_name]
+    if not selected:
+        return {"source": source_name, "n_items": 0, "curve": {}}
+
+    per_size: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    for record in selected:
+        item = record["_item"]
+        question = item.question
+        n_options = record["option_count"]
+        gold_index = record["label_idx"]
+        texts = record["option_texts"]
+        requested = list(sizes) + [n_options]
+        subsets = nested_option_subsets(n_options, gold_index, requested, seed, item.id)
+        for size, subset in subsets.items():
+            probe_texts = [texts[index] for index in subset]
+            logits = model.forward_choice(
+                item.state, question.get("instructions", ""), probe_texts
+            )[0]
+            probs = softmax(logits.float().cpu().tolist())
+            prediction = subset[tie_stable_argmax(probs, subset)]
+            gold_local = subset.index(gold_index)
+            gold_probability = probs[gold_local]
+            per_size[size].append(
+                {
+                    "correct": prediction == gold_index,
+                    "confidence": max(probs),
+                    "gold_probability": gold_probability,
+                    "gold_rank": 1 + sum(p > gold_probability for p in probs),
+                    "tied": len(tie_indices(probs)) > 1,
+                }
+            )
+
+    curve: dict[str, Any] = {}
+    for size in sorted(per_size):
+        rows = per_size[size]
+        count = len(rows)
+        accuracy = sum(row["correct"] for row in rows) / count
+        chance = chance_accuracy(size)
+        curve[str(size)] = {
+            "n": count,
+            "accuracy": accuracy,
+            "chance": chance,
+            "normalized_accuracy": normalized_accuracy(accuracy, chance),
+            "ece": expected_calibration_error(
+                [row["confidence"] for row in rows],
+                [row["correct"] for row in rows],
+            )["ece"],
+            "mean_gold_probability": sum(row["gold_probability"] for row in rows)
+            / count,
+            "mean_gold_rank": sum(row["gold_rank"] for row in rows) / count,
+            "tie_count": sum(row["tied"] for row in rows),
+        }
+    return {"source": source_name, "n_items": len(selected), "curve": curve}
+
+
+def _load_history_reference(path: Path) -> dict[str, Any]:
+    """Quote the checkpoint's best-epoch eval row from its training history.
+
+    The history file lives next to the checkpoint and is not part of the
+    evaluation artifact, so copying the epoch and per-type accuracies into the
+    report makes the "matches training" sanity check reviewable.
+    """
+    history = json.loads(Path(path).read_text())
+    best: tuple[float, dict[str, Any]] | None = None
+    for entry in history:
+        evaluation = entry.get("eval")
+        if not evaluation:
+            continue
+        loss = evaluation["aggregate"]["mean_loss"]
+        if best is None or loss < best[0]:
+            best = (loss, entry)
+    if best is None:
+        return {"source": str(path)}
+    loss, entry = best
+    evaluation = entry["eval"]
+    return {
+        "source": str(path),
+        "epoch": entry.get("epoch"),
+        "mean_loss": loss,
+        "aggregate_accuracy": evaluation["aggregate"]["accuracy"],
+        "accuracy": {
+            q_type: stats["accuracy"]
+            for q_type, stats in evaluation.get("by_type", {}).items()
+        },
     }
 
 
@@ -677,6 +867,35 @@ def _print_table(summary: dict[str, Any]) -> None:
             flush=True,
         )
 
+    score_metrics = summary["by_type"].get("score", {}).get("score_metrics", {})
+    qwk_by_levels = score_metrics.get("qwk_by_levels", {})
+    if qwk_by_levels:
+        parts = [
+            f"{n_levels} levels {values['qwk']:.3f} (n={values['n']})"
+            for n_levels, values in sorted(
+                qwk_by_levels.items(), key=lambda item: int(item[0])
+            )
+        ]
+        print(f"  QWK by level count: {'; '.join(parts)}", flush=True)
+
+    print("\nAmbiguous items:", flush=True)
+    print(
+        f"{'Type':<8} {'Ties':>6} {'Tie_rate':>9} {'Dup_text':>9} "
+        f"{'Acc_unique':>11} {'n_unique':>9}",
+        flush=True,
+    )
+    for q_type in TYPES:
+        metrics = summary["by_type"].get(q_type)
+        if not metrics or not metrics["n"]:
+            continue
+        print(
+            f"{q_type:<8} {metrics['tie_count']:>6} {metrics['tie_rate']:>9.4f} "
+            f"{metrics['duplicate_option_text_count']:>9} "
+            f"{metrics['accuracy_on_unique_options']:>11.4f} "
+            f"{metrics['n_unique_options']:>9}",
+            flush=True,
+        )
+
     print("\nTemperature scaling (fit / holdout split):", flush=True)
     print(
         f"{'Type':<8} {'T':>7} {'ECE_before':>11} {'ECE_after':>10} "
@@ -695,30 +914,51 @@ def _print_table(summary: dict[str, Any]) -> None:
             f"{hold['brier_after']:>12.4f}",
             flush=True,
         )
+    score_temp = summary["by_type"].get("score", {}).get("temperature", {})
+    score_holdout = score_temp.get("holdout_score", {})
+    if score_holdout:
+        print(
+            f"  score MAE: {score_holdout['mae_before']:.4f} -> "
+            f"{score_holdout['mae_after']:.4f} "
+            f"({score_holdout['mae_delta_pct']:+.1f}%); "
+            f"RPS: {score_holdout['rps_before']:.5f} -> "
+            f"{score_holdout['rps_after']:.5f}",
+            flush=True,
+        )
+    print(
+        "  Apply T to probabilities/confidence only; MAE on the expected "
+        "level is not invariant to it.",
+        flush=True,
+    )
 
     order = summary.get("order_sensitivity", {})
     if order:
-        print("\nOption-order sensitivity:", flush=True)
+        print("\nOption-order sensitivity (tie-stable):", flush=True)
         print(
-            f"{'Type':<8} {'Probe':<8} {'n':>6} {'Flip':>8} {'MeanTV':>8} "
-            f"{'Acc_before':>11} {'Acc_after':>10}",
+            f"{'Type':<8} {'Probe':<12} {'n':>6} {'Flip':>8} {'Flip_notie':>10} "
+            f"{'MeanTV':>8} {'Acc_before':>11} {'Acc_after':>10}",
             flush=True,
         )
-        for q_type in ("choice", "score"):
-            for probe in ("order", "text"):
-                values = order.get(q_type, {}).get(probe)
+        for q_type, probes in order.items():
+            for probe, values in probes.items():
                 if not values or not values["n"]:
                     continue
                 print(
-                    f"{q_type:<8} {probe:<8} {values['n']:>6} "
-                    f"{values['label_flip_rate']:>8.4f} {values['mean_tv']:>8.4f} "
+                    f"{q_type:<8} {probe:<12} {values['n']:>6} "
+                    f"{values['label_flip_rate']:>8.4f} "
+                    f"{values['label_flip_rate_excluding_ties']:>10.4f} "
+                    f"{values['mean_tv']:>8.4f} "
                     f"{values['accuracy_before']:>11.4f} "
                     f"{values['accuracy_after']:>10.4f}",
                     flush=True,
                 )
 
-    print("\nAccuracy / ECE by option count:", flush=True)
-    print(f"{'Type':<8} {'Bucket':<8} {'n':>6} {'Acc':>8} {'ECE':>8}", flush=True)
+    print("\nAccuracy / ECE by option count (chance-normalised):", flush=True)
+    print(
+        f"{'Type':<8} {'Bucket':<8} {'n':>6} {'Acc':>8} {'ECE':>8} "
+        f"{'Chance':>8} {'Norm':>8}",
+        flush=True,
+    )
     for q_type in TYPES:
         metrics = summary["by_type"].get(q_type)
         if not metrics:
@@ -726,7 +966,52 @@ def _print_table(summary: dict[str, Any]) -> None:
         for bucket, values in metrics.get("by_option_count", {}).items():
             print(
                 f"{q_type:<8} {bucket:<8} {values['n']:>6} "
-                f"{values['accuracy']:>8.4f} {values['ece']:>8.4f}",
+                f"{values['accuracy']:>8.4f} {values['ece']:>8.4f} "
+                f"{values['mean_chance']:>8.4f} "
+                f"{values['normalized_accuracy']:>8.4f}",
+                flush=True,
+            )
+
+    nested = summary.get("nested_options")
+    if nested and nested.get("curve"):
+        print(
+            f"\nNested option subsets on {nested['source']} "
+            f"(n={nested['n_items']}), same items, only K changes:",
+            flush=True,
+        )
+        print(
+            f"{'K':>4} {'n':>6} {'Acc':>8} {'ECE':>8} {'Chance':>8} "
+            f"{'Norm':>8} {'GoldP':>8} {'GoldRank':>9}",
+            flush=True,
+        )
+        for size, values in sorted(
+            nested["curve"].items(), key=lambda item: int(item[0])
+        ):
+            print(
+                f"{size:>4} {values['n']:>6} {values['accuracy']:>8.4f} "
+                f"{values['ece']:>8.4f} {values['chance']:>8.4f} "
+                f"{values['normalized_accuracy']:>8.4f} "
+                f"{values['mean_gold_probability']:>8.4f} "
+                f"{values['mean_gold_rank']:>9.2f}",
+                flush=True,
+            )
+
+    history = summary.get("history_reference")
+    if history and history.get("accuracy"):
+        measured = {
+            q_type: summary["by_type"][q_type]["accuracy"]
+            for q_type in history["accuracy"]
+            if q_type in summary["by_type"]
+        }
+        print(
+            f"\nTraining history reference (epoch {history['epoch']}, "
+            f"best eval loss {history['mean_loss']:.4f}):",
+            flush=True,
+        )
+        for q_type in sorted(measured):
+            print(
+                f"  {q_type:<8} measured {measured[q_type]:.4f}  "
+                f"history {history['accuracy'][q_type]:.4f}",
                 flush=True,
             )
 
@@ -831,6 +1116,22 @@ def main() -> int:
         "--no-order-probes", action="store_true", help="Skip reordering probes"
     )
     parser.add_argument(
+        "--nested-options-source",
+        default=None,
+        help="Choice source for the nested-K experiment, e.g. banking77",
+    )
+    parser.add_argument(
+        "--nested-option-sizes",
+        default="2,5,20,77",
+        help="Comma-separated subset sizes for the nested-K experiment",
+    )
+    parser.add_argument(
+        "--history",
+        type=Path,
+        default=None,
+        help="Training history.json; quote its best epoch in the report",
+    )
+    parser.add_argument(
         "--json", type=Path, default=None, help="Write the full report here"
     )
     args = parser.parse_args()
@@ -920,16 +1221,20 @@ def main() -> int:
     eval_items = _load_eval_items(cfg, args)
     print(f"\nLoaded {len(eval_items):,} eval items", flush=True)
     eval_items = _cap_items_per_type(eval_items, args.max_items_per_type, args.seed)
+    eval_items, option_limit_skipped = select_items_by_option_limit(
+        eval_items, args.max_options
+    )
 
     records: dict[str, list[dict[str, Any]]] = {q_type: [] for q_type in TYPES}
-    skipped = {"option_limit": 0, "label_not_in_options": 0, "unknown_type": 0}
+    skipped = {
+        "option_limit": option_limit_skipped,
+        "label_not_in_options": 0,
+        "unknown_type": 0,
+    }
     for item in eval_items:
         q_type = item.question.get("type", "noul")
         if q_type not in records:
             skipped["unknown_type"] += 1
-            continue
-        if args.max_options and _option_count(item) > args.max_options:
-            skipped["option_limit"] += 1
             continue
         record = _predict_original(model, item)
         if record is None:
@@ -966,12 +1271,24 @@ def main() -> int:
             metrics["score_metrics"] = _score_metrics(type_records)
         summary["by_type"][q_type] = metrics
 
+    if args.nested_options_source:
+        sizes = [
+            int(part) for part in args.nested_option_sizes.split(",") if part.strip()
+        ]
+        summary["nested_options"] = _nested_option_report(
+            model, records["choice"], args.nested_options_source, sizes, args.seed
+        )
+    if args.history:
+        summary["history_reference"] = _load_history_reference(args.history)
+
     if not args.no_order_probes:
-        for q_type in ("choice", "score"):
-            summary["order_sensitivity"][q_type] = {
-                "order": _order_report(model, records[q_type], args.seed, "order"),
-                "text": _order_report(model, records[q_type], args.seed, "text"),
-            }
+        summary["order_sensitivity"]["choice"] = {
+            "permutation": _order_report(model, records["choice"], args.seed, "order"),
+        }
+        summary["order_sensitivity"]["score"] = {
+            "reversed": _order_report(model, records["score"], args.seed, "order"),
+            "permutation": _order_report(model, records["score"], args.seed, "text"),
+        }
 
     summary["elapsed_s"] = time.perf_counter() - started
     _print_table(summary)

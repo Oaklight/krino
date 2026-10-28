@@ -109,3 +109,170 @@ def make_permutation(n: int, seed: int, item_id: str, tag: str) -> list[int]:
     permutation = list(range(n))
     rng.shuffle(permutation)
     return permutation
+
+
+def option_count(
+    question: dict[str, Any], teacher_probs: dict[str, Any] | None = None
+) -> int:
+    """Number of options (or score levels) a forward pass will score.
+
+    Mirrors the branch ``_eval_item`` takes in ``model/training/supervised.py``:
+    a noul item uses its augmented option list only when the item carries more
+    than two teacher probabilities.
+
+    Args:
+        question: The ``TypedQuestion.question`` mapping.
+        teacher_probs: Optional teacher distribution attached to the item.
+
+    Returns:
+        The option or level count.
+    """
+    q_type = question.get("type", "noul")
+    if q_type == "choice":
+        return len(question.get("criteria") or {})
+    if q_type == "score":
+        return len(question.get("criteria") or [])
+    augmented = question.get("augmented_options")
+    if augmented and teacher_probs and len(teacher_probs) > 2:
+        return len(augmented)
+    return 2
+
+
+def select_items_by_option_limit(
+    items: Sequence[Any], max_options: int
+) -> tuple[list[Any], int]:
+    """Split items into those within the option guard and those above it.
+
+    Args:
+        items: Objects with a ``question`` attribute (and optionally
+            ``teacher_probs``), such as ``TypedQuestion``.
+        max_options: Maximum option count; ``0`` or a negative value disables
+            the guard.
+
+    Returns:
+        ``(kept, skipped)`` where ``skipped`` is the number of items dropped.
+    """
+    if max_options <= 0:
+        return list(items), 0
+    kept: list[Any] = []
+    skipped = 0
+    for item in items:
+        if (
+            option_count(item.question, getattr(item, "teacher_probs", None))
+            > max_options
+        ):
+            skipped += 1
+        else:
+            kept.append(item)
+    return kept, skipped
+
+
+def tie_indices(probabilities: Sequence[float]) -> list[int]:
+    """Indices that share the exact maximum probability."""
+    if not probabilities:
+        return []
+    best = max(probabilities)
+    return [index for index, p in enumerate(probabilities) if p == best]
+
+
+def tie_stable_argmax(probabilities: Sequence[float], order_keys: Sequence[Any]) -> int:
+    """Argmax that breaks exact ties by the smallest ``order_keys`` value.
+
+    Python's ``max`` returns the first maximum, so on an exact tie the label
+    depends on where the option happened to sit in the list.  That makes a
+    reordering probe count tie-breaking as sensitivity and makes the headline
+    accuracy itself depend on presentation order.  Breaking ties by a key that
+    travels with the label (its original index) removes both effects.
+
+    Args:
+        probabilities: Probability per position.
+        order_keys: Comparable tie-break key per position; lower wins.
+
+    Returns:
+        Index of the winning position.
+
+    Raises:
+        ValueError: If the inputs are empty or have different lengths.
+    """
+    if not probabilities:
+        raise ValueError("probabilities must not be empty")
+    if len(probabilities) != len(order_keys):
+        raise ValueError(
+            f"probabilities and order_keys must have the same length, "
+            f"got {len(probabilities)} and {len(order_keys)}"
+        )
+    candidates = tie_indices(probabilities)
+    return min(candidates, key=lambda index: order_keys[index])
+
+
+def duplicate_option_texts(texts: Sequence[str]) -> dict[str, int]:
+    """Effective option texts that occur more than once, with their counts.
+
+    A duplicated option makes the gold label ambiguous: two positions carry
+    the same evidence, so the argmax can only be decided by position.  The
+    evaluation reports these items separately rather than letting them decide
+    accuracy silently.
+    """
+    counts: dict[str, int] = {}
+    for text in texts:
+        counts[text] = counts.get(text, 0) + 1
+    return {text: count for text, count in counts.items() if count > 1}
+
+
+def chance_accuracy(n_options: int) -> float:
+    """Accuracy of a uniform guess over ``n_options`` options."""
+    return 1.0 / n_options if n_options > 0 else 0.0
+
+
+def normalized_accuracy(accuracy: float, mean_chance: float) -> float:
+    """Rescale accuracy to the distance from chance to perfect.
+
+    Raw accuracy falls with option count even when discrimination is constant,
+    so a many-option cell looks worse than a binary one.  ``(acc - chance) /
+    (1 - chance)`` puts both on a comparable scale.  A value of 0 is chance
+    and 1 is perfect.
+    """
+    if mean_chance >= 1.0:
+        return 0.0
+    return (accuracy - mean_chance) / (1.0 - mean_chance)
+
+
+def nested_option_subsets(
+    n_options: int,
+    gold_index: int,
+    sizes: Sequence[int],
+    seed: int,
+    item_id: str,
+) -> dict[int, list[int]]:
+    """Nested option subsets that always contain the gold option.
+
+    Removing options from the same questions isolates option count from source
+    difficulty: accuracy by subset size is a controlled curve, whereas
+    bucketing whole sources confounds the two.
+
+    Args:
+        n_options: Total number of options on the item.
+        gold_index: Index of the gold option.
+        sizes: Requested subset sizes; values outside ``[2, n_options]`` are
+            skipped.
+        seed: Run-level seed.
+        item_id: Stable question identifier.
+
+    Returns:
+        Mapping ``size -> option indices`` with the gold option included.
+    """
+    subsets: dict[int, list[int]] = {}
+    for size in sizes:
+        if size < 2 or size > n_options:
+            continue
+        if size == n_options:
+            subset = list(range(n_options))
+        else:
+            distractors = [index for index in range(n_options) if index != gold_index]
+            rng = random.Random(f"{seed}:{item_id}:nested:{size}")
+            rng.shuffle(distractors)
+            subset = [gold_index] + distractors[: size - 1]
+        rng = random.Random(f"{seed}:{item_id}:nested-order:{size}")
+        rng.shuffle(subset)
+        subsets[size] = subset
+    return subsets
