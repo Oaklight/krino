@@ -33,6 +33,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import math
 import os
 import tempfile
 from pathlib import Path
@@ -200,16 +201,24 @@ def cluster_families(
     signatures: list[tuple[int, ...]] = []
     state_of: list[str] = []
     owners: list[int] = []
+    # Cache of *text* pairs already compared. It must not be keyed on the family
+    # pair: a family contributes up to three state texts, so a family-level key
+    # would make the first combination the only one ever tested and a duplicate
+    # reachable through a counterfactual or paraphrase would stay in another
+    # split. Keying on the pair of inserted signatures is exact and still visits
+    # each text pair once.
     checked: set[tuple[int, int]] = set()
     # The signature only estimates Jaccard: at 64 permutations its standard
-    # error near 0.7 is ~0.06, so a pair at exactly 0.7 is called a duplicate
-    # only ~half the time. Band at the threshold, then confirm with the exact
-    # measure so the cluster boundary is the threshold rather than a coin flip.
-    prefilter = threshold - 0.15
+    # error near the threshold is ~0.057, so a pair at exactly 0.7 is called a
+    # duplicate only ~half the time. Candidates are banded at the threshold and
+    # confirmed with the exact measure; the prefilter only bounds wasted work,
+    # and its statistical justification lives in ``_prefilter_for``.
+    prefilter = _prefilter_for(threshold, num_perm)
 
     for family_idx, texts in enumerate(family_states):
         for text in texts:
             signature = lsh.make_minhash(text).signature
+            current = len(signatures)
             for candidate in lsh.query(signature):
                 other_family = owners[candidate]
                 if other_family == family_idx:
@@ -218,14 +227,15 @@ def cluster_families(
                     min(other_family, family_idx),
                     max(other_family, family_idx),
                 )
-                if pair in checked:
+                text_pair = (min(candidate, current), max(candidate, current))
+                if text_pair in checked:
                     continue
+                checked.add(text_pair)
                 if _jaccard(signature, signatures[candidate]) < prefilter:
                     continue
-                checked.add(pair)
                 if _exact_jaccard(text, state_of[candidate]) >= threshold:
                     union_find.union(pair[0], pair[1])
-            lsh.insert(len(signatures), signature)
+            lsh.insert(current, signature)
             signatures.append(signature)
             state_of.append(text)
             owners.append(family_idx)
@@ -233,26 +243,61 @@ def cluster_families(
     return [union_find.find(idx) for idx in range(len(family_states))]
 
 
+def _prefilter_for(threshold: float, num_perm: int) -> float:
+    """MinHash estimate below which a candidate pair is not worth exact comparison.
+
+    The exact Jaccard decides cluster membership, so this only bounds wasted work
+    — but a too-tight bound silently becomes the dominant false-negative source,
+    which is what a fixed ``threshold - 0.15`` was: at 64 permutations the
+    estimate's standard error near 0.7 is ~0.057, so that cutoff sat 2.6 sigma
+    below the true value and dropped roughly 0.5% of genuine threshold pairs,
+    seven orders of magnitude more than banding misses.
+
+    Four standard errors below the threshold puts the per-pair false-negative
+    rate near 3e-5.
+    """
+    sigma = math.sqrt(max(threshold * (1.0 - threshold), 0.0) / num_perm)
+    return max(0.0, threshold - 4.0 * sigma)
+
+
 def assign_splits(
     domain: str,
     clusters: Sequence[int],
     eval_ratio: float = 0.1,
+    family_keys: Sequence[int] | None = None,
 ) -> list[str]:
     """Assign one split per family, shared by every member of a cluster.
 
-    The cluster label is the lowest family index in the cluster, so a family
-    with no near-duplicate keeps the split the family-level scheme gives it.
+    The split key of a cluster is the lowest ``_family_idx`` among its members,
+    not the lowest position and not the cluster label. Two reasons: a family
+    alone in its cluster must keep exactly the split the family-level scheme
+    gives it, and this function must agree with the loader. Keying on position
+    disagreed with :func:`domain_splits` on 258 of 4,476 families, which is how a
+    verification table came to describe a run that never happens.
 
     Args:
         domain: Synthetic domain name.
         clusters: Cluster label per family, from :func:`cluster_families`.
         eval_ratio: Fraction of clusters held out for evaluation.
+        family_keys: ``_family_idx`` per family, in the same order as
+            ``clusters``. Defaults to the position, which is only correct when
+            the indices are positional — they are not in most domains.
 
     Returns:
         Split per family, aligned with ``clusters``.
     """
+    if family_keys is None:
+        family_keys = list(range(len(clusters)))
+
+    cluster_keys: dict[int, int] = {}
+    for position, label in enumerate(clusters):
+        key = family_keys[position]
+        if label not in cluster_keys or key < cluster_keys[label]:
+            cluster_keys[label] = key
+
     return [
-        split_from_key(f"{domain}-{label}", eval_ratio) for label in clusters
+        split_from_key(f"{domain}-{cluster_keys[label]}", eval_ratio)
+        for label in clusters
     ]
 
 
@@ -382,21 +427,11 @@ def domain_splits(
         force_group=family_idxs,
     )
 
-    # Re-key the clusters on ``_family_idx`` so the split key matches the one
-    # the family-level scheme uses; a family alone in its cluster therefore
-    # keeps its original split.
     # The split key is the lowest ``_family_idx`` in the cluster, not the
     # position: a family alone in its cluster then keeps exactly the split the
-    # family-level scheme gives it.
-    cluster_keys: dict[int, int] = {}
-    for position, label in enumerate(clusters):
-        key = family_idxs[position]
-        if label not in cluster_keys or key < cluster_keys[label]:
-            cluster_keys[label] = key
-    splits = [
-        split_from_key(f"{domain}-{cluster_keys[label]}", eval_ratio)
-        for label in clusters
-    ]
+    # family-level scheme gives it. ``assign_splits`` owns this rule so the
+    # leakage checker and the loader cannot drift apart again.
+    splits = assign_splits(domain, clusters, eval_ratio, family_keys=family_idxs)
 
     clustered = len({label for label in clusters})
     if clustered != len(families):
