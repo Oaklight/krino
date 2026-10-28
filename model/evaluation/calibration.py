@@ -386,12 +386,14 @@ def fit_confidence_map(
     """Fit a monotone map from stated confidence to observed accuracy.
 
     Temperature scaling assumes the miscalibration is a single scale factor on
-    the logits, which fails when the reliability curve is bent: on the score
-    primitive a fitted temperature moves holdout ECE from 0.1027 to 0.0811 and
-    stops, because the overconfidence is concentrated in one band of confidence
-    that a scale factor cannot reach without wrecking the rest of the curve.
-    A monotone map has no such constraint and is the ceiling for any
-    recalibration that uses confidence alone.
+    the logits, which fails when the reliability curve is bent. On the 4B
+    ``arch_4b_loraAll_32k`` arm a fitted temperature moves score holdout ECE
+    from 0.1027 to 0.0811 and stops, because the overconfidence is concentrated
+    in one band of confidence that a scale factor cannot reach without wrecking
+    the rest of the curve; on ``arch_4b_loraAll_weighted`` the same procedure
+    reaches 0.0250. A monotone map has no such constraint and is the ceiling for
+    any recalibration that uses confidence alone, which is what makes it a
+    diagnostic of the curve rather than a proposed replacement.
 
     The map is isotonic regression (pool adjacent violators) on the
     confidence/outcome pairs, then two regularisations, both because the raw

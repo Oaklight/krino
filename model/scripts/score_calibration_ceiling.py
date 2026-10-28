@@ -20,7 +20,7 @@ Example:
     python model/scripts/score_calibration_ceiling.py \\
         --predictions model/experiments/cal_clean3_4b_predictions.jsonl \\
         --temperature-report model/experiments/cal_clean3_4b.json \\
-        --json model/experiments/score_calibration_map_4b.json
+        --json model/experiments/score_calibration_map_4b_32k.json
 """
 
 from __future__ import annotations
