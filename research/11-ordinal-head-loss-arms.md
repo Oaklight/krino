@@ -111,6 +111,34 @@ network that does not exist (#145).
 | | QWK (item-weighted, 4-6 levels) | **0.5272** | 0.4592 |
 | | RPS | **0.1557** | 0.1715 |
 
+### Why the two tables' accuracies differ
+
+They are two inference passes over the same items, not two definitions of
+"correct", and the difference is small enough to state as a floor rather than a
+caveat. Measured, not assumed:
+
+* **The item lists are identical.** The loaders in `train_multitask.py` and
+  `eval_calibration.py` were run side by side on the same config and seed and
+  produced byte-identical ordered lists (13,444 items, compared by id, source,
+  type and state text). The per-type `n` agree in both reports as well.
+* **The rules are identical.** Applying `_eval_item` (training) and
+  `_predict_original` (calibration) to one loaded checkpoint in one process gives
+  **0 disagreements over all 13,444 items**, and both reproduce this note's
+  Results table exactly: 3,101 / 2,735 / 794 correct.
+* **The calibration reports disagree with that by 25 items net**: 3,107 noul
+  (+6), 2,756 choice (+21), 792 score (−2), i.e. 0.19% of the set.
+
+So what moves is the inference pass — near-tied logits resolved differently in
+bf16 across two processes — not the scoring code and not the data. Tie-breaking
+is ruled out as the main cause directly: noul has `tie_count` 0 in the report and
+still moves six items, and choice's six ties cannot account for its 21.
+
+The calibration column is the authoritative one for anything probability-shaped,
+because those reports carry the tie, duplicate-option and per-bucket metadata;
+the accuracy rows are quoted from them for that reason. The residual is ±0.2 pp,
+inside every seed band this note uses (the 2.00 pp LoRA spread at 0.6B, the
+0.29-0.40 pp frozen spread), so no conclusion depends on which column is read.
+
 **RPS does not buy a calibration advantage that pays for its accuracy cost.**
 On the score items -- where the loss is supposed to matter -- raw ECE is a tie
 (0.0628 vs 0.0595) and every other proper metric is worse: Brier 0.7515 vs
