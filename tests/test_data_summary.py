@@ -107,3 +107,77 @@ class TestTypeDistribution:
         assert "'noul': 3" in out
         assert "'choice': 6" in out
         assert "'score': 3" in out
+
+
+class TestPoolReport:
+    """The pool-vs-slot report makes a starved type visible at launch."""
+
+    def _items(self, n_by_type):
+        from data.format import TypedQuestion
+
+        items = []
+        for q_type, n in n_by_type.items():
+            for i in range(n):
+                if q_type == "noul":
+                    items.append(
+                        TypedQuestion.noul(
+                            id=f"n{i}", state="s", instructions="i",
+                            label=True, source="src", split="train",
+                        )
+                    )
+                else:
+                    items.append(
+                        TypedQuestion.choice(
+                            id=f"c{i}", state="s", instructions="i",
+                            criteria={"a": "a", "b": "b"}, label="a",
+                            source="src", split="train",
+                        )
+                    )
+        return items
+
+    def test_reports_resampling_per_type(self, capsys):
+        from model.scripts.train_multitask import print_data_summary
+
+        train = self._items({"noul": 1000, "choice": 100})
+        print_data_summary(
+            train, [], {"epoch_size": 300, "type_ratios": {"noul": 1, "choice": 1}}
+        )
+        out = capsys.readouterr().out
+        assert "Pool vs per-epoch sampling" in out
+        assert "1.50x" in out, "1000-item pool with 150 slots resamples 1.5x"
+        assert "0.15x" in out or "15.00x" in out
+
+    def test_omits_table_without_sampling_config(self, capsys):
+        from model.scripts.train_multitask import print_data_summary
+
+        print_data_summary(self._items({"noul": 10}), [])
+        out = capsys.readouterr().out
+        assert "Pool vs per-epoch sampling" not in out
+
+    def test_difficulty_weights_take_precedence(self, capsys):
+        from model.scripts.train_multitask import print_data_summary
+
+        train = self._items({"noul": 10})
+        print_data_summary(
+            train,
+            [],
+            {
+                "epoch_size": 100,
+                "type_ratios": {"noul": 1},
+                "difficulty_weights": {"noul": 1},
+            },
+        )
+        out = capsys.readouterr().out
+        assert "10.00x" in out, "100 slots over a 10-item pool resamples 10x"
+
+    def test_empty_pool_is_reported_not_divided_by_zero(self, capsys):
+        from model.scripts.train_multitask import print_data_summary
+
+        train = self._items({"noul": 5})
+        print_data_summary(
+            train,
+            [],
+            {"epoch_size": 100, "type_ratios": {"noul": 1, "score": 1}},
+        )
+        out = capsys.readouterr().out
+        assert "n/a" in out
