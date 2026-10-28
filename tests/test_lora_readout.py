@@ -138,6 +138,41 @@ class TestLayerMixer:
         with pytest.raises(ValueError, match="outside"):
             LayerMixer(3, "mean_last_n", n=5)
 
+    def test_layer_returns_the_selected_layer(self) -> None:
+        mixer = LayerMixer(3, "layer", layer=1)
+        result = mixer(self._hidden_states())
+        assert torch.equal(result, self._hidden_states()[1])
+        assert mixer.out_mult == 1
+
+    def test_layer_index_out_of_range_raises(self) -> None:
+        with pytest.raises(ValueError, match="outside"):
+            LayerMixer(3, "layer", layer=3)
+
+    def test_fuse_pair_concat_fuses_width_and_out_mult(self) -> None:
+        mixer = LayerMixer(3, "fuse_pair", pair=(0, 2), fusion="concat")
+        result = mixer(self._hidden_states())
+        expected = torch.cat(
+            [self._hidden_states()[0], self._hidden_states()[2]], dim=-1
+        )
+        assert torch.equal(result, expected)
+        assert result.shape[-1] == 6
+        assert mixer.out_mult == 2
+
+    def test_fuse_pair_sum_keeps_width(self) -> None:
+        mixer = LayerMixer(3, "fuse_pair", pair=(0, 2), fusion="sum")
+        result = mixer(self._hidden_states())
+        expected = self._hidden_states()[0] + self._hidden_states()[2]
+        assert torch.equal(result, expected)
+        assert mixer.out_mult == 1
+
+    def test_fuse_pair_needs_two_indices(self) -> None:
+        with pytest.raises(ValueError, match="two layer indices"):
+            LayerMixer(3, "fuse_pair", pair=None)
+        with pytest.raises(ValueError, match="outside"):
+            LayerMixer(3, "fuse_pair", pair=(0, 3))
+        with pytest.raises(ValueError, match="fusion"):
+            LayerMixer(3, "fuse_pair", pair=(0, 1), fusion="bogus")
+
 
 class _MixedBackbone(nn.Module):
     """Matching layers under an indexed block, plus one outside any block."""
@@ -230,4 +265,83 @@ class TestCheckpointRoundTrip:
         for name, param in fresh.named_parameters():
             if "lora_b" in name:
                 assert torch.count_nonzero(param) == 0, f"{name} did not load"
+
+
+class _ForwardConfig:
+    """Config for a backbone that can actually run a forward pass."""
+
+    def __init__(self, hidden_size: int, num_hidden_layers: int = 2) -> None:
+        self.hidden_size = hidden_size
+        self.num_hidden_layers = num_hidden_layers
+        self.max_position_embeddings = 128
+        self.is_decoder = True
+
+
+class _ForwardBackbone(nn.Module):
+    """Deterministic backbone returning per-layer hidden states."""
+
+    def __init__(self, hidden_size: int) -> None:
+        super().__init__()
+        self.config = _ForwardConfig(hidden_size)
+        self.proj = nn.Linear(hidden_size, hidden_size)
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor | None = None,
+        output_hidden_states: bool = True,
+        use_cache: bool = False,
+    ):
+        from types import SimpleNamespace
+
+        batch, seq = input_ids.shape
+        base = torch.arange(seq, dtype=torch.float32)
+        states = []
+        for layer in range(self.config.num_hidden_layers + 1):
+            value = base.view(1, seq, 1) + float(layer)
+            states.append(value.expand(batch, seq, self.config.hidden_size).contiguous())
+        return SimpleNamespace(hidden_states=tuple(states))
+
+
+class TestTwoBackboneFusion:
+    def _model(self, **kwargs):
+        from model.src.decision_model import DecisionModel
+        from model.src.gpu_config import GPUConfig
+
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=False,
+            max_length=128,
+            gradient_checkpointing=False,
+        )
+        return DecisionModel(
+            backbone=_ForwardBackbone(16),
+            tokenizer=None,
+            rank=8,
+            gpu_config=gpu,
+            **kwargs,
+        )
+
+    def test_concat_fusion_projects_to_head_width(self) -> None:
+        model = self._model(
+            second_backbone=_ForwardBackbone(8), fusion="concat"
+        )
+        inputs = {"input_ids": torch.zeros(1, 4, dtype=torch.long)}
+        out = model._hidden_sequence(inputs)
+        assert out.shape == (1, 4, 16)
+        assert isinstance(model.fusion_project, nn.Linear)
+        assert model.fusion_project.in_features == 24
+
+    def test_fuse_pair_readout_round_trips_width(self) -> None:
+        model = self._model(readout="fuse_pair", readout_pair=(0, 2))
+        inputs = {"input_ids": torch.zeros(1, 4, dtype=torch.long)}
+        out = model._hidden_sequence(inputs)
+        assert out.shape == (1, 4, 16)
+        # The two selected layers are concatenated before the projection.
+        assert isinstance(model.readout_project, nn.Linear)
+        assert model.readout_project.in_features == 32
+
+    def test_sum_fusion_requires_equal_widths(self) -> None:
+        with pytest.raises(ValueError, match="equal hidden sizes"):
+            self._model(second_backbone=_ForwardBackbone(8), fusion="sum")
 
