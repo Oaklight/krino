@@ -81,6 +81,17 @@ The frozen run's per-epoch values, used as the baselines above: 49.08 at epoch 1
 55.59 instead, the 4B full-LoRA `last` arm at epoch 4 (61.92) is +6.33 — the
 weaker claim, which holds even if the arm had stopped there.
 
+That epoch-5 jump is large enough to be worth ruling out as an artifact. It is
+not one: `eval_epoch_detailed` scores the live epoch-end weights on the single
+eval list built once before training, and the same code runs at every epoch, so
+no epoch sees a best-checkpoint or a different subset. The last epoch is also the
+largest single-step gain in every arm whose schedule completed — +3.19 at 4B
+frozen (52.40 -> 55.59), +2.67 and +2.80 for the 4B full-LoRA arms (61.92 ->
+64.59, 61.87 -> 64.67), +2.85 at 8B frozen, and +7.22 for 8B frozen `weighted`
+(48.69 -> 55.91) — so it is a property of the schedule's tail, not of this arm.
+The same shape shows in the eval loss, which peaks mid-run and then falls
+sharply: 1.1407 / 1.7894 / 1.9718 / 1.2011 / 1.0726 at 4B frozen.
+
 ### 8B — readout collapse
 
 | run | readout | LoRA | final | baseline | Δ |
@@ -89,15 +100,20 @@ weaker claim, which holds even if the arm had stopped there.
 | `arch_8b_frozen_8k_e10` | last | none | **61.43** (ep10) | frozen last 58.58 | +2.85 |
 | `arch_8b_frozen_32k` | last | none | 58.17 | frozen last 58.58 | −0.41 |
 | `arch_8b_frozen_weighted` | weighted | none | 55.91 | frozen last 58.58 | −2.67 |
-| `arch_8b_loraAll_weighted` | weighted | all | **62.85 (ep4)** | frozen weighted 55.91 | **+6.94** |
-| `arch_8b_loraAll_weighted_s123` | weighted | all | 62.99 (ep4) | frozen weighted 55.91 | +7.08 |
+| `arch_8b_loraAll_weighted` | weighted | all | **62.85 (ep4)** | frozen `last` ep4 55.73 | **+7.12** |
+| `arch_8b_loraAll_weighted_s123` | weighted | all | 62.99 (ep4) | frozen `last` ep4 55.73 | +7.26 |
 | `arch_8b_loraAll_8k` | last | all | 47.51 | frozen last 58.58 | **−11.07** |
 | `arch_8b_loraAll_8k_s123` | last | all | 36.43 | frozen last s123 58.23 | **−21.80** |
 
 The two 8B full-LoRA `weighted` arms are epoch-4 checkpoints: those runs stopped
 at the host's wall-clock limit before finishing epoch 5, so they are lower bounds.
-Against frozen `last` at the same epoch (55.73) the seed-42 `weighted` arm is
-+7.12 rather than +6.94; the +6.94 is the conservative, matched-readout figure.
+Both deltas are against frozen `last` at epoch 4 (55.73), which is the same-epoch
+comparison but mixes readouts. The matched-readout baseline is the frozen
+`weighted` arm, whose own epochs run 52.17 / 48.69 / 46.47 / 48.69 / 55.91 — epoch
+4 is a mid-schedule dip, so the epoch-matched matched-readout delta there would be
++14.16 against a number no run would report as its result. Measured against that
+arm's final 55.91 instead, the delta is +6.94, which mixes epochs and is therefore
+a *lower* bound on what LoRA buys at 8B.
 
 ## Findings
 
@@ -105,13 +121,20 @@ Against frozen `last` at the same epoch (55.73) the seed-42 `weighted` arm is
 like readouts — `last` throughout — frozen is 49.11 / 55.59 / 58.58 at 0.6B / 4B /
 8B and full LoRA is 54.46 / **64.59** / 47.51, i.e. +5.35 / +9.00 / −11.07; the
 8B `last` arm collapses (finding 4). At 8B, under the readout that does not
-collapse, the gain is +6.94 against the frozen `weighted` arm (55.91), not
-+7.12 or +15.34 against a `last` baseline.
+collapse, the gain is +7.12 against frozen `last` at the same epoch, and +6.94
+against the frozen `weighted` arm's final — the conservative, matched-readout
+figure. Not +15.34 against a collapsed `last` baseline.
 
-The best result in the sweep is 4B, full LoRA, `weighted` readout: **64.89** —
-2.0 pp above the best 8B arm (62.85) and 8.7 pp above the 0.6B best (56.17). A 0.6B
-model with full LoRA (56.17) matches a frozen 4B (55.59): for this task the
-adaptation matters about as much as a 6.7x parameter increase.
+The best result in the sweep is 4B, full LoRA, `weighted` readout: **64.89** at
+five epochs. The nearest 8B arm is 62.85, but that is an epoch-4 checkpoint of a
+run the wall-clock limit stopped, and the 8B frozen arm gains +2.85 pp across its
+five epochs — roughly 0.57 pp per epoch at that scale. So the 8B arm ends 2.04 pp
+short with one epoch unrun, against a per-epoch rate of about half a point, and
+closing the gap at that rate would take roughly three and a half more epochs,
+which the run never had. That is what makes 4B the better arm on this evidence;
+it is not a claim about what a finished 8B run would score. A 0.6B model with
+full LoRA (56.17) matches a frozen 4B (55.59): for this task the adaptation
+matters about as much as a 6.7x parameter increase.
 
 **2. Context length does not matter, at any scale.** 8k versus 32k is +0.37 pp at
 4B frozen, −0.41 pp at 8B frozen, and +0.08 pp at 4B full LoRA (64.59 -> 64.67) —
