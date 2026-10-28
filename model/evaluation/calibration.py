@@ -10,6 +10,7 @@ or a quadratic-weighted kappa says more than exact-match accuracy.
 from __future__ import annotations
 
 import math
+import random
 from typing import Any, Sequence
 
 
@@ -516,4 +517,162 @@ def confidence_map_report(
         "n_fit": len(fit_confidences),
         "n_holdout": len(holdout_confidences),
         "map": mapping,
+    }
+
+
+def temperature_by_scale(
+    logits: Sequence[Sequence[float]],
+    labels: Sequence[int],
+    scales: Sequence[int],
+    fit_frac: float = 0.5,
+    seed: int = 0,
+    steps: int = 400,
+    criterion: str = "ece",
+    min_items: int = 30,
+) -> dict[str, Any]:
+    """Compare one shared temperature against one temperature per level count.
+
+    Score items arrive on several level scales (the score sources use three), and
+    a single temperature fitted over all of them is a compromise: it is chosen to
+    minimise an average that one scale can dominate. This fits a temperature per
+    scale and reports both on the *same* holdout items, so the comparison is
+    matched — same items, same criterion, same split — and the only variable is
+    how many temperatures are allowed.
+
+    Each scale's temperature is fitted on that scale's fitting half and evaluated
+    on its holdout half. A scale with fewer than ``min_items`` items is still
+    reported but borrows the shared temperature, because a temperature fitted on
+    a handful of items is noise; it is marked ``"borrowed": True``.
+
+    Args:
+        logits: Logit vector per item.
+        labels: Gold index per item.
+        scales: Level count per item, parallel to ``logits``.
+        fit_frac: Fraction of each group used to fit the temperature.
+        seed: Seed for the deterministic fit/holdout split. Each scale gets its
+            own stream, so the splits are not correlated across scales.
+        steps: Grid resolution passed to :func:`fit_temperature`.
+        criterion: ``"ece"`` or ``"nll"``; the same criterion is used for the
+            shared fit and the per-scale fits.
+        min_items: Smallest group that fits its own temperature.
+
+    Returns:
+        ``{"criterion", "n_items", "shared": {...}, "by_scale": {...},
+        "pooled": {...}}``. ``shared`` and ``pooled`` hold the holdout ECE of the
+        one-temperature and per-scale protocols on the same items, so
+        ``pooled.ece_per_scale`` below ``pooled.ece_shared`` is the whole claim.
+    """
+    if len(logits) != len(labels) or len(logits) != len(scales):
+        raise ValueError("logits, labels and scales must be the same length")
+    if not logits:
+        return {
+            "criterion": criterion,
+            "n_items": 0,
+            "shared": {},
+            "by_scale": {},
+            "pooled": {},
+        }
+
+    # One split for the shared fit, then per-scale splits from their own streams.
+    shared_order = list(range(len(logits)))
+    random.Random(f"{seed}:shared:temperature").shuffle(shared_order)
+    shared_fit_n = max(2, min(int(round(len(logits) * fit_frac)), len(logits) - 2))
+    shared_fit = shared_order[:shared_fit_n]
+    shared_holdout = shared_order[shared_fit_n:]
+    shared_temperature = fit_temperature(
+        [logits[i] for i in shared_fit],
+        [labels[i] for i in shared_fit],
+        steps=steps,
+        criterion=criterion,
+    )["temperature"]
+
+    grouped: dict[int, list[int]] = {}
+    for index, scale in enumerate(scales):
+        grouped.setdefault(int(scale), []).append(index)
+
+    by_scale: dict[str, Any] = {}
+    pooled_ece_shared = 0.0
+    pooled_ece_per_scale = 0.0
+    pooled_n = 0
+    for scale in sorted(grouped):
+        members = grouped[scale]
+        order = list(members)
+        random.Random(f"{seed}:{scale}:temperature").shuffle(order)
+        fit_n = max(2, min(int(round(len(order) * fit_frac)), len(order) - 2))
+        fit_idx = order[:fit_n]
+        holdout_idx = order[fit_n:]
+        if not holdout_idx:
+            continue
+
+        borrowed = len(members) < min_items
+        if borrowed:
+            temperature = shared_temperature
+            fitted = None
+        else:
+            fitted = fit_temperature(
+                [logits[i] for i in fit_idx],
+                [labels[i] for i in fit_idx],
+                steps=steps,
+                criterion=criterion,
+            )
+            temperature = fitted["temperature"]
+
+        holdout_logits = [logits[i] for i in holdout_idx]
+        holdout_labels = [labels[i] for i in holdout_idx]
+        ece_shared = top1_calibration(
+            [
+                softmax([value / shared_temperature for value in row])
+                for row in holdout_logits
+            ],
+            holdout_labels,
+        )["ece"]
+        ece_own = top1_calibration(
+            [softmax([value / temperature for value in row]) for row in holdout_logits],
+            holdout_labels,
+        )["ece"]
+        pooled_ece_shared += ece_shared * len(holdout_idx)
+        pooled_ece_per_scale += ece_own * len(holdout_idx)
+        pooled_n += len(holdout_idx)
+
+        by_scale[str(scale)] = {
+            "n": len(members),
+            "n_fit": len(fit_idx),
+            "n_holdout": len(holdout_idx),
+            "temperature": temperature,
+            "borrowed": borrowed,
+            "ece_at_t1": top1_calibration(
+                [softmax(row) for row in holdout_logits], holdout_labels
+            )["ece"],
+            "ece_shared_t": ece_shared,
+            "ece_own_t": ece_own,
+            **({"fit": fitted} if fitted is not None else {}),
+        }
+
+    shared_holdout_logits = [logits[i] for i in shared_holdout]
+    shared_holdout_labels = [labels[i] for i in shared_holdout]
+    return {
+        "criterion": criterion,
+        "n_items": len(logits),
+        "min_items": min_items,
+        "shared": {
+            "temperature": shared_temperature,
+            "n_fit": len(shared_fit),
+            "n_holdout": len(shared_holdout),
+            "ece_at_t1": top1_calibration(
+                [softmax(row) for row in shared_holdout_logits], shared_holdout_labels
+            )["ece"],
+            "ece_after": top1_calibration(
+                [
+                    softmax([value / shared_temperature for value in row])
+                    for row in shared_holdout_logits
+                ],
+                shared_holdout_labels,
+            )["ece"],
+        },
+        "by_scale": by_scale,
+        "pooled": {
+            "n": pooled_n,
+            "ece_shared": (pooled_ece_shared / pooled_n) if pooled_n else 0.0,
+            "ece_per_scale": (pooled_ece_per_scale / pooled_n) if pooled_n else 0.0,
+        },
     }

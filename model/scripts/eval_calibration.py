@@ -56,6 +56,7 @@ from model.evaluation.calibration import (
     multiclass_brier,
     quadratic_weighted_kappa,
     softmax,
+    temperature_by_scale,
     temperature_curve,
 )
 from model.evaluation.jevbench import prediction_rows
@@ -996,6 +997,26 @@ def _print_table(summary: dict[str, Any]) -> None:
                 flush=True,
             )
 
+    per_scale = summary["by_type"].get("score", {}).get("temperature_by_scale", {})
+    if per_scale.get("by_scale"):
+        pooled = per_scale["pooled"]
+        print(
+            f"\n  Temperature by level count ({per_scale['criterion']} fit), holdout: "
+            f"pooled ECE {pooled['ece_shared']:.4f} with one shared T vs "
+            f"{pooled['ece_per_scale']:.4f} with one per scale (n={pooled['n']})",
+            flush=True,
+        )
+        for n_levels, entry in sorted(
+            per_scale["by_scale"].items(), key=lambda item: int(item[0])
+        ):
+            borrowed = " (borrowed)" if entry["borrowed"] else ""
+            print(
+                f"    {n_levels:>2} levels  T={entry['temperature']:>7.3f}{borrowed}  "
+                f"ECE {entry['ece_at_t1']:.4f} at T=1 -> {entry['ece_own_t']:.4f}  "
+                f"(n={entry['n']})",
+                flush=True,
+            )
+
     print("\nAmbiguous items:", flush=True)
     print(
         f"{'Type':<8} {'Ties':>6} {'Tie_rate':>9} {'Dup_text':>9} "
@@ -1638,6 +1659,19 @@ def main() -> int:
         )
         if q_type == "score":
             metrics["score_metrics"] = _score_metrics(type_records)
+            # One temperature for all score items is a compromise across level
+            # scales; this reports what a per-scale fit would do on the same
+            # items, which is the only way to tell a protocol problem from a
+            # calibration one (#172).
+            metrics["temperature_by_scale"] = temperature_by_scale(
+                [record["logits"] for record in type_records],
+                [record["label_idx"] for record in type_records],
+                [record["n_levels"] for record in type_records],
+                fit_frac=args.fit_frac,
+                seed=args.seed,
+                steps=args.fit_steps,
+                criterion=args.fit_criterion,
+            )
         summary["by_type"][q_type] = metrics
 
     if args.nested_options_source:
