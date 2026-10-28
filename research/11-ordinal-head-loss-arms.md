@@ -9,8 +9,9 @@ ordinal targets.
 
 This note reports a 2×2 at 0.6B. It is a negative result on accuracy: the plain
 baseline — softmax head, cross-entropy — wins on every type, and neither the
-ordinal head nor RPS recovers any of the gap. The caveat that matters is at the
-end: RPS targets *calibration*, and this experiment did not measure it.
+ordinal head nor RPS recovers any of the gap. RPS targets *calibration* rather
+than accuracy, so the two softmax arms were then scored with the calibration
+harness; that second half is below, and it does not rescue RPS either.
 
 ## Setup
 
@@ -20,7 +21,7 @@ end: RPS targets *calibration*, and this experiment did not measure it.
 | Data | `model/configs/r2_reranker0.6b.yaml` — 182,262 train / 13,444 eval items, `epoch_size` 15,000, `type_ratios` 1:1:1 |
 | Training | 5 epochs, seed 42, `accumulation_steps 8`, bf16, flash attention, `last` readout, rank 64 |
 | Arms | `--score-head {softmax,cumulative}` × `--score-loss {ce,rps}` |
-| Wall clock | 76.5-78.0 minutes per arm on one A100-40GB |
+| Wall clock | 76.5-78.0 minutes for the five-epoch loop, per arm — the sum of the per-epoch `elapsed_s` in each committed JSON — and ~92 minutes end to end, from the runner's per-arm start/stop timestamps |
 
 The four arms are matched controls of each other: identical data, seed, schedule
 and architecture, differing only in the score head and the score loss. The
@@ -38,6 +39,10 @@ python model/scripts/train_multitask.py \
     --checkpoint-dir model/experiments/ordinal_cumulative_rps \
     --output model/experiments/ordinal_cumulative_rps.json
 ```
+
+The four `--output` files are committed as `model/experiments/ordinal_<arm>.json`,
+one per arm; each holds the per-epoch history and the final per-type and
+per-source breakdown the accuracy table below is read from.
 
 ## Results
 
@@ -80,22 +85,28 @@ not accuracy on this data.
 
 Accuracy was never what RPS claims. The two softmax arms -- same architecture,
 same data, same seed, only the loss differs -- were therefore scored with the
-calibration harness (PR #167) on the same 13,444 items:
+calibration harness (merged as #167) on the same 13,444 items. The two reports
+are committed as `model/experiments/calibration_ordinal_softmax_ce.json` and
+`model/experiments/calibration_ordinal_softmax_rps.json`; the ECE-fitted variant
+of the first is the separately committed `calibration_ecefit_softmax_ce.json`
+that #167 added. The two `cumulative` arms are not scored: `eval_calibration.py`
+has no `--score-head` flag, so it would build a softmax head and report on a
+network that does not exist (#145).
 
 | type | metric | softmax_ce | softmax_rps |
 |---|---|---:|---:|
 | noul | accuracy | 0.6578 | 0.6576 |
 | | ECE (T=1) | 0.0557 | **0.0503** |
 | | Brier | 0.2133 | **0.2116** |
-| | ECE after fitted T | **0.0172** | 0.0221 |
+| | ECE after fitted T (holdout) | **0.0172** | 0.0221 |
 | choice | accuracy | **0.4015** | 0.3936 |
 | | ECE (T=1) | **0.0722** | 0.0864 |
 | | Brier | **0.6823** | 0.6915 |
-| | ECE after fitted T | 0.0519 | **0.0425** |
+| | ECE after fitted T (holdout) | 0.0519 | **0.0425** |
 | score | accuracy | **0.4265** | 0.3802 |
 | | ECE (T=1) | 0.0628 | **0.0595** |
 | | Brier | **0.7148** | 0.7515 |
-| | ECE after fitted T | 0.1267 | **0.0844** |
+| | ECE after fitted T (holdout) | 0.1267 | **0.0844** |
 | | MAE | **0.9404** | 1.0481 |
 | | QWK (item-weighted, 4-6 levels) | **0.5272** | 0.4592 |
 | | RPS | **0.1557** | 0.1715 |
@@ -107,15 +118,17 @@ On the score items -- where the loss is supposed to matter -- raw ECE is a tie
 is 4.6 pp lower. On noul the two are indistinguishable in accuracy and RPS is
 marginally better calibrated; on choice RPS is worse on both.
 
-**Temperature scaling is not rescuing the score primitive in either arm.** ECE
-after the fitted temperature rises above its value at T=1 in both:
-0.0628 -> 0.1267 for cross-entropy at T=3.796, and 0.0595 -> 0.0844 for RPS at
-T=2.445. The temperature is fitted by NLL on one half and evaluated by ECE on
-the other, and ECE is not a monotone function of T with a minimum at the NLL
-optimum, so a large fitted T can make bin-level calibration worse. Goal item 2
-asks for ECE <= 0.05 after per-type temperature scaling; no arm reaches it on
-score, and the fitting criterion is a candidate explanation worth testing
-before the head or the loss is blamed again.
+**Temperature scaling is not rescuing the score primitive in either arm.** ECE on
+the half the temperature does not see rises in both: 0.0765 -> 0.1267 for
+cross-entropy at T=3.796, and 0.0523 -> 0.0844 for RPS at T=2.445. The
+temperature is fitted by NLL on one half and evaluated by ECE on the other, and
+ECE is not a monotone function of T with a minimum at the NLL optimum, so a large
+fitted T makes bin-level calibration worse. Goal item 2 asks for ECE <= 0.05
+after per-type temperature scaling; no arm reaches it on score, and the fitting
+criterion is the explanation: fitted for ECE instead of NLL, the same
+cross-entropy checkpoint reaches 0.0325 on score (`calibration_ecefit_softmax_ce.json`,
+reported in #167). So the head and the loss are not what fails that clause; the
+fitting objective is.
 
 ### What the two halves together say
 
@@ -145,17 +158,18 @@ distribution rather than of the architecture.
   equally so it does not affect the comparison.
 * **Accuracy is not what RPS is for.** RPS is a proper scoring rule for ordinal
   distributions: its claim is about calibration and about penalising
-  distance-wrong answers, not about argmax accuracy. A head that is 5 pp less
-  accurate but substantially better calibrated is a different trade, and this
-  experiment did not measure ECE, Brier, MAE or QWK on the score items. The
-  calibration harness (PR #167) measures exactly those, and running the four
-  checkpoints through it is the experiment that would settle RPS.
+  distance-wrong answers, not about argmax accuracy. That is why the two softmax
+  arms were scored for ECE, Brier, MAE, QWK and RPS as well; the result is in
+  "The calibration half" above. The two `cumulative` arms remain unscored, so
+  the ordinal head's calibration is still an open question rather than a
+  measured loss.
 
 ## What this means for the goal
 
 The goal's score clause is calibration and QWK (ECE, Brier, QWK >= 0.85), not
 accuracy alone. This note removes one hypothesis from the accuracy path — an
-ordinal head or an RPS loss does not buy score accuracy at 0.6B — and leaves the
-calibration question open, with the tool to answer it now in review. Until the
-four checkpoints are scored for ECE and QWK, the default should stay softmax +
-cross-entropy, which is also what every existing checkpoint uses.
+ordinal head or an RPS loss does not buy score accuracy at 0.6B — and, with the
+calibration half, one more from the calibration path: RPS does not buy better
+calibration either. The default stays softmax + cross-entropy, which is also what
+every existing checkpoint uses. What remains open is the temperature-fitting
+criterion (#172), not the head, the loss, or the backbone.
