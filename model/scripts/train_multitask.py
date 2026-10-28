@@ -185,6 +185,9 @@ def main() -> int:
     parser.add_argument("--lora-lr", type=float, default=None, help="Separate LR for LoRA adapters (default: the heads' lr)")
     parser.add_argument("--score-form", choices=["off", "single", "candidates"], default=None, help="Convert training items to score form; evaluation keeps the original types. 'candidates' expands each choice question into one score question per option, so the in-memory list grows by the option count (epoch_size still bounds the steps) (default: off)")
     parser.add_argument("--score-loss", choices=["ce", "rps"], default=None, help="Training loss for score questions: 'ce' treats levels as unordered classes, 'rps' uses the ranked probability score, which respects the level order (default: ce)")
+    parser.add_argument("--k-augment-fraction", type=float, default=None, help="Share of choice items to pad with extra distractor options each epoch (0 disables, default: 0). Option count is drawn log-uniformly in [--k-augment-min-k, --k-augment-max-k].")
+    parser.add_argument("--k-augment-min-k", type=int, default=8, help="Smallest padded option count (default: 8)")
+    parser.add_argument("--k-augment-max-k", type=int, default=256, help="Largest padded option count (default: 256)")
     parser.add_argument("--synthetic-ratio", type=float, default=None, help="Target proportion of synthetic data (0.0 to 1.0)")
 
     # GPU memory optimization flags
@@ -297,6 +300,19 @@ def main() -> int:
     score_loss, score_loss_src = resolve_setting(
         args.score_loss, cfg, "score_loss", "ce"
     )
+    k_augment_fraction, k_augment_src = resolve_setting(
+        args.k_augment_fraction, cfg, "k_augment_fraction", 0.0
+    )
+    k_augment_cfg = None
+    if k_augment_fraction and k_augment_fraction > 0:
+        from data.k_augment import KAugmentConfig
+
+        k_augment_cfg = KAugmentConfig(
+            fraction=float(k_augment_fraction),
+            min_k=int(args.k_augment_min_k),
+            max_k=int(args.k_augment_max_k),
+            seed=int(seed),
+        )
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -477,6 +493,7 @@ def main() -> int:
                 ("lora_lr", lora_lr, lora_lr_src),
                 ("score_form", score_form, score_form_src),
                 ("score_loss", score_loss, score_loss_src),
+                ("k_augment_fraction", k_augment_fraction, k_augment_src),
                 ("max_length", model.max_length, max_length_source),
                 ("epochs", epochs, epochs_src),
                 ("rank", rank, rank_src),
@@ -555,6 +572,7 @@ def main() -> int:
         lora_lr=lora_lr,
         uncertainty_weighting=uncertainty_weighting,
         score_loss=score_loss,
+        k_augment=k_augment_cfg,
     )
 
     # Print final eval summary
