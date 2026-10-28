@@ -95,21 +95,21 @@ network that does not exist (#145).
 
 | type | metric | softmax_ce | softmax_rps |
 |---|---|---:|---:|
-| noul | accuracy | 0.6578 | 0.6576 |
-| | ECE (T=1) | 0.0557 | **0.0503** |
-| | Brier | 0.2133 | **0.2116** |
-| | ECE after fitted T (holdout) | **0.0172** | 0.0221 |
-| choice | accuracy | **0.4015** | 0.3936 |
-| | ECE (T=1) | **0.0722** | 0.0864 |
-| | Brier | **0.6823** | 0.6915 |
-| | ECE after fitted T (holdout) | 0.0519 | **0.0425** |
-| score | accuracy | **0.4265** | 0.3802 |
-| | ECE (T=1) | 0.0628 | **0.0595** |
-| | Brier | **0.7148** | 0.7515 |
-| | ECE after fitted T (holdout) | 0.1267 | **0.0844** |
-| | MAE | **0.9404** | 1.0481 |
-| | QWK (item-weighted, 4-6 levels) | **0.5272** | 0.4592 |
-| | RPS | **0.1557** | 0.1715 |
+| noul | accuracy | 0.6566 | 0.6583 |
+| | ECE (T=1) | 0.0569 | **0.0498** |
+| | Brier | 0.2133 | **0.2117** |
+| | ECE after fitted T (holdout) | **0.0203** | 0.0223 |
+| choice | accuracy | **0.3985** | 0.3922 |
+| | ECE (T=1) | **0.0744** | 0.0881 |
+| | Brier | **0.6824** | 0.6915 |
+| | ECE after fitted T (holdout) | 0.0520 | **0.0429** |
+| score | accuracy | **0.4276** | 0.3775 |
+| | ECE (T=1) | 0.0648 | **0.0622** |
+| | Brier | **0.7146** | 0.7513 |
+| | ECE after fitted T (holdout) | 0.1350 | **0.0768** |
+| | MAE | **0.9384** | 1.0463 |
+| | QWK (item-weighted, 4-6 levels) | **0.5312** | 0.4483 |
+| | RPS | **0.1553** | 0.1712 |
 
 ### Why the two tables' accuracies differ
 
@@ -133,34 +133,44 @@ bf16 across two processes — not the scoring code and not the data. Tie-breakin
 is ruled out as the main cause directly: noul has `tie_count` 0 in the report and
 still moves six items, and choice's six ties cannot account for its 21.
 
-Which column to trust, then. The Results table is the reproducible one: it comes
-from the committed histories and a fresh scoring pass over the committed
-checkpoint reproduces it exactly, twice. The calibration reports' *accuracy* rows
-(0.6578 / 0.4015 / 0.4265) do not reproduce from that checkpoint today, so they
-are quoted here only because everything probability-shaped in those reports — ECE,
-Brier, QWK, RPS, the tie counts — exists nowhere else, and accuracy has to travel
-with them. The residual is 0.19% of items, within every seed band this note uses
-(the 2.00 pp LoRA spread at 0.6B, the 0.29-0.40 pp frozen spread), so no
-conclusion depends on which column is read.
+Which column to trust, then. Both, now: the calibration reports were regenerated
+with this revision — a fresh pass over the committed checkpoint that lands on
+3,101 / 2,735 / 794, i.e. the Results table — so the two tables agree on accuracy
+and the metrics below are reproducible from the committed artifacts. The earlier
+calibration reports (0.6578 / 0.4015 / 0.4265) were produced by a pass that does
+not reproduce, and they are superseded rather than reconciled; the numbers moved
+by 0.19% of items and no conclusion changed.
+
+That pass-to-pass movement is itself the resolution floor, and it is quoted where
+it matters: re-running one checkpoint moves its score ECE by 0.0020, which is why
+a 0.0026 gap between two arms is called a tie below rather than a win.
 
 **RPS does not buy a calibration advantage that pays for its accuracy cost.**
-On the score items -- where the loss is supposed to matter -- raw ECE is a tie
-(0.0628 vs 0.0595) and every other proper metric is worse: Brier 0.7515 vs
-0.7148, MAE 1.048 vs 0.940, QWK 0.459 vs 0.527, RPS 0.1715 vs 0.1557. Accuracy
-is 4.6 pp lower. On noul the two are indistinguishable in accuracy and RPS is
-marginally better calibrated; on choice RPS is worse on both.
+On the score items -- where the loss is supposed to matter -- the raw-ECE gap is
+0.0026 in RPS's favour (0.0622 vs 0.0648), which is a tie in the only sense that
+matters here: re-running the *same* checkpoint through the same harness moves its
+score ECE by 0.0020, so a 0.0026 difference between two arms is inside the
+measurement's own resolution. Every other proper metric is clearly worse for RPS:
+Brier 0.7513 vs 0.7146, MAE 1.0463 vs 0.9384, QWK 0.4483 vs 0.5312, RPS 0.1712 vs
+0.1553. Accuracy is 5.0 pp lower (0.3775 vs 0.4276). On noul, RPS is better
+calibrated by 0.0071 ECE -- three and a half times the pass-to-pass movement on
+that arm -- while the two are indistinguishable in accuracy; on choice RPS is
+worse on both.
 
 **Temperature scaling is not rescuing the score primitive in either arm.** ECE on
-the half the temperature does not see rises in both: 0.0765 -> 0.1267 for
-cross-entropy at T=3.796, and 0.0523 -> 0.0844 for RPS at T=2.445. The
+the half the temperature does not see rises in both: 0.0722 -> 0.1350 for
+cross-entropy at T=4.079, and 0.0616 -> 0.0768 for RPS at T=2.445. The
 temperature is fitted by NLL on one half and evaluated by ECE on the other, and
 ECE is not a monotone function of T with a minimum at the NLL optimum, so a large
 fitted T makes bin-level calibration worse. Goal item 2 asks for ECE <= 0.05
 after per-type temperature scaling; no arm reaches it on score, and the fitting
 criterion is the explanation: fitted for ECE instead of NLL, the same
-cross-entropy checkpoint reaches 0.0325 on score (`calibration_ecefit_softmax_ce.json`,
-reported in #167). So the head and the loss are not what fails that clause; the
-fitting objective is.
+cross-entropy checkpoint clears the bar on all three types — noul 0.0548 ->
+0.0294, choice 0.0741 -> 0.0345, score 0.0722 -> **0.0337** at T=1.336
+(`calibration_ecefit_softmax_ce.json`). So the head and the loss are not what
+fails that clause; the fitting objective is. It does not survive the 4B
+checkpoint, where the ECE fit reaches 0.0631 and no point on the grid clears 0.05
+(#172).
 
 ### What the two halves together say
 
