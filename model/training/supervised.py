@@ -18,6 +18,12 @@ import torch.nn.functional as F
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 
+from .distributed import (
+    average_gradients,
+    gather_eval_stats,
+    gather_train_stats,
+    shard,
+)
 from .losses import rps_loss
 
 
@@ -362,6 +368,7 @@ def train_epoch(
     batch_backbone: int = 0,
     log_vars: dict[str, nn.Parameter] | None = None,
     score_loss: str = "ce",
+    world_size: int = 1,
 ) -> dict[str, float]:
     """Train for one epoch. Returns loss statistics.
 
@@ -374,12 +381,23 @@ def train_epoch(
             weighting (Kendall et al. 2018). None disables weighting.
         score_loss: ``"ce"`` for cross-entropy over levels, or ``"rps"`` for
             the ranked probability score, which respects the level order.
+        world_size: number of data-parallel processes. > 1 averages gradients
+            across ranks before each optimizer step; ``train_items`` must
+            already be this rank's shard.
     """
     model.train()
     total_loss = 0.0
     n_items = 0
     n_skipped = 0
     accum_count = 0
+    trainable_params = [p for p in model.parameters() if p.requires_grad]
+
+    def _finish_step() -> None:
+        if world_size > 1:
+            average_gradients(trainable_params, world_size)
+        torch.nn.utils.clip_grad_norm_(trainable_params, max_grad_norm)
+        optimizer.step()
+        optimizer.zero_grad()
 
     optimizer.zero_grad()
 
@@ -446,11 +464,7 @@ def train_epoch(
                 accum_count += len(all_weighted)
 
             if accum_count >= accumulation_steps:
-                torch.nn.utils.clip_grad_norm_(
-                    [p for p in model.parameters() if p.requires_grad], max_grad_norm
-                )
-                optimizer.step()
-                optimizer.zero_grad()
+                _finish_step()
                 accum_count = 0
     else:
         for item in train_items:
@@ -466,11 +480,7 @@ def train_epoch(
             accum_count += 1
 
             if accum_count >= accumulation_steps:
-                torch.nn.utils.clip_grad_norm_(
-                    [p for p in model.parameters() if p.requires_grad], max_grad_norm
-                )
-                optimizer.step()
-                optimizer.zero_grad()
+                _finish_step()
                 accum_count = 0
 
     if accum_count > 0:
@@ -479,11 +489,7 @@ def train_epoch(
             for p in model.parameters():
                 if p.requires_grad and p.grad is not None:
                     p.grad.mul_(scale)
-        torch.nn.utils.clip_grad_norm_(
-            [p for p in model.parameters() if p.requires_grad], max_grad_norm
-        )
-        optimizer.step()
-        optimizer.zero_grad()
+        _finish_step()
 
     return {
         "mean_loss": total_loss / max(n_items, 1),
@@ -771,6 +777,8 @@ def train_multitask(
     accumulation_steps: int = 1,
     seed: int = 42,
     batch_backbone: int = 0,
+    rank: int = 0,
+    world_size: int = 1,
     save_every_epoch: bool = False,
     mlp_lr: float | None = None,
     noul_lr: float | None = None,
@@ -805,6 +813,11 @@ def train_multitask(
             parameters (Kendall et al. 2018) to automatically balance losses.
         score_loss: ``"ce"`` or ``"rps"`` — how score-question levels are
             scored during training.  Evaluation is unaffected.
+        rank: This process's rank when ``world_size`` > 1.
+        world_size: Number of data-parallel processes. Each rank trains on a
+            stride shard of the epoch and gradients are averaged before every
+            optimizer step; evaluation is sharded and merged, so the reported
+            metrics match a single-process run.
     """
     from data.sampler import MultitaskSampler
 
@@ -921,13 +934,14 @@ def train_multitask(
     for epoch in range(1, epochs + 1):
         t0 = time.monotonic()
 
-        epoch_items = sampler.sample_epoch(epoch - 1)
+        epoch_items = shard(sampler.sample_epoch(epoch - 1), rank, world_size)
 
         train_stats = train_epoch(
             model, epoch_items, optimizer, max_grad_norm,
             accumulation_steps, batch_backbone, log_vars=log_vars,
-            score_loss=score_loss,
+            score_loss=score_loss, world_size=world_size,
         )
+        train_stats = gather_train_stats(train_stats, world_size)
         scheduler.step()
 
         elapsed = time.monotonic() - t0
@@ -940,15 +954,20 @@ def train_multitask(
         }
 
         if epoch % eval_every == 0 or epoch == epochs:
-            eval_stats = eval_epoch_detailed(model, eval_items)
+            eval_stats = gather_eval_stats(
+                eval_epoch_detailed(
+                    model, shard(eval_items, rank, world_size)
+                )
+            )
             log["eval"] = eval_stats
 
             agg = eval_stats["aggregate"]
-            print(
-                f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} "
-                f"eval_loss={agg['mean_loss']:.4f} eval_acc={agg['accuracy']:.4f} "
-                f"({elapsed:.1f}s)"
-            )
+            if rank == 0:
+                print(
+                    f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} "
+                    f"eval_loss={agg['mean_loss']:.4f} eval_acc={agg['accuracy']:.4f} "
+                    f"({elapsed:.1f}s)"
+                )
 
             # Per-type summary
             by_type = eval_stats.get("by_type", {})
@@ -956,7 +975,7 @@ def train_multitask(
             for t in sorted(by_type):
                 ts = by_type[t]
                 type_parts.append(f"{t}={ts['accuracy']:.3f}({ts['n_items']})")
-            if type_parts:
+            if type_parts and rank == 0:
                 print(f"    by_type: {' | '.join(type_parts)}", flush=True)
 
             # Log uncertainty weights if enabled
@@ -967,13 +986,14 @@ def train_multitask(
                     val = log_vars[t].item()
                     lv_parts.append(f"{t}={val:.4f}")
                     lv_snapshot[t] = round(val, 6)
-                print(f"    log_var: {' | '.join(lv_parts)}", flush=True)
+                if rank == 0:
+                    print(f"    log_var: {' | '.join(lv_parts)}", flush=True)
                 log["log_vars"] = lv_snapshot
 
             if agg["mean_loss"] < best_eval_loss:
                 best_eval_loss = agg["mean_loss"]
                 log["best"] = True
-                if checkpoint_dir:
+                if checkpoint_dir and rank == 0:
                     model.save_heads(checkpoint_dir / "best_heads.pt")
                     torch.save(
                         {
@@ -985,14 +1005,14 @@ def train_multitask(
                         checkpoint_dir / "training_state.pt",
                     )
 
-            if save_every_epoch and checkpoint_dir:
+            if save_every_epoch and checkpoint_dir and rank == 0:
                 model.save_heads(checkpoint_dir / f"epoch_{epoch:03d}.pt")
-        else:
+        elif rank == 0:
             print(f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} ({elapsed:.1f}s)", flush=True)
 
         history.append(log)
 
-    if checkpoint_dir:
+    if checkpoint_dir and rank == 0:
         (checkpoint_dir / "history.json").write_text(json.dumps(history, indent=2, default=str))
 
     return {"history": history, "best_eval_loss": best_eval_loss}
