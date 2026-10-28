@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import random
 import sys
@@ -12,6 +11,12 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from .format import TypedQuestion
+from .synthetic_split import (
+    CACHE_NAME,
+    corpus_fingerprint,
+    domain_splits,
+    split_from_key,
+)
 
 DATA_DIR = Path(__file__).resolve().parent / "benchmarks"
 
@@ -1297,9 +1302,11 @@ def _synthetic_family_split(
     side. Splitting per item would leak paraphrases across the boundary and
     inflate eval accuracy.
 
-    Uses md5 rather than ``hash()`` because Python's string hash is randomised
-    per process (PYTHONHASHSEED), which would make the split unstable across
-    runs and machines.
+    ``load_synthetic`` does not use this function directly for a family that
+    shares a state with another family: it clusters near-duplicate families and
+    gives each cluster one split (see :mod:`data.synthetic_split`). A family
+    with no near-duplicate keeps the value returned here, so in practice this
+    is still the split rule for almost every family.
 
     Two limits are worth knowing:
 
@@ -1308,10 +1315,9 @@ def _synthetic_family_split(
       fixed corpus, but not across regenerating it: reordering families shifts
       families across the boundary (a +1 shift on every index moves ~18% of
       families).
-    * Family-disjointness is not state-disjointness. A handful of states appear
-      in more than one family (two such states in ``safety_moderation``); if
-      those families split, the same state is evaluated on text it was trained
-      on. The effect is negligible at this scale but is not zero.
+    * Family-disjointness is not state-disjointness on its own. A handful of
+      states appear in more than one family; the cluster-aware split in
+      ``data.synthetic_split`` is what closes that gap (#120).
 
     Args:
         domain: Synthetic domain name, e.g. ``"medical_triage"``.
@@ -1322,8 +1328,7 @@ def _synthetic_family_split(
         ``"test"`` or ``"train"`` — ``"test"`` matches the split name the
         benchmark loaders use, which is what ``load_source_items`` filters on.
     """
-    digest = hashlib.md5(f"{domain}-{family_idx}".encode()).hexdigest()
-    return "test" if int(digest[:8], 16) / 0xFFFFFFFF < eval_ratio else "train"
+    return split_from_key(f"{domain}-{family_idx}", eval_ratio)
 
 
 def load_synthetic() -> Iterator[TypedQuestion]:
@@ -1349,11 +1354,22 @@ def load_synthetic() -> Iterator[TypedQuestion]:
 
         families = _load_jsonl(families_path)
         variants = _load_jsonl(variants_path) if variants_path.exists() else []
+        family_idxs = [
+            fam.get("_family_idx", idx) for idx, fam in enumerate(families)
+        ]
+        fam_splits = domain_splits(
+            domain,
+            families,
+            variants,
+            family_idxs,
+            content_key=corpus_fingerprint([families_path, variants_path]),
+            cache_path=synth_dir / CACHE_NAME,
+        )
 
         for idx, fam in enumerate(families):
             vd = variants[idx] if idx < len(variants) else {}
-            fam_idx = fam.get("_family_idx", idx)
-            fam_split = _synthetic_family_split(domain, fam_idx)
+            fam_idx = family_idxs[idx]
+            fam_split = fam_splits[idx]
             items = family_to_typed_questions(
                 fam, vd, domain, fam_idx, split=fam_split
             )
