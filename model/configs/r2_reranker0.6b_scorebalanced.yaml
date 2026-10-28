@@ -1,0 +1,218 @@
+# Round 2 variant: score-balanced mixture (experiment, pending validation)
+#
+# Score is the least-supplied primitive. Every type gets 5,000 slots per
+# epoch, but the pools behind them differ: 21,544 score items against 88,830
+# noul, so each score item is drawn 3.8x as often as a noul item.  (The
+# sampler holds type_ratios at 1:1:1 over a fixed epoch_size, so the
+# resampling rate follows the pool, not the ratio.  An earlier revision of
+# this header quoted the 27,235 / 111,708 pool sizes as per-epoch counts and
+# called the ratio 4x; both were wrong.)
+#
+# This config raises the two score caps that were the binding constraint:
+#   yelp      max_train  5,000 -> 20,000  (the prepared yelp.jsonl holds only
+#                                         20,000 train rows; raising that
+#                                         needs re-materialising the file)
+#   synthetic max_train 10,000 -> 30,000  (measured: 4,231 score items at this
+#                                         cap; all 19,854 train score items
+#                                         would need max_train ~138,595)
+# and adds three external ordinal sources (25,000, 25,000 and 24,983 train items):
+#   helpsteer     — human 0-4 ratings on five response attributes (CC-BY-4.0)
+#   wmt_da        — human 0-100 direct-assessment translation scores
+#                   (Apache-2.0)
+#   ultrafeedback — rated response quality, 1-10 overall score (MIT)
+# Everything else is identical to r2_reranker0.6b.yaml, so a run against the
+# 49.11 frozen baseline isolates the mixture change.
+#
+# Usage:
+#   python model/scripts/train_multitask.py \
+#       --config model/configs/r2_reranker0.6b_scorebalanced.yaml
+#
+# Findings applied:
+#   - Rank: r64 (head-size sweep — higher rank hurts for 0.6B)
+#   - MLP: mlp=0 (MLP+LR targeted runs — MLP doesn't help for small backbone)
+#   - LR: 1e-3 uniform (MTL optimization — baseline wins)
+#   - Attention: SDPA auto-detect (PR #94)
+#   - Data: 26 benchmarks + 154K synthetic (23 domains)
+#   - Shared attention: TBD (pending #98 verification)
+#
+# Usage:
+#   python model/scripts/train_multitask.py --config model/configs/r2_reranker0.6b.yaml
+
+model: Qwen/Qwen3-Reranker-0.6B
+encoder: false
+rank: 64
+epochs: 20
+lr: 0.001
+accumulation_steps: 8
+eval_every: 1
+seed: 42
+save_every_epoch: true
+shared_attention: true
+
+# The three score sources below are train-only (max_eval: 0). Their eval
+# slices would add 3,000 items to a 13,444-item evaluation set and make this
+# config's accuracy incomparable with every run in the sweep. Evaluate them
+# separately with an eval-only config if their out-of-distribution behaviour
+# matters.
+#
+# They also have to be materialised before use: load_source_items reads a
+# prepared JSONL and does not dispatch through LOADERS.
+#   python -m data.pipeline helpsteer wmt_da ultrafeedback
+sources:
+  # --- Choice benchmarks (13 sources) ---
+  banking77:
+    path: data/benchmarks/banking77.jsonl
+    weight: 0.5
+    max_train: 5000
+    max_eval: 500
+  agnews:
+    path: data/benchmarks/agnews.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  arc:
+    path: data/benchmarks/arc.jsonl
+    weight: 2.0
+    max_eval: 500
+  race:
+    path: data/benchmarks/race.jsonl
+    weight: 1.5
+    max_train: 5000
+    max_eval: 500
+  hellaswag:
+    path: data/benchmarks/hellaswag.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  codesearchnet:
+    path: data/benchmarks/codesearchnet.jsonl
+    weight: 0.5
+    max_train: 3000
+    max_eval: 300
+  swag:
+    path: data/benchmarks/swag.jsonl
+    weight: 0.8
+    max_train: 5000
+    max_eval: 500
+  fever:
+    path: data/benchmarks/fever.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  mmlu:
+    path: data/benchmarks/mmlu.jsonl
+    weight: 2.0
+    max_train: 5000
+    max_eval: 500
+  winogrande:
+    path: data/benchmarks/winogrande.jsonl
+    weight: 1.5
+    max_train: 5000
+    max_eval: 500
+  piqa:
+    path: data/benchmarks/piqa.jsonl
+    weight: 1.5
+    max_train: 5000
+    max_eval: 500
+  commonsenseqa:
+    path: data/benchmarks/commonsenseqa.jsonl
+    weight: 2.0
+    max_eval: 500
+  logiqa:
+    path: data/benchmarks/logiqa.jsonl
+    weight: 2.0
+    max_eval: 500
+
+  # --- Noul benchmarks (8 sources) ---
+  sst2:
+    path: data/benchmarks/sst2.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  mnli:
+    path: data/benchmarks/mnli.jsonl
+    weight: 0.3
+    max_train: 10000
+    max_eval: 500
+  tabfact:
+    path: data/benchmarks/tabfact.jsonl
+    weight: 1.0
+    max_train: 5000
+    max_eval: 500
+  multirc:
+    path: data/benchmarks/multirc.jsonl
+    weight: 1.5
+    max_eval: 500
+  mednli:
+    path: data/benchmarks/mednli.jsonl
+    weight: 2.0
+    max_eval: 500
+  contractnli:
+    path: data/benchmarks/contractnli.jsonl
+    weight: 2.0
+    max_eval: 500
+  anli:
+    path: data/benchmarks/anli.jsonl
+    weight: 2.0
+    max_train: 5000
+    max_eval: 500
+  boolq:
+    path: data/benchmarks/boolq.jsonl
+    weight: 1.5
+    max_train: 5000
+    max_eval: 500
+
+  # --- Score benchmarks (3 sources) ---
+  sst5:
+    path: data/benchmarks/sst5.jsonl
+    weight: 1.0
+    max_eval: 500
+  stsb:
+    path: data/benchmarks/stsb.jsonl
+    weight: 1.5
+    max_eval: 500
+  yelp:
+    path: data/benchmarks/yelp.jsonl
+    weight: 1.0
+    max_train: 20000
+    max_eval: 500
+  helpsteer:
+    path: data/benchmarks/helpsteer.jsonl
+    weight: 1.0
+    max_train: 25000
+    max_eval: 0
+  wmt_da:
+    path: data/benchmarks/wmt_da.jsonl
+    weight: 1.0
+    max_train: 25000
+    max_eval: 0
+  ultrafeedback:
+    path: data/benchmarks/ultrafeedback.jsonl
+    weight: 1.0
+    max_train: 25000
+    max_eval: 0
+
+  # --- Synthetic (23 domains, 154K items assembled on-the-fly) ---
+  synthetic:
+    weight: 1.0
+    max_train: 30000
+    max_eval: 1000
+
+  # --- Eval-only ---
+  authored144:
+    path: data/benchmarks/openjev/authored144.jsonl
+    weight: 0
+    max_eval: 144
+  typed_decisions:
+    path: data/benchmarks/typed_decisions.jsonl
+    weight: 1.0
+    max_train: 2000
+    max_eval: 500
+
+sampling:
+  type_ratios:
+    noul: 1.0
+    choice: 1.0
+    score: 1.0
+  sampling_temperature: 0.7
+  epoch_size: 15000
