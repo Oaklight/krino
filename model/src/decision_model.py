@@ -71,8 +71,19 @@ class DecisionModel(nn.Module):
     for Qwen3-0.6B (28 layers, 8 KV heads, 128 head dim, bf16) that is about
     112 KiB per context token (1.8 GiB at 16K tokens).  The suffix cache is
     cropped after every chunk, so it adds only ``B * S`` tokens at a time.
-    Without the cache the same question would cost ``K`` full-context forward
-    passes and ``K * L`` tokens instead of ``1 + ceil(K / B)`` forwards.
+
+    The existing pooled readout is not a per-option loop: it encodes the
+    context and then the whole option batch in two backbone forwards, so its
+    forward count is 2 for any ``K``.  The marker readout uses
+    ``1 + ceil(K / B)`` forwards instead, and every option token attends to
+    the cached prefix in every layer.  That attention adds about
+    ``4 * n_layers * hidden * K * S * L`` FLOPs.  The marker readout is
+    therefore a representation and memory-bounding change, not a FLOP
+    reduction: the ``K`` full-context passes it avoids are the naive
+    per-option alternative, which the pooled batch never paid.  On
+    launch-bound hardware the extra forwards can dominate wall-clock.
+    Treat the counts above as a FLOP and memory model, not a latency
+    guarantee, and measure both.
     """
 
     def __init__(
