@@ -40,7 +40,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from data.format import TypedQuestion
-from data.sampler import SamplerConfig
+from data.sampler import SamplerConfig, sampling_type
 from data.score_form import convert_training_items
 from data.sources import (
     collect_synthetic_sources,
@@ -123,7 +123,12 @@ def print_data_summary(
 
     for item in train_items:
         train_by_source[item.source] += 1
-        train_by_type[item.question.get("type", "?")] += 1
+        # The type the sampler actually pools on, not the declared one: score
+        # form rewrites `type` to "score" and keeps the original in
+        # `score_form.source_type`.  Reporting the declared field would print
+        # `{'score': 182262}` for a run whose sampler is still balancing the
+        # original three types, which reads as a collapsed mix.
+        train_by_type[sampling_type(item)] += 1
     for item in eval_items:
         eval_by_source[item.source] += 1
 
@@ -139,7 +144,19 @@ def print_data_summary(
         print(f"  {source:<20} {t:>8,} {e:>8,}", flush=True)
     print(f"  {'TOTAL':<20} {len(train_items):>8,} {len(eval_items):>8,}", flush=True)
 
-    print(f"\n  Type distribution (train): {dict(train_by_type)}", flush=True)
+    print(f"\n  Type distribution (train, as sampled): {dict(train_by_type)}", flush=True)
+
+    n_converted = sum(
+        1 for item in train_items
+        if isinstance(item.question.get("score_form"), dict)
+    )
+    if n_converted:
+        print(
+            f"  {n_converted:,} items are in score form: their declared type is "
+            f"'score', but they are pooled by the original type above, so "
+            f"type_ratios still apply",
+            flush=True,
+        )
 
 
 def main() -> int:
