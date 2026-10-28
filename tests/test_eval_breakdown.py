@@ -176,3 +176,72 @@ def test_printer_flags_cells_far_below_the_panel(capsys):
     good_line = next(line for line in out.splitlines() if "good" in line)
     assert "<--" in bad_line
     assert "<--" not in good_line
+
+
+class TestScoreColumns:
+    """Score items carry (rps, mae); every other row stops at four columns."""
+
+    def test_score_metrics_appear_only_on_score_buckets(self):
+        from model.evaluation.breakdown import build_eval_breakdown
+
+        stats = build_eval_breakdown(
+            [
+                ("sst5", "score", 1.0, True, 0.10, 0.25),
+                ("sst5", "score", 1.2, False, 0.30, 0.75),
+                ("sst2", "noul", 0.5, True),
+            ]
+        )
+        score = stats["by_type"]["score"]
+        assert score["rps"] == pytest.approx(0.20)
+        assert score["mae"] == pytest.approx(0.50)
+        assert score["n_scored"] == 2
+        assert "rps" not in stats["by_type"]["noul"]
+
+    def test_a_bucket_with_no_score_items_has_no_keys(self):
+        from model.evaluation.breakdown import build_eval_breakdown
+
+        stats = build_eval_breakdown([("boolq", "noul", 0.4, True)])
+        assert "rps" not in stats["aggregate"]
+        assert "n_scored" not in stats["aggregate"]
+
+    def test_aggregate_mixes_only_the_score_rows(self):
+        from model.evaluation.breakdown import build_eval_breakdown
+
+        stats = build_eval_breakdown(
+            [
+                ("sst5", "score", 1.0, True, 0.10, 0.25),
+                ("sst2", "noul", 0.5, True),
+                ("sst2", "noul", 0.7, False),
+            ]
+        )
+        # Mean over the one score item, not over all three.
+        assert stats["aggregate"]["rps"] == pytest.approx(0.10)
+        assert stats["aggregate"]["n_scored"] == 1
+        assert stats["aggregate"]["n_items"] == 3
+
+    def test_source_type_breakdown_carries_them_too(self):
+        from model.evaluation.breakdown import build_eval_breakdown
+
+        stats = build_eval_breakdown(
+            [
+                ("mixed", "score", 1.0, True, 0.20, 0.40),
+                ("mixed", "noul", 0.5, True),
+            ]
+        )
+        assert stats["by_source_type"]["mixed"]["score"]["rps"] == pytest.approx(0.20)
+        assert "rps" not in stats["by_source_type"]["mixed"]["noul"]
+
+    def test_the_report_prints_them_on_score_rows(self):
+        from model.evaluation.breakdown import build_eval_breakdown, format_detailed_eval
+
+        stats = build_eval_breakdown(
+            [
+                ("sst5", "score", 1.0, True, 0.10, 0.25),
+                ("sst2", "noul", 0.5, True),
+            ]
+        )
+        report = format_detailed_eval(stats)
+        score_line = next(row for row in report.splitlines() if "score" in row)
+        noul_line = next(row for row in report.splitlines() if "noul" in row)
+        assert "rps=0.1000" in score_line and "mae=0.2500" in score_line
+        assert "rps=" not in noul_line
