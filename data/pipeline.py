@@ -1052,6 +1052,205 @@ def load_drop() -> Iterator[TypedQuestion]:
                 )
 
 
+# --- HelpSteer (Human-Rated Response Quality, Score) ---
+
+# One row yields five score questions, one per annotated attribute.  The
+# attributes are independent 0-4 ratings, so each uses its own ordered rubric.
+HELPSTEER_ATTRIBUTES: dict[str, tuple[str, list[str]]] = {
+    "helpfulness": (
+        "How helpful is the response to the prompt?",
+        ["Not helpful at all", "Slightly helpful", "Moderately helpful",
+         "Very helpful", "Extremely helpful"],
+    ),
+    "correctness": (
+        "How factually correct is the response?",
+        ["Completely incorrect", "Mostly incorrect", "Partially correct",
+         "Mostly correct", "Completely correct"],
+    ),
+    "coherence": (
+        "How coherent and well organized is the response?",
+        ["Incoherent", "Poorly organized", "Somewhat coherent",
+         "Coherent", "Highly coherent"],
+    ),
+    "complexity": (
+        "How complex is the response?",
+        ["Very simple", "Simple", "Moderately complex", "Complex", "Very complex"],
+    ),
+    "verbosity": (
+        "How verbose is the response?",
+        ["Very concise", "Concise", "Moderately verbose", "Verbose",
+         "Very verbose"],
+    ),
+}
+
+_HELPSTEER_TRAIN_ROWS = 5_000
+_HELPSTEER_EVAL_ROWS = 1_000
+
+
+def load_helpsteer() -> Iterator[TypedQuestion]:
+    """Convert HelpSteer's human 0-4 attribute ratings into score questions.
+
+    Licence: CC-BY-4.0.  Each sampled row contributes one score item per
+    attribute, with the attribute's 0-4 rating as the expected level.  Train
+    rows are capped at 5,000 (25,000 items); validation at 1,000 rows.
+    """
+    rng = random.Random(42)
+    for split_name, out_split, cap in (
+        ("train", "train", _HELPSTEER_TRAIN_ROWS),
+        ("validation", "test", _HELPSTEER_EVAL_ROWS),
+    ):
+        rows = _load_hf_parquet("nvidia/HelpSteer", "default", split_name)
+        rows = [r for r in rows if r.get("prompt") and r.get("response")]
+        if len(rows) > cap:
+            rows = rng.sample(rows, cap)
+        for i, row in enumerate(rows):
+            state = f"Prompt: {row['prompt']}\n\nResponse: {row['response']}"
+            for attribute, (instructions, levels) in HELPSTEER_ATTRIBUTES.items():
+                value = row.get(attribute)
+                if not isinstance(value, int) or not 0 <= value < len(levels):
+                    continue
+                yield TypedQuestion.score(
+                    id=f"helpsteer-{out_split}-{i:05d}-{attribute}",
+                    state=state,
+                    instructions=instructions,
+                    criteria=levels,
+                    label=float(value),
+                    source="helpsteer",
+                    split=out_split,
+                    group=f"helpsteer-{i % 100}",
+                )
+
+
+# --- WMT Direct Assessment (Human Translation Quality, Score) ---
+
+WMT_DA_LEVELS = ["Very poor", "Poor", "Fair", "Good", "Excellent"]
+
+_WMT_DA_TRAIN_ROWS = 25_000
+_WMT_DA_EVAL_ROWS = 2_000
+
+
+def _wmt_da_level(raw_score: float) -> int:
+    """Map a 0-100 direct-assessment score to a five-level quality band."""
+    return min(4, max(0, int(raw_score // 20)))
+
+
+def load_wmt_da() -> Iterator[TypedQuestion]:
+    """Convert WMT direct-assessment scores into translation-quality scores.
+
+    Licence: Apache-2.0 (dataset release; underlying WMT source text retains
+    its own terms).  The 0-100 ``raw`` score is banded into five 20-point
+    levels.  Year 2022 is held out for evaluation; train rows are capped at
+    25,000 and eval at 2,000, both sampled with a fixed seed.
+    """
+    rng = random.Random(42)
+    rows = _load_hf_parquet(
+        "RicardoRei/wmt-da-human-evaluation", "default", "train"
+    )
+    train_rows: list[dict[str, Any]] = []
+    eval_rows: list[dict[str, Any]] = []
+    for row in rows:
+        if not row.get("src") or not row.get("mt"):
+            continue
+        try:
+            float(row.get("raw"))
+        except (TypeError, ValueError):
+            continue
+        if str(row.get("year")) == "2022":
+            eval_rows.append(row)
+        else:
+            train_rows.append(row)
+
+    for out_split, split_rows, cap in (
+        ("train", train_rows, _WMT_DA_TRAIN_ROWS),
+        ("test", eval_rows, _WMT_DA_EVAL_ROWS),
+    ):
+        if len(split_rows) > cap:
+            split_rows = rng.sample(split_rows, cap)
+        for i, row in enumerate(split_rows):
+            level = _wmt_da_level(float(row["raw"]))
+            yield TypedQuestion.score(
+                id=f"wmt-da-{out_split}-{i:05d}",
+                state=f"Source: {row['src']}\n\nTranslation: {row['mt']}",
+                instructions=(
+                    "How well does the translation preserve the meaning and "
+                    "quality of the source text?"
+                ),
+                criteria=WMT_DA_LEVELS,
+                label=float(level),
+                source="wmt_da",
+                split=out_split,
+                group=f"wmt-da-{row.get('lp', 'unknown')}",
+            )
+
+
+# --- UltraFeedback (Rated Response Quality, Score) ---
+
+ULTRAFEEDBACK_LEVELS = ["Very poor", "Poor", "Fair", "Good", "Excellent"]
+
+_ULTRAFEEDBACK_TRAIN_ROWS = 12_500
+_ULTRAFEEDBACK_EVAL_ROWS = 1_000
+
+
+def _ultrafeedback_level(overall_score: float) -> int:
+    """Map UltraFeedback's 1-10 overall score to five equal-width levels."""
+    return min(4, max(0, int((overall_score - 1.0) / 9.0 * 5.0)))
+
+
+def _last_assistant_content(conversation: Any) -> str:
+    if not isinstance(conversation, list):
+        return ""
+    for message in reversed(conversation):
+        if isinstance(message, dict) and message.get("role") == "assistant":
+            return str(message.get("content", ""))
+    return ""
+
+
+def load_ultrafeedback() -> Iterator[TypedQuestion]:
+    """Convert UltraFeedback overall scores into response-quality questions.
+
+    Licence: MIT for the released annotations (the prompts come from several
+    upstream collections with their own terms).  Each row contributes two
+    items, one for the chosen and one for the rejected response; the 1-10
+    overall score maps to five equal-width levels.  Train is capped at 12,500
+    rows (25,000 items), test at 1,000 rows.
+    """
+    rng = random.Random(42)
+    for split_name, out_split, cap in (
+        ("train_prefs", "train", _ULTRAFEEDBACK_TRAIN_ROWS),
+        ("test_prefs", "test", _ULTRAFEEDBACK_EVAL_ROWS),
+    ):
+        rows = _load_hf_parquet(
+            "HuggingFaceH4/ultrafeedback_binarized", "default", split_name
+        )
+        rows = [
+            r for r in rows
+            if r.get("prompt") and r.get("score_chosen") is not None
+            and r.get("score_rejected") is not None
+        ]
+        if len(rows) > cap:
+            rows = rng.sample(rows, cap)
+        for i, row in enumerate(rows):
+            prompt = row["prompt"]
+            for response_key, score_key, suffix in (
+                ("chosen", "score_chosen", "chosen"),
+                ("rejected", "score_rejected", "rejected"),
+            ):
+                response = _last_assistant_content(row.get(response_key))
+                if not response:
+                    continue
+                level = _ultrafeedback_level(float(row[score_key]))
+                yield TypedQuestion.score(
+                    id=f"ultrafeedback-{out_split}-{i:05d}-{suffix}",
+                    state=f"Instruction: {prompt}\n\nResponse: {response}",
+                    instructions="How well does the response satisfy the instruction?",
+                    criteria=ULTRAFEEDBACK_LEVELS,
+                    label=float(level),
+                    source="ultrafeedback",
+                    split=out_split,
+                    group=f"ultrafeedback-{row.get('prompt_id') or i}",
+                )
+
+
 # --- Synthetic (generated data) ---
 
 
@@ -1231,6 +1430,9 @@ LOADERS = {
     "tabfact": load_tabfact,
     "fever": load_fever,
     "yelp": load_yelp,
+    "helpsteer": load_helpsteer,
+    "wmt_da": load_wmt_da,
+    "ultrafeedback": load_ultrafeedback,
     "swag": load_swag,
     "multirc": load_multirc,
     "mednli": load_mednli,

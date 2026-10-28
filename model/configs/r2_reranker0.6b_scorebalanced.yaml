@@ -15,6 +15,11 @@
 #   synthetic max_train 10,000 -> 30,000  (measured: 4,231 score items at this
 #                                         cap; all 19,854 train score items
 #                                         would need max_train ~138,595)
+# and adds three external ordinal sources (25,000, 25,000 and 24,983 train items):
+#   helpsteer     — human 0-4 ratings on five response attributes (CC-BY-4.0)
+#   wmt_da        — human 0-100 direct-assessment translation scores
+#                   (Apache-2.0)
+#   ultrafeedback — rated response quality, 1-10 overall score (MIT)
 # Everything else is identical to r2_reranker0.6b.yaml, so a run against the
 # 49.11 frozen baseline isolates the mixture change.
 #
@@ -161,6 +166,21 @@ sources:
     path: data/benchmarks/yelp.jsonl
     weight: 1.0
     max_train: 20000
+    max_eval: 500
+  helpsteer:
+    path: data/benchmarks/helpsteer.jsonl
+    weight: 1.0
+    max_train: 25000
+    max_eval: 500
+  wmt_da:
+    path: data/benchmarks/wmt_da.jsonl
+    weight: 1.0
+    max_train: 25000
+    max_eval: 2000
+  ultrafeedback:
+    path: data/benchmarks/ultrafeedback.jsonl
+    weight: 1.0
+    max_train: 25000
     max_eval: 500
 
   # --- Synthetic (23 domains, 154K items assembled on-the-fly) ---
