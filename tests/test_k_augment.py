@@ -2,13 +2,22 @@
 
 The failure it addresses is measured, not hypothetical: the pooled-attention
 baseline drops from 0.677 accuracy at 4 options to 0.217 at 256 on the same
-items, because training never presents more than 80 options. These tests pin the
-invariants that make padding safe — the gold key survives, no option text is
-duplicated, keys cannot collide, non-choice items pass through untouched, and
-the same (seed, epoch) reproduces the same widths.
+300 banking77 items (model/experiments/optcount_pooled.json), because training
+never presents more than 80 options.  These tests pin the invariants that make
+padding safe: the gold key survives, no option text (including a case or
+whitespace variant) is duplicated, distractors come only from the supplied
+items, keys cannot collide, non-choice items pass through untouched, the same
+(seed, epoch) reproduces the same widths, and the teacher-distribution switch is
+matched between the augmented and control arms.
+
+The tests are torch-free on purpose: CI installs neither torch nor transformers,
+so a guard that skips on a missing torch would make the whole file pass without
+running anything.
 """
 
 from __future__ import annotations
+
+import random
 
 import pytest
 
@@ -16,13 +25,20 @@ from data.format import TypedQuestion
 from data.k_augment import (
     KAugmentConfig,
     apply_k_augment,
+    apply_k_augment_with_stats,
     build_distractor_pool,
     draw_target_k,
     pad_choice_item,
 )
 
 
-def _choice(item_id: str, label: str, criteria: dict[str, str], source: str = "src") -> TypedQuestion:
+def _choice(
+    item_id: str,
+    label: str,
+    criteria: dict[str, str],
+    source: str = "src",
+    teacher_probs: dict[str, float] | None = None,
+) -> TypedQuestion:
     return TypedQuestion(
         id=item_id,
         state="state",
@@ -30,14 +46,22 @@ def _choice(item_id: str, label: str, criteria: dict[str, str], source: str = "s
         label=label,
         source=source,
         split="train",
+        teacher_probs=teacher_probs,
     )
 
 
-def _pool_items(n: int, source: str = "src", width: int = 4) -> list[TypedQuestion]:
+def _pool_items(
+    n: int,
+    source: str = "src",
+    width: int = 4,
+    teacher_probs: dict[str, float] | None = None,
+) -> list[TypedQuestion]:
     items = []
     for i in range(n):
         criteria = {f"k{j}": f"{source} option {i}-{j}" for j in range(width)}
-        items.append(_choice(f"{source}-{i}", f"k{i % width}", criteria, source=source))
+        items.append(
+            _choice(f"{source}-{i}", f"k{i % width}", criteria, source=source, teacher_probs=teacher_probs)
+        )
     return items
 
 
@@ -50,9 +74,15 @@ def test_config_rejects_bad_values():
         KAugmentConfig(min_k=32, max_k=16)
 
 
+def test_default_max_k_stays_within_evaluation_width():
+    # The widest evaluation item is banking77 at 77 options.  Padding past it
+    # buys widths nothing is measured at and most of the extra encode cost.
+    assert KAugmentConfig().max_k == 80
+
+
 def test_draw_target_k_stays_in_range():
     cfg = KAugmentConfig(min_k=8, max_k=256)
-    rng = __import__("random").Random(0)
+    rng = random.Random(0)
     values = [draw_target_k(rng, cfg) for _ in range(2000)]
     assert min(values) >= 8
     assert max(values) <= 256
@@ -65,7 +95,7 @@ def test_pad_preserves_gold_and_original_options():
     target = items[0]
     pool = build_distractor_pool(items)
 
-    padded = pad_choice_item(target, target_k=32, pool=pool, rng=__import__("random").Random(1))
+    padded = pad_choice_item(target, target_k=32, pool=pool, rng=random.Random(1))
 
     assert padded is not target
     assert padded.label == target.label
@@ -82,16 +112,27 @@ def test_pad_preserves_gold_and_original_options():
 def test_pad_adds_distinct_texts():
     items = _pool_items(60)
     pool = build_distractor_pool(items)
-    padded = pad_choice_item(items[0], target_k=64, pool=pool, rng=__import__("random").Random(2))
-    texts = list(padded.question["criteria"].values())
+    padded = pad_choice_item(items[0], target_k=64, pool=pool, rng=random.Random(2))
+    texts = [_norm(v) for v in padded.question["criteria"].values()]
     assert len(texts) == len(set(texts)), "a distractor duplicated another option's text"
 
 
+def _norm(text: str) -> str:
+    return text.strip().casefold()
+
+
+def test_pad_rejects_case_and_whitespace_variants_of_gold():
+    item = _choice("t", "gold", {"gold": "True", "other": "Other option"})
+    pool = {"src": ["true", "  TRUE  ", "valid distractor", "aDdItIoNaL text"]}
+    padded = pad_choice_item(item, target_k=4, pool=pool, rng=random.Random(0))
+    added = set(padded.question["criteria"].values()) - set(item.question["criteria"].values())
+    assert {_norm(t) for t in added} == {"valid distractor", "additional text"}
+
+
 def test_pad_drops_teacher_probs():
-    item = _choice("t", "k0", {"k0": "a", "k1": "b"})
-    item.teacher_probs = {"k0": 0.7, "k1": 0.3}
+    item = _choice("t", "k0", {"k0": "a", "k1": "b"}, teacher_probs={"k0": 0.7, "k1": 0.3})
     pool = {"src": ["c", "d", "e"]}
-    padded = pad_choice_item(item, target_k=4, pool=pool, rng=__import__("random").Random(0))
+    padded = pad_choice_item(item, target_k=4, pool=pool, rng=random.Random(0))
     assert padded.teacher_probs is None, "teacher mass on unseen options would teach impossibility"
 
 
@@ -99,24 +140,24 @@ def test_pad_is_a_noop_when_target_not_wider():
     items = _pool_items(10)
     pool = build_distractor_pool(items)
     item = items[0]
-    assert pad_choice_item(item, target_k=2, pool=pool, rng=__import__("random").Random(0)) is item
+    assert pad_choice_item(item, target_k=2, pool=pool, rng=random.Random(0)) is item
 
 
 def test_pad_prefers_same_source():
-    a = _choice("a", "k0", {"k0": "a0", "k1": "a1"}, source="alpha")
-    b = _choice("b", "k0", {"k0": "b0", "b1": "b1"}, source="beta")
+    a = _choice("a", "k0", {"k0": "alpha zero", "k1": "alpha one"}, source="alpha")
+    b = _choice("b", "k0", {"k0": "beta zero", "b1": "beta one"}, source="beta")
     pool = build_distractor_pool([a, b])
 
-    padded = pad_choice_item(a, target_k=4, pool=pool, rng=__import__("random").Random(0))
+    padded = pad_choice_item(a, target_k=4, pool=pool, rng=random.Random(0))
     added = set(padded.question["criteria"].values()) - set(a.question["criteria"].values())
     # Only one same-source text is available, so exactly one foreign text sneaks in.
-    assert "b0" in added or "b1" in added
+    assert "beta zero" in added or "beta one" in added
     assert len(added) == 2
 
 
 def test_pad_skips_unpaddable_items():
     pool = {"src": ["c", "d"]}
-    rng = __import__("random").Random(0)
+    rng = random.Random(0)
 
     noul = TypedQuestion(
         id="n", state="s", question={"type": "noul", "instructions": "i"},
@@ -133,6 +174,31 @@ def test_pad_skips_unpaddable_items():
 
     missing_label = _choice("m", "absent", {"k0": "a", "k1": "b"})
     assert pad_choice_item(missing_label, target_k=8, pool=pool, rng=rng) is missing_label
+
+
+def test_pad_borrows_only_texts_from_the_supplied_items():
+    # The provenance boundary: distractors are borrowed from the items passed
+    # to the augmenter, which in training is the sampled training epoch.  An
+    # item that was not passed (e.g. evaluation data) cannot reach the pool.
+    train = [_choice("t", "g", {"g": "train gold text", "o": "train other text"}, source="train")]
+    held_out = [_choice("e", "g", {"g": "eval gold text", "x": "eval only text"}, source="eval")]
+
+    pool = build_distractor_pool(train)
+    padded = pad_choice_item(train[0], target_k=3, pool=pool, rng=random.Random(0))
+    added = set(padded.question["criteria"].values()) - set(train[0].question["criteria"].values())
+
+    supplied = {v for item in train for v in item.question["criteria"].values()}
+    held_out_texts = {v for item in held_out for v in item.question["criteria"].values()}
+    assert added <= supplied
+    assert not (added & held_out_texts)
+
+
+def test_pad_does_not_mutate_the_pool():
+    items = _pool_items(30)
+    pool = build_distractor_pool(items)
+    snapshot = {source: list(texts) for source, texts in pool.items()}
+    pad_choice_item(items[0], target_k=16, pool=pool, rng=random.Random(3))
+    assert pool == snapshot
 
 
 def test_apply_keeps_length_and_order_and_only_touches_choice():
@@ -180,12 +246,74 @@ def test_fraction_controls_the_share_selected():
     assert 0.15 * len(items) <= padded <= 0.35 * len(items)
 
 
-def test_distractor_pool_dedupes_and_falls_back_to_keys():
+def test_distractor_pool_dedupes_and_skips_short_or_blank_values():
     items = [
         _choice("a", "k0", {"k0": "shared", "k1": "shared"}),
         _choice("b", "k0", {"k0": "unique", "k1": ""}),
+        _choice("c", "k0", {"k0": "ab", "k1": "  real text  "}),
     ]
     pool = build_distractor_pool(items)
-    # A blank option text is not usable as a distractor, so the key stands in —
-    # the same `value or key` rule the training path uses.
-    assert pool["src"] == ["shared", "unique", "k1"]
+    # Blank and sub-3-character values are skipped, not replaced by their keys:
+    # a bare "k1" in the option list carries no signal.
+    assert pool["src"] == ["shared", "unique", "real text"]
+
+
+def test_selected_item_drops_teacher_probs_even_when_not_padded():
+    # target_k == natural: nothing to add, but the selected item must still lose
+    # its teacher distribution so the control arm can match it.
+    item = _choice("t", "k0", {"k0": "a", "k1": "b"}, teacher_probs={"k0": 0.7, "k1": 0.3})
+    cfg = KAugmentConfig(fraction=1.0, min_k=2, max_k=2, seed=1)
+    out = apply_k_augment([item], cfg, epoch=0)
+    assert len(out[0].question["criteria"]) == 2
+    assert out[0].teacher_probs is None
+
+
+def test_control_matches_the_augmented_selection_without_padding():
+    teacher = {"k0": 0.5, "k1": 0.5}
+    items = _pool_items(200, teacher_probs=teacher)
+    aug_cfg = KAugmentConfig(fraction=0.3, min_k=16, max_k=64, seed=5)
+    ctl_cfg = KAugmentConfig(fraction=0.3, min_k=16, max_k=64, seed=5, control=True)
+
+    aug, aug_stats = apply_k_augment_with_stats(items, aug_cfg, epoch=2)
+    ctl, ctl_stats = apply_k_augment_with_stats(items, ctl_cfg, epoch=2)
+
+    # Same coin, same items: control copies an item exactly when the augmented
+    # arm touched it, and never widens one.
+    touched_aug = {i for i, (a, orig) in enumerate(zip(aug, items)) if a is not orig}
+    touched_ctl = {i for i, (c, orig) in enumerate(zip(ctl, items)) if c is not orig}
+    assert touched_aug == touched_ctl
+    assert aug_stats.selected == ctl_stats.selected == len(touched_aug)
+    assert ctl_stats.padded == 0
+    assert ctl_stats.teacher_probs_dropped == aug_stats.teacher_probs_dropped == ctl_stats.selected
+    for c, orig in zip(ctl, items):
+        assert len(c.question["criteria"]) == len(orig.question["criteria"])
+        if c is not orig:
+            assert c.teacher_probs is None
+        else:
+            assert c.teacher_probs == teacher
+
+
+def test_stats_report_under_fill_when_the_pool_is_too_thin():
+    items = _pool_items(10, width=2)  # 20 distinct texts in the whole pool
+    cfg = KAugmentConfig(fraction=1.0, min_k=100, max_k=100, seed=1)
+    _, stats = apply_k_augment_with_stats(items, cfg, epoch=0)
+
+    assert stats.selected == stats.padded == len(items)
+    assert stats.under_filled == len(items)
+    assert stats.target_mean == 100.0
+    assert stats.realised_max < 100
+    assert stats.encodes_after < stats.target_mean * len(items)
+
+
+def test_stats_report_encodes_and_padding_counts():
+    items = _pool_items(20, width=4)
+    cfg = KAugmentConfig(fraction=1.0, min_k=8, max_k=8, seed=2)
+    out, stats = apply_k_augment_with_stats(items, cfg, epoch=0)
+
+    assert stats.choice_items == len(items)
+    assert stats.selected == len(items)
+    assert stats.padded == len(items)
+    assert stats.under_filled == 0
+    assert stats.encodes_before == 4 * len(items)
+    assert stats.encodes_after == sum(len(i.question["criteria"]) for i in out)
+    assert stats.encodes_after > stats.encodes_before
