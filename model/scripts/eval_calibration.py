@@ -57,6 +57,7 @@ from model.evaluation.calibration import (
 from model.evaluation.order_sensitivity import (
     chance_accuracy,
     duplicate_option_texts,
+    majority_class_accuracy,
     make_permutation,
     nested_option_subsets,
     normalized_accuracy,
@@ -437,6 +438,27 @@ def _score_metrics(
         "qwk_by_levels": qwk_by_levels,
         "qwk_excluded_scales": sorted(
             level for level in qwk_by_levels if level not in readable
+        ),
+    }
+
+
+def _floors(records: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    """Accuracy against the two floors a skewed eval set imposes.
+
+    ``chance`` is the mean of 1/option_count: what a uniform guess gets.
+    ``majority`` is what always predicting the most frequent gold label gets.
+    Neither appears in an accuracy number on its own, and on a set like
+    JevBench's noul slice the second one equals the reported result exactly.
+    """
+    if not records:
+        return {"chance": 0.0, "majority": 0.0}
+    chance = sum(
+        chance_accuracy(record["option_count"]) for record in records
+    ) / len(records)
+    return {
+        "chance": chance,
+        "majority": majority_class_accuracy(
+            [record["gold_label"] for record in records]
         ),
     }
 
@@ -885,6 +907,24 @@ def _print_table(summary: dict[str, Any]) -> None:
             flush=True,
         )
 
+    print("\nFloors (chance = uniform guess; majority = the most common gold):", flush=True)
+    print(
+        f"{'Type':<8} {'Acc':>8} {'Chance':>8} {'+pp':>7} {'Majority':>9} {'+pp':>7}",
+        flush=True,
+    )
+    for q_type in TYPES:
+        metrics = summary["by_type"].get(q_type)
+        floors = (metrics or {}).get("floors")
+        if not floors or not metrics["n"]:
+            continue
+        print(
+            f"{q_type:<8} {metrics['accuracy']:>8.4f} {floors['chance']:>8.4f} "
+            f"{100 * (metrics['accuracy'] - floors['chance']):>+7.2f} "
+            f"{floors['majority']:>9.4f} "
+            f"{100 * (metrics['accuracy'] - floors['majority']):>+7.2f}",
+            flush=True,
+        )
+
     score_metrics = summary["by_type"].get("score", {}).get("score_metrics", {})
     qwk_by_levels = score_metrics.get("qwk_by_levels", {})
     if qwk_by_levels:
@@ -1162,6 +1202,16 @@ def main() -> int:
     parser.add_argument(
         "--json", type=Path, default=None, help="Write the full report here"
     )
+    parser.add_argument(
+        "--predictions",
+        type=Path,
+        default=None,
+        help=(
+            "Write one JSON line per scored item. Aggregates cannot separate a "
+            "model that answers from one that sits at the majority class; this "
+            "file can."
+        ),
+    )
     args = parser.parse_args()
 
     if not 0.0 < args.fit_frac < 1.0:
@@ -1270,6 +1320,33 @@ def main() -> int:
             continue
         records[q_type].append(record)
 
+    if args.predictions:
+        args.predictions.parent.mkdir(parents=True, exist_ok=True)
+        with args.predictions.open("w", encoding="utf-8") as handle:
+            for q_type in TYPES:
+                for record in records[q_type]:
+                    probabilities = _probs(record)
+                    prediction = record["labels"][_argmax(probabilities)]
+                    handle.write(
+                        json.dumps(
+                            {
+                                "id": record["_item"].id,
+                                "source": record["source"],
+                                "type": q_type,
+                                "gold": record["gold_label"],
+                                "prediction": prediction,
+                                "correct": prediction == record["gold_label"],
+                                "prob_gold": probabilities[record["label_idx"]],
+                                "top_prob": max(probabilities),
+                                "option_count": record["option_count"],
+                                "chance": chance_accuracy(record["option_count"]),
+                            },
+                            default=str,
+                        )
+                        + "\n"
+                    )
+        print(f"Predictions written to {args.predictions}", flush=True)
+
     for q_type in TYPES:
         print(f"  {q_type:<7} {len(records[q_type]):>6} items", flush=True)
     if any(skipped.values()):
@@ -1295,6 +1372,10 @@ def main() -> int:
             type_records, args.fit_frac, args.seed, args.fit_steps
         )
         metrics["by_option_count"] = _bucket_metrics(type_records)
+        metrics["floors"] = _floors(type_records)
+        metrics["accuracy_over_chance"] = normalized_accuracy(
+            metrics["accuracy"], metrics["floors"]["chance"]
+        )
         if q_type == "score":
             metrics["score_metrics"] = _score_metrics(type_records)
         summary["by_type"][q_type] = metrics

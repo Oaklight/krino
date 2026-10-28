@@ -15,6 +15,7 @@ standard library, so they run in CI where torch is not installed.
 from __future__ import annotations
 
 import random
+from collections import Counter
 from typing import Any, Mapping, Sequence
 
 
@@ -222,6 +223,19 @@ def duplicate_option_texts(texts: Sequence[str]) -> dict[str, int]:
 def chance_accuracy(n_options: int) -> float:
     """Accuracy of a uniform guess over ``n_options`` options."""
     return 1.0 / n_options if n_options > 0 else 0.0
+
+
+def majority_class_accuracy(labels: Sequence[Any]) -> float:
+    """Accuracy of always predicting the most common label.
+
+    The floor a skewed set imposes on any scorer.  On JevBench's noul items the
+    golds are 39 ``no`` to 35 ``yes``, so 52.7% -- the same figure a real result
+    reported -- is exactly what a constant predictor gets.
+    """
+    if not labels:
+        return 0.0
+    counts = Counter(labels)
+    return max(counts.values()) / len(labels)
 
 
 def normalized_accuracy(accuracy: float, mean_chance: float) -> float:

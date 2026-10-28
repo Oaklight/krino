@@ -10,6 +10,7 @@ import pytest
 from model.evaluation.order_sensitivity import (
     chance_accuracy,
     duplicate_option_texts,
+    majority_class_accuracy,
     make_permutation,
     nested_option_subsets,
     normalized_accuracy,
@@ -230,3 +231,19 @@ class TestNestedOptionSubsets:
     def test_full_size_is_all_options(self):
         subsets = nested_option_subsets(5, 2, [5], seed=42, item_id="x")
         assert sorted(subsets[5]) == [0, 1, 2, 3, 4]
+
+
+class TestMajorityClassAccuracy:
+    def test_all_same_label_is_one(self):
+        assert majority_class_accuracy(["no", "no", "no"]) == 1.0
+
+    def test_matches_the_jevbench_noul_case(self):
+        # 39 no / 35 yes: a constant "no" predictor scores exactly 52.70%.
+        labels = ["no"] * 39 + ["yes"] * 35
+        assert majority_class_accuracy(labels) == pytest.approx(39 / 74)
+
+    def test_balanced_labels_are_one_half(self):
+        assert majority_class_accuracy(["a", "b", "a", "b"]) == 0.5
+
+    def test_empty_is_zero(self):
+        assert majority_class_accuracy([]) == 0.0
