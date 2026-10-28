@@ -23,7 +23,7 @@ from the head's readout over hidden layers, and how much from backbone scale.
 | Backbones | `Qwen/Qwen3-Reranker-0.6B` / `-4B` / `-8B` |
 | Data | `model/configs/r2_reranker4b.yaml` — 182,262 train / 13,444 eval items, `epoch_size` 15,000, `type_ratios` 1:1:1 |
 | Training | 5 epochs unless stated (configs default to 20), seed 42, `accumulation_steps 8`, bf16, flash attention |
-| LR and head rank | from each config, no CLI override: `lr 1e-3`, `rank 64` at 0.6B; `lr 3e-4`, `rank 128` (and `noul_rank 128`) at 4B and 8B |
+| LR and head rank | from the config, no CLI override: `r2_reranker0.6b.yaml` (`lr 1e-3`, `rank 64`) at 0.6B; `r2_reranker4b.yaml` (`lr 3e-4`, `rank 128`, `noul_rank 128`) at 4B, and again at 8B — there is no 8B config, those runs reuse the 4B file with `--model Qwen/Qwen3-Reranker-8B` |
 | Readouts | `last`, `mean_last_n` (`mean4`), `weighted` (learned softmax over all hidden states, initialised with 0.95 on the final layer) |
 | LoRA scopes | none (frozen), last 8 blocks, all blocks (`qkvo` = q/k/v/o targets, otherwise q/v) |
 
