@@ -389,15 +389,30 @@ def train_epoch(
     total_loss = 0.0
     n_items = 0
     n_skipped = 0
-    accum_count = 0
-    trainable_params = [p for p in model.parameters() if p.requires_grad]
+    # Counts *positions consumed*, not successful losses. Step boundaries must be
+    # a function of the shard alone: if a rank skips a different number of items
+    # (a label missing from its criteria, say), counting only successes makes the
+    # ranks issue different numbers of all-reduces and the group hangs.
+    positions = 0
+    n_steps = 0
+    # Every trainable tensor the optimizer steps, including tensors that are not
+    # registered on the model — the uncertainty log_vars are attached to the
+    # optimizer only, and leaving them out would let the replicas diverge.
+    trainable_params = [
+        p
+        for group in optimizer.param_groups
+        for p in group["params"]
+        if p.requires_grad
+    ]
 
     def _finish_step() -> None:
+        nonlocal n_steps
         if world_size > 1:
             average_gradients(trainable_params, world_size)
         torch.nn.utils.clip_grad_norm_(trainable_params, max_grad_norm)
         optimizer.step()
         optimizer.zero_grad()
+        n_steps += 1
 
     optimizer.zero_grad()
 
@@ -461,33 +476,37 @@ def train_epoch(
                 scaled_loss.backward()
                 total_loss += window_loss.item()
                 n_items += len(all_weighted)
-                accum_count += len(all_weighted)
 
-            if accum_count >= accumulation_steps:
+            # Count the window's positions, not its successes, so the step
+            # boundary is identical on every rank.
+            positions += len(window)
+            if positions >= accumulation_steps:
                 _finish_step()
-                accum_count = 0
+                positions = 0
     else:
         for item in train_items:
             loss = compute_loss(model, item, log_vars=log_vars, score_loss=score_loss)
+            positions += 1
             if loss is None:
                 n_skipped += 1
-                continue
+            else:
+                scaled_loss = loss / accumulation_steps
+                scaled_loss.backward()
+                total_loss += loss.item()
+                n_items += 1
 
-            scaled_loss = loss / accumulation_steps
-            scaled_loss.backward()
-            total_loss += loss.item()
-            n_items += 1
-            accum_count += 1
-
-            if accum_count >= accumulation_steps:
+            if positions >= accumulation_steps:
                 _finish_step()
-                accum_count = 0
+                positions = 0
 
-    if accum_count > 0:
-        if accum_count < accumulation_steps:
-            scale = accumulation_steps / accum_count
-            for p in model.parameters():
-                if p.requires_grad and p.grad is not None:
+    if positions > 0:
+        if positions < accumulation_steps:
+            # Fewer valid losses than positions may have accumulated here; scale
+            # by the positions consumed so the step's magnitude matches the
+            # full steps above rather than inflating a short tail.
+            scale = accumulation_steps / positions
+            for p in trainable_params:
+                if p.grad is not None:
                     p.grad.mul_(scale)
         _finish_step()
 
@@ -495,6 +514,7 @@ def train_epoch(
         "mean_loss": total_loss / max(n_items, 1),
         "n_items": n_items,
         "n_skipped": n_skipped,
+        "n_steps": n_steps,
     }
 
 
@@ -957,7 +977,8 @@ def train_multitask(
             eval_stats = gather_eval_stats(
                 eval_epoch_detailed(
                     model, shard(eval_items, rank, world_size)
-                )
+                ),
+                world_size=world_size,
             )
             log["eval"] = eval_stats
 

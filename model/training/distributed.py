@@ -16,9 +16,13 @@ Two behaviours are worth knowing:
   after ``optimizer.step()``. It also means an unused head still receives its
   weight decay, as it would under DDP.
 * Each rank trains on a stride-sharded slice of the epoch the sampler
-  produced. The global item composition is unchanged, but one optimizer step
-  now spans ``world_size x accumulation_steps`` items unless
-  ``accumulation_steps`` is divided by ``world_size``.
+  produced, padded to equal length. The global item composition is unchanged,
+  but one optimizer step now spans ``world_size x accumulation_steps`` items
+  unless ``accumulation_steps`` is divided by ``world_size``.
+* Step boundaries depend only on how many items a rank consumed, never on how
+  many of them produced a loss. A rank that skips a different number of items
+  than its peers must still issue the same all-reduce sequence, or the group
+  hangs with no timer to break it.
 """
 
 from __future__ import annotations
@@ -27,6 +31,8 @@ import os
 from typing import Any, Sequence
 
 import torch
+
+from .sharding import shard as _shard, steps_for as _steps_for
 
 
 def world_info() -> tuple[int, int, int]:
@@ -84,22 +90,13 @@ def shutdown() -> None:
 
 
 def shard(items: Sequence[Any], rank: int, world_size: int) -> list[Any]:
-    """Return this rank's stride slice of ``items``.
+    """This rank's equal-length slice; see :mod:`model.training.sharding`."""
+    return _shard(items, rank, world_size)
 
-    A stride keeps the union of all slices equal to the input and the slices
-    near-equal in size, and it is deterministic for a given epoch.
 
-    Args:
-        items: Items to split.
-        rank: This process's rank.
-        world_size: Number of processes.
-
-    Returns:
-        The items this rank should process.
-    """
-    if world_size <= 1:
-        return list(items)
-    return list(items[rank::world_size])
+def steps_for(shard_length: int, accumulation_steps: int) -> int:
+    """Optimizer steps for a shard; see :mod:`model.training.sharding`."""
+    return _steps_for(shard_length, accumulation_steps)
 
 
 def average_gradients(params: Sequence[torch.nn.Parameter], world_size: int) -> None:
@@ -217,7 +214,10 @@ def gather_train_stats(stats: dict[str, float], world_size: int) -> dict[str, fl
     }
 
 
-def gather_eval_stats(stats: dict[str, Any]) -> dict[str, Any]:
+def gather_eval_stats(
+    stats: dict[str, Any],
+    world_size: int | None = None,
+) -> dict[str, Any]:
     """Collect every rank's eval stats and return the merged result.
 
     All ranks receive the same merged dict, so logging and checkpoint decisions
@@ -225,11 +225,15 @@ def gather_eval_stats(stats: dict[str, Any]) -> dict[str, Any]:
 
     Args:
         stats: This rank's ``eval_epoch_detailed`` result.
+        world_size: Group size the caller already knows. Passing it keeps one
+            source of truth; ``None`` falls back to the environment, for callers
+            that do not thread it through.
 
     Returns:
         Merged result over all ranks.
     """
-    _, world_size, _ = world_info()
+    if world_size is None:
+        _, world_size, _ = world_info()
     if world_size <= 1 or not is_initialized():
         return stats
     gathered: list[dict[str, Any] | None] = [None] * world_size

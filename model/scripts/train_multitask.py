@@ -468,15 +468,17 @@ def main() -> int:
         eval_stats = gather_eval_stats(
             eval_epoch_detailed(
                 model, shard(all_eval, world_rank, world_size)
-            )
+            ),
+            world_size=world_size,
         )
         _print_detailed_eval(eval_stats)
 
         if output:
             output = Path(output)
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(json.dumps(eval_stats, indent=2, default=str))
-            print(f"\nResults saved to {output}", flush=True)
+            if is_main_process():
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_text(json.dumps(eval_stats, indent=2, default=str))
+                print(f"\nResults saved to {output}", flush=True)
         shutdown()
         return 0
 
@@ -539,9 +541,10 @@ def main() -> int:
     # Save results
     if output:
         output = Path(output)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(results, indent=2, default=str))
-        print(f"\nResults saved to {output}", flush=True)
+        if is_main_process():
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(results, indent=2, default=str))
+            print(f"\nResults saved to {output}", flush=True)
 
     shutdown()
     return 0
