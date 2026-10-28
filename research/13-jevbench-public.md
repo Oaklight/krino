@@ -155,6 +155,48 @@ So the JevBench deficit is a property of how the choice head scores an option
 list, not of the training data or the backbone. That is a much narrower target
 than Finding 2 posed, and it is the one the next experiment should attack.
 
+## Finding 5 — the two scorers cross over at about twenty options
+
+Finding 4 leaves the impression that the choice head is simply the wrong tool.
+Measured on the in-distribution eval, that is half the story: the two scorers
+trade places as the option list grows.
+
+Same checkpoint, clean corpus, 1,500 items per type, choice accuracy by option
+count:
+
+| options | n | trained head | native readout |
+|---|---:|---:|---:|
+| 2 | 224 | 0.6071 | **0.6696** |
+| 3-5 | 1,169 | 0.5595 | **0.6758** |
+| >20 | 107 | **0.5607** | 0.3178 |
+| all choice | 1,500 | 0.5667 | **0.6493** |
+
+The native readout wins where the option list is short — by 6.3 points at two
+options and 11.6 at three to five — and loses by 24.3 points above twenty. Both
+are far outside sampling noise (the >20 bucket is 107 items, about 4.8 points per
+standard error).
+
+That is the mechanism, and it also explains JevBench. Its items nearly all carry
+two or three options (chance is 0.318), which is exactly the regime where
+scoring each option independently wins — so Finding 4's 14-21 point deficit is
+not "the head is bad", it is "the head pays for competition that short lists do
+not need". Per-option P(yes) has no term that makes options compete; with two
+options that costs nothing, and with twenty plausible ones it stops
+discriminating, while the head's attention over the option list is precisely
+that competition.
+
+Two consequences for how this should be reported. The head is not replaceable by
+the native readout — it is the only one of the two that holds up on long lists,
+and it passes goal item 3's option-count clause (0.5607 above twenty against
+0.6071 at two, a 4.6 point gap) where the native path fails it by 35 points. And
+the native readout is not a usable product even where it wins accuracy: its
+choice ECE is 0.2139 against the head's 0.0448, because independent per-option
+probabilities are not a distribution over the options.
+
+The obvious next experiment is the one neither scorer does: feed the native
+per-option score into the head as a feature, so short lists get the reranker's
+judgement and long lists keep the competition.
+
 ## Caveats
 
 * **The raw comparison is a product comparison, not an attribution.** It
@@ -191,7 +233,9 @@ this note would have ended on — that the model we train is worse than the mode
 we started from — is true of the heads and false of the backbones, and the work
 belongs in how the choice head scores an option list. The trained choice head
 scores exactly 0.396 at both model sizes, which is the number that says the head,
-not the backbone, is the constraint.
+not the backbone, is the constraint — with Finding 5's qualification that the
+native readout wins only on short lists, and that the head is what keeps long
+lists and calibrated probabilities working.
 
 That is one measurement, one seed, 231 items. The hard tier is where the
 remaining gap sits (0.351 against a 0.336 chance floor), and it is the column to
