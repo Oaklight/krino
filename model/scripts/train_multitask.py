@@ -49,8 +49,6 @@ from data.sources import (
 )
 from model.evaluation.breakdown import format_detailed_eval
 from model.settings import describe_effective_length, format_settings, resolve_setting
-from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
-from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info
 from model.training.distributed import (
     gather_eval_stats,
@@ -60,6 +58,7 @@ from model.training.distributed import (
     shutdown,
     world_info,
 )
+from model.src.model_factory import build_decision_model
 from model.training.supervised import eval_epoch_detailed, train_multitask
 
 
@@ -475,30 +474,18 @@ def main() -> int:
 
     # Load backbone and build model
     print(f"\nLoading backbone: {model_name}", flush=True)
-    flash_att = gpu_config.flash_attention
-    if qwen35_base:
-        backbone, tokenizer = load_qwen35_base(
-            model_name, device=device, freeze=True, flash_attention=flash_att,
-        )
-    elif use_encoder:
-        backbone, tokenizer = load_encoder(
-            model_name, device=device, freeze=True, flash_attention=flash_att,
-        )
-    else:
-        backbone, tokenizer = load_causal_lm(
-            model_name, device=device, freeze=True, flash_attention=flash_att,
-        )
-
-    model = DecisionModel(
-        backbone=backbone,
-        tokenizer=tokenizer,
+    model = build_decision_model(
+        model_name=model_name,
+        gpu_config=gpu_config,
+        device=device,
+        use_encoder=use_encoder,
+        qwen35_base=qwen35_base,
         rank=rank,
         rival_aware=rival_aware,
         mlp_layers=mlp_layers,
         mlp_dim=mlp_dim,
         noul_rank=noul_rank,
         max_length=max_length,
-        gpu_config=gpu_config,
         shared_attention=shared_attention,
         unified_head=unified_head_flag,
         readout=readout,
@@ -509,6 +496,7 @@ def main() -> int:
         lora_dropout=lora_dropout,
         lora_targets=lora_targets,
     )
+
     print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
     print(f"Frozen:    {model.frozen_parameters():,} params", flush=True)
 
