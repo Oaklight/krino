@@ -1,0 +1,326 @@
+{
+  "checkpoint": "/home/pding/projects/open-decisions/model/checkpoints/arch_4b_loraAll_32k/best_heads.pt",
+  "config": "model/configs/r2_reranker4b.yaml",
+  "model": "Qwen/Qwen3-Reranker-4B",
+  "seed": 42,
+  "fit_frac": 0.5,
+  "max_options": 255,
+  "max_items_per_type": null,
+  "skipped": {
+    "option_limit": 0,
+    "label_not_in_options": 0,
+    "unknown_type": 0
+  },
+  "by_type": {
+    "noul": {
+      "n": 4743,
+      "accuracy": 0.8184693232131562,
+      "ece": 0.0297596118561055,
+      "brier": 0.1222090232605601,
+      "tie_count": 0,
+      "tie_rate": 0.0,
+      "duplicate_option_text_count": 0,
+      "accuracy_on_unique_options": 0.8184693232131562,
+      "n_unique_options": 4743,
+      "temperature": {
+        "fitted": 1.210075950067817,
+        "applied": 1.210075950067817,
+        "criterion": "ece",
+        "curve": null,
+        "n_fit": 2372,
+        "n_holdout": 2371,
+        "nll_before": 0.38291168015298543,
+        "nll_after": 0.38342262314395464,
+        "holdout": {
+          "ece_before": 0.032839892492340525,
+          "ece_after": 0.018825765716379936,
+          "brier_before": 0.12682240637498712,
+          "brier_after": 0.12624280447309363,
+          "accuracy_before": 0.80261493040911,
+          "accuracy_after": 0.80261493040911
+        },
+        "holdout_score": {},
+        "note": "Temperature scaling is monotone, so argmax accuracy is unchanged. It is valid for probabilities and confidence; it is not valid for the score point estimate sum(i * p_i). For score items it can raise MAE even while ECE and Brier fall (see holdout_score)."
+      },
+      "by_option_count": {
+        "2": {
+          "n": 4173,
+          "accuracy": 0.8468727534148095,
+          "ece": 0.02991898391196485,
+          "brier": 0.10664627965654369,
+          "tie_count": 0,
+          "tie_rate": 0.0,
+          "duplicate_option_text_count": 0,
+          "accuracy_on_unique_options": 0.8468727534148095,
+          "n_unique_options": 4173,
+          "mean_chance": 0.5,
+          "excess_accuracy": 0.3468727534148095,
+          "normalized_accuracy": 0.693745506829619
+        },
+        "3-5": {
+          "n": 570,
+          "accuracy": 0.6105263157894737,
+          "ece": 0.09280074663058557,
+          "brier": 0.23614468827733298,
+          "tie_count": 0,
+          "tie_rate": 0.0,
+          "duplicate_option_text_count": 0,
+          "accuracy_on_unique_options": 0.6105263157894737,
+          "n_unique_options": 570,
+          "mean_chance": 0.2,
+          "excess_accuracy": 0.4105263157894737,
+          "normalized_accuracy": 0.513157894736842
+        }
+      },
+      "floors": {
+        "chance": 0.4639468690702087,
+        "majority": 0.5448028673835126
+      },
+      "accuracy_over_chance": 0.6613569321533923
+    },
+    "choice": {
+      "n": 6874,
+      "accuracy": 0.5757928425952866,
+      "ece": 0.03826954604448814,
+      "brier": 0.5222330375271838,
+      "tie_count": 10,
+      "tie_rate": 0.0014547570555717194,
+      "duplicate_option_text_count": 23,
+      "accuracy_on_unique_options": 0.5769960589694935,
+      "n_unique_options": 6851,
+      "temperature": {
+        "fitted": 1.295140022784333,
+        "applied": 1.295140022784333,
+        "criterion": "ece",
+        "curve": null,
+        "n_fit": 3437,
+        "n_holdout": 3437,
+        "nll_before": 0.9856863097585423,
+        "nll_after": 0.9749151521031243,
+        "holdout": {
+          "ece_before": 0.038007148232670714,
+          "ece_after": 0.015512862175184864,
+          "brier_before": 0.5209308772649193,
+          "brier_after": 0.5187775560580403,
+          "accuracy_before": 0.5775385510619726,
+          "accuracy_after": 0.5775385510619726
+        },
+        "holdout_score": {},
+        "note": "Temperature scaling is monotone, so argmax accuracy is unchanged. It is valid for probabilities and confidence; it is not valid for the score point estimate sum(i * p_i). For score items it can raise MAE even while ECE and Brier fall (see holdout_score)."
+      },
+      "by_option_count": {
+        "2": {
+          "n": 1000,
+          "accuracy": 0.621,
+          "ece": 0.038208062722713404,
+          "brier": 0.4421876994278891,
+          "tie_count": 0,
+          "tie_rate": 0.0,
+          "duplicate_option_text_count": 0,
+          "accuracy_on_unique_options": 0.621,
+          "n_unique_options": 1000,
+          "mean_chance": 0.5,
+          "excess_accuracy": 0.121,
+          "normalized_accuracy": 0.242
+        },
+        "3-5": {
+          "n": 5374,
+          "accuracy": 0.5651283959806476,
+          "ece": 0.03787959638688645,
+          "brier": 0.5368317221661564,
+          "tie_count": 10,
+          "tie_rate": 0.0018608113137327876,
+          "duplicate_option_text_count": 23,
+          "accuracy_on_unique_options": 0.5666230611100729,
+          "n_unique_options": 5351,
+          "mean_chance": 0.2537526361493611,
+          "excess_accuracy": 0.31137575983128646,
+          "normalized_accuracy": 0.4172554234893193
+        },
+        ">20": {
+          "n": 500,
+          "accuracy": 0.6,
+          "ece": 0.04364255306720823,
+          "brier": 0.5254170512260848,
+          "tie_count": 0,
+          "tie_rate": 0.0,
+          "duplicate_option_text_count": 0,
+          "accuracy_on_unique_options": 0.6,
+          "n_unique_options": 500,
+          "mean_chance": 0.0125,
+          "excess_accuracy": 0.5875,
+          "normalized_accuracy": 0.5949367088607594
+        }
+      },
+      "floors": {
+        "chance": 0.27202744641644844,
+        "majority": 0.15216758801280186
+      },
+      "accuracy_over_chance": 0.41727589135539317
+    },
+    "score": {
+      "n": 1827,
+      "accuracy": 0.49370552818828684,
+      "ece": 0.16096574551461046,
+      "brier": 0.678721553100549,
+      "tie_count": 0,
+      "tie_rate": 0.0,
+      "duplicate_option_text_count": 0,
+      "accuracy_on_unique_options": 0.49370552818828684,
+      "n_unique_options": 1827,
+      "temperature": {
+        "fitted": 2.2028508917621816,
+        "applied": 2.2028508917621816,
+        "criterion": "ece",
+        "curve": null,
+        "n_fit": 914,
+        "n_holdout": 913,
+        "nll_before": 1.827341600857256,
+        "nll_after": 1.3842132830212062,
+        "holdout": {
+          "ece_before": 0.169793945039665,
+          "ece_after": 0.03790207029817366,
+          "brier_before": 0.6933504127152812,
+          "brier_after": 0.6551799680743051,
+          "accuracy_before": 0.48521358159912376,
+          "accuracy_after": 0.48521358159912376
+        },
+        "holdout_score": {
+          "mae_before": 0.8129634775404176,
+          "mae_after": 0.8558122962000999,
+          "mae_delta_pct": 5.270694175502118,
+          "rps_before": 0.1400025515344814,
+          "rps_after": 0.13640801482890025
+        },
+        "note": "Temperature scaling is monotone, so argmax accuracy is unchanged. It is valid for probabilities and confidence; it is not valid for the score point estimate sum(i * p_i). For score items it can raise MAE even while ECE and Brier fall (see holdout_score)."
+      },
+      "by_option_count": {
+        "3-5": {
+          "n": 1327,
+          "accuracy": 0.5553880934438583,
+          "ece": 0.09702999286613416,
+          "brier": 0.5783222220349092,
+          "tie_count": 0,
+          "tie_rate": 0.0,
+          "duplicate_option_text_count": 0,
+          "accuracy_on_unique_options": 0.5553880934438583,
+          "n_unique_options": 1327,
+          "mean_chance": 0.2076865109269028,
+          "excess_accuracy": 0.3477015825169555,
+          "normalized_accuracy": 0.4388434468327943
+        },
+        "6-20": {
+          "n": 500,
+          "accuracy": 0.33,
+          "ece": 0.3337308110483831,
+          "brier": 0.9451813777487633,
+          "tie_count": 0,
+          "tie_rate": 0.0,
+          "duplicate_option_text_count": 0,
+          "accuracy_on_unique_options": 0.33,
+          "n_unique_options": 500,
+          "mean_chance": 0.16666666666666666,
+          "excess_accuracy": 0.16333333333333336,
+          "normalized_accuracy": 0.196
+        }
+      },
+      "floors": {
+        "chance": 0.19646049990877576,
+        "majority": 0.2796934865900383
+      },
+      "accuracy_over_chance": 0.36991962217882934,
+      "score_metrics": {
+        "mae": 0.8016589392115228,
+        "rps": 0.13655471372747918,
+        "qwk_mixed_scale_mean": 0.6308968291126829,
+        "qwk_by_levels": {
+          "4": {
+            "qwk": 0.48868335965110155,
+            "n": 204
+          },
+          "5": {
+            "qwk": 0.8283239854872245,
+            "n": 1123
+          },
+          "6": {
+            "qwk": 0.2454985314357876,
+            "n": 500
+          }
+        },
+        "qwk_excluded_scales": []
+      },
+      "temperature_by_scale": {
+        "criterion": "ece",
+        "n_items": 1827,
+        "min_items": 30,
+        "shared": {
+          "temperature": 2.33957223112298,
+          "n_fit": 914,
+          "n_holdout": 913,
+          "ece_at_t1": 0.15976341949296805,
+          "ece_after": 0.060409957640222556
+        },
+        "by_scale": {
+          "4": {
+            "n": 204,
+            "n_fit": 102,
+            "n_holdout": 102,
+            "temperature": 1.3357576694460502,
+            "borrowed": false,
+            "ece_at_t1": 0.10969687217779497,
+            "ece_shared_t": 0.1609140465012234,
+            "ece_own_t": 0.11725864536547635,
+            "fit": {
+              "temperature": 1.3357576694460502,
+              "nll_before": 1.097585246030446,
+              "nll_after": 1.109517716581634,
+              "n": 102,
+              "criterion": "ece"
+            }
+          },
+          "5": {
+            "n": 1123,
+            "n_fit": 562,
+            "n_holdout": 561,
+            "temperature": 1.7180149411657584,
+            "borrowed": false,
+            "ece_at_t1": 0.1278648410021126,
+            "ece_shared_t": 0.07950909143317542,
+            "ece_own_t": 0.05983237299074945,
+            "fit": {
+              "temperature": 1.7180149411657584,
+              "nll_before": 1.0254907570018092,
+              "nll_after": 0.9798670769076561,
+              "n": 562,
+              "criterion": "ece"
+            }
+          },
+          "6": {
+            "n": 500,
+            "n_fit": 250,
+            "n_holdout": 250,
+            "temperature": 4.949025420792834,
+            "borrowed": false,
+            "ece_at_t1": 0.35438207623766405,
+            "ece_shared_t": 0.1908126699017192,
+            "ece_own_t": 0.08296505411987791,
+            "fit": {
+              "temperature": 4.949025420792834,
+              "nll_before": 4.1613723213786225,
+              "nll_after": 1.8823721504450874,
+              "n": 250,
+              "criterion": "ece"
+            }
+          }
+        },
+        "pooled": {
+          "n": 913,
+          "ece_shared": 0.11908105204005036,
+          "ece_per_scale": 0.07258226353237514
+        }
+      }
+    }
+  },
+  "order_sensitivity": {},
+  "elapsed_s": 1568.3038024271373
+}
