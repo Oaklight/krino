@@ -185,6 +185,10 @@ def main() -> int:
     parser.add_argument("--lora-lr", type=float, default=None, help="Separate LR for LoRA adapters (default: the heads' lr)")
     parser.add_argument("--score-form", choices=["off", "single", "candidates"], default=None, help="Convert training items to score form; evaluation keeps the original types. 'candidates' expands each choice question into one score question per option, so the in-memory list grows by the option count (epoch_size still bounds the steps) (default: off)")
     parser.add_argument("--score-loss", choices=["ce", "rps"], default=None, help="Training loss for score questions: 'ce' treats levels as unordered classes, 'rps' uses the ranked probability score, which respects the level order (default: ce)")
+    parser.add_argument("--k-augment-fraction", type=float, default=None, help="Share of choice items to pad with extra distractor options each epoch (0 disables, default: 0). Option count is drawn log-uniformly in [--k-augment-min-k, --k-augment-max-k].")
+    parser.add_argument("--k-augment-min-k", type=int, default=None, help="Smallest padded option count (default: 8)")
+    parser.add_argument("--k-augment-max-k", type=int, default=None, help="Largest padded option count (default: 80, the widest evaluation item)")
+    parser.add_argument("--k-augment-control", action="store_true", default=None, help="Baseline arm for a K-augmentation A/B: select the same items and drop teacher_probs on them, but do not pad. Pair with the same --k-augment-fraction and seed.")
     parser.add_argument("--synthetic-ratio", type=float, default=None, help="Target proportion of synthetic data (0.0 to 1.0)")
 
     # GPU memory optimization flags
@@ -297,6 +301,40 @@ def main() -> int:
     score_loss, score_loss_src = resolve_setting(
         args.score_loss, cfg, "score_loss", "ce"
     )
+    k_augment_fraction, k_augment_src = resolve_setting(
+        args.k_augment_fraction, cfg, "k_augment_fraction", 0.0
+    )
+    k_augment_min_k, k_augment_min_src = resolve_setting(
+        args.k_augment_min_k, cfg, "k_augment_min_k", 8
+    )
+    k_augment_max_k, k_augment_max_src = resolve_setting(
+        args.k_augment_max_k, cfg, "k_augment_max_k", 80
+    )
+    k_augment_control, k_augment_control_src = resolve_setting(
+        args.k_augment_control, cfg, "k_augment_control", False
+    )
+    if k_augment_fraction and k_augment_fraction > 0 and score_form != "off":
+        # convert_training_items rewrites every choice item to score before the
+        # sampler runs, so the augmentation would silently do nothing.
+        print(
+            "Error: --k-augment-fraction cannot be combined with "
+            f"--score-form {score_form}: score-form conversion removes the choice "
+            "items the augmentation pads.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 1
+    k_augment_cfg = None
+    if k_augment_fraction and k_augment_fraction > 0:
+        from data.k_augment import KAugmentConfig
+
+        k_augment_cfg = KAugmentConfig(
+            fraction=float(k_augment_fraction),
+            min_k=int(k_augment_min_k),
+            max_k=int(k_augment_max_k),
+            seed=int(seed),
+            control=bool(k_augment_control),
+        )
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -477,6 +515,13 @@ def main() -> int:
                 ("lora_lr", lora_lr, lora_lr_src),
                 ("score_form", score_form, score_form_src),
                 ("score_loss", score_loss, score_loss_src),
+                ("k_augment_fraction", k_augment_fraction, k_augment_src),
+                (
+                    "k_augment_k_range",
+                    f"{k_augment_min_k}..{k_augment_max_k}",
+                    f"{k_augment_min_src}/{k_augment_max_src}",
+                ),
+                ("k_augment_control", bool(k_augment_control), k_augment_control_src),
                 ("max_length", model.max_length, max_length_source),
                 ("epochs", epochs, epochs_src),
                 ("rank", rank, rank_src),
@@ -555,6 +600,7 @@ def main() -> int:
         lora_lr=lora_lr,
         uncertainty_weighting=uncertainty_weighting,
         score_loss=score_loss,
+        k_augment=k_augment_cfg,
     )
 
     # Print final eval summary
