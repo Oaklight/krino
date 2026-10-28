@@ -133,11 +133,15 @@ bf16 across two processes — not the scoring code and not the data. Tie-breakin
 is ruled out as the main cause directly: noul has `tie_count` 0 in the report and
 still moves six items, and choice's six ties cannot account for its 21.
 
-The calibration column is the authoritative one for anything probability-shaped,
-because those reports carry the tie, duplicate-option and per-bucket metadata;
-the accuracy rows are quoted from them for that reason. The residual is ±0.2 pp,
-inside every seed band this note uses (the 2.00 pp LoRA spread at 0.6B, the
-0.29-0.40 pp frozen spread), so no conclusion depends on which column is read.
+Which column to trust, then. The Results table is the reproducible one: it comes
+from the committed histories and a fresh scoring pass over the committed
+checkpoint reproduces it exactly, twice. The calibration reports' *accuracy* rows
+(0.6578 / 0.4015 / 0.4265) do not reproduce from that checkpoint today, so they
+are quoted here only because everything probability-shaped in those reports — ECE,
+Brier, QWK, RPS, the tie counts — exists nowhere else, and accuracy has to travel
+with them. The residual is 0.19% of items, within every seed band this note uses
+(the 2.00 pp LoRA spread at 0.6B, the 0.29-0.40 pp frozen spread), so no
+conclusion depends on which column is read.
 
 **RPS does not buy a calibration advantage that pays for its accuracy cost.**
 On the score items -- where the loss is supposed to matter -- raw ECE is a tie
