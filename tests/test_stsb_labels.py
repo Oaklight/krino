@@ -56,3 +56,34 @@ def test_the_loader_drops_withheld_rows_instead_of_calling_them_zero(monkeypatch
     # The one real zero in validation survives: the fix must not drop genuine
     # "No similarity" rows, only the sentinel.
     assert [float(item.label) for item in items] == [3.0, 0.0]
+
+
+def test_the_read_path_drops_out_of_range_levels():
+    """A corpus built before the loader fix must not keep scoring bad rows.
+
+    `data/benchmarks/stsb.jsonl` was materialised with the sentinel already
+    clamped to 0, so the loader fix alone cannot repair it -- the guard has to
+    run when the JSONL is read (#176).
+    """
+    from data.format import TypedQuestion
+    from data.sources import invalid_score_labels
+
+    criteria = ["a", "b", "c", "d", "e", "f"]
+
+    def score(label):
+        return TypedQuestion.score(
+            id=f"s-{label}",
+            state="x",
+            instructions="y",
+            criteria=criteria,
+            label=label,
+            source="stsb",
+            split="test",
+        )
+
+    good = [score(0.0), score(3.0), score(5.0), score(2.5)]
+    bad = [score(-1.0), score(6.0)]
+    # 2.5 is a legal label -- the training path accepts soft targets -- so the
+    # guard must key on the range, not on integrality.
+    assert not invalid_score_labels(good)
+    assert [item.label for item in invalid_score_labels(bad)] == [-1.0, 6.0]

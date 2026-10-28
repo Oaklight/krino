@@ -88,6 +88,41 @@ def missing_sources(
     return missing
 
 
+def invalid_score_labels(items: list[TypedQuestion]) -> list[TypedQuestion]:
+    """Return the score items whose label cannot be a level on their own scale.
+
+    A corpus is built once and read many times, so a loader fix alone does not
+    repair an existing JSONL: `data/benchmarks/stsb.jsonl` still holds the 1,379
+    rows GLUE shipped with `label = -1.0`, clamped to 0 at build time. Those rows
+    are unlabeled, not "No similarity", and they contaminated every score metric
+    and cost 1.05 pp of overall accuracy (#176).
+
+    The rule is the invariant rather than the source name: a level index has to
+    fall on `0 .. n_levels-1` for the item's own criteria list. That catches the
+    negative sentinel, a label past the end of the scale, and a non-numeric
+    label, for any source, without naming stsb.
+
+    Args:
+        items: Items from one source, already filtered to supported types.
+
+    Returns:
+        The offending items; the caller drops them and reports the count.
+    """
+    bad: list[TypedQuestion] = []
+    for item in items:
+        if item.question.get("type") != "score":
+            continue
+        n_levels = len(item.question.get("criteria") or [])
+        try:
+            level = float(item.label)
+        except (TypeError, ValueError):
+            bad.append(item)
+            continue
+        if n_levels < 2 or level < 0 or level > n_levels - 1:
+            bad.append(item)
+    return bad
+
+
 def load_source_items(
     source_name: str,
     source_cfg: dict,
@@ -134,6 +169,20 @@ def load_source_items(
     # Filter to supported types
     supported = {"noul", "choice", "score"}
     items = [it for it in items if it.question.get("type") in supported]
+
+    # Drop score items whose label is not a level on their own scale. This has to
+    # happen on read, not only in the loader that writes the JSONL: corpora built
+    # before the loader fix still carry the rows (#176).
+    bad = invalid_score_labels(items)
+    if bad:
+        bad_ids = {id(item) for item in bad}
+        items = [item for item in items if id(item) not in bad_ids]
+        print(
+            f"  {source_name}: dropped {len(bad):,} score item(s) with a label "
+            f"outside 0..n_levels-1 (#176)",
+            file=sys.stderr,
+            flush=True,
+        )
 
     # Split by item.split field
     train_items = [it for it in items if it.split == "train"]
