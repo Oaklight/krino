@@ -1,153 +1,178 @@
-"""The detailed eval breakdown must not merge question types within a source.
+"""The eval breakdown must separate question types and rank cells honestly.
 
-``by_source`` mixes every type a source contributes and only remembers the
-first type it saw, so a multi-type source like ``synthetic`` gets mislabelled.
-``by_source_type`` is the authoritative per-(source, type) view.
+``by_source`` keyed on the source name and remembered only the first question
+type it saw, so a multi-type source like ``synthetic`` (586 noul / 284 choice /
+130 score in the eval pool) was reported as a single "noul" row whose accuracy
+was a mix of all three. That is the bug these tests pin.
+
+They also pin the two presentation decisions review asked for: "worst first"
+must be ordered by a Wilson lower bound rather than raw accuracy, so a three-item
+cell cannot outrank a thousand-item cell, and the printer must keep rendering
+pre-existing ``history.json`` files, which have no ``by_source_type``.
+
+Everything here is torch-free — this module is pure arithmetic — so the tests
+run in CI, which installs only pytest.
 """
 
 from __future__ import annotations
 
 import pytest
 
-torch = pytest.importorskip("torch")
-
-from data.format import TypedQuestion
-from model.training.supervised import eval_epoch_detailed
-
-
-class _ConstantModel(torch.nn.Module):
-    """Predicts a fixed class per question type, ignoring the input."""
-
-    def __init__(self, noul_logit: float, choice_best: int, score_best: int):
-        super().__init__()
-        self.noul_logit = noul_logit
-        self.choice_best = choice_best
-        self.score_best = score_best
-        self.dummy = torch.nn.Parameter(torch.zeros(1))
-
-    def forward_noul(self, state, instructions):
-        return torch.tensor([[self.noul_logit]])
-
-    def forward_choice(self, state, instructions, option_texts):
-        logits = torch.zeros(1, len(option_texts))
-        logits[0, self.choice_best] = 10.0
-        return logits
-
-    def forward_score(self, state, instructions, levels):
-        logits = torch.zeros(1, len(levels))
-        logits[0, self.score_best] = 10.0
-        return logits
+from model.evaluation.breakdown import (
+    build_eval_breakdown,
+    format_detailed_eval,
+    wilson_lower_bound,
+    wilson_upper_bound,
+)
 
 
-def _noul(source: str, item_id: str, label: bool) -> TypedQuestion:
-    return TypedQuestion(
-        id=item_id,
-        state="state",
-        question={"type": "noul", "instructions": "is it?"},
-        label=label,
-        source=source,
-        split="test",
+def _rows(n, source, q_type, correct, loss=1.0):
+    """`n` rows for a source/type, `correct` of them right."""
+    return [(source, q_type, loss, i < correct) for i in range(n)]
+
+
+def test_splits_a_multi_type_source_by_type():
+    rows = (
+        _rows(3, "synthetic", "noul", 2)
+        + _rows(2, "synthetic", "choice", 1)
+        + _rows(1, "synthetic", "score", 1)
+        + _rows(1, "sst2", "noul", 1)
     )
-
-
-def _choice(source: str, item_id: str, label: str) -> TypedQuestion:
-    return TypedQuestion(
-        id=item_id,
-        state="state",
-        question={"type": "choice", "instructions": "pick", "criteria": {"a": "A", "b": "B"}},
-        label=label,
-        source=source,
-        split="test",
-    )
-
-
-def _score(source: str, item_id: str, label: float) -> TypedQuestion:
-    return TypedQuestion(
-        id=item_id,
-        state="state",
-        question={"type": "score", "instructions": "rate", "criteria": ["1", "2", "3"]},
-        label=label,
-        source=source,
-        split="test",
-    )
-
-
-def test_multi_type_source_is_split_by_type():
-    # Always-true noul head, always-"a" choice head, always-level-0 score head.
-    model = _ConstantModel(noul_logit=10.0, choice_best=0, score_best=0)
-
-    items = [
-        # noul: 2 right, 1 wrong
-        _noul("synthetic", "s-noul-1", True),
-        _noul("synthetic", "s-noul-2", True),
-        _noul("synthetic", "s-noul-3", False),
-        # choice: 1 right, 1 wrong
-        _choice("synthetic", "s-choice-1", "a"),
-        _choice("synthetic", "s-choice-2", "b"),
-        # score: 1 right
-        _score("synthetic", "s-score-1", 0.0),
-        # single-type source, all right
-        _noul("sst2", "sst2-1", True),
-    ]
-
-    stats = eval_epoch_detailed(model, items)
+    stats = build_eval_breakdown(rows)
 
     by_st = stats["by_source_type"]
     assert set(by_st) == {"synthetic", "sst2"}
     assert set(by_st["synthetic"]) == {"noul", "choice", "score"}
 
-    noul = by_st["synthetic"]["noul"]
-    assert noul["n_items"] == 3
-    assert noul["correct"] == 2
-    assert noul["accuracy"] == pytest.approx(2 / 3)
-
-    choice = by_st["synthetic"]["choice"]
-    assert choice["n_items"] == 2
-    assert choice["accuracy"] == pytest.approx(0.5)
-
-    score = by_st["synthetic"]["score"]
-    assert score["n_items"] == 1
-    assert score["accuracy"] == pytest.approx(1.0)
-
+    assert by_st["synthetic"]["noul"]["n_items"] == 3
+    assert by_st["synthetic"]["noul"]["correct"] == 2
+    assert by_st["synthetic"]["noul"]["accuracy"] == pytest.approx(2 / 3)
+    assert by_st["synthetic"]["choice"]["accuracy"] == pytest.approx(0.5)
+    assert by_st["synthetic"]["score"]["accuracy"] == pytest.approx(1.0)
     assert by_st["sst2"]["noul"]["accuracy"] == pytest.approx(1.0)
 
 
-def test_by_source_stays_a_sum_over_types():
-    """Backward compatibility: by_source totals equal the per-type totals."""
-    model = _ConstantModel(noul_logit=10.0, choice_best=0, score_best=0)
-    items = [
-        _noul("synthetic", "n1", True),
-        _choice("synthetic", "c1", "b"),
-        _score("synthetic", "v1", 1.0),
-    ]
-
-    stats = eval_epoch_detailed(model, items)
+def test_by_source_totals_are_the_sum_over_types():
+    rows = _rows(1, "synthetic", "noul", 1) + _rows(1, "synthetic", "choice", 0)
+    rows += _rows(1, "synthetic", "score", 0)
+    stats = build_eval_breakdown(rows)
 
     merged = stats["by_source"]["synthetic"]
     per_type = stats["by_source_type"]["synthetic"]
     assert merged["n_items"] == sum(m["n_items"] for m in per_type.values())
     assert merged["correct"] == sum(m["correct"] for m in per_type.values())
-    assert merged["correct"] == 1  # only noul is right
+    assert merged["correct"] == 1
 
 
-def test_aggregate_matches_by_type_totals():
-    model = _ConstantModel(noul_logit=10.0, choice_best=0, score_best=0)
-    items = [
-        _noul("sst2", "n1", True),
-        _noul("sst2", "n2", False),
-        _choice("arc", "c1", "a"),
-    ]
+def test_multi_type_source_reports_no_single_type():
+    """The field that caused the original confusion must not answer falsely."""
+    rows = _rows(2, "synthetic", "noul", 2) + _rows(2, "synthetic", "score", 1)
+    stats = build_eval_breakdown(rows)
+    assert stats["by_source"]["synthetic"]["type"] is None
 
-    stats = eval_epoch_detailed(model, items)
+    single = build_eval_breakdown(_rows(2, "sst2", "noul", 2))
+    assert single["by_source"]["sst2"]["type"] == "noul"
 
-    assert stats["aggregate"]["n_items"] == 3
-    assert stats["aggregate"]["correct"] == 2
-    for t, m in stats["by_type"].items():
-        rows = [
-            mm
+
+def test_by_type_totals_match_the_sum_across_sources():
+    rows = _rows(2, "sst2", "noul", 1) + _rows(1, "arc", "choice", 1) + _rows(3, "sst2", "choice", 2)
+    stats = build_eval_breakdown(rows)
+
+    assert stats["aggregate"]["n_items"] == 6
+    assert stats["aggregate"]["correct"] == 4
+    for q_type, metrics in stats["by_type"].items():
+        rows_for_type = [
+            m
             for types in stats["by_source_type"].values()
-            for tt, mm in types.items()
-            if tt == t
+            for t, m in types.items()
+            if t == q_type
         ]
-        assert m["n_items"] == sum(r["n_items"] for r in rows)
-        assert m["correct"] == sum(r["correct"] for r in rows)
+        assert metrics["n_items"] == sum(r["n_items"] for r in rows_for_type)
+        assert metrics["correct"] == sum(r["correct"] for r in rows_for_type)
+
+
+def test_empty_input_is_all_zeros():
+    stats = build_eval_breakdown([])
+    assert stats["aggregate"]["n_items"] == 0
+    assert stats["aggregate"]["accuracy"] == 0.0
+    assert stats["by_type"] == {}
+    assert stats["by_source_type"] == {}
+
+
+@pytest.mark.parametrize(
+    "correct,n,expected",
+    [(0, 10, 0.0), (300, 1000, 0.2724), (1, 3, 0.0615), (5, 20, 0.1119)],
+)
+def test_wilson_lower_bound_matches_reference_values(correct, n, expected):
+    assert wilson_lower_bound(correct, n) == pytest.approx(expected, abs=5e-4)
+
+
+def test_wilson_orders_noise_below_signal():
+    """Elena's case: 1/3 point estimate beats 300/1000, but must not outrank it."""
+    assert 1 / 3 > 0.300
+    assert wilson_lower_bound(1, 3) < wilson_lower_bound(300, 1000)
+
+
+def test_ordering_key_is_the_upper_bound():
+    """A thin cell must not lead the table just because it is thin."""
+    assert wilson_upper_bound(1, 3) > wilson_upper_bound(300, 1000)
+    assert wilson_upper_bound(60, 200) < wilson_upper_bound(180, 200)
+
+
+def test_printer_orders_worst_reliably_first(capsys):
+    rows = (
+        _rows(3, "tiny", "choice", 1)          # 0.333 on n=3
+        + _rows(1000, "solid", "choice", 300)  # 0.300 on n=1000
+        + _rows(100, "good", "choice", 90)     # 0.900
+    )
+    stats = build_eval_breakdown(rows)
+
+    print(format_detailed_eval(stats), end="")
+
+    out = capsys.readouterr().out
+    positions = {name: out.index(name) for name in ("tiny", "solid", "good")}
+    # solid (0.300 on n=1000) is reliably the worst, so it leads; tiny (0.333 on
+    # n=3) is merely unknown, so it must not lead; good (0.900) belongs last.
+    assert positions["solid"] < positions["tiny"] < positions["good"]
+    assert min(positions.values()) != positions["tiny"], "a 3-item cell must not lead"
+
+
+def test_printer_renders_legacy_history_without_source_type(capsys):
+    """A history.json written before this change has only by_source."""
+    legacy = {
+        "aggregate": {"mean_loss": 1.0, "accuracy": 0.5, "n_items": 4, "correct": 2},
+        "by_type": {"choice": {"mean_loss": 1.0, "accuracy": 0.5, "n_items": 4, "correct": 2}},
+        "by_source": {
+            "arc": {
+                "mean_loss": 1.0,
+                "accuracy": 0.5,
+                "n_items": 4,
+                "correct": 2,
+                "type": "choice",
+            }
+        },
+    }
+
+    print(format_detailed_eval(legacy), end="")
+
+    out = capsys.readouterr().out
+    assert "arc" in out
+    assert "choice" in out
+    assert "Aggregate" in out
+
+
+def test_printer_handles_an_empty_breakdown(capsys):
+    print(format_detailed_eval(build_eval_breakdown([])), end="")
+    out = capsys.readouterr().out
+    assert "Aggregate" in out
+
+
+def test_printer_flags_cells_far_below_the_panel(capsys):
+    rows = _rows(200, "good", "choice", 180) + _rows(200, "bad", "choice", 60)
+    print(format_detailed_eval(build_eval_breakdown(rows)), end="")
+    out = capsys.readouterr().out
+
+    bad_line = next(line for line in out.splitlines() if "bad" in line)
+    good_line = next(line for line in out.splitlines() if "good" in line)
+    assert "<--" in bad_line
+    assert "<--" not in good_line

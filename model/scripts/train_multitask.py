@@ -41,7 +41,12 @@ sys.path.insert(0, str(ROOT))
 from data.format import TypedQuestion
 from data.sampler import SamplerConfig
 from data.score_form import convert_training_items
-from data.sources import collect_synthetic_sources, load_source_items, missing_sources
+from data.sources import (
+    collect_synthetic_sources,
+    load_source_items,
+    missing_sources,
+)
+from model.evaluation.breakdown import format_detailed_eval
 from model.settings import describe_effective_length, format_settings, resolve_setting
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
@@ -537,55 +542,12 @@ def main() -> int:
 
 
 def _print_detailed_eval(eval_stats: dict) -> None:
-    """Print formatted detailed eval results."""
-    agg = eval_stats["aggregate"]
-    print(
-        f"  Aggregate: loss={agg['mean_loss']:.4f} acc={agg['accuracy']:.4f} ({agg['n_items']} items)",
-        flush=True,
-    )
+    """Print formatted detailed eval results.
 
-    by_type = eval_stats.get("by_type", {})
-    if by_type:
-        print("\n  By type:", flush=True)
-        for t in sorted(by_type):
-            ts = by_type[t]
-            print(
-                f"    {t:<10} loss={ts['mean_loss']:.4f} acc={ts['accuracy']:.4f} ({ts['n_items']} items)",
-                flush=True,
-            )
-
-    by_source = eval_stats.get("by_source", {})
-    by_source_type = eval_stats.get("by_source_type")
-    if by_source_type:
-        # One row per (source, type): by_source alone mixes the types a source
-        # contributes and labels the mix with the first type it saw.
-        rows = [
-            (src, t, m)
-            for src, types in by_source_type.items()
-            for t, m in types.items()
-        ]
-        print(
-            f"\n  {'Source':<20} {'Type':<8} {'Loss':>8} {'Acc':>8} {'N':>6}",
-            flush=True,
-        )
-        print(f"  {'-' * 20} {'-' * 8} {'-' * 8} {'-' * 8} {'-' * 6}", flush=True)
-        for src, t, m in sorted(rows, key=lambda r: (r[2]["accuracy"], r[0], r[1])):
-            print(
-                f"  {src:<20} {t:<8} {m['mean_loss']:>8.4f} "
-                f"{m['accuracy']:>8.4f} {m['n_items']:>6}"
-            )
-    elif by_source:
-        print(
-            f"\n  {'Source':<20} {'Type':<8} {'Loss':>8} {'Acc':>8} {'N':>6}",
-            flush=True,
-        )
-        print(f"  {'-' * 20} {'-' * 8} {'-' * 8} {'-' * 8} {'-' * 6}", flush=True)
-        for src in sorted(by_source):
-            ss = by_source[src]
-            print(
-                f"  {src:<20} {ss['type']:<8} {ss['mean_loss']:>8.4f} "
-                f"{ss['accuracy']:>8.4f} {ss['n_items']:>6}"
-            )
+    The rendering lives in :mod:`model.evaluation.breakdown` so it can be tested
+    without torch; this is the CLI's thin wrapper.
+    """
+    print(format_detailed_eval(eval_stats), end="")
 
 
 if __name__ == "__main__":
