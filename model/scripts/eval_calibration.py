@@ -53,6 +53,7 @@ from model.evaluation.calibration import (
     multiclass_brier,
     quadratic_weighted_kappa,
     softmax,
+    temperature_curve,
 )
 from model.evaluation.order_sensitivity import (
     chance_accuracy,
@@ -498,6 +499,7 @@ def _temperature_report(
     fit_frac: float,
     seed: int,
     fit_steps: int,
+    curve_enabled: bool = False,
 ) -> dict[str, Any]:
     """Fit a temperature on one split and score the other split."""
     if len(records) < 4:
@@ -546,9 +548,17 @@ def _temperature_report(
             "rps_after": score_after["rps"],
         }
 
+    curve = None
+    if curve_enabled:
+        curve = temperature_curve(
+            [record["logits"] for record in holdout_records],
+            [record["label_idx"] for record in holdout_records],
+        )
+
     return {
         "fitted": temperature,
         "applied": temperature,
+        "curve": curve,
         "n_fit": n_fit,
         "n_holdout": len(holdout_records),
         "nll_before": fitted["nll_before"],
@@ -999,6 +1009,32 @@ def _print_table(summary: dict[str, Any]) -> None:
         flush=True,
     )
 
+    curved = [
+        (q_type, summary["by_type"][q_type].get("temperature", {}).get("curve"))
+        for q_type in TYPES
+        if (summary["by_type"].get(q_type) or {}).get("temperature", {}).get("curve")
+    ]
+    if curved:
+        print(
+            "\nTemperature curve on the holdout (NLL is what is fitted, ECE is what is asked for):",
+            flush=True,
+        )
+        print(
+            f"{'Type':<8} {'criterion':<10} {'T':>7} {'NLL':>9} {'ECE':>9}",
+            flush=True,
+        )
+        for q_type, curve in curved:
+            for label, point in (
+                ("T=1", curve["at_one"]),
+                ("min NLL", curve["nll_best"]),
+                ("min ECE", curve["ece_best"]),
+            ):
+                print(
+                    f"{q_type:<8} {label:<10} {point['temperature']:>7.3f} "
+                    f"{point['nll']:>9.4f} {point['ece']:>9.4f}",
+                    flush=True,
+                )
+
     order = summary.get("order_sensitivity", {})
     if order:
         print("\nOption-order sensitivity (tie-stable):", flush=True)
@@ -1203,6 +1239,16 @@ def main() -> int:
         "--json", type=Path, default=None, help="Write the full report here"
     )
     parser.add_argument(
+        "--temperature-curve",
+        action="store_true",
+        help=(
+            "Report NLL and ECE across a temperature grid on the holdout, with "
+            "the argmin under each criterion. The temperature is fitted by NLL "
+            "but judged by ECE, and on the score primitive the two minima do "
+            "not coincide."
+        ),
+    )
+    parser.add_argument(
         "--predictions",
         type=Path,
         default=None,
@@ -1371,7 +1417,11 @@ def main() -> int:
         type_records = records[q_type]
         metrics = _type_metrics(type_records)
         metrics["temperature"] = _temperature_report(
-            type_records, args.fit_frac, args.seed, args.fit_steps
+            type_records,
+            args.fit_frac,
+            args.seed,
+            args.fit_steps,
+            curve_enabled=args.temperature_curve,
         )
         metrics["by_option_count"] = _bucket_metrics(type_records)
         metrics["floors"] = _floors(type_records)

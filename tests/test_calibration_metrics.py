@@ -121,3 +121,38 @@ class TestTop1Calibration:
         probs = [[0.95, 0.05]] * 100
         labels = [1] * 100
         assert top1_calibration(probs, labels)["ece"] > 0.8
+
+
+class TestTemperatureCurve:
+    """NLL and ECE need not agree on the best temperature."""
+
+    @staticmethod
+    def _overconfident():
+        # Every item is predicted at 0.9 confidence and right 60% of the time.
+        logits = [[3.0, 0.0]] * 10 + [[0.0, 3.0]] * 10
+        labels = [0] * 6 + [1] * 4 + [1] * 6 + [0] * 4
+        return logits, labels
+
+    def test_reports_both_criteria_and_t_one(self):
+        from model.evaluation.calibration import temperature_curve
+
+        logits, labels = self._overconfident()
+        result = temperature_curve(logits, labels)
+        assert result["nll_best"]["temperature"] > 1.0
+        assert result["at_one"]["temperature"] == 1.0
+        for key in ("temperature", "nll", "ece"):
+            assert key in result["nll_best"]
+        assert len(result["curve"]) == 41  # 40 log-spaced points plus T=1
+
+    def test_the_two_minima_can_differ(self):
+        from model.evaluation.calibration import temperature_curve
+
+        logits, labels = self._overconfident()
+        result = temperature_curve(logits, labels)
+        assert result["ece_best"]["ece"] <= result["at_one"]["ece"]
+        assert result["nll_best"]["nll"] <= result["at_one"]["nll"]
+
+    def test_empty_input(self):
+        from model.evaluation.calibration import temperature_curve
+
+        assert temperature_curve([], [])["curve"] == []

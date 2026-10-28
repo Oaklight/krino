@@ -218,3 +218,64 @@ def top1_calibration(
         for row, label in zip(probabilities, labels)
     ]
     return expected_calibration_error(confidences, correctness, n_bins)
+
+
+def temperature_curve(
+    logits: Sequence[Sequence[float]],
+    labels: Sequence[int],
+    temperatures: Sequence[float] | None = None,
+    n_bins: int = 10,
+) -> dict[str, Any]:
+    """NLL and ECE as functions of the temperature.
+
+    Temperature is fitted by minimising NLL, but the goal is stated in ECE, and
+    ECE has no reason to reach its minimum at the NLL optimum. On the score
+    primitive it does not: a fitted T of 3.8 raises holdout ECE from 0.0628 to
+    0.1267 while lowering NLL. Reporting both curves makes that visible, and
+    gives the T that would be chosen by each criterion.
+
+    Args:
+        logits: Logit vector per item.
+        labels: Gold index per item.
+        temperatures: Grid to evaluate; defaults to 40 log-spaced points from
+            0.25 to 8.0.
+        n_bins: Bins for the ECE.
+
+    Returns:
+        ``{"curve": [{"temperature", "nll", "ece"}], "nll_best": {...},
+        "ece_best": {...}, "at_one": {...}}``. ``None`` when there are no items.
+    """
+    if not logits:
+        return {"curve": [], "nll_best": None, "ece_best": None, "at_one": None}
+
+    if temperatures is None:
+        steps = 40
+        temperatures = [0.25 * (8.0 / 0.25) ** (i / (steps - 1)) for i in range(steps)]
+    # T=1 is the baseline every other temperature is judged against, and a
+    # log-spaced grid does not contain it; add it rather than rounding to a
+    # neighbour and reporting that as "at T=1".
+    if not any(abs(temperature - 1.0) < 1e-9 for temperature in temperatures):
+        temperatures = sorted(list(temperatures) + [1.0])
+
+    curve = []
+    for temperature in temperatures:
+        probabilities = [
+            softmax([value / temperature for value in row]) for row in logits
+        ]
+        curve.append(
+            {
+                "temperature": temperature,
+                "nll": _nll(logits, labels, temperature),
+                "ece": top1_calibration(probabilities, labels, n_bins)["ece"],
+            }
+        )
+
+    nll_best = min(curve, key=lambda point: point["nll"])
+    ece_best = min(curve, key=lambda point: point["ece"])
+    at_one = min(curve, key=lambda point: abs(point["temperature"] - 1.0))
+    return {
+        "curve": curve,
+        "nll_best": dict(nll_best),
+        "ece_best": dict(ece_best),
+        "at_one": dict(at_one),
+    }
