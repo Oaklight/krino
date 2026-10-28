@@ -1,0 +1,200 @@
+{
+  "checkpoint": "/home/pding/lambda_home/projects/open-decisions/model/checkpoints/arch_06b_loraAll_weighted/best_heads.pt",
+  "config": "model/configs/r2_reranker0.6b.yaml",
+  "model": "Qwen/Qwen3-Reranker-0.6B",
+  "seed": 42,
+  "fit_frac": 0.5,
+  "max_options": 255,
+  "max_items_per_type": null,
+  "skipped": {
+    "option_limit": 0,
+    "label_not_in_options": 0,
+    "unknown_type": 0
+  },
+  "by_type": {
+    "noul": {
+      "n": 4723,
+      "accuracy": 0.7478297692144823,
+      "ece": 0.07081750587703109,
+      "brier": 0.16502103484498903,
+      "temperature": {
+        "fitted": 1.359687089682435,
+        "applied": 1.359687089682435,
+        "n_fit": 2362,
+        "n_holdout": 2361,
+        "nll_before": 0.5120983784174248,
+        "nll_after": 0.49672764783267515,
+        "holdout": {
+          "ece_before": 0.06928665650315236,
+          "ece_after": 0.037096491118420234,
+          "brier_before": 0.16663461468561086,
+          "brier_after": 0.1630308974082868,
+          "accuracy_before": 0.7420584498094028,
+          "accuracy_after": 0.7420584498094028
+        },
+        "holdout_score": {}
+      },
+      "by_option_count": {
+        "2": {
+          "n": 4169,
+          "accuracy": 0.7800431758215399,
+          "ece": 0.07445553650466545,
+          "brier": 0.15277716941501854
+        },
+        "3-5": {
+          "n": 554,
+          "accuracy": 0.5054151624548736,
+          "ece": 0.05265340105904986,
+          "brier": 0.2571594373315361
+        }
+      }
+    },
+    "choice": {
+      "n": 6864,
+      "accuracy": 0.4599358974358974,
+      "ece": 0.030760888171651134,
+      "brier": 0.6219789872471084,
+      "temperature": {
+        "fitted": 1.1149967624129993,
+        "applied": 1.1149967624129993,
+        "n_fit": 3432,
+        "n_holdout": 3432,
+        "nll_before": 1.1908113798805329,
+        "nll_after": 1.188747505562996,
+        "holdout": {
+          "ece_before": 0.03271085855840618,
+          "ece_after": 0.021598512470920272,
+          "brier_before": 0.6159937016822383,
+          "brier_after": 0.6151318344813775,
+          "accuracy_before": 0.46736596736596736,
+          "accuracy_after": 0.46736596736596736
+        },
+        "holdout_score": {}
+      },
+      "by_option_count": {
+        "2": {
+          "n": 1000,
+          "accuracy": 0.555,
+          "ece": 0.041753981155794956,
+          "brier": 0.4963789927461294
+        },
+        "3-5": {
+          "n": 5364,
+          "accuracy": 0.45302013422818793,
+          "ece": 0.03380408179587568,
+          "brier": 0.6302656549102112
+        },
+        ">20": {
+          "n": 500,
+          "accuracy": 0.344,
+          "ece": 0.03848757815540287,
+          "brier": 0.7842796055593003
+        }
+      }
+    },
+    "score": {
+      "n": 1857,
+      "accuracy": 0.45772751750134627,
+      "ece": 0.12300588604477941,
+      "brier": 0.6965968536781814,
+      "temperature": {
+        "fitted": 3.089121764866937,
+        "applied": 3.089121764866937,
+        "n_fit": 928,
+        "n_holdout": 929,
+        "nll_before": 1.7707576551120974,
+        "nll_after": 1.4130134797667986,
+        "holdout": {
+          "ece_before": 0.14915317431101766,
+          "ece_after": 0.0751786539727137,
+          "brier_before": 0.7100053316307371,
+          "brier_after": 0.6947887151809127,
+          "accuracy_before": 0.43918191603875134,
+          "accuracy_after": 0.43918191603875134
+        },
+        "holdout_score": {
+          "mae_before": 0.8678554776835382,
+          "mae_after": 0.947712205221128,
+          "rps_before": 0.14739827816529988,
+          "rps_after": 0.14726659689254987
+        }
+      },
+      "by_option_count": {
+        "3-5": {
+          "n": 1357,
+          "accuracy": 0.5180545320560059,
+          "ece": 0.05414118245333964,
+          "brier": 0.6029419485631704
+        },
+        "6-20": {
+          "n": 500,
+          "accuracy": 0.294,
+          "ece": 0.3165055959798719,
+          "brier": 0.9507762661603132
+        }
+      },
+      "score_metrics": {
+        "mae": 0.8648350048187307,
+        "rps": 0.14629843826247727,
+        "qwk": 0.5709418131348489,
+        "qwk_by_levels": {
+          "3": {
+            "qwk": 0.0,
+            "n": 1
+          },
+          "4": {
+            "qwk": 0.39799331103678937,
+            "n": 213
+          },
+          "5": {
+            "qwk": 0.7565562422841637,
+            "n": 1143
+          },
+          "6": {
+            "qwk": 0.2214451736195583,
+            "n": 500
+          }
+        }
+      }
+    }
+  },
+  "order_sensitivity": {
+    "choice": {
+      "order": {
+        "n": 6864,
+        "label_flip_rate": 0.0011655011655011655,
+        "mean_tv": 0.0,
+        "max_tv": 0.0,
+        "accuracy_before": 0.4599358974358974,
+        "accuracy_after": 0.4602272727272727
+      },
+      "text": {
+        "n": 6864,
+        "label_flip_rate": 0.0010198135198135198,
+        "mean_tv": 0.0,
+        "max_tv": 0.0,
+        "accuracy_before": 0.4599358974358974,
+        "accuracy_after": 0.4602272727272727
+      }
+    },
+    "score": {
+      "order": {
+        "n": 1857,
+        "label_flip_rate": 0.0,
+        "mean_tv": 0.0,
+        "max_tv": 0.0,
+        "accuracy_before": 0.45772751750134627,
+        "accuracy_after": 0.45772751750134627
+      },
+      "text": {
+        "n": 1857,
+        "label_flip_rate": 0.0,
+        "mean_tv": 0.0,
+        "max_tv": 0.0,
+        "accuracy_before": 0.45772751750134627,
+        "accuracy_after": 0.45772751750134627
+      }
+    }
+  },
+  "elapsed_s": 3009.7632468501106
+}
