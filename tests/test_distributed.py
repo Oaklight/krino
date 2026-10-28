@@ -27,10 +27,17 @@ class TestWorldInfo:
 
 
 class TestShard:
-    def test_covers_every_item_exactly_once(self):
+    def test_covers_every_item_with_bounded_duplication(self):
+        # Shards are padded to equal length so every rank takes the same number
+        # of optimizer steps; the price is that up to world_size - 1 items are
+        # seen twice in an epoch. Exact-once coverage is not compatible with a
+        # synchronised step count, and the step count is what keeps the group
+        # from deadlocking.
         items = list(range(10))
         shards = [distributed.shard(items, r, 3) for r in range(3)]
-        assert sorted(item for s in shards for item in s) == items
+        flattened = [item for s in shards for item in s]
+        assert set(flattened) == set(items)
+        assert len(flattened) - len(items) <= 3 - 1
 
     def test_sizes_differ_by_at_most_one(self):
         items = list(range(10))

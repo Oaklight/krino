@@ -56,13 +56,18 @@ def shard(items: Sequence[Any], rank: int, world_size: int) -> list[Any]:
     if rank < 0 or rank >= world_size:
         raise ValueError(f"rank {rank} is outside world_size {world_size}")
 
+    longest = shard_length(len(items), world_size)
+    if longest == 0:
+        # An empty epoch is legitimate: every rank gets nothing, every rank takes
+        # zero steps, so the collective sequence still matches.
+        return []
+
     slice_ = list(items[rank::world_size])
     if not slice_:
         raise ValueError(
             f"cannot shard {len(items)} items across {world_size} ranks: "
             f"rank {rank} would receive none"
         )
-    longest = shard_length(len(items), world_size)
     while len(slice_) < longest:
         slice_.append(slice_[0])
     return slice_

@@ -84,3 +84,15 @@ def test_rank_outside_the_group_is_rejected():
 def test_group_larger_than_the_data_is_rejected():
     with pytest.raises(ValueError):
         shard([1], 2, 4)
+
+
+def test_empty_epoch_gives_every_rank_nothing():
+    """An empty item list must not raise, and must give every rank zero steps.
+
+    Both matter for the collective sequence: if one rank raised while the others
+    proceeded, the group would deadlock instead of failing.
+    """
+    for world_size in (2, 4, 8):
+        shards = [shard([], rank, world_size) for rank in range(world_size)]
+        assert shards == [[] for _ in range(world_size)]
+        assert {steps_for(len(s), 8) for s in shards} == {0}
