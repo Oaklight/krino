@@ -1,0 +1,41 @@
+# Eval-only: JevBench public tiers against a trained checkpoint.
+#
+# JevBench is the only benchmark where a comparison with Jev means anything:
+# TypeSafe reports its own numbers there, and the open reproductions publish
+# theirs. Training never uses it (weight 0), so this config is for
+# `--eval-only`.
+#
+# The architecture settings below must mirror the run that produced the
+# checkpoint, or `load_heads` will fail on a shape mismatch — which is the
+# behaviour we want. They are the settings of
+# `model/checkpoints/arch_8b_loraAll_weighted/` (Qwen3-Reranker-8B, full LoRA).
+#
+# The source must be materialised first — `load_source_items` reads a prepared
+# JSONL, it does not dispatch through LOADERS:
+#   python -m data.pipeline jevbench   # writes data/benchmarks/jevbench.jsonl
+#
+# Usage:
+#   python model/scripts/train_multitask.py --config model/configs/eval_jevbench.yaml \
+#       --eval-only --load-heads model/checkpoints/arch_8b_loraAll_weighted/best_heads.pt \
+#       --max-length 4096
+#
+# For a 4B / 0.6B checkpoint, change `model`, `rank`, `lora_layers`, `readout`
+# and `max_length` to match that run's log header. The head `rank` must match
+# too: the 4B/8B configs use 128 and the 0.6B config uses 64, and a mismatch
+# fails loudly inside `load_heads` rather than silently re-initialising.
+
+model: Qwen/Qwen3-Reranker-8B
+rank: 128
+readout: weighted
+shared_attention: true
+lora_layers: -1
+lora_rank: 16
+lora_alpha: 32
+lora_targets: q_proj,v_proj
+max_length: 4096
+eval_every: 1
+
+sources:
+  jevbench:
+    weight: 0
+    max_eval: 300
