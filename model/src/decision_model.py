@@ -47,6 +47,12 @@ class DecisionModel(nn.Module):
         every block or only the last N, so the backbone representation can
         adapt while the pretrained weights stay frozen.
       - ``mlp_layers``: an MLP projector between backbone and heads.
+
+    A second backbone can be attached with ``second_backbone``.  Both encode
+    the same token ids and their readout tensors are concatenated along the
+    hidden dimension, then a learned projection maps the result back to
+    ``hidden_size`` so the existing heads work unchanged.  ``fusion="sum"``
+    is available when both backbones share a hidden size.
     """
 
     def __init__(
@@ -66,11 +72,22 @@ class DecisionModel(nn.Module):
         unified_head: bool = False,
         readout: str = "last",
         readout_n: int = 4,
+        readout_layer: int | None = None,
+        readout_pair: tuple[int, int] | None = None,
+        readout_fusion: str = "concat",
         lora_layers: int | None = None,
         lora_rank: int = 16,
         lora_alpha: int = 32,
         lora_dropout: float = 0.0,
         lora_targets: tuple[str, ...] = ("q_proj", "v_proj"),
+        second_backbone: PreTrainedModel | None = None,
+        second_readout: str = "last",
+        second_readout_n: int = 4,
+        second_readout_layer: int | None = None,
+        second_readout_pair: tuple[int, int] | None = None,
+        second_readout_fusion: str = "concat",
+        second_lora_layers: int | None = None,
+        fusion: str = "concat",
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -129,11 +146,90 @@ class DecisionModel(nn.Module):
                 f"readout={readout!r} needs backbone.config.num_hidden_layers, "
                 "which this backbone does not define"
             )
-        self.readout = LayerMixer(n_hidden + 1, readout, readout_n)
+        self.readout = LayerMixer(
+            n_hidden + 1,
+            readout,
+            readout_n,
+            layer=readout_layer,
+            pair=readout_pair,
+            fusion=readout_fusion,
+        )
+        # A two-layer concatenation is twice the backbone width; bring it back
+        # so the heads and every other readout mode keep one input width.
+        self.readout_project = (
+            nn.Linear(self.hidden_size * self.readout.out_mult, self.hidden_size)
+            if self.readout.out_mult > 1
+            else nn.Identity()
+        )
         if readout != "last":
-            detail = f" (n={readout_n})" if readout == "mean_last_n" else ""
+            detail = ""
+            if readout == "mean_last_n":
+                detail = f" (n={readout_n})"
+            elif readout == "layer":
+                detail = f" (layer={readout_layer})"
+            elif readout == "fuse_pair":
+                detail = f" (layers={readout_pair}, {readout_fusion})"
             print(
                 f"  Readout: {readout}{detail} over {n_hidden + 1} hidden states",
+                flush=True,
+            )
+
+        # Optional second backbone.  Both encode the same ids; their readout
+        # tensors are fused and projected back to ``hidden_size``.
+        self.second_backbone = second_backbone
+        self.second_hidden_size = 0
+        self.second_readout = None
+        self.second_readout_project = None
+        self.fusion_project = None
+        self.fusion = fusion
+        self.second_backbone_requires_grad = False
+        if second_backbone is not None:
+            if fusion not in ("concat", "sum"):
+                raise ValueError(f"fusion={fusion!r}; expected 'concat' or 'sum'")
+            if _is_encoder_model(second_backbone) != self.is_encoder:
+                raise ValueError(
+                    "primary and second backbone must both be causal or both "
+                    "be encoders"
+                )
+            n_hidden2 = getattr(second_backbone.config, "num_hidden_layers", 0)
+            if second_readout != "last" and n_hidden2 == 0:
+                raise ValueError(
+                    f"second_readout={second_readout!r} needs "
+                    "second_backbone.config.num_hidden_layers"
+                )
+            self.second_hidden_size = second_backbone.config.hidden_size
+            self.second_readout = LayerMixer(
+                n_hidden2 + 1,
+                second_readout,
+                second_readout_n,
+                layer=second_readout_layer,
+                pair=second_readout_pair,
+                fusion=second_readout_fusion,
+            )
+            self.second_readout_project = (
+                nn.Linear(
+                    self.second_hidden_size * self.second_readout.out_mult,
+                    self.second_hidden_size,
+                )
+                if self.second_readout.out_mult > 1
+                else nn.Identity()
+            )
+            if fusion == "sum":
+                if self.hidden_size != self.second_hidden_size:
+                    raise ValueError(
+                        "fusion='sum' needs equal hidden sizes, got "
+                        f"{self.hidden_size} and {self.second_hidden_size}"
+                    )
+                self.fusion_project = nn.Identity()
+            else:
+                self.fusion_project = nn.Linear(
+                    self.hidden_size + self.second_hidden_size, self.hidden_size
+                )
+            print(
+                f"  Second backbone: hidden={self.second_hidden_size}, "
+                f"readout={second_readout}, fusion={fusion} "
+                f"({self.hidden_size} + {self.second_hidden_size} -> "
+                f"{self.hidden_size})",
                 flush=True,
             )
 
@@ -216,12 +312,47 @@ class DecisionModel(nn.Module):
                 flush=True,
             )
 
+        # The second backbone is frozen the same way; LoRA on it is opt-in
+        # and independent of the primary backbone's LoRA scope.
+        if self.second_backbone is not None:
+            for param in self.second_backbone.parameters():
+                param.requires_grad_(False)
+            if second_lora_layers is not None:
+                adapted2 = inject_lora(
+                    self.second_backbone,
+                    targets=lora_targets,
+                    rank=lora_rank,
+                    alpha=lora_alpha,
+                    dropout=lora_dropout,
+                    last_n_layers=second_lora_layers if second_lora_layers > 0 else None,
+                )
+                scope2 = (
+                    f"last {second_lora_layers} blocks"
+                    if second_lora_layers > 0
+                    else "all blocks"
+                )
+                print(
+                    f"  Second-backbone LoRA: {adapted2} layers ({scope2}), "
+                    f"r={lora_rank}, targets={','.join(lora_targets)}",
+                    flush=True,
+                )
+            self.second_backbone_requires_grad = any(
+                p.requires_grad for p in self.second_backbone.parameters()
+            )
+
         self.backbone_requires_grad = any(
             p.requires_grad for p in self.backbone.parameters()
         )
 
         device = next(self.backbone.parameters()).device
         self.readout = self.readout.to(device)
+        self.readout_project = self.readout_project.to(device).float()
+        if self.second_readout is not None:
+            self.second_readout = self.second_readout.to(device)
+        if self.second_readout_project is not None:
+            self.second_readout_project = self.second_readout_project.to(device).float()
+        if self.fusion_project is not None:
+            self.fusion_project = self.fusion_project.to(device).float()
         self.projector = self.projector.to(device).float()
         if self.noul_head is not None:
             self.noul_head = self.noul_head.to(device).float()
@@ -234,11 +365,18 @@ class DecisionModel(nn.Module):
     def device(self) -> torch.device:
         return next(self.backbone.parameters()).device
 
-    def _backbone_forward(self, inputs: dict) -> Any:
-        """Run backbone forward pass with optional bf16 autocast.
+    def _run_backbone(
+        self,
+        backbone: PreTrainedModel,
+        inputs: dict,
+        needs_grad: bool,
+    ) -> Any:
+        """Run one backbone forward pass with optional bf16 autocast.
 
         Args:
+            backbone: The backbone to run (primary or second).
             inputs: Tokenized inputs dict (on device).
+            needs_grad: Whether the backbone graph must be kept alive.
 
         Returns:
             Model outputs with hidden states.
@@ -254,13 +392,41 @@ class DecisionModel(nn.Module):
         # LoRA adapters live inside the backbone, so their graph needs grad
         # enabled even though every pretrained weight stays frozen.  An
         # enclosing no_grad (evaluation) still wins.
-        needs_grad = self.backbone_requires_grad and torch.is_grad_enabled()
-        with torch.enable_grad() if needs_grad else torch.no_grad():
+        needs = needs_grad and torch.is_grad_enabled()
+        with torch.enable_grad() if needs else torch.no_grad():
             if use_autocast:
                 with torch.autocast("cuda", dtype=torch.bfloat16):
-                    return self.backbone(**fwd_kwargs)
+                    return backbone(**fwd_kwargs)
             else:
-                return self.backbone(**fwd_kwargs)
+                return backbone(**fwd_kwargs)
+
+    def _backbone_forward(self, inputs: dict) -> Any:
+        """Run the primary backbone forward pass."""
+        return self._run_backbone(
+            self.backbone, inputs, self.backbone_requires_grad
+        )
+
+    def _hidden_sequence(self, inputs: dict) -> torch.Tensor:
+        """Backbone readout fused across both backbones, [batch, seq, hidden].
+
+        The readout layers return bf16 under autocast; the projections and
+        the heads are fp32, so upcast before either projection runs.
+        """
+        outputs = self._run_backbone(
+            self.backbone, inputs, self.backbone_requires_grad
+        )
+        hidden = self.readout_project(self.readout(outputs.hidden_states).float())
+        if self.second_backbone is None:
+            return hidden
+        outputs2 = self._run_backbone(
+            self.second_backbone, inputs, self.second_backbone_requires_grad
+        )
+        hidden2 = self.second_readout_project(
+            self.second_readout(outputs2.hidden_states).float()
+        )
+        if self.fusion == "sum":
+            return self.fusion_project(hidden + hidden2)
+        return self.fusion_project(torch.cat([hidden, hidden2], dim=-1))
 
     def _encode_text(
         self, text: str | list[str], max_length: int | None = None
@@ -280,8 +446,7 @@ class DecisionModel(nn.Module):
             max_length=max_length,
             padding=True,
         ).to(self.device)
-        outputs = self._backbone_forward(inputs)
-        hidden = self.readout(outputs.hidden_states)
+        hidden = self._hidden_sequence(inputs)
         if self.is_encoder:
             mask = inputs["attention_mask"].unsqueeze(-1).float()
             pooled = (hidden * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
@@ -298,8 +463,7 @@ class DecisionModel(nn.Module):
         inputs = self.tokenizer(
             text, return_tensors="pt", truncation=True, max_length=max_length
         ).to(self.device)
-        outputs = self._backbone_forward(inputs)
-        hidden = self.readout(outputs.hidden_states)
+        hidden = self._hidden_sequence(inputs)
         return self.projector(hidden.float())
 
     def forward_noul(self, state: str, instructions: str) -> torch.Tensor:
