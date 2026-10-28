@@ -152,6 +152,11 @@ def main() -> int:
     parser.add_argument(
         "--n-options", type=int, nargs="+", default=list(DEFAULT_OPTION_COUNTS)
     )
+    parser.add_argument(
+        "--compile",
+        action="store_true",
+        help="torch.compile the backbone with reduce-overhead (CUDA graphs)",
+    )
     parser.add_argument("--repeats", type=int, default=20)
     parser.add_argument("--warmup", type=int, default=3)
     args = parser.parse_args()
@@ -163,6 +168,15 @@ def main() -> int:
         print("WARNING: CUDA unavailable; timings measure CPU inference only.", flush=True)
 
     model = build_model(args, cfg, device)
+    if args.compile:
+        # Latency here is launch-bound: a 42-token forward of the 0.6B model
+        # measures ~40 ms where the arithmetic is well under 1 ms.  CUDA graphs
+        # collapse the per-layer kernel launches, which is the only lever that
+        # moves the fixed cost rather than the token count.
+        model.backbone = torch.compile(
+            model.backbone, mode="reduce-overhead", dynamic=False
+        )
+        print("backbone compiled with reduce-overhead", flush=True)
     print(
         f"readout={getattr(model, 'readout_mode', 'n/a')} "
         f"max_length={model.max_length} options={args.n_options} "
