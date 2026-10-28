@@ -59,6 +59,35 @@ def collect_synthetic_sources(
     return {name for name, cfg in sources_cfg.items() if is_synthetic_source(name, cfg)}
 
 
+def missing_sources(
+    counts: dict[str, tuple[int, int]],
+    sources_cfg: dict,
+) -> list[str]:
+    """Sources that produced no items and are not marked ``allow_missing``.
+
+    A configured source that yields nothing means the mixture is not the one
+    the config describes, and the run's numbers are not comparable with the
+    rest of the project. That has to be an error, not a warning: a fresh
+    worktree without the prepared benchmark files silently trained on 10k of
+    182k items, with one stderr line per source as the only signal.
+
+    Args:
+        counts: ``{source_name: (n_train, n_eval)}`` as loaded.
+        sources_cfg: The config's ``sources`` mapping.
+
+    Returns:
+        Names of the sources that loaded nothing and were not opted out.
+    """
+    missing: list[str] = []
+    for name, (n_train, n_eval) in counts.items():
+        cfg = sources_cfg.get(name) or {}
+        if cfg.get("allow_missing"):
+            continue
+        if n_train + n_eval == 0:
+            missing.append(name)
+    return missing
+
+
 def load_source_items(
     source_name: str,
     source_cfg: dict,
