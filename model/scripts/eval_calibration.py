@@ -500,6 +500,7 @@ def _temperature_report(
     seed: int,
     fit_steps: int,
     curve_enabled: bool = False,
+    criterion: str = "nll",
 ) -> dict[str, Any]:
     """Fit a temperature on one split and score the other split."""
     if len(records) < 4:
@@ -524,6 +525,7 @@ def _temperature_report(
         [record["logits"] for record in fit_records],
         [record["label_idx"] for record in fit_records],
         steps=fit_steps,
+        criterion=criterion,
     )
     temperature = fitted["temperature"]
     before = _type_metrics(holdout_records, 1.0)
@@ -1239,6 +1241,16 @@ def main() -> int:
         "--json", type=Path, default=None, help="Write the full report here"
     )
     parser.add_argument(
+        "--fit-criterion",
+        choices=["nll", "ece"],
+        default="nll",
+        help=(
+            "What the temperature minimises on the fit split. The goal is "
+            "stated in ECE; fitting NLL and evaluating ECE can make the score "
+            "primitive look worse after scaling than before."
+        ),
+    )
+    parser.add_argument(
         "--temperature-curve",
         action="store_true",
         help=(
@@ -1422,6 +1434,7 @@ def main() -> int:
             args.seed,
             args.fit_steps,
             curve_enabled=args.temperature_curve,
+            criterion=args.fit_criterion,
         )
         metrics["by_option_count"] = _bucket_metrics(type_records)
         metrics["floors"] = _floors(type_records)

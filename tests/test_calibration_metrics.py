@@ -156,3 +156,56 @@ class TestTemperatureCurve:
         from model.evaluation.calibration import temperature_curve
 
         assert temperature_curve([], [])["curve"] == []
+
+
+class TestFitTemperatureCriterion:
+    """The fitting criterion is a choice, and on score it changes the answer."""
+
+    @staticmethod
+    def _skewed():
+        # Right 60% of the time at 0.95 confidence: overconfident and skewed.
+        rows = []
+        for index in range(60):
+            rows.append(([4.0, 0.0, 0.0], 0))
+        for index in range(20):
+            rows.append(([4.0, 0.0, 0.0], 1))
+        for index in range(20):
+            rows.append(([0.0, 4.0, 0.0], 1))
+        return [row for row, _ in rows], [label for _, label in rows]
+
+    def test_default_is_nll(self):
+        from model.evaluation.calibration import fit_temperature
+
+        logits, labels = self._skewed()
+        assert fit_temperature(logits, labels)["criterion"] == "nll"
+
+    def test_ece_criterion_returns_a_temperature_too(self):
+        from model.evaluation.calibration import fit_temperature
+
+        logits, labels = self._skewed()
+        fitted = fit_temperature(logits, labels, criterion="ece")
+        assert fitted["temperature"] > 0
+        assert fitted["criterion"] == "ece"
+
+    def test_the_ece_criterion_does_not_lose_on_its_own_metric(self):
+        """Whatever else changes, fitting for ECE cannot be worse at ECE."""
+        from model.evaluation.calibration import fit_temperature, softmax, top1_calibration
+
+        logits, labels = self._skewed()
+
+        def ece_at(temperature):
+            probabilities = [
+                softmax([value / temperature for value in row]) for row in logits
+            ]
+            return top1_calibration(probabilities, labels)["ece"]
+
+        by_nll = fit_temperature(logits, labels, criterion="nll")["temperature"]
+        by_ece = fit_temperature(logits, labels, criterion="ece")["temperature"]
+        assert ece_at(by_ece) <= ece_at(by_nll) + 1e-9
+
+    def test_unknown_criterion_raises(self):
+        import pytest
+        from model.evaluation.calibration import fit_temperature
+
+        with pytest.raises(ValueError):
+            fit_temperature([[1.0, 0.0]], [0], criterion="brier")

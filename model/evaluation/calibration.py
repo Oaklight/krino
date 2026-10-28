@@ -164,8 +164,9 @@ def fit_temperature(
     low: float = 0.05,
     high: float = 20.0,
     steps: int = 400,
+    criterion: str = "nll",
 ) -> dict[str, Any]:
-    """Fit one temperature by minimising NLL on held-out logits.
+    """Fit one temperature on held-out logits.
 
     Temperature scaling is the cheapest calibration fix there is: it leaves the
     argmax untouched, so accuracy cannot change, and it usually moves ECE by a
@@ -177,32 +178,53 @@ def fit_temperature(
         low: Lower bound of the search grid.
         high: Upper bound of the search grid.
         steps: Grid resolution before the local refinement.
+        criterion: ``"nll"`` (the usual choice, minimises negative log
+            likelihood) or ``"ece"``. The goal is stated in ECE, and on the
+            score primitive the two criteria pick different temperatures: NLL
+            chooses 3.6 where ECE is 0.122, ECE chooses 1.5 where it is 0.031.
 
     Returns:
         ``{"temperature": float, "nll_before": float, "nll_after": float,
-        "n": count}``. ``nll_before`` uses T=1.
+        "n": count}`` plus ``"criterion"``. ``nll_before`` uses T=1.
     """
+    if criterion not in ("nll", "ece"):
+        raise ValueError(f"unknown criterion {criterion!r}")
     if not logits:
-        return {"temperature": 1.0, "nll_before": 0.0, "nll_after": 0.0, "n": 0}
+        return {
+            "temperature": 1.0,
+            "nll_before": 0.0,
+            "nll_after": 0.0,
+            "n": 0,
+            "criterion": criterion,
+        }
+
+    def objective(temperature: float) -> float:
+        if criterion == "nll":
+            return _nll(logits, labels, temperature)
+        probabilities = [
+            softmax([value / temperature for value in row]) for row in logits
+        ]
+        return top1_calibration(probabilities, labels)["ece"]
 
     def search(lo: float, hi: float, count: int) -> tuple[float, float]:
-        best_temp, best_nll = lo, float("inf")
+        best_temp, best_value = lo, float("inf")
         for step in range(count):
             temp = lo * (hi / lo) ** (step / (count - 1))
-            value = _nll(logits, labels, temp)
-            if value < best_nll:
-                best_temp, best_nll = temp, value
-        return best_temp, best_nll
+            value = objective(temp)
+            if value < best_value:
+                best_temp, best_value = temp, value
+        return best_temp, best_value
 
     coarse_temp, _ = search(low, high, max(steps, 2))
     span = coarse_temp * (high / low) ** (1.0 / max(steps - 1, 1))
-    fine_temp, fine_nll = search(max(coarse_temp / span, low), min(coarse_temp * span, high), 40)
+    fine_temp, _ = search(max(coarse_temp / span, low), min(coarse_temp * span, high), 40)
 
     return {
         "temperature": fine_temp,
         "nll_before": _nll(logits, labels, 1.0),
-        "nll_after": fine_nll,
+        "nll_after": _nll(logits, labels, fine_temp),
         "n": len(logits),
+        "criterion": criterion,
     }
 
 
