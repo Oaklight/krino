@@ -555,7 +555,26 @@ def _print_detailed_eval(eval_stats: dict) -> None:
             )
 
     by_source = eval_stats.get("by_source", {})
-    if by_source:
+    by_source_type = eval_stats.get("by_source_type")
+    if by_source_type:
+        # One row per (source, type): by_source alone mixes the types a source
+        # contributes and labels the mix with the first type it saw.
+        rows = [
+            (src, t, m)
+            for src, types in by_source_type.items()
+            for t, m in types.items()
+        ]
+        print(
+            f"\n  {'Source':<20} {'Type':<8} {'Loss':>8} {'Acc':>8} {'N':>6}",
+            flush=True,
+        )
+        print(f"  {'-' * 20} {'-' * 8} {'-' * 8} {'-' * 8} {'-' * 6}", flush=True)
+        for src, t, m in sorted(rows, key=lambda r: (r[2]["accuracy"], r[0], r[1])):
+            print(
+                f"  {src:<20} {t:<8} {m['mean_loss']:>8.4f} "
+                f"{m['accuracy']:>8.4f} {m['n_items']:>6}"
+            )
+    elif by_source:
         print(
             f"\n  {'Source':<20} {'Type':<8} {'Loss':>8} {'Acc':>8} {'N':>6}",
             flush=True,

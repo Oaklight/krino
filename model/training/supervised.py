@@ -677,6 +677,14 @@ def eval_epoch_detailed(model: nn.Module, eval_items: list) -> dict[str, Any]:
         - "aggregate": {"mean_loss", "accuracy", "n_items", "correct"}
         - "by_type": {type_name: {"mean_loss", "accuracy", "n_items", "correct"}}
         - "by_source": {source_name: {"mean_loss", "accuracy", "n_items", "correct", "type"}}
+        - "by_source_type": {source_name: {type_name: {same fields minus "type"}}}
+
+    ``by_source`` mixes all question types that a source contributes, so its
+    ``type`` field is only the first type seen for that source. Sources such as
+    ``synthetic`` and ``typed_decisions`` contribute noul, choice and score
+    items, which makes ``by_source`` unusable for per-type attribution — read
+    ``by_source_type`` for that. ``by_source`` is kept for callers that only
+    compare single-type sources.
     """
     model.eval()
 
@@ -689,6 +697,8 @@ def eval_epoch_detailed(model: nn.Module, eval_items: list) -> dict[str, Any]:
     type_stats: dict[str, dict[str, float]] = {}
     # Per-source accumulators
     source_stats: dict[str, dict[str, Any]] = {}
+    # Per-source-per-type accumulators
+    source_type_stats: dict[tuple[str, str], dict[str, float]] = {}
 
     for item in eval_items:
         result = _eval_item(model, item)
@@ -721,6 +731,15 @@ def eval_epoch_detailed(model: nn.Module, eval_items: list) -> dict[str, Any]:
         if is_correct:
             source_stats[source]["correct"] += 1
 
+        # Per-source-per-type
+        st_key = (source, q_type)
+        if st_key not in source_type_stats:
+            source_type_stats[st_key] = {"total_loss": 0.0, "n_items": 0, "correct": 0}
+        source_type_stats[st_key]["total_loss"] += loss_val
+        source_type_stats[st_key]["n_items"] += 1
+        if is_correct:
+            source_type_stats[st_key]["correct"] += 1
+
     # Build result dicts
     aggregate = {
         "mean_loss": total_loss / max(n_items, 1),
@@ -750,10 +769,21 @@ def eval_epoch_detailed(model: nn.Module, eval_items: list) -> dict[str, Any]:
             "type": s["type"],
         }
 
+    by_source_type: dict[str, dict[str, dict[str, Any]]] = {}
+    for (src, t), s in source_type_stats.items():
+        n = s["n_items"]
+        by_source_type.setdefault(src, {})[t] = {
+            "mean_loss": s["total_loss"] / max(n, 1),
+            "accuracy": s["correct"] / max(n, 1),
+            "n_items": n,
+            "correct": int(s["correct"]),
+        }
+
     return {
         "aggregate": aggregate,
         "by_type": by_type,
         "by_source": by_source,
+        "by_source_type": by_source_type,
     }
 
 
