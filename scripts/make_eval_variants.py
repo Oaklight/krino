@@ -1,24 +1,41 @@
 #!/usr/bin/env python3
 """Generate deterministic variants of an eval set for robustness probing.
 
-Three transformations, each aimed at a specific failure mode that a single
+Four transformations, each aimed at a specific failure mode that a single
 accuracy number cannot see:
 
 * ``neutral`` — replace every question's instructions with one fixed template.
   Separates "can the model decide from the state" from "did it memorise our
   instruction phrasings".
+* ``nonsense`` — replace the instructions with unrelated tokens. ``neutral``
+  alone cannot separate "robust to phrasing" from "does not read the
+  instruction at all": a model that ignores the instruction scores the same
+  under any fixed template. If accuracy survives nonsense, it was never using
+  the instruction, and the phrasing result has to be read that way.
 * ``reversed`` — reverse the option/level order and remap the label. A model
   that scores by position rather than content loses accuracy here; a correct
   one is unchanged.
 * ``shuffled`` — permute options/levels with a fixed seed, remap labels.
 
 Applied to a prepared JSONL (``data/benchmarks/<source>.jsonl``), the output is
-another JSONL in the same format, so it can be evaluated by pointing an
-eval-only config at it. No model code is involved.
+another JSONL in the same format. No model code is involved.
+
+The files land in ``data/benchmarks/variants/``, which the loader does not
+look at: ``load_source_items`` resolves a source named ``X`` to
+``data/benchmarks/X.jsonl``. To evaluate a variant, add a source to the config
+with an explicit ``path`` — the same way ``jevbench`` is declared:
+
+    jevbench_reversed:
+      path: data/benchmarks/variants/jevbench_reversed.jsonl
+      weight: 0
+      max_eval: 300
+
+Do not copy the variant over the original; the comparison needs both.
 
 Usage:
     python scripts/make_eval_variants.py data/benchmarks/jevbench.jsonl \
-        --out-dir data/benchmarks/variants --variants neutral,reversed,shuffled
+        --out-dir data/benchmarks/variants \
+        --variants neutral,nonsense,reversed,shuffled
 """
 
 from __future__ import annotations
@@ -31,6 +48,7 @@ from pathlib import Path
 from typing import Any
 
 NEUTRAL_INSTRUCTION = "Answer the question using only the information in the text."
+NONSENSE_INSTRUCTION = "zzz qqq wumpus blorf"
 
 
 def reverse_choice(criteria: dict[str, str], label: str) -> tuple[dict[str, str], str]:
@@ -56,12 +74,22 @@ def shuffle_choice(
 def shuffle_score(
     criteria: list[str], label: float, rng: random.Random
 ) -> tuple[list[str], float]:
-    """Permute ordinal levels and move the label to the level's new index."""
+    """Permute ordinal levels and move the label to the level's new index.
+
+    Fractional labels are interpolated, not rounded: the score-form conversion
+    produces targets like 2.5, and rounding one to 2.0 would silently harden a
+    soft target, which changes the question rather than its presentation.
+    """
     order = list(range(len(criteria)))
     rng.shuffle(order)
     new_levels = [criteria[i] for i in order]
     # ``order[new_index] == old_index``, so the label's new index is its position.
-    return new_levels, float(order.index(int(round(label))))
+    low = int(label)
+    high = min(low + 1, len(criteria) - 1)
+    fraction = label - low
+    if fraction == 0.0 or low == high:
+        return new_levels, float(order.index(low))
+    return new_levels, order.index(low) + fraction * (order.index(high) - order.index(low))
 
 
 def transform_item(item: dict[str, Any], variant: str, rng: random.Random) -> dict[str, Any]:
@@ -69,7 +97,7 @@ def transform_item(item: dict[str, Any], variant: str, rng: random.Random) -> di
 
     Args:
         item: A prepared ``TypedQuestion`` dict.
-        variant: ``neutral``, ``reversed`` or ``shuffled``.
+        variant: ``neutral``, ``nonsense``, ``reversed`` or ``shuffled``.
         rng: Seeded generator, used for ``shuffled``.
 
     Returns:
@@ -85,6 +113,10 @@ def transform_item(item: dict[str, Any], variant: str, rng: random.Random) -> di
 
     if variant == "neutral":
         question["instructions"] = NEUTRAL_INSTRUCTION
+        return out
+
+    if variant == "nonsense":
+        question["instructions"] = NONSENSE_INSTRUCTION
         return out
 
     if variant == "reversed":
@@ -116,7 +148,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate eval-set robustness variants")
     parser.add_argument("path", type=Path, help="Prepared JSONL to transform")
     parser.add_argument("--out-dir", type=Path, default=None)
-    parser.add_argument("--variants", default="neutral,reversed,shuffled")
+    parser.add_argument(
+        "--variants", default="neutral,nonsense,reversed,shuffled"
+    )
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 

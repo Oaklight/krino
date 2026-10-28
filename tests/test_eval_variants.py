@@ -134,3 +134,49 @@ class TestTransformItem:
         out = transform_item(item, "shuffled", random.Random(5))
         levels = out["question"]["criteria"]
         assert levels[int(out["label"])] == "bad"
+
+
+class TestNonsenseInstruction:
+    def test_replaces_the_instruction_and_keeps_everything_else(self):
+        from scripts.make_eval_variants import NONSENSE_INSTRUCTION, transform_item
+        import random as _random
+
+        item = {
+            "id": "q1",
+            "label": True,
+            "question": {"type": "noul", "instructions": "Is X true?", "criteria": {}},
+        }
+        out = transform_item(item, "nonsense", _random.Random(42))
+        assert out["question"]["instructions"] == NONSENSE_INSTRUCTION
+        assert out["label"] is True
+        assert out["id"] == "q1::nonsense"
+
+    def test_differs_from_neutral(self):
+        from scripts.make_eval_variants import NEUTRAL_INSTRUCTION, NONSENSE_INSTRUCTION
+
+        assert NEUTRAL_INSTRUCTION != NONSENSE_INSTRUCTION
+
+
+class TestShuffleScoreFractionalLabels:
+    def test_fractional_label_stays_between_its_neighbours(self):
+        from scripts.make_eval_variants import shuffle_score
+        import random as _random
+
+        levels = ["a", "b", "c", "d", "e"]
+        for seed in range(20):
+            new_levels, new_label = shuffle_score(levels, 2.5, _random.Random(seed))
+            low = new_levels.index("c")   # old level 2, weight 0.5
+            high = new_levels.index("d")  # old level 3, weight 0.5
+            # The expected level is the midpoint of the two positions in the
+            # new scale, in either direction -- not rounded onto one of them.
+            assert new_label == (low + high) / 2
+            assert new_label != float(int(new_label)) or abs(low - high) % 2 == 0
+
+    def test_integer_label_moves_without_interpolation(self):
+        from scripts.make_eval_variants import shuffle_score
+        import random as _random
+
+        levels = ["a", "b", "c", "d", "e"]
+        for seed in range(20):
+            new_levels, new_label = shuffle_score(levels, 2.0, _random.Random(seed))
+            assert new_levels[int(new_label)] == "c"
