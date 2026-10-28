@@ -9,8 +9,9 @@ ordinal targets.
 
 This note reports a 2×2 at 0.6B. It is a negative result on accuracy: the plain
 baseline — softmax head, cross-entropy — wins overall, on choice and on score,
-while on noul the two losses are tied inside the reproduction floor the note
-establishes later. Neither the ordinal head nor RPS recovers any of the gap. RPS
+while on noul the two losses are tied inside the 0.29-0.40 pp seed noise the
+note uses throughout, not inside any reproduction floor. Neither the ordinal
+head nor RPS recovers any of the gap. RPS
 targets *calibration* rather than accuracy, so the two softmax arms were then
 scored with the calibration harness; that second half is below, and it does not
 rescue RPS either.
@@ -100,7 +101,11 @@ calibration harness (merged as #167) on the same 13,444 items. The two reports
 are committed as `model/experiments/calibration_ordinal_softmax_ce.json` and
 `model/experiments/calibration_ordinal_softmax_rps.json`; the ECE-fitted variant
 of the first is the separately committed `calibration_ecefit_softmax_ce.json`
-that #167 added. The two `cumulative` arms are not scored: `eval_calibration.py`
+that #167 added. Every report's temperature block records the `criterion` it was
+fitted under — `nll` for the first two, `ece` for the ecefit one — so the two
+files' fitted score temperatures of 4.079 and 1.336 on the same checkpoint are
+explained in the payload, not only in the prose. The two `cumulative` arms are
+not scored: `eval_calibration.py`
 has no `--score-head` flag, so it would build a softmax head and report on a
 network that does not exist (#145).
 
@@ -122,11 +127,11 @@ network that does not exist (#145).
 | | QWK (item-weighted, 4-6 levels) | **0.5312** | 0.4483 |
 | | RPS | **0.1553** | 0.1712 |
 
-### Why the two tables' accuracies differ
+### Why the earlier calibration reports disagreed
 
-They are two inference passes over the same items, not two definitions of
-"correct", and the difference is small enough to state as a floor rather than a
-caveat. Measured, not assumed:
+The superseded reports were a second inference pass over the same items, not a
+second definition of "correct", and the difference is small enough to state as a
+floor rather than a caveat. Measured, not assumed:
 
 * **The item lists are identical.** The loaders in `train_multitask.py` and
   `eval_calibration.py` were run side by side on the same config and seed and
@@ -136,13 +141,16 @@ caveat. Measured, not assumed:
   `_predict_original` (calibration) to one loaded checkpoint in one process gives
   **0 disagreements over all 13,444 items**, and both reproduce this note's
   Results table exactly: 3,101 / 2,735 / 794 correct.
-* **The calibration reports disagree with that by 25 items net**: 3,107 noul
-  (+6), 2,756 choice (+21), 792 score (−2), i.e. 0.19% of the set.
+* **The superseded reports disagreed with that by 25 items net**: 3,107 noul
+  (+6), 2,756 choice (+21), 792 score (−2), i.e. 0.19% of the set. The reports
+  committed at this head do not: they reproduce 3,101 / 2,735 / 794 exactly, so
+  this bullet and the floor table below are the only places the earlier pass is
+  still visible.
 
-So what moves is the inference pass — near-tied logits resolved differently in
+So what moved was the inference pass — near-tied logits resolved differently in
 bf16 across two processes — not the scoring code and not the data. Tie-breaking
 is ruled out as the main cause directly: noul has `tie_count` 0 in the report and
-still moves six items, and choice's six ties cannot account for its 21.
+still moved six items, and choice's six ties cannot account for its 21.
 
 Which column to trust, then. Both, now: the calibration reports were regenerated
 with this revision — a fresh pass over the committed checkpoint that lands on
@@ -165,17 +173,20 @@ the two passes over the same checkpoint differ by
 | QWK | — | — | 0.0040 |
 | RPS | — | — | 0.0004 |
 
-The largest of them, 0.0040, is the floor any difference in this section has to
-clear. Accuracy and Brier are far more stable than ECE and QWK, which is what
+Each row is the floor for its own metric and the rows are not interchangeable:
+they differ by an order of magnitude, from Brier's 0.0000-0.0002 to QWK's
+0.0040. Accuracy and Brier are far more stable than ECE and QWK, which is what
 makes the accuracy agreement between the two tables a meaningful check and the
 ECE comparisons the ones that need the floor quoted next to them.
 
 **RPS does not buy a calibration advantage that pays for its accuracy cost.**
 On the score items -- where the loss is supposed to matter -- the raw-ECE gap is
 0.0026 in RPS's favour (0.0622 vs 0.0648), which is a tie in the only sense that
-matters here: it is the size of the movement the score ECE itself shows between
-two passes over one checkpoint (0.0020) and below the largest metric movement
-between those passes (0.0040, QWK). It sits at the floor, not above it. Every
+matters here: 0.0026 is 1.3x the movement the score ECE itself shows between two
+passes over one checkpoint (0.0020), so it is at the edge of resolution, not
+above it, and is not evidence of a win. (An earlier revision called it "below the
+largest metric movement" and cited QWK's 0.0040; that borrowed another metric's
+noise scale, which is what the per-metric table above exists to prevent.) Every
 other proper metric is clearly worse for RPS:
 Brier 0.7513 vs 0.7146, MAE 1.0463 vs 0.9384, QWK 0.4483 vs 0.5312, RPS 0.1712 vs
 0.1553. Accuracy is 5.0 pp lower (0.3775 vs 0.4276). On noul, RPS is better
