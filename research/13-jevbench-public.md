@@ -85,6 +85,15 @@ suggestive rather than measured). That matters for where to look: the noul head
 takes a single hidden state, while choice and score score an option list, and it
 is the option-list path that fails to transfer.
 
+Both trained models land on exactly 55/139 choice items (0.396), which is worth
+ruling out as a degenerate answer before reading anything into it. It is not a
+constant rule: always taking the first option scores 0.216 and always taking the
+last scores 0.266, so 0.396 is 13 to 18 points above any position-only strategy,
+and the labels are spread too thinly (the commonest label is 2.9% of items) for a
+majority guess to be the explanation. Two independent checkpoints agreeing on the
+same count is then a coincidence at the few-percent level, not a shared failure
+mode — but it is the kind of number that should be checked rather than trusted.
+
 ## Finding 3 — on the hard tier we are at chance
 
 The hard tier is the one that separates models: 111 items, chance 0.336. The
