@@ -37,7 +37,7 @@ Two caveats that apply to the whole table:
   families — well under 1% — so it should shift these figures by a few tenths of
   a point at most, but they are not directly comparable with post-fix runs.
 * Seed noise: 0.40 pp at 0.6B frozen (49.11 vs 48.71 at seed 123) and 0.35 pp at
-  8B frozen (58.58 vs 58.23), 0.18 pp for the 8B full-LoRA `weighted` arms
+  8B frozen (58.58 vs 58.23), 0.14 pp for the 8B full-LoRA `weighted` arms
   (62.85 / 62.99 at epoch 4). LoRA arms are noisier at small scale: a 0.6B
   full-LoRA `last` replicate moves 54.46 -> 56.46, 2.00 pp. So 0.6B LoRA arms are
   read only against a matched control, and differences under ~2 pp there are not
@@ -158,7 +158,10 @@ than a gain.
 
 A fourth arm changes the LoRA *targets* rather than the readout: all-block LoRA
 on `qkvo` reaches 55.51 at 0.6B (+6.40) but at 4B falls from 54.30 at epoch 1
-(−1.29) to 36.72 at epoch 5 (−18.87), collapsing between epochs 1 and 2. One run
+(+5.22 against frozen `last` epoch 1, 49.08) to 36.72 at epoch 5 (−18.87). It is
+above its same-epoch baseline at epoch 1 and then loses 15.9 pp between epochs 1
+and 2 (54.30 -> 38.39), which is a divergence rather than a configuration that
+never worked — a distinction that matters for what to try next. One run
 per scale, so this is a reproduction target, not a finding.
 
 **4. `last` collapses at 8B under full LoRA, and it is not the seed.** 47.51 at
