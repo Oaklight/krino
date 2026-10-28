@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import pickle
 import random
 import sys
@@ -56,6 +57,7 @@ from model.evaluation.calibration import (
     temperature_curve,
 )
 from model.evaluation.jevbench import summarize as summarize_jevbench
+from model.src.reranker_prompt import score_options_native
 from model.evaluation.order_sensitivity import (
     chance_accuracy,
     duplicate_option_texts,
@@ -92,7 +94,9 @@ def _as_bool(label: Any) -> bool:
 
 
 @torch.no_grad()
-def _predict_original(model: Any, item: Any) -> dict[str, Any] | None:
+def _predict_original(
+    model: Any, item: Any, choice_scorer: str = "head"
+) -> dict[str, Any] | None:
     """Score one item and return its logits, labels and gold index.
 
     This follows the same branches as ``_eval_item`` in
@@ -166,8 +170,29 @@ def _predict_original(model: Any, item: Any) -> dict[str, Any] | None:
         criteria = question["criteria"]
         keys = list(criteria.keys())
         option_texts = [value or key for key, value in criteria.items()]
-        logits = model.forward_choice(state, instructions, option_texts)[0]
-        logits = logits.float().cpu().tolist()
+        if choice_scorer == "native":
+            # Score each option with the backbone's own yes/no logit, the way
+            # the base reranker does, instead of the trained choice head. The
+            # two scorers disagree by 14-21 points on JevBench (#180); this is
+            # how the same comparison is made on the in-distribution eval.
+            # The probabilities are independent per option and do not sum to
+            # one, so they are stored as log-odds: argmax is preserved and ECE
+            # over the resulting distribution is not meaningful.
+            native = score_options_native(
+                model.backbone,
+                model.tokenizer,
+                state,
+                question,
+                [(key, text) for key, text in zip(keys, option_texts)],
+                max_length=getattr(model, "max_length", 8192) or 8192,
+            )
+            logits = [
+                math.log(max(score, 1e-6)) - math.log(max(1.0 - score, 1e-6))
+                for score in native
+            ]
+        else:
+            logits = model.forward_choice(state, instructions, option_texts)[0]
+            logits = logits.float().cpu().tolist()
         if item.label not in keys:
             return None
         return {
@@ -1150,7 +1175,7 @@ def _run_jevbench(model: Any, args: argparse.Namespace) -> int:
     records: list[dict[str, Any]] = []
     failed = 0
     for index, item in enumerate(items):
-        record = _predict_original(model, item)
+        record = _predict_original(model, item, args.choice_scorer)
         if record is None:
             failed += 1
             continue
@@ -1303,6 +1328,14 @@ def main() -> int:
     )
     parser.add_argument(
         "--no-order-probes", action="store_true", help="Skip reordering probes"
+    )
+    parser.add_argument(
+        "--choice-scorer",
+        choices=("head", "native"),
+        default="head",
+        help="Score choice options with the trained head, or with the backbone's "
+        "own yes/no logit as the base reranker does. Accuracy is comparable "
+        "between the two; ECE from the native scorer is not meaningful",
     )
     parser.add_argument(
         "--nested-options-source",
@@ -1458,7 +1491,7 @@ def main() -> int:
         if q_type not in records:
             skipped["unknown_type"] += 1
             continue
-        record = _predict_original(model, item)
+        record = _predict_original(model, item, args.choice_scorer)
         if record is None:
             skipped["label_not_in_options"] += 1
             continue
