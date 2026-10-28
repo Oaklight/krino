@@ -103,14 +103,46 @@ is 74.1 overall. This is the tier to watch, because easy is nearly saturated for
 anything that works (the raw 4B is at 1.000) and the original tier has only 72
 items.
 
+## Finding 4 — the deficit is in the choice head, not the fine-tuning
+
+Finding 2 compares what we ship against the untouched base model, which mixes
+two explanations: fine-tuning may have cost the backbone its reranker behaviour,
+or the heads may score options worse than the backbone's own yes/no logit. They
+are separable — fold the LoRA factors into the base weights, and the fine-tuned
+backbone can be scored by the reranker's own readout.
+
+`model/src/lora.py` gains `merge_lora` for that, and the merge is checked rather
+than assumed: the reloaded merged model reproduces the LoRA model's choice logits
+to **0.0000** on held-out probes, so a merge that dropped or double-applied the
+adapter would fail instead of producing a plausible number.
+
+0.6B, same 231 items, three ways of scoring the same weights:
+
+| scoring | overall | choice | noul | score |
+|---|---:|---:|---:|---:|
+| untouched base, native readout | 0.476 | 0.482 | 0.459 | 0.500 |
+| **fine-tuned backbone, native readout** | **0.541** | **0.540** | **0.554** | 0.500 |
+| fine-tuned backbone, Krino heads | 0.433 | 0.396 | 0.554 | 0.222 |
+
+Two things fall out, and they point the same way:
+
+* **Fine-tuning did not damage the backbone — it improved it**, from 0.476 to
+  0.541 (+6.5 points) on the same scorer. The capability Finding 2 was measuring
+  was never lost.
+* **The heads lose 10.8 points overall against their own backbone**, and the loss
+  is entirely choice (−14.4) and score. On noul the head and the native readout
+  agree exactly (0.554 against 0.554): the noul head costs nothing.
+
+So the JevBench deficit is a property of how the choice head scores an option
+list, not of the training data or the backbone. That is a much narrower target
+than Finding 2 posed, and it is the one the next experiment should attack.
+
 ## Caveats
 
-* **The raw comparison confounds two things.** It measures what we ship against
-  the untouched base model, which is the honest product comparison, but it
-  cannot say whether the 16.5 points went to the fine-tuning or to scoring
-  options with a head instead of the reranker's own yes/no logit. Separating them
-  needs the fine-tuned backbone scored through the native readout — a
-  merge-and-rerun, not a different code path — and that is the next measurement.
+* **The raw comparison is a product comparison, not an attribution.** It
+  measures what we ship against the untouched base model. Finding 4 separates
+  the two explanations it mixes, by scoring the fine-tuned backbone through the
+  reranker's native readout; that is the like-for-like comparison.
 * **18 score items.** One item is worth 5.6 points on the score column, and the
   0.833 vs 0.444 row is 7 items. Nothing in this note should be read as a
   score-primitive finding, and #179 measures that primitive on 1,856 items
@@ -133,10 +165,15 @@ items.
 
 ## What this means for the goal
 
-Item 4 is the widest gap in the goal, and the one with the most direct evidence
-about where it comes from: the capability is partly present in the base model and
-the choice/score heads do not preserve it. The next two measurements are named
-above — the fine-tuned backbone under the native readout, and the hard tier as the
-target rather than the overall column. Until then the honest statement is that
-our best JevBench-public result is 0.463, against a reference of 74.1, and that
-the model we train is worse at it than the model we started from.
+Item 4 is the widest gap in the goal — 0.463 against a 74.1 reference — and
+Finding 4 says where it is. The backbone after training is *better* at JevBench
+than the one we started from (0.541 against 0.476 when both are scored the same
+way), and the trained choice head throws 14 points of that away. So the sentence
+this note would have ended on — that the model we train is worse than the model
+we started from — is true of the heads and false of the backbone, and the work
+belongs in the choice head.
+
+That is one measurement, one seed, 231 items. The hard tier is where the
+remaining gap sits (0.351 against a 0.336 chance floor), and it is the column to
+optimise rather than the overall number, because easy is nearly saturated for
+anything that works.
