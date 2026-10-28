@@ -362,7 +362,13 @@ def _score_metrics(
 ) -> dict[str, Any]:
     """MAE, RPS and QWK for score items (metrics that respect level order)."""
     if not records:
-        return {"mae": 0.0, "rps": 0.0, "qwk": 0.0, "qwk_by_levels": {}}
+        return {
+            "mae": 0.0,
+            "rps": 0.0,
+            "qwk_mixed_scale_mean": 0.0,
+            "qwk_by_levels": {},
+            "qwk_excluded_scales": [],
+        }
 
     probabilities = [_probs(record, temperature) for record in records]
     mae = sum(
@@ -392,10 +398,14 @@ def _score_metrics(
         for group_probs, group_targets in rps_groups.values()
     ) / len(records)
 
-    # QWK is defined within one level scale, and the score sources use
-    # different counts (5 for sst5/yelp, 6 for stsb).  Report each scale
-    # separately and average over items so the summary is not dominated by a
-    # source with more rows.
+    # QWK is defined within one level scale, and the score sources use three
+    # (4, 5 and 6 levels), so there is no single QWK for the score primitive.
+    # Averaging the per-scale values over items yields a number that belongs to
+    # no scale -- on the 0.6B checkpoint that mean is 0.5709 while the scales
+    # themselves span 0.22 to 0.76.  Report every scale, and keep the mean only
+    # as an explicitly named mixture, excluding scales too small to read (a
+    # one-item scale's QWK is noise, and one such scale is present).
+    MIN_SCALE_ITEMS = 30
     by_levels: dict[int, tuple[list[int], list[int]]] = defaultdict(lambda: ([], []))
     for probability, record in zip(probabilities, records):
         predictions, golds = by_levels[record["n_levels"]]
@@ -408,18 +418,26 @@ def _score_metrics(
         }
         for n_levels, (predictions, golds) in sorted(by_levels.items())
     }
-    if len(records):
-        qwk = sum(group["qwk"] * group["n"] for group in qwk_by_levels.values()) / len(
-            records
-        )
-    else:
-        qwk = 0.0
+    readable = {
+        level: group
+        for level, group in qwk_by_levels.items()
+        if group["n"] >= MIN_SCALE_ITEMS
+    }
+    readable_n = sum(group["n"] for group in readable.values())
+    qwk_mixed_scale_mean = (
+        sum(group["qwk"] * group["n"] for group in readable.values()) / readable_n
+        if readable_n
+        else 0.0
+    )
 
     return {
         "mae": mae,
         "rps": rps,
-        "qwk": qwk,
+        "qwk_mixed_scale_mean": qwk_mixed_scale_mean,
         "qwk_by_levels": qwk_by_levels,
+        "qwk_excluded_scales": sorted(
+            level for level in qwk_by_levels if level not in readable
+        ),
     }
 
 
@@ -847,7 +865,7 @@ def _print_table(summary: dict[str, Any]) -> None:
     print("=" * 78, flush=True)
     print(
         f"{'Type':<8} {'n':>6} {'Acc':>8} {'ECE':>8} {'Brier':>8} "
-        f"{'MAE':>8} {'QWK':>8} {'RPS':>8} {'T':>7}",
+        f"{'MAE':>8} {'QWKmix':>8} {'RPS':>8} {'T':>7}",
         flush=True,
     )
     print("-" * 78, flush=True)
@@ -861,7 +879,7 @@ def _print_table(summary: dict[str, Any]) -> None:
             f"{q_type:<8} {metrics['n']:>6} {metrics['accuracy']:>8.4f} "
             f"{metrics['ece']:>8.4f} {metrics['brier']:>8.4f} "
             f"{extra.get('mae', float('nan')):>8.4f} "
-            f"{extra.get('qwk', float('nan')):>8.4f} "
+            f"{extra.get('qwk_mixed_scale_mean', float('nan')):>8.4f} "
             f"{extra.get('rps', float('nan')):>8.4f} "
             f"{temperature:>7.3f}",
             flush=True,
@@ -870,6 +888,9 @@ def _print_table(summary: dict[str, Any]) -> None:
     score_metrics = summary["by_type"].get("score", {}).get("score_metrics", {})
     qwk_by_levels = score_metrics.get("qwk_by_levels", {})
     if qwk_by_levels:
+        # QWK is defined within one scale.  These values are not comparable
+        # with each other, and any target stated for "score QWK" has to name a
+        # scale; QWKmix is the item-weighted mean over readable scales only.
         parts = [
             f"{n_levels} levels {values['qwk']:.3f} (n={values['n']})"
             for n_levels, values in sorted(
@@ -877,6 +898,13 @@ def _print_table(summary: dict[str, Any]) -> None:
             )
         ]
         print(f"  QWK by level count: {'; '.join(parts)}", flush=True)
+        excluded = score_metrics.get("qwk_excluded_scales") or []
+        if excluded:
+            print(
+                f"  scales too small to read, excluded from QWKmix: "
+                f"{', '.join(excluded)}",
+                flush=True,
+            )
 
     print("\nAmbiguous items:", flush=True)
     print(
