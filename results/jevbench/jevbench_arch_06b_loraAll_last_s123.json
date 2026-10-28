@@ -1,0 +1,94 @@
+{
+  "checkpoint": "/home/pding/projects/open-decisions/model/checkpoints/arch_06b_loraAll_last_s123/best_heads.pt",
+  "config": "model/configs/r2_reranker0.6b.yaml",
+  "model": "Qwen/Qwen3-Reranker-0.6B",
+  "seed": 42,
+  "overall": {
+    "accuracy": 0.4329004329004329,
+    "correct": 100,
+    "total": 231,
+    "failed": 0
+  },
+  "by_tier": {
+    "easy": {
+      "accuracy": 0.6875,
+      "correct": 33,
+      "total": 48
+    },
+    "hard": {
+      "accuracy": 0.36036036036036034,
+      "correct": 40,
+      "total": 111
+    },
+    "original": {
+      "accuracy": 0.375,
+      "correct": 27,
+      "total": 72
+    }
+  },
+  "by_type": {
+    "choice": {
+      "accuracy": 0.39568345323741005,
+      "correct": 55,
+      "total": 139
+    },
+    "noul": {
+      "accuracy": 0.5540540540540541,
+      "correct": 41,
+      "total": 74
+    },
+    "score": {
+      "accuracy": 0.2222222222222222,
+      "correct": 4,
+      "total": 18
+    }
+  },
+  "by_tier_type": {
+    "easy": {
+      "choice": {
+        "accuracy": 0.6111111111111112,
+        "correct": 22,
+        "total": 36
+      },
+      "noul": {
+        "accuracy": 0.9166666666666666,
+        "correct": 11,
+        "total": 12
+      }
+    },
+    "hard": {
+      "choice": {
+        "accuracy": 0.31343283582089554,
+        "correct": 21,
+        "total": 67
+      },
+      "noul": {
+        "accuracy": 0.4473684210526316,
+        "correct": 17,
+        "total": 38
+      },
+      "score": {
+        "accuracy": 0.3333333333333333,
+        "correct": 2,
+        "total": 6
+      }
+    },
+    "original": {
+      "noul": {
+        "accuracy": 0.5416666666666666,
+        "correct": 13,
+        "total": 24
+      },
+      "choice": {
+        "accuracy": 0.3333333333333333,
+        "correct": 12,
+        "total": 36
+      },
+      "score": {
+        "accuracy": 0.16666666666666666,
+        "correct": 2,
+        "total": 12
+      }
+    }
+  }
+}
