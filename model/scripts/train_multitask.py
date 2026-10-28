@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import sys
 from pathlib import Path
@@ -51,6 +52,14 @@ from model.settings import describe_effective_length, format_settings, resolve_s
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info
+from model.training.distributed import (
+    gather_eval_stats,
+    init_process_group,
+    is_main_process,
+    shard,
+    shutdown,
+    world_info,
+)
 from model.training.supervised import eval_epoch_detailed, train_multitask
 
 
@@ -222,6 +231,25 @@ def main() -> int:
     lr, lr_src = resolve_setting(args.lr, cfg, "lr", 1e-3)
     seed, seed_src = resolve_setting(args.seed, cfg, "seed", 42)
     device = args.device or cfg.get("device")
+
+    # Distributed launch: torchrun sets RANK/WORLD_SIZE/LOCAL_RANK.  Each rank
+    # is pinned to its own GPU and the group must be initialised before any
+    # CUDA work so the NCCL communicator binds to the right device.
+    world_rank, world_size, local_rank = world_info()
+    if world_size > 1:
+        world_rank, world_size = init_process_group(local_rank)
+        if torch.cuda.is_available():
+            device = f"cuda:{local_rank}"
+        if world_rank == 0:
+            print(
+                f"Distributed: {world_size} ranks, backend="
+                f"{'nccl' if torch.cuda.is_available() else 'gloo'}",
+                flush=True,
+            )
+        else:
+            # Ranks write to one merged log, so only rank 0 keeps stdout. Errors
+            # still reach stderr, which is where a crashed rank shows up.
+            sys.stdout = open(os.devnull, "w")
     accumulation_steps, accumulation_steps_src = resolve_setting(
         None, cfg, "accumulation_steps", 8
     )
@@ -467,14 +495,21 @@ def main() -> int:
     # Eval-only mode
     if args.eval_only:
         print("\n=== Eval-only mode ===", flush=True)
-        eval_stats = eval_epoch_detailed(model, all_eval)
+        eval_stats = gather_eval_stats(
+            eval_epoch_detailed(
+                model, shard(all_eval, world_rank, world_size)
+            ),
+            world_size=world_size,
+        )
         _print_detailed_eval(eval_stats)
 
         if output:
             output = Path(output)
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(json.dumps(eval_stats, indent=2, default=str))
-            print(f"\nResults saved to {output}", flush=True)
+            if is_main_process():
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_text(json.dumps(eval_stats, indent=2, default=str))
+                print(f"\nResults saved to {output}", flush=True)
+        shutdown()
         return 0
 
     # Apply CLI sampling_temperature override
@@ -510,6 +545,8 @@ def main() -> int:
         accumulation_steps=accumulation_steps,
         seed=seed,
         batch_backbone=batch_backbone,
+        rank=world_rank,
+        world_size=world_size,
         save_every_epoch=save_every_epoch,
         mlp_lr=mlp_lr,
         noul_lr=noul_lr,
@@ -534,10 +571,12 @@ def main() -> int:
     # Save results
     if output:
         output = Path(output)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(results, indent=2, default=str))
-        print(f"\nResults saved to {output}", flush=True)
+        if is_main_process():
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(results, indent=2, default=str))
+            print(f"\nResults saved to {output}", flush=True)
 
+    shutdown()
     return 0
 
 
