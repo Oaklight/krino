@@ -25,9 +25,11 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 import torch
 import yaml
@@ -58,10 +60,14 @@ def build_model(args: argparse.Namespace, cfg: dict, device: str):
     model_name = args.model or cfg.get("model", "Qwen/Qwen3-0.6B")
     gpu_config = GPUConfig.auto_detect(estimate_model_billions(model_name))
     gpu_config = gpu_config.apply_overrides(max_length=args.max_length)
+    # Fall back to the config's own value.  Passing ``None`` leaves
+    # ``DecisionModel`` to use ``gpu_config.max_length``, which ignores the
+    # config the command names -- so a run without --max-length would silently
+    # benchmark a different length than the config declares.
     if args.max_length:
         max_length = args.max_length
     else:
-        max_length = None
+        max_length = cfg.get("max_length")
 
     print(f"\nGPU optimization config (model ~{estimate_model_billions(model_name):.1f}B params):")
     print_gpu_info(gpu_config)
@@ -157,6 +163,16 @@ def main() -> int:
         action="store_true",
         help="torch.compile the backbone with reduce-overhead (CUDA graphs)",
     )
+    parser.add_argument(
+        "--json",
+        type=Path,
+        default=None,
+        help=(
+            "Write a run record here: device, torch/dtype, effective settings "
+            "and every timing. The table is the deliverable; without this the "
+            "numbers exist only in the terminal."
+        ),
+    )
     parser.add_argument("--repeats", type=int, default=20)
     parser.add_argument("--warmup", type=int, default=3)
     args = parser.parse_args()
@@ -168,11 +184,15 @@ def main() -> int:
         print("WARNING: CUDA unavailable; timings measure CPU inference only.", flush=True)
 
     model = build_model(args, cfg, device)
+    warmup = args.warmup
     if args.compile:
-        # Latency here is launch-bound: a 42-token forward of the 0.6B model
-        # measures ~40 ms where the arithmetic is well under 1 ms.  CUDA graphs
-        # collapse the per-layer kernel launches, which is the only lever that
-        # moves the fixed cost rather than the token count.
+        # The first calls pay compilation and CUDA-graph capture.  Three warmup
+        # iterations measure the compiler, not the model.
+        warmup = max(warmup, 10)
+        # Latency here is launch-bound: the per-call cost is roughly flat from 2
+        # to 20 options, which is the arithmetic being a small part of it.
+        # CUDA graphs collapse the per-layer kernel launches, which is the only
+        # lever that moves the fixed cost rather than the token count.
         model.backbone = torch.compile(
             model.backbone, mode="reduce-overhead", dynamic=False
         )
@@ -184,16 +204,37 @@ def main() -> int:
         flush=True,
     )
 
+    record: dict[str, Any] = {
+        "model": getattr(model, "model_name", None),
+        "device": torch.cuda.get_device_name(0) if use_cuda else "cpu",
+        "torch": torch.__version__,
+        "cuda": torch.version.cuda,
+        "dtype": str(next(model.backbone.parameters()).dtype),
+        "state_tokens": len(model.tokenizer(STATE).input_ids),
+        "max_length": model.max_length,
+        "readout": getattr(model, "readout_mode", None),
+        "compiled": bool(args.compile),
+        "warmup": warmup,
+        "repeats": args.repeats,
+        "timings": {},
+    }
+
     header = f"{'options':>8} {'median_ms':>10} {'p95_ms':>8} {'items/s':>9} {'peak_GB':>8}"
     print("\n" + header)
     print("-" * len(header))
     for n_options in args.n_options:
-        stats = time_option_count(model, n_options, args.repeats, args.warmup, use_cuda)
+        stats = time_option_count(model, n_options, args.repeats, warmup, use_cuda)
         print(
             f"{n_options:>8} {stats['median_ms']:>10.1f} {stats['p95_ms']:>8.1f} "
             f"{stats['items_per_s']:>9.1f} {stats['peak_mem_gb']:>8.2f}",
             flush=True,
         )
+        record["timings"][str(n_options)] = stats
+
+    if args.json:
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(json.dumps(record, indent=2))
+        print(f"\nRun record written to {args.json}", flush=True)
     return 0
 
 
