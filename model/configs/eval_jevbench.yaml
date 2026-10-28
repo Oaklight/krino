@@ -9,6 +9,10 @@
 # checkpoint, or `load_heads` will fail on a shape mismatch — which is the
 # behaviour we want. They are the settings of
 # `model/checkpoints/arch_8b_loraAll_weighted/` (Qwen3-Reranker-8B, full LoRA).
+# `model/checkpoints/` is not tracked, so that path exists only on the training
+# hosts: the shared `lambda_home` checkout on rbdgx1/rbdgx2 and
+# `/home/pding/projects/open-decisions` on rbh101. Copy the directory, or pass
+# an absolute `--load-heads`.
 #
 # The source must be materialised first — `load_source_items` reads a prepared
 # JSONL, it does not dispatch through LOADERS:
