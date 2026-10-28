@@ -49,6 +49,15 @@ seed: 42
 save_every_epoch: true
 shared_attention: true
 
+# The three score sources below are train-only (max_eval: 0). Their eval
+# slices would add 3,000 items to a 13,444-item evaluation set and make this
+# config's accuracy incomparable with every run in the sweep. Evaluate them
+# separately with an eval-only config if their out-of-distribution behaviour
+# matters.
+#
+# They also have to be materialised before use: load_source_items reads a
+# prepared JSONL and does not dispatch through LOADERS.
+#   python -m data.pipeline helpsteer wmt_da ultrafeedback
 sources:
   # --- Choice benchmarks (13 sources) ---
   banking77:
@@ -171,17 +180,17 @@ sources:
     path: data/benchmarks/helpsteer.jsonl
     weight: 1.0
     max_train: 25000
-    max_eval: 500
+    max_eval: 0
   wmt_da:
     path: data/benchmarks/wmt_da.jsonl
     weight: 1.0
     max_train: 25000
-    max_eval: 2000
+    max_eval: 0
   ultrafeedback:
     path: data/benchmarks/ultrafeedback.jsonl
     weight: 1.0
     max_train: 25000
-    max_eval: 500
+    max_eval: 0
 
   # --- Synthetic (23 domains, 154K items assembled on-the-fly) ---
   synthetic:
