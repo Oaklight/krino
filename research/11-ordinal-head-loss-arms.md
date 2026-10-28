@@ -141,21 +141,36 @@ calibration reports (0.6578 / 0.4015 / 0.4265) were produced by a pass that does
 not reproduce, and they are superseded rather than reconciled; the numbers moved
 by 0.19% of items and no conclusion changed.
 
-That pass-to-pass movement is itself the resolution floor, and it is quoted where
-it matters: re-running one checkpoint moves its score ECE by 0.0020, which is why
-a 0.0026 gap between two arms is called a tie below rather than a win.
+That pass-to-pass movement is the resolution floor for every metric in the
+calibration half, not only for accuracy, and it is measured rather than assumed:
+the two passes over the same checkpoint differ by
+
+| metric | noul | choice | score |
+|---|---:|---:|---:|
+| accuracy | 0.0012 | 0.0030 | 0.0011 |
+| ECE (T=1) | 0.0012 | 0.0022 | 0.0020 |
+| Brier | 0.0000 | 0.0001 | 0.0002 |
+| MAE | — | — | 0.0020 |
+| QWK | — | — | 0.0040 |
+| RPS | — | — | 0.0004 |
+
+The largest of them, 0.0040, is the floor any difference in this section has to
+clear. Accuracy and Brier are far more stable than ECE and QWK, which is what
+makes the accuracy agreement between the two tables a meaningful check and the
+ECE comparisons the ones that need the floor quoted next to them.
 
 **RPS does not buy a calibration advantage that pays for its accuracy cost.**
 On the score items -- where the loss is supposed to matter -- the raw-ECE gap is
 0.0026 in RPS's favour (0.0622 vs 0.0648), which is a tie in the only sense that
-matters here: re-running the *same* checkpoint through the same harness moves its
-score ECE by 0.0020, so a 0.0026 difference between two arms is inside the
-measurement's own resolution. Every other proper metric is clearly worse for RPS:
+matters here: it is the size of the movement the score ECE itself shows between
+two passes over one checkpoint (0.0020) and below the largest metric movement
+between those passes (0.0040, QWK). It sits at the floor, not above it. Every
+other proper metric is clearly worse for RPS:
 Brier 0.7513 vs 0.7146, MAE 1.0463 vs 0.9384, QWK 0.4483 vs 0.5312, RPS 0.1712 vs
 0.1553. Accuracy is 5.0 pp lower (0.3775 vs 0.4276). On noul, RPS is better
-calibrated by 0.0071 ECE -- three and a half times the pass-to-pass movement on
-that arm -- while the two are indistinguishable in accuracy; on choice RPS is
-worse on both.
+calibrated by 0.0071 ECE -- six times the 0.0012 pass-to-pass movement on that
+arm -- while the two are indistinguishable in accuracy; on choice RPS is worse on
+both, and its 0.0137 ECE gap is also well above the 0.0022 floor.
 
 **Temperature scaling is not rescuing the score primitive in either arm.** ECE on
 the half the temperature does not see rises in both: 0.0722 -> 0.1350 for
