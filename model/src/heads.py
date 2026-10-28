@@ -8,6 +8,11 @@ Three type-specific heads, one per primitive:
 Plus one unified head that handles all three types via cross-attention:
   UnifiedHead: single AttentionHead for noul/choice/score
 
+One alternative readout:
+  OptionMarkerHead: scores the backbone hidden state at a marker token that
+  follows each option in the same sequence, instead of pooling each option
+  separately and cross-attending it to the context.
+
 LayerMixer sits between the backbone and the heads and chooses which
 backbone layers feed them (final layer, a mean of the last few, or a
 learned softmax mixture over all of them).
@@ -234,6 +239,69 @@ class AttentionHead(nn.Module):
         q_orig = self.query(opt)
         gate = torch.sigmoid(self.rival_gate(torch.cat([q_orig, rival_ctx], dim=-1)))
         return opt + gate * rival_ctx
+
+
+class OptionMarkerHead(nn.Module):
+    """Score options at their own marker positions.
+
+    The option-marker readout puts a marker token right after each candidate
+    option in one sequence that starts with the state and instructions.  The
+    backbone has already attended from the marker position to the context and
+    to the options that precede it, so this head only has to turn one hidden
+    vector per option into a logit.  It is the readout used by Laya-style
+    decision models, adapted to a causal decoder by keeping the context in a
+    cached prefix and appending the options after it.
+
+    The scorer is an MLP rather than a linear probe.  Its hidden width is
+    ``rank * expansion`` with ``expansion=3``: :class:`AttentionHead` learns
+    three rank-``r`` maps (Q, K, V), so this keeps the two readouts within a
+    few percent of the same parameter count at the same ``rank``.  That
+    matters when the comparison is the readout rather than the head size.
+
+    Args:
+        hidden_size: Backbone hidden dimension.
+        rank: Nominal width, matching the attention head's rank.
+        dropout: Dropout probability.
+        expansion: Multiplier from ``rank`` to the scorer's hidden width.
+    """
+
+    def __init__(
+        self,
+        hidden_size: int,
+        rank: int = 64,
+        dropout: float = 0.1,
+        expansion: int = 3,
+    ) -> None:
+        super().__init__()
+        hidden = max(1, rank * expansion)
+        self.layer_norm = nn.LayerNorm(hidden_size)
+        self.scorer = nn.Sequential(
+            nn.Dropout(dropout),
+            nn.Linear(hidden_size, hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, 1),
+        )
+
+    def forward(
+        self,
+        marker_hidden: torch.Tensor,
+        option_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Score option markers.
+
+        Args:
+            marker_hidden: [batch, n_options, hidden_size] — backbone hidden
+                state at each option's marker token.
+            option_mask: [batch, n_options] — True for valid options.
+
+        Returns:
+            logits: [batch, n_options] — one score per option (pre-softmax).
+        """
+        logits = self.scorer(self.layer_norm(marker_hidden)).squeeze(-1)
+        if option_mask is not None:
+            logits = logits.masked_fill(~option_mask, float("-inf"))
+        return logits
 
 
 class ChoiceHead(nn.Module):

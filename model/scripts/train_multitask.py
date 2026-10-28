@@ -172,6 +172,9 @@ def main() -> int:
     parser.add_argument("--score-form", choices=["off", "single", "candidates"], default=None, help="Convert training items to score form; evaluation keeps the original types. 'candidates' expands each choice question into one score question per option, so the in-memory list grows by the option count (epoch_size still bounds the steps) (default: off)")
     parser.add_argument("--score-loss", choices=["ce", "rps"], default=None, help="Training loss for score questions: 'ce' treats levels as unordered classes, 'rps' uses the ranked probability score, which respects the level order (default: ce)")
     parser.add_argument("--synthetic-ratio", type=float, default=None, help="Target proportion of synthetic data (0.0 to 1.0)")
+    parser.add_argument("--option-marker", action="store_true", default=None, help="Score choice/score options at a marker token after each option in the context sequence (Laya-style readout) instead of pooling each option separately")
+    parser.add_argument("--option-chunk-size", type=int, default=None, help="Options per marker-readout chunk (default: 32); controls how many suffix forwards a question costs")
+    parser.add_argument("--option-max-tokens", type=int, default=None, help="Token cap per option in the marker readout (default: 64)")
 
     # GPU memory optimization flags
     flash_group = parser.add_mutually_exclusive_group()
@@ -263,6 +266,21 @@ def main() -> int:
     )
     score_loss, score_loss_src = resolve_setting(
         args.score_loss, cfg, "score_loss", "ce"
+    )
+    option_marker = (
+        args.option_marker
+        if args.option_marker is not None
+        else cfg.get("option_marker", False)
+    )
+    option_chunk_size = (
+        args.option_chunk_size
+        if args.option_chunk_size is not None
+        else cfg.get("option_chunk_size", 32)
+    )
+    option_max_tokens = (
+        args.option_max_tokens
+        if args.option_max_tokens is not None
+        else cfg.get("option_max_tokens", 64)
     )
 
     checkpoint_dir = args.checkpoint_dir
@@ -395,6 +413,9 @@ def main() -> int:
         lora_alpha=lora_alpha,
         lora_dropout=lora_dropout,
         lora_targets=lora_targets,
+        option_marker=option_marker,
+        option_chunk_size=option_chunk_size,
+        option_max_tokens=option_max_tokens,
     )
     print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
     print(f"Frozen:    {model.frozen_parameters():,} params", flush=True)
@@ -419,6 +440,9 @@ def main() -> int:
                 ("lora_lr", lora_lr, lora_lr_src),
                 ("score_form", score_form, score_form_src),
                 ("score_loss", score_loss, score_loss_src),
+                ("option_marker", option_marker, "config"),
+                ("option_chunk_size", option_chunk_size, "config"),
+                ("option_max_tokens", option_max_tokens, "config"),
                 ("max_length", model.max_length, max_length_source),
                 ("epochs", epochs, epochs_src),
                 ("rank", rank, rank_src),
