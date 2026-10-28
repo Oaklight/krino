@@ -560,6 +560,10 @@ def _temperature_report(
     return {
         "fitted": temperature,
         "applied": temperature,
+        # The criterion is part of the result: 1.39 and 3.60 are both "the
+        # fitted temperature" for the same items, and which one a report shows
+        # changes whether the score primitive passes its calibration bar.
+        "criterion": criterion,
         "curve": curve,
         "n_fit": n_fit,
         "n_holdout": len(holdout_records),
