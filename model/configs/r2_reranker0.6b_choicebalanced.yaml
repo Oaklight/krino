@@ -5,11 +5,33 @@
 # 51% of the eval set, so overall accuracy is dominated by it. The pool report
 # shows choice at only ~0.07x resampling -- 71,888 items available against
 # 5,000 slots per epoch -- while the underlying sources hold far more (agnews
-# 127k, mmlu 115k, race 98k, swag 94k, hellaswag 50k, piqa 18k).
+# 120,000 train, mmlu 99,842, race 87,866, swag 73,546).
 #
 # This config raises max_train on the large choice sources. epoch_size is
-# unchanged, so the sampler still draws 5,000 items per type per epoch; the
-# difference is diversity, not compute.
+# unchanged, so the sampler still draws 5,000 items per type per epoch.
+#
+# WHAT THIS ARM ACTUALLY VARIES — read before interpreting a result.
+#
+# The sampling block sets `sampling_temperature: 0.7`, and a positive temperature
+# makes the sampler draw by `w = n_pool ** (1 / 0.7) = n ** 1.43`, ignoring the
+# per-source `weight:` entries entirely (data/sampler.py). So a 4x cap raise is a
+# 7.2x raise in that source's draw weight, not just four times as many distinct
+# items to sample from. The arm therefore mixes two changes: more distinct items,
+# and a mixture shifted toward whichever sources were widened.
+#
+# Convenient for this experiment (the widened sources are benchmarks we want more
+# of) but it is not a diversity-only control. A diversity-only control would need
+# `sampling_temperature: 0`, which restores the `weight:` values and leaves the
+# mixture fixed -- and then the baseline (49.11, run at 0.7) is no longer a
+# matched comparison, so it needs its own run.
+#
+# Three choice sources are uncapped and carry most of the pool mass:
+# arc (3,370 train), commonsenseqa (9,741), logiqa (7,376). Widening the other
+# caps cannot move their share, so this arm's ceiling is set by them.
+#
+# A `max_train` above a source's train split is inert -- the cap never binds, so
+# the in-memory shuffle never fires. Two of them were: banking77 (13,083 against
+# 10,003 train) and piqa (17,951 against 16,113). Both now equal the split size.
 #
 # Compare against the frozen `last` baseline (49.11) at the same 5 epochs.
 #
@@ -22,7 +44,7 @@
 #   - Shared attention: TBD (pending #98 verification)
 #
 # Usage:
-#   python model/scripts/train_multitask.py --config model/configs/r2_reranker0.6b.yaml
+#   python model/scripts/train_multitask.py --config model/configs/r2_reranker0.6b_choicebalanced.yaml
 
 model: Qwen/Qwen3-Reranker-0.6B
 encoder: false
@@ -40,7 +62,7 @@ sources:
   banking77:
     path: data/benchmarks/banking77.jsonl
     weight: 0.5
-    max_train: 13083
+    max_train: 10003  # == the train split; 13,083 was the dataset total and never bound
     max_eval: 500
   agnews:
     path: data/benchmarks/agnews.jsonl
@@ -89,7 +111,7 @@ sources:
   piqa:
     path: data/benchmarks/piqa.jsonl
     weight: 1.5
-    max_train: 17951
+    max_train: 16113  # == the train split; 17,951 was the dataset total and never bound
     max_eval: 500
   commonsenseqa:
     path: data/benchmarks/commonsenseqa.jsonl
