@@ -47,7 +47,7 @@ CACHE_NAME = ".split_clusters.json"
 # Bump whenever the clustering algorithm changes: the cache stores computed
 # splits, so a code change without a version bump would silently serve splits
 # produced by the previous algorithm.
-CACHE_VERSION = 2
+CACHE_VERSION = 3
 DEFAULT_THRESHOLD = 0.7
 DEFAULT_NUM_PERM = 64
 DEFAULT_BANDS = 32
@@ -367,6 +367,54 @@ def _write_cache(
         logger.warning("Could not write split cache %s: %s", cache_path, exc)
 
 
+def family_clusters(
+    families: Sequence[dict[str, Any]],
+    variants: Sequence[dict[str, Any]] | None = None,
+    family_idxs: Sequence[int] | None = None,
+    threshold: float = DEFAULT_THRESHOLD,
+    num_perm: int = DEFAULT_NUM_PERM,
+    bands: int = DEFAULT_BANDS,
+) -> tuple[list[list[str]], list[int]]:
+    """Cluster one domain's family states, as the loader does.
+
+    Exists so that a caller which needs the clusters themselves — the leakage
+    checker reports how many clusters straddle the split — cannot build them
+    with a different argument set than the loader. ``force_group`` in
+    particular is easy to forget, and ``_family_idx`` is not unique within a
+    domain, so omitting it yields different clusters and a checker that
+    describes a split nobody assigns.
+
+    Args:
+        families: Family records, in file order.
+        variants: Variant records aligned with ``families`` by position.
+        family_idxs: ``_family_idx`` per family, defaulting to the position.
+        threshold: Jaccard at or above which two states are duplicates.
+        num_perm: MinHash permutations.
+        bands: LSH bands.
+
+    Returns:
+        ``(states, clusters)`` where ``states[i]`` are family ``i``'s state
+        texts and ``clusters[i]`` is its cluster label.
+    """
+    if family_idxs is None:
+        family_idxs = list(range(len(families)))
+    variants = variants or []
+    states = [
+        family_state_texts(
+            family, variants[idx] if idx < len(variants) else None
+        )
+        for idx, family in enumerate(families)
+    ]
+    clusters = cluster_families(
+        states,
+        threshold=threshold,
+        num_perm=num_perm,
+        bands=bands,
+        force_group=family_idxs,
+    )
+    return states, clusters
+
+
 def domain_splits(
     domain: str,
     families: Sequence[dict[str, Any]],
@@ -413,18 +461,13 @@ def domain_splits(
         if cached is not None and len(cached) == len(families):
             return cached
 
-    states = [
-        family_state_texts(
-            family, variants[idx] if idx < len(variants) else None
-        )
-        for idx, family in enumerate(families)
-    ]
-    clusters = cluster_families(
-        states,
+    states, clusters = family_clusters(
+        families,
+        variants=variants,
+        family_idxs=family_idxs,
         threshold=threshold,
         num_perm=num_perm,
         bands=bands,
-        force_group=family_idxs,
     )
 
     # The split key is the lowest ``_family_idx`` in the cluster, not the

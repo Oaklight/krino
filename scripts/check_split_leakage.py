@@ -27,9 +27,8 @@ from data.synthetic import _load_jsonl  # noqa: E402
 from data.synthetic_split import (  # noqa: E402
     DEFAULT_BANDS,
     DEFAULT_NUM_PERM,
-    assign_splits,
-    cluster_families,
-    family_state_texts,
+    domain_splits,
+    family_clusters,
 )
 from data.synthetic_templates import DOMAIN_TEMPLATES  # noqa: E402
 
@@ -105,22 +104,25 @@ def main() -> int:
         families = _load_jsonl(families_path)
         variants = _load_jsonl(variants_path) if variants_path.exists() else []
         family_idxs = [fam.get("_family_idx", i) for i, fam in enumerate(families)]
-        if family_idxs != list(range(len(families))):
-            print(
-                f"WARNING {domain}: _family_idx is not positional; "
-                "the moved-split count is approximate",
-                file=sys.stderr,
-            )
 
-        states = [
-            family_state_texts(fam, variants[i] if i < len(variants) else None)
-            for i, fam in enumerate(families)
-        ]
-        clusters = cluster_families(states, threshold=args.threshold)
-        # Pass the real ``_family_idx`` values: keying on position here made this
-        # table describe a different split from the one the loader assigns.
-        splits = assign_splits(
-            domain, clusters, args.eval_ratio, family_keys=family_idxs
+        # Both the clusters and the splits come from ``data.synthetic_split``,
+        # the same functions the loader calls.  Rebuilding either one here is
+        # how the checker drifted from the loader before: it omitted
+        # ``force_group``, and ``_family_idx`` is not unique within a domain,
+        # so it clustered a corpus the loader never assigns.
+        states, clusters = family_clusters(
+            families,
+            variants=variants,
+            family_idxs=family_idxs,
+            threshold=args.threshold,
+        )
+        splits = domain_splits(
+            domain,
+            families,
+            variants=variants,
+            family_idxs=family_idxs,
+            eval_ratio=args.eval_ratio,
+            threshold=args.threshold,
         )
 
         by_cluster: dict[int, set[str]] = {}
