@@ -1149,12 +1149,14 @@ def _run_jevbench(model: Any, args: argparse.Namespace) -> int:
 
     records: list[dict[str, Any]] = []
     failed = 0
-    for item in items:
+    for index, item in enumerate(items):
         record = _predict_original(model, item)
         if record is None:
             failed += 1
             continue
         records.append(record)
+        if (index + 1) % 50 == 0:
+            print(f"  {index + 1}/{len(items)} items scored", flush=True)
 
     summary = summarize_jevbench(records, failed=failed)
     overall = summary["overall"]
