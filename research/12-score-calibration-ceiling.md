@@ -1,61 +1,76 @@
-# The score primitive's calibration ceiling
+# Score calibration is a property of the arm, not of the score primitive
 
-Goal item 2 asks for ECE ≤ 0.05 after per-type temperature scaling. On the 4B
-checkpoint a temperature fitted by ECE on half the score items and scored on the
-other half moves ECE from 0.1027 to 0.0811 and stops (#172), and an earlier note
-showed the fit criterion is not the reason (#171): fitted for ECE rather than
-NLL, the 0.6B checkpoint clears 0.05 on all three types, but the 4B one does not.
+Goal item 2 asks for ECE ≤ 0.05 after per-type temperature scaling. This note has
+been rewritten once: its first version measured one 4B arm and concluded that a
+temperature could not calibrate the score primitive at 4B. That conclusion does
+not survive the second arm. On `arch_4b_loraAll_weighted` — the checkpoint that
+carries the rest of the goal — the same per-type temperature procedure reaches
+**0.0250** on score, under the bar. On `arch_4b_loraAll_32k` it stalls at 0.0811.
 
-This note asks two questions. Why does a scale factor fail on score, and how far
-does calibration get if the method is allowed to be *anything* that uses the
-model's confidence? The second is a ceiling: a monotone map of top-1 confidence
-is at least as expressive as temperature scaling for ECE, because ECE is computed
-on top-1 confidence alone, so nothing that ECE can measure is out of its reach.
-If the ceiling is under the bar, the problem is upstream of calibration.
-
-Answering it does not need a new inference pass. `eval_calibration.py` writes
-`--predictions`, and each row carries `top_prob` and `correct` — everything ECE
-uses. The dump is the one behind #176's clean figures
-(`cal_clean3_4b_predictions.jsonl`, 13,444 items, 4B full-LoRA weighted
-checkpoint on the rebuilt stsb corpus).
+Both arms have the same backbone, data, schedule and seed, and they land within
+0.13 pp of each other on overall accuracy (0.6581 against 0.6594, inside the
+0.35 pp seed floor). So this is not "one model is better". It is that the
+reliability curve of the score head is shaped differently, and a scale factor
+fits one shape and not the other.
 
 ## Setup
 
-| | |
-|---|---|
-| Checkpoint | `arch_4b_loraAll_weighted`, the arm behind #171's headline |
-| Data | the rebuilt corpus after #177, 13,444 eval items; 928 score holdout items |
-| Split | the harness's own: `random.Random("<seed>:<type>:temperature")` over `range(n)`, `fit_frac` 0.5 |
-| Script | `model/scripts/score_calibration_ceiling.py` |
-| Derived | `model/experiments/score_calibration_map_4b.json` |
+| | `arch_4b_loraAll_32k` | `arch_4b_loraAll_weighted` |
+|---|---|---|
+| Backbone | Qwen3-Reranker-4B, full LoRA | same |
+| Readout | `last` | `weighted`, 37 hidden states |
+| Training `max_length` | 32,768 (its log) | 16,384 (its log) |
+| Eval `max_length` | 32,768 | 8,192 |
+| Overall accuracy, rebuilt corpus | 0.6594 | 0.6581 |
+| Score items | 1,856 (928 holdout) | 1,856 (928 holdout) |
 
-The split reproduces to the digit — recomputing ECE at T=1 over the dump's
-holdout half gives 0.1027 for score, which is the `ece_before` in
-`cal_clean3_4b.json` — so every column below is measured on the same items the
-reported temperature was fitted and scored on. The script warns and refuses to
-quote the temperature column when it cannot reproduce that number.
+The derived artifacts are `model/experiments/score_calibration_map_4b_32k.json`
+and `score_calibration_map_4b_weighted.json`, each tagged with its arm.
 
-Three recalibrations, all fitted on the mirror half and scored on the holdout:
+Data is the corpus rebuilt after #177 (stsb's withheld labels removed). The split
+is the harness's own — a shuffle of `range(n)` keyed by
+`"<seed>:score:temperature"`, `fit_frac` 0.5 — and both runs reproduce its
+`ece_before` to four decimals, so every number below is on the same 928 holdout
+items. Score items are short documents; the eval-time `max_length` difference
+affects long contractnli rows and cannot touch these 1,856 items.
 
-| type | holdout | ECE at T=1 | after ECE-fitted temperature | after monotone map (CV) | 95% interval on the map |
-|---|---:|---:|---:|---:|---|
-| noul | 2,344 | 0.0400 | **0.0274** | 0.0309 | [0.0205, 0.0465] |
-| choice | 3,450 | 0.0352 | **0.0126** | 0.0272 | [0.0199, 0.0449] |
-| score | 928 | 0.1027 | 0.0811 | **0.0537** | [0.0282, 0.0865] |
+The weighted arm's numbers were produced twice, by two independent passes over
+the same checkpoint, and every accuracy, fitted temperature and holdout ECE below
+agrees to four decimals between the two reports
+(`cal_clean_4b_weighted.json` and `cal_clean_4b_weighted_pred.json`). The 32k
+arm was measured once.
 
-The map is isotonic regression on (confidence, outcome) pairs with two
-regularisations — blocks under 20 items absorbed, every block pulled toward the
-base rate — and its two parameters are chosen by a two-fold cross-validation
-*inside* the fitting half. Choosing them on the holdout instead is not worth
-much on this grid: the best of the thirty configurations when scored against the
-holdout gives 0.0535 at `alpha=5, min_n=40`, against 0.0537 at the CV choice. The
-figure is therefore not a product of the selection protocol. The grid still
-matters in the other direction — the fixed default of `alpha=10, min_n=20` gives
-0.0666 — which is why the chosen configuration is reported rather than a default.
+The temperatures are fitted by ECE, not NLL. That is the harness's
+`--fit-criterion ece`, and it is the criterion the goal is stated in: on the 0.6B
+arm the two criteria pick 1.5 and 3.6 and disagree about whether the bar is met
+(#171).
 
-## Finding 1 — the miscalibration is one band, not a scale factor
+## Results
 
-Score items on the holdout half, at T=1:
+Per type, at T=1 and after a temperature fitted by ECE on the mirror half:
+
+| type | arm | accuracy | ECE at T=1 | fitted T | holdout ECE before → after |
+|---|---|---:|---:|---:|---:|
+| noul | 32k | 0.8242 | 0.0329 | 1.140 | 0.0400 → 0.0274 |
+| noul | weighted | 0.8238 | 0.0333 | 1.162 | 0.0396 → 0.0290 |
+| choice | 32k | 0.5732 | 0.0395 | 1.264 | 0.0352 → 0.0126 |
+| choice | weighted | 0.5722 | 0.0373 | 1.209 | 0.0373 → 0.0161 |
+| score | 32k | 0.5636 | 0.0897 | 1.772 | 0.1027 → **0.0811** |
+| score | weighted | 0.5593 | 0.0784 | 1.518 | 0.0765 → **0.0250** |
+
+## Finding 1 — the arms agree on noul and choice, and only score moves
+
+Noul and choice are indistinguishable across the two arms: fitted temperatures of
+1.140 against 1.162 and 1.264 against 1.209, holdout ECE after scaling of 0.0274
+against 0.0290 and 0.0126 against 0.0161. Both are under the bar on both arms.
+
+Score is not: the temperature moves from 1.772 to 1.518 and the holdout ECE after
+scaling moves by a factor of 3.2. Whatever differs between these arms, it shows
+up in the score head's calibration and nowhere else.
+
+## Finding 2 — on the 32k arm the reliability curve is bent
+
+Score holdout, 32k arm, at T=1:
 
 | bin | mean confidence | accuracy | gap | n |
 |---|---:|---:|---:|---:|
@@ -68,99 +83,87 @@ Score items on the holdout half, at T=1:
 | 8 | 0.846 | **0.733** | **−0.113** | 135 |
 | 9 | 0.938 | 0.923 | −0.015 | 52 |
 
-Below 0.55 the model is roughly calibrated or slightly underconfident. Between
-0.60 and 0.85 — 520 of the 928 items, 56% of the set — it is 11 to 20 points too
-confident, and the excess is largest in the middle of that band rather than at
-its top. At 0.94 it is right again.
+Below 0.55 the model is roughly calibrated and at 0.94 it is right again, but
+between 0.60 and 0.85 — 520 of the 928 holdout items — it is 11 to 20 points too
+confident, worst in the middle of the band. A temperature is one multiplicative
+change applied to the whole curve, so reaching the middle costs the ends: that is
+why 1.772 recovers only 0.022 of the 0.053 needed.
 
-A temperature is a single multiplicative change to the logits, which moves the
-whole curve; this curve is flat, then drops 20 points, then recovers. Fixing
-0.65 → 0.45 with a scale factor would put the 0.94 items near 0.70. That is why
-the fitted T of 1.77 gains only 0.022: it is the best compromise across a curve
-that has no single scale factor in it.
+The ceiling for anything that reads top-1 confidence, on this arm, is a
+regularised monotone map fitted on the mirror half: **0.0537** (95% interval
+[0.0282, 0.0865]) against the temperature's 0.0811. The map closes a third of the
+gap and still misses the bar, so on this arm the residual is not calibration error
+a better calibrator would remove.
 
-The shape is the same in all three score sources, which is why it is one map and
-not three: over all 500 items of each source, sst5, stsb and yelp each have their
-worst bin at mean confidence 0.65, with gaps of −0.226, −0.184 and −0.142 against
-overall ECEs of 0.1300, 0.1260 and 0.0841. Nothing about the failure is specific
-to one corpus.
+## Finding 3 — on the weighted arm a temperature is enough, and the map does not improve on it
 
-## Finding 2 — a monotone map beats a temperature on score, and misses the bar
+Score holdout, weighted arm, at T=1:
 
-On the same 928 holdout items the map lands at 0.0537 against the temperature's
-0.0811. That is a real improvement and it is still not the goal's 0.05 — the
-point estimate is 0.0037 above the bar and the interval [0.0282, 0.0865] spans
-it. So the honest reading is not "calibration can reach 0.05" but "the cheapest
-method available closes a third of the gap, and the bar sits inside the noise of
-a 928-item measurement."
+| bin | mean confidence | accuracy | gap | n |
+|---|---:|---:|---:|---:|
+| 2 | 0.257 | 0.375 | +0.118 | 8 |
+| 3 | 0.361 | 0.405 | +0.045 | 37 |
+| 4 | 0.460 | 0.465 | +0.005 | 99 |
+| 5 | 0.547 | 0.450 | −0.096 | 242 |
+| 6 | 0.652 | 0.574 | −0.078 | 251 |
+| 7 | 0.742 | 0.669 | −0.073 | 175 |
+| 8 | 0.848 | 0.704 | −0.144 | 71 |
+| 9 | 0.935 | 0.889 | −0.046 | 45 |
 
-The fitted map makes the overconfidence legible. Its breakpoints, in confidence:
+Compare the two tables. The 32k arm is calibrated at 0.55 (+0.025) and then falls
+off a cliff at 0.65 (−0.199). The weighted arm is undercalibrated at 0.55 (−0.096)
+and overconfident by a similar amount at every bin above it (−0.07 to −0.14). One
+is a dent; the other is a slope. A single scale factor cannot fix a dent — moving
+0.65 down to 0.47 drags the well-calibrated 0.55 bin with it — but it absorbs a
+slope, and T=1.518 does: 0.0765 to 0.0250 on the holdout.
 
-| stated | 0.38 | 0.48 | 0.59 | 0.69 | 0.74 | 0.79 | 0.85 | 0.95 |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| re-calibrated | 0.37 | 0.46 | 0.48 | 0.56 | 0.61 | 0.65 | 0.69 | 0.74 |
+The map does not improve on that. It reaches 0.0316 at the fixed regularisation
+and 0.0350 with the regularisation chosen by inner CV, against the temperature's
+0.0250. Nor is the map useless: on noul it wins (0.0143 against 0.0290), and on
+choice the temperature wins (0.0161 against 0.0259), so which instrument is
+better depends on the cell. That is the reason both are reported rather than one
+being proposed as the answer.
 
-Items the model calls 95% are worth 74%. That is not a sharpening problem — the
-model already spreads its mass — it is that the head's confidence ranking is
-miscalibrated against its own accuracy.
-
-## Finding 3 — where a temperature works, a map is worse
-
-noul and choice already clear the bar after a temperature (0.0274 and 0.0126).
-There the map is worse (0.0309, 0.0272): 13 and 28 blocks pay a variance cost for
-a bias that is not there. The comparison is therefore not "isotonic beats
-temperature". It is that the right instrument depends on the shape of the
-reliability curve, and only score has a shape a scale factor cannot express.
-
-## What the ceiling says
-
-The residual after the best monotone map is not calibration error that a better
-calibrator would remove. A monotone map applied to 0.65 sets 0.47 no matter what;
-whatever ECE remains comes from *which* items sit in that band — items the model
-cannot distinguish and should not be confident about. That is an accuracy and
-ranking problem in the score head, and it is the one goal item 2's phrasing
-implicitly assumes away.
-
-Two things follow, in cost order:
-
-1. **Train the head to be less confidently wrong.** Label smoothing or an
-   entropy penalty on the score head is a one-parameter change whose control is
-   already on disk — the frozen 0.6B softmax arm of #171, 76.5 minutes per arm —
-   so it is the cheapest next measurement. It attacks the 20-point band
-   directly rather than post hoc.
-2. **Measure the full distribution, not top-1.** The ceiling above is over maps
-   of top-1 confidence, which is all ECE reads. Vector scaling, or a per-level
-   recalibration of the whole option vector, can change a maximum in ways that no
-   function of the maximum can, so it is not covered by the bound. It needs
-   logits, which the dump does not carry, so it is a separate run.
-
-## Caveats
-
-* **One checkpoint, one split, 928 items.** The interval is quoted next to every
-  score figure for that reason; the 0.0037 gap to the bar is smaller than the
-  interval's width.
-* **The map is fitted on half the eval set.** That is the harness's own protocol
-  for temperature, so the comparison is matched, but a deployed calibrator would
-  be fitted on a separate corpus and would do no better.
-* **The regularisation grid was chosen by inner CV, not by holdout.** The grid
-  itself (six alphas, five minimum block sizes) was not pre-registered. On this
-  data the CV choice is 0.0002 from the best point on the grid scored against the
-  holdout, so the reported figure is not tuned; a fixed `alpha=10, min_n=20`
-  default would have given 0.0666, and the note quotes the chosen configuration
-  for that reason.
-* **The map uses top-1 confidence only.** A better score model would not change
-  that bound; a different calibration *family* would, which is why item 2 above
-  is named rather than assumed away.
-* **Pre-#138 checkpoint.** This is #171's arm, trained before the cluster-aware
-  split, so it is not a goal result — it is a diagnosis of the calibration
-  behaviour the goal has to fix.
+Across the two arms the map is the better of the two instruments in two of six
+cells: score on the 32k arm and noul on the weighted arm. In the cell that
+matters here — score — the map helps only where the curve is bent, and there it
+still lands above the bar, at 0.0537 against 0.05.
 
 ## What this means for the goal
 
-Goal item 2 is not met on score, and this note closes off the calibration side of
-the explanation: no post-hoc map of top-1 confidence clearly reaches 0.05, and a
-per-type temperature does not come close (0.0811). The remaining hypotheses are
-in training — overconfident logits in a band where the model is only 45%
-accurate — and in the calibration family, where vector scaling on the full level
-vector is the untested one. The next cheap test is label smoothing on the 0.6B
-score head against the frozen arm this note's instruments were validated on.
+**Goal item 2's ECE clause is met on the weighted arm**: 0.0250 on score, 0.0290
+on noul and 0.0161 on choice, all after a per-type temperature fitted on held-out
+items. This is the first time any 4B checkpoint has cleared that clause on score,
+and it clears it by half the bar.
+
+It is not yet a goal result. The checkpoint predates the cluster-disjoint split
+(#138), so it trained on data that overlaps the eval set; item 2 has to be
+re-measured on a #138-trained checkpoint before it counts. What this note
+establishes is that the target is reachable and that the reading depends on which
+arm is measured — a difference of 0.056 on a metric whose pass-to-pass floor is
+0.0020.
+
+The practical consequence is about reporting: a calibration number should name the
+arm it came from, because "the 4B model" covers arms that differ by 3x on this
+metric while agreeing to 0.13 pp on accuracy.
+
+## Caveats
+
+* **Two things differ between the arms**, the readout and the training
+  `max_length` (32,768 against 16,384, from the runs' own logs), so this note
+  cannot attribute the calibration difference to either. The obvious story — the
+  readout changed what the score head sees — is also incomplete: the model shares
+  one attention head between choice and score (`Shared attention: choice+score
+  share AttentionHead` in both runs' logs), so a readout change reaches choice
+  too, and choice's calibration does not move. A readout-only pair at fixed
+  length is the clean ablation, and it is not run.
+* **The eval `max_length` also differs** (32,768 against 8,192). It cannot affect
+  the 1,856 score items, all short; it could in principle touch long contractnli
+  rows, where choice accuracy differs by 0.001.
+* **One seed per arm.** These are matched controls, but a single draw each.
+* **The map ceiling is over top-1 confidence**, which is all ECE reads. Vector
+  scaling on the full level vector can change a maximum in ways no function of
+  the maximum can, so it is outside the bound and untested — it needs logits,
+  which the prediction dump does not carry.
+* **The numbers here are one split.** The 0.0020 pass-to-pass floor and the
+  0.0282-0.0865 interval are quoted where they bear on a claim.
