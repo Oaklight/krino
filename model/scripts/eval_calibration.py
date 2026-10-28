@@ -55,6 +55,7 @@ from model.evaluation.calibration import (
     softmax,
     temperature_curve,
 )
+from model.evaluation.jevbench import summarize as summarize_jevbench
 from model.evaluation.order_sensitivity import (
     chance_accuracy,
     duplicate_option_texts,
@@ -1130,6 +1131,70 @@ def _print_table(summary: dict[str, Any]) -> None:
         print(f"\nSkipped: {skipped}", flush=True)
 
 
+def _run_jevbench(model: Any, args: argparse.Namespace) -> int:
+    """Score JevBench's public items with the checkpoint this run loaded.
+
+    ``model/scripts/eval_jevbench.py`` scores published HuggingFace checkpoints
+    through ``DecisionModel.predict``, which rounds probabilities to two
+    decimals and builds a head-only model, so it cannot score a LoRA training
+    checkpoint at all. The goal is stated against local checkpoints, so that
+    path has never reported the models that gate it; this one reuses the
+    architecture built above and the same accuracy rule as the rest of the
+    script, and adds the tier breakdown JevBench is scored on.
+    """
+    items = list(pipeline_mod.load_jevbench())
+    if args.max_items:
+        items = items[: args.max_items]
+    print(f"Loaded {len(items)} JevBench items", flush=True)
+
+    records: list[dict[str, Any]] = []
+    failed = 0
+    for item in items:
+        record = _predict_original(model, item)
+        if record is None:
+            failed += 1
+            continue
+        records.append(record)
+
+    summary = summarize_jevbench(records, failed=failed)
+    overall = summary["overall"]
+    print("\n=== JevBench (public) ===", flush=True)
+    print(f"{'tier':<10} {'n':>4} {'correct':>8} {'acc':>7}")
+    for tier, data in sorted(summary["by_tier"].items()):
+        print(
+            f"{tier:<10} {data['total']:>4} {data['correct']:>8} "
+            f"{data['accuracy']:>7.3f}"
+        )
+    print(
+        f"{'overall':<10} {overall['total']:>4} {overall['correct']:>8} "
+        f"{overall['accuracy']:>7.3f}"
+    )
+    if failed:
+        print(f"unscored: {failed}")
+
+    print(f"\n{'type':<10} {'n':>4} {'acc':>7}")
+    for q_type, data in sorted(summary["by_type"].items()):
+        print(f"{q_type:<10} {data['total']:>4} {data['accuracy']:>7.3f}")
+
+    print(f"\n{'tier':<10} {'type':<10} {'n':>4} {'acc':>7}")
+    for tier, types in sorted(summary["by_tier_type"].items()):
+        for q_type, data in sorted(types.items()):
+            print(f"{tier:<10} {q_type:<10} {data['total']:>4} {data['accuracy']:>7.3f}")
+
+    if args.json:
+        payload = {
+            "checkpoint": str(args.load_heads),
+            "config": str(args.config),
+            "model": args.model,
+            "seed": args.seed,
+            **summary,
+        }
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        print(f"\nwrote {args.json}", flush=True)
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Calibration and robustness evaluation for a decision model"
@@ -1221,6 +1286,18 @@ def main() -> int:
         type=int,
         default=None,
         help="Cap evaluated items per type for a faster report",
+    )
+    parser.add_argument(
+        "--jevbench",
+        action="store_true",
+        help="Score JevBench's public items with this checkpoint instead of the "
+        "configured eval set, and report accuracy by tier",
+    )
+    parser.add_argument(
+        "--max-items",
+        type=int,
+        default=None,
+        help="Cap items for a faster run; applies to --jevbench",
     )
     parser.add_argument(
         "--no-order-probes", action="store_true", help="Skip reordering probes"
@@ -1356,6 +1433,9 @@ def main() -> int:
     _warn_architecture_mismatch(model, args.load_heads)
     model.load_heads(args.load_heads)
     model.eval()
+
+    if args.jevbench:
+        return _run_jevbench(model, args)
 
     started = time.perf_counter()
     eval_items = _load_eval_items(cfg, args)
