@@ -301,3 +301,217 @@ def temperature_curve(
         "ece_best": dict(ece_best),
         "at_one": dict(at_one),
     }
+
+
+def _pava_blocks(pairs: Sequence[tuple[float, float]]) -> list[list[float]]:
+    """Pool-adjacent-violators over (confidence, outcome) pairs.
+
+    Args:
+        pairs: ``(confidence, 0.0 or 1.0)`` sorted by confidence.
+
+    Returns:
+        ``[x_sum, y_sum, n]`` per block, with non-decreasing ``y_sum / n``.
+    """
+    blocks: list[list[float]] = []
+    for confidence, outcome in pairs:
+        blocks.append([confidence, outcome, 1.0])
+        while len(blocks) > 1:
+            previous, current = blocks[-2], blocks[-1]
+            if previous[1] / previous[2] < current[1] / current[2]:
+                break
+            blocks.pop()
+            blocks.pop()
+            blocks.append([
+                previous[0] + current[0],
+                previous[1] + current[1],
+                previous[2] + current[2],
+            ])
+    return blocks
+
+
+def _merge_small_blocks(
+    blocks: list[list[float]], min_n: int
+) -> list[list[float]]:
+    """Merge blocks below ``min_n`` into a neighbour, keeping the fit monotone.
+
+    A block fitted on a handful of items is noise, and at the ends of the
+    confidence range that noise is not harmless: a single low-confidence block
+    that happens to be wrong drives every item below it to zero confidence.
+    Small blocks are therefore absorbed, and the adjacent-violator pass is
+    re-run after each absorption so the result stays monotone -- pooling a
+    block into its neighbour can otherwise leave the neighbour above the block
+    that follows it.
+    """
+    ordered = [list(block) for block in blocks]
+    while len(ordered) > 1:
+        smallest = min(range(len(ordered)), key=lambda i: ordered[i][2])
+        if ordered[smallest][2] >= min_n:
+            break
+        left = smallest - 1 if smallest > 0 else smallest
+        right = left + 1
+        ordered[left : right + 1] = [[
+            ordered[left][0] + ordered[right][0],
+            ordered[left][1] + ordered[right][1],
+            ordered[left][2] + ordered[right][2],
+        ]]
+        ordered = _pava_weighted(ordered)
+    return ordered
+
+
+def _pava_weighted(blocks: list[list[float]]) -> list[list[float]]:
+    """Re-apply the adjacent-violator pass to weighted blocks."""
+    ordered: list[list[float]] = []
+    for block in blocks:
+        ordered.append(list(block))
+        while len(ordered) > 1:
+            previous, current = ordered[-2], ordered[-1]
+            if previous[1] / previous[2] < current[1] / current[2]:
+                break
+            ordered.pop()
+            ordered.pop()
+            ordered.append([
+                previous[0] + current[0],
+                previous[1] + current[1],
+                previous[2] + current[2],
+            ])
+    return ordered
+
+
+def fit_confidence_map(
+    confidences: Sequence[float],
+    correct: Sequence[bool | int | float],
+    alpha: float = 20.0,
+    min_n: int = 20,
+) -> dict[str, Any]:
+    """Fit a monotone map from stated confidence to observed accuracy.
+
+    Temperature scaling assumes the miscalibration is a single scale factor on
+    the logits, which fails when the reliability curve is bent: on the score
+    primitive a fitted temperature moves holdout ECE from 0.1027 to 0.0811 and
+    stops, because the overconfidence is concentrated in one band of confidence
+    that a scale factor cannot reach without wrecking the rest of the curve.
+    A monotone map has no such constraint and is the ceiling for any
+    recalibration that uses confidence alone.
+
+    The map is isotonic regression (pool adjacent violators) on the
+    confidence/outcome pairs, then two regularisations, both because the raw
+    fit is fitted on a few hundred items and is badly behaved at the ends:
+
+    * blocks under ``min_n`` items are absorbed into a neighbour,
+    * every block is pulled toward the base rate with weight ``alpha``.
+
+    Args:
+        confidences: Stated confidence of the predicted option, per item.
+        correct: Whether the prediction was right, per item.
+        alpha: Pseudo-count pulling each block toward the overall accuracy. 0
+            leaves the block means untouched.
+        min_n: Smallest block that is kept.
+
+    Returns:
+        ``{"blocks": [{"upto", "confidence"}], "base_rate", "n"}``. The map is
+        applied by :func:`apply_confidence_map`. ``base_rate`` is the accuracy
+        of the fitting items and is the map's value above the last breakpoint.
+    """
+    if len(confidences) != len(correct):
+        raise ValueError("confidences and correct must have the same length")
+    pairs = [
+        (
+            min(1.0, max(0.0, float(confidence))),
+            1.0 if bool(ok) else 0.0,
+        )
+        for confidence, ok in zip(confidences, correct)
+    ]
+    # Sort by confidence only, so items the model gave the same confidence stay
+    # in input order: sorting on the outcome as a tie-break would decide which
+    # items pool together and bias the fit on exact ties.
+    pairs.sort(key=lambda pair: pair[0])
+    if not pairs:
+        return {"blocks": [], "base_rate": 0.0, "n": 0}
+
+    blocks = _pava_blocks(pairs)
+    if min_n > 1:
+        blocks = _merge_small_blocks(blocks, min_n)
+    base_rate = sum(outcome for _, outcome in pairs) / len(pairs)
+    # Shrinking a block toward the base rate depends on the block size, so two
+    # neighbours ordered before shrinkage can invert after it; run the
+    # adjacent-violator pass once more on the shrunk values.
+    shrunk = [
+        [x_sum, ((y_sum + alpha * base_rate) / (n + alpha)) * n, n]
+        for x_sum, y_sum, n in blocks
+    ]
+    blocks_out = [
+        {
+            "upto": x_sum / n,
+            "confidence": min(1.0, max(0.0, y_sum / n)),
+        }
+        for x_sum, y_sum, n in _pava_weighted(shrunk)
+    ]
+    return {"blocks": blocks_out, "base_rate": base_rate, "n": len(pairs)}
+
+
+def apply_confidence_map(
+    mapping: dict[str, Any], confidences: Sequence[float]
+) -> list[float]:
+    """Apply a :func:`fit_confidence_map` result to new confidences.
+
+    Values outside the fitted range take the nearest block's value rather than
+    being extrapolated, so the map cannot claim a confidence the fitting items
+    never supported beyond the clamps at 0 and 1.
+    """
+    blocks = mapping.get("blocks") or []
+    if not blocks:
+        return [min(1.0, max(0.0, float(conf))) for conf in confidences]
+    upto = [block["upto"] for block in blocks]
+    values = [block["confidence"] for block in blocks]
+    out = []
+    for confidence in confidences:
+        confidence = float(confidence)
+        # Last breakpoint at or below the confidence; the blocks are stored by
+        # the mean confidence of their members, so this is the block it falls in.
+        index = 0
+        low, high = 0, len(upto) - 1
+        while low <= high:
+            mid = (low + high) // 2
+            if upto[mid] <= confidence:
+                index = mid
+                low = mid + 1
+            else:
+                high = mid - 1
+        out.append(values[index])
+    return out
+
+
+def confidence_map_report(
+    fit_confidences: Sequence[float],
+    fit_correct: Sequence[bool | int | float],
+    holdout_confidences: Sequence[float],
+    holdout_correct: Sequence[bool | int | float],
+    alpha: float = 20.0,
+    min_n: int = 20,
+    n_bins: int = 10,
+) -> dict[str, Any]:
+    """Fit a monotone confidence map on one split and score it on the other.
+
+    The counterpart of :func:`temperature_curve` for the family that temperature
+    scaling cannot express: reports ECE on the same holdout items before and
+    after, so the comparison against a fitted temperature is matched.
+    """
+    mapping = fit_confidence_map(fit_confidences, fit_correct, alpha=alpha, min_n=min_n)
+    before = expected_calibration_error(
+        [float(confidence) for confidence in holdout_confidences],
+        [bool(ok) for ok in holdout_correct],
+        n_bins,
+    )["ece"]
+    mapped = apply_confidence_map(mapping, holdout_confidences)
+    after = expected_calibration_error(
+        mapped, [bool(ok) for ok in holdout_correct], n_bins
+    )["ece"]
+    return {
+        "alpha": alpha,
+        "min_n": min_n,
+        "before": before,
+        "after": after,
+        "n_fit": len(fit_confidences),
+        "n_holdout": len(holdout_confidences),
+        "map": mapping,
+    }
