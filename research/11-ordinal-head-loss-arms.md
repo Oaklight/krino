@@ -8,10 +8,12 @@ ranked-probability score (RPS), which is the metric the literature uses for
 ordinal targets.
 
 This note reports a 2×2 at 0.6B. It is a negative result on accuracy: the plain
-baseline — softmax head, cross-entropy — wins on every type, and neither the
-ordinal head nor RPS recovers any of the gap. RPS targets *calibration* rather
-than accuracy, so the two softmax arms were then scored with the calibration
-harness; that second half is below, and it does not rescue RPS either.
+baseline — softmax head, cross-entropy — wins overall, on choice and on score,
+while on noul the two losses are tied inside the reproduction floor the note
+establishes later. Neither the ordinal head nor RPS recovers any of the gap. RPS
+targets *calibration* rather than accuracy, so the two softmax arms were then
+scored with the calibration harness; that second half is below, and it does not
+rescue RPS either.
 
 ## Setup
 
@@ -62,11 +64,20 @@ by construction; that is not evidence of anything.
 
 ## Findings
 
-**1. The plain baseline wins on all three types.** Score accuracy is 5.0 pp
-higher under softmax_ce than under softmax_rps, 5.7 pp higher than
-cumulative_ce, and 5.9 pp higher than cumulative_rps. Against 0.29-0.40 pp seed
-noise at this scale, all three gaps are real. Overall accuracy is 0.96 to 1.97 pp
-higher, in the same order.
+**1. The plain baseline wins on choice and score, and ties on noul.** Score
+accuracy is 5.0 pp higher under softmax_ce than under softmax_rps, 5.7 pp higher
+than cumulative_ce, and 5.9 pp higher than cumulative_rps. Choice is higher on
+every variant, by 0.6 to 1.8 pp. Against 0.29-0.40 pp seed noise at this scale,
+those gaps are real. Overall accuracy is 0.96 to 1.97 pp higher, in the same
+order.
+
+Noul is the exception, and the small residual moves RPS's way rather than the
+baseline's: softmax_rps scores 3,109 to softmax_ce's 3,101 (0.6583 vs 0.6566,
+0.17 pp), and cumulative_rps 3,080 to cumulative_ce's 3,062 (0.6521 vs 0.6483,
+0.38 pp). Both are inside the 0.29-0.40 pp seed band this note uses everywhere
+else, so noul is a tie — an earlier revision said the baseline "wins on all three
+types", which overstated it. A tie on the third type makes for a cleaner negative
+result than a sweep, and finding 2 below does not depend on noul.
 
 **2. RPS only hurts under the softmax head.** Under cumulative, RPS and
 cross-entropy differ by 0.2 pp on score (0.3689 vs 0.3710) — inside noise. Under
@@ -195,10 +206,12 @@ checkpoint, where the ECE fit reaches 0.0631 and no point on the grid clears 0.0
 | RPS loss | -5.0 pp score | a tie on raw ECE, worse on Brier/MAE/QWK/RPS |
 
 Neither change is worth adopting on this evidence. The default -- softmax head,
-cross-entropy -- remains both the most accurate and, on the metrics measured, no
-worse calibrated. The open question is no longer "which head or loss" but
-"why does temperature scaling fail on score", which is a property of the
-distribution rather than of the architecture.
+cross-entropy -- remains the most accurate overall, on choice and on score, and,
+on the metrics measured, no worse calibrated: RPS's one claimed advantage, a
+better-calibrated distribution, does not appear on the primitive it was meant to
+help. The open question is no longer "which head or loss" but "why does
+temperature scaling fail on score", which is a property of the distribution
+rather than of the architecture.
 
 ## Caveats
 
