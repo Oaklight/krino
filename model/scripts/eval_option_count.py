@@ -226,7 +226,7 @@ def main() -> int:
     )
 
     model = build_model(args, cfg)
-    readout = "option-marker" if args.option_marker else "pooled-attention"
+    readout = "option-marker" if model.option_marker else "pooled-attention"
     print(f"Readout: {readout}", flush=True)
 
     by_k: dict[str, dict[str, Any]] = {}
