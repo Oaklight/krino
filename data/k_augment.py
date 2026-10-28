@@ -45,9 +45,9 @@ class KAugmentConfig:
 
     Args:
         fraction: share of choice items to pad, in [0, 1].  The rest keep their
-            natural option count.  This is the main compute knob: the cost of a
-            choice item grows linearly in K, so a fraction of 0.2 with a mean
-            target of 45 roughly triples an epoch's option encodes.
+            natural option count.  This is the main compute knob: cost grows with
+            the sum of option counts, and measured on the real training pool
+            (fraction 0.2, K in [8, 256]) an epoch's option encodes go up 2.49x.
         min_k: smallest target K.  Padding never shrinks an item, so an item
             already at or above ``min_k`` may still be padded if the drawn target
             exceeds its natural count.
