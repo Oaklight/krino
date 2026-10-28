@@ -1,12 +1,17 @@
-# JevBench-public: 46%, against a 74% reference
+# JevBench-public: the heads cost 14-21 points against their own backbone
 
 Goal item 4 asks for JevBench-public to be reported next to Jev's reference
 numbers, which the goal records as a teacher at 84.9 and the best open student
-at 74.1. Until now the only Krino rows on that benchmark came from published
-HuggingFace releases, because `eval_jevbench.py` builds a head-only model from a
-repo and `DecisionModel.predict` rounds probabilities to two decimals. Neither
-fits a LoRA training checkpoint, so the models the rest of the goal is measured
-on had never been scored there.
+at 74.1. Measured, the trained models land at 0.463 (4B) and 0.433 (0.6B)
+against a 0.318 chance floor. The interesting part is not the level: scored
+through the backbone's own reranker readout, the same two checkpoints reach
+**0.623 and 0.541**. Almost all of the gap is the decision heads.
+
+Until now the only Krino rows on that benchmark came from published HuggingFace
+releases, because `eval_jevbench.py` builds a head-only model from a repo and
+`DecisionModel.predict` rounds probabilities to two decimals. Neither fits a LoRA
+training checkpoint, so the models the rest of the goal is measured on had never
+been scored there.
 
 `eval_calibration.py --jevbench` closes that: it scores the public tiers with the
 architecture and heads it already loaded, using the same accuracy rule as the
@@ -62,8 +67,11 @@ By type, for the four models the comparison rests on:
 
 ## Finding 1 — the best trained model clears chance by 14.5 points and misses the reference by 27.8
 
-The 4B checkpoint that carries the rest of the goal scores 0.463 overall: 14.5
-points above chance, 27.8 below the best open student and 38.6 below the teacher.
+The 4B checkpoint that carries the rest of the goal scores 0.463 overall through
+its heads: 14.5 points above chance, 27.8 below the best open student and 38.6
+below the teacher. Finding 4 shows the same weights score 0.623 when the backbone
+scores options natively, so 0.463 is a statement about the heads and not about
+what the model knows.
 The smallest Krino model in the table, a 150M encoder, is 5 points above chance.
 That spread — 0.325 to 0.463 across every model we have — is what the gap looks
 like from the inside.
@@ -116,22 +124,32 @@ than assumed: the reloaded merged model reproduces the LoRA model's choice logit
 to **0.0000** on held-out probes, so a merge that dropped or double-applied the
 adapter would fail instead of producing a plausible number.
 
-0.6B, same 231 items, three ways of scoring the same weights:
+Same 231 items, three ways of scoring the same weights, at both sizes:
 
 | scoring | overall | choice | noul | score |
 |---|---:|---:|---:|---:|
-| untouched base, native readout | 0.476 | 0.482 | 0.459 | 0.500 |
-| **fine-tuned backbone, native readout** | **0.541** | **0.540** | **0.554** | 0.500 |
-| fine-tuned backbone, Krino heads | 0.433 | 0.396 | 0.554 | 0.222 |
+| 0.6B, untouched base, native | 0.476 | 0.482 | 0.459 | 0.500 |
+| 0.6B, **fine-tuned backbone, native** | **0.541** | **0.540** | **0.554** | 0.500 |
+| 0.6B, fine-tuned backbone, Krino heads | 0.433 | 0.396 | 0.554 | 0.222 |
+| 4B, untouched base, native | 0.628 | 0.604 | 0.622 | 0.833 |
+| 4B, **fine-tuned backbone, native** | **0.623** | **0.604** | **0.635** | 0.722 |
+| 4B, fine-tuned backbone, Krino heads | 0.463 | 0.396 | 0.595 | 0.444 |
 
-Two things fall out, and they point the same way:
+Three things follow.
 
-* **Fine-tuning did not damage the backbone — it improved it**, from 0.476 to
-  0.541 (+6.5 points) on the same scorer. The capability Finding 2 was measuring
-  was never lost.
-* **The heads lose 10.8 points overall against their own backbone**, and the loss
-  is entirely choice (−14.4) and score. On noul the head and the native readout
-  agree exactly (0.554 against 0.554): the noul head costs nothing.
+* **Fine-tuning does not damage the backbone's reranker capability.** At 0.6B it
+  improves it, 0.476 → 0.541 (+6.5 points on the same scorer). At 4B it leaves
+  the total where it was — 0.628 → 0.623, one item out of 231 — while moving
+  performance around inside it: original 0.667 → 0.736, hard 0.441 → 0.387. So
+  the capability Finding 2 read as lost was never lost; at 4B it was partially
+  reshuffled, and the hard tier is where the reshuffle went wrong.
+* **The choice head loses its own backbone's advantage.** 14.4 points at 0.6B
+  (0.540 → 0.396) and 20.8 at 4B (0.604 → 0.396). The trained choice head is the
+  same 0.396 at both sizes, which is the number to explain: a 6.7x larger backbone
+  changes nothing about how the head scores an option list.
+* **The noul head is free.** It matches the native readout at 0.6B exactly (0.554)
+  and lands close at 4B (0.595 against 0.635). Whatever the choice head is doing
+  wrong, the noul head is not doing it.
 
 So the JevBench deficit is a property of how the choice head scores an option
 list, not of the training data or the backbone. That is a much narrower target
@@ -166,12 +184,14 @@ than Finding 2 posed, and it is the one the next experiment should attack.
 ## What this means for the goal
 
 Item 4 is the widest gap in the goal — 0.463 against a 74.1 reference — and
-Finding 4 says where it is. The backbone after training is *better* at JevBench
-than the one we started from (0.541 against 0.476 when both are scored the same
-way), and the trained choice head throws 14 points of that away. So the sentence
+Finding 4 says where it is. The fine-tuned backbones keep the reranker
+capability (0.541 at 0.6B, where it improves on the base, and 0.623 at 4B, where
+it holds), and the choice head throws 14 to 21 points of it away. So the sentence
 this note would have ended on — that the model we train is worse than the model
-we started from — is true of the heads and false of the backbone, and the work
-belongs in the choice head.
+we started from — is true of the heads and false of the backbones, and the work
+belongs in how the choice head scores an option list. The trained choice head
+scores exactly 0.396 at both model sizes, which is the number that says the head,
+not the backbone, is the constraint.
 
 That is one measurement, one seed, 231 items. The hard tier is where the
 remaining gap sits (0.351 against a 0.336 chance floor), and it is the column to
