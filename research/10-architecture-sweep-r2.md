@@ -2,15 +2,17 @@
 
 This note consolidates the round-2 architecture sweep. Every number is final-epoch
 eval accuracy on the shared 13,444-item evaluation set, produced by
-`model/scripts/train_multitask.py --eval-every 1`.
+`model/scripts/train_multitask.py --eval-every 1`. Rows whose run stopped at an
+earlier epoch say so and are compared against the frozen baseline *at that
+epoch*.
 
 **Provenance.** The training logs are not in this repository — they live on the
 training hosts, at `model/experiments/arch_*.log` under the project checkout on
 each (`/home/pding/projects/open-decisions` on `rbh101`, and the shared
 `lambda_home` copy of the same path on `rbdgx1`/`rbdgx2`). The table reader used
-to assemble them, `model/scripts/sweep_report.py`, is proposed in #133 and is not
-merged, so the commands below cannot be replayed end to end from a clean clone:
-the runs are reproducible, the report is not yet.
+to assemble them, `model/scripts/sweep_report.py`, is merged (#133), so the
+tables below can be rebuilt from those logs; the runs themselves need the
+benchmark corpus, which is not in the repository.
 
 The point of the sweep was to separate three questions that are easy to
 confound: how much of the gain comes from adapting the backbone (LoRA), how much
@@ -34,83 +36,114 @@ Two caveats that apply to the whole table:
   a slight overestimate. The shipped implementation (#138) moves 25 of 4,476
   families — well under 1% — so it should shift these figures by a few tenths of
   a point at most, but they are not directly comparable with post-fix runs.
-* Seed noise: 0.40 pp at 0.6B final epoch, 0.35 pp at 8B, 0.09–0.85 pp for
-  same-config reruns. Differences under ~0.8 pp are treated as noise throughout.
+* Seed noise: 0.40 pp at 0.6B frozen (49.11 vs 48.71 at seed 123) and 0.35 pp at
+  8B frozen (58.58 vs 58.23), 0.18 pp for the 8B full-LoRA `weighted` arms
+  (62.85 / 62.99 at epoch 4). LoRA arms are noisier at small scale: a 0.6B
+  full-LoRA `last` replicate moves 54.46 -> 56.46, 2.00 pp. So 0.6B LoRA arms are
+  read only against a matched control, and differences under ~2 pp there are not
+  resolvable.
 
 ## Results
 
+The `Δ` column is against the arm named in `baseline`, at the same epoch. An
+epoch-4 arm is scored against the frozen run's epoch 4, not its epoch 5, because
+the frozen run still gains +3.19 pp across that last epoch (52.40 -> 55.59) and a
+final-vs-epoch-4 delta would credit that gain to the arm under test.
+
 ### 0.6B — readout × LoRA scope
 
-| run | readout | LoRA | final | Δ vs frozen `last` |
-|---|---|---|---|---|
-| `arch_06b_frozen_last` | last | none | 49.11 | — |
-| `arch_06b_frozen_weighted` | weighted | none | 42.22 | **−6.89** |
-| `arch_06b_loraAll_last` | last | all | 54.46 | +5.35 |
-| `arch_06b_loraAll_weighted` | weighted | all | **56.17** | **+7.06** |
-| `arch_06b_loraAll_mean4` | mean4 | all | 53.03 | +3.92 |
-| `arch_06b_loraAll_qkvo_weighted` | weighted | all, qkvo | 53.44 (ep4) | +6.15 (ep4) |
-| `arch_06b_loraLast8_weighted` | weighted | last 8 | 50.15 | +1.04 |
-
-### 4B — readout × context length
-
-| run | readout | LoRA | max_length | final | Δ vs frozen `last` |
+| run | readout | LoRA | final | baseline | Δ |
 |---|---|---|---|---|---|
-| `arch_4b_frozen_last` | last | none | 8k | 55.59 | — |
-| `arch_4b_frozen_32k` | last | none | 32k | 55.96 | +0.37 |
-| `arch_4b_frozen_weighted` | weighted | none | 8k | 52.11 (ep4) | −0.29 (ep4) |
-| `arch_4b_loraAll_last` | last | all | 8k | **61.92 (ep4)** | **+9.52 (ep4)** |
-| `arch_4b_loraAll_32k` | last | all | 32k | 61.87 (ep4) | +9.44 (ep4) |
-| `arch_4b_loraLast8_weighted` | weighted | last 8 | 8k | 49.73 (ep1) | +0.65 (ep1) |
+| `arch_06b_frozen_last` | last | none | 49.11 | — | — |
+| `arch_06b_frozen_weighted` | weighted | none | 42.22 | frozen last 49.11 | **−6.89** |
+| `arch_06b_loraAll_last` | last | all | 54.46 | frozen last 49.11 | +5.35 |
+| `arch_06b_loraAll_weighted` | weighted | all | **56.17** | frozen last 49.11 | **+7.06** |
+| `arch_06b_loraAll_mean4` | mean4 | all | 53.03 | frozen last 49.11 | +3.92 |
+| `arch_06b_loraAll_qkvo_weighted` | weighted | all, qkvo | 55.51 | frozen last 49.11 | +6.40 |
+| `arch_06b_loraLast8_weighted` | weighted | last 8 | 50.15 | frozen last 49.11 | +1.04 |
+
+### 4B — readout × context length, LoRA complete
+
+| run | readout | LoRA | max_length | final | baseline | Δ |
+|---|---|---|---|---|---|---|
+| `arch_4b_frozen_last` | last | none | 8k | 55.59 | — | — |
+| `arch_4b_frozen_32k` | last | none | 32k | 55.96 | frozen last 8k 55.59 | +0.37 |
+| `arch_4b_frozen_weighted` | weighted | none | 8k | 52.11 (ep4) | frozen last ep4 52.40 | −0.29 |
+| `arch_4b_loraAll_last` | last | all | 8k | 64.59 | frozen last 55.59 | +9.00 |
+| `arch_4b_loraAll_32k` | last | all | 32k | 64.67 | frozen 32k 55.96 | +8.71 |
+| `arch_4b_loraAll_weighted` | weighted | all | 8k | **64.89** | frozen last 55.59 | **+9.30** |
+| `arch_4b_loraAll_mean4` | mean4 | all | 8k | 64.81 | frozen last 55.59 | +9.22 |
+| `arch_4b_loraAll_qkvo_weighted` | weighted | all, qkvo | 8k | 36.72 | frozen last 55.59 | **−18.87** |
+| `arch_4b_loraLast8_weighted` | weighted | last 8 | 8k | 49.73 (ep1) | frozen last ep1 49.08 | +0.65 |
+
+The frozen run's per-epoch values, used as the baselines above: 49.08 at epoch 1,
+52.40 at epoch 4, 55.59 at epoch 5. Measured against the frozen run's *final*
+55.59 instead, the 4B full-LoRA `last` arm at epoch 4 (61.92) is +6.33 — the
+weaker claim, which holds even if the arm had stopped there.
 
 ### 8B — readout collapse
 
-| run | readout | LoRA | final | Δ vs frozen `last` |
-|---|---|---|---|---|
-| `arch_8b_frozen_8k` | last | none | 58.58 | — |
-| `arch_8b_frozen_8k_e10` | last | none | **61.43** (10 epochs) | +2.85 at equal epochs |
-| `arch_8b_frozen_32k` | last | none | 58.17 | −0.41 |
-| `arch_8b_frozen_weighted` | weighted | none | 55.91 | −2.67 |
-| `arch_8b_loraAll_weighted` | weighted | all | **62.85 (ep4)** | **+7.12 (ep4)** |
-| `arch_8b_loraAll_8k` | last | all | **43.91 (ep4)** | **−11.82 (ep4)** |
+| run | readout | LoRA | final | baseline | Δ |
+|---|---|---|---|---|---|
+| `arch_8b_frozen_8k` | last | none | 58.58 | — | — |
+| `arch_8b_frozen_8k_e10` | last | none | **61.43** (ep10) | frozen last 58.58 | +2.85 |
+| `arch_8b_frozen_32k` | last | none | 58.17 | frozen last 58.58 | −0.41 |
+| `arch_8b_frozen_weighted` | weighted | none | 55.91 | frozen last 58.58 | −2.67 |
+| `arch_8b_loraAll_weighted` | weighted | all | **62.85 (ep4)** | frozen weighted 55.91 | **+6.94** |
+| `arch_8b_loraAll_weighted_s123` | weighted | all | 62.99 (ep4) | frozen weighted 55.91 | +7.08 |
+| `arch_8b_loraAll_8k` | last | all | 47.51 | frozen last 58.58 | **−11.07** |
+| `arch_8b_loraAll_8k_s123` | last | all | 36.43 | frozen last s123 58.23 | **−21.80** |
+
+The two 8B full-LoRA `weighted` arms are epoch-4 checkpoints: those runs stopped
+at the host's wall-clock limit before finishing epoch 5, so they are lower bounds.
+Against frozen `last` at the same epoch (55.73) the seed-42 `weighted` arm is
++7.12 rather than +6.94; the +6.94 is the conservative, matched-readout figure.
 
 ## Findings
 
 **1. LoRA is the dominant lever, and it grows with backbone size.** Comparing
 like readouts — `last` throughout — frozen is 49.11 / 55.59 / 58.58 at 0.6B / 4B /
-8B and full LoRA is 54.46 / 61.92 / **43.91** at 8B, where `last` collapses
-(finding 4). The only 8B full-LoRA result above its frozen baseline is the
-`weighted` arm at 62.85, so the honest statement is: LoRA gains +5.35 at 0.6B and
-+6.33 at 4B under `last`, and at 8B the gain is +6.94 under `weighted` against the frozen
-`weighted` arm (55.91) — not +7.12 against a `last` baseline.
+8B and full LoRA is 54.46 / **64.59** / 47.51, i.e. +5.35 / +9.00 / −11.07; the
+8B `last` arm collapses (finding 4). At 8B, under the readout that does not
+collapse, the gain is +6.94 against the frozen `weighted` arm (55.91), not
++7.12 or +15.34 against a `last` baseline.
 
-A 0.6B model with full LoRA (56.17) matches a frozen 4B (55.59): for this task the
+The best result in the sweep is 4B, full LoRA, `weighted` readout: **64.89** —
+2.0 pp above the best 8B arm (62.85) and 8.7 pp above the 0.6B best (56.17). A 0.6B
+model with full LoRA (56.17) matches a frozen 4B (55.59): for this task the
 adaptation matters about as much as a 6.7x parameter increase.
 
 **2. Context length does not matter, at any scale.** 8k versus 32k is +0.37 pp at
-4B frozen, −0.41 pp at 8B frozen, and −0.05 pp at 4B full LoRA — all inside noise.
-The earlier reading of the 4B 32k result as a context effect was wrong; the gain
-was LoRA. The likely reason 32k showed nothing is that our items are short (mean
-238 tokens; the longest source, contractnli, averages 1,194) and `max_length`
-only bounds truncation.
+4B frozen, −0.41 pp at 8B frozen, and +0.08 pp at 4B full LoRA (64.59 -> 64.67) —
+all inside noise. The earlier reading of the 4B 32k result as a context effect
+was wrong; the gain was LoRA. The likely reason 32k shows nothing is that our
+items are short (mean 238 tokens; the longest source, contractnli, averages
+1,194) and `max_length` only bounds truncation.
 
-**3. The readout's sign depends on both LoRA scope and backbone size.** On a frozen
+**3. The readout does not buy accuracy under LoRA below 8B.** On a frozen
 backbone `weighted` loses clearly at 0.6B (−6.89) and at 8B (−2.67); at 4B the
-single available checkpoints put it at −0.29 pp, **inside the 0.8 pp noise band**,
-so 4B is a tie rather than a fourth loss. Under full LoRA it wins at 0.6B (+1.71)
-and at 8B (+18.94 against the collapsed `last` arm).
+only comparison available is one epoch short (52.11 at epoch 4, inside noise).
+Under full LoRA the readout differences are +1.71 at 0.6B (56.17 vs 54.46), +0.30
+at 4B (64.89 vs 64.59) and +0.22 for `mean4` at 4B (64.81 vs 64.59) — all within
+the 2.00 pp seed spread that a 0.6B LoRA replicate shows. So below 8B the choice
+of readout is not settled by accuracy; `weighted` wins decisively only at 8B
+(+15.34 against the collapsed `last` arm), where it is really a rescue rather
+than a gain.
 
-`mean4` was measured once, at 0.6B full LoRA, where it reaches 53.03 against
-56.17 for `weighted` (it is also the only `mean4` entry in the table above), so
-"`mean4` loses in both regimes" overstates the evidence: the
-learned-softmax-versus-multi-layer distinction rests on one cell at one scale.
+`mean4` was measured twice: 53.03 at 0.6B full LoRA (against 56.17 for
+`weighted`) and 64.81 at 4B full LoRA (against 64.89). Both are single cells.
 
-**4. `last` collapses at 8B under full LoRA.** 43.91 at epoch 4 versus 62.85 for
-`weighted` in the same setting, a 19 pp gap that is far outside noise. Two
-readings are open and not yet distinguished: the `last` head reaches a degenerate
-solution at that scale (a single pooled vector from an 8B backbone, with a rank-64
-attention head on top), or the run hit an unlucky seed. `arch_8b_loraAll_last_s123`
-(seed 123, otherwise identical) is running to distinguish them. If it reproduces,
-`weighted` should be the default readout above 4B, not an option.
+A fourth arm changes the LoRA *targets* rather than the readout: all-block LoRA
+on `qkvo` reaches 55.51 at 0.6B (+6.40) but at 4B falls from 54.30 at epoch 1
+(−1.29) to 36.72 at epoch 5 (−18.87), collapsing between epochs 1 and 2. One run
+per scale, so this is a reproduction target, not a finding.
+
+**4. `last` collapses at 8B under full LoRA, and it is not the seed.** 47.51 at
+seed 42 and 36.43 at seed 123, against 62.85 and 62.99 for `weighted` in the same
+setting — a 15 to 27 pp gap, far outside noise, reproduced on both seeds. The
+earlier open question ("degenerate solution or an unlucky seed?") is answered: a
+second seed does not rescue the `last` arm, so this is the readout at that scale,
+not the draw. `weighted` should be the default readout above 4B, not an option.
 
 **5. Partial LoRA is dominated.** Last-8-blocks reaches 50.15 at 0.6B where full
 LoRA reaches 56.17. A frozen 0.6B run reaches 53.27 after 20 epochs (`r2_06b_r64`),
@@ -118,16 +151,39 @@ which is 94.8% of the full-LoRA accuracy but only 58.9% of its gain over the
 5-epoch frozen baseline (4.16 of 7.06 pp), for several times the wall-clock.
 
 **6. Five epochs truncates the large models.** The 8B frozen run gains +2.85 pp
-going from 5 to 10 epochs (58.58 → 61.43) and was still improving. Every 5-epoch
-number at 8B in this table is a lower bound.
+going from 5 to 10 epochs (58.58 -> 61.43) and was still improving. The 8B
+full-LoRA `weighted` arms are epoch-4 numbers for the same reason — the host's
+wall-clock limit, not convergence — so every 8B number here is a lower bound.
+
+## Corrections in this revision
+
+An earlier revision of this note reported four arms at a superseded epoch, and
+described three 4B arms as still running. All four have a longer run in the same
+log, and all three have finished:
+
+| arm | earlier revision | this revision |
+|---|---|---|
+| `arch_06b_loraAll_qkvo_weighted` | 53.44 (ep4) | 55.51 (ep5) |
+| `arch_4b_loraAll_last` | 61.92 (ep4) | 64.59 (ep5) |
+| `arch_4b_loraAll_32k` | 61.87 (ep4) | 64.67 (ep5) |
+| `arch_8b_loraAll_8k` | 43.91 (ep4) | 47.51 (ep5) |
+| `arch_4b_loraAll_weighted` | not reported | 64.89 (ep5) |
+| `arch_4b_loraAll_mean4` | not reported | 64.81 (ep5) |
+| `arch_4b_loraAll_qkvo_weighted` | not reported | 36.72 (ep5) |
+
+Consequences: the 4B headline moves from 61.92 to 64.59 under `last` and to
+64.89 under `weighted`, so the best arm in the sweep is 4B, not 8B; the 8B
+`last` collapse is 11.07 pp rather than 11.82; and the epoch-mixing in the `Δ`
+column is gone, replaced by an explicit baseline column.
 
 ## Not established
 
-* **4B full LoRA + `weighted`**: three arms (weighted, qkvo_weighted, mean4) are
-  on H100s at ~2.2 h/epoch and will finish well after this note. Without them the
-  4B readout comparison rests on a single epoch, where frozen-baseline deltas are
-  dominated by schedule warmup.
-* **Whether the 8B `last` collapse is stable**: see finding 4.
+* **Why `last` collapses at 8B.** Reproduced on two seeds, so it is real, but not
+  explained. The candidate — a single pooled vector from an 8B backbone feeding a
+  rank-128 attention head — has not been tested against, e.g., a `last` head with
+  a wider rank or a LayerNorm before pooling.
+* **The 4B `qkvo` collapse.** One run, one seed, and it fails within one epoch of
+  starting. Worth reproducing before anything is concluded about LoRA targets.
 * **Calibration and order sensitivity**: none of these numbers say whether the
   winner is calibrated or order-stable. Both are being measured (#143), and the
   literature's largest failure mode for this model family is option-order
