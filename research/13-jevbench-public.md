@@ -26,6 +26,10 @@ Chance is computed per item — 0.5 for noul, 1/|options| otherwise — and aver
 over the tier. It is high because most JevBench items have two or three options;
 that is the number any accuracy has to beat to mean anything.
 
+All ten rows below scored the identical 231 items with identical per-tier and
+per-type denominators (48/111/72 and 139/74/18), so the comparison between them
+is not confounded by differing item sets or by one path silently skipping items.
+
 ## Results
 
 Overall, then the three tiers:
