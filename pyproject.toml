@@ -12,7 +12,9 @@ license = "MIT"
 
 dependencies = [
     "torch>=2.0",
-    "transformers>=4.40",
+    # 4.49 is the first release where Qwen2/Qwen3 `forward()` accepts
+    # `logits_to_keep`; 4.45-4.48 only accept the older `num_logits_to_keep`.
+    "transformers>=4.49",
 ]
 
 [project.optional-dependencies]

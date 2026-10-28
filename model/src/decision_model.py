@@ -246,6 +246,26 @@ class DecisionModel(nn.Module):
         fwd_kwargs = dict(**inputs, output_hidden_states=True)
         if not self.is_encoder:
             fwd_kwargs["use_cache"] = False
+            # The projection to vocabulary is pure waste here: nothing in this
+            # model reads ``.logits`` — the heads take ``hidden_states`` and the
+            # prefix-cache path takes the cache. Qwen3's vocabulary is 151,669,
+            # so one 16,384-token sequence materialises 4.6 GiB in bf16 before
+            # any batching; sixteen of them is 74 GiB, which is how a run OOMed
+            # while asking for a single 26.13 GiB allocation (~5.6 sequences).
+            #
+            # Only pass this when the backbone actually has a vocabulary head.
+            # ``is_encoder`` answers "is this bidirectional", not "can this
+            # forward project": ``load_qwen35_base`` returns
+            # ``AutoModelForCausalLM(...).model``, which has no ``lm_head`` and
+            # would raise on the kwarg. Hidden states and the KV cache are
+            # unaffected by the slice.
+            #
+            # Do NOT add this to ``model/src/logit_scorer.py``: that module reads
+            # ``ctx_out.logits[0, -1]`` and the shifted ``out.logits[:, :-1, :]``
+            # over option tokens, so keeping one position would silently zero its
+            # token scores.
+            if getattr(self.backbone, "lm_head", None) is not None:
+                fwd_kwargs["logits_to_keep"] = 1
 
         use_autocast = (
             self.gpu_config.bf16_compute
