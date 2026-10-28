@@ -246,6 +246,12 @@ class DecisionModel(nn.Module):
         fwd_kwargs = dict(**inputs, output_hidden_states=True)
         if not self.is_encoder:
             fwd_kwargs["use_cache"] = False
+            # The CausalLM wrapper projects every token to the vocabulary by
+            # default.  A 16K-token context times a 16-item batch makes a
+            # multi-GB [tokens, vocab] tensor that this model never reads.
+            # Keeping one token's logits removes it from the memory peak;
+            # hidden states and the KV cache are unaffected.
+            fwd_kwargs["logits_to_keep"] = 1
 
         use_autocast = (
             self.gpu_config.bf16_compute
