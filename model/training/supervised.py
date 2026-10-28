@@ -557,8 +557,18 @@ def train(
     checkpoint_dir: Path | None = None,
     eval_every: int = 1,
     accumulation_steps: int = 1,
+    mlp_lr: float | None = None,
 ) -> dict[str, Any]:
-    """Full training loop with evaluation and checkpointing."""
+    """Full training loop with evaluation and checkpointing.
+
+    Args:
+        mlp_lr: Separate learning rate for the MLP projector. None uses
+            ``lr``. Appended after the original parameters so existing
+            positional calls keep their meaning.
+    """
+    # `trainable` is printed below and used by the single-group branch; the
+    # per-component branch does not define it, which left it unbound.
+    trainable = [p for p in model.parameters() if p.requires_grad]
     if mlp_lr is not None and hasattr(model, "projector") and not isinstance(model.projector, nn.Identity):
         projector_params = list(model.projector.parameters())
         projector_ids = {id(p) for p in projector_params}
@@ -569,7 +579,6 @@ def train(
         ], weight_decay=weight_decay)
         print(f"  Per-component LR: heads={lr}, mlp={mlp_lr}", flush=True)
     else:
-        trainable = [p for p in model.parameters() if p.requires_grad]
         optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)
     warmup_epochs = max(1, epochs // 10)
     warmup = LinearLR(optimizer, start_factor=0.1, total_iters=warmup_epochs)
