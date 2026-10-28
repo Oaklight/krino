@@ -1326,7 +1326,9 @@ def main() -> int:
             for q_type in TYPES:
                 for record in records[q_type]:
                     probabilities = _probs(record)
-                    prediction = record["labels"][_argmax(probabilities)]
+                    prediction = record["labels"][
+                        tie_stable_argmax(probabilities, record["label_order"])
+                    ]
                     handle.write(
                         json.dumps(
                             {
