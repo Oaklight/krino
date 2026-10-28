@@ -953,10 +953,16 @@ def train_multitask(
         # way to tell growth from fragmentation after the fact.
         #
         # Both numbers are *peaks* over the phase they describe, not point
-        # samples, and the counters are reset between the phases so training and
-        # eval are never charged to each other — a snapshot taken before eval
-        # attributes eval's peak to the next epoch, which is the shape that makes
-        # a heavier eval look like growth.
+        # samples: mixing a peak with an instantaneous reading produces pairs
+        # where reserved < allocated, which reads as a bug in the model rather
+        # than in the logger. `peak_reserved - peak_allocated` is the
+        # fragmentation figure the issue is actually about.
+        #
+        # The counters are reset *between* the phases, not once per epoch, so
+        # training and eval are never charged to each other. A single snapshot
+        # taken before eval would silently attribute eval's peak to the next
+        # epoch, which is exactly the shape that makes a heavier eval look like
+        # growth across epochs.
         on_cuda = device.type == "cuda"
 
         def _peak_snapshot() -> dict[str, Any] | None:
@@ -982,11 +988,11 @@ def train_multitask(
             )
             log["eval"] = eval_stats
 
-            agg = eval_stats["aggregate"]
             eval_mem = _peak_snapshot()
             if eval_mem is not None:
                 log["gpu_mem_gb"]["eval"] = eval_mem
 
+            agg = eval_stats["aggregate"]
             mem_text = format_epoch_memory(train_mem, eval_mem)
             if rank == 0:
                 print(
