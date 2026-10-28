@@ -76,6 +76,60 @@ at cross-entropy, cumulative loses 5.7 pp of score accuracy. Between the two
 losses at the cumulative head, 0.2 pp. Whatever the cumulative head buys, it is
 not accuracy on this data.
 
+## The calibration half
+
+Accuracy was never what RPS claims. The two softmax arms -- same architecture,
+same data, same seed, only the loss differs -- were therefore scored with the
+calibration harness (PR #167) on the same 13,444 items:
+
+| type | metric | softmax_ce | softmax_rps |
+|---|---|---:|---:|
+| noul | accuracy | 0.6578 | 0.6576 |
+| | ECE (T=1) | 0.0557 | **0.0503** |
+| | Brier | 0.2133 | **0.2116** |
+| | ECE after fitted T | **0.0172** | 0.0221 |
+| choice | accuracy | **0.4015** | 0.3936 |
+| | ECE (T=1) | **0.0722** | 0.0864 |
+| | Brier | **0.6823** | 0.6915 |
+| | ECE after fitted T | 0.0519 | **0.0425** |
+| score | accuracy | **0.4265** | 0.3802 |
+| | ECE (T=1) | 0.0628 | **0.0595** |
+| | Brier | **0.7148** | 0.7515 |
+| | ECE after fitted T | 0.1267 | **0.0844** |
+| | MAE | **0.9404** | 1.0481 |
+| | QWK (item-weighted, 4-6 levels) | **0.5272** | 0.4592 |
+| | RPS | **0.1557** | 0.1715 |
+
+**RPS does not buy a calibration advantage that pays for its accuracy cost.**
+On the score items -- where the loss is supposed to matter -- raw ECE is a tie
+(0.0628 vs 0.0595) and every other proper metric is worse: Brier 0.7515 vs
+0.7148, MAE 1.048 vs 0.940, QWK 0.459 vs 0.527, RPS 0.1715 vs 0.1557. Accuracy
+is 4.6 pp lower. On noul the two are indistinguishable in accuracy and RPS is
+marginally better calibrated; on choice RPS is worse on both.
+
+**Temperature scaling is not rescuing the score primitive in either arm.** ECE
+after the fitted temperature rises above its value at T=1 in both:
+0.0628 -> 0.1267 for cross-entropy at T=3.796, and 0.0595 -> 0.0844 for RPS at
+T=2.445. The temperature is fitted by NLL on one half and evaluated by ECE on
+the other, and ECE is not a monotone function of T with a minimum at the NLL
+optimum, so a large fitted T can make bin-level calibration worse. Goal item 2
+asks for ECE <= 0.05 after per-type temperature scaling; no arm reaches it on
+score, and the fitting criterion is a candidate explanation worth testing
+before the head or the loss is blamed again.
+
+### What the two halves together say
+
+| | accuracy | calibration |
+|---|---|---|
+| ordinal head | -5.7 pp score | not measured (the harness cannot build a cumulative head yet) |
+| RPS loss | -5.0 pp score | a tie on raw ECE, worse on Brier/MAE/QWK/RPS |
+
+Neither change is worth adopting on this evidence. The default -- softmax head,
+cross-entropy -- remains both the most accurate and, on the metrics measured, no
+worse calibrated. The open question is no longer "which head or loss" but
+"why does temperature scaling fail on score", which is a property of the
+distribution rather than of the architecture.
+
 ## Caveats
 
 * **One seed per arm.** These are matched controls, which is the evidence bar's
