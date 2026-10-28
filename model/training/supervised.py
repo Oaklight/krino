@@ -747,6 +747,7 @@ def train_multitask(
     lora_lr: float | None = None,
     uncertainty_weighting: bool = False,
     score_loss: str = "ce",
+    k_augment: "KAugmentConfig | None" = None,
 ) -> dict[str, Any]:
     """Multi-task training loop with type-balanced sampling and detailed eval.
 
@@ -778,7 +779,15 @@ def train_multitask(
             stride shard of the epoch and gradients are averaged before every
             optimizer step; evaluation is sharded and merged, so the reported
             metrics match a single-process run.
+        k_augment: option-count augmentation for choice items.  When set, a
+            ``fraction`` of each epoch's choice items are padded to a log-uniform
+            target K, with distractors drawn from the training pool.  Eval items
+            are never padded.  Selected items lose ``teacher_probs`` whether or
+            not they can be widened; ``control=True`` selects the same items and
+            drops the same teacher distributions without padding, for an A/B
+            baseline.  None (default) leaves the data untouched.
     """
+    from data.k_augment import apply_k_augment_with_stats
     from data.sampler import MultitaskSampler
 
     device = next(model.parameters()).device
@@ -894,7 +903,29 @@ def train_multitask(
     for epoch in range(1, epochs + 1):
         t0 = time.monotonic()
 
-        epoch_items = shard(sampler.sample_epoch(epoch - 1), rank, world_size)
+        epoch_items = sampler.sample_epoch(epoch - 1)
+        if k_augment is not None:
+            epoch_items, aug_stats = apply_k_augment_with_stats(
+                epoch_items, k_augment, epoch=epoch - 1
+            )
+            if epoch == 1 or epoch % 5 == 0:
+                mode = "control" if k_augment.control else "pad"
+                print(
+                    f"  k_augment ({mode}): choice options {aug_stats.encodes_before} -> "
+                    f"{aug_stats.encodes_after} "
+                    f"(fraction={k_augment.fraction}, K in [{k_augment.min_k}, "
+                    f"{k_augment.max_k}], selected {aug_stats.selected}/"
+                    f"{aug_stats.choice_items}, padded {aug_stats.padded}, "
+                    f"realised K mean {aug_stats.realised_mean:.1f} max "
+                    f"{aug_stats.realised_max}, target mean {aug_stats.target_mean:.1f}, "
+                    f"under-filled {aug_stats.under_filled}, "
+                    f"teacher_probs dropped {aug_stats.teacher_probs_dropped})",
+                    flush=True,
+                )
+        # Augment the full epoch before sharding: every rank sees the same
+        # distractor pool and the same per-item selection, then trains on its
+        # stride shard.
+        epoch_items = shard(epoch_items, rank, world_size)
 
         train_stats = train_epoch(
             model, epoch_items, optimizer, max_grad_norm,

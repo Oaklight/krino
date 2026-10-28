@@ -1,0 +1,60 @@
+{
+  "readout": "pooled-attention",
+  "checkpoint": "/home/pding/lambda_home/projects/open-decisions/model/checkpoints/sweep_reranker0.6b_r64_mlp0/epoch_005.pt",
+  "config": "model/configs/r2_reranker0.6b.yaml",
+  "option_chunk_size": 32,
+  "n_items": 300,
+  "real_pool_size": 80,
+  "stress_pool_size": 264,
+  "elapsed_s": 375.1,
+  "by_option_count": {
+    "4": {
+      "accuracy": 0.6766666666666666,
+      "correct": 203,
+      "n": 300,
+      "pool": "banking77-real"
+    },
+    "8": {
+      "accuracy": 0.5566666666666666,
+      "correct": 167,
+      "n": 300,
+      "pool": "banking77-real"
+    },
+    "16": {
+      "accuracy": 0.4533333333333333,
+      "correct": 136,
+      "n": 300,
+      "pool": "banking77-real"
+    },
+    "32": {
+      "accuracy": 0.32,
+      "correct": 96,
+      "n": 300,
+      "pool": "banking77-real"
+    },
+    "64": {
+      "accuracy": 0.23666666666666666,
+      "correct": 71,
+      "n": 300,
+      "pool": "banking77-real"
+    },
+    "80": {
+      "accuracy": 0.23,
+      "correct": 69,
+      "n": 300,
+      "pool": "banking77-real"
+    },
+    "128": {
+      "accuracy": 0.27666666666666667,
+      "correct": 83,
+      "n": 300,
+      "pool": "banking77-plus-variants"
+    },
+    "256": {
+      "accuracy": 0.21666666666666667,
+      "correct": 65,
+      "n": 300,
+      "pool": "banking77-plus-variants"
+    }
+  }
+}
