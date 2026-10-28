@@ -68,29 +68,67 @@ class LayerMixer(nn.Module):
     layers.  ``weighted`` learns a softmax mixture over every layer; it is
     initialised to put :data:`_INIT_LAST_WEIGHT` of the weight on the final
     layer, so training starts from the representation the frozen baseline
-    used and moves away from it only where that helps.
+    used and moves away from it only where that helps.  ``layer`` takes a
+    single middle layer.  ``fuse_pair`` takes two layers, concatenated or
+    summed; a concatenation doubles the output width, which a projection
+    downstream must bring back to the backbone width.
+
+    Layer indices follow ``hidden_states``: index 0 is the embedding output
+    and index ``k`` is the output of the ``k``-th transformer block, so a
+    28-layer backbone has 29 entries and ``layer=16`` reads block 16.
 
     Args:
         n_layers: Number of entries in the backbone's ``hidden_states``
             tuple, i.e. transformer layers plus the embedding output.
-        mode: ``"last"``, ``"mean_last_n"`` or ``"weighted"``.
+        mode: ``"last"``, ``"mean_last_n"``, ``"weighted"``, ``"layer"`` or
+            ``"fuse_pair"``.
         n: Window size for ``mean_last_n``.  Ignored by the other modes.
+        layer: Layer index for ``layer``.
+        pair: Two layer indices for ``fuse_pair``.
+        fusion: ``"concat"`` or ``"sum"`` for ``fuse_pair``.
 
     Raises:
-        ValueError: If ``mode`` is unknown or ``n`` is out of range.
+        ValueError: If ``mode`` is unknown, ``n`` is out of range, or the
+            mode-specific layer selection is incomplete or out of range.
     """
 
-    MODES = ("last", "mean_last_n", "weighted")
+    MODES = ("last", "mean_last_n", "weighted", "layer", "fuse_pair")
 
-    def __init__(self, n_layers: int, mode: str = "last", n: int = 4) -> None:
+    def __init__(
+        self,
+        n_layers: int,
+        mode: str = "last",
+        n: int = 4,
+        layer: int | None = None,
+        pair: tuple[int, int] | None = None,
+        fusion: str = "concat",
+    ) -> None:
         super().__init__()
         if mode not in self.MODES:
             raise ValueError(f"Unknown readout mode {mode!r}; expected one of {self.MODES}")
         if mode == "mean_last_n" and not 1 <= n <= n_layers:
             raise ValueError(f"readout n={n} outside [1, {n_layers}]")
+        if mode == "layer" and (layer is None or not 0 <= layer < n_layers):
+            raise ValueError(
+                f"readout layer={layer!r} outside [0, {n_layers - 1}]"
+            )
+        if mode == "fuse_pair":
+            if pair is None or len(pair) != 2:
+                raise ValueError(f"readout pair={pair!r} needs two layer indices")
+            if not all(0 <= index < n_layers for index in pair):
+                raise ValueError(
+                    f"readout pair={pair!r} outside [0, {n_layers - 1}]"
+                )
+            if fusion not in ("concat", "sum"):
+                raise ValueError(
+                    f"readout fusion={fusion!r}; expected 'concat' or 'sum'"
+                )
         self.mode = mode
         self.n = n
         self.n_layers = n_layers
+        self.layer = layer
+        self.pair = tuple(pair) if pair is not None else None
+        self.fusion = fusion
         if mode == "weighted":
             logits = torch.zeros(n_layers)
             if n_layers > 1:
@@ -102,12 +140,29 @@ class LayerMixer(nn.Module):
                 logits[-1] = math.log((n_layers - 1) * weight / (1.0 - weight))
             self.layer_logits = nn.Parameter(logits)
 
+    @property
+    def out_mult(self) -> int:
+        """Width multiplier relative to one hidden state's last dimension."""
+        return 2 if self.mode == "fuse_pair" and self.fusion == "concat" else 1
+
     def forward(self, hidden_states: tuple[torch.Tensor, ...]) -> torch.Tensor:
-        """Returns the mixed hidden states, shaped like one layer's output."""
+        """Returns the mixed hidden states, shaped like one layer's output.
+
+        ``fuse_pair`` with ``fusion="concat"`` returns twice the hidden width;
+        the caller is responsible for projecting it back down.
+        """
         if self.mode == "last":
             return hidden_states[-1]
         if self.mode == "mean_last_n":
             return torch.stack(hidden_states[-self.n :]).mean(0)
+        if self.mode == "layer":
+            return hidden_states[self.layer]
+        if self.mode == "fuse_pair":
+            first, second = self.pair
+            left, right = hidden_states[first], hidden_states[second]
+            if self.fusion == "concat":
+                return torch.cat([left, right], dim=-1)
+            return left + right
 
         weights = torch.softmax(self.layer_logits, dim=0).to(hidden_states[0].dtype)
         out = hidden_states[0] * weights[0]
