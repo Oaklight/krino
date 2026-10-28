@@ -256,6 +256,15 @@ def main() -> int:
                 "accuracy": correct / max(n, 1),
                 "correct": correct,
                 "n": n,
+                # The curve changes construction above the real class count:
+                # rows up to 80 use only real Banking77 intents, larger rows
+                # add numbered variants.  Record it so a mixed table cannot
+                # be read as one pool.
+                "pool": (
+                    "banking77-real"
+                    if k <= len(real_pool)
+                    else "banking77-plus-variants"
+                ),
             }
             print(
                 f"  K={k:>3}: acc={correct / max(n, 1):.4f} "
@@ -269,6 +278,8 @@ def main() -> int:
         "config": str(args.config),
         "option_chunk_size": args.option_chunk_size,
         "n_items": len(eval_items),
+        "real_pool_size": len(real_pool),
+        "stress_pool_size": len(pool),
         "elapsed_s": round(time.monotonic() - started, 1),
         "by_option_count": by_k,
     }
