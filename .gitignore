@@ -8,6 +8,13 @@ model/docs/gpu-inventory.md
 data/benchmarks/synthetic/synthetic.jsonl
 data/benchmarks/synthetic/.hf_manifest.json
 
+# Materialised benchmark corpora: hundreds of megabytes, rebuilt on demand by
+# `python -m data.pipeline <source>`.  The authored eval set is hand-written and
+# stays tracked.
+data/benchmarks/*.jsonl
+!data/benchmarks/openjev/authored144.jsonl
+
+
 # Web dashboard
 web/node_modules/
 web/.next/

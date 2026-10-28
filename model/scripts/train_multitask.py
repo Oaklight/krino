@@ -31,6 +31,7 @@ import json
 import os
 import random
 import sys
+from collections import Counter
 from pathlib import Path
 
 import torch
@@ -40,6 +41,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from data.format import TypedQuestion
+from data.pool_report import print_pool_report
 from data.sampler import SamplerConfig, sampling_type
 from data.score_form import convert_training_items
 from data.sources import (
@@ -112,10 +114,18 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
 def print_data_summary(
     train_items: list[TypedQuestion],
     eval_items: list[TypedQuestion],
+    sampling: dict | None = None,
 ) -> None:
-    """Print a summary of loaded data by source and type."""
-    from collections import Counter
+    """Print a summary of loaded data by source and type.
 
+    Args:
+        train_items: Training items after any source caps and score-form
+            conversion.
+        eval_items: Evaluation items.
+        sampling: The config's ``sampling`` section. When it carries
+            ``epoch_size`` and type weights, the per-type pool is compared
+            against the slots the sampler gives that type per epoch.
+    """
     train_by_source: Counter[str] = Counter()
     train_by_type: Counter[str] = Counter()
     eval_by_source: Counter[str] = Counter()
@@ -156,6 +166,9 @@ def print_data_summary(
             f"type_ratios still apply",
             flush=True,
         )
+
+    if sampling:
+        print_pool_report(train_by_type, sampling)
 
 
 def main() -> int:
@@ -470,7 +483,7 @@ def main() -> int:
             flush=True,
         )
 
-    print_data_summary(all_train, all_eval)
+    print_data_summary(all_train, all_eval, cfg.get("sampling") or {})
 
     # Load backbone and build model
     print(f"\nLoading backbone: {model_name}", flush=True)

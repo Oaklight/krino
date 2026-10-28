@@ -13,6 +13,7 @@ Each loader is tested independently for:
 from __future__ import annotations
 
 import random
+from collections import Counter
 from unittest.mock import patch
 
 import pytest
@@ -245,6 +246,58 @@ def _mock_drop(dataset, config, split):
     ]
 
 
+def _mock_helpsteer(dataset, config, split):
+    return [
+        {
+            "prompt": f"Prompt {i}",
+            "response": f"Response {i}",
+            "helpfulness": i % 5,
+            "correctness": (i + 1) % 5,
+            "coherence": (i + 2) % 5,
+            "complexity": (i + 3) % 5,
+            "verbosity": (i + 4) % 5,
+        }
+        for i in range(20)
+    ]
+
+
+def _mock_wmt_da(dataset, config, split):
+    return [
+        {
+            "lp": "en-de",
+            "src": f"Source sentence {i}",
+            "mt": f"Translated sentence {i}",
+            "ref": f"Reference sentence {i}",
+            "score": 0.0,
+            "raw": float((i * 20) % 101),
+            "annotators": 3,
+            "domain": "news",
+            "year": 2022 if i % 4 == 0 else 2019,
+        }
+        for i in range(20)
+    ]
+
+
+def _mock_ultrafeedback(dataset, config, split):
+    return [
+        {
+            "prompt": f"Instruction {i}",
+            "prompt_id": f"prompt-{i}",
+            "chosen": [
+                {"role": "user", "content": f"Instruction {i}"},
+                {"role": "assistant", "content": f"Chosen answer {i}"},
+            ],
+            "rejected": [
+                {"role": "user", "content": f"Instruction {i}"},
+                {"role": "assistant", "content": f"Rejected answer {i}"},
+            ],
+            "score_chosen": float(1 + i % 10),
+            "score_rejected": float(1 + (i + 5) % 10),
+        }
+        for i in range(20)
+    ]
+
+
 _MOCK_DISPATCH: dict[str, callable] = {
     "legacy-datasets/banking77": _mock_banking77,
     "stanfordnlp/sst2": _mock_sst2,
@@ -274,6 +327,9 @@ _MOCK_DISPATCH: dict[str, callable] = {
     "emozilla/quality": _mock_quality,
     "hotpotqa/hotpot_qa": _mock_hotpotqa,
     "ucinlp/drop": _mock_drop,
+    "nvidia/HelpSteer": _mock_helpsteer,
+    "RicardoRei/wmt-da-human-evaluation": _mock_wmt_da,
+    "HuggingFaceH4/ultrafeedback_binarized": _mock_ultrafeedback,
 }
 
 
@@ -296,6 +352,9 @@ EXPECTED_TYPES: dict[str, set[str]] = {
     "typed_decisions": {"choice", "noul", "score"},
     "stsb": {"score"},
     "sst5": {"score"},
+    "helpsteer": {"score"},
+    "wmt_da": {"score"},
+    "ultrafeedback": {"score"},
     "arc": {"choice"},
     "race": {"choice"},
     "hellaswag": {"choice"},
@@ -486,6 +545,55 @@ class TestLoaderFormat:
             assert reconstructed.question["type"] == item.question["type"]
 
 
+# ---------------------------------------------------------------------------
+# Score-source integrity
+# ---------------------------------------------------------------------------
+
+_SCORE_LEVELS = {
+    "helpsteer": {
+        tuple(levels) for _, levels in pipeline.HELPSTEER_ATTRIBUTES.values()
+    },
+    "wmt_da": {tuple(pipeline.WMT_DA_LEVELS)},
+    "ultrafeedback": {tuple(pipeline.ULTRAFEEDBACK_LEVELS)},
+}
+
+
+@pytest.mark.parametrize("source", ["helpsteer", "wmt_da", "ultrafeedback"])
+class TestScoreLoaderIntegrity:
+    """Pin the properties that make an ordinal source usable as supervision."""
+
+    def _items(self, source: str) -> list[TypedQuestion]:
+        return list(pipeline.LOADERS[source]())
+
+    def test_nonempty(self, source):
+        assert self._items(source)
+
+    def test_label_diversity(self, source):
+        items = self._items(source)
+        counts = Counter(int(item.label) for item in items)
+        assert len(counts) >= 3, (
+            f"{source}: only {len(counts)} distinct levels: {dict(counts)}"
+        )
+        top_share = max(counts.values()) / len(items)
+        assert top_share <= 0.90, (
+            f"{source}: level {counts.most_common(1)[0][0]} holds "
+            f"{top_share:.0%} of items"
+        )
+
+    def test_no_gold_in_instruction(self, source):
+        for item in self._items(source):
+            instructions = item.question["instructions"].lower()
+            assert str(int(item.label)) not in instructions, item.id
+            assert "gold" not in instructions, item.id
+            assert "expected" not in instructions, item.id
+
+    def test_level_ordering(self, source):
+        for item in self._items(source):
+            levels = tuple(item.question["criteria"])
+            assert levels in _SCORE_LEVELS[source], item.id
+            assert 0 <= item.label < len(levels), item.id
+
+
 class TestLoaderRegistry:
     """Verify the LOADERS dict is complete and consistent."""
 
@@ -496,18 +604,19 @@ class TestLoaderRegistry:
             "yelp", "swag", "multirc", "mednli", "contractnli", "codesearchnet",
             "mmlu", "winogrande", "piqa", "commonsenseqa", "logiqa", "anli", "boolq",
             "quality", "hotpotqa", "drop",
+            "helpsteer", "wmt_da", "ultrafeedback",
             "synthetic", "jevbench",
         }
         assert set(pipeline.LOADERS.keys()) == expected
 
     def test_loader_count(self):
-        assert len(pipeline.LOADERS) == 30
+        assert len(pipeline.LOADERS) == 33
 
     def test_load_all_works(self):
         items = pipeline.load_all()
         assert len(items) > 0
         sources = {item.source for item in items}
-        assert len(sources) == 30
+        assert len(sources) == 33
 
     def test_load_all_single_source(self):
         items = pipeline.load_all(["sst2"])
@@ -534,3 +643,42 @@ class TestBalanceCaps:
             assert isinstance(cap, int) and cap > 0, (
                 f"DEFAULT_CAPS['{source}'] should be positive int, got {cap}"
             )
+
+
+class TestOrdinalDirection:
+    """The level mappings must run from the worst to the best response.
+
+    Range checks cannot see an inverted scale: `4 - level` still returns
+    0..4 and every existing ScoreLoader test passes with it, but the model is
+    then trained to answer the opposite of what every rater said.  These
+    tests pin the direction with known raw values.
+    """
+
+    def test_wmt_da_increases_with_the_raw_score(self):
+        cases = [(0.0, 0), (19.9, 0), (20.0, 1), (59.9, 2), (60.0, 3), (80.0, 4), (100.0, 4)]
+        for raw, expected in cases:
+            assert pipeline._wmt_da_level(raw) == expected, raw
+
+    def test_wmt_da_is_monotone(self):
+        levels = [pipeline._wmt_da_level(raw / 10.0) for raw in range(0, 1001)]
+        assert levels == sorted(levels)
+
+    def test_ultrafeedback_increases_with_the_overall_score(self):
+        cases = [(1.0, 0), (2.0, 0), (3.0, 1), (5.5, 2), (7.3, 3), (9.0, 4), (10.0, 4)]
+        for raw, expected in cases:
+            assert pipeline._ultrafeedback_level(raw) == expected, raw
+
+    def test_ultrafeedback_is_monotone(self):
+        levels = [
+            pipeline._ultrafeedback_level(1.0 + step / 100.0) for step in range(0, 901)
+        ]
+        assert levels == sorted(levels)
+
+    def test_helpsteer_uses_the_rating_as_the_level(self):
+        # HelpSteer rates 0-4 where 0 is the worst end of each attribute's list.
+        for value in range(5):
+            assert pipeline._helpsteer_level(value) == value
+
+    def test_each_helpsteer_attribute_has_one_level_per_rating(self):
+        for attribute, (_, levels) in pipeline.HELPSTEER_ATTRIBUTES.items():
+            assert len(levels) == 5, attribute
