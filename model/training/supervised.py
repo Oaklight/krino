@@ -25,6 +25,7 @@ from .distributed import (
     shard,
 )
 from .losses import rps_loss
+from .memory import format_epoch_memory, peak_snapshot
 from ..evaluation.breakdown import build_eval_breakdown
 
 
@@ -900,6 +901,9 @@ def train_multitask(
     best_eval_loss = float("inf")
     history: list[dict[str, Any]] = []
 
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+
     for epoch in range(1, epochs + 1):
         t0 = time.monotonic()
 
@@ -944,6 +948,31 @@ def train_multitask(
             "lr": scheduler.get_last_lr()[0],
         }
 
+        # Device memory per epoch.  An 8B LoRA run reached 89 GiB and OOMed on
+        # its fifth epoch (issue #161); without a per-epoch series there is no
+        # way to tell growth from fragmentation after the fact.
+        #
+        # Both numbers are *peaks* over the phase they describe, not point
+        # samples, and the counters are reset between the phases so training and
+        # eval are never charged to each other — a snapshot taken before eval
+        # attributes eval's peak to the next epoch, which is the shape that makes
+        # a heavier eval look like growth.
+        on_cuda = device.type == "cuda"
+
+        def _peak_snapshot() -> dict[str, Any] | None:
+            if not on_cuda:
+                return None
+            return peak_snapshot(
+                torch.cuda.max_memory_allocated,
+                torch.cuda.max_memory_reserved,
+                torch.cuda.memory_stats,
+                torch.cuda.reset_peak_memory_stats,
+            )
+
+        train_mem = _peak_snapshot()
+        if train_mem is not None:
+            log["gpu_mem_gb"] = {"train": train_mem}
+
         if epoch % eval_every == 0 or epoch == epochs:
             eval_stats = gather_eval_stats(
                 eval_epoch_detailed(
@@ -954,11 +983,16 @@ def train_multitask(
             log["eval"] = eval_stats
 
             agg = eval_stats["aggregate"]
+            eval_mem = _peak_snapshot()
+            if eval_mem is not None:
+                log["gpu_mem_gb"]["eval"] = eval_mem
+
+            mem_text = format_epoch_memory(train_mem, eval_mem)
             if rank == 0:
                 print(
                     f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} "
                     f"eval_loss={agg['mean_loss']:.4f} eval_acc={agg['accuracy']:.4f} "
-                    f"({elapsed:.1f}s)"
+                    f"({elapsed:.1f}s){mem_text}"
                 )
 
             # Per-type summary
