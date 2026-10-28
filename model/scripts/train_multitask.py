@@ -30,6 +30,7 @@ import argparse
 import json
 import random
 import sys
+from collections import Counter
 from pathlib import Path
 
 import torch
@@ -96,13 +97,55 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
     )
 
 
+def _print_pool_report(
+    pool_by_type: Counter[str],
+    sampling: dict,
+) -> None:
+    """Print how often each type's pool is resampled within one epoch.
+
+    The training mixture is defined by ``type_ratios`` over a fixed
+    ``epoch_size``, not by the pool sizes.  When one type's pool is much
+    smaller than its share of the epoch, its items are resampled far more
+    often than the others — less diverse supervision at a higher overfitting
+    risk — and nothing else in the log makes that visible.
+    """
+    ratios = sampling.get("difficulty_weights") or sampling.get("type_ratios") or {}
+    epoch_size = sampling.get("epoch_size")
+    if not ratios or not epoch_size:
+        return
+
+    total_ratio = sum(ratios.values())
+    print("\n  Pool vs per-epoch sampling:", flush=True)
+    print(
+        f"  {'Type':<8} {'Pool':>8} {'Slots':>8} {'Resampling':>11}",
+        flush=True,
+    )
+    print(f"  {'-' * 8} {'-' * 8} {'-' * 8} {'-' * 11}", flush=True)
+    for q_type in sorted(ratios):
+        pool = pool_by_type.get(q_type, 0)
+        slots = int(epoch_size * ratios[q_type] / total_ratio)
+        repeats = f"{slots / pool:.2f}x" if pool else "n/a"
+        print(
+            f"  {q_type:<8} {pool:>8,} {slots:>8,} {repeats:>11}",
+            flush=True,
+        )
+
+
 def print_data_summary(
     train_items: list[TypedQuestion],
     eval_items: list[TypedQuestion],
+    sampling: dict | None = None,
 ) -> None:
-    """Print a summary of loaded data by source and type."""
-    from collections import Counter
+    """Print a summary of loaded data by source and type.
 
+    Args:
+        train_items: Training items after any source caps and score-form
+            conversion.
+        eval_items: Evaluation items.
+        sampling: The config's ``sampling`` section. When it carries
+            ``epoch_size`` and type weights, the per-type pool is compared
+            against the slots the sampler gives that type per epoch.
+    """
     train_by_source: Counter[str] = Counter()
     train_by_type: Counter[str] = Counter()
     eval_by_source: Counter[str] = Counter()
@@ -143,6 +186,9 @@ def print_data_summary(
             f"type_ratios still apply",
             flush=True,
         )
+
+    if sampling:
+        _print_pool_report(train_by_type, sampling)
 
 
 def main() -> int:
@@ -375,7 +421,7 @@ def main() -> int:
             flush=True,
         )
 
-    print_data_summary(all_train, all_eval)
+    print_data_summary(all_train, all_eval, cfg.get("sampling") or {})
 
     # Load backbone and build model
     print(f"\nLoading backbone: {model_name}", flush=True)
