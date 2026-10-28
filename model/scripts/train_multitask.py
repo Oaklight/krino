@@ -41,7 +41,7 @@ sys.path.insert(0, str(ROOT))
 from data.format import TypedQuestion
 from data.sampler import SamplerConfig
 from data.score_form import convert_training_items
-from data.sources import collect_synthetic_sources, load_source_items
+from data.sources import collect_synthetic_sources, load_source_items, missing_sources
 from model.settings import describe_effective_length, format_settings, resolve_setting
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
@@ -330,6 +330,7 @@ def main() -> int:
     rng = random.Random(seed)
     all_train: list[TypedQuestion] = []
     all_eval: list[TypedQuestion] = []
+    loaded: dict[str, tuple[int, int]] = {}
 
     for source_name, source_cfg in sources_cfg.items():
         if source_cfg is None:
@@ -339,8 +340,32 @@ def main() -> int:
         all_eval.extend(eval_items)
         n_train = len(train_items)
         n_eval = len(eval_items)
+        loaded[source_name] = (n_train, n_eval)
         if n_train > 0 or n_eval > 0:
             print(f"  {source_name}: {n_train} train, {n_eval} eval", flush=True)
+
+    empty = missing_sources(loaded, sources_cfg)
+    if empty:
+        print(
+            f"\nError: {len(empty)} configured source(s) produced no items: "
+            f"{', '.join(empty)}",
+            file=sys.stderr,
+            flush=True,
+        )
+        print(
+            "The run would train on a different mixture than the config "
+            "describes, and its numbers would not be comparable with the rest "
+            "of the project. Prepare the data or set `allow_missing: true` on "
+            "the source if the gap is intended.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 1
+    print(
+        f"\n  {len(all_train):,} train / {len(all_eval):,} eval items "
+        f"from {len(sources_cfg)} configured sources",
+        flush=True,
+    )
 
     if score_form != "off":
         # Training only: evaluation keeps the original types so accuracy stays
