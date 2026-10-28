@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from data.synthetic_split import (
     CACHE_NAME,
     CACHE_VERSION,
@@ -237,3 +239,109 @@ class TestCorpusFingerprint:
 
     def test_missing_file_disables_cache(self, tmp_path):
         assert corpus_fingerprint([tmp_path / "absent.jsonl"]) == ""
+
+
+def _mutate(text: str, step: int) -> str:
+    """Reverse one in ``step`` words, calibrated against exact Jaccard.
+
+    Reversing a word destroys every 5-gram it touches, so the mapping from words
+    changed to shingles changed is far from 1:1. On BASE_STATE, step 8 lands at
+    ~0.61 and step 12 at ~0.76.
+    """
+    words = text.split()
+    return " ".join("z" + w[::-1] if i % step == 0 else w for i, w in enumerate(words))
+
+
+class TestMultiTextRecall:
+    """A family's second or third state must still be compared.
+
+    The cache of already-compared pairs used to be keyed on the family pair, so
+    the first text combination decided the pair forever and a duplicate reachable
+    only through a counterfactual or paraphrase state stayed in another split.
+    """
+
+    def test_duplicate_reachable_through_second_text_merges(self):
+        # The shape the old cache missed: the first combination clears the
+        # prefilter but not the threshold, so the pair is recorded as "checked"
+        # and the family's second state is never compared. Elena's numbers were
+        # base-base 0.67 and counterfactual-base 0.94.
+        from data.synthetic_split import _exact_jaccard
+        from data.synthetic_split import _prefilter_for
+
+        from data.lsh import LSHIndex
+        from data.synthetic_split import DEFAULT_BANDS, DEFAULT_NUM_PERM, _jaccard
+
+        base = BASE_STATE
+        partial = _mutate(base, 7)   # 0.644 exact Jaccard, 0.625 estimated
+        near = _mutate(base, 12)     # 0.759 exact Jaccard
+
+        assert _exact_jaccard(base, partial) < 0.7
+        lsh = LSHIndex(num_perm=DEFAULT_NUM_PERM, bands=DEFAULT_BANDS, seed=42)
+        estimate = _jaccard(
+            lsh.make_minhash(base).signature, lsh.make_minhash(partial).signature
+        )
+        assert estimate > _prefilter_for(0.7, DEFAULT_NUM_PERM), (
+            "the first combination must clear the prefilter, otherwise the old "
+            "cache never recorded it and the bug does not reproduce"
+        )
+        assert _exact_jaccard(base, near) >= 0.7
+
+        # Family A holds the partial match first, the exact duplicate second.
+        clusters = cluster_families([[partial, near], [base]], threshold=0.7)
+
+        assert clusters[0] == clusters[1], (
+            "a duplicate reachable through a family's second state was not merged"
+        )
+
+    def test_first_combination_above_threshold_still_merges(self):
+        states = [[BASE_STATE, UNRELATED_STATE], [NEAR_DUP_STATE]]
+        clusters = cluster_families(states, threshold=0.7)
+        assert clusters[0] == clusters[1]
+
+    def test_unrelated_families_stay_separate(self):
+        states = [[BASE_STATE, UNRELATED_STATE], [NEAR_DUP_STATE, "x" * 400]]
+        clusters = cluster_families(states, threshold=0.7)
+        assert clusters[0] == clusters[1]
+        clusters = cluster_families([[BASE_STATE], [UNRELATED_STATE]], threshold=0.7)
+        assert clusters[0] != clusters[1]
+
+
+class TestPrefilter:
+    def test_prefilter_is_four_sigma_below_threshold(self):
+        from data.synthetic_split import _prefilter_for
+
+        threshold, num_perm = 0.7, 64
+        sigma = (threshold * (1 - threshold) / num_perm) ** 0.5
+        assert _prefilter_for(threshold, num_perm) == pytest.approx(threshold - 4 * sigma)
+        # The old fixed cutoff was far tighter and was the dominant false-negative.
+        assert _prefilter_for(threshold, num_perm) < threshold - 0.15
+
+    def test_prefilter_never_goes_negative(self):
+        from data.synthetic_split import _prefilter_for
+
+        # sigma = sqrt(0.05 * 0.95 / 16) = 0.0545, four of those exceed 0.05.
+        assert _prefilter_for(0.05, 16) == 0.0
+
+
+class TestSplitKeyAgreement:
+    """The checker and the loader must assign the same split for the same input."""
+
+    def test_assign_splits_keys_on_family_idx_not_position(self):
+        # Positional indices are deliberately permuted: 7, 3, 5.
+        clusters = [0, 0, 2]
+        splits = assign_splits("dom", clusters, 0.5, family_keys=[7, 3, 5])
+        # Lowest _family_idx in cluster 0 is 3, not the position 0.
+        assert splits[0] == split_from_key("dom-3", 0.5)
+        assert splits[1] == split_from_key("dom-3", 0.5)
+        assert splits[2] == split_from_key("dom-5", 0.5)
+
+    def test_domain_splits_matches_assign_splits(self):
+        families = [{"state": BASE_STATE}, {"state": NEAR_DUP_STATE}, {"state": UNRELATED_STATE}]
+        family_idxs = [7, 3, 5]
+
+        via_loader = domain_splits("dom", families, family_idxs=family_idxs, eval_ratio=0.5)
+        states = [family_state_texts(f, None) for f in families]
+        clusters = cluster_families(states, force_group=family_idxs)
+        via_helper = assign_splits("dom", clusters, 0.5, family_keys=family_idxs)
+
+        assert via_loader == via_helper

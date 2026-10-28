@@ -117,7 +117,11 @@ def main() -> int:
             for i, fam in enumerate(families)
         ]
         clusters = cluster_families(states, threshold=args.threshold)
-        splits = assign_splits(domain, clusters, args.eval_ratio)
+        # Pass the real ``_family_idx`` values: keying on position here made this
+        # table describe a different split from the one the loader assigns.
+        splits = assign_splits(
+            domain, clusters, args.eval_ratio, family_keys=family_idxs
+        )
 
         by_cluster: dict[int, set[str]] = {}
         for label, split in zip(clusters, splits):
