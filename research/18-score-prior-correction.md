@@ -235,6 +235,51 @@ items, `typed_decisions` (161) plus synthetic (57). Any training-side work aimed
 at clause 2 should be aimed at that data, not at the calibration layer and not at
 the aggregate.
 
+## The sentinel was the six-level scale's problem — measured, not argued
+
+The section above reasons about *excluding* STS-B. #177 makes the better test
+possible: drop only the rows whose gold label was never observed, and keep the
+281 that have one. Score logits are now dumped with item ids
+(`score_vote_adjust.py --dump-logits`) on the cluster-disjoint split at epoch 5,
+both seeds, and the 219 items whose id starts `stsb-test` are removed before the
+metrics are computed:
+
+| scale | seed 123 before | seed 123 after | seed 42 before | seed 42 after |
+|---|---:|---:|---:|---:|
+| 4-level (218) | 0.4196 | 0.4196 | 0.5031 | 0.5031 |
+| 5-level (1,113) | 0.8314 | 0.8314 | 0.8481 | 0.8481 |
+| **6-level** | 0.2654 | **0.9222** | 0.2969 | **0.9181** |
+| **mixed, argmax** | 0.6278 | **0.7916** | 0.6565 | **0.8136** |
+| mixed, ordinal median | 0.6088 | 0.7735 | 0.6674 | 0.8261 |
+
+**The six-level scale was the sentinel, and it clears the bar on both seeds once
+the withheld rows go** — 0.9222 and 0.9181 against 0.85, from 0.27 and 0.30. That
+is a 65-point move on a scale where nothing about the model changed, which is
+what a fabricated gold label looks like.
+
+**The aggregate still misses, now for an ordinary reason.** Mixed QWK is 0.7916
+and 0.8136 — short by 5.8 and 3.6 points rather than by 22 — and the binding
+constraint has moved: it is no longer the contaminated six-level scale but the
+**four-level one, at 0.4196 and 0.5031**, with the five-level scale at 0.83/0.85.
+The arithmetic from the section above carries over unchanged — holding five
+levels where it is, four levels would have to reach 0.968 for the aggregate to
+clear 0.85 — and the four-level scale is `typed_decisions` (161 items) plus
+synthetic (57). Any training-side work aimed at clause 2 should be aimed there.
+
+**This supersedes two statements earlier in this note.** "Clause 2's QWK does not
+have a passing scale that survives a second seed" was true of the contaminated
+slice and is not true now: the six-level scale passes on both seeds. And the
+decoder result no longer points the same way on two seeds — on the corrected
+slice the ordinal median is **−1.8 pp on seed 123** ([−0.0378, +0.0031]) and
+**+1.25 pp on seed 42** ([−0.0005, +0.0259]). A decoder that helped under
+contaminated labels and flips sign without them was fitting the contamination,
+so the ~1.1 pp decoder gain is withdrawn along with the aggregate it was measured
+on.
+
+The 219 dropped rows are not 255 because the eval draw caps stsb at 500 items and
+splits them 281 validation / 219 test; the withheld fraction of the source is the
+same, the slice just differs.
+
 ## What this closes
 
 Clause 2's QWK half is **not post-hoc fixable**. The three cheap post-hoc levers
