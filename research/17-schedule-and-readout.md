@@ -326,6 +326,11 @@ cannot pass quietly again.
   checkpoint, so it is less exposed to that spread than the absolute number is.
 * **Routing trades latency for accuracy** on the short-list path: native scores one forward per
   option rather than one per question, which matters for goal item 5 and is not accounted for here.
+* **The routed system's own ECE is not measured.** Each path calibrates under 0.05 with its own
+  fitted temperature (head 0.0180 at epoch 10, native 0.0406 on the 1,500-item sample), but a single
+  temperature over the mixture would be wrong — the two paths have different confidences by
+  construction. The routed ECE needs per-path temperatures fitted and reported together, which is a
+  follow-up, not something this note has done.
 * **The route is a product decision, not a training result.** A single head that learned to compete
   over options would be the better fix; routing is what works today.
 * **One duplicated id** in the eval set (`synthetic-education_assessment-0160-noul-causal`, both
