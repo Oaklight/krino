@@ -197,6 +197,35 @@ this model passes in the strong sense, than by a two-sided 5 pp band across buck
 different distributions. I have not changed the clause; I am reporting that the model does not
 meet it as written.
 
+### The bucket comparison is one benchmark against thirteen
+
+Following that second point to its source: **every >20-option item is banking77** (500 items, mean
+80 options, chance 1.25%), and the ≤5 bucket is thirteen different benchmarks. So the 20.03 pp gap
+is banking77's accuracy against the average of agnews, arc, race, hellaswag, swag, fever and the
+rest — a statement about how hard intent classification is compared with those tasks, not about
+what happens to this model when option lists grow.
+
+Where the corpus *can* hold the question fixed, it does, and the answer is that option count barely
+matters:
+
+| source | option counts present | accuracy |
+|---|---|---|
+| synthetic | 4 options (n=185) | 0.535 |
+| synthetic | 5 options (n=113) | 0.558 |
+| typed_decisions | 4 options (n=96) | 0.500 |
+| typed_decisions | 5 options (n=46) | 0.609 |
+
+Both move in the *favourable* direction, and the larger sample moves 2.3 pp. Nothing here degrades
+with option count.
+
+**The consequence is that the current eval corpus cannot test clause 3's count half as written.**
+A matched test needs the same question rendered at different option counts, which is what the
+synthetic pipeline's `fill-variants` stage produces — those variants exist but are not in the eval
+mixture. Until they are, the honest report is: the clause fails numerically at +20.03 pp, the
+number compares tasks rather than counts, and the matched comparison (4→5 options) shows no
+degradation. That is a corpus gap to close before the clause can be either passed or failed with
+meaning.
+
 ## Caveats
 
 * **One seed at 10 epochs.** The seed-42 run is in flight; until it lands, 69.24 / 73.01 are single

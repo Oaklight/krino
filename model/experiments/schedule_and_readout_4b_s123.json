@@ -25,9 +25,30 @@
   },
   "clause_reading": "two-sided within 5 pp: FAIL; one-sided (long lists not worse): pass",
   "gap_pp": 20.03,
+  "gt20_all_from": "banking77 (500 items, mean 80 options, chance 0.0125)",
+  "interpretation": "the cross-bucket gap compares one benchmark against thirteen; the matched 4->5 option comparison shows no degradation, so the corpus cannot test the clause as written",
+  "le5_sources": "13 benchmarks (agnews, arc, race, hellaswag, swag, fever, ...)",
   "note": "gap widened from +4.6 pp on the 5-epoch weighted arm (#182) to +20.03 pp here",
   "noul_2": 0.8619,
-  "noul_3_5": 0.6399
+  "noul_3_5": 0.6399,
+  "within_source": {
+   "synthetic_k4": {
+    "acc": 0.535,
+    "n": 185
+   },
+   "synthetic_k5": {
+    "acc": 0.558,
+    "n": 113
+   },
+   "typed_k4": {
+    "acc": 0.5,
+    "n": 96
+   },
+   "typed_k5": {
+    "acc": 0.609,
+    "n": 46
+   }
+  }
  },
  "draw": {
   "items": 13444,
