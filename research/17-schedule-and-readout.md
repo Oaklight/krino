@@ -154,6 +154,31 @@ pairs and is evaluated on low ones. That is a within-source distribution shift c
 split, not something more training fixes, and it is separate from the 7 withheld-label rows #177
 removes.
 
+The label distributions say how bad that shift is. STS-B is the only source whose train and test
+marginals barely overlap:
+
+| source | split | level 0 share | full distribution |
+|---|---|---:|---|
+| stsb | train | 0.11 | 0.11 / 0.14 / 0.16 / 0.23 / 0.25 / 0.10 |
+| stsb | test | **0.56** | 0.56 / 0.08 / 0.09 / 0.12 / 0.10 / 0.04 |
+| sst5 | train | 0.13 | 0.13 / 0.26 / 0.19 / 0.27 / 0.15 |
+| sst5 | test | 0.13 | 0.13 / 0.28 / 0.19 / 0.24 / 0.17 |
+| yelp | train | 0.19 | uniform |
+| yelp | test | 0.20 | uniform |
+| typed_decisions | train | 0.13 | 0.13 / 0.26 / 0.30 / 0.30 / 0.01 |
+| typed_decisions | test | 0.15 | 0.15 / 0.20 / 0.32 / 0.32 / 0.01 |
+
+Every other source's train and test marginals match to within two points. STS-B's test set is 56%
+level 0 where its train set is 11% — a model trained on that train split is *correctly* prior-ed
+for level 0 to be rare, and then scored on a set where it dominates. **Its QWK of 0.287 therefore
+measures the benchmark's own train/test mismatch, not the model**, and its 500 items are 27% of
+the score eval.
+
+That is the strongest statement this note can make about clause 2: on the two sources whose
+distributions match and which are real human judgements (sst5 0.832, yelp 0.880), the model is at
+or near the 0.85 bar; the aggregate is pulled down by a benchmark that cannot be scored this way,
+and by the four-level group where the bottom-level aversion below is a genuine model weakness.
+
 **But fixing STS-B alone would not clear the bar.** Dropping it leaves 0.827 on the 1,113
 five-level items and 0.631 on the 218 four-level ones — a mixture of roughly 0.80 against a 0.85
 target. The 4-level group is our own data (typed_decisions and synthetic), where QWK at 0.63 is a
