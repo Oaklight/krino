@@ -25,6 +25,28 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v
 
+  # Eleven test files start with pytest.importorskip("torch") and therefore
+  # never ran: the job above has no torch, so they counted as skips. That is the
+  # hole a merge bug would hide in -- the LoRA merge is checked by exactly these
+  # tests. This job installs the CPU wheel and runs those files.
+  test-torch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install --no-deps -e .
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install pytest pytest-asyncio transformers
+
+      - name: Run the torch-dependent tests
+        run: pytest $(grep -rl 'importorskip("torch")' tests/) -v
+
   build-web:
     runs-on: ubuntu-latest
     steps:

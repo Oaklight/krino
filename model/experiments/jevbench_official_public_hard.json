@@ -1,0 +1,685 @@
+{
+ "note": "Public-item per-task outcomes published by the JevBench (Benchmark Heaven) v1.2 artifact, reduced to per-system accuracy on the 111 public hard items and their 67 choice items.",
+ "public_hard_choice_items": 67,
+ "public_hard_items": 111,
+ "revision": "v1.3.0",
+ "source": "https://raw.githubusercontent.com/fstandhartinger/jevbench/main/results/v1.2/jevbench-v1.2-per-task.json",
+ "systems": {
+  "bge-reranker-v2-m3": {
+   "display": "BAAI bge-reranker-v2-m3",
+   "hard_all": {
+    "accuracy": 0.3784,
+    "correct": 42,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.2687,
+    "correct": 18,
+    "n": 67
+   }
+  },
+  "certo": {
+   "display": "Certo v1 (AltSlate Labs)",
+   "hard_all": {
+    "accuracy": 0.3333,
+    "correct": 37,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.2239,
+    "correct": 15,
+    "n": 67
+   }
+  },
+  "classifier-dev-fast": {
+   "display": "classifier.dev (fast tier)",
+   "hard_all": {
+    "accuracy": 0.7027,
+    "correct": 78,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.7164,
+    "correct": 48,
+    "n": 67
+   }
+  },
+  "decider-2b": {
+   "display": "decider-2b (Mapika)",
+   "hard_all": {
+    "accuracy": 0.4955,
+    "correct": 55,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.5224,
+    "correct": 35,
+    "n": 67
+   }
+  },
+  "decider-35b-a3b": {
+   "display": "decider-35b-a3b (Mapika)",
+   "hard_all": {
+    "accuracy": 0.6667,
+    "correct": 74,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.6418,
+    "correct": 43,
+    "n": 67
+   }
+  },
+  "decision-machine-1": {
+   "display": "decision-machine-1 (milliseconds.ai)",
+   "hard_all": {
+    "accuracy": 0.4865,
+    "correct": 54,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.4776,
+    "correct": 32,
+    "n": 67
+   }
+  },
+  "deepseek-flash": {
+   "display": "DeepSeek V4.1 Flash (thinking default)",
+   "hard_all": {
+    "accuracy": 0.964,
+    "correct": 107,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.9552,
+    "correct": 64,
+    "n": 67
+   }
+  },
+  "djev": {
+   "display": "djev (Maisa, diffusion-gemma)",
+   "hard_all": {
+    "accuracy": 0.6757,
+    "correct": 75,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.6716,
+    "correct": 45,
+    "n": 67
+   }
+  },
+  "djev-thinking": {
+   "display": "djev (thinking)",
+   "hard_all": {
+    "accuracy": 0.7658,
+    "correct": 85,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.6866,
+    "correct": 46,
+    "n": 67
+   }
+  },
+  "gemini-3.1-flash-lite": {
+   "display": "Gemini 3.1 Flash-Lite",
+   "hard_all": {
+    "accuracy": 0.7387,
+    "correct": 82,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.7313,
+    "correct": 49,
+    "n": 67
+   }
+  },
+  "gliner2": {
+   "display": "GLiNER2 (Fastino, gliner2.5-base)",
+   "hard_all": {
+    "accuracy": 0.3694,
+    "correct": 41,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.3582,
+    "correct": 24,
+    "n": 67
+   }
+  },
+  "gliner2-large": {
+   "display": "GLiNER2 large (Fastino)",
+   "hard_all": {
+    "accuracy": 0.3694,
+    "correct": 41,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.3731,
+    "correct": 25,
+    "n": 67
+   }
+  },
+  "gliner2.5-multi": {
+   "display": "GLiNER2.5 multi (Fastino, 287M)",
+   "hard_all": {
+    "accuracy": 0.3333,
+    "correct": 37,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.2836,
+    "correct": 19,
+    "n": 67
+   }
+  },
+  "gliner2.5-small": {
+   "display": "GLiNER2.5 small (Fastino, 74M)",
+   "hard_all": {
+    "accuracy": 0.3153,
+    "correct": 35,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.2537,
+    "correct": 17,
+    "n": 67
+   }
+  },
+  "gpt-5.6-luna": {
+   "display": "GPT-5.6 Luna (low reasoning effort)",
+   "hard_all": {
+    "accuracy": 0.964,
+    "correct": 107,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.9701,
+    "correct": 65,
+    "n": 67
+   }
+  },
+  "gte-reranker-modernbert-base": {
+   "display": "Alibaba GTE Reranker ModernBERT-base",
+   "hard_all": {
+    "accuracy": 0.3153,
+    "correct": 35,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.194,
+    "correct": 13,
+    "n": 67
+   }
+  },
+  "jeff": {
+   "display": "jeff (Logan Markewich, GLiFormer 400M)",
+   "hard_all": {
+    "accuracy": 0.3874,
+    "correct": 43,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.3284,
+    "correct": 22,
+    "n": 67
+   }
+  },
+  "jev-1.13.0": {
+   "display": "Jev 1.13.0 (TypeSafe AI)",
+   "hard_all": {
+    "accuracy": 0.7297,
+    "correct": 81,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.7612,
+    "correct": 51,
+    "n": 67
+   }
+  },
+  "jev-local": {
+   "display": "jev-local (Qwen3.5-9B)",
+   "hard_all": {
+    "accuracy": 0.5856,
+    "correct": 65,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.5672,
+    "correct": 38,
+    "n": 67
+   }
+  },
+  "jqv": {
+   "display": "jqv (Qwen3-32B zero-shot)",
+   "hard_all": {
+    "accuracy": 0.6126,
+    "correct": 68,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.5672,
+    "correct": 38,
+    "n": 67
+   }
+  },
+  "kev-0.5b": {
+   "display": "kev 0.5B",
+   "hard_all": {
+    "accuracy": 0.2973,
+    "correct": 33,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.194,
+    "correct": 13,
+    "n": 67
+   }
+  },
+  "kev-0.6b": {
+   "display": "kev 0.6B (research preview)",
+   "hard_all": {
+    "accuracy": 0.4324,
+    "correct": 48,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.3731,
+    "correct": 25,
+    "n": 67
+   }
+  },
+  "kev-4b": {
+   "display": "kev 4B (research preview)",
+   "hard_all": {
+    "accuracy": 0.3694,
+    "correct": 41,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.3582,
+    "correct": 24,
+    "n": 67
+   }
+  },
+  "kev-8b": {
+   "display": "kev 8B (research preview)",
+   "hard_all": {
+    "accuracy": 0.4505,
+    "correct": 50,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.4328,
+    "correct": 29,
+    "n": 67
+   }
+  },
+  "laya": {
+   "display": "Laya (Convai Innovations, ModernBERT-large 421M)",
+   "hard_all": {
+    "accuracy": 0.3514,
+    "correct": 39,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.3134,
+    "correct": 21,
+    "n": 67
+   }
+  },
+  "litjev": {
+   "display": "LitJev (Qwen3.8-27B)",
+   "hard_all": {
+    "accuracy": 0.7207,
+    "correct": 80,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.7164,
+    "correct": 48,
+    "n": 67
+   }
+  },
+  "mxbai-rerank-base-v2": {
+   "display": "Mixedbread mxbai-rerank-base-v2",
+   "hard_all": {
+    "accuracy": 0.3604,
+    "correct": 40,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.2687,
+    "correct": 18,
+    "n": 67
+   }
+  },
+  "needle-3": {
+   "display": "Needle 3 (Cactus, 2-bit, local CPU)",
+   "hard_all": {
+    "accuracy": 0.1532,
+    "correct": 17,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.1194,
+    "correct": 8,
+    "n": 67
+   }
+  },
+  "needle-3-tools": {
+   "display": "Needle 3, options as tools (post-hoc adapter mode)",
+   "hard_all": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "n": 67
+   }
+  },
+  "nimble-9b": {
+   "display": "Bespoke Nimble 9B (Bespoke Labs)",
+   "hard_all": {
+    "accuracy": 0.6216,
+    "correct": 69,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.6866,
+    "correct": 46,
+    "n": 67
+   }
+  },
+  "open-alternative-jev": {
+   "display": "open-alternative-jev (Qwen3.5-4B, IkerMoel)",
+   "hard_all": {
+    "accuracy": 0.5676,
+    "correct": 63,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.5522,
+    "correct": 37,
+    "n": 67
+   }
+  },
+  "open-jev-deberta-v3-large": {
+   "display": "open-jev-deberta-v3-large (local CPU)",
+   "hard_all": {
+    "accuracy": 0.3784,
+    "correct": 42,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.3134,
+    "correct": 21,
+    "n": 67
+   }
+  },
+  "open-jev-zefan-2b": {
+   "display": "Open-Jev 2B (Zefan Cai)",
+   "hard_all": {
+    "accuracy": 0.4144,
+    "correct": 46,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.403,
+    "correct": 27,
+    "n": 67
+   }
+  },
+  "open-jev-zefan-9b": {
+   "display": "Open-Jev 9B (Zefan Cai)",
+   "hard_all": {
+    "accuracy": 0.5946,
+    "correct": 66,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.5821,
+    "correct": 39,
+    "n": 67
+   }
+  },
+  "opendecision": {
+   "display": "OpenDecision (ModernBERT-large zero-shot)",
+   "hard_all": {
+    "accuracy": 0.3423,
+    "correct": 38,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.2687,
+    "correct": 18,
+    "n": 67
+   }
+  },
+  "openjev-razorback16": {
+   "display": "OpenJev (DiffusionGemma 26B-A4B NVFP4, razorback16)",
+   "hard_all": {
+    "accuracy": 0.6396,
+    "correct": 71,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.6716,
+    "correct": 45,
+    "n": 67
+   }
+  },
+  "openjev-sglang": {
+   "display": "openjev-sglang (Qwen3.6-35B-A3B on SGLang)",
+   "hard_all": {
+    "accuracy": 0.7297,
+    "correct": 81,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.7463,
+    "correct": 50,
+    "n": 67
+   }
+  },
+  "openjev-thinking": {
+   "display": "OpenJev (thinking, BF16)",
+   "hard_all": {
+    "accuracy": 0.7658,
+    "correct": 85,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.791,
+    "correct": 53,
+    "n": 67
+   }
+  },
+  "openjev-verdict": {
+   "display": "openJev Verdict (heman10x, ModernBERT-base 151M)",
+   "hard_all": {
+    "accuracy": 0.3784,
+    "correct": 42,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.2836,
+    "correct": 19,
+    "n": 67
+   }
+  },
+  "openjev-verdict-1.4": {
+   "display": "openJev Verdict 1.4",
+   "hard_all": {
+    "accuracy": 0.3694,
+    "correct": 41,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.2836,
+    "correct": 19,
+    "n": 67
+   }
+  },
+  "qwen3-reranker-4b": {
+   "display": "Qwen3-Reranker-4B",
+   "hard_all": {
+    "accuracy": 0.4955,
+    "correct": 55,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.5075,
+    "correct": 34,
+    "n": 67
+   }
+  },
+  "qwen3.8-27b": {
+   "display": "Qwen3.8 27B (Chutes TEE)",
+   "hard_all": {
+    "accuracy": 0.4234,
+    "correct": 47,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.4627,
+    "correct": 31,
+    "n": 67
+   }
+  },
+  "reflex-27b": {
+   "display": "reflex-27b (Qwen3.8-27B)",
+   "hard_all": {
+    "accuracy": 0.7568,
+    "correct": 84,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.7761,
+    "correct": 52,
+    "n": 67
+   }
+  },
+  "reflex-4b": {
+   "display": "reflex 4B (kshetrajna12)",
+   "hard_all": {
+    "accuracy": 0.6036,
+    "correct": 67,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.597,
+    "correct": 40,
+    "n": 67
+   }
+  },
+  "semif-qwen3.5-4b": {
+   "display": "SemIf, formerly OpenJev (Qwen3.5-4B, TheoLeeCJ)",
+   "hard_all": {
+    "accuracy": 0.6126,
+    "correct": 68,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.597,
+    "correct": 40,
+    "n": 67
+   }
+  },
+  "simplejev-qwen3.6-35b-a3b": {
+   "display": "SimpleJev Qwen3.6-35B-A3B",
+   "hard_all": {
+    "accuracy": 0.6577,
+    "correct": 73,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.6567,
+    "correct": 44,
+    "n": 67
+   }
+  },
+  "simplejev-qwen3.8-27b": {
+   "display": "SimpleJev Qwen3.8-27B",
+   "hard_all": {
+    "accuracy": 0.7387,
+    "correct": 82,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.7612,
+    "correct": 51,
+    "n": 67
+   }
+  },
+  "smalljev": {
+   "display": "smalljev semantic-v9",
+   "hard_all": {
+    "accuracy": 0.3964,
+    "correct": 44,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.3433,
+    "correct": 23,
+    "n": 67
+   }
+  },
+  "system-one-open": {
+   "display": "system-one-open (Gemma 4 E2B LoRA on an L4)",
+   "hard_all": {
+    "accuracy": 0.4865,
+    "correct": 54,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.403,
+    "correct": 27,
+    "n": 67
+   }
+  },
+  "system-one-sg": {
+   "display": "system-one (Qwen3-8B, Sean Goedecke)",
+   "hard_all": {
+    "accuracy": 0.4865,
+    "correct": 54,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.4478,
+    "correct": 30,
+    "n": 67
+   }
+  },
+  "winnow-12b": {
+   "display": "Winnow-12B Q8",
+   "hard_all": {
+    "accuracy": 0.7297,
+    "correct": 81,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.7164,
+    "correct": 48,
+    "n": 67
+   }
+  },
+  "zerank-2": {
+   "display": "ZeroEntropy zerank-2",
+   "hard_all": {
+    "accuracy": 0.5135,
+    "correct": 57,
+    "n": 111
+   },
+   "hard_choice": {
+    "accuracy": 0.5373,
+    "correct": 36,
+    "n": 67
+   }
+  }
+ }
+}
