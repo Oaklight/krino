@@ -140,6 +140,102 @@ class TestForwardChoice:
             _model("bilinear")
 
 
+class _Item:
+    """The subset of ``TypedQuestion`` the supervised losses touch."""
+
+    def __init__(self, state: str, question: dict, label=None, teacher_probs=None) -> None:
+        self.state = state
+        self.question = question
+        self.label = label
+        self.teacher_probs = teacher_probs
+
+
+class TestTrainingLoops:
+    """The losses must reach the head through ``forward_choice``.
+
+    They used to call ``model.choice_head(context_hidden, opt_hidden)``
+    directly, which a cross-encoder head cannot accept — the first
+    ``--choice-mode cross_encoder`` pilot died on the argument count before a
+    single step ran. ``forward_choice`` owns the head's calling convention, so
+    these tests go through the real loss functions.
+    """
+
+    def _stubbed(self, choice_mode: str, recorder: list[str]):
+        model = _model(choice_mode)
+
+        def fake_encode(text, max_length=None):
+            texts = [text] if isinstance(text, str) else list(text)
+            recorder.extend(texts)
+            rows = []
+            for value in texts:
+                seed = sum(ord(char) for char in value) % 997
+                generator = torch.Generator().manual_seed(seed)
+                rows.append(torch.randn(model.hidden_size, generator=generator))
+            return torch.stack(rows)
+
+        model._encode_text = fake_encode  # type: ignore[assignment]
+        model._encode_with_sequence = lambda text, max_length=None: torch.randn(  # type: ignore[assignment]
+            1, 4, model.hidden_size
+        )
+        return model
+
+    def test_a_choice_batch_reaches_the_cross_encoder_head(self):
+        from model.training.supervised import _compute_choice_batch
+
+        recorder: list[str] = []
+        model = self._stubbed("cross_encoder", recorder)
+        item = _Item(
+            "the customer is angry about a late delivery",
+            {"instructions": "pick the intent", "criteria": {"refund": "", "cancel": "cancel it"}},
+            label="refund",
+        )
+        losses = _compute_choice_batch(model, [item])
+        assert len(losses) == 1
+        assert losses[0] is not None and torch.isfinite(losses[0])
+        assert losses[0].requires_grad
+        # Every encoded prompt carries the state, which only the
+        # cross-encoder path does.
+        assert len(recorder) == 2
+        assert all("late delivery" in prompt for prompt in recorder)
+        # ``v or k``: an empty value falls back to the key.
+        assert any("cancel it" in prompt for prompt in recorder)
+
+    def test_an_augmented_noul_batch_reaches_the_cross_encoder_head(self):
+        from model.training.supervised import _compute_augmented_noul_batch
+
+        recorder: list[str] = []
+        model = self._stubbed("cross_encoder", recorder)
+        options = {"decline": "decline", "accept": "accept", "maybe": "maybe"}
+        item = _Item(
+            "an invoice arrives for a service not ordered",
+            {"augmented_options": options},
+            teacher_probs={"decline": 0.7, "accept": 0.2, "maybe": 0.1},
+        )
+        losses = _compute_augmented_noul_batch(model, [item])
+        assert len(losses) == 1
+        assert torch.isfinite(losses[0]) and losses[0].requires_grad
+        assert len(recorder) == 3
+
+    def test_the_tower_path_still_batches_options(self):
+        from model.training.supervised import _compute_choice_batch
+
+        recorder: list[str] = []
+        model = self._stubbed("tower", recorder)
+        model._encode_with_sequence = lambda text, max_length=None: (  # type: ignore[assignment]
+            recorder.append(text) or torch.randn(1, 4, model.hidden_size)
+        )
+        item = _Item(
+            "state",
+            {"instructions": "q", "criteria": {"a": "", "b": ""}},
+            label="a",
+        )
+        losses = _compute_choice_batch(model, [item])
+        assert losses[0] is not None and torch.isfinite(losses[0])
+        # One context encode, then one batched encode of both options.
+        assert recorder[0] == "state q"
+        assert recorder[1:] == ["a", "b"]
+
+
 class TestInferChoiceMode:
     def test_cross_encoder_tensors_are_recognised(self):
         keys = ["choice_head.norm.weight", "choice_head.score.weight"]
