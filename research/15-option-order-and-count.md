@@ -39,6 +39,16 @@ than that.
 So the flip-rate half of clause 3 is met with room, and it will stay met: no seed
 draw can move a structural zero.
 
+## The count half passes here and fails on a stronger checkpoint
+
+The 4.6 pp gap below is measured on `arch_4b_loraAll_weighted`. On a later, better checkpoint
+(10 epochs, choice accuracy 0.632), the same comparison goes to **+20.03 pp**: 0.6177 at ≤5
+options against 0.8180 at >20 on 500 items. That checkpoint is reported in
+`research/17-schedule-and-readout.md`, and the correction belongs here too, because a reader
+should not take "clause 3's count half passes" as a property of the approach — it is a property
+of this arm. The gap widened as the model improved, and noul on that checkpoint diverges the other
+way (0.8619 at 2 options, 0.6399 at 3-5).
+
 ## The option-count half is met at the point estimate, and the bucket is too small to certify it
 
 Choice accuracy by option count, same run:
