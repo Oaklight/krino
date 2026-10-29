@@ -21,13 +21,22 @@ class WhitespaceTokenizer:
         # Only the length matters to the caller; keep one word per id.
         return " ".join(f"t{index}" for index in range(len(ids)))
 
+    def encode_batch(self, texts: list[str]) -> list[list[int]]:
+        return [self.encode(text) for text in texts]
+
 
 TOKENIZER = WhitespaceTokenizer()
 
 
-def fit(state, instructions, options, max_length):
+def fit(state, instructions, options, max_length, encode_batch=None):
     return fit_option_prompts(
-        state, instructions, options, max_length, TOKENIZER.encode, TOKENIZER.decode
+        state,
+        instructions,
+        options,
+        max_length,
+        TOKENIZER.encode,
+        TOKENIZER.decode,
+        encode_batch=encode_batch,
     )
 
 
@@ -108,3 +117,36 @@ class TestNonStringInputs:
         assert dropped > 0
         assert "the correct option" in prompts[0]
         assert len(TOKENIZER.encode(prompts[0])) <= 32
+
+
+class TestBatchedSuffixMeasurement:
+    """One tokenizer call for K options, and the same prompts as the slow path.
+
+    The cross-encoder builds K prompts per item, and measuring each option's
+    suffix with its own tokenizer call is what leaves the GPU idle at training
+    time. The batched path must be indistinguishable from the per-call one.
+    """
+
+    def test_batch_and_per_call_paths_agree(self):
+        state = " ".join(f"w{index}" for index in range(60))
+        options = ["alpha option", "beta option", "a third, longer option text"]
+        slow, slow_dropped = fit(state, "which one?", options, max_length=40)
+        fast, fast_dropped = fit(
+            state, "which one?", options, max_length=40, encode_batch=TOKENIZER.encode_batch
+        )
+        assert fast == slow
+        assert fast_dropped == slow_dropped
+
+    def test_the_batched_path_makes_one_call(self):
+        calls = []
+
+        def counting_batch(texts):
+            calls.append(list(texts))
+            return TOKENIZER.encode_batch(texts)
+
+        fit(
+            "state", "which?", ["a", "b", "c", "d"], max_length=64,
+            encode_batch=counting_batch,
+        )
+        assert len(calls) == 1
+        assert len(calls[0]) == 4

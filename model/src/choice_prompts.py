@@ -62,6 +62,7 @@ def fit_option_prompts(
     max_length: int,
     encode: Callable[[str], list[int]],
     decode: Callable[[list[int]], str],
+    encode_batch: Callable[[list[str]], list[list[int]]] | None = None,
 ) -> tuple[list[str], int]:
     """Build one prompt per option, shortening the state so options survive.
 
@@ -76,6 +77,12 @@ def fit_option_prompts(
         max_length: The encoder's token limit.
         encode: ``text -> token ids``.
         decode: ``token ids -> text``.
+        encode_batch: ``texts -> list of token-id lists``, optional. When given,
+            it measures every option's suffix in one call to the tokenizer
+            instead of one call per option. That matters at training time: with
+            K options the per-call path is K Python-to-Rust round trips *per
+            item*, before the prompts are tokenised again for the forward pass,
+            and it is what leaves the GPU idle waiting for the CPU.
 
     Returns:
         ``(prompts, dropped_state_tokens)``. The second value is 0 when the
@@ -85,10 +92,14 @@ def fit_option_prompts(
     state = _as_text(state)
     instructions = _as_text(instructions)
     option_texts = [_as_text(text) for text in option_texts]
-    suffix_ids = [
-        encode(" ".join(part for part in (instructions.strip(), text.strip()) if part))
+    suffixes = [
+        " ".join(part for part in (instructions.strip(), text.strip()) if part)
         for text in option_texts
     ]
+    if encode_batch is not None:
+        suffix_ids = encode_batch(suffixes)
+    else:
+        suffix_ids = [encode(suffix) for suffix in suffixes]
     worst_suffix = max((len(ids) for ids in suffix_ids), default=0)
     budget = max_length - worst_suffix - SAFETY_TOKENS
 
