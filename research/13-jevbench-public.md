@@ -377,6 +377,53 @@ reimplementation of theirs sits at 0.418-0.433. The honest statement is that our
 hard-tier choice accuracy is 0.373-0.493 in our harness, and that an official row
 for the same base weights exists at 0.507 which we cannot reproduce.
 
+### How much of the hard-tier deficit is checkpoint variance?
+
+Every hard-tier number in this note is one checkpoint. The 67 public hard choice
+items are few enough that the question is worth asking directly: how much of the
+0.373–0.493 spread is the checkpoint rather than the model? Two checkpoints on the
+same split at the same training length answer it — seed 123 and seed 42, both at
+epoch 5, scored through both readouts. `model/scripts/jevbench_cross_seed.py`
+takes their per-item score vectors (the `--dump-records` output of
+`blend_scorers.py`, on the PR that introduces it), maps them onto the 67 items by
+file order after checking every option count, and writes
+`model/experiments/jevbench_cross_seed_hard.json`:
+
+| readout | seed 123 | seed 42 | both right | either right | items they disagree on |
+|---|---:|---:|---:|---:|---:|
+| native (backbone readout) | 0.358 | 0.493 | 21 | **36 (0.537)** | 15 |
+| trained choice head | 0.328 | 0.254 | 8 | 31 (0.463) | 23 |
+
+Three things follow.
+
+**The seed alone moves the hard tier by 13 points.** The matched pair puts the
+native readout at 0.358 and 0.493 — nine items, 13.4 pp — which is larger than
+every effect this project has measured anywhere else. On 67 items a single
+checkpoint's hard-tier accuracy is not a measurement of the model; it is that
+checkpoint's draw. Only the paired comparison above is quoted.
+
+**The head is close to independent across checkpoints; the native readout is
+not.** If two checkpoints answered independently at their own rates, the expected
+number of items both would get right is 5.6 for the head and 11.8 for the native
+readout. Observed: 8 and 21. The head's overlap is barely above chance — what it
+gets right on a hard JevBench item is largely not a property of the training
+recipe — while the native readout shares most of its successes, which is the same
+stability that made it the better scorer in the first place.
+
+**Ensembling checkpoints cannot close the gap.** A perfect oracle that took the
+right answer from either seed would score 0.537 on the native readout. Jev scores
+0.761 on these 67 items. So even with an oracle — not achievable, it uses the
+label — two independently trained checkpoints leave 22 points to Jev. The deficit
+is not checkpoint variance and no amount of seed averaging reaches it.
+
+The items both seeds miss are 30 of 67: long_policy 7 of 12, multi_hop 8 of 16,
+tradeoff 4 of 4, probability 4 of 7, ambiguous 3 of 7, temporal_numeric 4 of 10,
+adversarial 1 of 3, trap 0 of 3, routing_hard 0 of 5. That ordering is suggestive
+— tradeoff and long_policy look like the worst families — but a family with four
+items cannot support a claim, and this note does not make one: the same table run
+at different checkpoints moves by one to three items per family, which is the
+whole reason the aggregate needed two seeds first.
+
 ## Caveats
 
 * **The raw comparison is a product comparison, not an attribution.** It
