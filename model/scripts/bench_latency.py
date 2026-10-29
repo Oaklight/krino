@@ -37,6 +37,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from model.evaluation.checkpoint_readout import infer_readout
 from model.evaluation.latency import DEFAULT_OPTION_COUNTS, make_options, summarise
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
@@ -87,6 +88,21 @@ def build_model(args: argparse.Namespace, cfg: dict, device: str):
         )
 
     lora_layers = args.lora_layers if args.lora_layers is not None else cfg.get("lora_layers")
+    # The checkpoint decides the readout when neither the CLI nor an explicit
+    # --readout says otherwise: a weighted checkpoint benchmarked as `last`
+    # times a different network than the one that was trained.
+    readout = args.readout or cfg.get("readout", "last")
+    if args.readout is None and args.load_heads is not None:
+        inferred = infer_readout(
+            torch.load(args.load_heads, map_location="cpu", weights_only=True).keys()
+        )
+        if inferred and inferred != readout:
+            print(
+                f"readout inferred from the checkpoint: {inferred} "
+                f"(config said {readout})",
+                flush=True,
+            )
+            readout = inferred
     model = DecisionModel(
         backbone=backbone,
         tokenizer=tokenizer,
@@ -94,7 +110,7 @@ def build_model(args: argparse.Namespace, cfg: dict, device: str):
         max_length=max_length,
         gpu_config=gpu_config,
         shared_attention=cfg.get("shared_attention", False),
-        readout=args.readout or cfg.get("readout", "last"),
+        readout=readout,
         readout_n=cfg.get("readout_n", 4),
         lora_layers=lora_layers,
         lora_rank=cfg.get("lora_rank", 16),

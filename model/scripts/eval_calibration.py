@@ -47,6 +47,7 @@ sys.path.insert(0, str(ROOT))
 import data.pipeline as pipeline_mod
 import data.sources as sources_mod
 from data.sources import load_source_items
+from model.evaluation.checkpoint_readout import infer_readout
 from model.evaluation.calibration import (
     brier_score,
     expected_calibration_error,
@@ -1430,6 +1431,21 @@ def main() -> int:
     shared_attention = _resolve(args.shared_attention, cfg, "shared_attention", False)
     unified_head = _resolve(args.unified_head, cfg, "unified_head", False)
     readout = _resolve(args.readout, cfg, "readout", "last")
+    if args.readout is None and args.load_heads is not None:
+        # The checkpoint is authoritative: it either carries the learned layer
+        # mixture or it does not. Trusting the config here would score a
+        # weighted checkpoint as `last` (dropping the mixture) whenever the
+        # config names a different readout than the arm was trained with.
+        inferred = infer_readout(
+            torch.load(args.load_heads, map_location="cpu", weights_only=True).keys()
+        )
+        if inferred and inferred != readout:
+            print(
+                f"readout inferred from the checkpoint: {inferred} "
+                f"(config/CLI said {readout})",
+                flush=True,
+            )
+            readout = inferred
     readout_n = _resolve(args.readout_n, cfg, "readout_n", 4)
     lora_layers = _resolve(args.lora_layers, cfg, "lora_layers", None)
     if lora_layers == 0:

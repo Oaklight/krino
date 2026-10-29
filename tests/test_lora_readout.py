@@ -232,6 +232,69 @@ class TestCheckpointRoundTrip:
                 assert torch.count_nonzero(param) == 0, f"{name} did not load"
 
 
+class TestReadoutInferredFromCheckpoint:
+    """The evaluation scripts read the readout off the saved tensors.
+
+    ``infer_readout`` matches on the name of the layer-mixing parameter, so it
+    is only correct while a saved checkpoint spells that parameter
+    ``readout.layer_logits``.  This round-trips a real model to pin the name.
+    """
+
+    def _model(self, readout: str):
+        from model.src.decision_model import DecisionModel
+        from model.src.gpu_config import GPUConfig
+
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=False,
+            max_length=128,
+            gradient_checkpointing=False,
+        )
+        return DecisionModel(
+            backbone=_FakeBackbone(),
+            tokenizer=None,
+            rank=8,
+            gpu_config=gpu,
+            readout=readout,
+        )
+
+    def test_weighted_checkpoint_is_reported_as_weighted(self, tmp_path) -> None:
+        from model.evaluation.checkpoint_readout import infer_readout
+
+        path = tmp_path / "weighted.pt"
+        self._model("weighted").save_heads(path)
+        state = torch.load(path, weights_only=True)
+
+        assert "readout.layer_logits" in state
+        assert infer_readout(state.keys()) == "weighted"
+
+    def test_last_checkpoint_is_not_reported_as_weighted(self, tmp_path) -> None:
+        from model.evaluation.checkpoint_readout import infer_readout
+
+        path = tmp_path / "last.pt"
+        self._model("last").save_heads(path)
+
+        assert infer_readout(torch.load(path, weights_only=True).keys()) is None
+
+    def test_the_mixture_survives_load_heads(self, tmp_path) -> None:
+        # load_heads is not strict; if save_heads dropped the mixture the
+        # inference above would still pass but the model would be wrong.
+        path = tmp_path / "weighted.pt"
+        trained = self._model("weighted")
+        with torch.no_grad():
+            trained.readout.layer_logits.copy_(torch.arange(3, dtype=torch.float32))
+        trained.save_heads(path)
+
+        fresh = self._model("weighted")
+        with torch.no_grad():
+            fresh.readout.layer_logits.zero_()
+        fresh.load_heads(path)
+
+        assert torch.equal(
+            fresh.readout.layer_logits, torch.arange(3, dtype=torch.float32)
+        )
+
+
 class _RecordingBackbone(_FakeBackbone):
     """Fake backbone that records gradient-checkpointing enable calls."""
 
