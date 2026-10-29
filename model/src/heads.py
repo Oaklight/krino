@@ -116,6 +116,57 @@ class LayerMixer(nn.Module):
         return out
 
 
+class CrossEncoderHead(nn.Module):
+    """Scores one option at a time from a prompt that already contains the state.
+
+    The default ``ChoiceHead`` encodes the state once and each option on its
+    own, then scores the option with a rank-limited cross-attention. This head
+    takes the other shape: the caller concatenates state, instructions and the
+    option text into one prompt, the backbone runs that prompt end to end, and
+    the head is a single linear read-out of the pooled hidden state. That is
+    the shape the backbone's own trained reranker uses.
+
+    What is not claimed here: the backbone's reranker beats our tower head by
+    14 to 21 points on JevBench (#180), but that reranker was trained separately
+    and zero-shot at eval time. This head is trained on our data through a
+    different prompt format, so the gap motivates the experiment without
+    predicting its result. The number that matters is the run's, and it belongs
+    in the PR that ships this head.
+
+    The prompt is plain concatenation (``state instructions option``) with no
+    reranker template. That is deliberate: the option sits at the end, where a
+    causal model's last-token pool has the most attention on it, and the
+    template's instruction text would duplicate the item's own instructions.
+    The templated variant (``model/src/reranker_prompt.py::build_query_doc``)
+    is the first thing to try if the head lands below the tower.
+
+    The score is per option and unbounded; the caller softmaxes across options,
+    so the head keeps the cross-option normalisation the default head has.
+
+    Args:
+        hidden_size: Backbone hidden dimension after the projector.
+        dropout: Dropout applied before the read-out.
+
+    Note:
+        The linear layer starts at zero, so a fresh head scores every option
+        identically — training begins from a uniform distribution rather than
+        from whichever option a random projection happens to favour.
+    """
+
+    def __init__(self, hidden_size: int, dropout: float = 0.1) -> None:
+        super().__init__()
+        self.norm = nn.LayerNorm(hidden_size)
+        self.dropout = nn.Dropout(dropout)
+        self.score = nn.Linear(hidden_size, 1)
+        nn.init.zeros_(self.score.weight)
+        nn.init.zeros_(self.score.bias)
+
+    def forward(self, option_hidden: torch.Tensor) -> torch.Tensor:
+        """Returns one logit per option, shaped ``[..., n_options]``."""
+        pooled = self.dropout(self.norm(option_hidden))
+        return self.score(pooled).squeeze(-1)
+
+
 class NoulHead(nn.Module):
     """Binary probability head. Maps hidden state to P(yes) via sigmoid."""
 

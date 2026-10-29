@@ -7,6 +7,7 @@ LM and encoder backbones.
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -15,10 +16,12 @@ import torch.nn as nn
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 from .backbone import is_hybrid_model
+from .choice_prompts import fit_option_prompts
 from .gpu_config import GPUConfig, print_gpu_info
 from .heads import (
     AttentionHead,
     ChoiceHead,
+    CrossEncoderHead,
     LayerMixer,
     MLPProjector,
     NoulHead,
@@ -71,8 +74,17 @@ class DecisionModel(nn.Module):
         lora_alpha: int = 32,
         lora_dropout: float = 0.0,
         lora_targets: tuple[str, ...] = ("q_proj", "v_proj"),
+        choice_mode: str = "tower",
     ) -> None:
         super().__init__()
+        if choice_mode not in ("tower", "cross_encoder"):
+            raise ValueError(
+                f"choice_mode={choice_mode!r} is not 'tower' or 'cross_encoder'"
+            )
+        self.choice_mode = choice_mode
+        #: Items whose cross-encoder prompts had to shorten the state to keep
+        #: the option inside max_length. Reported once, then counted.
+        self.truncated_prompts = 0
         self.backbone = backbone
         self.tokenizer = tokenizer
         self.hidden_size = hidden_size or backbone.config.hidden_size
@@ -161,7 +173,21 @@ class DecisionModel(nn.Module):
         else:
             self.projector = nn.Identity()
 
-        if unified_head:
+        if choice_mode == "cross_encoder":
+            # One prompt per option, each carrying the state; the score is a
+            # linear read-out of that prompt's pooled hidden state. Score and
+            # noul keep the default path — only the choice slot changes.
+            self.unified = None  # type: ignore[assignment]
+            self.noul_head = NoulHead(self.hidden_size, rank=noul_rank, dropout=dropout)
+            self.choice_head = CrossEncoderHead(self.hidden_size, dropout)
+            self.score_head = ScoreHead(self.hidden_size, rank, dropout)
+            params = sum(p.numel() for p in self.choice_head.parameters())
+            print(
+                f"  Choice head: cross-encoder (one prompt per option, "
+                f"state in the prompt), {params:,} params",
+                flush=True,
+            )
+        elif unified_head:
             # Single AttentionHead for all question types.  Noul is handled
             # via "true"/"false" option encoding in forward_noul.
             self.unified = UnifiedHead(self.hidden_size, rank, rival_aware, dropout)
@@ -361,6 +387,35 @@ class DecisionModel(nn.Module):
         self, state: str, instructions: str, option_texts: list[str]
     ) -> torch.Tensor:
         """Returns logits [1, n_options] for choice prediction."""
+        if self.choice_mode == "cross_encoder":
+            # Each option is scored from the whole prompt, so the state and the
+            # option interact through the full depth of the backbone rather
+            # than through a rank-limited attention. One batched forward for
+            # all options; the softmax across them lives in the loss.
+            #
+            # The option is the suffix of the prompt and the tokenizer truncates
+            # from the right, so a state that fills the window would drop the
+            # option — silently, and only on the longest items. The state is
+            # shortened instead, and a truncated prompt is reported once.
+            prompts, dropped = fit_option_prompts(
+                state,
+                instructions,
+                option_texts,
+                self.max_length,
+                encode=lambda text: self.tokenizer(text, add_special_tokens=False)["input_ids"],
+                decode=lambda ids: self.tokenizer.decode(ids, skip_special_tokens=True),
+            )
+            if dropped:
+                self.truncated_prompts += 1
+                if self.truncated_prompts == 1:
+                    warnings.warn(
+                        "cross-encoder prompts exceeded max_length: dropped "
+                        f"{dropped} leading state tokens so the option survives. "
+                        "Long states are shortened, never the option.",
+                        stacklevel=2,
+                    )
+            option_pooled = self._encode_text(prompts)
+            return self.choice_head(option_pooled).unsqueeze(0)
         context_text = f"{state} {instructions}"
         context_hidden = self._encode_with_sequence(context_text)
         option_pooled = self._encode_text(option_texts)

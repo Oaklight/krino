@@ -206,6 +206,7 @@ def main() -> int:
     parser.add_argument("--shared-attention", action="store_true", default=None, help="Share AttentionHead weights between choice and score heads")
     parser.add_argument("--unified-head", action="store_true", default=None, help="Use single unified attention head for all types (noul via true/false options)")
     parser.add_argument("--readout", choices=["last", "mean_last_n", "weighted"], default=None, help="Which backbone layers feed the heads (default: weighted; last has collapsed at 8B and on long schedules, see model/training/readout_guard.py)")
+    parser.add_argument("--choice-mode", choices=["tower", "cross_encoder"], default=None, help="How choice options are scored: 'tower' encodes the state and each option separately and scores with cross-attention; 'cross_encoder' puts the state into every option's prompt and reads out a linear score (the shape the backbone's own reranker uses, ~3x training cost) (default: tower)")
     parser.add_argument("--readout-n", type=int, default=None, help="Layer window for --readout mean_last_n (default: 4)")
     parser.add_argument("--lora-layers", type=int, default=None, help="LoRA scope: -1 = all blocks, N = last N blocks, 0 = off (default: off)")
     parser.add_argument("--lora-rank", type=int, default=None, help="LoRA bottleneck rank (default: 16)")
@@ -306,6 +307,18 @@ def main() -> int:
     warning = schedule_warning(readout, epochs, model_name)
     if warning:
         print(warning, flush=True)
+    choice_mode = (
+        args.choice_mode if args.choice_mode is not None else cfg.get("choice_mode", "tower")
+    )
+    if choice_mode == "cross_encoder" and (unified_head_flag or shared_attention):
+        # Both of those settings describe the attention head this mode
+        # replaces, and both configs set shared_attention, so this is a note
+        # rather than an error: the cross-encoder branch in DecisionModel wins.
+        print(
+            "  Note: --choice-mode cross_encoder replaces the attention head, "
+            "so unified_head/shared_attention are ignored for choice.",
+            flush=True,
+        )
     readout_n = args.readout_n if args.readout_n is not None else cfg.get("readout_n", 4)
     lora_layers, lora_layers_src = resolve_setting(
         args.lora_layers, cfg, "lora_layers", None
@@ -512,6 +525,7 @@ def main() -> int:
         lora_alpha=lora_alpha,
         lora_dropout=lora_dropout,
         lora_targets=lora_targets,
+        choice_mode=choice_mode,
     )
 
     print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
@@ -537,6 +551,7 @@ def main() -> int:
                 ("lora_lr", lora_lr, lora_lr_src),
                 ("score_form", score_form, score_form_src),
                 ("score_loss", score_loss, score_loss_src),
+                ("choice_mode", choice_mode, "cli/config"),
                 ("k_augment_fraction", k_augment_fraction, k_augment_src),
                 (
                     "k_augment_k_range",
