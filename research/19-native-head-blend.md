@@ -165,6 +165,39 @@ time augmentation over option order is also excluded in advance rather than by
 experiment: clause 3's flip rate is 0/1,500, so the head has no order sensitivity
 for augmentation to average away.
 
+## It replicates on the second seed
+
+Everything above is seed 123 at epoch 10. The claim that matters for the goal is
+whether the rule beats what ships on a *second* seed, so the same full-eval run
+was repeated on `arch_4b_32k_split138` epoch 5 — seed 42, the checkpoint the
+routing rule was independently verified on in `research/17`.
+
+| checkpoint | head | shipped routing | blend | blend − routing | blend − head |
+|---|---|---|---|---|---|
+| seed 123, epoch 10 | 0.6322 | 0.7060 | 0.7398 | **+3.38 pp** | +10.76 pp |
+| seed 42, epoch 5 | 0.5627 | 0.6893 | 0.7131 | **+2.38 pp** | +15.04 pp |
+
+Overall accuracy, converting each choice delta onto that checkpoint's own harness
+counts:
+
+| checkpoint | head alone | shipped routing | blend |
+|---|---|---|---|
+| seed 123, epoch 10 | 69.24% | 73.01% | **74.75%** |
+| seed 42, epoch 5 | 64.19% | 70.67% | **71.89%** |
+
+**The blend beats the routing rule on both seeds**, by 1.73 and 1.22 pp overall.
+The two seeds disagree about the best weight — 2.5 at epoch 10, 4.0 at epoch 5 —
+but not about the direction: every weight from 1 to the native endpoint is
+positive against head-only on both, and a single fixed `lam = 4` is +3.10 pp on
+seed 123 and +2.38 pp on seed 42. The choice between 2.5 and 4 is worth 0.28 pp
+on seed 123 and 0.32 pp on seed 42, both far inside the per-seed spread.
+
+The second seed also matters for what does *not* replicate: the long-list bucket
+is much weaker at epoch 5 (0.5960 against 0.8180), and JevBench's hard tier is
+higher (0.4627-0.4925 against 0.3731-0.4030). Neither changes the rule's
+direction — the head is kept there regardless — but both say the epoch-10 figures
+are a later-training snapshot, not a seed-independent constant.
+
 ## Caveats
 
 - **`lam` is chosen on the eval split.** That is why the cross-fit paragraph
