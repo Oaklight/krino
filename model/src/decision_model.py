@@ -7,6 +7,7 @@ LM and encoder backbones.
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,7 @@ import torch.nn as nn
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 from .backbone import is_hybrid_model
+from .choice_prompts import fit_option_prompts
 from .gpu_config import GPUConfig, print_gpu_info
 from .heads import (
     AttentionHead,
@@ -80,6 +82,9 @@ class DecisionModel(nn.Module):
                 f"choice_mode={choice_mode!r} is not 'tower' or 'cross_encoder'"
             )
         self.choice_mode = choice_mode
+        #: Items whose cross-encoder prompts had to shorten the state to keep
+        #: the option inside max_length. Reported once, then counted.
+        self.truncated_prompts = 0
         self.backbone = backbone
         self.tokenizer = tokenizer
         self.hidden_size = hidden_size or backbone.config.hidden_size
@@ -387,9 +392,28 @@ class DecisionModel(nn.Module):
             # option interact through the full depth of the backbone rather
             # than through a rank-limited attention. One batched forward for
             # all options; the softmax across them lives in the loss.
-            prompts = [
-                f"{state} {instructions} {text}".strip() for text in option_texts
-            ]
+            #
+            # The option is the suffix of the prompt and the tokenizer truncates
+            # from the right, so a state that fills the window would drop the
+            # option — silently, and only on the longest items. The state is
+            # shortened instead, and a truncated prompt is reported once.
+            prompts, dropped = fit_option_prompts(
+                state,
+                instructions,
+                option_texts,
+                self.max_length,
+                encode=lambda text: self.tokenizer(text, add_special_tokens=False)["input_ids"],
+                decode=lambda ids: self.tokenizer.decode(ids, skip_special_tokens=True),
+            )
+            if dropped:
+                self.truncated_prompts += 1
+                if self.truncated_prompts == 1:
+                    warnings.warn(
+                        "cross-encoder prompts exceeded max_length: dropped "
+                        f"{dropped} leading state tokens so the option survives. "
+                        "Long states are shortened, never the option.",
+                        stacklevel=2,
+                    )
             option_pooled = self._encode_text(prompts)
             return self.choice_head(option_pooled).unsqueeze(0)
         context_text = f"{state} {instructions}"
