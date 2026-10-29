@@ -338,10 +338,44 @@ untrained public row, and on one seed it is 13 points below it.**
 
 That last comparison has a caveat that cuts both ways: their adapter's prompt and
 threshold fitting differ from ours, so part of the difference is protocol rather
-than weights. That is exactly why it is worth acting on — the board documents a
-preregistered adapter that scores the same weights material better than our
-prompt does on one of our two seeds. Adopting its design is the most concrete
-lead this note has produced for clause 4.
+than weights. That is why it looked worth acting on. **It is not, and the check
+below is why.**
+
+### Their documented mapping does not reproduce their number
+
+The board publishes the adapter (`jevbench/adapters/reranker.py` and
+`docs/v1.2-additions-rerankers.md`), so the candidate explanation is testable.
+Reading it, two things stand out. Its **query carries the complete answer
+rubric** — state, question and every option — where ours carries only the state
+and the question; that is an input difference the model actually sees. And its
+**temperature grid and noul threshold cannot move accuracy at all**, because both
+are monotone maps that leave every argmax where it was — the same argument that
+ruled out temperature scaling for clause 2.
+
+So the only accuracy-relevant difference is the prompt, and it is cheap to test
+in our own harness. `model/scripts/eval_jevbench_adapter.py` implements their
+mapping verbatim — rubric in the query, their exact instruction wording, compact
+JSON for structured states — and scores the 111 public hard items:
+
+| base Qwen3-Reranker-4B, 111 public hard | all | 67 choice |
+|---|---|---|
+| the board's published row | 0.495 | 0.507 |
+| our reimplementation of their mapping | 0.4505 | 0.4179 |
+| our own prompt, same harness | 0.4595 | 0.4328 |
+
+**Two results, both negative.** The rubric-in-query prompt is worth **minus one
+item** — 28/67 against 29/67 — so it is not the explanation and there is nothing
+to adopt. And our reimplementation of their published mapping lands 8.9 points
+below their published figure on the same weights, so **their number is not
+reproducible from their own documentation**: something in the transport, which
+the docs do not pin down, accounts for it.
+
+That means the sentence above — that fine-tuning leaves us below the untrained
+public row — **is not established**. Comparing our 0.373-0.493 against their
+0.507 compares two harnesses whose calibration we cannot measure; our best
+reimplementation of theirs sits at 0.418-0.433. The honest statement is that our
+hard-tier choice accuracy is 0.373-0.493 in our harness, and that an official row
+for the same base weights exists at 0.507 which we cannot reproduce.
 
 ## Caveats
 
