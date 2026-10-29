@@ -1,0 +1,143 @@
+{
+ "arm": "arch_4b_loraAll_32k_s123",
+ "calibration_map_epoch_10": {
+  "choice": {
+   "ece_t1": 0.0488,
+   "map_cv": 0.0137
+  },
+  "noul": {
+   "ece_t1": 0.0368,
+   "map_cv": 0.0264
+  },
+  "score": {
+   "ece_t1": 0.1733,
+   "map_cv": 0.0289
+  }
+ },
+ "draw": {
+  "items": 13444,
+  "note": "no per-type cap",
+  "seed": 123,
+  "split": "cluster-disjoint after #138"
+ },
+ "half_split_stability_epoch_8": {
+  "A": {
+   "head": 0.6253,
+   "n": 750,
+   "routed": 0.6973
+  },
+  "B": {
+   "head": 0.608,
+   "n": 750,
+   "routed": 0.676
+  }
+ },
+ "harness_overall_accuracy": {
+  "epoch_10": 0.6924,
+  "epoch_5": 0.6244,
+  "epoch_8": 0.6737
+ },
+ "jevbench": {
+  "epoch_10": {
+   "head": 0.506,
+   "native": 0.632
+  },
+  "epoch_8": {
+   "head": 0.515,
+   "native": 0.641
+  }
+ },
+ "overall_epoch_10": {
+  "by_type": {
+   "choice": {
+    "head": 0.6322,
+    "n": 6887,
+    "native": 0.6701
+   },
+   "noul": {
+    "head": 0.8362,
+    "n": 4724,
+    "native": 0.8362
+   },
+   "score": {
+    "head": 0.548,
+    "n": 1832,
+    "native": 0.548
+   }
+  },
+  "head": 0.6924,
+  "n": 13443,
+  "native": 0.7118,
+  "routed": 0.7301
+ },
+ "qwk_epoch_10": {
+  "by_level_count": {
+   "4": 0.501,
+   "5": 0.833,
+   "6": 0.215
+  },
+  "by_source": {
+   "sst5": 0.832,
+   "stsb": 0.215,
+   "yelp": 0.88
+  },
+  "mix": 0.6562
+ },
+ "readout_epoch_10": {
+  "choice": {
+   "by_option_count": {
+    "2": {
+     "head": 0.65,
+     "n": 1000,
+     "native": 0.683
+    },
+    "3-5": {
+     "head": 0.6117,
+     "n": 5387,
+     "native": 0.6996
+    },
+    ">20": {
+     "head": 0.818,
+     "n": 500,
+     "native": 0.326
+    }
+   },
+   "head": 0.6322,
+   "items": 6887,
+   "native": 0.6701,
+   "routed": 0.7058
+  }
+ },
+ "readout_epoch_8": {
+  "choice": {
+   "by_option_count": {
+    "2": {
+     "head": 0.6356,
+     "n": 225,
+     "native": 0.6622
+    },
+    "3-5": {
+     "head": 0.5952,
+     "n": 1166,
+     "native": 0.6801
+    },
+    ">20": {
+     "head": 0.8073,
+     "n": 109,
+     "native": 0.3119
+    }
+   },
+   "head": 0.6167,
+   "items": 1500,
+   "native": 0.6507,
+   "routed": 0.6867
+  }
+ },
+ "run_to_run_same_seed_pp": 0.67,
+ "seed_spread_pp": 2.47,
+ "sources": {
+  "preds_epoch_10": "rbh101 wt-jevbench model/experiments/preds_4b_32k_s123_ep10.jsonl",
+  "preds_epoch_10_native": "rbh101 wt-native model/experiments/preds_4b_32k_s123_ep10_native.jsonl",
+  "preds_epoch_8_sample": "1500/type seed 42 samples (preds_ep8.jsonl, preds_native.jsonl)"
+ }
+}
