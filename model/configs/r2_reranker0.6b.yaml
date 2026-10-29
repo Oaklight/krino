@@ -15,6 +15,9 @@ model: Qwen/Qwen3-Reranker-0.6B
 encoder: false
 rank: 64
 epochs: 20
+# `weighted` because `last` collapsed on this exact backbone at ten epochs
+# (model/experiments/arch_06b_loraAll_last_10ep_s123_epochs.json).
+readout: weighted
 lr: 0.001
 accumulation_steps: 8
 eval_every: 1
