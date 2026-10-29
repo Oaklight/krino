@@ -270,11 +270,11 @@ better than uniform and short of any demanding skill threshold.
 
 | clause | state |
 |---|---|
-| 1. accuracy ≥ 65% | **met** at 69.24% (head) and **73.01%** (routed), epoch 10, one seed; seed 2 in flight |
-| 2. ECE ≤ 0.05, Brier/QWK ≥ 0.85 | **ECE met on every type** (0.0264 / 0.0137 / 0.0289 with the map, CV-selected). **QWK fails at 0.6562 for two reasons** — STS-B's split shift and our own four-level data at 0.631 — and the **Brier criterion is unsatisfiable as written**, since 0.85 is a fail-worse bar for a squared error. See below. |
-| 3. flip ≤ 5%, >20 options within 5 pp | flip **met** (0/1,500, #182); count **fails the letter at +20.03 pp**, which measures the gap between banking77 and thirteen other benchmarks rather than an option-count effect — see below |
-| 4. JevBench vs 84.9 / 74.1 | **not met** — 0.641 (native readout), hard tier 0.414, flat at both checkpoints |
-| 5. ≤100 ms at 256 options; 0.6B within 3 pp | **not met** — 183.6 ms at 256 options even compiled (#181). The accuracy half is **unmeasured**: the 0.6B 10-epoch run is still training, and its epoch-1 figure is not a comparison |
+| 1. accuracy ≥ 65% | **met, two seeds at matched training length**: epoch-5 checkpoints give 70.12% (seed 123) and 71.88% (seed 42) with the blend rule from `research/19`, and 68.69% / 70.66% with the routing rule this note describes. The head alone is 62.16% / 64.18% — **under the bar on both seeds** — so the clause is met by the rule, not the head. Epoch 10 on seed 123 reaches 74.75%; the epoch-10 seed-42 checkpoint is still training |
+| 2. ECE ≤ 0.05, Brier/QWK ≥ 0.85 | **ECE met on every type** (0.0264 / 0.0137 / 0.0289 with the map, CV-selected). **QWK fails at 0.6562** and no scale passes on a second seed: the 5-level scale straddles the bar at 0.8463-0.8529, and a posterior-mean decoder that cleared it on seed 123 alone gave +0.0014 on seed 42 and was withdrawn (`research/18`). The **Brier criterion is unsatisfiable as written** |
+| 3. flip ≤ 5%, >20 options within 5 pp | flip **met** (0/1,500, #182); count **fails** — −8.39 pp with the blend rule (`research/19`), −12.08 routing, −20.03 head. It passed at epoch 5 (3.6 pp) and fails at epoch 10 because banking77 improves faster than the short buckets |
+| 4. JevBench vs 84.9 / 74.1 | **not met** — 0.6475 (blend) / 0.6547 (native readout) on the 139 choice items; hard tier 0.37-0.49 and **seed-dependent**, so it is not a stable capability constant as this note first implied. The items are **provably held out** (`research/13`, zero overlap with 1.56M training items) and the two prompt-format hypotheses for the hard tier are measured and null (2 items on 139) |
+| 5. ≤100 ms at 256 options; 0.6B within 3 pp | **not met** — 183.6 ms at 256 options even compiled (#181). The accuracy half now looks lost rather than unmeasured: the 0.6B is ~20 pp behind the 4B at epoch 6-7 against a 3 pp allowance |
 
 ## Clause 3's count half fails on the best checkpoint, and it got worse as the model improved
 
