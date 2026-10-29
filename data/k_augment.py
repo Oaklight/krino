@@ -305,6 +305,48 @@ def pad_choice_item(
     return replace(item, question=new_question, teacher_probs=None)
 
 
+def shrink_choice_item(
+    item: TypedQuestion, target_k: int, rng: random.Random
+) -> TypedQuestion:
+    """Return a copy of ``item`` with at most ``target_k`` options, gold included.
+
+    :func:`pad_choice_item` only widens, which is right for training — nothing is
+    ever removed, so supervision is untouched — but it cannot vary K *downward*.
+    A source whose items already carry its full option inventory is then
+    unchanged by every target below that count: banking77 puts all 80 intents on
+    every item, so a pad-only sweep scores the same unmodified item at K=4, 8,
+    16, 32, 64 and 80 and reports perfect option-count robustness.
+
+    This keeps the gold key and ``target_k - 1`` others drawn with ``rng``, in the
+    source's own order so the item still reads as its author wrote it. Used by
+    ``model/scripts/option_count_sweep.py`` to hold an item fixed while its option
+    count changes; training does not call it.
+
+    Args:
+        item: A choice item whose ``criteria`` is a mapping.
+        target_k: Option count to keep, including the gold.
+        rng: Seeded generator deciding which other options survive.
+
+    Returns:
+        A copy with at most ``target_k`` options, or ``item`` itself when it is
+        not a choice item, the gold is missing, or it is already small enough.
+    """
+    criteria = item.question.get("criteria")
+    if not isinstance(criteria, dict) or item.label not in criteria:
+        return item
+    if len(criteria) <= target_k:
+        return item
+
+    others = [key for key in criteria if key != item.label]
+    rng.shuffle(others)
+    kept = {item.label, *others[: max(target_k - 1, 0)]}
+    new_question = dict(item.question)
+    new_question["criteria"] = {
+        key: value for key, value in criteria.items() if key in kept
+    }
+    return replace(item, question=new_question)
+
+
 def apply_k_augment_with_stats(
     items: list[TypedQuestion],
     cfg: KAugmentConfig,
