@@ -114,3 +114,40 @@ def summarize(
             for tier, types in by_tier_type.items()
         },
     }
+
+
+def prediction_rows(records: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The option each item was predicted to, not only whether it was right.
+
+    Two checkpoints can score the same accuracy on the same items for two very
+    different reasons -- a shared capability, or a shared bias toward one option
+    key. Accuracy alone cannot tell them apart; the predicted option can, so it
+    is written next to the summary.
+
+    Args:
+        records: Records from ``_predict_original``.
+
+    Returns:
+        One row per record with the item id, its type, the gold and predicted
+        option labels, and whether they match. Labels are index-based when a
+        record carries no ``labels`` list.
+    """
+    rows = []
+    for record in records:
+        probabilities = softmax(record["logits"])
+        prediction = tie_stable_argmax(probabilities, record["label_order"])
+        labels = list(record.get("labels") or [])
+        gold = record["label_idx"]
+        rows.append(
+            {
+                "id": getattr(record.get("_item"), "id", None),
+                "type": record.get("type"),
+                "n_options": len(labels),
+                "gold": labels[gold] if gold < len(labels) else gold,
+                "predicted": labels[prediction]
+                if prediction < len(labels)
+                else prediction,
+                "correct": prediction == gold,
+            }
+        )
+    return rows

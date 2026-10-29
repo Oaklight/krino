@@ -1,4 +1,4 @@
-# JevBench-public: the heads cost 14-21 points against their own backbone
+# JevBench-public: the trained heads lose 14-21 points to our own readout
 
 Goal item 4 asks for JevBench-public to be reported next to Jev's reference
 numbers, which the goal records as a teacher at 84.9 and the best open student
@@ -98,9 +98,37 @@ ruling out as a degenerate answer before reading anything into it. It is not a
 constant rule: always taking the first option scores 0.216 and always taking the
 last scores 0.266, so 0.396 is 13 to 18 points above any position-only strategy,
 and the labels are spread too thinly (the commonest label is 2.9% of items) for a
-majority guess to be the explanation. Two independent checkpoints agreeing on the
-same count is then a coincidence at the few-percent level, not a shared failure
-mode — but it is the kind of number that should be checked rather than trusted.
+majority guess to be the explanation.
+
+Identical counts across two backbones 6.7x apart are still at least as consistent
+with the head being driven by something the backbone does not move — a dominant
+option key, a degenerate logit pattern on out-of-distribution items — as with a
+real capability, so the predictions themselves were dumped
+(`--dump-predictions`, `model.evaluation.jevbench.prediction_rows`). They say it
+is not that either:
+
+| | 4B head | 0.6B head |
+|---|---:|---:|
+| choice items correct | 54 / 139 | 55 / 139 |
+| distinct option keys predicted | 96 | 98 |
+| modal key's share of the 139 items | 5.8% | 5.8% |
+| items where both arms predict the same key | 54 / 139 | |
+| both arms correct, against an independence null of 21.4 | 29 | |
+
+**The head does not collapse onto a key.** It spreads its predictions over 96 of
+the 139 items' keys, and the key it names most often accounts for 5.8% of items —
+about twice the concentration of the commonest gold key (4 items, 2.9%), which is
+what any scorer mildly favouring a frequent answer would produce, and nowhere
+near a base rate. What the two arms do share is accuracy, not choices: they name
+the same key on only 39% of items, and 29 items are right on both against 21.4
+expected if they answered independently. So 0.396 is two models that are related
+but not the same model landing on the same score, which is the honest description
+— and it means the identity is a coincidence of two middling scorers, not
+evidence that one number measures both.
+
+That pass reproduces 54 and 55 rather than 55 and 55; the one-item movement is
+the same pass-to-pass variation the calibration reports in `research/11` measure
+at 0.19% of items. Nothing in the reading depends on which item moved.
 
 ## Finding 3 — on the hard tier we are at chance
 
@@ -328,18 +356,19 @@ Two things follow, and neither is comfortable.
 is 0.761 against our 0.373-0.493 — 27 to 39 points — and the best open rebuild
 reaches 0.791. Nothing in the composite-versus-accuracy confusion rescues that.
 
-**On our own backbone we are at or below the published row.** The board carries an
-official `qwen3-reranker-4b` row — our exact base weights, scored through "one
-neutral, preregistered option-ranking adapter" with temperature and yes/no
-threshold grids fitted on public items — at 0.507 on the same 67 choice items. Our
-fine-tuned checkpoint's native readout reaches 0.493 on one seed and 0.373 on the
-other. **Fine-tuning has not improved our hard-tier choice scoring above the
-untrained public row, and on one seed it is 13 points below it.**
-
-That last comparison has a caveat that cuts both ways: their adapter's prompt and
-threshold fitting differ from ours, so part of the difference is protocol rather
-than weights. That is why it looked worth acting on. **It is not, and the check
-below is why.**
+**The comparison to the published row cannot be made, and the next section is
+why.** The board carries an official `qwen3-reranker-4b` row — our exact base
+weights, scored through "one neutral, preregistered option-ranking adapter" with
+temperature and yes/no threshold grids fitted on public items — at 0.507 on the
+same 67 choice items, where our fine-tuned checkpoint's native readout reaches
+0.493 on one seed and 0.373 on the other. Read as a like-for-like, that says
+fine-tuning has not cleared its own starting point. It cannot be read that way:
+the two numbers come from different harnesses, and when the board's documented
+adapter is reimplemented below it lands 8.9 points under their published figure
+on the same weights. Their row is not reproducible from their own documentation,
+so it is not a yardstick for ours. Our hard-tier choice accuracy is **0.373-0.493
+in our harness**, full stop, and no statement about how that compares to the
+untrained base on the board's terms is available.
 
 ### Their documented mapping does not reproduce their number
 
@@ -370,12 +399,12 @@ below their published figure on the same weights, so **their number is not
 reproducible from their own documentation**: something in the transport, which
 the docs do not pin down, accounts for it.
 
-That means the sentence above — that fine-tuning leaves us below the untrained
-public row — **is not established**. Comparing our 0.373-0.493 against their
-0.507 compares two harnesses whose calibration we cannot measure; our best
-reimplementation of theirs sits at 0.418-0.433. The honest statement is that our
-hard-tier choice accuracy is 0.373-0.493 in our harness, and that an official row
-for the same base weights exists at 0.507 which we cannot reproduce.
+That is what removes the only candidate explanation that was available for the
+published row: their adapter's calibration is monotone and their prompt is worth
+a single item, so the 8.9-point difference sits in the transport rather than in
+anything documented. Their row cannot be reproduced, and ours is therefore
+reported on its own terms — 0.373-0.493 in this harness — with no claim about
+where it sits relative to the untrained base as the board measures it.
 
 ### How much of the hard-tier deficit is checkpoint variance?
 

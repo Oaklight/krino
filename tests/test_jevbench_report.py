@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from model.evaluation.jevbench import record_correct, summarize, tier_from_id
+from model.evaluation.jevbench import prediction_rows, record_correct, summarize, tier_from_id
 
 
 def record(item_id: str, logits: list[float], label_idx: int, q_type: str = "choice"):
@@ -101,3 +101,31 @@ def test_summarize_of_nothing_is_zero_and_not_a_division_error():
 def test_each_tier_is_reported_under_its_own_name(tier):
     summary = summarize([record(f"{tier}-1", [2.0, 0.0], 0)])
     assert list(summary["by_tier"]) == [tier]
+
+
+def test_prediction_rows_name_the_option_that_was_chosen():
+    rows = prediction_rows([record("hard-a", [0.1, 2.0, 0.3], 1), record("hard-b", [2.0, 0.0], 1)])
+    assert [row["predicted"] for row in rows] == [1, 0]
+    assert rows[0]["gold"] == 1 and rows[0]["correct"] is True
+    assert rows[1]["correct"] is False
+    assert [row["id"] for row in rows] == ["hard-a", "hard-b"]
+
+
+def test_prediction_rows_expose_a_shared_key_bias():
+    # Two items whose gold answers differ, both predicted to the same option:
+    # the count of identical predictions is what accuracy alone cannot show.
+    rows = prediction_rows(
+        [record("hard-a", [2.0, 0.0, 0.0], 1), record("hard-b", [2.0, 0.0, 0.0], 2)]
+    )
+    assert [row["predicted"] for row in rows] == [0, 0]
+    assert [row["correct"] for row in rows] == [False, False]
+
+
+def test_prediction_rows_fall_back_to_indices_without_labels():
+    item = SimpleNamespace(id="hard-c", question={"type": "score"})
+    rows = prediction_rows(
+        [{"type": "score", "logits": [0.0, 5.0], "label_order": [0, 1], "label_idx": 0, "_item": item}]
+    )
+    assert rows[0]["predicted"] == 1
+    assert rows[0]["gold"] == 0
+    assert rows[0]["n_options"] == 0
