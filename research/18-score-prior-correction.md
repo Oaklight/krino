@@ -103,12 +103,22 @@ level 0 up takes correct level-1 predictions with it. The aversion is real at th
 marginal, but the marginal is not what caps this scale: the head's within-item
 discrimination is, and no shift of the levels changes it.
 
-**STS-B does not reach 0.85 even with an oracle prior.** The six-level QWK goes
-0.287 → 0.292 against a gold marginal the model would never be given in
-production. If the marginal were the whole story, an oracle correction would
-recover most of it. It recovers 0.006. So re-splitting STS-B — the open decision
-in `research/17` — removes an unfair comparison but does not by itself produce a
+**STS-B does not reach 0.85 on this slice even with an oracle prior.** The
+six-level QWK goes 0.287 → 0.292 against a gold marginal the model would never be
+given in production. If the marginal were the whole story, an oracle correction
+would recover most of it. It recovers 0.006. So **correcting the marginal** —
+re-weighting the levels, or any other re-split that leaves the 219 unobserved rows
+inside the scale — removes an unfair comparison but does not by itself produce a
 passing QWK on that scale.
+
+That is a statement about the prior, not about deleting the rows, and the two are
+different interventions. Re-weighting cannot recover a gold distribution that was
+never observed; dropping the rows deletes the part of the distribution that does
+not exist. *The sentinel was the six-level scale's problem*, below, measures the
+second — 0.2654 → 0.9222 on seed 123 and 0.2969 → 0.9181 on seed 42, which does
+pass — and that is the measurement `research/17`'s clause-2 row cites. Both
+statements stand: on this contaminated slice the prior lever is null, and the row
+drop is not.
 
 ## The other lever is the decision rule, and the sentinel decides it
 
