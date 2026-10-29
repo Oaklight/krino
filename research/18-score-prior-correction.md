@@ -119,28 +119,69 @@ Three decoders, applied to the same logits, on the same 1,832 score items:
 | ordinal median | 0.6379 | 0.8463 | 0.2857 | 0.6684 |
 | **posterior mean** | 0.5951 | **0.8514** | 0.2849 | 0.6662 |
 
-**On the five-level scale — the largest, 1,113 items — the posterior mean clears
-the clause at 0.8514**, up from 0.8268. Paired bootstrap over 2,000 resamples
-puts the gain at **+0.0242 [0.0107, 0.0395], P(>0) = 1.000**, and the decoder
-choice cross-fits: chosen on one half of the scale it scores 0.8539 on the other,
-chosen on the other half it scores 0.8486, against argmax's 0.8236 and 0.8304.
+**On the five-level scale — the largest, 1,113 items — the posterior mean reaches
+0.8514**, up from 0.8268. Paired bootstrap over 2,000 resamples puts the gain at
+**+0.0242 [0.0107, 0.0395], P(>0) = 1.000**, and the decoder choice cross-fits:
+chosen on one half of the scale it scores 0.8539 on the other, chosen on the other
+half it scores 0.8486, against argmax's 0.8236 and 0.8304.
 
-It does not transfer to the other scales, and that is the point. On the
-four-level scale the posterior mean **loses** 0.0371 [−0.0929, +0.0280] — the CI
-crosses zero and the in-sample median decoder's apparent win does not cross-fit,
-so the only defensible statement there is that the decoders are indistinguishable.
-On the six-level (STS-B) scale nothing moves: −0.0024, and that scale's problem is
-the split, as established above.
+### The second seed does not reproduce that
 
-So the decoder has to be chosen per scale, and chosen out of sample. Chosen that
-way — posterior mean at five levels, argmax elsewhere — the mixed figure is
-0.6662 against 0.6562, which is still nowhere near 0.85.
+Everything in the paragraph above is one seed. The same dump on seed 42 at epoch
+5 — the checkpoint the rest of this note is replicated on — gives a different
+answer:
 
-**What this changes for clause 2:** one of the three score scales now meets the
-bar, on a principled rule that costs nothing and needs no training. The aggregate
-does not, and cannot on this data mix — but the statement "no part of clause 2's
-QWK has ever passed" is no longer true, and the passing part is the scale that
-carries 61% of the score items.
+| scale | decoder | seed 123 (ep10) | seed 42 (ep5) |
+|---|---|---|---|
+| 4-level | argmax | 0.6309 | 0.5031 |
+| 4-level | ordinal median | 0.6379 | **0.5702** |
+| 4-level | posterior mean | 0.5951 | 0.4501 |
+| 5-level | argmax | 0.8268 | 0.8481 |
+| 5-level | ordinal median | 0.8463 | 0.8529 |
+| 5-level | posterior mean | **0.8514** | 0.8495 |
+| 6-level | argmax | 0.2874 | 0.2969 |
+| 6-level | ordinal median | 0.2857 | 0.2970 |
+| 6-level | posterior mean | 0.2849 | 0.2971 |
+| mixed | argmax | 0.6562 | 0.6565 |
+| mixed | ordinal median | 0.6684 | **0.6674** |
+| mixed | posterior mean | 0.6662 | 0.6511 |
+
+**The posterior mean's gain at five levels does not replicate.** On seed 42 it is
+**+0.0014 [−0.0084, +0.0122], P(>0) = 0.596** — indistinguishable from argmax —
+against +0.0242 on seed 123. The reason is visible in the baseline: seed 42's
+argmax already sits at 0.8481 where seed 123's sits at 0.8268. The decoder is not
+adding a systematic gain; on seed 123 it closes a gap that seed 42 does not have.
+A 2 pp seed spread in the baseline is comparable to the effect being measured, and
+one seed is not enough to tell them apart.
+
+**What does replicate is the ordinal median.** It is the only decoder that helps
+on both seeds at every scale that has items:
+
+| | seed 123 | seed 42 |
+|---|---|---|
+| mixed QWK, argmax → median | 0.6562 → 0.6684 (+1.22 pp) | 0.6565 → 0.6674 (+1.09 pp) |
+| 5-level, argmax → median | 0.8268 → 0.8463 | 0.8481 → 0.8529 |
+| 4-level, argmax → median | 0.6309 → 0.6379 | 0.5031 → 0.5702 |
+
+So **the honest claim is a mixed-scale gain of about 1.1 pp that repeats on two
+seeds**, plus a larger four-level gain that is itself seed-dependent (0.64 against
+0.57 at the same training length). The 5-level scale sits at **~0.85 and
+straddles the bar**: 0.8463-0.8529 depending on seed and decoder. It clears 0.85
+on seed 123 only under the posterior mean and on seed 42 under either rule — but
+seed 42's argmax already clears it, so the decoder is not what puts it there.
+
+**Clause 2's QWK therefore does not have a passing scale that survives a second
+seed.** The earlier version of this section claimed the five-level scale cleared
+the bar; that claim was one seed deep and is withdrawn here.
+
+On the four-level scale the posterior mean **loses** 0.0371 [−0.0929, +0.0280] on
+seed 123 and 0.0530 on seed 42 — consistently wrong, and the opposite of what the
+squared-error argument predicts. On the six-level (STS-B) scale nothing moves on
+either seed: the scale's problem is the split, as established above.
+
+**What survives for clause 2:** the ordinal median is a free +1.1 pp on mixed
+QWK that repeats on two seeds and never hurts a scale. That is a real but small
+improvement, and it does not turn any scale's verdict.
 
 ## Excluding STS-B does not rescue the clause either
 
