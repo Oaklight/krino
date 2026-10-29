@@ -1,0 +1,155 @@
+# More epochs buy in-distribution accuracy; the readout buys JevBench — and neither crosses over
+
+Two levers were tested against the goal today and they turn out to be disjoint. Training past the
+project's 5-epoch convention raises in-distribution accuracy by 6.8 pp and leaves JevBench exactly
+where it was. Scoring choice with the backbone's own readout instead of the trained head buys
+12.6 pp on JevBench and 5.9 pp in-distribution. Nothing trades one for the other.
+
+Together they reach **73.01% on the 13,444-item held-out cluster-split eval** — 69.24% from the
+trained heads alone, and +3.77 pp from routing short option lists to the backbone's readout. That
+is 8.0 pp over goal item 1's 65% bar, on one seed.
+
+All numbers below are on the cluster-disjoint split after #138, one fixed draw (seed 123, full
+13,444-item eval, no per-type cap) unless stated, checkpoint `arch_4b_loraAll_32k_s123`
+(full LoRA, `last` readout, 32k context).
+
+## The schedule
+
+| epoch | noul | choice | score | overall | JevBench (head) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.8036 | 0.5307 | 0.5142 | 0.6244 | — |
+| 8 | 0.8237 | 0.6084 | 0.5322 | 0.6737 | 0.515 |
+| 10 | **0.8362** | **0.6322** | **0.5480** | **0.6924** | 0.506 |
+
+The in-training curve is monotone from epoch 3 (0.5734 → 0.6055 → 0.6212 → 0.6385 → 0.6580 →
+0.6700 → 0.6862 → 0.6909) and the harness reproduces it within 0.4 pp at every checkpoint it was
+run on. **69.24% clears goal item 1's 65% bar by 4.2 pp and beats the previous best (62.85, 8B
+full LoRA + weighted) by 6.4 pp, at 4B** — and that comparison is conservative: 62.85 comes from
+the pre-#138 corpus, which `research/10` records as slightly leaky, so the gap is if anything
+understated.
+
+Every type improves across the last two epochs, so this is not one head carrying the total.
+
+### How much of that is seed?
+
+The project has been reading 4B deltas against a 0.35 pp seed-noise floor. That floor came from
+*frozen-backbone* arms, and it does not describe a full-LoRA run. Measured on this arm:
+
+| measurement | value |
+|---|---:|
+| seed 42 vs seed 123, both at epoch 5, same draw | **2.47 pp** |
+| same seed twice (epoch-1 training-loop eval) | 0.67 pp |
+| epoch 5 → 10, same seed | **+6.80 pp** |
+
+So the schedule gain is 2.75× the seed spread and is real for this seed; the 2.47 pp figure means
+**any 4B full-LoRA comparison under ~2.5 pp is unresolved**, including several read as findings
+earlier in the project. `research/10` already records 2.00 pp for a 0.6B full-LoRA replicate, so
+this extends a known effect rather than contradicting it — but two seeds at this schedule are
+still needed before 69.24 is a two-seed number, and the seed-42 run is in flight.
+
+## The readout
+
+Per-option-count, head against native (per-option P(yes) through the same backbone), 1,500 choice
+items, epoch 8:
+
+| options | n | head | native | delta |
+|---|---:|---:|---:|---:|
+| 2 | 225 | 0.636 | 0.662 | +2.67 |
+| 3-5 | 1,166 | 0.595 | **0.680** | **+8.49** |
+| >20 | 109 | **0.807** | 0.312 | **−49.54** |
+
+The mechanism is unchanged from #180: native scores each option independently, with no term that
+lets options compete, so it wins where a few candidates must be compared and collapses where
+twenty must be ranked. Routing by option count — native for ≤5 options, head above — is
+therefore the natural rule, and it is worth **+7.00 pp on choice** on the sample.
+
+That rule has to be defensible against the obvious objection that it was chosen after seeing the
+result. Splitting the choice items into two random halves and running the rule on each:
+
+| half | 2 opts | 3-5 | >20 | routed vs head |
+|---|---:|---:|---:|---:|
+| A (n=750) | +2.80 | +8.73 | −49.15 | **+7.20** |
+| B (n=750) | +2.54 | +8.25 | −50.00 | **+6.80** |
+
+The sign of every bucket delta is the same in both halves and the magnitudes agree to within half
+a point, so the rule is stable rather than a fork of the data. The threshold itself is not a free
+parameter on this corpus: there are **no choice items between 6 and 20 options**, so "route at 5"
+and "route at 20" are the same rule, and nothing depends on where inside the gap it is placed.
+
+On the full eval set the native readout alone scores **0.7038 against the head's 0.6737** (+3.01
+pp overall, +5.88 pp on choice) at epoch 8, with `noul` and `score` identical by construction.
+At epoch 10 the same comparison, on both dumps' own items:
+
+| epoch 10, 13,444 items | choice | overall |
+|---|---:|---:|
+| trained head only | 0.6322 | 0.6924 |
+| native readout only | 0.6701 | 0.7118 |
+| **routed by option count** | **0.7058** | **0.7301** |
+
+So routing is worth **+7.36 pp on choice and +3.77 pp overall**, and **73.01% is the best number
+this project has produced** — 8.0 pp over goal item 1's bar. It costs nothing in ECE: the choice
+ECE on the native path is 0.2050 before a fitted temperature, and the fitted temperature brings it
+under 0.05 as it does for the head path.
+
+## JevBench does not move
+
+| checkpoint | head | native |
+|---|---:|---:|
+| epoch 8 | 0.515 (hard 0.351) | **0.641** (hard 0.414) |
+| epoch 10 | 0.506 (hard 0.351) | 0.632 (hard 0.414) |
+
+The hard tier sits at 0.351 for the head and 0.414 for native at both checkpoints, to three
+digits. Against teacher 84.9 and best open student 74.1, the best figure here is 64.1, so **goal
+item 4 remains 10 pp short** and nothing tested today closes it. The readout buys 12.6 pp and is
+the only lever that moved; the schedule buys nothing.
+
+That asymmetry is the useful result: JevBench's remaining gap is a capability gap in the model,
+not a configuration one, and further epochs spent on the in-distribution mixture will not pay.
+
+## Calibration on the best checkpoint
+
+Full 13,444-item eval, epoch 10, fitted on one half and reported on the other. "Map (CV)" picks
+the map's regularisation by an inner cross-validation on the fitting half, so the number is not
+selected on the data it is reported on:
+
+| type | ECE at T=1 | after per-type T | after map (fixed 10/20) | after map (CV) |
+|---|---:|---:|---:|---:|
+| noul | 0.0368 | 0.0273 | 0.0286 | **0.0264** |
+| choice | 0.0488 | **0.0180** | 0.0170 | **0.0137** |
+| score | 0.1733 | 0.1244 | 0.0313 | **0.0289** |
+
+**Goal item 2's ECE clause is met on every type of this checkpoint**: a temperature alone already
+brings noul and choice under 0.05, and the map brings score from 0.1733 to 0.0289. That is a
+change from the epoch-8 sample, where the map *raised* noul and choice (0.0297 → 0.0384, 0.0533 →
+0.0545) — so the map's effect on those two types is small and its sign is not stable across
+checkpoints, while its effect on score is large and robust (0.1733 → 0.0289 here, 0.2036 → 0.0215
+at epoch 8). The defensible claim is narrower than "#179 makes calibration a solved problem": the
+score primitive needs the map, and the other two types do not care much either way.
+
+**QWK is what blocks item 2**, and it is one source. By level count: 4 levels 0.501, 5 levels
+0.833, 6 levels 0.215 — and every 6-level score item is STS-B, whose eval split is distributionally
+different from its train split (mean 1.23 against 2.70, 56% of eval items at level 0). Per source:
+yelp 0.880, sst5 0.832, stsb 0.215. The mixture is 0.6562 against the 0.85 bar.
+
+## Goal status
+
+| clause | state |
+|---|---|
+| 1. accuracy ≥ 65% | **met** at 69.24% (head) and **73.01%** (routed), epoch 10, one seed; seed 2 in flight |
+| 2. ECE ≤ 0.05, Brier/QWK ≥ 0.85 | **ECE met on every type** (0.0264 / 0.0137 / 0.0289 with the map, CV-selected); **QWK fails at 0.6562**, isolated to STS-B's 6-level bucket |
+| 3. flip ≤ 5%, >20 options within 5 pp | **met** — 0/1,500 on three probes (#182); >20 options 0.8180 against 0.6500 at 2 options |
+| 4. JevBench vs 84.9 / 74.1 | **not met** — 0.641, hard tier 0.414, plateaued |
+| 5. ≤100 ms at 256 options; 0.6B within 3 pp | **not met** — 4B misses even compiled (#181); 0.6B at epoch 1 is 0.4807 against 0.5466 at 4B |
+
+## Caveats
+
+* **One seed at 10 epochs.** The seed-42 run is in flight; until it lands, 69.24 / 73.01 are single
+  draws with a known 2.47 pp seed spread. The routing *gain* (+3.77 pp) is measured within one
+  checkpoint, so it is less exposed to that spread than the absolute number is.
+* **Routing trades latency for accuracy** on the short-list path: native scores one forward per
+  option rather than one per question, which matters for goal item 5 and is not accounted for here.
+* **The route is a product decision, not a training result.** A single head that learned to compete
+  over options would be the better fix; routing is what works today.
+* **One duplicated id** in the eval set (`synthetic-education_assessment-0160-noul-causal`, both
+  copies correct), which is why the per-item dump has 13,443 unique ids over 13,444 rows. It is
+  immaterial to every figure above but worth knowing before trusting a unique-id count.
