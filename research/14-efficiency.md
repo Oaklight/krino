@@ -30,13 +30,17 @@ Median milliseconds per item. "—" is a configuration not measured in this roun
 
 | options | 0.6B eager | 0.6B compiled | 4B eager | 4B compiled |
 |---:|---:|---:|---:|---:|
-| 2 | 78.2 | 13.8 | 101.0 | 33.2 |
+| 2 | 78.2 | — | 101.0 | 33.2 |
 | 5 | 79.9 | 13.8 | 101.3 | 34.2 |
 | 20 | 82.6 | — | 106.7 | 47.6 |
 | 64 | 86.9 | — | 124.4 | 68.5 |
 | 128 | 92.9 | — | 188.2 | 109.1 |
 | **255** | 126.6 | **55.5** | 316.7 | **183.6** |
 | peak memory at 255 | 2.35 GB | 1.15 GB | 9.27 GB | 7.63 GB |
+
+The 0.6B compiled column has only two measured points (5 and 255 options); the
+k=2, 20, 64 and 128 cells are not measurements, and an earlier revision printed
+13.8 in the k=2 cell, which is the k=5 number.
 
 Throughput at 256 options follows from the medians: 17.9 items/s and 5.4 items/s
 for the two compiled models. Both fit on one A100 by memory at either size; time
@@ -109,6 +113,16 @@ recorded here so a reader who saw them can find out what happened.
 |---|---:|---:|
 | options 5 | 51.0 ms | 13.8 ms |
 | options 255 | 78.1 ms | 55.5 ms |
+
+The two runs differ in the stack as well as in the result: the superseded file
+(`model/experiments/latency_a100_06b_compiled.json`, merged with #160) records
+torch 2.11.0+cu128 and CUDA 12.8, this one torch 2.14.0+cu126 and CUDA 12.6, with
+the same warmup and repeat counts. So the 78.1 ms to 55.5 ms change is a stack
+change on identical model, device, state length and `max_length` — not a
+measurement error in either run, and not a model difference. Both clear the
+100 ms bar, so nothing in Finding 1 depends on which is quoted; the repository
+now carries one artifact for this configuration and this note records what the
+other one said.
 
 ## Caveats
 
