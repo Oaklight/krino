@@ -147,6 +147,69 @@ def bootstrap_delta(
     }
 
 
+def bootstrap_mixed(
+    rows: Sequence[dict[str, Any]],
+    better: str,
+    baseline: str,
+    resamples: int = 2000,
+    seed: int = 0,
+) -> dict[str, Any]:
+    """Paired bootstrap of the item-weighted mixed-scale QWK difference.
+
+    ``bootstrap_delta`` answers within one level scale, which is where QWK
+    lives; the number the note headlines is the item-weighted average across
+    scales, so it needs its own interval rather than an average of per-scale
+    ones. Each resample draws items across every scale and reweights by the
+    drawn counts, which is what the point estimate does on the full set.
+    """
+    usable = [
+        row
+        for scale, group in _collect(rows).items()
+        if len(group) >= MIN_SCALE_ITEMS
+        for row in group
+    ]
+    if len(usable) < 2:
+        return {}
+
+    def delta_on(sample: Sequence[dict[str, Any]]) -> float:
+        """Item-weighted difference between the two decoders on ``sample``."""
+        parts = []
+        count = 0
+        for scale, group in _collect(sample).items():
+            golds = [row["gold"] for row in group]
+            good = quadratic_weighted_kappa(
+                [DECODERS[better](row["logits"]) for row in group], golds, scale
+            )
+            base = quadratic_weighted_kappa(
+                [DECODERS[baseline](row["logits"]) for row in group], golds, scale
+            )
+            parts.append((good - base) * len(group))
+            count += len(group)
+        return sum(parts) / count if count else 0.0
+
+    rng = random.Random(seed)
+    deltas: list[float] = []
+    for _ in range(resamples):
+        sample = [usable[rng.randrange(len(usable))] for _ in range(len(usable))]
+        deltas.append(delta_on(sample))
+    deltas.sort()
+    return {
+        "delta": delta_on(usable),
+        "median": statistics.median(deltas),
+        "ci_low": deltas[int(0.025 * resamples)],
+        "ci_high": deltas[int(0.975 * resamples) - 1],
+        "share_positive": sum(1 for value in deltas if value > 0) / resamples,
+    }
+
+
+def _collect(sample: Sequence[dict[str, Any]]) -> dict[int, list[dict[str, Any]]]:
+    """Group resampled rows by level scale."""
+    grouped: dict[int, list[dict[str, Any]]] = {}
+    for row in sample:
+        grouped.setdefault(row["k"], []).append(row)
+    return grouped
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--logits", type=Path, required=True)
@@ -158,7 +221,12 @@ def main() -> int:
     rows = json.loads(args.logits.read_text(encoding="utf-8"))["items"]
     print(f"{len(rows)} score items", flush=True)
 
-    report: dict[str, Any] = {"decoders": {}, "cross_fitted": {}, "bootstrap": {}}
+    report: dict[str, Any] = {
+        "decoders": {},
+        "cross_fitted": {},
+        "bootstrap": {},
+        "bootstrap_mixed": {},
+    }
     for decoder in DECODERS:
         report["decoders"][decoder] = per_scale_metrics(rows, decoder)
         summary = report["decoders"][decoder]
@@ -191,6 +259,19 @@ def main() -> int:
         values = report["bootstrap"][str(scale)]
         print(
             f"  k={scale} expected - argmax: {values['median']:+.4f} "
+            f"[{values['ci_low']:+.4f}, {values['ci_high']:+.4f}] "
+            f"P(>0)={values['share_positive']:.3f}",
+            flush=True,
+        )
+
+    for better in ("expected_level", "ordinal_median"):
+        values = bootstrap_mixed(rows, better, "argmax", args.resamples, args.seed)
+        if not values:
+            continue
+        report["bootstrap_mixed"][better] = values
+        print(
+            f"  mixed {better} - argmax: {values['delta']:+.4f} "
+            f"(resampled median {values['median']:+.4f}) "
             f"[{values['ci_low']:+.4f}, {values['ci_high']:+.4f}] "
             f"P(>0)={values['share_positive']:.3f}",
             flush=True,

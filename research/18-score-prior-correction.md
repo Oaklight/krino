@@ -159,16 +159,34 @@ on both seeds at every scale that has items:
 
 | | seed 123 | seed 42 |
 |---|---|---|
-| mixed QWK, argmax → median | 0.6562 → 0.6684 (+1.22 pp) | 0.6565 → 0.6674 (+1.09 pp) |
+| mixed QWK, argmax → median | 0.6562 → 0.6684 (+1.22 pp) | 0.6565 → 0.6674 (+1.10 pp) |
+| mixed gain, paired bootstrap | **+0.0122 [+0.0035, +0.0226], P(>0) = 0.997** | **+0.0110 [−0.0005, +0.0231], P(>0) = 0.967** |
 | 5-level, argmax → median | 0.8268 → 0.8463 | 0.8481 → 0.8529 |
 | 4-level, argmax → median | 0.6309 → 0.6379 | 0.5031 → 0.5702 |
 
-So **the honest claim is a mixed-scale gain of about 1.1 pp that repeats on two
-seeds**, plus a larger four-level gain that is itself seed-dependent (0.64 against
-0.57 at the same training length). The 5-level scale sits at **~0.85 and
+The mixed-scale interval is its own measurement (`bootstrap_mixed`, item-weighted
+across scales, since QWK lives within a scale and the headline does not) rather
+than an average of the per-scale ones. **It clears zero on seed 123 and just
+misses on seed 42** — +0.0110 with a lower bound of −0.0005 — so the honest
+statement is a ~1.1-1.2 pp gain in the same direction on two seeds of which only
+one is individually significant, not a replicated effect in the strict sense. For
+comparison the posterior mean's mixed gain is +0.0099 [−0.0008, +0.0217] on seed
+123 and **−0.0054 [−0.0178, +0.0071]** on seed 42, which is the withdrawal below
+in mixed-scale form.
+
+So **the claim is a mixed-scale gain of about 1.1 pp that points the same way on
+two seeds**, plus a larger four-level gain that is itself seed-dependent (0.64
+against 0.57 at the same training length). The 5-level scale sits at **~0.85 and
 straddles the bar**: 0.8463-0.8529 depending on seed and decoder. It clears 0.85
 on seed 123 only under the posterior mean and on seed 42 under either rule — but
 seed 42's argmax already clears it, so the decoder is not what puts it there.
+
+**None of this is progress toward the clause's 0.85 in an aggregate sense.** The
+mixed number averages three scales that are not close to each other: 5-level
+0.827, 4-level 0.631, and 6-level **0.287**. A decoder that reorders the same
+posterior cannot lift a 0.287 scale, and the median in fact makes it very
+slightly worse (0.2874 → 0.2857). The 1.2 pp is real and free, and it is a
+rounding error against the gap on the six-level scale.
 
 **Clause 2's QWK therefore does not have a passing scale that survives a second
 seed.** The earlier version of this section claimed the five-level scale cleared

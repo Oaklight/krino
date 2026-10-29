@@ -19,6 +19,7 @@ from model.evaluation.ordinal_decode import (
     decode_expected_level,
     decode_ordinal_median,
 )
+from model.scripts.eval_score_decoders import bootstrap_mixed
 
 
 def _logits(*probabilities: float) -> list[float]:
@@ -99,3 +100,37 @@ class TestDisagreement:
 
     def test_registry_exposes_all_three(self):
         assert set(DECODERS) == {"argmax", "ordinal_median", "expected_level"}
+
+
+class TestMixedScaleBootstrap:
+    """The headline QWK is item-weighted across scales, so its interval must be too."""
+
+    @staticmethod
+    def _rows(k: int, n: int, seed: int) -> list[dict]:
+        import random
+
+        rng = random.Random(seed)
+        rows = []
+        for _ in range(n):
+            gold = rng.randrange(k)
+            # A logit vector whose argmax is right most of the time.
+            logits = [rng.gauss(0.0, 1.0) for _ in range(k)]
+            logits[gold] += 2.0
+            rows.append({"k": k, "gold": gold, "logits": logits})
+        return rows
+
+    def test_identical_decoders_give_a_zero_difference(self):
+        rows = self._rows(5, 60, 0) + self._rows(4, 40, 1)
+        result = bootstrap_mixed(rows, "argmax", "argmax", resamples=100)
+        assert result["delta"] == 0.0
+        assert result["ci_low"] == 0.0 and result["ci_high"] == 0.0
+
+    def test_scales_below_the_item_floor_are_excluded(self):
+        rows = self._rows(5, 60, 0) + self._rows(6, 3, 1)
+        result = bootstrap_mixed(rows, "ordinal_median", "argmax", resamples=50)
+        assert result  # the five-level block alone is enough to run
+        assert result["median"] is not None
+
+    def test_no_usable_scale_returns_empty(self):
+        rows = [{"k": 4, "gold": 0, "logits": [3.0, 0.0, 0.0, 0.0]}]
+        assert bootstrap_mixed(rows, "ordinal_median", "argmax", resamples=10) == {}
