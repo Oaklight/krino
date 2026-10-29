@@ -103,6 +103,45 @@ recover most of it. It recovers 0.006. So re-splitting STS-B — the open decisi
 in `research/17` — removes an unfair comparison but does not by itself produce a
 passing QWK on that scale.
 
+## The decision rule is worth more than the prior: argmax is not QWK-optimal
+
+Everything above corrects the *distribution*. The prior failures share a cause
+worth naming: QWK weights a miss by the square of the distance between levels,
+and the argmax is the mode. The mode minimises 0-1 loss, not squared loss. The
+Bayes rule under squared loss is the posterior mean, and for an ordinal head that
+is a different level often enough to matter.
+
+Three decoders, applied to the same logits, on the same 1,832 score items:
+
+| decoder | 4-level QWK (218) | 5-level QWK (1,113) | 6-level QWK (500) | mixed |
+|---|---|---|---|---|
+| argmax (shipped) | 0.6309 | 0.8268 | 0.2874 | 0.6562 |
+| ordinal median | 0.6379 | 0.8463 | 0.2857 | 0.6684 |
+| **posterior mean** | 0.5951 | **0.8514** | 0.2849 | 0.6662 |
+
+**On the five-level scale — the largest, 1,113 items — the posterior mean clears
+the clause at 0.8514**, up from 0.8268. Paired bootstrap over 2,000 resamples
+puts the gain at **+0.0242 [0.0107, 0.0395], P(>0) = 1.000**, and the decoder
+choice cross-fits: chosen on one half of the scale it scores 0.8539 on the other,
+chosen on the other half it scores 0.8486, against argmax's 0.8236 and 0.8304.
+
+It does not transfer to the other scales, and that is the point. On the
+four-level scale the posterior mean **loses** 0.0371 [−0.0929, +0.0280] — the CI
+crosses zero and the in-sample median decoder's apparent win does not cross-fit,
+so the only defensible statement there is that the decoders are indistinguishable.
+On the six-level (STS-B) scale nothing moves: −0.0024, and that scale's problem is
+the split, as established above.
+
+So the decoder has to be chosen per scale, and chosen out of sample. Chosen that
+way — posterior mean at five levels, argmax elsewhere — the mixed figure is
+0.6662 against 0.6562, which is still nowhere near 0.85.
+
+**What this changes for clause 2:** one of the three score scales now meets the
+bar, on a principled rule that costs nothing and needs no training. The aggregate
+does not, and cannot on this data mix — but the statement "no part of clause 2's
+QWK has ever passed" is no longer true, and the passing part is the scale that
+carries 61% of the score items.
+
 ## Excluding STS-B does not rescue the clause either
 
 That raises the other open decision from `research/17` directly: if STS-B is a

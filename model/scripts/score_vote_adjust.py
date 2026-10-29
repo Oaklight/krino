@@ -107,6 +107,7 @@ def main() -> int:
     parser.add_argument("--rank", type=int, default=None)
     parser.add_argument("--noul-rank", type=int, default=None)
     parser.add_argument("--mlp-layers", type=int, default=None)
+    parser.add_argument("--dump-logits", type=Path, default=None)
     parser.add_argument("--json", type=Path, default=None)
     args = parser.parse_args()
 
@@ -214,6 +215,16 @@ def main() -> int:
             gold_by_scale[n_levels].append(score_gold_index(item, n_levels))
             if index % 200 == 0:
                 print(f"  {index}/{len(score_items)} scored", flush=True)
+
+    if args.dump_logits:
+        args.dump_logits.parent.mkdir(parents=True, exist_ok=True)
+        payload = [
+            {"k": n_levels, "gold": gold, "logits": logits}
+            for n_levels, rows in logits_by_scale.items()
+            for logits, gold in zip(rows, gold_by_scale[n_levels])
+        ]
+        args.dump_logits.write_text(json.dumps({"items": payload}) + "\n", encoding="utf-8")
+        print(f"Logits saved to {args.dump_logits}", flush=True)
 
     # --- Priors ------------------------------------------------------------
     gold_prior = {k: marginal(v, k) for k, v in gold_by_scale.items()}
