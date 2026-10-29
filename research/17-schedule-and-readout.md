@@ -263,6 +263,18 @@ the clause was written to catch — but a 20 pp divergence is not "within 5 pp" 
 the noul primitive disagrees in the opposite direction (2 options 0.8619, 3-5 options 0.6399,
 −22.2 pp).
 
+**And the gap is a consequence of the model getting better.** The seed-42 epoch-5 checkpoint, put
+through the same harness on the same draw, has choice accuracy 0.560 at ≤5 options against 0.596
+at >20 — a **3.6 pp** gap that passes the clause. Between epoch 5 and epoch 10 the long-list bucket
+improves 0.596 → 0.818 (+22 pp, banking77 at a mean of 80 options) while the short-list bucket
+moves 0.560 → 0.618 (+6 pp). Training fixes long lists faster than it fixes short ones, so a
+comparison that was inside the band at epoch 5 is 20 pp outside it at epoch 10.
+
+That makes the clause's failure a measurement consequence rather than a regression: the model did
+not become more option-brittle, it became much better at the one benchmark that has many options.
+The matched sweep in the next section is the measurement that holds the option count fixed and
+still finds a real 12.67 pp effect, which is the number worth acting on.
+
 Two things follow. First, **the gap widened as the model got better**: +4.6 pp on the 5-epoch
 weighted arm against +20.03 pp here, so a pass on a weak checkpoint says nothing about a strong
 one. Second, comparing raw accuracies across these buckets is partly a comparison of tasks: the

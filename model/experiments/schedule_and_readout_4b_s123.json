@@ -315,6 +315,39 @@
    "routed": 0.6867
   }
  },
+ "readout_split138_ep5_independent": {
+  "by_option_count": {
+   "2": {
+    "head": 0.613,
+    "native": 0.647
+   },
+   "3-5": {
+    "head": 0.5502,
+    "native": 0.7054
+   },
+   ">20": {
+    "head": 0.596,
+    "native": 0.32
+   }
+  },
+  "checkpoint": "arch_4b_32k_split138 epoch_005 (seed 42, 5 epochs)",
+  "choice": {
+   "head": 0.5627,
+   "native": 0.6689,
+   "routed": 0.689
+  },
+  "draw": "seed 123, 13,443 unique ids, same corpus",
+  "note": "the routing effect replicates on a different seed and half the schedule, with the same sign in every bucket, and is larger on the weaker checkpoint (+6.48 overall vs +3.77 at epoch 10). The clause-3 count gap on this checkpoint is 3.6 pp (0.560 vs 0.596), i.e. inside the band, because training lifts the long-list bucket 0.596 -> 0.818 by epoch 10 while the short-list bucket moves only 0.560 -> 0.618.",
+  "overall": {
+   "head": 0.649,
+   "native": 0.7035,
+   "routed": 0.7138
+  },
+  "routing_gain": {
+   "choice_pp": 12.63,
+   "overall_pp": 6.48
+  }
+ },
  "run_to_run": {
   "interpretation": "run-to-run spread at 4B full LoRA is ~2.5 pp and is not attributable to seed alone; a pair differing only by an implementation flag reaches the same spread by epoch 2.",
   "same_seed_different_flag": {
