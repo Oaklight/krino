@@ -126,10 +126,39 @@ checkpoints, while its effect on score is large and robust (0.1733 → 0.0289 he
 at epoch 8). The defensible claim is narrower than "#179 makes calibration a solved problem": the
 score primitive needs the map, and the other two types do not care much either way.
 
-**QWK is what blocks item 2**, and it is one source. By level count: 4 levels 0.501, 5 levels
-0.833, 6 levels 0.215 — and every 6-level score item is STS-B, whose eval split is distributionally
-different from its train split (mean 1.23 against 2.70, 56% of eval items at level 0). Per source:
-yelp 0.880, sst5 0.832, stsb 0.215. The mixture is 0.6562 against the 0.85 bar.
+**QWK is what blocks item 2**, and the mixture is dragged by more than one group. Per level count,
+the score eval splits cleanly by source:
+
+| levels | n | sources | QWK |
+|---|---:|---|---:|
+| 4 | 218 | typed_decisions 161, synthetic 57 | 0.631 |
+| 5 | 1,113 | sst5 500, yelp 500, synthetic 92, typed_decisions 21 | 0.827 |
+| 6 | 500 | stsb 500 | 0.287 |
+
+Per source, yelp 0.880 and sst5 0.832 are at or near the 0.85 bar; stsb 0.287,
+typed_decisions and synthetic are well below. The mixture is 0.6562.
+
+STS-B is the worst and the reason is visible in the gold distribution — it is the only source whose
+eval items are dominated by one level:
+
+| source | n | most common gold | accuracy |
+|---|---:|---:|---:|
+| yelp | 500 | 21% | 0.670 |
+| sst5 | 500 | 31% | 0.568 |
+| synthetic | 150 | 31% | 0.440 |
+| typed_decisions | 182 | 37% | 0.577 |
+| **stsb** | 500 | **53%** | 0.428 |
+
+STS-B's train split has mean 2.70 and its eval split 1.23, so the model trains on high-similarity
+pairs and is evaluated on low ones. That is a within-source distribution shift created by the
+split, not something more training fixes, and it is separate from the 7 withheld-label rows #177
+removes.
+
+**But fixing STS-B alone would not clear the bar.** Dropping it leaves 0.827 on the 1,113
+five-level items and 0.631 on the 218 four-level ones — a mixture of roughly 0.80 against a 0.85
+target. The 4-level group is our own data (typed_decisions and synthetic), where QWK at 0.63 is a
+label-quality question rather than a shift, and it is the second thing to look at. I said earlier
+that STS-B was "the sole calibration blocker"; that was too strong and this table is the correction.
 
 ## Goal status
 
