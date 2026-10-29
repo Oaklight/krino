@@ -197,6 +197,39 @@ The obvious next experiment is the one neither scorer does: feed the native
 per-option score into the head as a feature, so short lists get the reranker's
 judgement and long lists keep the competition.
 
+## The 231 items are held out, measured rather than asserted
+
+Every number above is only a held-out number if the items were not in training.
+JevBench is not a training source in any config, so the only way it is not held
+out is if its items duplicate items from the corpus we do train on.
+`scripts/check_jevbench_leakage.py` tests that against the benchmark files,
+which hold **1,562,838 training items** across the 25 non-JevBench sources:
+
+| tier | n | state repeat | identical | label conflict | near-duplicate |
+|---|---|---|---|---|---|
+| easy | 48 | 0 | 0 | 0 | 0 |
+| hard | 111 | 0 | 0 | 0 | 0 |
+| original | 72 | 0 | 0 | 0 | 0 |
+
+Three counts, because a match means different things. A **state repeat** is a
+JevBench state that also appears in training under a different question — not
+leakage on its own. **Identical** is the same state with the same options and the
+same gold: a duplicate the model was trained on. A **label conflict** is the same
+state and options with a different gold, which is not leakage but makes the item
+unreliable. All three are zero.
+
+Exact matching would miss a reworded copy, which is what a corpus assembled from
+public sources would actually present, so the check also measures eight-word
+shingle containment between each JevBench state and the training corpus. The
+largest containment over the 231 items is **0.0011** — a single shared eight-word
+shingle inside a long state — and the p99 is 0.0. The three tiers are authored
+scenarios, which is what that distribution looks like.
+
+The audit is `scripts/check_jevbench_leakage.py` (20 torch-free tests,
+`tests/test_jevbench_leakage.py`) and its output is committed at
+`model/experiments/jevbench_leakage.json`, so the claim can be re-run rather
+than taken on trust.
+
 ## Caveats
 
 * **The raw comparison is a product comparison, not an attribution.** It
