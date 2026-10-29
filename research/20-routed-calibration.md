@@ -32,7 +32,7 @@ ECE, Brier and accuracy on the held-out folds, averaged over the four folds.
 | head only, T=1 | **0.0509** | 0.0352 | 0.0284 |
 | head only, fitted T (0.99–1.11) | 0.0227 | 0.0338 | 0.0258 |
 | routed, T=1 | **0.1716** | 0.1733 | 0.1721 |
-| routed, one temperature per type (fitted) | **0.0607** | **0.0526** | **0.0774** |
+| routed, one temperature for everything (fitted) | **0.0607** | **0.0526** | **0.0774** |
 | routed, one temperature per path (fitted) | **0.0355** | **0.0371** | **0.0382** |
 | accuracy (all rows) | 0.7048 | 0.6641 | 0.6890 |
 | Brier, head only (fitted T) | 0.4695 | 0.5648 | 0.5331 |
@@ -77,16 +77,19 @@ axes at once.
 
 ## What this means for the goal
 
-Item 2's ECE half is **met with per-path temperatures and failed with a per-type
+Item 2's ECE half is **met with per-path temperatures and failed with a single
 one**. Both are global, held-out calibrations; the difference is that the
 deployed rule has two scorers. That makes it an author decision, and the note
 should not pretend otherwise:
 
 - **If per-path scaling counts**, item 2's ECE half is met on the system that
   meets item 1, on two seeds, at 0.0355–0.0382.
-- **If the clause means literally one temperature per type**, the repair is not a
-  better temperature but a better-calibrated native path: fit its temperature at
-  serving time from training items, or replace the reranker score with a
+- **If the clause means one temperature per question type** (noul / choice / score), this note
+  does not measure it: the records are choice-only, so the per-question-type reading needs a
+  calibration dump over all three primitives. What this note can say is that within choice, a
+  single temperature fails and per-path succeeds. If the choice reading is the one that counts,
+  the repair is not a better temperature but a better-calibrated native path: fit its
+  temperature at serving time from training items, or replace the reranker score with a
   calibrated head. Software alone will not close 0.0607 → 0.05 without touching
   how the native scores are produced.
 
