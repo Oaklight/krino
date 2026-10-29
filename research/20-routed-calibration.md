@@ -4,11 +4,17 @@ Goal item 1 is met by a rule rather than a model: short lists go to the
 backbone's native reranker readout and long ones to the trained head, which is
 worth +3.77 pp overall (`research/17`) and +1.74 pp more with the blend
 (`research/19`). Item 2 asks for `ECE <= 0.05` after per-type temperature scaling,
-and the number that has been quoted for it — 0.0264 / 0.0137 / 0.0289 per type —
-was measured on the trained head, not on the system that actually answers. The
-deployed system has two scorers with different calibration, and this note measures
-it: on the routed system, one temperature per question type misses 0.05 on every
-checkpoint, and one temperature per **path** clears it on every checkpoint.
+and three different quantities have been read as answering it. The first is the
+head's **CV-selected monotone map**, 0.0264 / 0.0137 / 0.0289 over noul / choice /
+score, which is what `research/17` quotes as "met on every type". The second is
+the head's **per-type temperature** from the same table: 0.0273 / 0.0180 /
+**0.1244**, where the score primitive stays 2.5× the bar — a temperature does not
+fix score, a map does. The third is the slot the clause actually has to be read
+in: the deployed system, which has two scorers with different calibration and is
+not the head at all. This note measures that system. Its records are choice-only,
+so the per-question-type reading of the routed system is *not measured* here; what
+is measured is one temperature for the whole choice set, which misses 0.05 on
+every checkpoint, and one temperature per **path**, which clears it on every one.
 
 ## Setup
 
@@ -50,14 +56,24 @@ That also explains why one number for the type cannot work: a single temperature
 that divides the native logits by 3 would soften the head into uselessness, and
 one that leaves the head alone leaves the native path at 0.17.
 
-## Finding 2 — as the clause is worded, the ECE half fails on the system that meets item 1
+## Finding 2 — on the head the literal per-type reading fails on score; on the system it is not measured
 
-"After per-type temperature scaling" is one temperature for the whole choice
-type. Fitted that way, the routed system lands at **0.0607, 0.0526 and 0.0774**
-against a 0.05 bar: it misses on all three checkpoints, and the miss is not
-marginal on two of them. This is the honest reading of item 2 for the deployed
-system, and it is a different claim from the head's 0.0227–0.0338 that has been
-quoted.
+`research/17`'s per-type table is where the clause's literal reading lives. After
+a temperature of its own per type the trained head is at noul 0.0273, choice
+0.0180 and **score 0.1244** — one primitive fails, by two and a half times the
+bar — and it is the CV-selected map, not the temperature, that takes score to
+0.0289. So on the head the clause passes only if "per-type temperature scaling"
+is read as "whatever per-type post-hoc map"; read literally, it fails on score.
+
+For the deployed system the per-type question cannot be answered from these
+records at all: they are choice-only, so there is no noul or score item to fit a
+temperature on. What can be answered is how many temperatures the choice set
+gets. **One temperature for the whole choice set** lands at **0.0607, 0.0526 and
+0.0774** against the 0.05 bar — a miss on all three checkpoints, and not a
+marginal one on two of them. That number is *not* the head's 0.0180: 0.0180 is
+choice items under a temperature of their own, with no native path in the mix,
+and 0.0607 is two scorers forced to share one divisor. The prose in earlier
+drafts of this note called 0.0607 "per type"; it never was one.
 
 ## Finding 3 — per-path temperatures clear it on two seeds and two training lengths
 
@@ -77,24 +93,29 @@ axes at once.
 
 ## What this means for the goal
 
-Item 2's ECE half is **met with per-path temperatures and failed with a single
-one**. Both are global, held-out calibrations; the difference is that the
-deployed rule has two scorers. That makes it an author decision, and the note
-should not pretend otherwise:
+Item 2's ECE half is **met on the routed system with per-path temperatures, and
+failed with a single one**; on the head it is met with the CV-selected map and
+failed under the temperature the clause literally names, because score needs the
+map. All of these are global, held-out calibrations; the difference is how many
+of them there are. That makes it an author decision, and the note should not
+pretend otherwise:
 
 - **If per-path scaling counts**, item 2's ECE half is met on the system that
   meets item 1, on two seeds, at 0.0355–0.0382.
 - **If the clause means one temperature per question type** (noul / choice / score), this note
-  does not measure it: the records are choice-only, so the per-question-type reading needs a
-  calibration dump over all three primitives. What this note can say is that within choice, a
+  does not measure it on the routed system — the records are choice-only, so that reading needs a
+  calibration dump over all three primitives; where it is measured, on the head, it fails on
+  score (0.1244) and passes only with the map. What this note can say is that within choice, a
   single temperature fails and per-path succeeds. If the choice reading is the one that counts,
   the repair is not a better temperature but a better-calibrated native path: fit its
   temperature at serving time from training items, or replace the reranker score with a
   calibrated head. Software alone will not close 0.0607 → 0.05 without touching
   how the native scores are produced.
 
-Either way, the previously quoted 0.0264 / 0.0137 / 0.0289 describes the head,
-not the system, and should be labelled as such wherever it appears.
+Either way, the previously quoted 0.0264 / 0.0137 / 0.0289 is the CV-selected
+**map** column on the head — not a temperature, and not the system — and should
+be labelled as such wherever it appears. The head's temperature column is
+0.0273 / 0.0180 / 0.1244, and that is the one that answers the clause as worded.
 
 ## Caveats
 
@@ -107,21 +128,28 @@ not the system, and should be labelled as such wherever it appears.
   | | folds 4 | folds 2 |
   |---|---|---:|
   | routed, per path: s123 ep10 / s123 ep5 / s42 ep5 | 0.0355 / 0.0371 / 0.0382 | 0.0278 / 0.0336 / 0.0324 |
-  | routed, per type: s123 ep10 / s123 ep5 / s42 ep5 | 0.0607 / 0.0526 / 0.0774 | 0.0589 / 0.0517 / 0.0632 |
+  | routed, one temperature for everything: s123 ep10 / s123 ep5 / s42 ep5 | 0.0607 / 0.0526 / 0.0774 | 0.0589 / 0.0517 / 0.0632 |
 
-  The largest move is 0.014 (s42, per type). **No verdict flips**: per-type stays
-  above 0.05 on all three checkpoints under both schedules and per-path stays
-  below on all three. The two-seed spread on the per-path number is 0.0011 at
+  The largest move is 0.014 (s42, one temperature for everything). **No verdict
+  flips**: the single-temperature arm stays above 0.05 on all three checkpoints
+  under both schedules and per-path stays below on all three. The two-seed spread on the per-path number is 0.0011 at
   four folds, so the pass is not resting on the fold size.
 
   The verdicts are mean-level statements and the individual folds are not all on
   the same side of the bar. On the passing side, s42 ep5 has a per-path fold at
   **0.0501**, over 0.05, on a mean of 0.0382; its per-fold spread (sd 0.0141) is
   three times the other two checkpoints', so its 2-SE upper bound is 0.0523. On
-  the failing side, s123 ep5 has a per-type fold at **0.0429**, under 0.05, on a
-  mean of 0.0526. Neither flips a verdict, but "no verdict flips" is a statement
+  the failing side, s123 ep5 has a single-temperature fold at **0.0429**, under
+  0.05, on a mean of 0.0526. Neither flips a verdict, but "no verdict flips" is a statement
   about the means, and the choice this note asks the author to make is exactly
   the place where a fold-level margin matters.
+- **The head's per-type numbers predate the STS-B repair.** 0.0273 / 0.0180 /
+  0.1244 were measured while the score scale carried GLUE's withheld-label
+  sentinel. On the repaired corpus (`#177`) the same harness gives noul 0.0465,
+  choice 0.0446 and score **0.1264** on the s123 epoch-9 checkpoint
+  (`cal_4b_split138_s123_ep9_repaired.json`). The score primitive is the one that
+  fails on both corpora, at about the same level, so the claim above does not
+  depend on the repair; the map's 0.0289 does, and has not been re-measured.
 - **The criterion is ECE, not NLL**, because the clause is written in ECE. An NLL
   fit would pick different temperatures (the two criteria disagree by a factor of
   ~2 on the score primitive, `research/17`) and this note does not report that
