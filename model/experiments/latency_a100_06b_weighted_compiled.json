@@ -1,0 +1,29 @@
+{
+  "model": "Qwen/Qwen3-Reranker-0.6B",
+  "device": "NVIDIA A100-SXM4-40GB",
+  "torch": "2.14.0+cu126",
+  "cuda": "12.6",
+  "dtype": "torch.bfloat16",
+  "state_tokens": 186,
+  "max_length": 16384,
+  "readout": null,
+  "compiled": true,
+  "warmup": 10,
+  "repeats": 30,
+  "timings": {
+    "5": {
+      "median_ms": 13.79426522180438,
+      "p95_ms": 15.884459018707275,
+      "mean_ms": 14.085435463736454,
+      "items_per_s": 70.99532013579147,
+      "peak_mem_gb": 1.1285820007324219
+    },
+    "255": {
+      "median_ms": 55.49061484634876,
+      "p95_ms": 58.15479997545481,
+      "mean_ms": 55.76880772908529,
+      "items_per_s": 17.93117050050304,
+      "peak_mem_gb": 1.1481842994689941
+    }
+  }
+}
