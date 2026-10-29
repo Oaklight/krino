@@ -45,15 +45,27 @@ The project has been reading 4B deltas against a 0.35 pp seed-noise floor. That 
 Two of those rows appeared later than the first, and together they change what the top row means.
 The "same seed twice" pair is `arch_4b_loraAll_32k_s123` against `arch_4b_32k_split138_s123`:
 identical seed, corpus and schedule, differing only in `--no-gradient-checkpointing` and an explicit
-`--model`. They agree to 0.67 pp at epoch 1 and diverge to 2.52 pp by epoch 2 — so a run that
-differs only in an implementation flag moves as far as the seed comparison did.
+`--model`. They agree to 0.67 pp at epoch 1 and diverge to 2.52 pp by epoch 2.
+
+Once the seed-42 arm reached epoch 2 the comparison became a 2x2, and it points the other way from
+what the project has assumed:
+
+| run | seed | gradient checkpointing | epoch 1 | epoch 2 |
+|---|---|---:|---:|---:|
+| `arch_4b_loraAll_32k_s42` | 42 | default | 0.5440 | **0.5124** |
+| `arch_4b_loraAll_32k_s123` | 123 | default | 0.5466 | **0.5144** |
+| `arch_4b_32k_split138_s123` | 123 | off | 0.5399 | 0.5396 |
+
+**At epoch 2 the two different seeds agree to 0.20 pp while the two runs of the same seed differ by
+2.52 pp.** On this evidence an implementation flag moves the training outcome twelve times as far as
+the seed does — plausible mechanically, since gradient checkpointing changes which activations are
+recomputed and, in bf16, which kernels and accumulation orders produce the loss. One pair per cell
+and two epochs is not a factorial, so this is a strong hint rather than an established result; but
+it is enough to say that the project's run-to-run variation is not usefully described as seed noise.
 
 **The honest statement is therefore not "seed noise is 2.47 pp" but "run-to-run differences at 4B
-full LoRA are ~2.5 pp, and this project cannot currently attribute them to seed."** Splitting seed
-from implementation noise and bf16 nondeterminism needs a factorial this note does not have. The
-operational consequence is unchanged and is what matters: any 4B full-LoRA comparison under ~2.5 pp
-is unresolved, including several read as findings earlier in the project. `research/10` already
-records 2.00 pp for a 0.6B full-LoRA replicate, so this extends a known effect.
+full LoRA are ~2.5 pp, and at least part of that is implementation flags rather than seed."** Any
+two runs compared must match their checkpointing flag, and the training logs do not record it.
 
 The +6.80 pp schedule gain is 2.7× that spread and survives. But two seeds at the same schedule
 agreeing within 2.5 pp would not, on its own, distinguish them — so the two-seed run in flight

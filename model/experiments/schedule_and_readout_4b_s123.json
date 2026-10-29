@@ -349,17 +349,15 @@
   }
  },
  "run_to_run": {
-  "interpretation": "run-to-run spread at 4B full LoRA is ~2.5 pp and is not attributable to seed alone; a pair differing only by an implementation flag reaches the same spread by epoch 2.",
-  "same_seed_different_flag": {
-   "difference": "--no-gradient-checkpointing + explicit --model",
-   "epoch_1_pp": 0.67,
-   "epoch_2_pp": 2.52,
-   "pair": [
-    "arch_4b_loraAll_32k_s123",
-    "arch_4b_32k_split138_s123"
-   ]
-  },
-  "seed_42_vs_123_epoch_5_pp": 2.47
+  "interpretation": "at epoch 2 two different seeds agree to 0.20 pp while two runs of the same seed with different gradient-checkpointing settings differ by 2.52 pp. One pair per cell and two epochs is a hint, not a factorial, but run-to-run variation at 4B full LoRA is not usefully described as seed noise, and comparisons must match the checkpointing flag.",
+  "seed_42_vs_123_epoch_5_pp": 2.47,
+  "two_by_two_epoch2": {
+   "different_seed_same_flags_pp": 0.2,
+   "s123_gc_default": 0.5144,
+   "s42_gc_default": 0.5124,
+   "same_seed_different_flag_pp": 2.52,
+   "split138_s123_gc_off": 0.5396
+  }
  },
  "seed_spread_pp": 2.47,
  "sources": {
