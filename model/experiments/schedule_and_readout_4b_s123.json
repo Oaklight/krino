@@ -305,7 +305,19 @@
    "routed": 0.6867
   }
  },
- "run_to_run_same_seed_pp": 0.67,
+ "run_to_run": {
+  "interpretation": "run-to-run spread at 4B full LoRA is ~2.5 pp and is not attributable to seed alone; a pair differing only by an implementation flag reaches the same spread by epoch 2.",
+  "same_seed_different_flag": {
+   "difference": "--no-gradient-checkpointing + explicit --model",
+   "epoch_1_pp": 0.67,
+   "epoch_2_pp": 2.52,
+   "pair": [
+    "arch_4b_loraAll_32k_s123",
+    "arch_4b_32k_split138_s123"
+   ]
+  },
+  "seed_42_vs_123_epoch_5_pp": 2.47
+ },
  "seed_spread_pp": 2.47,
  "sources": {
   "preds_epoch_10": "rbh101 wt-jevbench model/experiments/preds_4b_32k_s123_ep10.jsonl",
