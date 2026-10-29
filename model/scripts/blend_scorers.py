@@ -42,6 +42,7 @@ import argparse
 import json
 import math
 import random
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -354,6 +355,21 @@ def rule_sweep(records: Sequence[dict[str, Any]], lams: Sequence[float]) -> dict
     return {"head_scale": head_scale, "native_scale": native_scale, "rules": rules}
 
 
+def checkpoint_seed(path: Path | None) -> int | None:
+    """The training seed a checkpoint path names, if it names one.
+
+    ``--seed`` is the sampling seed -- which items a run scores -- and it has a
+    default, so a report that calls it ``seed`` reads as if it were the training
+    seed even when the run never passed it. The training seed is in the
+    checkpoint's name (``arch_4b_32k_split138_s42``); this reads it there, and
+    returns ``None`` rather than guessing when the name does not carry one.
+    """
+    if path is None:
+        return None
+    match = re.search(r"_s(\d+)(?:/|$)", str(path))
+    return int(match.group(1)) if match else None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
@@ -362,6 +378,13 @@ def main() -> int:
     parser.add_argument("--device", default=None)
     parser.add_argument("--data-root", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=123)
+    parser.add_argument(
+        "--training-seed",
+        type=int,
+        default=None,
+        help="Training seed of the checkpoint, for names that do not carry one; "
+        "recorded in the report so it cannot be confused with --seed",
+    )
     parser.add_argument("--lams", default="0,0.125,0.25,0.5,1,2,4,8")
     parser.add_argument(
         "--per-source",
@@ -429,8 +452,11 @@ def main() -> int:
         args.json.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "checkpoint": str(args.load_heads),
+            "checkpoint_seed": args.training_seed
+            if args.training_seed is not None
+            else checkpoint_seed(args.load_heads),
             "config": str(args.config),
-            "seed": args.seed,
+            "sample_seed": args.seed,
             "n_items": len(records),
             "lams": lams,
             **analysis,

@@ -11,8 +11,11 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
+
+from model.scripts.blend_scorers import checkpoint_seed
 
 from model.evaluation.scorer_blend import (
     LONG_MIN,
@@ -142,3 +145,23 @@ class TestSampleChoiceItems:
             [_Item({"type": "choice"})], per_source=5, long_items=0, rng=random.Random(0)
         )
         assert len(sampled) == 1
+
+
+class TestCheckpointSeed:
+    """A report must not call the sampling seed the training seed."""
+
+    def test_parses_the_seed_out_of_a_checkpoint_path(self):
+        path = Path("model/checkpoints/arch_4b_loraAll_32k_s42/epoch_005.pt")
+        assert checkpoint_seed(path) == 42
+
+    def test_parses_a_seed_at_the_end_of_a_directory_name(self):
+        assert checkpoint_seed(Path("/x/arch_4b_32k_split138_s123/")) == 123
+
+    def test_returns_none_when_the_name_carries_no_seed(self):
+        assert checkpoint_seed(Path("model/checkpoints/arch_4b_loraAll_weighted/epoch_010.pt")) is None
+        assert checkpoint_seed(None) is None
+
+    def test_does_not_mistake_a_step_count_for_a_seed(self):
+        # ``_s123`` is a seed; ``steps_4`` and ``shard2`` are not.
+        assert checkpoint_seed(Path("/x/run_steps_4/ck.pt")) is None
+        assert checkpoint_seed(Path("/x/run_shard2/ck.pt")) is None
