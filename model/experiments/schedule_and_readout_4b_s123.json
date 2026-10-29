@@ -50,6 +50,23 @@
    "used_in_headline_runs": false
   },
   "le5_sources": "13 benchmarks (agnews, arc, race, hellaswag, swag, fever, ...)",
+  "matched_sweep_4b_ep10": {
+   "accuracy_by_k": {
+    "16": 0.9533,
+    "32": 0.9133,
+    "4": 0.9767,
+    "64": 0.8733,
+    "8": 0.97,
+    "80": 0.85
+   },
+   "artifact": "model/experiments/optcount_4b_ep10.json",
+   "drop_k4_to_k32_pp": 6.33,
+   "drop_k4_to_k80_pp": 12.67,
+   "items": 300,
+   "note": "K=80 is the unmodified item (changed 0/300); lower K removes distractors. The committed 0.6B sweep fell 0.677->0.217 over the same direction, so the collapse does not replicate at 4B/10 epochs.",
+   "seed": 42,
+   "source": "banking77"
+  },
   "note": "gap widened from +4.6 pp on the 5-epoch weighted arm (#182) to +20.03 pp here",
   "noul_2": 0.8619,
   "noul_3_5": 0.6399,
