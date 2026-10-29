@@ -48,6 +48,7 @@ import data.pipeline as pipeline_mod
 import data.sources as sources_mod
 from data.sources import load_source_items
 from model.evaluation.checkpoint_readout import infer_readout
+from model.evaluation.choice_candidates import score_candidates
 from model.evaluation.calibration import (
     brier_score,
     expected_calibration_error,
@@ -192,6 +193,11 @@ def _predict_original(
                 math.log(max(score, 1e-6)) - math.log(max(1.0 - score, 1e-6))
                 for score in native
             ]
+        elif choice_scorer == "score_candidates":
+            # A `--score-form candidates` checkpoint was trained on one score
+            # question per option and never on the choice head, so its choice
+            # answer has to be read out of the score head or it is chance.
+            logits = score_candidates(model, item)
         else:
             logits = model.forward_choice(state, instructions, option_texts)[0]
             logits = logits.float().cpu().tolist()
@@ -1358,11 +1364,14 @@ def main() -> int:
     )
     parser.add_argument(
         "--choice-scorer",
-        choices=("head", "native"),
+        choices=("head", "native", "score_candidates"),
         default="head",
-        help="Score choice options with the trained head, or with the backbone's "
-        "own yes/no logit as the base reranker does. Accuracy is comparable "
-        "between the two; ECE from the native scorer is not meaningful",
+        help="Score choice options with the trained head, with the backbone's "
+        "own yes/no logit as the base reranker does, or with the score head one "
+        "candidate at a time (needed for a --score-form candidates checkpoint, "
+        "whose choice head was never trained). Accuracy is comparable between "
+        "the three; ECE from the native and score_candidates scorers is not "
+        "meaningful, because their per-option scores do not sum to one",
     )
     parser.add_argument(
         "--nested-options-source",
