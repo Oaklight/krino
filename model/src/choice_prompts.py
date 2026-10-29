@@ -23,9 +23,35 @@ from typing import Callable, Sequence
 SAFETY_TOKENS = 2
 
 
+def _as_text(value: object) -> str:
+    """Whatever the caller holds, as prompt text.
+
+    Items carry their state as whatever the loader left there: a string for most
+    sources, a structured object for 35 of JevBench's 111 hard items. Rendering
+    those is the loader's job (``data.pipeline.render_jevbench_state``, #180);
+    this only guarantees the prompt builder does not crash on one and lose the
+    option. A dict that reaches ``str`` is Python's ``repr``, which is a poor
+    prompt but still contains the state, and it is what the tower path has
+    always built from an f-string.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    return str(value)
+
+
 def option_prompt(state: str, instructions: str, option_text: str) -> str:
     """The prompt scored for one option."""
-    parts = [part for part in (state or "", instructions or "", option_text or "") if part.strip()]
+    parts = [
+        part
+        for part in (
+            _as_text(state),
+            _as_text(instructions),
+            _as_text(option_text),
+        )
+        if part.strip()
+    ]
     return " ".join(parts).strip()
 
 
@@ -38,6 +64,10 @@ def fit_option_prompts(
     decode: Callable[[list[int]], str],
 ) -> tuple[list[str], int]:
     """Build one prompt per option, shortening the state so options survive.
+
+    Non-string inputs are coerced (see :func:`_as_text`), so a structured state
+    from a loader that did not render it produces a prompt rather than a
+    tokenizer ``TypeError``.
 
     Args:
         state: The item's state text, the only part that may be shortened.
@@ -52,14 +82,17 @@ def fit_option_prompts(
         state fitted whole, and otherwise how many of its leading tokens were
         dropped — callers warn once so a run cannot lose options silently.
     """
+    state = _as_text(state)
+    instructions = _as_text(instructions)
+    option_texts = [_as_text(text) for text in option_texts]
     suffix_ids = [
-        encode(" ".join(part for part in ((instructions or "").strip(), (text or "").strip()) if part))
+        encode(" ".join(part for part in (instructions.strip(), text.strip()) if part))
         for text in option_texts
     ]
     worst_suffix = max((len(ids) for ids in suffix_ids), default=0)
     budget = max_length - worst_suffix - SAFETY_TOKENS
 
-    state_ids = encode(state or "")
+    state_ids = encode(state)
     if budget <= 0:
         # Even the options alone do not fit; there is nothing sensible to keep.
         # Return the plain prompts and report every state token as dropped so
