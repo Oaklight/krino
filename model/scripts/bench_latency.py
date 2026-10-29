@@ -103,6 +103,11 @@ def build_model(args: argparse.Namespace, cfg: dict, device: str):
                 flush=True,
             )
             readout = inferred
+    # The two choice heads cost different things: the tower encodes each option
+    # on its own, the cross-encoder repeats the state in front of every option.
+    # Timing one and reporting it as the model's latency is how a mode's cost
+    # goes unmeasured, so the flag is explicit and recorded in the JSON.
+    choice_mode = args.choice_mode or cfg.get("choice_mode") or "tower"
     model = DecisionModel(
         backbone=backbone,
         tokenizer=tokenizer,
@@ -111,6 +116,7 @@ def build_model(args: argparse.Namespace, cfg: dict, device: str):
         gpu_config=gpu_config,
         shared_attention=cfg.get("shared_attention", False),
         readout=readout,
+        choice_mode=choice_mode,
         readout_n=cfg.get("readout_n", 4),
         lora_layers=lora_layers,
         lora_rank=cfg.get("lora_rank", 16),
@@ -168,6 +174,12 @@ def main() -> int:
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--load-heads", type=Path, default=None)
     parser.add_argument("--readout", default=None)
+    parser.add_argument(
+        "--choice-mode",
+        choices=("tower", "cross_encoder"),
+        default=None,
+        help="Choice head shape; defaults to the config, then to `tower`.",
+    )
     parser.add_argument("--rank", type=int, default=None)
     parser.add_argument("--lora-layers", type=int, default=None)
     parser.add_argument("--max-length", type=int, default=None)
@@ -229,6 +241,7 @@ def main() -> int:
         "state_tokens": len(model.tokenizer(STATE).input_ids),
         "max_length": model.max_length,
         "readout": getattr(model, "readout_mode", None),
+        "choice_mode": getattr(model, "choice_mode", "tower"),
         "compiled": bool(args.compile),
         "warmup": warmup,
         "repeats": args.repeats,
