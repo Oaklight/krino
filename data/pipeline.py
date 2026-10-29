@@ -262,15 +262,46 @@ STS_LEVELS = [
 ]
 
 
+def stsb_level(raw: Any) -> int | None:
+    """Map an STS-B score to a level index, or ``None`` when it is withheld.
+
+    GLUE ships ``label = -1.0`` for **every** row of the STS-B test split — the
+    labels are withheld, and -1 is the sentinel, not a score. Clamping it into
+    range the way ``min(5, max(0, round(x)))`` does would turn all 1,379 test
+    rows into gold level 0 ("No similarity"), which is what the loader used to
+    do: half the stsb eval slice carried a fabricated label, and since all of
+    them were 0 they scored 0.11 accuracy and QWK 0.0000 while dragging the
+    score primitive's QWKmix down by 0.16.
+
+    Args:
+        raw: The ``label`` field of a GLUE STS-B row.
+
+    Returns:
+        An index into :data:`STS_LEVELS`, or ``None`` if the row is unlabeled
+        or the value is not numeric.
+    """
+    try:
+        score = float(raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if score < 0:
+        return None
+    return int(min(len(STS_LEVELS) - 1, max(0, round(score))))
+
+
 def load_stsb() -> Iterator[TypedQuestion]:
     for split_name in ("train", "validation", "test"):
         rows = _load_hf_parquet("nyu-mll/glue", "stsb", split_name)
         out_split = "test" if split_name in ("validation", "test") else "train"
         for i, row in enumerate(rows):
+            level = stsb_level(row.get("label"))
+            if level is None:
+                # Only the test split hits this; the train and validation
+                # splits are fully labeled.
+                continue
             sentence1 = row.get("sentence1", "")
             sentence2 = row.get("sentence2", "")
-            score = float(row.get("label", 0))
-            label = float(min(5, max(0, round(score))))
+            label = float(level)
             state = f"Sentence A: {sentence1}\nSentence B: {sentence2}"
             yield TypedQuestion.score(
                 id=f"stsb-{split_name}-{i:05d}",
