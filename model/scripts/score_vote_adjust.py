@@ -204,6 +204,7 @@ def main() -> int:
 
     logits_by_scale: dict[int, list[list[float]]] = defaultdict(list)
     gold_by_scale: dict[int, list[int]] = defaultdict(list)
+    id_by_scale: dict[int, list[str]] = defaultdict(list)
     with torch.no_grad():
         for index, item in enumerate(score_items, start=1):
             criteria = item.question["criteria"]
@@ -213,15 +214,18 @@ def main() -> int:
             )[0]
             logits_by_scale[n_levels].append(logits.float().cpu().tolist())
             gold_by_scale[n_levels].append(score_gold_index(item, n_levels))
+            id_by_scale[n_levels].append(item.id)
             if index % 200 == 0:
                 print(f"  {index}/{len(score_items)} scored", flush=True)
 
     if args.dump_logits:
         args.dump_logits.parent.mkdir(parents=True, exist_ok=True)
         payload = [
-            {"k": n_levels, "gold": gold, "logits": logits}
+            {"id": item_id, "k": n_levels, "gold": gold, "logits": logits}
             for n_levels, rows in logits_by_scale.items()
-            for logits, gold in zip(rows, gold_by_scale[n_levels])
+            for logits, gold, item_id in zip(
+                rows, gold_by_scale[n_levels], id_by_scale[n_levels]
+            )
         ]
         args.dump_logits.write_text(json.dumps({"items": payload}) + "\n", encoding="utf-8")
         print(f"Logits saved to {args.dump_logits}", flush=True)

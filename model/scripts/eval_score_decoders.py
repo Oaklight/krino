@@ -216,9 +216,27 @@ def main() -> int:
     parser.add_argument("--resamples", type=int, default=2000)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--json", type=Path, default=None)
+    parser.add_argument(
+        "--exclude-id-prefix",
+        action="append",
+        default=[],
+        help="Drop items whose id starts with this prefix (repeatable). The use "
+        "case is scoring the corrected STS-B slice: rows from GLUE's test split "
+        "carry a withheld label stored as 0, and their ids say so.",
+    )
     args = parser.parse_args()
 
     rows = json.loads(args.logits.read_text(encoding="utf-8"))["items"]
+    dropped = 0
+    if args.exclude_id_prefix:
+        kept = [
+            row
+            for row in rows
+            if not any(str(row.get("id", "")).startswith(prefix) for prefix in args.exclude_id_prefix)
+        ]
+        dropped = len(rows) - len(kept)
+        rows = kept
+        print(f"dropped {dropped} items by id prefix", flush=True)
     print(f"{len(rows)} score items", flush=True)
 
     report: dict[str, Any] = {
