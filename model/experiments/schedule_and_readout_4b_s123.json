@@ -87,16 +87,36 @@
  },
  "qwk_epoch_10": {
   "by_level_count": {
-   "4": 0.501,
-   "5": 0.833,
-   "6": 0.215
+   "4": {
+    "n": 218,
+    "qwk": 0.631
+   },
+   "5": {
+    "n": 1113,
+    "qwk": 0.827
+   },
+   "6": {
+    "n": 500,
+    "qwk": 0.287
+   }
   },
   "by_source": {
    "sst5": 0.832,
-   "stsb": 0.215,
+   "stsb": 0.287,
    "yelp": 0.88
   },
-  "mix": 0.6562
+  "ex_stsb_mixture_approx": 0.8,
+  "mix": 0.6562,
+  "note": "STS-B alone is not the blocker: dropping it leaves ~0.80 against the 0.85 bar, so the 4-level group (our own typed_decisions + synthetic) is a second problem.",
+  "stsb_eval_mean_label": 1.23,
+  "stsb_train_mean_label": 2.7,
+  "top_gold_share": {
+   "sst5": 0.31,
+   "stsb": 0.53,
+   "synthetic": 0.31,
+   "typed_decisions": 0.37,
+   "yelp": 0.21
+  }
  },
  "readout_epoch_10": {
   "choice": {
