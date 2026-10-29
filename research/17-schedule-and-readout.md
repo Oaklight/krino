@@ -137,9 +137,36 @@ yelp 0.880, sst5 0.832, stsb 0.215. The mixture is 0.6562 against the 0.85 bar.
 |---|---|
 | 1. accuracy ≥ 65% | **met** at 69.24% (head) and **73.01%** (routed), epoch 10, one seed; seed 2 in flight |
 | 2. ECE ≤ 0.05, Brier/QWK ≥ 0.85 | **ECE met on every type** (0.0264 / 0.0137 / 0.0289 with the map, CV-selected); **QWK fails at 0.6562**, isolated to STS-B's 6-level bucket |
-| 3. flip ≤ 5%, >20 options within 5 pp | **met** — 0/1,500 on three probes (#182); >20 options 0.8180 against 0.6500 at 2 options |
+| 3. flip ≤ 5%, >20 options within 5 pp | flip **met** (0/1,500, #182); count **fails the letter at +20.03 pp** — see below |
 | 4. JevBench vs 84.9 / 74.1 | **not met** — 0.641, hard tier 0.414, plateaued |
 | 5. ≤100 ms at 256 options; 0.6B within 3 pp | **not met** — 4B misses even compiled (#181); 0.6B at epoch 1 is 0.4807 against 0.5466 at 4B |
+
+## Clause 3's count half fails on the best checkpoint, and it got worse as the model improved
+
+This needs stating plainly because an earlier note (#182) recorded the count half as passing, and
+that was true only for the weaker arm it measured. On the epoch-10 checkpoint:
+
+| choice, epoch 10 | n | accuracy |
+|---|---:|---:|
+| ≤5 options | 6,387 | 0.6177 |
+| >20 options | 500 | **0.8180** |
+| gap | | **+20.03 pp** |
+
+The clause asks for the two to be within 5 pp. They are 20 pp apart. The direction matters for how
+to read it — the long-list bucket is *better*, not worse, so the model is not brittle in the sense
+the clause was written to catch — but a 20 pp divergence is not "within 5 pp" on any reading, and
+the noul primitive disagrees in the opposite direction (2 options 0.8619, 3-5 options 0.6399,
+−22.2 pp).
+
+Two things follow. First, **the gap widened as the model got better**: +4.6 pp on the 5-epoch
+weighted arm against +20.03 pp here, so a pass on a weak checkpoint says nothing about a strong
+one. Second, comparing raw accuracies across these buckets is partly a comparison of tasks: the
+>20-option items have a 1.25% chance floor against 50% at two options, so they are long lists with
+mostly implausible distractors, not the same question with more competition. A clause that wants
+option-count robustness is better tested by asking whether accuracy *degrades* with count, which
+this model passes in the strong sense, than by a two-sided 5 pp band across buckets built from
+different distributions. I have not changed the clause; I am reporting that the model does not
+meet it as written.
 
 ## Caveats
 
