@@ -198,6 +198,28 @@ higher (0.4627-0.4925 against 0.3731-0.4030). Neither changes the rule's
 direction — the head is kept there regardless — but both say the epoch-10 figures
 are a later-training snapshot, not a seed-independent constant.
 
+## The matched pair: both seeds at epoch 5
+
+The table above compares seed 123 at epoch 10 with seed 42 at epoch 5, which is
+not like-for-like — the two differ in training length as well as in seed. The
+matched comparison needs both seeds at the same epoch on the same split, and both
+checkpoints exist at epoch 5:
+
+| checkpoint (epoch 5, cluster-disjoint split) | head | shipped routing | blend | blend − routing | blend − head |
+|---|---|---|---|---|---|
+| seed 123 | 62.16% | 68.69% | **70.12%** | **+1.43 pp** | +7.96 pp |
+| seed 42 | 64.18% | 70.66% | **71.88%** | **+1.22 pp** | +7.70 pp |
+
+This is the pair that settles the claim. Same split, same training length, same
+items, same rule: **the blend beats what ships by 1.43 and 1.22 pp overall, and
+the head alone by 7.96 and 7.70 pp.** The two seeds agree on the effect to within
+0.2 pp even though they disagree about the best weight, and both put the model
+above clause 1's 65% bar through the shipped rule where the head alone is still
+below it (62.16% and 64.18%).
+
+The choice rows, for the same pair: seed 123 goes 0.5386 head → 0.6660 routed →
+0.6941 blended; seed 42 goes 0.5627 → 0.6893 → 0.7131.
+
 ## Caveats
 
 - **`lam` is chosen on the eval split.** That is why the cross-fit paragraph
