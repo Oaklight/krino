@@ -404,6 +404,11 @@ class DecisionModel(nn.Module):
                 self.max_length,
                 encode=lambda text: self.tokenizer(text, add_special_tokens=False)["input_ids"],
                 decode=lambda ids: self.tokenizer.decode(ids, skip_special_tokens=True),
+                # One tokenizer call for all K options instead of K calls per
+                # item: the per-call path is what keeps the GPU waiting.
+                encode_batch=lambda texts: self.tokenizer(
+                    texts, add_special_tokens=False
+                )["input_ids"],
             )
             if dropped:
                 self.truncated_prompts += 1
