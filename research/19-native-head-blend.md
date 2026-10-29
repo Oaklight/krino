@@ -265,6 +265,33 @@ does not have. Blending beats both scorers on individual sources because the two
 disagree item by item, not just source by source — which is why a single global
 weight is the right instrument and per-source routing is not.
 
+## A third score vector from the untrained reranker: inconclusive, not adopted
+
+If fine-tuning cost the backbone reranking ability on ARC and race, the *original*
+reranker — never trained on our task — might be a better second opinion there.
+That is testable: score the same 900 short-list sample items with the base
+Qwen3-Reranker-4B and blend three ways.
+
+| scorer on the 900 short-list items | accuracy |
+|---|---|
+| trained head | 0.6411 |
+| fine-tuned backbone's native readout | **0.6911** |
+| base reranker's native readout | 0.6489 |
+
+**The base reranker is worse than the fine-tuned one, not better.** Whatever the
+per-source table above shows, fine-tuning improved the native readout overall:
+0.6911 against 0.6489. The per-source losses are real but they do not add up to a
+net regression, and the "fine-tuning damaged the reranker" reading of that table
+is wrong as a summary.
+
+The three-way blend is not established either. Best over a 48-point grid is
+0.7378 at `(fine-tuned 1.5, base 0.5)` against the two-way 0.7300, and a paired
+bootstrap over 2,000 resamples puts the difference at **+0.0100 [−0.0022,
++0.0233], P(>0) = 0.944** — the interval includes zero, on one seed, on a
+900-item sample. By this project's own bar that is not a finding, and it is not
+adopted. Settling it would need both seeds on the full 6,387 items, which is a
+further ~40 minutes of GPU per checkpoint for a +1 pp question.
+
 ## Caveats
 
 - **`lam` is chosen on the eval split.** That is why the cross-fit paragraph
