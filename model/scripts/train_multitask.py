@@ -61,6 +61,7 @@ from model.training.distributed import (
     world_info,
 )
 from model.src.model_factory import build_decision_model
+from model.training.readout_guard import schedule_warning
 from model.training.supervised import eval_epoch_detailed, train_multitask
 
 
@@ -302,6 +303,9 @@ def main() -> int:
     shared_attention = args.shared_attention if args.shared_attention is not None else cfg.get("shared_attention", False)
     unified_head_flag = args.unified_head if args.unified_head is not None else cfg.get("unified_head", False)
     readout = args.readout if args.readout is not None else cfg.get("readout", "last")
+    warning = schedule_warning(readout, epochs)
+    if warning:
+        print(warning, flush=True)
     readout_n = args.readout_n if args.readout_n is not None else cfg.get("readout_n", 4)
     lora_layers, lora_layers_src = resolve_setting(
         args.lora_layers, cfg, "lora_layers", None
