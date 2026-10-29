@@ -103,21 +103,54 @@ recover most of it. It recovers 0.006. So re-splitting STS-B — the open decisi
 in `research/17` — removes an unfair comparison but does not by itself produce a
 passing QWK on that scale.
 
+## Excluding STS-B does not rescue the clause either
+
+That raises the other open decision from `research/17` directly: if STS-B is a
+split artefact rather than a model defect, should it be in the aggregate at all?
+The engine that produced the table above answers it with no new measurement.
+
+Dropping the six-level scale entirely leaves the four- and five-level scales,
+where the model is not fighting its own split:
+
+| aggregate | n | QWK |
+|---|---|---|
+| all three readable scales | 1,831 | 0.6562 |
+| without STS-B | 1,331 | **0.7947** |
+| five-level scale alone | 1,113 | 0.8268 |
+| four-level scale alone | 218 | 0.6309 |
+
+Excluding STS-B moves the number by 0.139 and **still leaves it 0.055 short of
+0.85**. Nor does any other subset of the scales: every weighted mean of 0.631,
+0.827 and 0.287 sits between the smallest and largest of them, and the best
+single scale — the five-level one — is 0.827. **No choice of scales reaches the
+clause.** And excluding STS-B concentrates the shortfall on one scale: holding
+the five-level scale at its measured 0.827 and dropping STS-B, the four-level
+scale would have to reach **0.968** for the aggregate to hit 0.85, where it sits
+at 0.631 — the same 0.631 it had before any correction. With STS-B kept, the
+four-level scale would have to reach 2.26, outside the range of the metric.
+
+So the STS-B question changes the reported number but not the verdict, and it
+names the binding constraint: **the four-level scale is what stands between this
+checkpoint and clause 2**, and the five-level scale is already close enough that
+a realistic gain there would not matter on its own. The four-level scale is 218
+items, `typed_decisions` (161) plus synthetic (57). Any training-side work aimed
+at clause 2 should be aimed at that data, not at the calibration layer and not at
+the aggregate.
+
 ## What this closes
 
 Clause 2's QWK half is **not post-hoc fixable**. The three cheap post-hoc levers
 are now all measured and all null: temperature leaves the argmax alone, a
 monotone map leaves the argmax alone, and a class prior moves the argmax by an
 amount that does not help. A repair has to come from training — the loss, the
-level balancing, or more data on the low end of the four-level scales — or from
-the comparison itself, i.e. the STS-B decision that remains with the goal's
-author.
+level balancing, or more data on the low end of the four-level scales. The section
+above rules out the one remaining non-training alternative.
 
-The remaining two decisions from `research/17` are unchanged in substance and
-now better supported: whether STS-B belongs in the QWK aggregate (it is a split
-mismatch, not a model defect — but excluding it would still leave the 4- and
-5-level scales well short of 0.85), and what clause 2's Brier criterion was meant
-to be.
+The remaining two decisions from `research/17` are unchanged in substance.
+Whether STS-B belongs in the QWK aggregate is now answered as a matter of
+arithmetic rather than judgement: excluding it moves the number to 0.7947 and
+still fails, so the decision affects reporting but not the verdict. What clause
+2's Brier criterion was meant to be still needs its author.
 
 ## Caveats
 
