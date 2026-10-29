@@ -35,12 +35,17 @@ Every type improves across the last two epochs, so this is not one head carrying
 The project has been reading 4B deltas against a 0.35 pp seed-noise floor. That floor came from
 *frozen-backbone* arms, and it does not describe a full-LoRA run. Measured on this arm:
 
-| measurement | value |
-|---|---:|
-| seed 42 vs seed 123, both at epoch 5, same draw | **2.47 pp** |
-| same seed twice, epoch 1 | 0.67 pp |
-| same seed twice, epoch 2 | **2.52 pp** |
-| epoch 5 → 10, same seed | **+6.80 pp** |
+| measurement | method | value |
+|---|---|---:|
+| seed 42 vs seed 123 at epoch 5 | harness, fixed draw | **2.47 pp** |
+| same seed twice, epoch 1 | training loop | 0.67 pp |
+| same seed twice, epoch 2 | training loop | 2.52 pp |
+| same seed twice, epoch 3 | training loop | 0.08 pp |
+| epoch 5 → 10, same seed | harness, fixed draw | **+6.80 pp** |
+
+The three training-loop rows are single epochs and are shown to make a point rather than to be
+averaged: they disagree with each other by a factor of thirty. Only the two harness rows measure
+anything, and they are the ones the rest of this note relies on.
 
 Two of those rows appeared later than the first, and together they change what the top row means.
 The "same seed twice" pair is `arch_4b_loraAll_32k_s123` against `arch_4b_32k_split138_s123`:
@@ -69,9 +74,10 @@ spread at 4B full LoRA.** Estimate it from the full curve or from harness number
 not from one row. I made the flag claim myself after epoch 2 and had to withdraw it one epoch later,
 which is the same mistake in miniature.
 
-The +6.80 pp schedule gain is 2.7× that spread and survives. But two seeds at the same schedule
-agreeing within 2.5 pp would not, on its own, distinguish them — so the two-seed run in flight
-answers "does 73% reproduce" and not "is 73% the right number".
+The +6.80 pp schedule gain is measured the way the rest of this note measures things — harness
+numbers at fixed checkpoints on one draw, five epochs apart — so it is not exposed to the
+single-epoch noise above. What the two-seed run in flight can and cannot settle is narrower than
+the definition of done implies: it answers "does ~73% reproduce", not "is 73% the right number".
 
 ## The readout
 
@@ -116,6 +122,13 @@ So routing is worth **+7.36 pp on choice and +3.77 pp overall**, and **73.01% is
 this project has produced** — 8.0 pp over goal item 1's bar. It costs nothing in ECE: the choice
 ECE on the native path is 0.2050 before a fitted temperature, and the fitted temperature brings it
 under 0.05 as it does for the head path.
+
+**The rule replicates on a checkpoint that shares neither seed nor schedule.** The seed-42
+five-epoch checkpoint, scored the same way against its own head dump on the same draw, gives head
+0.6490, native 0.7035 and **routed 0.7138** — +6.48 pp overall and +12.63 pp on choice, with the
+same sign in every bucket. The gain is *larger* on the weaker checkpoint, which is what the
+mechanism predicts: routing recovers what the head has not yet learned to do, and the head catches
+up as it trains.
 
 ## JevBench does not move
 
@@ -207,24 +220,27 @@ and by the four-level group where the bottom-level aversion below is a genuine m
 
 **But fixing STS-B alone would not clear the bar.** Dropping it leaves 0.827 on the 1,113
 five-level items and 0.631 on the 218 four-level ones — a mixture of roughly 0.80 against a 0.85
-target. The 4-level group is our own data (typed_decisions and synthetic), where QWK at 0.63 is a
-label-quality question rather than a shift, and it is the second thing to look at. I said earlier
-that STS-B was "the sole calibration blocker"; that was too strong and this table is the correction.
+target. The 4-level group is our own data (typed_decisions and synthetic), and it is the second
+thing to look at. I said earlier that STS-B was "the sole calibration blocker"; that was too strong
+and this table is the correction. I also first called the 4-level group a label-quality question,
+before looking at the confusion; the next paragraph is what the data actually shows.
 
 The 4-level failure has a specific shape, and it is the same shape as STS-B's. On the 218
 four-level items the gold is spread (level 0: 29, 1: 56, 2: 81, 3: 52) but the predictions are not:
 the model predicts level 0 only **13 times against 29 golds**, pushing the rest up into level 1,
 which it over-predicts 79 times against 56. The top level is fine (57 predicted, 52 gold). So the
-error is not noise in the middle of the scale — it is an **aversion to the bottom level**, and it
-appears in both typed_decisions (11 predicted against 27 gold at level 0) and, more weakly, in
-synthetic.
+error is not noise in the middle of the scale and it is not a label problem — the labels are
+plausibly spread and the model systematically avoids one end of them. It is an **aversion to the
+bottom level**, and it appears in both typed_decisions (11 predicted against 27 gold at level 0)
+and, more weakly, in synthetic.
 
-That single behaviour explains both QWK failures: STS-B's eval split is 53% level 0 and the
-four-level group's lowest level is under-called, while the five-level groups, whose gold is
-mid-scale, are at 0.827. A model that will not emit the lowest level cannot score well on any
-scale whose lowest level is common. It is a plausible downstream consequence of an imbalanced
-vote: if the lowest level is rare in training relative to the middle, an argmax over a shared
-scale vocabulary will drift upward, and no temperature or map changes an argmax.
+That single behaviour explains both QWK failures: level 0 is 53% of the STS-B items in the eval
+(56% of that benchmark's whole test split) and the four-level group's lowest level is under-called,
+while the five-level groups, whose gold is mid-scale, are at 0.827. A model that will not emit the
+lowest level cannot score well on any scale whose lowest level is common. It is a plausible
+downstream consequence of an imbalanced vote: if the lowest level is rare in training relative to
+the middle, an argmax over a shared scale vocabulary will drift upward, and no temperature or map
+changes an argmax.
 
 ## Clause 2's Brier criterion cannot be met by a good model
 
@@ -255,10 +271,10 @@ better than uniform and short of any demanding skill threshold.
 | clause | state |
 |---|---|
 | 1. accuracy ≥ 65% | **met** at 69.24% (head) and **73.01%** (routed), epoch 10, one seed; seed 2 in flight |
-| 2. ECE ≤ 0.05, Brier/QWK ≥ 0.85 | **ECE met on every type** (0.0264 / 0.0137 / 0.0289 with the map, CV-selected); **QWK fails at 0.6562**, isolated to STS-B's 6-level bucket |
-| 3. flip ≤ 5%, >20 options within 5 pp | flip **met** (0/1,500, #182); count **fails the letter at +20.03 pp** — see below |
-| 4. JevBench vs 84.9 / 74.1 | **not met** — 0.641, hard tier 0.414, plateaued |
-| 5. ≤100 ms at 256 options; 0.6B within 3 pp | **not met** — 4B misses even compiled (#181); 0.6B at epoch 1 is 0.4807 against 0.5466 at 4B |
+| 2. ECE ≤ 0.05, Brier/QWK ≥ 0.85 | **ECE met on every type** (0.0264 / 0.0137 / 0.0289 with the map, CV-selected). **QWK fails at 0.6562 for two reasons** — STS-B's split shift and our own four-level data at 0.631 — and the **Brier criterion is unsatisfiable as written**, since 0.85 is a fail-worse bar for a squared error. See below. |
+| 3. flip ≤ 5%, >20 options within 5 pp | flip **met** (0/1,500, #182); count **fails the letter at +20.03 pp**, which measures the gap between banking77 and thirteen other benchmarks rather than an option-count effect — see below |
+| 4. JevBench vs 84.9 / 74.1 | **not met** — 0.641 (native readout), hard tier 0.414, flat at both checkpoints |
+| 5. ≤100 ms at 256 options; 0.6B within 3 pp | **not met** — 183.6 ms at 256 options even compiled (#181). The accuracy half is **unmeasured**: the 0.6B 10-epoch run is still training, and its epoch-1 figure is not a comparison |
 
 ## Clause 3's count half fails on the best checkpoint, and it got worse as the model improved
 
