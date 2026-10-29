@@ -1,4 +1,4 @@
-# Is clause 2's QWK reachable by a class-prior correction?
+# Clause 2's QWK is not post-hoc fixable, and its worst scale was a label artefact
 
 Clause 2 asks for `QWK >= 0.85` on the score primitive. On the best checkpoint the
 mixed-scale QWK is **0.6562**, and the two candidate repairs discussed so far —
@@ -6,6 +6,13 @@ temperature scaling and a monotone confidence map — cannot touch it: both leav
 every argmax where it was, so neither changes a single ordinal prediction. That
 made the score head's scale mismatch the last untested lever on a failing clause.
 This note measures it and reports a negative result.
+
+Measuring it also produced the note's more important result, which is about the
+measurement rather than the repair: the six-level scale this note starts from
+carries 219 eval rows whose gold label was never observed, and dropping only
+those rows moves that scale from 0.27 to 0.92 without changing the model. The
+repair sections are read correctly only after that (see *The sentinel was the
+six-level scale's problem*, below).
 
 Everything below is one checkpoint (`arch_4b_loraAll_32k_s123`, epoch 10), one
 seed, the 1,832 score items inside the 13,444-item cluster-split eval, at
@@ -103,7 +110,7 @@ recover most of it. It recovers 0.006. So re-splitting STS-B — the open decisi
 in `research/17` — removes an unfair comparison but does not by itself produce a
 passing QWK on that scale.
 
-## The decision rule is worth more than the prior: argmax is not QWK-optimal
+## The other lever is the decision rule, and the sentinel decides it
 
 Everything above corrects the *distribution*. The prior failures share a cause
 worth naming: QWK weights a miss by the square of the distance between levels,
@@ -154,8 +161,9 @@ adding a systematic gain; on seed 123 it closes a gap that seed 42 does not have
 A 2 pp seed spread in the baseline is comparable to the effect being measured, and
 one seed is not enough to tell them apart.
 
-**What does replicate is the ordinal median.** It is the only decoder that helps
-on both seeds at every scale that has items:
+**On this slice the mixed-scale numbers look like the finding.** They are not, and
+*The sentinel was the six-level scale's problem* is why; they are reported here as
+the measurement that the corrected slice reverses.
 
 | | seed 123 | seed 42 |
 |---|---|---|
@@ -166,40 +174,26 @@ on both seeds at every scale that has items:
 
 The mixed-scale interval is its own measurement (`bootstrap_mixed`, item-weighted
 across scales, since QWK lives within a scale and the headline does not) rather
-than an average of the per-scale ones. **It clears zero on seed 123 and just
-misses on seed 42** — +0.0110 with a lower bound of −0.0005 — so the honest
-statement is a ~1.1-1.2 pp gain in the same direction on two seeds of which only
-one is individually significant, not a replicated effect in the strict sense. For
-comparison the posterior mean's mixed gain is +0.0099 [−0.0008, +0.0217] on seed
-123 and **−0.0054 [−0.0178, +0.0071]** on seed 42, which is the withdrawal below
-in mixed-scale form.
+than an average of the per-scale ones. It clears zero on seed 123 and just misses
+on seed 42 — +0.0110 with a lower bound of −0.0005. For comparison the posterior
+mean's mixed gain is +0.0099 [−0.0008, +0.0217] on seed 123 and
+**−0.0054 [−0.0178, +0.0071]** on seed 42.
 
-So **the claim is a mixed-scale gain of about 1.1 pp that points the same way on
-two seeds**, plus a larger four-level gain that is itself seed-dependent (0.64
-against 0.57 at the same training length). The 5-level scale sits at **~0.85 and
-straddles the bar**: 0.8463-0.8529 depending on seed and decoder. It clears 0.85
-on seed 123 only under the posterior mean and on seed 42 under either rule — but
-seed 42's argmax already clears it, so the decoder is not what puts it there.
+**No decoder claim is made from these numbers.** The decoder result is stated
+once, in *The sentinel was the six-level scale's problem*, where the same items
+are scored without the 219 rows whose gold label was never observed — and there
+the median's sign on seed 123 goes with them. A decoder that helped under
+contaminated labels and flips sign without them was fitting the contamination.
 
-**None of this is progress toward the clause's 0.85 in an aggregate sense.** The
-mixed number averages three scales that are not close to each other: 5-level
-0.827, 4-level 0.631, and 6-level **0.287**. A decoder that reorders the same
-posterior cannot lift a 0.287 scale, and the median in fact makes it very
-slightly worse (0.2874 → 0.2857). The 1.2 pp is real and free, and it is a
-rounding error against the gap on the six-level scale.
-
-**Clause 2's QWK therefore does not have a passing scale that survives a second
-seed.** The earlier version of this section claimed the five-level scale cleared
-the bar; that claim was one seed deep and is withdrawn here.
+What does not depend on the sentinel is the aggregate. The mixed number averages
+three scales that are not close to each other — 5-level 0.827, 4-level 0.631,
+6-level **0.287** — so no reordering of a single posterior lifts it, whatever the
+scale underneath turns out to be.
 
 On the four-level scale the posterior mean **loses** 0.0371 [−0.0929, +0.0280] on
 seed 123 and 0.0530 on seed 42 — consistently wrong, and the opposite of what the
 squared-error argument predicts. On the six-level (STS-B) scale nothing moves on
 either seed: the scale's problem is the split, as established above.
-
-**What survives for clause 2:** the ordinal median is a free +1.1 pp on mixed
-QWK that repeats on two seeds and never hurts a scale. That is a real but small
-improvement, and it does not turn any scale's verdict.
 
 ## Excluding STS-B does not rescue the clause either
 
@@ -266,15 +260,14 @@ levels where it is, four levels would have to reach 0.968 for the aggregate to
 clear 0.85 — and the four-level scale is `typed_decisions` (161 items) plus
 synthetic (57). Any training-side work aimed at clause 2 should be aimed there.
 
-**This supersedes two statements earlier in this note.** "Clause 2's QWK does not
-have a passing scale that survives a second seed" was true of the contaminated
-slice and is not true now: the six-level scale passes on both seeds. And the
-decoder result no longer points the same way on two seeds — on the corrected
-slice the ordinal median is **−1.8 pp on seed 123** ([−0.0378, +0.0031]) and
-**+1.25 pp on seed 42** ([−0.0005, +0.0259]). A decoder that helped under
-contaminated labels and flips sign without them was fitting the contamination,
-so the ~1.1 pp decoder gain is withdrawn along with the aggregate it was measured
-on.
+**The decoder result is stated here, and it is the opposite of what the
+contaminated slice suggested.** On the corrected slice the ordinal median is
+**−1.8 pp on seed 123** ([−0.0378, +0.0031]) and **+1.25 pp on seed 42**
+([−0.0005, +0.0259]). Neither interval excludes zero and the two point estimates
+have opposite signs, so the ~1.1 pp that repeated on two seeds above is not a
+gain: it was the decoder fitting the 219 unobserved labels. The posterior mean
+had already failed to replicate on seed 42, and nothing in this slice revives
+either decoder.
 
 The 219 dropped rows are not 255 because the eval draw caps stsb at 500 items and
 splits them 281 validation / 219 test; the withheld fraction of the source is the
@@ -282,12 +275,13 @@ same, the slice just differs.
 
 ## What this closes
 
-Clause 2's QWK half is **not post-hoc fixable**. The three cheap post-hoc levers
-are now all measured and all null: temperature leaves the argmax alone, a
-monotone map leaves the argmax alone, and a class prior moves the argmax by an
-amount that does not help. A repair has to come from training — the loss, the
-level balancing, or more data on the low end of the four-level scales. The section
-above rules out the one remaining non-training alternative.
+Clause 2's QWK half is **not post-hoc fixable** in the aggregate. The four cheap
+post-hoc levers are now all measured and all null: temperature leaves the argmax
+alone, a monotone map leaves the argmax alone, a class prior moves the argmax by
+an amount that does not help, and the decision-rule change helped only while the
+unobserved labels were in the slice. A repair has to come from training — the
+loss, the level balancing, or more data on the low end of the four-level scales.
+Excluding STS-B, the one remaining reporting change, does not reach 0.85 either.
 
 The remaining two decisions from `research/17` are unchanged in substance.
 Whether STS-B belongs in the QWK aggregate is now answered as a matter of
@@ -297,10 +291,12 @@ still fails, so the decision affects reporting but not the verdict. What clause
 
 ## Caveats
 
-- One checkpoint, one seed. There is no second-seed QWK for this checkpoint, so
-  +0.0014 cannot be separated from checkpoint-to-checkpoint variation by this
-  experiment alone; the direction of the conclusion does not depend on it,
-  because a repair would have to clear +0.19.
+- One checkpoint, one seed for the prior sweep. There is no second-seed QWK for
+  this checkpoint, so +0.0014 cannot be separated from checkpoint-to-checkpoint
+  variation by this experiment alone; the direction of the conclusion does not
+  depend on it, because a repair would have to clear +0.19. The decoder and
+  sentinel comparisons in this note use two seeds (123 and 42) at epoch 5 on the
+  cluster-disjoint split, which is why their numbers differ from the sweep's.
 - 1,832 score items, of which 500 are STS-B and 218 are four-level. The
   four-level result is the smallest sample in the table and carries the most
   weight in the argument against the aversion fix; its direction is consistent at
