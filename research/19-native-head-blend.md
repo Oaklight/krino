@@ -220,6 +220,51 @@ below it (62.16% and 64.18%).
 The choice rows, for the same pair: seed 123 goes 0.5386 head → 0.6660 routed →
 0.6941 blended; seed 42 goes 0.5627 → 0.6893 → 0.7131.
 
+## Where the gain comes from, and why routing per source does not beat it
+
+The two scorers are not uniformly ordered. Per source on the 6,387 short-list
+items (seed 123, epoch 10), head against the backbone's native readout:
+
+| source | head | native | n |
+|---|---|---|---|
+| ARC | 0.580 | **0.878** | 500 |
+| race | 0.512 | **0.762** | 500 |
+| authored144 | 0.514 | **0.792** | 144 |
+| commonsenseqa | 0.538 | **0.720** | 500 |
+| MMLU | 0.338 | **0.504** | 500 |
+| LogiQA | 0.350 | **0.444** | 500 |
+| synthetic | 0.538 | **0.691** | 301 |
+| winogrande | 0.552 | **0.612** | 500 |
+| codesearchnet | 0.933 | **0.977** | 300 |
+| PIQA | 0.748 | 0.754 | 500 |
+| SWAG | **0.660** | 0.594 | 500 |
+| HellaSwag | **0.738** | 0.668 | 500 |
+| FEVER | **0.804** | 0.752 | 500 |
+| agnews | **0.886** | 0.844 | 500 |
+| banking77 (>20 options) | **0.818** | 0.326 | 500 |
+
+**The trained head is much worse than the untouched reranker readout on the
+reasoning-flavoured short-list sources** — ARC by 30 points, race by 25,
+authored144 by 28, CommonsenseQA by 18, MMLU by 17 — and much better on
+banking77 (+49) and slightly better on SWAG, HellaSwag, FEVER and agnews. That is
+the same pattern `research/13` found on JevBench from the outside: fine-tuning
+buys the task it is trained on and costs general reranking ability elsewhere.
+
+It also rules out the obvious alternative. If the sources were consistently one
+way or the other, routing per source would beat blending. It does not:
+
+| rule on the ≤5 bucket | accuracy |
+|---|---|
+| head only | 0.6177 |
+| native only (what ships) | 0.6970 |
+| **oracle per-source choice of the better scorer** | 0.7158 |
+| blend, `lam = 2.5` | **0.7341** |
+
+The oracle pick is *worse* than the blend, and it uses knowledge a deployment
+does not have. Blending beats both scorers on individual sources because the two
+disagree item by item, not just source by source — which is why a single global
+weight is the right instrument and per-source routing is not.
+
 ## Caveats
 
 - **`lam` is chosen on the eval split.** That is why the cross-fit paragraph
