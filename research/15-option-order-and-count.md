@@ -11,6 +11,10 @@ per type, seed 42, with order probes enabled
 
 ## The flip rate is exactly zero, and that is structural
 
+"Exactly zero" is the flip count — 0 of 1,500 on each of the three probes, a
+count rather than a rounded statistic. The `max_tv` figures are zero to five
+decimals, not bit-exact, and the two claims are not the same strength.
+
 | probe | n | flips | flip rate | max total-variation |
 |---|---:|---:|---:|---:|
 | choice, option permutation | 1,500 | 0 | **0.0000** | 0.00000 |
