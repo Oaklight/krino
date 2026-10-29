@@ -248,6 +248,35 @@ So this is a correctness fix — the evaluation should score the item as authore
 not as a Python literal — and **not an explanation of Finding 3**. The hard tier
 is at chance for some other reason, and the repr rendering was not it.
 
+## Two format hypotheses for the hard tier, both measured and both null
+
+Finding 3 says we are at chance on the hard tier, and a prompt-construction bug
+is the charitable explanation, so the two most likely candidates were tested
+rather than argued about.
+
+**Structured states as Python reprs.** Covered above: 1 of 18 choice items
+changes answer, accuracy unchanged.
+
+**The assistant suffix.** `model/src/reranker_prompt.py` ends the prompt with
+`<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n`. Qwen3-Reranker is a
+non-thinking model and its published format stops at `<|im_start|>assistant\n`;
+the empty think block is what Qwen3's *generative* template emits. Scoring all
+139 JevBench choice items through the fine-tuned backbone with the suffix
+stripped:
+
+| suffix | easy | hard | original | choice |
+|---|---|---|---|---|
+| with `<think>` block (shipped) | 36/36 | 25/67 | 30/36 | 91/139 = 0.6547 |
+| plain `assistant\n` | 36/36 | 26/67 | 30/36 | 92/139 = 0.6619 |
+
+One item. The hard tier moves 25 → 26 of 67, which is noise.
+
+Between them the two hypotheses are worth two items on 139. **The hard tier is
+not a prompt-format artefact**, and neither is the 14-21 point gap between the
+head and the native readout. Whatever limits this benchmark at 4B is in the
+model's ability to reason over a long composite state, not in how we render the
+prompt. That is worth knowing before anyone spends a training run on it.
+
 ## Caveats
 
 * **The raw comparison is a product comparison, not an attribution.** It
