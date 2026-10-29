@@ -24,7 +24,9 @@ single weight can be read across buckets:
 
 Scoring is the expensive half: the native scorer runs one forward pass per
 option, so ``--dump-records`` writes every per-item score vector and
-``--from-records`` re-runs the sweep over them without touching a GPU.
+``--from-records`` re-runs the sweep over them without touching a GPU. Each
+record carries its ``source`` as well as its coarse ``group``, so a dump can be
+decomposed per source without re-scoring.
 
 Usage:
     python model/scripts/blend_scorers.py \
@@ -131,7 +133,7 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
     # keeps the sweep inside a fifteen-minute run while leaving every bucket
     # represented.
     rng = random.Random(args.seed)
-    choice_items: list[tuple[str, Any]] = []
+    choice_items: list[tuple[str, Any, str]] = []
     for source_name, source_cfg in ({} if args.jevbench_only else (cfg.get("sources") or {})).items():
         _, eval_items = load_source_items(source_name, source_cfg or {}, rng)
         source_choice = [item for item in eval_items if item.question.get("type") == "choice"]
@@ -142,7 +144,10 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
                 source_choice, args.per_source, args.long_items, random.Random(args.seed)
             )
         )
-        choice_items.extend(("in-distribution", item) for item in sampled)
+        # The source travels with the record so a dump can be decomposed per
+        # source later. `group` stays coarse on purpose: the committed tables
+        # report "in-distribution" as one number.
+        choice_items.extend(("in-distribution", item, source_name) for item in sampled)
         if source_choice:
             print(
                 f"  {source_name:<20} {len(sampled):>4}/{len(source_choice):<4} choice items",
@@ -167,7 +172,7 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
                 # Same rendering the loader applies, so a structured hard-tier
                 # state reaches the model as text rather than as Python repr.
                 task["state"] = render_jevbench_state(task["state"])
-                choice_items.append((f"jevbench-{tier}", task))
+                choice_items.append((f"jevbench-{tier}", task, f"jevbench-{tier}"))
     print(f"total choice items: {len(choice_items)}", flush=True)
 
     # --- Model -------------------------------------------------------------
@@ -200,7 +205,7 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
 
     # --- Score both ways ---------------------------------------------------
     records: list[dict[str, Any]] = []
-    for index, (group, item) in enumerate(choice_items, start=1):
+    for index, (group, item, source) in enumerate(choice_items, start=1):
         state = item.state if hasattr(item, "state") else item["state"]
         question = item.question if hasattr(item, "question") else item["question"]
         label = item.label if hasattr(item, "label") else item.get("expected")
@@ -242,6 +247,7 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
         records.append(
             {
                 "group": group,
+                "source": source,
                 "k": len(keys),
                 "gold": gold,
                 "head": head.float().cpu().tolist(),
