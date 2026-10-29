@@ -24,9 +24,31 @@
    "n": 6387
   },
   "clause_reading": "two-sided within 5 pp: FAIL; one-sided (long lists not worse): pass",
+  "committed_matched_sweep": {
+   "accuracy_by_k": {
+    "128": 0.277,
+    "16": 0.453,
+    "256": 0.217,
+    "32": 0.32,
+    "4": 0.677,
+    "64": 0.237,
+    "8": 0.557,
+    "80": 0.23
+   },
+   "artifact": "model/experiments/optcount_pooled.json",
+   "checkpoint": "sweep_reranker0.6b_r64_mlp0 epoch_005 (0.6B, 5 epochs)",
+   "conflict": "the same benchmark at mean K=80 scores 0.818 on the 4B epoch-10 model, so the sweep collapse does not describe the current model; the matched curve must be re-measured",
+   "n_per_k": 300
+  },
   "gap_pp": 20.03,
   "gt20_all_from": "banking77 (500 items, mean 80 options, chance 0.0125)",
-  "interpretation": "the cross-bucket gap compares one benchmark against thirteen; the matched 4->5 option comparison shows no degradation, so the corpus cannot test the clause as written",
+  "interpretation": "the cross-bucket gap compares banking77 (all >20 items) against thirteen benchmarks; the within-source 4->5 comparison shows no degradation, so the cross-bucket number is task-confounded",
+  "k_augment": {
+   "cost": "1.559x encodes at fraction 0.2",
+   "implementation": "data/k_augment.py",
+   "note": "--k-augment-fraction defaults to 0 and neither config sets it, so the one lever aimed at this clause has never been applied to a run that counts",
+   "used_in_headline_runs": false
+  },
   "le5_sources": "13 benchmarks (agnews, arc, race, hellaswag, swag, fever, ...)",
   "note": "gap widened from +4.6 pp on the 5-epoch weighted arm (#182) to +20.03 pp here",
   "noul_2": 0.8619,

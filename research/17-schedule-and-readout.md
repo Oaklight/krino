@@ -218,13 +218,29 @@ matters:
 Both move in the *favourable* direction, and the larger sample moves 2.3 pp. Nothing here degrades
 with option count.
 
-**The consequence is that the current eval corpus cannot test clause 3's count half as written.**
-A matched test needs the same question rendered at different option counts, which is what the
-synthetic pipeline's `fill-variants` stage produces — those variants exist but are not in the eval
-mixture. Until they are, the honest report is: the clause fails numerically at +20.03 pp, the
-number compares tasks rather than counts, and the matched comparison (4→5 options) shows no
-degradation. That is a corpus gap to close before the clause can be either passed or failed with
-meaning.
+**A matched test does exist in the repository, and it needs re-running on this model.**
+`model/experiments/optcount_pooled.json` holds exactly the comparison the clause wants — 300 fixed
+banking77 items, padded to K ∈ {4, 8, 16, 32, 64, 80, 128, 256} — but it was measured on
+`sweep_reranker0.6b_r64_mlp0` epoch 5, a much weaker checkpoint:
+
+| K | 4 | 8 | 16 | 32 | 64 | 80 | 256 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| accuracy | 0.677 | 0.557 | 0.453 | 0.320 | 0.237 | 0.230 | 0.217 |
+
+That curve collapses by 46 pp, and it does not describe the checkpoint this note is about: the
+4B epoch-10 model scores **0.818 on banking77 at a mean of 80 options**, where the 0.6B sweep
+scored 0.230 at K=80. So the current model is far more K-robust than the committed sweep suggests,
+and the matched curve has to be re-measured on it before clause 3 can be judged either way.
+
+Two further facts that matter for what to try next. Training-side option-count augmentation already
+exists (`data/k_augment.py`, with padding that preserves the gold key and a `--k-augment-control`
+flag for an A/B), its cost is measured (1.559× encodes at a fraction of 0.2), and **every headline
+run so far trained with `--k-augment-fraction 0`** — the flag defaults to off and neither config
+sets it. So the one lever designed for this clause has never been applied to a run that counts.
+
+The honest report is therefore narrower than "the corpus cannot test clause 3": the clause fails
+numerically at +20.03 pp, that number compares banking77 against thirteen benchmarks, the only
+matched curve on record is from a weak checkpoint, and the augmentation that targets it is unused.
 
 ## Caveats
 
