@@ -1,0 +1,22 @@
+{
+  "note": "Per-epoch history of arch_06b_loraAll_last_10ep_s123, the 0.6B full-LoRA run whose `last` readout collapsed after epoch 1. Copied from the run's history.json on the training host (rhb101) and reduced to the aggregate and per-type accuracies, so the threshold in model/training/readout_guard.py is checkable from the checkout rather than trusted.",
+  "arm": "arch_06b_loraAll_last_10ep_s123",
+  "backbone": "Qwen/Qwen3-Reranker-0.6B",
+  "readout": "last",
+  "lora": "all blocks, r=16, alpha=32",
+  "seed": 123,
+  "epochs_planned": 10,
+  "split": "cluster-disjoint after #138 (182,262 train / 13,444 eval)",
+  "epochs": [
+    {"epoch": 1, "train_loss": 1.1337, "eval_loss": 1.1583, "eval_accuracy": 0.4807, "by_type": {"choice": 0.3518, "noul": 0.7065, "score": 0.3832}, "elapsed_s": 6768.5},
+    {"epoch": 2, "train_loss": 1.3219, "eval_loss": 1.2548, "eval_accuracy": 0.3522, "by_type": {"choice": 0.2723, "noul": 0.528, "score": 0.1992}, "elapsed_s": 5046.1},
+    {"epoch": 3, "train_loss": 1.2937, "eval_loss": 1.2884, "eval_accuracy": 0.3654, "by_type": {"choice": 0.2685, "noul": 0.5628, "score": 0.2211}, "elapsed_s": 4750.4},
+    {"epoch": 4, "train_loss": 1.3006, "eval_loss": 1.2852, "eval_accuracy": 0.3444, "by_type": {"choice": 0.2699, "noul": 0.5183, "score": 0.1758}, "elapsed_s": 4671.7},
+    {"epoch": 5, "train_loss": 1.2875, "eval_loss": 1.2529, "eval_accuracy": 0.3458, "by_type": {"choice": 0.2701, "noul": 0.5274, "score": 0.1621}, "elapsed_s": 4489.0},
+    {"epoch": 6, "train_loss": 1.2817, "eval_loss": 1.2617, "eval_accuracy": 0.3644, "by_type": {"choice": 0.2734, "noul": 0.527, "score": 0.2871}, "elapsed_s": 4390.9},
+    {"epoch": 7, "train_loss": 1.2865, "eval_loss": 1.2643, "eval_accuracy": 0.3097, "by_type": {"choice": 0.2779, "noul": 0.3987, "score": 0.1992}, "elapsed_s": 4330.2},
+    {"epoch": 8, "train_loss": 1.2693, "eval_loss": 1.2628, "eval_accuracy": 0.3617, "by_type": {"choice": 0.2683, "noul": 0.5625, "score": 0.1949}, "elapsed_s": 4409.9},
+    {"epoch": 9, "train_loss": 1.2665, "eval_loss": 1.2487, "eval_accuracy": 0.3587, "by_type": {"choice": 0.2698, "noul": 0.5429, "score": 0.2183}, "elapsed_s": 4261.3},
+    {"epoch": 10, "train_loss": 1.2675, "eval_loss": 1.2475, "eval_accuracy": 0.3635, "by_type": {"choice": 0.2711, "noul": 0.5634, "score": 0.1954}, "elapsed_s": 4297.9}
+  ]
+}

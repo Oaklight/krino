@@ -19,6 +19,9 @@ rank: 128
 mlp_layers: 0
 noul_rank: 128
 epochs: 20
+# `weighted` because `last` has collapsed at 8B (both seeds, at five epochs) and
+# on 0.6B ten-epoch schedules; see model/training/readout_guard.py.
+readout: weighted
 lr: 0.0003
 accumulation_steps: 8
 eval_every: 1
