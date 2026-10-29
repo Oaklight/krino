@@ -14,7 +14,6 @@ torch = pytest.importorskip("torch")
 
 from torch import nn  # noqa: E402
 
-from model.evaluation.checkpoint_readout import infer_choice_mode  # noqa: E402
 from model.src.heads import CrossEncoderHead  # noqa: E402
 
 
@@ -39,6 +38,17 @@ class _FakeBackbone(nn.Module):
         self.layers = nn.ModuleList([_Block(16) for _ in range(2)])
 
 
+class _WordTokenizer:
+    """Word-level stand-in: the prompt fitting only needs counts and a decode."""
+
+    def __call__(self, text, add_special_tokens=True, **_kwargs):
+        texts = [text] if isinstance(text, str) else list(text)
+        return {"input_ids": [[hash(word) for word in value.split()] for value in texts]}
+
+    def decode(self, ids, skip_special_tokens=True):
+        return " ".join(f"w{index}" for index in range(len(ids)))
+
+
 def _model(choice_mode: str):
     from model.src.decision_model import DecisionModel
     from model.src.gpu_config import GPUConfig
@@ -51,7 +61,7 @@ def _model(choice_mode: str):
     )
     return DecisionModel(
         backbone=_FakeBackbone(),
-        tokenizer=None,
+        tokenizer=_WordTokenizer(),
         rank=8,
         gpu_config=gpu,
         choice_mode=choice_mode,
@@ -236,14 +246,42 @@ class TestTrainingLoops:
         assert recorder[1:] == ["a", "b"]
 
 
-class TestInferChoiceMode:
-    def test_cross_encoder_tensors_are_recognised(self):
-        keys = ["choice_head.norm.weight", "choice_head.score.weight"]
-        assert infer_choice_mode(keys) == "cross_encoder"
+class _Batch(dict):
+    """Stand-in for a tokenizer's BatchEncoding: a dict that knows ``.to``."""
 
-    def test_attention_head_tensors_are_recognised(self):
-        keys = ["choice_head.attention.query.weight", "noul_head.proj.0.weight"]
-        assert infer_choice_mode(keys) == "tower"
+    def to(self, _device):
+        return self
 
-    def test_a_checkpoint_without_a_choice_head_is_not_guessed(self):
-        assert infer_choice_mode(["noul_head.proj.0.weight"]) is None
+
+class TestPooling:
+    """The last-token pool must land on the last *real* token.
+
+    Options are batched with right padding, so a batch's shorter sequences end
+    in pad tokens. Pooling by sequence length instead of by mask would read a
+    pad position and score the wrong vector — silently, and only for the
+    shorter options in a batch.
+    """
+
+    def test_causal_pooling_takes_the_last_real_token(self):
+        model = _model("tower")
+        model.is_encoder = False
+        input_ids = torch.tensor([[5, 6, 7, 8], [5, 6, 0, 0]])
+        attention_mask = torch.tensor([[1, 1, 1, 1], [1, 1, 0, 0]])
+        model.tokenizer = lambda *args, **kwargs: _Batch(
+            input_ids=input_ids, attention_mask=attention_mask
+        )  # type: ignore[assignment]
+
+        hidden = torch.zeros(2, 4, model.hidden_size)
+        for batch_index in range(2):
+            for position in range(4):
+                hidden[batch_index, position] = batch_index * 10 + position
+
+        class _Out:
+            hidden_states = (hidden,)
+
+        model._backbone_forward = lambda inputs: _Out()  # type: ignore[assignment]
+        model.projector = nn.Identity()  # type: ignore[assignment]
+
+        pooled = model._encode_text(["a b c d", "e f"])
+        assert torch.equal(pooled[0], hidden[0, 3])
+        assert torch.equal(pooled[1], hidden[1, 1])
