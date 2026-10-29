@@ -43,7 +43,7 @@ import yaml  # noqa: E402
 
 import data.pipeline as pipeline_mod  # noqa: E402
 import data.sources as sources_mod  # noqa: E402
-from data.k_augment import pad_choice_item  # noqa: E402
+from data.k_augment import pad_choice_item, shrink_choice_item  # noqa: E402
 from data.sources import load_source_items  # noqa: E402
 from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info  # noqa: E402
 from model.src.model_factory import build_decision_model  # noqa: E402
@@ -76,35 +76,9 @@ def _score(model: Any, item: Any, option_texts: list[str], keys: list[str]) -> b
     return keys[best] == item.label
 
 
-def _shrink_item(item: Any, target_k: int, rng: random.Random) -> Any:
-    """Return a copy of a choice item keeping the gold and ``target_k - 1`` others.
-
-    Padding alone cannot vary K downward, and a source whose items already carry
-    its full option inventory (banking77 has 80 intents on every item) is
-    unchanged by every ``target_k <= 80``. Without this, a sweep reports the same
-    item at every K and looks like perfect option-count robustness.
-    """
-    criteria = item.question.get("criteria")
-    if not isinstance(criteria, dict) or item.label not in criteria:
-        return item
-    if len(criteria) <= target_k:
-        return item
-    others = [key for key in criteria if key != item.label]
-    rng.shuffle(others)
-    kept = [item.label] + others[: target_k - 1]
-    # Keep the source order so the item reads the way its author wrote it.
-    kept_set = set(kept)
-    new_criteria = {key: value for key, value in criteria.items() if key in kept_set}
-    new_question = dict(item.question)
-    new_question["criteria"] = new_criteria
-    from dataclasses import replace as _replace
-
-    return _replace(item, question=new_question)
-
-
 def _at_k(item: Any, target_k: int, pool: dict[str, list[str]], rng: random.Random) -> Any:
     """The item rendered with exactly ``target_k`` options where the corpus allows."""
-    shrunk = _shrink_item(item, target_k, rng)
+    shrunk = shrink_choice_item(item, target_k, rng)
     return pad_choice_item(shrunk, target_k, pool, rng)
 
 
