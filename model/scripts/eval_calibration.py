@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import pickle
 import random
 import sys
@@ -55,6 +56,9 @@ from model.evaluation.calibration import (
     softmax,
     temperature_curve,
 )
+from model.evaluation.jevbench import prediction_rows
+from model.evaluation.jevbench import summarize as summarize_jevbench
+from model.src.reranker_prompt import score_options_native
 from model.evaluation.order_sensitivity import (
     chance_accuracy,
     duplicate_option_texts,
@@ -91,7 +95,9 @@ def _as_bool(label: Any) -> bool:
 
 
 @torch.no_grad()
-def _predict_original(model: Any, item: Any) -> dict[str, Any] | None:
+def _predict_original(
+    model: Any, item: Any, choice_scorer: str = "head"
+) -> dict[str, Any] | None:
     """Score one item and return its logits, labels and gold index.
 
     This follows the same branches as ``_eval_item`` in
@@ -165,8 +171,29 @@ def _predict_original(model: Any, item: Any) -> dict[str, Any] | None:
         criteria = question["criteria"]
         keys = list(criteria.keys())
         option_texts = [value or key for key, value in criteria.items()]
-        logits = model.forward_choice(state, instructions, option_texts)[0]
-        logits = logits.float().cpu().tolist()
+        if choice_scorer == "native":
+            # Score each option with the backbone's own yes/no logit, the way
+            # the base reranker does, instead of the trained choice head. The
+            # two scorers disagree by 14-21 points on JevBench (#180); this is
+            # how the same comparison is made on the in-distribution eval.
+            # The probabilities are independent per option and do not sum to
+            # one, so they are stored as log-odds: argmax is preserved and ECE
+            # over the resulting distribution is not meaningful.
+            native = score_options_native(
+                model.backbone,
+                model.tokenizer,
+                state,
+                question,
+                [(key, text) for key, text in zip(keys, option_texts)],
+                max_length=getattr(model, "max_length", 8192) or 8192,
+            )
+            logits = [
+                math.log(max(score, 1e-6)) - math.log(max(1.0 - score, 1e-6))
+                for score in native
+            ]
+        else:
+            logits = model.forward_choice(state, instructions, option_texts)[0]
+            logits = logits.float().cpu().tolist()
         if item.label not in keys:
             return None
         return {
@@ -1130,6 +1157,90 @@ def _print_table(summary: dict[str, Any]) -> None:
         print(f"\nSkipped: {skipped}", flush=True)
 
 
+def _dump_jevbench_predictions(records: Sequence[dict[str, Any]], path: Path) -> None:
+    """Write the option each item was predicted to, next to the summary.
+
+    The rule lives in ``model.evaluation.jevbench.prediction_rows`` so it can be
+    tested without torch; this only writes what it returns.
+
+    Args:
+        records: The scored items.
+        path: Destination JSON file.
+    """
+    rows = prediction_rows(records)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"predictions": rows}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"Predictions saved to {path}", flush=True)
+
+
+def _run_jevbench(model: Any, args: argparse.Namespace) -> int:
+    """Score JevBench's public items with the checkpoint this run loaded.
+
+    ``model/scripts/eval_jevbench.py`` scores published HuggingFace checkpoints
+    through ``DecisionModel.predict``, which rounds probabilities to two
+    decimals and builds a head-only model, so it cannot score a LoRA training
+    checkpoint at all. The goal is stated against local checkpoints, so that
+    path has never reported the models that gate it; this one reuses the
+    architecture built above and the same accuracy rule as the rest of the
+    script, and adds the tier breakdown JevBench is scored on.
+    """
+    items = list(pipeline_mod.load_jevbench())
+    if args.max_items:
+        items = items[: args.max_items]
+    print(f"Loaded {len(items)} JevBench items", flush=True)
+
+    records: list[dict[str, Any]] = []
+    failed = 0
+    for index, item in enumerate(items):
+        record = _predict_original(model, item, args.choice_scorer)
+        if record is None:
+            failed += 1
+            continue
+        records.append(record)
+        if (index + 1) % 50 == 0:
+            print(f"  {index + 1}/{len(items)} items scored", flush=True)
+
+    summary = summarize_jevbench(records, failed=failed)
+    if args.dump_predictions:
+        _dump_jevbench_predictions(records, args.dump_predictions)
+    overall = summary["overall"]
+    print("\n=== JevBench (public) ===", flush=True)
+    print(f"{'tier':<10} {'n':>4} {'correct':>8} {'acc':>7}")
+    for tier, data in sorted(summary["by_tier"].items()):
+        print(
+            f"{tier:<10} {data['total']:>4} {data['correct']:>8} "
+            f"{data['accuracy']:>7.3f}"
+        )
+    print(
+        f"{'overall':<10} {overall['total']:>4} {overall['correct']:>8} "
+        f"{overall['accuracy']:>7.3f}"
+    )
+    if failed:
+        print(f"unscored: {failed}")
+
+    print(f"\n{'type':<10} {'n':>4} {'acc':>7}")
+    for q_type, data in sorted(summary["by_type"].items()):
+        print(f"{q_type:<10} {data['total']:>4} {data['accuracy']:>7.3f}")
+
+    print(f"\n{'tier':<10} {'type':<10} {'n':>4} {'acc':>7}")
+    for tier, types in sorted(summary["by_tier_type"].items()):
+        for q_type, data in sorted(types.items()):
+            print(f"{tier:<10} {q_type:<10} {data['total']:>4} {data['accuracy']:>7.3f}")
+
+    if args.json:
+        payload = {
+            "checkpoint": str(args.load_heads),
+            "config": str(args.config),
+            "model": args.model,
+            "seed": args.seed,
+            **summary,
+        }
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        print(f"\nwrote {args.json}", flush=True)
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Calibration and robustness evaluation for a decision model"
@@ -1223,7 +1334,34 @@ def main() -> int:
         help="Cap evaluated items per type for a faster report",
     )
     parser.add_argument(
+        "--jevbench",
+        action="store_true",
+        help="Score JevBench's public items with this checkpoint instead of the "
+        "configured eval set, and report accuracy by tier",
+    )
+    parser.add_argument(
+        "--max-items",
+        type=int,
+        default=None,
+        help="Cap items for a faster run; applies to --jevbench",
+    )
+    parser.add_argument(
+        "--dump-predictions",
+        type=Path,
+        default=None,
+        help="Write the option each JevBench item was predicted to, so accuracy "
+        "can be told apart from a shared bias toward one key",
+    )
+    parser.add_argument(
         "--no-order-probes", action="store_true", help="Skip reordering probes"
+    )
+    parser.add_argument(
+        "--choice-scorer",
+        choices=("head", "native"),
+        default="head",
+        help="Score choice options with the trained head, or with the backbone's "
+        "own yes/no logit as the base reranker does. Accuracy is comparable "
+        "between the two; ECE from the native scorer is not meaningful",
     )
     parser.add_argument(
         "--nested-options-source",
@@ -1357,6 +1495,9 @@ def main() -> int:
     model.load_heads(args.load_heads)
     model.eval()
 
+    if args.jevbench:
+        return _run_jevbench(model, args)
+
     started = time.perf_counter()
     eval_items = _load_eval_items(cfg, args)
     print(f"\nLoaded {len(eval_items):,} eval items", flush=True)
@@ -1376,7 +1517,7 @@ def main() -> int:
         if q_type not in records:
             skipped["unknown_type"] += 1
             continue
-        record = _predict_original(model, item)
+        record = _predict_original(model, item, args.choice_scorer)
         if record is None:
             skipped["label_not_in_options"] += 1
             continue

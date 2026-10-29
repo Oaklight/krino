@@ -147,3 +147,42 @@ def lora_parameters(model: nn.Module) -> list[nn.Parameter]:
         for name, param in model.named_parameters()
         if "lora_" in name and param.requires_grad
     ]
+
+
+def merge_lora(model: nn.Module) -> int:
+    """Fold every :class:`LoRALinear` in ``model`` into its base layer, in place.
+
+    The forward pass computes ``base(x) + (alpha / rank) * B A x``. Once the
+    factors are fixed, that is a single linear map, so the update can be added
+    to the base weight and the wrapper dropped. What this buys is a backbone
+    that any HuggingFace loader can read: the trained adaptation otherwise lives
+    only in the checkpoint, which is why a fine-tuned model could not be scored
+    through the reranker's own readout.
+
+    Args:
+        model: A module whose linear layers may have been wrapped by
+            :func:`inject_lora`.
+
+    Returns:
+        The number of layers merged; zero means the model had no adapter.
+
+    Note:
+        The merged weight is rounded once, in the base layer's dtype, where the
+        wrapper rounds the low-rank term separately before adding it. The two
+        agree to the last bit for bf16 weights in practice, and the merge is
+        checked against the wrapper in the tests rather than assumed.
+    """
+    targets = [
+        (name, module)
+        for name, module in model.named_modules()
+        if isinstance(module, LoRALinear)
+    ]
+    for name, module in targets:
+        with torch.no_grad():
+            delta = module.lora_b.weight.float() @ module.lora_a.weight.float()
+            merged = module.base.weight.float() + module.scaling * delta
+            module.base.weight.copy_(merged.to(module.base.weight.dtype))
+        parent_name, _, child = name.rpartition(".")
+        parent = model.get_submodule(parent_name) if parent_name else model
+        setattr(parent, child, module.base)
+    return len(targets)
