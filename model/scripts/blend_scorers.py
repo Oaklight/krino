@@ -133,8 +133,12 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
     for source_name, source_cfg in (cfg.get("sources") or {}).items():
         _, eval_items = load_source_items(source_name, source_cfg or {}, rng)
         source_choice = [item for item in eval_items if item.question.get("type") == "choice"]
-        sampled = sample_choice_items(
-            source_choice, args.per_source, args.long_items, random.Random(args.seed)
+        sampled = (
+            source_choice
+            if args.all_items
+            else sample_choice_items(
+                source_choice, args.per_source, args.long_items, random.Random(args.seed)
+            )
         )
         choice_items.extend(("in-distribution", item) for item in sampled)
         if source_choice:
@@ -213,22 +217,30 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
 
         with torch.no_grad():
             head = model.forward_choice(state, question.get("instructions", ""), texts)[0]
-        native = score_options_native(
-            model.backbone,
-            model.tokenizer,
-            state,
-            question,
-            list(zip(keys, texts)),
-            max_length=native_max_length,
-            device=device,
-        )
+        # The rule keeps the head for long lists, so scoring them natively costs
+        # one forward pass per option for a score nothing reads.
+        if args.skip_native_long and len(keys) >= args.skip_native_long:
+            native = None
+        else:
+            native = [
+                log_odds(value)
+                for value in score_options_native(
+                    model.backbone,
+                    model.tokenizer,
+                    state,
+                    question,
+                    list(zip(keys, texts)),
+                    max_length=native_max_length,
+                    device=device,
+                )
+            ]
         records.append(
             {
                 "group": group,
                 "k": len(keys),
                 "gold": gold,
                 "head": head.float().cpu().tolist(),
-                "native": [log_odds(value) for value in native],
+                "native": native,
             }
         )
         if index % 100 == 0:
@@ -238,6 +250,11 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
 
 def sweep(records: Sequence[dict[str, Any]], lams: Sequence[float]) -> dict[str, Any]:
     """Blend weight sweep, with the scale fitted on in-distribution items only."""
+    scored = [record for record in records if record.get("native") is not None]
+    skipped = len(records) - len(scored)
+    if skipped:
+        print(f"  {skipped} items have no native score and are left out of the sweep", flush=True)
+    records = scored
     in_dist = [record for record in records if record["group"] == "in-distribution"]
     if not in_dist:
         raise SystemExit("Error: no in-distribution records to fit the scale on")
@@ -270,6 +287,67 @@ def sweep(records: Sequence[dict[str, Any]], lams: Sequence[float]) -> dict[str,
     return {"head_scale": head_scale, "native_scale": native_scale, "results": results}
 
 
+def rule_sweep(records: Sequence[dict[str, Any]], lams: Sequence[float]) -> dict[str, Any]:
+    """Accuracy of the deployable rule: head on long lists, blend on short ones.
+
+    This is the rule the note recommends, evaluated directly instead of read off
+    the blend sweep: an item with at least ``LONG_MIN`` options keeps the head's
+    argmax, so it needs no native score at all, and everything below that is
+    blended. The scale is fitted on the short items, which are the only ones the
+    blend touches.
+
+    Args:
+        records: Scored items; ``native`` may be ``None`` where it was skipped.
+        lams: Blend weights to evaluate.
+
+    Returns:
+        ``{"head_scale", "native_scale", "rules"}`` where each rule holds
+        per-bucket and overall accuracy.
+    """
+    from model.evaluation.scorer_blend import LONG_MIN
+
+    short = [record for record in records if record["k"] < LONG_MIN and record.get("native")]
+    if not short:
+        raise SystemExit("Error: no short-list records with a native score to fit the scale on")
+    head_scale = spread([margin(record["head"]) for record in short])
+    native_scale = spread([margin(record["native"]) for record in short])
+    print(
+        f"rule scales (short-list medians): head {head_scale:.4f}, native {native_scale:.4f}",
+        flush=True,
+    )
+
+    rules: dict[str, Any] = {}
+    for lam in lams:
+        per_group: dict[str, Any] = {}
+        for group in sorted({record["group"] for record in records}):
+            by_bucket: dict[str, list[tuple[bool, float]]] = defaultdict(list)
+            for record in records:
+                if record["group"] != group:
+                    continue
+                if record["k"] >= LONG_MIN or not record.get("native"):
+                    guess = max(
+                        range(record["k"]), key=lambda index: (record["head"][index], -index)
+                    )
+                else:
+                    guess = blended_argmax(
+                        record["head"], record["native"], head_scale, native_scale, lam
+                    )
+                chance = 1.0 / record["k"]
+                by_bucket[bucket_of(record["k"])].append((guess == record["gold"], chance))
+                by_bucket["all"].append((guess == record["gold"], chance))
+            per_group[group] = {
+                bucket: accuracy(pairs) for bucket, pairs in sorted(by_bucket.items())
+            }
+        rules[str(lam)] = per_group
+        parts = " ".join(
+            f"{group}:{per_group[group]['all']['accuracy']:.4f}({per_group[group]['all']['n']})"
+            for group in sorted(per_group)
+        )
+        print(f"rule lam={lam:<6} {parts}", flush=True)
+
+    return {"head_scale": head_scale, "native_scale": native_scale, "rules": rules}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
@@ -290,6 +368,15 @@ def main() -> int:
         type=int,
         default=150,
         help="Items with at least 20 options sampled per source, which is only banking77 here",
+    )
+    parser.add_argument(
+        "--all-items", action="store_true", help="Score every choice item instead of a sample"
+    )
+    parser.add_argument(
+        "--skip-native-long",
+        type=int,
+        default=0,
+        help="Do not score items with at least this many options natively (0 = score all)",
     )
     parser.add_argument("--jevbench-dir", type=Path, default=None)
     parser.add_argument("--max-length", type=int, default=None)
@@ -325,7 +412,8 @@ def main() -> int:
             )
             print(f"Records saved to {args.dump_records}", flush=True)
 
-    analysis = sweep(records, lams)
+    rule = rule_sweep(records, lams)
+    analysis = {"rule": rule, **sweep(records, lams)}
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)
         payload = {

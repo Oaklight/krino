@@ -13,10 +13,12 @@ is already right.
 
 Every number below is the 4B epoch-10 checkpoint (`arch_4b_loraAll_32k_s123`),
 one seed, scored once per item through both readouts in a single process:
-`model/scripts/blend_scorers.py`, artifact at
-`model/experiments/blend_scorers_s123_ep10.json`. The per-item score vectors are
-not committed (1.1 MB); the run that produced them writes them with
-`--dump-records` and the sweep re-runs over them without a GPU with
+`model/scripts/blend_scorers.py`. Two artifacts: the 60-per-source sample the
+blend was developed on (`model/experiments/blend_scorers_s123_ep10.json`) and the
+full 7,026 choice items
+(`model/experiments/blend_rule_full_s123_ep10.json`). The per-item score vectors
+are not committed (1.1 MB and 3.3 MB); the run writes them with
+`--dump-records` and both sweeps re-run over them without a GPU with
 `--from-records`.
 
 ## The blend
@@ -71,57 +73,115 @@ readout finding, not a new blend effect. The head adds nothing there; it is
 pulling in the wrong direction and the weights that let it contribute are the
 ones that cost in-distribution accuracy.
 
+## The full eval
+
+The sample above established the shape; the numbers that count come from scoring
+every choice item in the 13,444-item eval — 6,887 in-distribution plus the 139
+JevBench choice items — with the rule applied item by item. The head is kept at
+`>= 20` options, so those items are never scored natively and the run costs one
+forward pass per short-list option and nothing extra on banking77.
+
+In-distribution choice, and the clause-3 bucket gap:
+
+| lam | ≤5 | ≥20 | choice | gap | overall accuracy |
+|---|---|---|---|---|---|
+| 0 (head only) | 0.6177 | 0.8180 | 0.6322 | −20.03 pp | 69.24% |
+| 0.5 | 0.6906 | 0.8180 | 0.6999 | −12.74 pp | 72.71% |
+| 1.0 | 0.7188 | 0.8180 | 0.7260 | −9.92 pp | 74.05% |
+| 1.5 | 0.7276 | 0.8180 | 0.7341 | −9.04 pp | 74.46% |
+| 2.0 | 0.7321 | 0.8180 | 0.7383 | −8.59 pp | 74.68% |
+| **2.5** | **0.7341** | 0.8180 | **0.7398** | −8.39 pp | **74.75%** |
+| 3.0 | 0.7318 | 0.8180 | 0.7382 | −8.62 pp | 74.66% |
+| native only (the shipped rule) | 0.6972 | 0.8180 | 0.7060 | −12.08 pp | 73.01% |
+
+Overall accuracy is the whole 13,443-item eval: the 4,954 correct noul and score
+items are untouched by a choice rule, so the movement is choice only.
+
+**The rule is +1.73 pp overall over what ships, and +5.51 pp over the head
+alone.** Choice accuracy goes 0.7060 → 0.7398, and the gain is entirely in the
+short-list bucket: 0.6972 → 0.7341, +3.7 pp, while the long-list bucket is
+untouched by construction.
+
+**Clause 3's count gap roughly halves and still fails.** It is −8.39 pp at
+`lam = 2.5` against the routing rule's −12.08 and the head's −20.03. The 5 pp
+band needs the short-list bucket at 0.768; the blend gets to 0.734.
+
+JevBench choice, which the whole note's out-of-sample claim rests on:
+
+| lam | easy (36) | hard (67) | original (36) | choice (139) |
+|---|---|---|---|---|
+| 0 (head only) | 0.7222 | 0.2687 | 0.5000 | 0.4460 |
+| 1.0 | 1.0000 | 0.3731 | 0.8333 | 0.6547 |
+| 2.0 | 1.0000 | 0.3881 | 0.8056 | 0.6403 |
+| 2.5 | 1.0000 | 0.4030 | 0.7778 | 0.6475 |
+| native only | 1.0000 | 0.3731 | 0.8333 | 0.6547 |
+
+The blend beats native-only on the hard tier (0.4030 against 0.3731, +2 items)
+and loses one item on the original tier. Across all 139 it is 0.6475 against the
+native scorer's 0.6547 — inside the noise of 139 items, and the honest statement
+is that on JevBench the blend and the native readout are the same measurement.
+
+**`lam` is chosen on the split it is scored on**, which is a real objection, so
+it was checked: fitting `lam` on one half of the in-distribution items and
+applying it to the other picks 2.5 and 3.0 on the two halves and scores
+**0.7379** cross-fitted, against 0.7058 for the routing rule and 0.6322 for the
+head. The gain is not a tuning artefact.
+
 ## The deployable rule
 
-The current model routes: native for ≤5 options, head above 20. On this sample
-that scores **0.7076**. Two blends do better:
+Keep the head for long lists and blend on short lists, at `lam = 2.5`:
 
-| rule | ≤5 | ≥20 | all | vs routing |
-|---|---|---|---|---|
-| routing (native ≤5, head ≥20) | 0.6911 | 0.8067 | 0.7076 | — |
-| single `lam = 1` everywhere | 0.7278 | 0.7533 | 0.7314 | +2.4 pp |
-| `lam = 1` on ≤5, head on ≥20 | 0.7278 | 0.8067 | 0.7390 | **+3.1 pp** |
-| `lam = 1.5` on ≤5, head on ≥20 | 0.7300 | 0.8067 | 0.7410 | **+3.3 pp** |
+| rule | ≤5 | ≥20 | choice | all | vs shipped |
+|---|---|---|---|---|---|
+| head only | 0.6177 | 0.8180 | 0.6322 | 69.24% | −3.77 pp |
+| shipped routing (native ≤5, head ≥20) | 0.6972 | 0.8180 | 0.7060 | 73.01% | — |
+| blend `lam = 2.5` on ≤5, head ≥20 | 0.7341 | 0.8180 | 0.7398 | **74.75%** | **+1.73 pp** |
 
-The third row is the recommendation: keep the head for long lists, replace the
-hard native switch with a blend on short lists. It costs the native scorer's
-forward passes on short items — at most five per item, against one for the head —
-and nothing extra on long lists. The fourth row is inside the noise of the first
-(2 items on 900), so `lam = 1` is the value to ship; the ≤5 optimum is flat
-between 1.0 and 1.5.
+It costs the native scorer's forward passes on short items — at most five per
+item, against one for the head — and nothing extra on long lists.
 
 ## Caveats
 
-- **The in-distribution rows are in-sample for `lam`.** The scale is fitted on
-  the same items and the weight is chosen on them. The JevBench rows are the
-  clean test — different corpus, and `research/13`'s companion audit shows it is
-  disjoint from training — and there the blend ties the native scorer rather than
-  beating it. What the out-of-sample data supports is that a blend does not
-  *hurt* relative to the native scorer on short lists; the +3.9 pp over
+- **`lam` is chosen on the eval split.** That is why the cross-fit paragraph
+  above exists: the two halves agree (2.5 and 3.0), the cross-fitted accuracy is
+  0.7379 against 0.7058 for the routing rule, and the overall number computed
+  from it is 74.66% against 74.75% at a fixed 2.5. The gain survives, but a
+  deployment should fit `lam` on held-out data rather than on the eval split.
+- **The sample rows are a sample.** The 60-per-source table earlier in the note
+  was the development instrument; small sources (`authored144` 60/144,
+  `typed_decisions` 60/142) are over-weighted in it and its bucket accuracies
+  carry ±1.5 to ±4 pp. The full-eval section is the one to quote, and it is
+  larger in every direction.
+- **JevBench is the clean test, and there the blend ties the native scorer.** It
+  reaches 0.6475 against native-only's 0.6547 on the 139 choice items — a
+  one-item loss. What the out-of-sample data supports is that the blend does not
+  *hurt* relative to the native scorer on short lists; the +3.4 pp over
   native-only is in-distribution only.
-- **1,050 in-distribution items, 60 per source.** Sampling is per source, so
-  small sources (`authored144` 60/144, `typed_decisions` 60/142) are
-  over-weighted relative to their share of the full 6,874-item choice eval. The
-  ≤5 and ≥20 rows have 900 and 150 items, so the bucket accuracies carry roughly
-  ±1.5 and ±4 pp of sampling noise. Every gap above that clears it.
 - **`>=20` is banking77.** It is the only choice source with more than 19
   options, so the long-list column is one benchmark, as it is for the bucket
   comparisons in `research/17`.
-- **The head's in-distribution accuracy here (0.6648) is not the 0.5667 quoted in
-  `research/13`.** Different sample: that table used 1,500 per type from the
-  clean corpus, this uses 60 per source. The two are not comparable and neither
-  should be quoted against the other; what is comparable is within this run.
+- **The head's full-eval choice accuracy (0.6322) is not `research/13`'s 0.5667.**
+  That table used 1,500 items per type from the clean corpus; this is the whole
+  6,887-item choice eval. Neither should be quoted against the other.
 - **Two scorers, one backbone.** The native score comes from the same fine-tuned
   weights through the reranker's own readout, not from an independent model, so
   this measures two readouts of one backbone rather than an ensemble.
 
 ## What this means for the goal
 
-It is a deployable gain with no training: +3.1 pp on in-distribution choice, on
-top of the +3.77 pp that routing already gave (`research/17`), and it moves the
-short-list bucket — the one where the head is weakest — by +8.9 pp. It does not
-touch clause 4: on JevBench the blend reproduces the native readout's 0.6547 and
-stops there, so the gap to the 74.1 reference is unchanged.
+It is the first change this session that moves a clause in the right direction
+without training. **Overall eval accuracy goes from 73.01% to 74.75%** — +1.73 pp
+over the routing rule the model ships, +5.51 pp over the head alone — and clause
+1's 65% bar is cleared by a wider margin than before. The short-list bucket, the
+one where the head is weakest, moves +3.7 pp.
+
+It moves clause 3 without meeting it: the ≤5 vs ≥20 gap falls from −12.08 pp to
+−8.39 pp, still outside the 5 pp band, and the blend would need the short-list
+bucket at 0.768 to close it.
+
+It does not touch clause 4. On JevBench the blend reproduces the native readout's
+0.6547 and stops there, so the gap to the 74.1 reference is unchanged; the hard
+tier moves from 0.373 to 0.403, which is two items on 67.
 
 The feature version that `research/13` proposed is still untested, and this
 result makes it more interesting rather than less: a *learned* combination does
