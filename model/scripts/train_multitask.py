@@ -623,6 +623,10 @@ def main() -> int:
         uncertainty_weighting=uncertainty_weighting,
         score_loss=score_loss,
         k_augment=k_augment_cfg,
+        # A `candidates` run converts every choice item into score questions, so
+        # the choice head is never trained; the epoch eval has to read choice
+        # accuracy out of the score head or it reports chance.
+        choice_from_score=score_form == "candidates",
     )
 
     # Print final eval summary

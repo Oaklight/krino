@@ -521,7 +521,9 @@ def train_epoch(
 
 
 @torch.no_grad()
-def eval_epoch(model: nn.Module, eval_items: list) -> dict[str, Any]:
+def eval_epoch(
+    model: nn.Module, eval_items: list, choice_from_score: bool = False
+) -> dict[str, Any]:
     """Evaluate on a set of items. Returns loss and accuracy statistics."""
     model.eval()
     total_loss = 0.0
@@ -529,7 +531,7 @@ def eval_epoch(model: nn.Module, eval_items: list) -> dict[str, Any]:
     correct = 0
 
     for item in eval_items:
-        result = _eval_item(model, item)
+        result = _eval_item(model, item, choice_from_score)
         if result is None:
             continue
         loss_val, is_correct, _details = result
@@ -638,6 +640,7 @@ def train(
 def _eval_item(
     model: nn.Module,
     item: Any,
+    choice_from_score: bool = False,
 ) -> tuple[float, bool, dict[str, float] | None] | None:
     """Evaluate a single item, returning (loss, is_correct, details).
 
@@ -679,6 +682,22 @@ def _eval_item(
         criteria = question["criteria"]
         keys = list(criteria.keys())
         option_texts = [v or k for k, v in criteria.items()]
+        if choice_from_score:
+            # A `--score-form candidates` run never trained the choice head, so
+            # scoring choice items with it would report chance. The log-odds per
+            # candidate stand in as logits: cross-entropy softmaxes them, which
+            # preserves the argmax and gives a loss on the same scale as a
+            # choice item scored by its own head.
+            from model.evaluation.choice_candidates import score_candidates
+
+            if label not in keys:
+                return None
+            logits = torch.tensor(
+                [score_candidates(model, item)], dtype=torch.float32
+            )
+            target = torch.tensor([keys.index(label)], device=logits.device)
+            correct = logits.argmax().item() == keys.index(label)
+            return (F.cross_entropy(logits, target).item(), correct, None)
         logits = model.forward_choice(state, instructions, option_texts)
         if label not in keys:
             return None
@@ -711,7 +730,9 @@ def _eval_item(
 
 
 @torch.no_grad()
-def eval_epoch_detailed(model: nn.Module, eval_items: list) -> dict[str, Any]:
+def eval_epoch_detailed(
+    model: nn.Module, eval_items: list, choice_from_score: bool = False
+) -> dict[str, Any]:
     """Evaluate with per-type and per-source breakdowns.
 
     Uses the same per-item logic as eval_epoch (forward pass + loss + prediction)
@@ -730,7 +751,7 @@ def eval_epoch_detailed(model: nn.Module, eval_items: list) -> dict[str, Any]:
 
     rows: list[tuple[Any, ...]] = []
     for item in eval_items:
-        result = _eval_item(model, item)
+        result = _eval_item(model, item, choice_from_score)
         if result is None:
             continue
         loss_val, is_correct, details = result
@@ -772,6 +793,7 @@ def train_multitask(
     uncertainty_weighting: bool = False,
     score_loss: str = "ce",
     k_augment: "KAugmentConfig | None" = None,
+    choice_from_score: bool = False,
 ) -> dict[str, Any]:
     """Multi-task training loop with type-balanced sampling and detailed eval.
 
@@ -1005,7 +1027,9 @@ def train_multitask(
         if epoch % eval_every == 0 or epoch == epochs:
             eval_stats = gather_eval_stats(
                 eval_epoch_detailed(
-                    model, shard(eval_items, rank, world_size)
+                    model,
+                    shard(eval_items, rank, world_size),
+                    choice_from_score=choice_from_score,
                 ),
                 world_size=world_size,
             )
