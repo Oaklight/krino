@@ -296,11 +296,11 @@ def _compute_augmented_noul_batch(
         option_texts = [ao[k] for k in keys]
         teacher_probs = item.teacher_probs
 
-        context_text = f"{item.state} {item.question.get('instructions', '')}"
-        context_hidden = model._encode_with_sequence(context_text)
-        option_pooled = model._encode_text(option_texts)
-        opt_hidden = option_pooled.unsqueeze(0)
-        logits = model.choice_head(context_hidden, opt_hidden)
+        # Go through forward_choice so the choice head has one caller: a
+        # cross-encoder head takes the joint prompts, not (context, options).
+        logits = model.forward_choice(
+            item.state, item.question.get("instructions", ""), option_texts
+        )
 
         losses.append(_teacher_loss(logits, teacher_probs, keys))
     return losses
@@ -318,11 +318,11 @@ def _compute_choice_batch(
         option_texts = [v or k for k, v in criteria.items()]
         teacher_probs = getattr(item, "teacher_probs", None)
 
-        context_text = f"{item.state} {item.question.get('instructions', '')}"
-        context_hidden = model._encode_with_sequence(context_text)  # [1, seq_len, hidden]
-        option_pooled = model._encode_text(option_texts)  # [K, hidden]
-        opt_hidden = option_pooled.unsqueeze(0)  # [1, K, hidden]
-        logits = model.choice_head(context_hidden, opt_hidden)
+        # Same reason as above: forward_choice owns the head's calling
+        # convention, so the cross-encoder mode works in training too.
+        logits = model.forward_choice(
+            item.state, item.question.get("instructions", ""), option_texts
+        )
 
         if teacher_probs:
             losses.append(_teacher_loss(logits, teacher_probs, keys))

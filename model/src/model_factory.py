@@ -36,6 +36,7 @@ def build_decision_model(
     lora_alpha: int = 32,
     lora_dropout: float = 0.0,
     lora_targets: tuple[str, ...] = ("q_proj", "v_proj"),
+    choice_mode: str = "tower",
 ) -> DecisionModel:
     """Load a frozen backbone and attach the typed decision heads.
 
@@ -60,6 +61,9 @@ def build_decision_model(
         lora_alpha: LoRA scaling numerator.
         lora_dropout: Dropout on the LoRA input.
         lora_targets: Linear-layer suffixes that receive adapters.
+        choice_mode: ``"tower"`` (state and options encoded separately, as
+            before) or ``"cross_encoder"`` (one prompt per option with the state
+            inside it; see :class:`model.src.heads.CrossEncoderHead`).
 
     Returns:
         The constructed model, still on the backbone's device.
@@ -106,4 +110,5 @@ def build_decision_model(
         lora_alpha=lora_alpha,
         lora_dropout=lora_dropout,
         lora_targets=lora_targets,
+        choice_mode=choice_mode,
     )
