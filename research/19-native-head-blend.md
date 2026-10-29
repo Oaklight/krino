@@ -86,23 +86,31 @@ In-distribution choice, and the clause-3 bucket gap:
 | lam | ≤5 | ≥20 | choice | gap | overall accuracy |
 |---|---|---|---|---|---|
 | 0 (head only) | 0.6177 | 0.8180 | 0.6322 | −20.03 pp | 69.24% |
-| 0.5 | 0.6906 | 0.8180 | 0.6999 | −12.74 pp | 72.71% |
-| 1.0 | 0.7188 | 0.8180 | 0.7260 | −9.92 pp | 74.05% |
-| 1.5 | 0.7276 | 0.8180 | 0.7341 | −9.04 pp | 74.46% |
-| 2.0 | 0.7321 | 0.8180 | 0.7383 | −8.59 pp | 74.68% |
-| **2.5** | **0.7341** | 0.8180 | **0.7398** | −8.39 pp | **74.75%** |
-| 3.0 | 0.7318 | 0.8180 | 0.7382 | −8.62 pp | 74.66% |
+| 0.5 | 0.6902 | 0.8180 | 0.6994 | −12.78 pp | 72.68% |
+| 1.0 | 0.7183 | 0.8180 | 0.7256 | −9.97 pp | 74.03% |
+| 1.5 | 0.7273 | 0.8180 | 0.7338 | −9.07 pp | 74.44% |
+| 2.0 | 0.7324 | 0.8180 | 0.7386 | −8.56 pp | 74.70% |
+| **2.5** | **0.7337** | 0.8180 | **0.7398** | −8.43 pp | **74.75%** |
+| 3.0 | 0.7320 | 0.8180 | 0.7382 | −8.60 pp | 74.67% |
 | native only (the shipped rule) | 0.6972 | 0.8180 | 0.7060 | −12.08 pp | 73.01% |
+
+Every cell is computed by the rule as it would ship — head on `>= 20`, blend
+below — which fits the blend's scale on the short items, the only ones the blend
+touches. An earlier version of this table quoted the plain sweep instead, which
+fits the scale on all in-distribution items and drops the long ones; the two
+instruments disagree by at most three items in any cell, so nothing below moves,
+but the artifact behind this table is the rule's
+(`model/experiments/blend_rule_full_s123_ep10.json`, `rule` block).
 
 Overall accuracy is the whole 13,443-item eval: the 4,954 correct noul and score
 items are untouched by a choice rule, so the movement is choice only.
 
-**The rule is +1.73 pp overall over what ships, and +5.51 pp over the head
+**The rule is +1.74 pp overall over what ships, and +5.51 pp over the head
 alone.** Choice accuracy goes 0.7060 → 0.7398, and the gain is entirely in the
-short-list bucket: 0.6972 → 0.7341, +3.7 pp, while the long-list bucket is
+short-list bucket: 0.6972 → 0.7337, +3.65 pp, while the long-list bucket is
 untouched by construction.
 
-**Clause 3's count gap roughly halves and still fails.** It is −8.39 pp at
+**Clause 3's count gap roughly halves and still fails.** It is −8.43 pp at
 `lam = 2.5` against the routing rule's −12.08 and the head's −20.03. The 5 pp
 band needs the short-list bucket at 0.768; the blend gets to 0.734.
 
@@ -135,16 +143,20 @@ Keep the head for long lists and blend on short lists, at `lam = 2.5`:
 |---|---|---|---|---|---|
 | head only | 0.6177 | 0.8180 | 0.6322 | 69.24% | −3.77 pp |
 | shipped routing (native ≤5, head ≥20) | 0.6972 | 0.8180 | 0.7060 | 73.01% | — |
-| blend `lam = 2.5` on ≤5, head ≥20 | 0.7341 | 0.8180 | 0.7398 | **74.75%** | **+1.73 pp** |
+| blend `lam = 2.5` on ≤5, head ≥20 | 0.7337 | 0.8180 | 0.7398 | **74.75%** | **+1.74 pp** |
 
 It costs the native scorer's forward passes on short items — at most five per
 item, against one for the head — and nothing extra on long lists.
 
 ## Three better fusion rules, all worse
 
-`lam = 2.5` leaves the short-list bucket at 0.7341 where clause 3's 5 pp band
+`lam = 2.5` leaves the short-list bucket at 0.7337 where clause 3's 5 pp band
 needs 0.768. Fusion is cheap to vary, so three alternatives were measured on the
-same 6,387 short-list items before concluding anything about training:
+same 6,387 short-list items before concluding anything about training. They were
+scored by the plain sweep (one weight over the whole short-list bucket, scale
+fitted on the in-distribution items), which is why the linear row reads 0.7341
+here and 0.7337 in the rule table above — the two instruments differ by three of
+the 6,387 items and every rule below is compared under the same one:
 
 | rule | ≤5 accuracy |
 |---|---|
@@ -294,6 +306,17 @@ further ~40 minutes of GPU per checkpoint for a +1 pp question.
 
 ## Caveats
 
+- **The 6-19 bracket is 16 JevBench items, and one checkpoint's zero there is a
+  draw.** The committed artifacts carry a `6-19` bucket that this note's tables do
+  not show, because nothing in-distribution lands in it: banking77 is the only
+  long source and it is at 80 options, so the band contains 16 JevBench items
+  (12 original, 4 hard), each with six options. At `lam = 0` the seed-123 epoch-10
+  checkpoint takes 0 of the 16 — a 5% event under chance — while the native
+  readout takes 9. The other two checkpoints take 3/16 (seed 123, epoch 5) and
+  6/16 (seed 42, epoch 5), and the gold answers and the head's picks are both
+  spread across all six positions, so this is the hard-tier seed variance of the
+  section on checkpoint spread, not a six-option scoring fault. No conclusion in
+  this note reads that bucket.
 - **`lam` is chosen on the eval split.** That is why the cross-fit paragraph
   above exists: the two halves agree (2.5 and 3.0), the cross-fitted accuracy is
   0.7379 against 0.7058 for the routing rule, and the overall number computed
