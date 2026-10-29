@@ -61,7 +61,7 @@ def print_report(name: str, report: dict[str, Any]) -> None:
         ("head_only", "head only (T=1)"),
         ("head_only_calibrated", "head only (fitted T)"),
         ("routed_at_t1", "routed (T=1)"),
-        ("routed_single_t", "routed (one T, per-type)"),
+        ("routed_single_t", "routed (one T for everything)"),
         ("routed", "routed (fitted T per path)"),
     ):
         row = mean[metric]
