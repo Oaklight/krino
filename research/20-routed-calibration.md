@@ -110,6 +110,15 @@ not the system, and should be labelled as such wherever it appears.
   above 0.05 on all three checkpoints under both schedules and per-path stays
   below on all three. The two-seed spread on the per-path number is 0.0011 at
   four folds, so the pass is not resting on the fold size.
+
+  The verdicts are mean-level statements and the individual folds are not all on
+  the same side of the bar. On the passing side, s42 ep5 has a per-path fold at
+  **0.0501**, over 0.05, on a mean of 0.0382; its per-fold spread (sd 0.0141) is
+  three times the other two checkpoints', so its 2-SE upper bound is 0.0523. On
+  the failing side, s123 ep5 has a per-type fold at **0.0429**, under 0.05, on a
+  mean of 0.0526. Neither flips a verdict, but "no verdict flips" is a statement
+  about the means, and the choice this note asks the author to make is exactly
+  the place where a fold-level margin matters.
 - **The criterion is ECE, not NLL**, because the clause is written in ECE. An NLL
   fit would pick different temperatures (the two criteria disagree by a factor of
   ~2 on the score primitive, `research/17`) and this note does not report that
