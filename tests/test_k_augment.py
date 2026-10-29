@@ -1,14 +1,17 @@
 """Option-count augmentation must widen choice items without touching their labels.
 
-The failure it addresses is measured, not hypothetical: the pooled-attention
-baseline drops from 0.677 accuracy at 4 options to 0.217 at 256 on the same
-300 banking77 items (model/experiments/optcount_pooled.json), because training
-never presents more than 80 options.  These tests pin the invariants that make
-padding safe: the gold key survives, no option text (including a case or
-whitespace variant) is duplicated, distractors come only from the supplied
-items, keys cannot collide, non-choice items pass through untouched, the same
-(seed, epoch) reproduces the same widths, and the teacher-distribution switch is
-matched between the augmented and control arms.
+The effect it addresses is measured, not hypothetical, but it is smaller on the
+current model than the original sweep suggested: the 0.6B 5-epoch baseline drops
+from 0.677 at 4 options to 0.217 at 256 (model/experiments/optcount_pooled.json),
+while the 4B 10-epoch model falls from 0.977 at K=4 to 0.850 at K=80
+(model/experiments/optcount_4b_ep10.json) — 12.67 pp against a 5 pp goal.
+
+The tests pin the invariants that make padding and shrinking safe: the gold key
+survives, no option text (including a case or whitespace variant) is duplicated,
+distractors come only from the supplied items, keys cannot collide, non-choice
+items pass through untouched, the same (seed, epoch) reproduces the same widths,
+shrinking keeps the source order and is reproducible per seed, and the
+teacher-distribution switch is matched between the augmented and control arms.
 
 The tests are torch-free on purpose: CI installs neither torch nor transformers,
 so a guard that skips on a missing torch would make the whole file pass without
@@ -22,6 +25,8 @@ import random
 import pytest
 
 from data.format import TypedQuestion
+from dataclasses import replace
+
 from data.k_augment import (
     KAugmentConfig,
     apply_k_augment,
@@ -29,6 +34,7 @@ from data.k_augment import (
     build_distractor_pool,
     draw_target_k,
     pad_choice_item,
+    shrink_choice_item,
 )
 
 
@@ -317,3 +323,77 @@ def test_stats_report_encodes_and_padding_counts():
     assert stats.encodes_before == 4 * len(items)
     assert stats.encodes_after == sum(len(i.question["criteria"]) for i in out)
     assert stats.encodes_after > stats.encodes_before
+
+
+def _wide_item(n_options: int = 80) -> TypedQuestion:
+    criteria = {f"intent_{i:02d}": f"text {i}" for i in range(n_options)}
+    return TypedQuestion(
+        id="wide-1",
+        state="I want to order a coffee",
+        question={"type": "choice", "instructions": "Pick", "criteria": criteria},
+        label="intent_07",
+        source="src",
+        split="test",
+    )
+
+
+def test_shrink_keeps_the_gold_and_the_requested_width():
+    shrink = shrink_choice_item
+    item = _wide_item(80)
+
+    shrunk = shrink(item, 4, random.Random(0))
+
+    criteria = shrunk.question["criteria"]
+    assert len(criteria) == 4
+    assert item.label in criteria
+    assert shrunk.label == item.label
+
+
+def test_shrink_is_a_no_op_at_or_above_the_natural_width():
+    shrink = shrink_choice_item
+    item = _wide_item(80)
+
+    # This is the bug the function exists to prevent: a pad-only sweep left the
+    # item untouched at every K below its natural width and scored it six times.
+    assert shrink(item, 80, random.Random(0)) is item
+    assert shrink(item, 120, random.Random(0)) is item
+
+
+def test_shrink_preserves_source_order_of_the_kept_options():
+    shrink = shrink_choice_item
+    item = _wide_item(80)
+
+    shrunk = shrink(item, 5, random.Random(3))
+
+    kept = list(shrunk.question["criteria"])
+    original = list(item.question["criteria"])
+    assert kept == [key for key in original if key in set(kept)]
+
+
+def test_shrink_is_deterministic_for_a_seed_and_varies_across_seeds():
+    shrink = shrink_choice_item
+    item = _wide_item(80)
+
+    first = list(shrink(item, 6, random.Random(11)).question["criteria"])
+    again = list(shrink(item, 6, random.Random(11)).question["criteria"])
+    other = list(shrink(item, 6, random.Random(12)).question["criteria"])
+
+    assert first == again
+    assert first != other
+
+
+def test_shrink_leaves_non_choice_and_label_mismatched_items_alone():
+    shrink = shrink_choice_item
+    noul = TypedQuestion(
+        id="n-1",
+        state="s",
+        question={"type": "noul", "instructions": "i", "criteria": {"yes": "", "no": ""}},
+        label="true",
+        source="src",
+        split="test",
+    )
+    missing = _wide_item(80)
+    missing = replace(missing, label="not_a_key")
+
+    assert shrink(noul, 1, random.Random(0)) is noul
+    assert shrink(missing, 4, random.Random(0)) is missing

@@ -1,0 +1,382 @@
+{
+ "arm": "arch_4b_loraAll_32k_s123",
+ "calibration_map_epoch_10": {
+  "choice": {
+   "ece_t1": 0.0488,
+   "map_cv": 0.0137
+  },
+  "noul": {
+   "ece_t1": 0.0368,
+   "map_cv": 0.0264
+  },
+  "score": {
+   "ece_t1": 0.1733,
+   "map_cv": 0.0289
+  }
+ },
+ "clause2_brier": {
+  "clause_as_written": "Brier >= 0.85 is satisfied by a worse-than-uniform model and failed by a perfect one",
+  "direction": "lower is better; 0 perfect; uniform scores (k-1)/k (0.75 at k=4, 0.83 at k=6)",
+  "measured_score_brier": 0.6446,
+  "readings": {
+   "1_minus_brier": 0.355,
+   "brier_skill_vs_uniform": 0.19
+  },
+  "status": "definitional defect; needs a decision (skill score, inverted Brier, or a slip alongside the QWK bar)"
+ },
+ "clause3_option_count_epoch_10": {
+  "choice_gt20": {
+   "accuracy": 0.818,
+   "n": 500
+  },
+  "choice_le5": {
+   "accuracy": 0.6177,
+   "n": 6387
+  },
+  "clause_reading": "two-sided within 5 pp: FAIL; one-sided (long lists not worse): pass",
+  "committed_matched_sweep": {
+   "accuracy_by_k": {
+    "128": 0.277,
+    "16": 0.453,
+    "256": 0.217,
+    "32": 0.32,
+    "4": 0.677,
+    "64": 0.237,
+    "8": 0.557,
+    "80": 0.23
+   },
+   "artifact": "model/experiments/optcount_pooled.json",
+   "checkpoint": "sweep_reranker0.6b_r64_mlp0 epoch_005 (0.6B, 5 epochs)",
+   "conflict": "the same benchmark at mean K=80 scores 0.818 on the 4B epoch-10 model, so the sweep collapse does not describe the current model; the matched curve must be re-measured",
+   "n_per_k": 300
+  },
+  "gap_pp": 20.03,
+  "gt20_all_from": "banking77 (500 items, mean 80 options, chance 0.0125)",
+  "interpretation": "the cross-bucket gap compares banking77 (all >20 items) against thirteen benchmarks; the within-source 4->5 comparison shows no degradation, so the cross-bucket number is task-confounded",
+  "k_augment": {
+   "cost": "1.559x encodes at fraction 0.2",
+   "implementation": "data/k_augment.py",
+   "note": "--k-augment-fraction defaults to 0 and neither config sets it, so the one lever aimed at this clause has never been applied to a run that counts",
+   "used_in_headline_runs": false
+  },
+  "le5_sources": "13 benchmarks (agnews, arc, race, hellaswag, swag, fever, ...)",
+  "matched_sweep_4b_ep10": {
+   "accuracy_by_k": {
+    "16": 0.9533,
+    "32": 0.9133,
+    "4": 0.9767,
+    "64": 0.8733,
+    "8": 0.97,
+    "80": 0.85
+   },
+   "artifact": "model/experiments/optcount_4b_ep10.json",
+   "drop_k4_to_k32_pp": 6.33,
+   "drop_k4_to_k80_pp": 12.67,
+   "items": 300,
+   "note": "K=80 is the unmodified item (changed 0/300); lower K removes distractors. The committed 0.6B sweep fell 0.677->0.217 over the same direction, so the collapse does not replicate at 4B/10 epochs.",
+   "seed": 42,
+   "source": "banking77"
+  },
+  "note": "gap widened from +4.6 pp on the 5-epoch weighted arm (#182) to +20.03 pp here",
+  "noul_2": 0.8619,
+  "noul_3_5": 0.6399,
+  "within_source": {
+   "synthetic_k4": {
+    "acc": 0.535,
+    "n": 185
+   },
+   "synthetic_k5": {
+    "acc": 0.558,
+    "n": 113
+   },
+   "typed_k4": {
+    "acc": 0.5,
+    "n": 96
+   },
+   "typed_k5": {
+    "acc": 0.609,
+    "n": 46
+   }
+  }
+ },
+ "draw": {
+  "items": 13444,
+  "note": "no per-type cap",
+  "seed": 123,
+  "split": "cluster-disjoint after #138"
+ },
+ "half_split_stability_epoch_8": {
+  "A": {
+   "head": 0.6253,
+   "n": 750,
+   "routed": 0.6973
+  },
+  "B": {
+   "head": 0.608,
+   "n": 750,
+   "routed": 0.676
+  }
+ },
+ "harness_overall_accuracy": {
+  "epoch_10": 0.6924,
+  "epoch_5": 0.6244,
+  "epoch_8": 0.6737
+ },
+ "jevbench": {
+  "epoch_10": {
+   "head": 0.506,
+   "native": 0.632
+  },
+  "epoch_8": {
+   "head": 0.515,
+   "native": 0.641
+  }
+ },
+ "overall_epoch_10": {
+  "by_type": {
+   "choice": {
+    "head": 0.6322,
+    "n": 6887,
+    "native": 0.6701
+   },
+   "noul": {
+    "head": 0.8362,
+    "n": 4724,
+    "native": 0.8362
+   },
+   "score": {
+    "head": 0.548,
+    "n": 1832,
+    "native": 0.548
+   }
+  },
+  "head": 0.6924,
+  "n": 13443,
+  "native": 0.7118,
+  "routed": 0.7301
+ },
+ "qwk_epoch_10": {
+  "by_level_count": {
+   "4": {
+    "n": 218,
+    "qwk": 0.631
+   },
+   "5": {
+    "n": 1113,
+    "qwk": 0.827
+   },
+   "6": {
+    "n": 500,
+    "qwk": 0.287
+   }
+  },
+  "by_source": {
+   "sst5": 0.832,
+   "stsb": 0.287,
+   "yelp": 0.88
+  },
+  "ex_stsb_mixture_approx": 0.8,
+  "label_marginals": {
+   "note": "stsb is the only source whose train and test marginals do not match (level 0 11% train vs 56% test); its 500 items are 27% of the score eval, so its 0.287 QWK measures the benchmark split rather than the model. Every other source matches to within two points.",
+   "sst5": {
+    "test": {
+     "0": 0.13,
+     "1": 0.28,
+     "2": 0.19,
+     "3": 0.24,
+     "4": 0.17
+    },
+    "train": {
+     "0": 0.13,
+     "1": 0.26,
+     "2": 0.19,
+     "3": 0.27,
+     "4": 0.15
+    }
+   },
+   "stsb": {
+    "test": {
+     "0": 0.56,
+     "1": 0.08,
+     "2": 0.09,
+     "3": 0.12,
+     "4": 0.1,
+     "5": 0.04
+    },
+    "train": {
+     "0": 0.11,
+     "1": 0.14,
+     "2": 0.16,
+     "3": 0.23,
+     "4": 0.25,
+     "5": 0.1
+    }
+   },
+   "typed_decisions": {
+    "test": {
+     "0": 0.15,
+     "1": 0.2,
+     "2": 0.32,
+     "3": 0.32,
+     "4": 0.01
+    },
+    "train": {
+     "0": 0.13,
+     "1": 0.26,
+     "2": 0.3,
+     "3": 0.3,
+     "4": 0.01
+    }
+   },
+   "yelp": {
+    "test": "uniform ~0.20",
+    "train": "uniform ~0.20"
+   }
+  },
+  "level0_aversion": {
+   "k4_gold_dist": {
+    "0": 29,
+    "1": 56,
+    "2": 81,
+    "3": 52
+   },
+   "k4_items": 218,
+   "k4_pred_dist": {
+    "0": 13,
+    "1": 79,
+    "2": 69,
+    "3": 57
+   },
+   "note": "the model under-predicts the bottom level and pushes those items to level 1; the top level is unbiased. Same shape as STS-B, whose eval is 53% level 0, and it explains both QWK failures while the mid-scale five-level group sits at 0.827. No temperature or monotone map changes an argmax.",
+   "typed_decisions_k4": {
+    "gold_level0": 27,
+    "pred_level0": 11
+   }
+  },
+  "mix": 0.6562,
+  "note": "STS-B alone is not the blocker: dropping it leaves ~0.80 against the 0.85 bar, so the 4-level group (our own typed_decisions + synthetic) is a second problem.",
+  "stsb_eval_mean_label": 1.23,
+  "stsb_train_mean_label": 2.7,
+  "top_gold_share": {
+   "sst5": 0.31,
+   "stsb": 0.53,
+   "synthetic": 0.31,
+   "typed_decisions": 0.37,
+   "yelp": 0.21
+  }
+ },
+ "readout_epoch_10": {
+  "choice": {
+   "by_option_count": {
+    "2": {
+     "head": 0.65,
+     "n": 1000,
+     "native": 0.683
+    },
+    "3-5": {
+     "head": 0.6117,
+     "n": 5387,
+     "native": 0.6996
+    },
+    ">20": {
+     "head": 0.818,
+     "n": 500,
+     "native": 0.326
+    }
+   },
+   "head": 0.6322,
+   "items": 6887,
+   "native": 0.6701,
+   "routed": 0.7058
+  }
+ },
+ "readout_epoch_8": {
+  "choice": {
+   "by_option_count": {
+    "2": {
+     "head": 0.6356,
+     "n": 225,
+     "native": 0.6622
+    },
+    "3-5": {
+     "head": 0.5952,
+     "n": 1166,
+     "native": 0.6801
+    },
+    ">20": {
+     "head": 0.8073,
+     "n": 109,
+     "native": 0.3119
+    }
+   },
+   "head": 0.6167,
+   "items": 1500,
+   "native": 0.6507,
+   "routed": 0.6867
+  }
+ },
+ "readout_split138_ep5_independent": {
+  "by_option_count": {
+   "2": {
+    "head": 0.613,
+    "native": 0.647
+   },
+   "3-5": {
+    "head": 0.5502,
+    "native": 0.7054
+   },
+   ">20": {
+    "head": 0.596,
+    "native": 0.32
+   }
+  },
+  "checkpoint": "arch_4b_32k_split138 epoch_005 (seed 42, 5 epochs)",
+  "choice": {
+   "head": 0.5627,
+   "native": 0.6689,
+   "routed": 0.689
+  },
+  "draw": "seed 123, 13,443 unique ids, same corpus",
+  "note": "the routing effect replicates on a different seed and half the schedule, with the same sign in every bucket, and is larger on the weaker checkpoint (+6.48 overall vs +3.77 at epoch 10). The clause-3 count gap on this checkpoint is 3.6 pp (0.560 vs 0.596), i.e. inside the band, because training lifts the long-list bucket 0.596 -> 0.818 by epoch 10 while the short-list bucket moves only 0.560 -> 0.618.",
+  "overall": {
+   "head": 0.649,
+   "native": 0.7035,
+   "routed": 0.7138
+  },
+  "routing_gain": {
+   "choice_pp": 12.63,
+   "overall_pp": 6.48
+  }
+ },
+ "run_to_run": {
+  "different_seed_same_flags_pp_epoch2": 0.2,
+  "interpretation": "the epoch-2 divergence between the same-seed pair was transient (0.08 pp by epoch 3), so neither \"seed noise 2.47 pp\" nor \"the flag dominates\" survives. A single training-loop epoch is not a measurement of run-to-run spread at this scale; use the full curve or harness numbers at a fixed epoch.",
+  "same_seed_different_flag_pp": {
+   "epoch2": 2.52,
+   "epoch3": 0.08
+  },
+  "seed_42_vs_123_epoch_5_pp": 2.47,
+  "three_runs_by_epoch": {
+   "s123_gc_default": {
+    "1": 0.5466,
+    "2": 0.5144,
+    "3": 0.5734
+   },
+   "s42_gc_default": {
+    "1": 0.544,
+    "2": 0.5124
+   },
+   "split138_s123_gc_off": {
+    "1": 0.5399,
+    "2": 0.5396,
+    "3": 0.5726
+   }
+  }
+ },
+ "seed_spread_pp": 2.47,
+ "sources": {
+  "preds_epoch_10": "rbh101 wt-jevbench model/experiments/preds_4b_32k_s123_ep10.jsonl",
+  "preds_epoch_10_native": "rbh101 wt-native model/experiments/preds_4b_32k_s123_ep10_native.jsonl",
+  "preds_epoch_8_sample": "1500/type seed 42 samples (preds_ep8.jsonl, preds_native.jsonl)"
+ }
+}
