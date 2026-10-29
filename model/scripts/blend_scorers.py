@@ -93,6 +93,7 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
 
     import data.pipeline as pipeline_mod
     import data.sources as sources_mod
+    from data.pipeline import render_jevbench_state
     from data.sources import load_source_items
     from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info
     from model.src.model_factory import build_decision_model
@@ -130,7 +131,7 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
     # represented.
     rng = random.Random(args.seed)
     choice_items: list[tuple[str, Any]] = []
-    for source_name, source_cfg in (cfg.get("sources") or {}).items():
+    for source_name, source_cfg in ({} if args.jevbench_only else (cfg.get("sources") or {})).items():
         _, eval_items = load_source_items(source_name, source_cfg or {}, rng)
         source_choice = [item for item in eval_items if item.question.get("type") == "choice"]
         sampled = (
@@ -162,6 +163,9 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
                 task = json.loads(line)
                 if task["question"].get("type") != "choice":
                     continue
+                # Same rendering the loader applies, so a structured hard-tier
+                # state reaches the model as text rather than as Python repr.
+                task["state"] = render_jevbench_state(task["state"])
                 choice_items.append((f"jevbench-{tier}", task))
     print(f"total choice items: {len(choice_items)}", flush=True)
 
@@ -257,7 +261,9 @@ def sweep(records: Sequence[dict[str, Any]], lams: Sequence[float]) -> dict[str,
     records = scored
     in_dist = [record for record in records if record["group"] == "in-distribution"]
     if not in_dist:
-        raise SystemExit("Error: no in-distribution records to fit the scale on")
+        # A JevBench-only run has no in-distribution items; the endpoints of the
+        # sweep are still the two scorers, which is what such a run reads.
+        in_dist = [record for record in records if record.get("native")]
     head_scale = spread([margin(record["head"]) for record in in_dist])
     native_scale = spread([margin(record["native"]) for record in in_dist])
     print(f"scales (in-distribution medians): head {head_scale:.4f}, native {native_scale:.4f}")
@@ -377,6 +383,11 @@ def main() -> int:
         type=int,
         default=0,
         help="Do not score items with at least this many options natively (0 = score all)",
+    )
+    parser.add_argument(
+        "--jevbench-only",
+        action="store_true",
+        help="Score only JevBench; the scale is then fitted on its own items, so read lam=0 and lam=1e9",
     )
     parser.add_argument("--jevbench-dir", type=Path, default=None)
     parser.add_argument("--max-length", type=int, default=None)
