@@ -38,14 +38,26 @@ The project has been reading 4B deltas against a 0.35 pp seed-noise floor. That 
 | measurement | value |
 |---|---:|
 | seed 42 vs seed 123, both at epoch 5, same draw | **2.47 pp** |
-| same seed twice (epoch-1 training-loop eval) | 0.67 pp |
+| same seed twice, epoch 1 | 0.67 pp |
+| same seed twice, epoch 2 | **2.52 pp** |
 | epoch 5 → 10, same seed | **+6.80 pp** |
 
-So the schedule gain is 2.75× the seed spread and is real for this seed; the 2.47 pp figure means
-**any 4B full-LoRA comparison under ~2.5 pp is unresolved**, including several read as findings
-earlier in the project. `research/10` already records 2.00 pp for a 0.6B full-LoRA replicate, so
-this extends a known effect rather than contradicting it — but two seeds at this schedule are
-still needed before 69.24 is a two-seed number, and the seed-42 run is in flight.
+Two of those rows appeared later than the first, and together they change what the top row means.
+The "same seed twice" pair is `arch_4b_loraAll_32k_s123` against `arch_4b_32k_split138_s123`:
+identical seed, corpus and schedule, differing only in `--no-gradient-checkpointing` and an explicit
+`--model`. They agree to 0.67 pp at epoch 1 and diverge to 2.52 pp by epoch 2 — so a run that
+differs only in an implementation flag moves as far as the seed comparison did.
+
+**The honest statement is therefore not "seed noise is 2.47 pp" but "run-to-run differences at 4B
+full LoRA are ~2.5 pp, and this project cannot currently attribute them to seed."** Splitting seed
+from implementation noise and bf16 nondeterminism needs a factorial this note does not have. The
+operational consequence is unchanged and is what matters: any 4B full-LoRA comparison under ~2.5 pp
+is unresolved, including several read as findings earlier in the project. `research/10` already
+records 2.00 pp for a 0.6B full-LoRA replicate, so this extends a known effect.
+
+The +6.80 pp schedule gain is 2.7× that spread and survives. But two seeds at the same schedule
+agreeing within 2.5 pp would not, on its own, distinguish them — so the two-seed run in flight
+answers "does 73% reproduce" and not "is 73% the right number".
 
 ## The readout
 
