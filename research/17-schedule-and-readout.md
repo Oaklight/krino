@@ -242,6 +242,31 @@ The honest report is therefore narrower than "the corpus cannot test clause 3": 
 numerically at +20.03 pp, that number compares banking77 against thirteen benchmarks, the only
 matched curve on record is from a weak checkpoint, and the augmentation that targets it is unused.
 
+### The matched curve on the 4B, and it is not the collapse the repo records
+
+`model/scripts/option_count_sweep.py` (new) holds 300 banking77 items fixed and varies only K,
+shrinking the option list below the natural 80 and padding above it. On the epoch-10 checkpoint:
+
+| K | 4 | 8 | 16 | 32 | 64 | 80 |
+|---|---:|---:|---:|---:|---:|---:|
+| accuracy | **0.9767** | 0.9700 | 0.9533 | 0.9133 | 0.8733 | 0.8500 |
+
+Two things follow, and the first overturns a claim the repository has been carrying. The 0.6B
+sweep falls 0.677 → 0.217 over the same direction; this model falls **0.977 → 0.850, 12.67 pp**.
+The "accuracy collapses as options are added" narrative in `data/k_augment.py`'s docstring is a
+description of that weaker checkpoint, not of the model this note is about, and the augmentation
+built on it is aimed at a smaller problem than it advertises.
+
+Second, the clause is **still not met on a matched test**: K=4 against K=80 is 12.67 pp against a
+5 pp band (K=4 against K=32, the closest reading of "≤5 vs >20", is 6.33 pp). But that is a
+different failure from the one the buckets suggest — two-thirds of the cross-bucket 20.03 pp was
+the task mix, and what remains is the honest cost of 76 extra distractors.
+
+The first version of this script reported `changed=0/300` at every K and would have "proved"
+perfect robustness, because `pad_choice_item` only pads and banking77 items already carry all 80
+intents. It now shrinks as well as pads, and prints the changed count per row so that failure
+cannot pass quietly again.
+
 ## Caveats
 
 * **One seed at 10 epochs.** The seed-42 run is in flight; until it lands, 69.24 / 73.01 are single
