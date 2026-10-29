@@ -56,6 +56,7 @@ from model.evaluation.calibration import (
     softmax,
     temperature_curve,
 )
+from model.evaluation.jevbench import prediction_rows
 from model.evaluation.jevbench import summarize as summarize_jevbench
 from model.src.reranker_prompt import score_options_native
 from model.evaluation.order_sensitivity import (
@@ -1156,6 +1157,22 @@ def _print_table(summary: dict[str, Any]) -> None:
         print(f"\nSkipped: {skipped}", flush=True)
 
 
+def _dump_jevbench_predictions(records: Sequence[dict[str, Any]], path: Path) -> None:
+    """Write the option each item was predicted to, next to the summary.
+
+    The rule lives in ``model.evaluation.jevbench.prediction_rows`` so it can be
+    tested without torch; this only writes what it returns.
+
+    Args:
+        records: The scored items.
+        path: Destination JSON file.
+    """
+    rows = prediction_rows(records)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"predictions": rows}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"Predictions saved to {path}", flush=True)
+
+
 def _run_jevbench(model: Any, args: argparse.Namespace) -> int:
     """Score JevBench's public items with the checkpoint this run loaded.
 
@@ -1184,6 +1201,8 @@ def _run_jevbench(model: Any, args: argparse.Namespace) -> int:
             print(f"  {index + 1}/{len(items)} items scored", flush=True)
 
     summary = summarize_jevbench(records, failed=failed)
+    if args.dump_predictions:
+        _dump_jevbench_predictions(records, args.dump_predictions)
     overall = summary["overall"]
     print("\n=== JevBench (public) ===", flush=True)
     print(f"{'tier':<10} {'n':>4} {'correct':>8} {'acc':>7}")
@@ -1325,6 +1344,13 @@ def main() -> int:
         type=int,
         default=None,
         help="Cap items for a faster run; applies to --jevbench",
+    )
+    parser.add_argument(
+        "--dump-predictions",
+        type=Path,
+        default=None,
+        help="Write the option each JevBench item was predicted to, so accuracy "
+        "can be told apart from a shared bias toward one key",
     )
     parser.add_argument(
         "--no-order-probes", action="store_true", help="Skip reordering probes"

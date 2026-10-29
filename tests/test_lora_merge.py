@@ -48,7 +48,10 @@ def test_merge_is_a_noop_without_an_adapter():
 
 def test_nested_layers_are_all_merged_and_the_parent_is_kept():
     torch.manual_seed(3)
-    block = torch.nn.Sequential(adapted_layer(1)[1], torch.nn.ReLU(), adapted_layer(2)[1])
+    # Chained layers have to agree on the axis between them: 8 -> 8 -> 4.
+    block = torch.nn.Sequential(
+        adapted_layer(1, 8, 8)[1], torch.nn.ReLU(), adapted_layer(2, 8, 4)[1]
+    )
     x = torch.randn(2, 8)
     before = block(x)
 
@@ -62,7 +65,8 @@ def test_a_zero_adapter_leaves_the_base_untouched():
     layer = LoRALinear(base, rank=2, alpha=2)  # lora_b initialised to zeros
     before = base.weight.detach().clone()
     merge_lora(torch.nn.Sequential(layer))
-    assert torch.allclose(before, layer.weight, atol=1e-6)
+    # The wrapper exposes no ``weight`` of its own; the frozen linear is ``base``.
+    assert torch.allclose(before, layer.base.weight, atol=1e-6)
 
 
 def test_merging_twice_does_not_apply_the_update_twice():
