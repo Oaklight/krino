@@ -80,3 +80,31 @@ class TestFitOptionPrompts:
         prompts, _ = fit(state, "q", ["a"], max_length=6)
         # The kept prefix starts at the beginning of the state, not the end.
         assert prompts[0].startswith("t0") or prompts[0].startswith("alpha")
+
+
+class TestNonStringInputs:
+    """A loader that did not render a structured state must not crash the head.
+
+    35 of JevBench's 111 hard items carry a dict state. #180 renders those in
+    the loader, but ``forward_choice`` still failed on the first eval that
+    reached it with a raw one, because the coercion happened nowhere.
+    """
+
+    def test_a_dict_state_produces_a_prompt_instead_of_raising(self):
+        state = {"policy": "refund within 30 days", "tier": "gold"}
+        prompts, dropped = fit(state, "does the policy apply?", ["yes", "no"], max_length=256)
+        assert dropped == 0
+        assert len(prompts) == 2
+        assert all("yes" in prompt or "no" in prompt for prompt in prompts)
+        assert all("refund within 30 days" in prompt for prompt in prompts)
+
+    def test_a_none_state_is_empty_rather_than_the_string_none(self):
+        prompts, _ = fit(None, "which?", ["a", "b"], max_length=64)
+        assert prompts == ["which? a", "which? b"]
+
+    def test_the_truncation_path_also_accepts_a_dict(self):
+        state = {"rows": [f"row{index}" for index in range(200)]}
+        prompts, dropped = fit(state, "which?", ["the correct option"], max_length=32)
+        assert dropped > 0
+        assert "the correct option" in prompts[0]
+        assert len(TOKENIZER.encode(prompts[0])) <= 32
