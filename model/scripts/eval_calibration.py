@@ -47,7 +47,7 @@ sys.path.insert(0, str(ROOT))
 import data.pipeline as pipeline_mod
 import data.sources as sources_mod
 from data.sources import load_source_items
-from model.evaluation.checkpoint_readout import infer_readout
+from model.evaluation.checkpoint_readout import infer_choice_mode, infer_readout
 from model.evaluation.choice_candidates import score_candidates
 from model.evaluation.calibration import (
     brier_score,
@@ -1276,6 +1276,14 @@ def main() -> int:
     parser.add_argument(
         "--readout", choices=["last", "mean_last_n", "weighted"], default=None
     )
+    parser.add_argument(
+        "--choice-mode",
+        choices=["tower", "cross_encoder"],
+        default=None,
+        help="Choice head shape. Left unset, it is read off the checkpoint's "
+        "tensors: a cross-encoder checkpoint carries choice_head.score.*, the "
+        "attention head carries choice_head.attention.*",
+    )
     parser.add_argument("--readout-n", type=int, default=None)
     parser.add_argument(
         "--lora-layers", type=int, default=None, help="-1 = all blocks, N = last N"
@@ -1440,21 +1448,37 @@ def main() -> int:
     shared_attention = _resolve(args.shared_attention, cfg, "shared_attention", False)
     unified_head = _resolve(args.unified_head, cfg, "unified_head", False)
     readout = _resolve(args.readout, cfg, "readout", "last")
-    if args.readout is None and args.load_heads is not None:
-        # The checkpoint is authoritative: it either carries the learned layer
-        # mixture or it does not. Trusting the config here would score a
-        # weighted checkpoint as `last` (dropping the mixture) whenever the
-        # config names a different readout than the arm was trained with.
-        inferred = infer_readout(
-            torch.load(args.load_heads, map_location="cpu", weights_only=True).keys()
-        )
-        if inferred and inferred != readout:
-            print(
-                f"readout inferred from the checkpoint: {inferred} "
-                f"(config/CLI said {readout})",
-                flush=True,
-            )
-            readout = inferred
+    choice_mode = _resolve(args.choice_mode, cfg, "choice_mode", "tower")
+    if args.load_heads is not None:
+        checkpoint_keys = torch.load(
+            args.load_heads, map_location="cpu", weights_only=True
+        ).keys()
+        if args.readout is None:
+            # The checkpoint is authoritative: it either carries the learned
+            # layer mixture or it does not. Trusting the config here would score
+            # a weighted checkpoint as `last` (dropping the mixture) whenever
+            # the config names a different readout than the arm trained with.
+            inferred = infer_readout(checkpoint_keys)
+            if inferred and inferred != readout:
+                print(
+                    f"readout inferred from the checkpoint: {inferred} "
+                    f"(config/CLI said {readout})",
+                    flush=True,
+                )
+                readout = inferred
+        if args.choice_mode is None:
+            # Same argument for the choice head: a cross-encoder checkpoint's
+            # linear read-out does not exist in the attention head, and
+            # load_heads is not strict, so a mismatch would score a head that
+            # never trained.
+            inferred_choice = infer_choice_mode(checkpoint_keys)
+            if inferred_choice and inferred_choice != choice_mode:
+                print(
+                    f"choice head inferred from the checkpoint: {inferred_choice} "
+                    f"(config/CLI said {choice_mode})",
+                    flush=True,
+                )
+                choice_mode = inferred_choice
     readout_n = _resolve(args.readout_n, cfg, "readout_n", 4)
     lora_layers = _resolve(args.lora_layers, cfg, "lora_layers", None)
     if lora_layers == 0:
@@ -1514,6 +1538,7 @@ def main() -> int:
         lora_alpha=lora_alpha,
         lora_dropout=lora_dropout,
         lora_targets=lora_targets,
+        choice_mode=choice_mode,
     )
     print(f"Loading heads from {args.load_heads}", flush=True)
     _warn_architecture_mismatch(model, args.load_heads)

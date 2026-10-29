@@ -34,3 +34,28 @@ def infer_readout(state_keys: Iterable[str]) -> str | None:
         if name.startswith("readout.") and "layer_logits" in name:
             return "weighted"
     return None
+
+
+def infer_choice_mode(state_keys: Iterable[str]) -> str | None:
+    """The choice head shape a checkpoint was trained with.
+
+    A cross-encoder checkpoint carries ``choice_head.norm.*`` and
+    ``choice_head.score.*``; the default attention head carries
+    ``choice_head.attention.*`` instead. Loading one through the other either
+    fails or, worse, leaves the real head at initialisation while reporting a
+    plausible number, so evaluation reads this from the tensors.
+
+    Args:
+        state_keys: The keys of the checkpoint's state dict.
+
+    Returns:
+        ``"cross_encoder"`` when the checkpoint has the linear read-out,
+        ``"tower"`` when it has the attention head, and ``None`` when it has
+        neither (a checkpoint that never trained a choice head).
+    """
+    keys = [str(key) for key in state_keys]
+    if any(name.startswith("choice_head.norm.") or name.startswith("choice_head.score.") for name in keys):
+        return "cross_encoder"
+    if any(name.startswith("choice_head.attention.") for name in keys):
+        return "tower"
+    return None
