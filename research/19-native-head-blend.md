@@ -140,6 +140,31 @@ Keep the head for long lists and blend on short lists, at `lam = 2.5`:
 It costs the native scorer's forward passes on short items — at most five per
 item, against one for the head — and nothing extra on long lists.
 
+## Three better fusion rules, all worse
+
+`lam = 2.5` leaves the short-list bucket at 0.7341 where clause 3's 5 pp band
+needs 0.768. Fusion is cheap to vary, so three alternatives were measured on the
+same 6,387 short-list items before concluding anything about training:
+
+| rule | ≤5 accuracy |
+|---|---|
+| linear blend, `lam = 2.5` | **0.7341** |
+| a separate weight for 2-option and 3-5-option items | ≤ 0.735 at every pair tried (`lam` 1-4 each) |
+| rank fusion (average the two rank vectors) | 0.6970 at best |
+| margin gate (native alone when its margin is in the top 20%) | 0.7341 |
+
+None beats the single linear weight. Rank fusion is worse by 3.7 pp because it
+throws away the sizes of the margins, which is exactly the information the two
+scorers disagree about. The gate does nothing because the native margin is
+already monotone in what the blend uses.
+
+**The linear blend is at the ceiling of what post-hoc combination of these two
+scores can do.** Closing clause 3's gap needs the short-list bucket 3.4 pp
+higher, and nothing that only reweights the two existing scores gets there. Test-
+time augmentation over option order is also excluded in advance rather than by
+experiment: clause 3's flip rate is 0/1,500, so the head has no order sensitivity
+for augmentation to average away.
+
 ## Caveats
 
 - **`lam` is chosen on the eval split.** That is why the cross-fit paragraph
