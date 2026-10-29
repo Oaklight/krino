@@ -230,6 +230,24 @@ The audit is `scripts/check_jevbench_leakage.py` (20 torch-free tests,
 `model/experiments/jevbench_leakage.json`, so the claim can be re-run rather
 than taken on trust.
 
+## Structured states were reaching the model as Python reprs
+
+The 111 hard items are not all plain text. **35 carry a structured `state`** —
+an agent policy plus a conversation, a service table, a set of contact records —
+and the loader passed that object through unchanged. Both scorers build their
+prompt with an f-string, so those items were scored on `str(dict)`: single-quoted
+keys, escaped unicode, one line, no structure. `render_jevbench_state` in
+`data/pipeline.py` now serialises a dict or list as indented JSON with the
+author's key order and unescaped unicode, and strings pass through untouched.
+
+Measured, it is a small fix. Of the 35 structured items, 18 are choice; rendering
+them changes **1 of 18** argmaxes and leaves the hard-tier choice accuracy
+unchanged at 7/18. The other 17 are noul and score.
+
+So this is a correctness fix — the evaluation should score the item as authored,
+not as a Python literal — and **not an explanation of Finding 3**. The hard tier
+is at chance for some other reason, and the repr rendering was not it.
+
 ## Caveats
 
 * **The raw comparison is a product comparison, not an attribution.** It

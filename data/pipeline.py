@@ -1398,6 +1398,35 @@ def _download_text(url: str, cache_path: Path) -> Path:
     return cache_path
 
 
+def render_jevbench_state(state: Any) -> str:
+    """Render a JevBench ``state`` as the text a model should read.
+
+    Most public items carry a plain string, but 35 of the 111 hard-tier items
+    carry a structured state: an agent policy, a conversation, contact records,
+    a service table. Those are the items whose point is that the answer needs
+    several parts of the state at once.
+
+    Passing the object straight through is not harmless. Both scorers build
+    their prompt with an f-string, so a dict arrives at the model as Python's
+    ``repr`` -- single-quoted keys, escaped unicode, one line, no structure --
+    and the item is scored on a rendering nobody authored. Rendering it as
+    indented JSON keeps the keys, the nesting and the order the author wrote,
+    and it is the same text for every scorer because this is the loader.
+
+    Args:
+        state: The raw ``state`` field.
+
+    Returns:
+        The string to feed the model. Non-dict values are str()-ed, and a
+        string is returned unchanged.
+    """
+    if isinstance(state, str):
+        return state
+    if isinstance(state, (dict, list)):
+        return json.dumps(state, indent=2, ensure_ascii=False)
+    return str(state)
+
+
 def load_jevbench() -> Iterator[TypedQuestion]:
     """Load JevBench public data (easy/hard/original tiers) as TypedQuestion items."""
     cache_dir = DATA_DIR / "jevbench"
@@ -1427,7 +1456,7 @@ def load_jevbench() -> Iterator[TypedQuestion]:
 
                 yield TypedQuestion(
                     id=task["id"],
-                    state=task["state"],
+                    state=render_jevbench_state(task["state"]),
                     question=q,
                     label=label,
                     source="jevbench",
