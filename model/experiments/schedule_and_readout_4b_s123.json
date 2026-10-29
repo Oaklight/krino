@@ -14,6 +14,16 @@
    "map_cv": 0.0289
   }
  },
+ "clause2_brier": {
+  "clause_as_written": "Brier >= 0.85 is satisfied by a worse-than-uniform model and failed by a perfect one",
+  "direction": "lower is better; 0 perfect; uniform scores (k-1)/k (0.75 at k=4, 0.83 at k=6)",
+  "measured_score_brier": 0.6446,
+  "readings": {
+   "1_minus_brier": 0.355,
+   "brier_skill_vs_uniform": 0.19
+  },
+  "status": "definitional defect; needs a decision (skill score, inverted Brier, or a slip alongside the QWK bar)"
+ },
  "clause3_option_count_epoch_10": {
   "choice_gt20": {
    "accuracy": 0.818,
