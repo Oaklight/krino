@@ -349,14 +349,28 @@
   }
  },
  "run_to_run": {
-  "interpretation": "at epoch 2 two different seeds agree to 0.20 pp while two runs of the same seed with different gradient-checkpointing settings differ by 2.52 pp. One pair per cell and two epochs is a hint, not a factorial, but run-to-run variation at 4B full LoRA is not usefully described as seed noise, and comparisons must match the checkpointing flag.",
+  "different_seed_same_flags_pp_epoch2": 0.2,
+  "interpretation": "the epoch-2 divergence between the same-seed pair was transient (0.08 pp by epoch 3), so neither \"seed noise 2.47 pp\" nor \"the flag dominates\" survives. A single training-loop epoch is not a measurement of run-to-run spread at this scale; use the full curve or harness numbers at a fixed epoch.",
+  "same_seed_different_flag_pp": {
+   "epoch2": 2.52,
+   "epoch3": 0.08
+  },
   "seed_42_vs_123_epoch_5_pp": 2.47,
-  "two_by_two_epoch2": {
-   "different_seed_same_flags_pp": 0.2,
-   "s123_gc_default": 0.5144,
-   "s42_gc_default": 0.5124,
-   "same_seed_different_flag_pp": 2.52,
-   "split138_s123_gc_off": 0.5396
+  "three_runs_by_epoch": {
+   "s123_gc_default": {
+    "1": 0.5466,
+    "2": 0.5144,
+    "3": 0.5734
+   },
+   "s42_gc_default": {
+    "1": 0.544,
+    "2": 0.5124
+   },
+   "split138_s123_gc_off": {
+    "1": 0.5399,
+    "2": 0.5396,
+    "3": 0.5726
+   }
   }
  },
  "seed_spread_pp": 2.47,
