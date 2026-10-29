@@ -76,6 +76,38 @@ def _score(model: Any, item: Any, option_texts: list[str], keys: list[str]) -> b
     return keys[best] == item.label
 
 
+def _shrink_item(item: Any, target_k: int, rng: random.Random) -> Any:
+    """Return a copy of a choice item keeping the gold and ``target_k - 1`` others.
+
+    Padding alone cannot vary K downward, and a source whose items already carry
+    its full option inventory (banking77 has 80 intents on every item) is
+    unchanged by every ``target_k <= 80``. Without this, a sweep reports the same
+    item at every K and looks like perfect option-count robustness.
+    """
+    criteria = item.question.get("criteria")
+    if not isinstance(criteria, dict) or item.label not in criteria:
+        return item
+    if len(criteria) <= target_k:
+        return item
+    others = [key for key in criteria if key != item.label]
+    rng.shuffle(others)
+    kept = [item.label] + others[: target_k - 1]
+    # Keep the source order so the item reads the way its author wrote it.
+    kept_set = set(kept)
+    new_criteria = {key: value for key, value in criteria.items() if key in kept_set}
+    new_question = dict(item.question)
+    new_question["criteria"] = new_criteria
+    from dataclasses import replace as _replace
+
+    return _replace(item, question=new_question)
+
+
+def _at_k(item: Any, target_k: int, pool: dict[str, list[str]], rng: random.Random) -> Any:
+    """The item rendered with exactly ``target_k`` options where the corpus allows."""
+    shrunk = _shrink_item(item, target_k, rng)
+    return pad_choice_item(shrunk, target_k, pool, rng)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
@@ -174,11 +206,11 @@ def main() -> int:
     started = time.perf_counter()
     for k in ks:
         correct = 0
-        padded = 0
+        changed = 0
         for item in choice_items:
-            probe = pad_choice_item(item, k, pool, random.Random(f"{args.seed}:{k}:{item.id}"))
-            if probe is not item:
-                padded += 1
+            probe = _at_k(item, k, pool, random.Random(f"{args.seed}:{k}:{item.id}"))
+            if probe is not item or len(probe.question["criteria"]) != len(item.question["criteria"]):
+                changed += 1
             criteria = probe.question["criteria"]
             keys = list(criteria.keys())
             texts = [value or key for key, value in criteria.items()]
@@ -189,10 +221,11 @@ def main() -> int:
             "n": n,
             "correct": correct,
             "accuracy": correct / n if n else 0.0,
-            "padded": padded,
+            "changed": changed,
+            "mean_options": sum(len(item.question["criteria"]) for item in choice_items) / n if n else 0.0,
             "chance": 1.0 / k,
         }
-        print(f"  K={k:<4d} acc={by_k[str(k)]['accuracy']:.4f} padded={padded}/{n}", flush=True)
+        print(f"  K={k:<4d} acc={by_k[str(k)]['accuracy']:.4f} changed={changed}/{n}", flush=True)
 
     elapsed = time.perf_counter() - started
     print(f"\nelapsed {elapsed:.1f}s", flush=True)
