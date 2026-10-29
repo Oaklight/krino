@@ -166,6 +166,63 @@
    "yelp": 0.88
   },
   "ex_stsb_mixture_approx": 0.8,
+  "label_marginals": {
+   "note": "stsb is the only source whose train and test marginals do not match (level 0 11% train vs 56% test); its 500 items are 27% of the score eval, so its 0.287 QWK measures the benchmark split rather than the model. Every other source matches to within two points.",
+   "sst5": {
+    "test": {
+     "0": 0.13,
+     "1": 0.28,
+     "2": 0.19,
+     "3": 0.24,
+     "4": 0.17
+    },
+    "train": {
+     "0": 0.13,
+     "1": 0.26,
+     "2": 0.19,
+     "3": 0.27,
+     "4": 0.15
+    }
+   },
+   "stsb": {
+    "test": {
+     "0": 0.56,
+     "1": 0.08,
+     "2": 0.09,
+     "3": 0.12,
+     "4": 0.1,
+     "5": 0.04
+    },
+    "train": {
+     "0": 0.11,
+     "1": 0.14,
+     "2": 0.16,
+     "3": 0.23,
+     "4": 0.25,
+     "5": 0.1
+    }
+   },
+   "typed_decisions": {
+    "test": {
+     "0": 0.15,
+     "1": 0.2,
+     "2": 0.32,
+     "3": 0.32,
+     "4": 0.01
+    },
+    "train": {
+     "0": 0.13,
+     "1": 0.26,
+     "2": 0.3,
+     "3": 0.3,
+     "4": 0.01
+    }
+   },
+   "yelp": {
+    "test": "uniform ~0.20",
+    "train": "uniform ~0.20"
+   }
+  },
   "level0_aversion": {
    "k4_gold_dist": {
     "0": 29,
