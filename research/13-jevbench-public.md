@@ -277,6 +277,72 @@ head and the native readout. Whatever limits this benchmark at 4B is in the
 model's ability to reason over a long composite state, not in how we render the
 prompt. That is worth knowing before anyone spends a training run on it.
 
+## The reference numbers measure something other than accuracy
+
+The goal quotes "teacher 84.9, best open student 74.1" as JevBench references, and
+this note has been comparing our accuracy against them. That comparison is
+wrong, and the published board says why.
+
+The live board (Benchmark Heaven, `benchmarkheaven.com/jev-models`, artifact
+`results/v1.2/jevbench-v1.2-results.json`) scores a **composite of four axes** —
+Intelligence, Calibration, Speed and Cost at 25% each, geometric mean — not an
+accuracy. In that artifact:
+
+| row | JevBench Score | Intelligence | hard-tier accuracy (220 items) |
+|---|---|---|---|
+| **Jev 1.13.0** | **74.40** | **85.69** | 0.7409 |
+| SemIf (Qwen3.5-4B) | 73.09 | 78.96 | 0.5954 |
+| djev | 73.03 | 82.67 | 0.6954 |
+| openjev-thinking | 59.99 | 87.97 | 0.7818 |
+| **Qwen3-Reranker-4B** | 63.83 | 63.98 | 0.5000 |
+
+So **84.9 is Jev's Intelligence axis and 74.1-74.4 is Jev's composite score**, not
+a second system's accuracy. Our 0.6475 is a *choice accuracy on 139 public
+items*; quoting it against 74.1 compares two different quantities, and in the
+direction that makes the gap look smaller than it is on accuracy and larger than
+it is on the composite.
+
+### The item-matched comparison
+
+The artifact also publishes `public_tasks`: a per-item outcome code for every
+system on the 111 public hard items we score. That makes an exact comparison
+possible, on identical items:
+
+| system | public hard, all 111 | public hard, the 67 choice |
+|---|---|---|
+| openjev-thinking | 0.766 | **0.791** |
+| djev-thinking | 0.766 | 0.687 |
+| Jev 1.13.0 | 0.730 | 0.761 |
+| simplejev-qwen3.8-27b | 0.739 | 0.761 |
+| openjev-sglang | 0.730 | 0.746 |
+| djev | 0.676 | 0.672 |
+| SemIf (Qwen3.5-4B) | 0.613 | 0.597 |
+| open-alternative-jev | 0.568 | 0.552 |
+| **Qwen3-Reranker-4B, our own backbone, untrained** | 0.495 | **0.507** |
+| **our 4B, seed 42 ep5** (native / blend) | — | 0.493 / 0.478 |
+| **our 4B, seed 123 ep10** (native / blend) | — | 0.373 / 0.403 |
+
+Two things follow, and neither is comfortable.
+
+**The gap is real and it is on accuracy, not units.** Jev's hard-choice accuracy
+is 0.761 against our 0.373-0.493 — 27 to 39 points — and the best open rebuild
+reaches 0.791. Nothing in the composite-versus-accuracy confusion rescues that.
+
+**On our own backbone we are at or below the published row.** The board carries an
+official `qwen3-reranker-4b` row — our exact base weights, scored through "one
+neutral, preregistered option-ranking adapter" with temperature and yes/no
+threshold grids fitted on public items — at 0.507 on the same 67 choice items. Our
+fine-tuned checkpoint's native readout reaches 0.493 on one seed and 0.373 on the
+other. **Fine-tuning has not improved our hard-tier choice scoring above the
+untrained public row, and on one seed it is 13 points below it.**
+
+That last comparison has a caveat that cuts both ways: their adapter's prompt and
+threshold fitting differ from ours, so part of the difference is protocol rather
+than weights. That is exactly why it is worth acting on — the board documents a
+preregistered adapter that scores the same weights material better than our
+prompt does on one of our two seeds. Adopting its design is the most concrete
+lead this note has produced for clause 4.
+
 ## Caveats
 
 * **The raw comparison is a product comparison, not an attribution.** It
