@@ -2,13 +2,17 @@
 
 The choice head encodes each option independently, pools, and takes a softmax
 over K logits.  That is well defined for any K, but the training data only ever
-supplies K in 2..80, with 92.7% of evaluation *choice* items at K <= 5.
-Accuracy therefore collapses as options are added: on a fixed 300-item banking77
-sweep the pooled-attention baseline falls from 0.677 at K=4 to 0.217 at K=256,
-where the goal asks for a 5 pp difference between the <=5-option and >20-option
-regimes.  Both measurements are committed: the sweep is
-``model/experiments/optcount_pooled.json`` and the augmentation cost is
-``model/experiments/k_augment_cost.json``.
+supplies K in 2..80, with 92.7% of evaluation *choice* items at K <= 5.  Accuracy
+degrades as options are added, and the size of that degradation depends on the
+checkpoint: on a fixed 300-item banking77 sweep the 0.6B 5-epoch
+pooled-attention baseline falls from 0.677 at K=4 to 0.217 at K=256, while the
+4B 10-epoch model falls only from 0.977 to 0.850 between K=4 and K=80 — 12.67 pp,
+against a goal that asks for 5 pp between the <=5-option and >20-option regimes.
+All three measurements are committed: ``model/experiments/optcount_pooled.json``
+(0.6B), ``model/experiments/optcount_4b_ep10.json`` (4B) and
+``model/experiments/k_augment_cost.json``.  The 0.6B curve is not a description of
+the 4B model, so this module is aimed at the smaller residual gap, not the
+collapse.
 
 This module widens the option count at training time.  A fraction of choice
 items get their option list padded up to a target K drawn log-uniformly from a
