@@ -1,14 +1,17 @@
 """Option-count augmentation must widen choice items without touching their labels.
 
-The failure it addresses is measured, not hypothetical: the pooled-attention
-baseline drops from 0.677 accuracy at 4 options to 0.217 at 256 on the same
-300 banking77 items (model/experiments/optcount_pooled.json), because training
-never presents more than 80 options.  These tests pin the invariants that make
-padding safe: the gold key survives, no option text (including a case or
-whitespace variant) is duplicated, distractors come only from the supplied
-items, keys cannot collide, non-choice items pass through untouched, the same
-(seed, epoch) reproduces the same widths, and the teacher-distribution switch is
-matched between the augmented and control arms.
+The effect it addresses is measured, not hypothetical, but it is smaller on the
+current model than the original sweep suggested: the 0.6B 5-epoch baseline drops
+from 0.677 at 4 options to 0.217 at 256 (model/experiments/optcount_pooled.json),
+while the 4B 10-epoch model falls from 0.977 at K=4 to 0.850 at K=80
+(model/experiments/optcount_4b_ep10.json) — 12.67 pp against a 5 pp goal.
+
+The tests pin the invariants that make padding and shrinking safe: the gold key
+survives, no option text (including a case or whitespace variant) is duplicated,
+distractors come only from the supplied items, keys cannot collide, non-choice
+items pass through untouched, the same (seed, epoch) reproduces the same widths,
+shrinking keeps the source order and is reproducible per seed, and the
+teacher-distribution switch is matched between the augmented and control arms.
 
 The tests are torch-free on purpose: CI installs neither torch nor transformers,
 so a guard that skips on a missing torch would make the whole file pass without
