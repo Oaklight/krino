@@ -160,6 +160,21 @@ target. The 4-level group is our own data (typed_decisions and synthetic), where
 label-quality question rather than a shift, and it is the second thing to look at. I said earlier
 that STS-B was "the sole calibration blocker"; that was too strong and this table is the correction.
 
+The 4-level failure has a specific shape, and it is the same shape as STS-B's. On the 218
+four-level items the gold is spread (level 0: 29, 1: 56, 2: 81, 3: 52) but the predictions are not:
+the model predicts level 0 only **13 times against 29 golds**, pushing the rest up into level 1,
+which it over-predicts 79 times against 56. The top level is fine (57 predicted, 52 gold). So the
+error is not noise in the middle of the scale — it is an **aversion to the bottom level**, and it
+appears in both typed_decisions (11 predicted against 27 gold at level 0) and, more weakly, in
+synthetic.
+
+That single behaviour explains both QWK failures: STS-B's eval split is 53% level 0 and the
+four-level group's lowest level is under-called, while the five-level groups, whose gold is
+mid-scale, are at 0.827. A model that will not emit the lowest level cannot score well on any
+scale whose lowest level is common. It is a plausible downstream consequence of an imbalanced
+vote: if the lowest level is rare in training relative to the middle, an argmax over a shared
+scale vocabulary will drift upward, and no temperature or map changes an argmax.
+
 ## Goal status
 
 | clause | state |

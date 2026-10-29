@@ -166,6 +166,26 @@
    "yelp": 0.88
   },
   "ex_stsb_mixture_approx": 0.8,
+  "level0_aversion": {
+   "k4_gold_dist": {
+    "0": 29,
+    "1": 56,
+    "2": 81,
+    "3": 52
+   },
+   "k4_items": 218,
+   "k4_pred_dist": {
+    "0": 13,
+    "1": 79,
+    "2": 69,
+    "3": 57
+   },
+   "note": "the model under-predicts the bottom level and pushes those items to level 1; the top level is unbiased. Same shape as STS-B, whose eval is 53% level 0, and it explains both QWK failures while the mid-scale five-level group sits at 0.827. No temperature or monotone map changes an argmax.",
+   "typed_decisions_k4": {
+    "gold_level0": 27,
+    "pred_level0": 11
+   }
+  },
   "mix": 0.6562,
   "note": "STS-B alone is not the blocker: dropping it leaves ~0.80 against the 0.85 bar, so the 4-level group (our own typed_decisions + synthetic) is a second problem.",
   "stsb_eval_mean_label": 1.23,
