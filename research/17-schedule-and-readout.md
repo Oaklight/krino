@@ -212,6 +212,30 @@ scale whose lowest level is common. It is a plausible downstream consequence of 
 vote: if the lowest level is rare in training relative to the middle, an argmax over a shared
 scale vocabulary will drift upward, and no temperature or map changes an argmax.
 
+## Clause 2's Brier criterion cannot be met by a good model
+
+Goal item 2 asks for "Brier and QWK >= 0.85 on the score primitive". QWK is a chance-corrected
+agreement statistic where 1 is perfect and 0.85 is a demanding bar, so the inequality makes sense
+for it. **Brier runs the other way**: it is a mean squared error over the option vector, 0 is
+perfect, and the uniform distribution over k options scores (k-1)/k — 0.75 at four levels, 0.83 at
+six. A criterion of "Brier >= 0.85" is therefore satisfied by a model that is *worse than uniform*,
+and is failed by a perfect one.
+
+The measured value on this checkpoint is **0.6446**, against 0.75-0.83 for uniform on the same
+items: better than uniform, far from perfect. Under the two readings that would make the clause
+coherent, it fails both:
+
+| reading | value | bar |
+|---|---:|---:|
+| 1 - Brier | 0.355 | >= 0.85 |
+| Brier skill score against the uniform baseline (~0.80) | ~0.19 | >= 0.85 |
+
+I am not claiming a pass on a literal reading, and I am not claiming a fail on a criterion that no
+correct model can satisfy. **This is a defect in the definition of done that needs a decision** —
+whether "Brier" meant a skill score, an inverted Brier (1 - Brier), or was a slip alongside a QWK
+bar. Until it is resolved, the honest report is the number: score Brier 0.6446, lower is better,
+better than uniform and short of any demanding skill threshold.
+
 ## Goal status
 
 | clause | state |
