@@ -241,3 +241,11 @@ python model/scripts/train_multitask.py \
 `--lora-layers -1` means all blocks, `N` means the last N blocks, `0`/absent
 means frozen. `--readout weighted` is the learned layer mixture; `mean_last_n`
 with `--readout-n 4` is the `mean4` row.
+
+**The default readout has since changed to `weighted`.** Every arm in this note
+was trained when `last` was the default, so reproducing a `last` row now needs an
+explicit `--readout last`; the `weighted`, `mean4` and frozen rows are unaffected
+because they always passed the flag or the config value. The change is in
+`model/training/readout_guard.py`, whose docstring records the two collapses
+behind it — the 8B one reported in this note, and a 0.6B ten-epoch run
+(`model/experiments/arch_06b_loraAll_last_10ep_s123_epochs.json`).
