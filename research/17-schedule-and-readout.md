@@ -3,7 +3,8 @@
 Two levers were tested against the goal today and they turn out to be disjoint. Training past the
 project's 5-epoch convention raises in-distribution accuracy by 6.8 pp and leaves JevBench exactly
 where it was. Scoring choice with the backbone's own readout instead of the trained head buys
-12.6 pp on JevBench and 5.9 pp in-distribution. Nothing trades one for the other.
+12.6 pp on JevBench and 3.8 pp on in-distribution choice (+1.9 pp overall). Nothing trades one for
+the other.
 
 Together they reach **73.01% on the 13,444-item held-out cluster-split eval** — 69.24% from the
 trained heads alone, and +3.77 pp from routing short option lists to the backbone's readout. That
@@ -23,10 +24,13 @@ All numbers below are on the cluster-disjoint split after #138, one fixed draw (
 
 The in-training curve is monotone from epoch 3 (0.5734 → 0.6055 → 0.6212 → 0.6385 → 0.6580 →
 0.6700 → 0.6862 → 0.6909) and the harness reproduces it within 0.4 pp at every checkpoint it was
-run on. **69.24% clears goal item 1's 65% bar by 4.2 pp and beats the previous best (62.85, 8B
-full LoRA + weighted) by 6.4 pp, at 4B** — and that comparison is conservative: 62.85 comes from
-the pre-#138 corpus, which `research/10` records as slightly leaky, so the gap is if anything
-understated.
+run on. **69.24% clears goal item 1's 65% bar by 4.2 pp and beats the previous best by 4.35 pp** —
+64.89, the 4B full-LoRA `weighted` arm of the round-2 sweep (`#150`, merged as `ef557d2`), not the
+62.85 8B number an earlier revision of this note quoted. Both come from the pre-#138 corpus, so the
+gap is if anything understated, but the comparison is no longer a scale result: the previous best
+was also 4B, so what this establishes is a schedule and readout effect at one scale. Against the
+lower and more leaky of the two candidates the gain would look like 6.4 pp; picking that one makes
+the gap look larger, not smaller, which is the opposite of conservative.
 
 Every type improves across the last two epochs, so this is not one head carrying the total.
 
@@ -108,8 +112,12 @@ a point, so the rule is stable rather than a fork of the data. The threshold its
 parameter on this corpus: there are **no choice items between 6 and 20 options**, so "route at 5"
 and "route at 20" are the same rule, and nothing depends on where inside the gap it is placed.
 
-On the full eval set the native readout alone scores **0.7038 against the head's 0.6737** (+3.01
-pp overall, +5.88 pp on choice) at epoch 8, with `noul` and `score` identical by construction.
+On the full eval set the native readout alone scores **0.7118 overall against the head's 0.6924**
+(+1.94 pp overall, +3.79 pp on choice — `overall_epoch_10`, the only full-eval readout comparison
+that is in the artifact), with `noul` and `score` identical by construction. The epoch-8 figure an
+earlier revision quoted for the choice gain (+5.88 pp) came from a pass whose full-eval dump was
+not committed; the 1,500-item sample at that epoch is `readout_epoch_8.choice` (head 0.6167 against
+native 0.6507), and this note now quotes the epoch-10 pair, which reproduces from the tree.
 At epoch 10 the same comparison, on both dumps' own items:
 
 | epoch 10, 13,444 items | choice | overall |
@@ -119,7 +127,10 @@ At epoch 10 the same comparison, on both dumps' own items:
 | **routed by option count** | **0.7058** | **0.7301** |
 
 So routing is worth **+7.36 pp on choice and +3.77 pp overall**, and **73.01% is the best number
-this project has produced** — 8.0 pp over goal item 1's bar. It costs nothing in ECE: the choice
+this project has produced** — 8.0 pp over goal item 1's bar, on **one seed, one draw, against a
+2.47 pp seed spread**. The routing gain is measured within a single checkpoint, so it is less
+exposed to that spread than the absolute number is; every later quotation of 73.01 in this project
+should carry the same sentence. It costs nothing in ECE: the choice
 ECE on the native path is 0.2050 before a fitted temperature, and the fitted temperature brings it
 under 0.05 as it does for the head path.
 
