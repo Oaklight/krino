@@ -196,16 +196,19 @@ applied, same loader for every row:
 | 4B tower, epoch 10 (s123) | 0.792 | 0.405 | 0.486 | 0.511 |
 | 0.6B cross-encoder, epoch 1 | **1.000** | 0.396 | **0.611** | **0.589** |
 | **4B cross-encoder, epoch 1** | **1.000** | **0.405** | **0.722** | **0.628** |
-| **4B cross-encoder, epoch 3** | **1.000** | **0.441** | 0.681 | **0.632** |
-| **4B cross-encoder, epoch 4** | **1.000** | **0.450** | 0.597 | 0.610 |
+| **4B cross-encoder, epoch 3** | **1.000** | 0.441 | 0.681 | **0.632** |
+| **4B cross-encoder, epoch 4** | **1.000** | 0.450 | 0.597 | 0.610 |
+| **4B cross-encoder, epoch 5** | 0.979 | **0.450** | 0.625 | 0.615 |
 
-The in-distribution eval and the board do not move together: between epochs 3 and
-4 the 13,444-item eval gained 1.7 points (0.7291 → 0.7462) while the board lost
-2.2 (0.632 → 0.610), almost all of it on the `original` tier (0.681 → 0.597, six
-items). Neither of those board moves is resolvable at 72 to 231 items, so the
-honest reading is that the board is *not tracking* in-distribution gains rather
-than that it is actively degrading — which is itself the useful fact, because it
-means more training on this mixture is not a route to the authored tiers.
+The in-distribution eval and the board do not move together. Across the arm's
+whole run the 13,444-item eval climbs 4 points (0.7231 at epoch 1 → 0.7626 at
+epoch 5) while the board goes the other way, 0.628 → 0.615, and the easy tier —
+1.000 at four consecutive checkpoints — drops to 0.979 at the last one. The board
+never moves more than 2 points in either direction. That is the shape of a mixture
+that saturates on the benchmarks it contains without reaching the authored tiers,
+and it means more epochs on this corpus are not a route to clause 4. None of the
+individual board moves is resolvable at 72–231 items, so the claim is that the
+board is *not tracking*, not that it is degrading.
 
 **Correction, twice.** The first version of this note said the change moves the
 hard tier "by exactly nothing" — 0.405 at 4B before the change and 0.405 after it,
@@ -219,16 +222,18 @@ with `model/scripts/paired_mcnemar.py`:
 |---|---:|---:|---:|
 | tower ep10 vs cross-encoder ep3 | 0.405 vs 0.441 | 16 / 20 | 0.62 |
 | tower ep10 vs cross-encoder ep4 | 0.405 vs 0.450 | 16 / 21 | 0.51 |
+| tower ep10 vs cross-encoder ep5 | 0.405 vs 0.450 | 16 / 21 | 0.51 |
 | cross-encoder ep3 vs ep4 | 0.441 vs 0.450 | 9 / 10 | 1.00 |
+| cross-encoder ep3 vs ep5 | 0.441 vs 0.450 | 11 / 12 | 1.00 |
 
-**Every comparison on this tier is indistinguishable from a coin flip.** The four
-models differ on 35 to 37 of 111 items and split those differences roughly evenly,
-which is what two models of similar quality look like on a set this size. So the
-honest statement is not that the tier is invariant and not that it moves: it is
-that **this tier cannot resolve a difference below about ten points**, and every
-hard-tier claim in this note and in `research/13` should be read as a point
-estimate with that width. Closing clause 4 needs a larger held-out set before any
-model change can be told apart from noise.
+**Every comparison on this tier is indistinguishable from a coin flip**, including
+the arm's own first-to-last epoch. The models differ on 35 to 37 of 111 items and
+split those differences roughly evenly, which is what two models of similar
+quality look like on a set this size. So the honest statement is not that the tier
+is invariant and not that it moves: it is that **this tier cannot resolve a
+difference below about ten points**, and every hard-tier claim in this note and in
+`research/13` should be read as a point estimate with that width. Closing clause 4
+needs a larger held-out set before any model change can be told apart from noise.
 
 The leakage audit (`scripts/check_jevbench_leakage.py`) finds **0 exact
 duplicates, 0 state repeats and 0 near-duplicates above 0.5 shingle containment
@@ -284,23 +289,25 @@ The 4B arm's first three epochs, both seeds:
 | s123, epoch 1 | 0.7231 | 0.721 | 0.822 | 0.477 | 0.727 |
 | s123, epoch 2 | **0.3761** | 0.292 | 0.555 | 0.229 | **1.362** |
 | s123, epoch 3 | **0.7291** | **0.737** | 0.825 | 0.452 | 0.745 |
+| s123, epoch 4 | 0.7462 | — | — | — | 0.659 |
+| **s123, epoch 5** | **0.7626** | — | — | — | 0.590 |
 | s42, epoch 1 | 0.7190 | — | — | — | 0.752 |
 | s42, epoch 2 | 0.7174 | — | — | — | 0.741 |
 | **s42, epoch 3** | **0.7287** | — | — | — | 0.687 |
 
-**The second seed does not dip** — s42 moves 0.7190 → 0.7174 across the epoch where
-s123 lost 35 points, then climbs to 0.7287. So the epoch-2 collapse is a property
-of one run, not of the arm, and two earlier readings of it should be retired
-together: "the 4B arm collapses at epoch 2" (wrong — it recovered), and "the
-cross-encoder is unstable at epoch 2" (also wrong — it is unstable once, on s123,
-in a way that leaves no trace on s42).
+**The arm is still improving when it stops.** s123 runs 0.7231 → 0.7291 → 0.7462 →
+0.7626 over epochs 1, 3, 4 and 5, with the eval loss falling at every step
+(0.727 → 0.745 → 0.659 → 0.590) and no sign of flattening at the end. **0.7626 is
+therefore a point on a rising curve, not the arm's ceiling** — the five-epoch budget
+was set before the arm existed, and the honest reading is that clause 1 is cleared
+by 11.3 points with training still to spare.
 
 **At matched epoch 3 the two seeds agree to 0.04 points** — 0.7291 against 0.7287 —
 on the same split, the same LoRA scope and the same schedule. That is the
-two-seed statement clause 1 rests on, and it holds at the epoch before the seeds'
-first divergence: s123 then gains 1.7 points at epoch 4 (0.7462) while s42 has not
-yet reached that epoch. Whether the epoch-4 gain replicates is the open question,
-not whether the arm is stable.
+two-seed statement clause 1 rests on. It sits before the seeds diverge: s123 then
+gains 3.3 points across epochs 4 and 5 while s42 has not yet reached those epochs,
+so whether the late gain replicates is the open question, not whether the arm is
+stable.
 
 **On s123, where the excursion lives.** Rebuilding that checkpoint with epoch 2's
 adapter and epoch 1's heads and scoring it: `choice` **0.289**, the same as epoch
