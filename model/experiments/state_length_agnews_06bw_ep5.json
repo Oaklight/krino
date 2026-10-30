@@ -1,0 +1,48 @@
+{
+  "by_target_chars": {
+    "0": {
+      "accuracy": 0.9033333333333333,
+      "correct": 271,
+      "mean_chars": 235.44333333333333,
+      "mean_tokens": 61.38666666666666,
+      "n": 300
+    },
+    "1500": {
+      "accuracy": 0.86,
+      "correct": 258,
+      "mean_chars": 1501.0,
+      "mean_tokens": 288.14,
+      "n": 300
+    },
+    "4000": {
+      "accuracy": 0.7666666666666667,
+      "correct": 230,
+      "mean_chars": 4001.0,
+      "mean_tokens": 732.4266666666666,
+      "n": 300
+    },
+    "500": {
+      "accuracy": 0.88,
+      "correct": 264,
+      "mean_chars": 501.56666666666666,
+      "mean_tokens": 110.24333333333334,
+      "n": 300
+    },
+    "8000": {
+      "accuracy": 0.7233333333333334,
+      "correct": 217,
+      "mean_chars": 8001.0,
+      "mean_tokens": 1443.6466666666668,
+      "n": 300
+    }
+  },
+  "checkpoint": "/home/pding/projects/open-decisions/model/checkpoints/arch_06b_weighted_lr3e4_split138_s123/epoch_005.pt",
+  "config": "model/configs/r2_reranker0.6b.yaml",
+  "elapsed_s": 197.5,
+  "items": 300,
+  "lora_layers": -1,
+  "max_length": 32768,
+  "readout": "weighted",
+  "seed": 42,
+  "source": "agnews"
+}
