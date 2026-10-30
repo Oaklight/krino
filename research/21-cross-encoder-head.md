@@ -138,22 +138,43 @@ applied, same loader for every row:
 | 0.6B cross-encoder, epoch 1 | **1.000** | 0.396 | **0.611** | **0.589** |
 | **4B cross-encoder, epoch 1** | **1.000** | **0.405** | **0.722** | **0.628** |
 | **4B cross-encoder, epoch 3** | **1.000** | **0.441** | 0.681 | **0.632** |
+| **4B cross-encoder, epoch 4** | **1.000** | **0.450** | 0.597 | 0.610 |
 
-**Correction.** An earlier revision of this note said the change moves the hard
-tier "by exactly nothing" — 0.405 at 4B before the change and 0.405 after it,
-0.396 at a fifth of the parameters, three models on one number. That is what
-epoch 1 said. At epoch 3 the same checkpoint scores **0.441** on the hard tier,
-3.6 points above the tower and above every other arm measured, while the overall
-board moves only 0.4 points (0.628 → 0.632). So the tier is not architecture-
-invariant: the head reaches it, and what reached it was training, not the shape.
-The four models are still within 4.5 points of each other on that column while
-spanning 0.511 to 0.632 overall, so the tier is much less responsive than the
-rest of the board — but "no response" was a one-epoch reading and is withdrawn.
+The in-distribution eval and the board do not move together: between epochs 3 and
+4 the 13,444-item eval gained 1.7 points (0.7291 → 0.7462) while the board lost
+2.2 (0.632 → 0.610), almost all of it on the `original` tier (0.681 → 0.597, six
+items). Neither of those board moves is resolvable at 72 to 231 items, so the
+honest reading is that the board is *not tracking* in-distribution gains rather
+than that it is actively degrading — which is itself the useful fact, because it
+means more training on this mixture is not a route to the authored tiers.
+
+**Correction, twice.** The first version of this note said the change moves the
+hard tier "by exactly nothing" — 0.405 at 4B before the change and 0.405 after it,
+three models on one number. That was an unpaired reading of four point estimates.
+The second version said the tier *does* move, because the same arm scored 0.441 at
+epoch 3 and 0.450 at epoch 4. That was also wrong, for a reason the first version
+shared: 111 items cannot resolve differences of this size. Paired on the items,
+with `model/scripts/paired_mcnemar.py`:
+
+| comparison | hard tier | discordant | McNemar p |
+|---|---:|---:|---:|
+| tower ep10 vs cross-encoder ep3 | 0.405 vs 0.441 | 16 / 20 | 0.62 |
+| tower ep10 vs cross-encoder ep4 | 0.405 vs 0.450 | 16 / 21 | 0.51 |
+| cross-encoder ep3 vs ep4 | 0.441 vs 0.450 | 9 / 10 | 1.00 |
+
+**Every comparison on this tier is indistinguishable from a coin flip.** The four
+models differ on 35 to 37 of 111 items and split those differences roughly evenly,
+which is what two models of similar quality look like on a set this size. So the
+honest statement is not that the tier is invariant and not that it moves: it is
+that **this tier cannot resolve a difference below about ten points**, and every
+hard-tier claim in this note and in `research/13` should be read as a point
+estimate with that width. Closing clause 4 needs a larger held-out set before any
+model change can be told apart from noise.
 
 The leakage audit (`scripts/check_jevbench_leakage.py`) finds **0 exact
 duplicates, 0 state repeats and 0 near-duplicates above 0.5 shingle containment
 over 1,562,838 training items** (max containment 0.001), so none of the movement
-is memorisation.
+that *is* visible elsewhere on the board is memorisation.
 
 It also does not close the tier. The hard items are a **long-state wall**, and the
 quartile cut below is recomputed so both architectures are on the same boundaries
@@ -171,10 +192,13 @@ The tower loses 38 points from the shortest to the longest quartile; the
 cross-encoder loses 27 and not monotonically, dipping in the third quartile and
 recovering in the fourth. With 27–28 items per cell a quartile's standard error is
 about 9 points, so only the tower's Q1-to-Q4 fall is clearly resolvable and the
-cross-encoder's non-monotonicity is not. What the cut does say is where the
-architecture difference lands: **on the longest quartile the cross-encoder is 18
-points ahead** (0.429 against 0.250), which is the quartile a read-out that
-attends over the whole context should lose first.
+cross-encoder's non-monotonicity is not. The architecture difference lands on the
+longest quartile — the cross-encoder is 18 points ahead there (0.429 against
+0.250) — which is the quartile a read-out attending over the whole context should
+lose first, and it is the same phenomenon `research/22` measures directly. On 28
+items, 18 points is a little over one standard error of the difference, so this
+is a hypothesis the padding experiment supports rather than establishes on its
+own; the padding experiment is the one that isolates it.
 
 The earlier version of this table carried a single "trained head" column and a
 native-readout column without naming the checkpoint behind the head, which is why
