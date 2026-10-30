@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import dataclasses
 import random
 import sys
 from pathlib import Path
@@ -101,6 +102,18 @@ def main() -> int:
         ),
     )
     parser.add_argument("--json", type=Path, default=None)
+    parser.add_argument(
+        "--blank-state",
+        action="store_true",
+        help=(
+            "Score every item with an empty state, keeping the instructions and the "
+            "options. A family whose accuracy does not move was never being read: the "
+            "answer came from the option texts and the instructions alone. A family "
+            "that collapses was being read. This is the ablation that separates the "
+            "two, and it is also a check on the set itself — if blanking does not "
+            "hurt, the items are not testing what they claim."
+        ),
+    )
     parser.add_argument(
         "--dump-preds",
         type=Path,
@@ -179,6 +192,10 @@ def main() -> int:
 
     with torch.no_grad():
         for item in items:
+            if args.blank_state:
+                # Blank the item before either scorer sees it, so the harness
+                # cross-check below still compares like with like.
+                item = dataclasses.replace(item, state="")
             # `_eval_item` is the harness's own per-item logic, so the accuracy this
             # script prints is the accuracy the eval config prints. The separate
             # forward pass below is only for the prediction histogram; if the two
