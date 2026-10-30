@@ -141,6 +141,15 @@ cross-encoder needs less training to reach a given large-K accuracy, since its
 epoch-5 curve at K=80 (0.5067) is above the tower's epoch-5 curve (0.4233) — and
 the "wins at large K" claim does not, once the tower has ten epochs.
 
+**Chance-correcting does not change the ordering, and it makes the residual scale
+clearer.** Raw accuracy falls with K partly because chance falls with K: 25 % at
+four options against 1.25 % at eighty. Rescaling each cell to
+`(acc − chance) / (1 − chance)`, the tower at epoch 10 keeps **0.969 → 0.848** across
+the sweep (a drop of 0.121) while the cross-encoder at epoch 5 keeps **0.796 →
+0.500** (a drop of 0.296). So on the measure that removes the arithmetic advantage
+of a short list, the trained tower is not merely catching up: it retains most of
+its discrimination at eighty options, and the cross-encoder retains about half.
+
 Clause 3's count half is still not met by any arm: the closest is the tower at
 epoch 10 at −12.7 points against a 5-point allowance, 2.5× over. And the arm that
 meets clause 1 by ten points is **not** the arm that comes closest to this one —
