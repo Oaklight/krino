@@ -77,8 +77,9 @@ moves that the wrong way. At matched epoch 1 on the same split:
 
 | | 0.6B | 4B | gap | allowance |
 |---|---:|---:|---:|---:|
-| tower (0.6B weighted, 4B `last`) | 0.4794 | 0.5399 | **6.1 pp** | 3 pp |
-| **cross-encoder** | **0.6048 / 0.6028** | **0.7231 / 0.7190** | **11.6–11.8 pp** | 3 pp |
+| tower (0.6B weighted, 4B `last`), epoch 1 | 0.4794 | 0.5399 | **6.1 pp** | 3 pp |
+| **cross-encoder, epoch 1** | **0.6048 / 0.6028** | **0.7231 / 0.7190** | **11.6–11.8 pp** | 3 pp |
+| tower, full 10-epoch schedule | **0.6023** | **0.6871** | **8.5 pp** | 3 pp |
 
 So the head that lifts the board by 12.5 points at 0.6B lifts it by 18.3 at 4B,
 and the capacity gap doubles from 6.1 to about 11.7 points. That is the expected
@@ -88,6 +89,13 @@ clause 5's accuracy half reachable, and it is worth saying plainly that the two
 clauses are now further apart than they were before this change — the arm that
 meets clause 1 on the aggregate is not the arm that meets clause 5, and the
 cross-encoder is not the arm that meets either clause at 0.6B.
+
+**The ten-epoch tower pair is the fairer reading, and it still misses by nearly
+three times.** Both arms trained to their full schedules reach 0.6871 (4B) and
+0.6023 (0.6B; its last two epochs were 0.5971 and 0.6023), an 8.5-point gap against
+a 3-point allowance. So the comparison at epoch 1 was measuring two models still
+climbing; at convergence the gap is 8.5 points rather than 6.1, and the
+cross-encoder's 11.7 is a further 3 above that.
 
 ## It degrades less with option count at matched epochs, and the tower catches up
 
