@@ -309,10 +309,10 @@ prompt. That is worth knowing before anyone spends a training run on it.
 
 The paragraph above was a hypothesis when it was written. It is now a
 measurement: the per-item predictions (`--dump-predictions`) joined to each
-item's state length, for the trained head and for the backbone's zero-shot
+item's state length, for the **tower** head and for the backbone's zero-shot
 native readout on the **same checkpoint** (s123, epoch 10).
 
-| hard-tier state length | n | trained head | native readout |
+| hard-tier state length | n | tower head | native readout |
 |---|---:|---:|---:|
 | 350 – 987 chars | 27 | **0.630** | **0.667** |
 | 995 – 1,493 | 27 | 0.407 | 0.407 |
@@ -324,6 +324,16 @@ the same places. The longest state in the tier is ~3.7k tokens, inside the
 16,384 window, so this is not truncation, and the two scorers build their
 prompts differently — so it is not the prompt either.
 
+**The head column is the tower's, and the cross-encoder's cut differs.** On one
+recomputed cut for both (`research/21`, `model/scripts/jevbench_quartiles.py`) the
+cross-encoder scores 0.704 / 0.393 / 0.250 / 0.429 across the same quartiles — a
+27-point spread rather than 38, and not monotone. Both columns are 27–28 items
+wide, so a quartile's standard error is about 9 points and only the tower's fall is
+clearly resolvable. What separates them is the longest quartile, where the
+cross-encoder is 18 points ahead — and `research/22` measures why that is the
+quartile a tower loses: the same questions padded with 1,400 tokens of irrelevant
+text cost the tower 24 points and the cross-encoder 1.
+
 Two other cuts rule out the explanations that would have been cheaper to fix:
 
 - **Structured states are not the problem.** Hard-tier accuracy is 0.486 on the
@@ -332,20 +342,26 @@ Two other cuts rule out the explanations that would have been cheaper to fix:
 - **Option count is not the problem.** Hard items with 2–4 options score 0.444;
   5–10 score 0.238.
 
-**And the head is not the problem either.** Swapping the tower head for the
-cross-encoder raises the board a lot and this tier not at all:
+**Is the head the problem? At epoch 1 it looked like no; at epoch 3 it looks like
+partly.** Swapping the tower head for the cross-encoder raises the board a lot, and
+at epoch 1 it left this tier untouched:
 
 | model | easy (48) | hard (111) | original (72) | overall (231) |
 |---|---:|---:|---:|---:|
 | 4B tower, epoch 10 | 0.792 | 0.405 | 0.486 | 0.511 |
 | 0.6B cross-encoder, epoch 1 | 1.000 | 0.396 | 0.611 | 0.589 |
 | 4B cross-encoder, epoch 1 | 1.000 | **0.405** | 0.722 | 0.628 |
+| **4B cross-encoder, epoch 3** | 1.000 | **0.441** | 0.681 | **0.632** |
 
-Three architectures, a fifth of the parameters in one of them, and the hard tier
-lands on the same number to three digits while the rest of the board moves 12 to
-24 points. Whatever closes the gap to the reference has to act on how much of a
-long state the backbone uses — training on long states, or compressing and
-retrieving over them — and no head, prompt or calibration change will.
+Three architectures, a fifth of the parameters in one of them, all on 0.405 to
+three digits — and then two more epochs on the same arm moved the tier to 0.441
+while the overall board moved 0.4 points. So the tier is **much less responsive**
+than the rest of the board rather than unresponsive, and "no head change reaches
+it" was a one-epoch reading. What closes the rest of the gap still has to act on
+how much of a long state the backbone uses — training on long states, or
+compressing and retrieving over them — and `research/22` isolates how much of it
+is the tower's read-out rather than the state: padding the same questions with
+1,400 tokens of irrelevant text costs the tower 24 points and the cross-encoder 1.
 
 ### What the corpus contains is a long state asked as a noul question, and almost never as a choice
 
@@ -381,10 +397,12 @@ below the 8,566 characters where the tier's longest quartile begins.
 So the model has been trained to answer long states as yes/no questions and short
 states as choice questions, and the hard tier asks a third thing — a 2.5 kB state
 with a list of options — that appears 25 times in 172,262 training items. That is
-also why the three architectures agree on 0.405: they differ in how they score an
-option, and this is not a scoring problem. The failure is upstream of every head,
-in a region none of them was trained on, which is the same conclusion the
-quartile table reached from the other direction.
+where the region the tier lives in *is*, and it is why every architecture starts
+on the same 0.405: they differ in how they score an option, and none of them was
+trained where the tier sits. Moving off that number took two more training epochs
+on the cross-encoder, not a different scorer, and `research/22` shows the tower's
+extra loss on long items is its read-out diluting over a dilated context — a
+separate defect on top of the distribution one.
 
 The implication for what to build is specific and cheap relative to the accuracy
 it could recover: **generate long-state choice items**. The synthetic pipeline
@@ -592,14 +610,15 @@ is worse than the model we started from — is true of the heads and false of th
 backbones, and for the easy and original tiers the work belongs in how the choice
 head scores an option list.
 
-**The hard tier is a different finding, and the last section changes the
-prescription.** There the head is not the constraint: three architectures, one of
-them a fifth the size, return 0.405 and the quartile table shows the trained head
-and the untouched native readout failing at the same state lengths. The corpus
-audit says why — long states reach the model as noul questions, and a long state
-asked as a choice appears 25 times in 172,262 training items. So the hard column
-is a data problem before it is an architecture problem, and the next experiment on
-it is to assemble long-state choice items rather than to build another scorer.
+**The hard tier is a different finding, and the last two sections change the
+prescription.** The head is not the whole constraint there — three architectures
+start on 0.405, one of them a fifth the size — but the tier is not inert either:
+the cross-encoder reached 0.441 two epochs later, and the quartile cut puts its
+gain where the padding probe predicts, on the longest quartile (0.429 against the
+tower's 0.250). Two mechanisms, in order: the corpus rarely asks the conjunction
+the tier is made of (25 items in 172,262), and the tower's read-out loses a
+further 24 points to dilution alone. The first needs long-state choice items; the
+second is already fixed by scoring each option inside the state.
 
 That is one measurement, one seed, 231 items. The hard tier is where the
 remaining gap sits (0.351 against a 0.336 chance floor), and it is the column to
