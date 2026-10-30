@@ -33,3 +33,11 @@ sources:
   authored_holdout:
     weight: 0
     max_eval: 300
+    # `load_source_items` reads a prepared JSONL and does not dispatch through
+    # LOADERS, so the path has to name the tracked file explicitly. Without it the
+    # loader looks for `data/benchmarks/authored_holdout.jsonl`, and a stale copy
+    # there wins silently — the first scoring run read exactly such a copy, one
+    # written before the score labels were level indices, and lost ten of the 51
+    # score items to the 0..n_levels-1 check without anything in the log saying the
+    # set was not the committed one.
+    path: data/benchmarks/openjev/authored_holdout.jsonl
