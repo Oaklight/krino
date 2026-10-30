@@ -253,17 +253,26 @@ def test_eval_config_scores_the_tracked_file_and_drops_nothing():
     the score labels became level indices, and lost ten of the 51 score items to the
     `0..n_levels-1` check — with the run still reporting a clean score number. This
     test runs the config's own source entry and requires the whole set back.
+
+    The config is read as text rather than through PyYAML: the package does not
+    declare `pyyaml`, and CI installs it with `--no-deps` plus `pytest`, so an
+    `import yaml` here fails the whole matrix in a job that has no other use for
+    it. The assertion is on the line the config has to carry, and on the stale
+    default path it must not mention.
     """
     import random
     from pathlib import Path
 
-    import yaml
-
     from data.sources import load_source_items, resolve_path
 
     root = Path(__file__).resolve().parents[1]
-    config = yaml.safe_load((root / "model" / "configs" / "eval_authored.yaml").read_text(encoding="utf-8"))
-    source_cfg = config["sources"]["authored_holdout"]
+    text = (root / "model" / "configs" / "eval_authored.yaml").read_text(encoding="utf-8")
+    tracked = "data/benchmarks/openjev/authored_holdout.jsonl"
+    assert f"path: {tracked}" in text
+    assert "path: data/benchmarks/authored_holdout.jsonl" not in text
+    assert "max_eval: 300" in text
+
+    source_cfg = {"path": tracked, "weight": 0, "max_eval": 300}
     assert resolve_path(source_cfg["path"]) == root / "data" / "benchmarks" / "openjev" / "authored_holdout.jsonl"
 
     train_items, eval_items = load_source_items("authored_holdout", source_cfg, random.Random(42))
