@@ -104,6 +104,19 @@ def main() -> int:
     parser.add_argument("--rank", type=int, default=None)
     parser.add_argument("--noul-rank", type=int, default=None)
     parser.add_argument("--mlp-layers", type=int, default=None)
+    parser.add_argument(
+        "--choice-mode",
+        choices=["tower", "cross_encoder"],
+        default=None,
+        help=(
+            "How the choice head scores options (default: the config's, else "
+            "tower). Clause 3's count half is a question about how a head "
+            "compares many options, and the two shapes compare them differently: "
+            "the tower attends over the option set against one encoded state, "
+            "the cross-encoder reads each option out of the state's full "
+            "context. The sweep is the instrument that tells them apart."
+        ),
+    )
     parser.add_argument("--json", type=Path, default=None)
     args = parser.parse_args()
 
@@ -123,6 +136,7 @@ def main() -> int:
     rank = int(args.rank or cfg.get("rank") or 128)
     noul_rank = int(args.noul_rank or cfg.get("noul_rank") or rank)
     mlp_layers = int(args.mlp_layers if args.mlp_layers is not None else cfg.get("mlp_layers", 0))
+    choice_mode = args.choice_mode or str(cfg.get("choice_mode") or "tower")
 
     if args.data_root:
         data_root = args.data_root
@@ -159,6 +173,7 @@ def main() -> int:
         lora_alpha=lora_alpha,
         lora_dropout=lora_dropout,
         lora_targets=lora_targets,
+        choice_mode=choice_mode,
     )
     model.load_heads(args.load_heads)
     model.eval()
@@ -214,6 +229,7 @@ def main() -> int:
             "seed": args.seed,
             "max_length": max_length,
             "readout": readout,
+            "choice_mode": choice_mode,
             "lora_layers": lora_layers,
             "distractor_pool_size": len(pool_texts),
             "elapsed_s": round(elapsed, 1),
