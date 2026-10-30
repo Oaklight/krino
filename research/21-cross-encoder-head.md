@@ -154,35 +154,42 @@ the reading that fits it being 18 points behind on the longest quartile — and 
 cross-encoder's remaining 27-point spread over the quartiles is something else,
 on the same items, at the same lengths, with no padding involved.
 
-## Epoch 2 dips and epoch 3 recovers — the dip is in the adapter, not the head
+## Epoch 2 dipped on one seed and not on the other
 
-The 4B arm's first three epochs, s123:
+The 4B arm's first three epochs, both seeds:
 
 | | overall | choice | noul | score | eval loss |
 |---|---:|---:|---:|---:|---:|
-| epoch 1 | 0.7231 | 0.721 | 0.822 | 0.477 | 0.727 |
-| epoch 2 | **0.3761** | 0.292 | 0.555 | 0.229 | **1.362** |
-| epoch 3 | **0.7291** | **0.737** | 0.825 | 0.452 | 0.745 |
+| s123, epoch 1 | 0.7231 | 0.721 | 0.822 | 0.477 | 0.727 |
+| s123, epoch 2 | **0.3761** | 0.292 | 0.555 | 0.229 | **1.362** |
+| s123, epoch 3 | **0.7291** | **0.737** | 0.825 | 0.452 | 0.745 |
+| s42, epoch 1 | 0.7190 | — | — | — | 0.752 |
+| **s42, epoch 2** | **0.7174** | — | — | — | 0.741 |
 
-Epoch 2 is a transient excursion, not a terminal state: by epoch 3 the arm is back above its first
-epoch, with the best `choice` of the three (0.737), while training loss fell throughout
-(0.969 → 0.926 → 0.861).
+**The second seed does not dip.** s42 moves 0.7190 → 0.7174 across the same epoch
+— 0.2 points, in the direction of the training loss (0.9411 → 0.8437), with no
+excursion. So the epoch-2 collapse is a property of one run, not of the arm, and
+two earlier readings of it should be retired together: "the 4B arm collapses at
+epoch 2" (wrong — it recovered), and "the cross-encoder is unstable at epoch 2"
+(also wrong — it is unstable once, on s123, in a way that leaves no trace on s42).
 
-**Where the dip lives.** Rebuilding the checkpoint with epoch 2's adapter and epoch 1's heads and
-scoring it: `choice` **0.289** — the same as epoch 2's own pair (0.292). Putting the good head back
-does not recover the accuracy, so the excursion is in the **LoRA adapter**, not in the linear
-read-out: at epoch 2 the adapter is producing a representation that neither head can read.
+**On s123, where the excursion lives.** Rebuilding that checkpoint with epoch 2's
+adapter and epoch 1's heads and scoring it: `choice` **0.289**, the same as epoch
+2's own pair (0.292). Putting the good head back does not recover the accuracy, so
+*that* excursion was in the LoRA adapter, not in the linear read-out: at that
+moment the adapter produced a representation neither head could read.
 
-**What that means for how to read the table above.** The epoch-1 figure is not "one epoch before the
-run falls apart" — the run does not fall apart, it dips and returns. What it still is: a single
-checkpoint's number, at one epoch, and the arm needs to finish its five before its accuracy is the
-arm's accuracy. The 0.6B JevBench row was scored at epoch 1 of a one-epoch run, so it is unaffected
-either way.
+**What that means for how to read the epoch-1 rows.** They are two seeds agreeing
+to 0.4 points, and s42's epoch 2 agrees with them too, so "epoch 1" is not a lucky
+draw before a fall. What it still is: one point on each run's learning curve, taken
+before either arm finished. The 0.6B JevBench row was scored at epoch 1 of a
+one-epoch run and is unaffected either way.
 
 ## Caveats
 
-- **Two seeds at 0.6B, two at 4B, all at epoch 1.** The 0.6B rows are 0.6048 and
-  0.6028, the 4B rows 0.7231 and 0.7190. The per-type counts differ by up to 13
+- **Two seeds at 0.6B, two at 4B, compared at epoch 1; s42 also has epoch 2.** The
+  0.6B rows are 0.6048 and 0.6028, the 4B rows 0.7231 and 0.7190, and s42's epoch
+  2 is 0.7174. The per-type counts differ by up to 13
   items between seeds because the eval mixture is sampled, so the comparison
   across seeds is not on identical items.
 - **The schedules differ.** The tower baselines ran 10 epochs; the 0.6B
