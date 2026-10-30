@@ -347,6 +347,60 @@ lands on the same number to three digits while the rest of the board moves 12 to
 long state the backbone uses — training on long states, or compressing and
 retrieving over them — and no head, prompt or calibration change will.
 
+### What the corpus contains is a long state asked as a noul question, and almost never as a choice
+
+The wall has an explanation one query away, and it is about the input
+distribution rather than the model. `scripts/state_length_audit.py` reads the
+`state` field of every source the training config names, on the train split and
+capped at each source's own `max_train` — the corpus a run actually draws from,
+not the union of every file — and splits it by question type, because the
+conjunction is what the hard tier is made of.
+
+| | n | p50 | p90 | p99 | max |
+|---|---:|---:|---:|---:|---:|
+| corpus, all types | 172,262 | 246 | 2,017 | 14,093 | 54,765 |
+| **corpus, choice only** | **69,287** | **117** | **770** | 1,600 | 38,047 |
+| **JevBench hard, choice only** | **67** | **2,533** | — | — | 14,986 |
+
+The hard tier's *shortest quarter* starts at 1,274 characters, above the corpus's
+90th percentile for choice. Concretely, of the 69,287 choice items in the corpus:
+
+- **3.13 %** (2,167 items) are at least as long as a hard-tier item in its
+  shortest quarter;
+- **0.036 %** (25 items) reach the tier's median;
+- **0.003 %** (2 items) reach its upper quarter.
+
+The corpus does contain long states — `contractnli` at p50 2,774 characters,
+`multirc` at 1,661, `tabfact` at 847, `boolq` at 578 — but **every one of those
+sources is noul**. The choice sources are uniformly short: `banking77` p50 46
+characters, `piqa` 35, `commonsenseqa` 64, `swag` 67, `winogrande` 97,
+`hellaswag` 126. The only choice source of any size with real length is
+`typed_decisions` (p50 397, max 1,559, 800 items), and its maximum is still well
+below the 8,566 characters where the tier's longest quartile begins.
+
+So the model has been trained to answer long states as yes/no questions and short
+states as choice questions, and the hard tier asks a third thing — a 2.5 kB state
+with a list of options — that appears 25 times in 172,262 training items. That is
+also why the three architectures agree on 0.405: they differ in how they score an
+option, and this is not a scoring problem. The failure is upstream of every head,
+in a region none of them was trained on, which is the same conclusion the
+quartile table reached from the other direction.
+
+The implication for what to build is specific and cheap relative to the accuracy
+it could recover: **generate long-state choice items**. The synthetic pipeline
+already carries a `long_doc` family at 8,000 characters and an 8-domain
+"long-horizon" assembly, but the per-domain files are not what training reads —
+`data/pipeline.py` assembles synthetic states at load time, so this audit excludes
+them rather than measure them wrongly. Whether the assembled corpus closes the
+length gap is a question about the loader, and the next thing to measure.
+
+Two limits on this table. Lengths are characters of the `state` field, and what
+the model sees is `state + instructions`, so the gap in tokens is a little
+smaller than the gap in characters — not enough to matter at 20×. And the 67
+hard-tier choice items are 60 % of the 111-item tier; the remaining 44 are noul,
+whose accuracy is not split out by state length here, so this explains most of
+the tier's deficit but not measurably all of it.
+
 ## The reference numbers measure something other than accuracy
 
 The goal quotes "teacher 84.9, best open student 74.1" as JevBench references, and
@@ -524,16 +578,22 @@ whole reason the aggregate needed two seeds first.
 ## What this means for the goal
 
 Item 4 is the widest gap in the goal — 0.463 against a 74.1 reference — and
-Finding 4 says where it is. The fine-tuned backbones keep the reranker
+Finding 4 says where part of it is. The fine-tuned backbones keep the reranker
 capability (0.541 at 0.6B, where it improves on the base, and 0.623 at 4B, where
-it holds), and the choice head throws 14 to 21 points of it away. So the sentence
-this note would have ended on — that the model we train is worse than the model
-we started from — is true of the heads and false of the backbones, and the work
-belongs in how the choice head scores an option list. The trained choice head
-scores exactly 0.396 at both model sizes, which is the number that says the head,
-not the backbone, is the constraint — with Finding 5's qualification that the
-native readout wins only on short lists, and that the head is what keeps long
-lists and calibrated probabilities working.
+it holds), and the choice head throws 14 to 21 points of it away on the board as
+a whole. So the sentence this note would have ended on — that the model we train
+is worse than the model we started from — is true of the heads and false of the
+backbones, and for the easy and original tiers the work belongs in how the choice
+head scores an option list.
+
+**The hard tier is a different finding, and the last section changes the
+prescription.** There the head is not the constraint: three architectures, one of
+them a fifth the size, return 0.405 and the quartile table shows the trained head
+and the untouched native readout failing at the same state lengths. The corpus
+audit says why — long states reach the model as noul questions, and a long state
+asked as a choice appears 25 times in 172,262 training items. So the hard column
+is a data problem before it is an architecture problem, and the next experiment on
+it is to assemble long-state choice items rather than to build another scorer.
 
 That is one measurement, one seed, 231 items. The hard tier is where the
 remaining gap sits (0.351 against a 0.336 chance floor), and it is the column to
