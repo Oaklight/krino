@@ -25,11 +25,17 @@
 #
 # For a 4B / 0.6B checkpoint, change `model`, `rank`, `lora_layers`, `readout`
 # and `max_length` to match that run's log header. The head `rank` must match
-# too: the 4B/8B configs use 128 and the 0.6B config uses 64, and a mismatch
-# fails loudly inside `load_heads` rather than silently re-initialising.
+# too: the 4B/8B configs use 128 and the 0.6B config uses 64. `noul_rank` matters
+# the same way and is easier to miss, because the two settings do not live next to
+# each other: every 4B and 8B checkpoint here has an MLP noul head
+# (`noul_head.proj.1.*`, `noul_head.proj.4.*`) because `r2_reranker4b.yaml` sets
+# `noul_rank: 128`, and a config that omits it builds a linear head instead. Until
+# `load_heads` started refusing the mismatch, that ran and reported a number for a
+# randomly initialised noul head.
 
 model: Qwen/Qwen3-Reranker-8B
 rank: 128
+noul_rank: 128
 readout: weighted
 shared_attention: true
 lora_layers: -1

@@ -494,8 +494,78 @@ class DecisionModel(nn.Module):
         torch.save(head_state, path)
 
     def load_heads(self, path: Path | str) -> None:
-        """Load head parameters from a checkpoint."""
+        """Load head parameters from a checkpoint, refusing a mismatched architecture.
+
+        A checkpoint records the architecture that produced it.  Loading it into a
+        model built with different head settings used to succeed silently:
+        ``load_state_dict(strict=False)`` leaves every key it cannot match at its
+        initial value, so the run reports a number for a head that was never
+        trained.  Two measured cases:
+
+        * ``eval_authored.yaml`` mirrors a 4B run whose ``noul_rank`` is 128, but
+          the config did not say so.  The model got a linear noul head, the
+          checkpoint's ``noul_head.proj.*`` went nowhere, and the set scored
+          26/51 on the flag family — chance — against 34/51 with the head loaded.
+        * An eval of the tower checkpoint ``arch_4b_32k_split138_s123`` under a
+          cross-encoder config scored 0.2680 on choice instead of 0.1765: the
+          cross-encoder choice head stayed random.
+
+        A key the model cannot hold, or one whose shape differs, is always a
+        mismatch, so those raise.  A model parameter the checkpoint does not carry
+        only warns: that is what a legitimate partial load looks like (frozen
+        backbone weights are never saved, and a heads-only checkpoint says
+        nothing about adapters).
+
+        Raises:
+            ValueError: If the checkpoint carries parameters this model does not
+                have, or with different shapes.  The message names the keys and
+                says which setting produced them, because the mismatch is almost
+                always a config that does not mirror the training run.
+        """
         head_state = torch.load(Path(path), map_location=self.device, weights_only=True)
+        own = self.state_dict()
+
+        shape_mismatches = [
+            f"{name}: checkpoint {tuple(value.shape)} vs model {tuple(own[name].shape)}"
+            for name, value in head_state.items()
+            if name in own and own[name].shape != value.shape
+        ]
+        unexpected = sorted(name for name in head_state if name not in own)
+        if shape_mismatches or unexpected:
+            parts = []
+            if unexpected:
+                shown = ", ".join(unexpected[:8])
+                more = f" (+{len(unexpected) - 8} more)" if len(unexpected) > 8 else ""
+                parts.append(f"{len(unexpected)} key(s) the model does not have: {shown}{more}")
+            if shape_mismatches:
+                shown = "; ".join(shape_mismatches[:4])
+                more = f" (+{len(shape_mismatches) - 4} more)" if len(shape_mismatches) > 4 else ""
+                parts.append(f"{len(shape_mismatches)} shape mismatch(es): {shown}{more}")
+            raise ValueError(
+                f"{Path(path)} does not match this model's architecture — "
+                + "; ".join(parts)
+                + ". Check that the config's rank/noul_rank/choice_mode/readout "
+                "match the run that wrote the checkpoint."
+            )
+
+        # What `save_heads` would have written: every non-backbone entry, plus the
+        # trainable backbone parameters (the LoRA adapters).
+        trainable_names = {name for name, p in self.named_parameters() if p.requires_grad}
+        expected = {
+            name
+            for name in own
+            if "backbone" not in name or name in trainable_names
+        }
+        missing = sorted(expected - set(head_state))
+        if missing:
+            shown = ", ".join(missing[:8])
+            more = f" (+{len(missing) - 8} more)" if len(missing) > 8 else ""
+            warnings.warn(
+                f"{Path(path)} has no value for {len(missing)} parameter(s) this "
+                f"model expects: {shown}{more}. They keep their initial values.",
+                stacklevel=2,
+            )
+
         self.load_state_dict(head_state, strict=False)
 
     def trainable_parameters(self) -> int:
