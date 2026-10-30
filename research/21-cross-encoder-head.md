@@ -359,6 +359,26 @@ adapter and epoch 1's heads and scoring it: `choice` **0.289**, the same as epoc
 *that* excursion was in the LoRA adapter, not in the linear read-out: at that
 moment the adapter produced a representation neither head could read.
 
+**Damping the choice head suppresses the collapse and costs twelve points.** If
+the excursion were the head's own learning rate, running the same arm with
+`choice_lr=3e-5` — a tenth of the 3e-4 every other arm uses — should remove it for
+free. It ran three epochs on the same split, seed and data (18,553 s):
+
+| epoch | overall | choice | noul | score | train loss | eval loss |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 | 0.5963 | 0.549 | 0.765 | 0.342 | 1.186 | 1.132 |
+| 2 | 0.6028 | 0.559 | 0.772 | 0.333 | **1.658** | 1.327 |
+| **3** | **0.6077** | 0.567 | 0.762 | 0.360 | 1.086 | 1.027 |
+
+It does suppress the accuracy collapse — epoch 2 is 0.6028 against the standard
+arm's 0.3761 — but at matched epoch 3 it is **12.1 points behind** (0.6077 against
+0.7291) and 17 points behind on `choice` (0.567 against 0.737). Two things follow.
+The collapse is not a head-learning-rate artefact, because damping the head does
+not stop the *training* loss from spiking at epoch 2 (1.186 → 1.658 → 1.086, where
+the standard arm's train loss fell monotonically); and the stability it buys is
+not free, so the cheap route through this excursion remains scoring the
+checkpoints and taking the one that recovered, not slowing the head down.
+
 **What that means for how to read the epoch-1 rows.** They are two seeds agreeing
 to 0.4 points, and s42's epoch 2 agrees with them too, so "epoch 1" is not a lucky
 draw before a fall. What it still is: one point on each run's learning curve, taken
