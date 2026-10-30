@@ -283,6 +283,39 @@ The 219 dropped rows are not 255 because the eval draw caps stsb at 500 items an
 splits them 281 validation / 219 test; the withheld fraction of the source is the
 same, the slice just differs.
 
+## Epoch 10 changes the scale, not the verdict
+
+Everything above is epoch 5 on the two-seed pair, plus one epoch-10 checkpoint for the prior sweep. At
+**epoch 10**, on the repaired corpus and both seeds, the numbers move far enough that they have to be
+stated next to the epoch-5 ones:
+
+| | s123 ep5 | s123 ep10 | s42 ep10 |
+|---|---:|---:|---:|
+| mixed QWK, argmax | 0.7916 | **0.8297** | **0.8320** |
+| mixed QWK, ordinal median | 0.7735 | **0.8404** | 0.8374 |
+| mixed QWK, posterior mean | — | 0.8410 | 0.8378 |
+| four-level scale | 0.4196 | **0.663** | 0.623 |
+| five-level scale | 0.8314 | 0.829 | 0.839 |
+| six-level scale | 0.9222 | 0.903 | 0.906 |
+
+Two things follow.
+
+**The four-level scale was not a permanent property of the model.** It tripled from 0.42 to 0.66
+between epoch 5 and epoch 10 without any change to the loss, the data, or the decoder — five more
+epochs did it. That is the training-side repair this note predicted would be needed, arriving earlier
+than expected, and it is worth saying plainly that the ep5 figure understated what the scale can reach.
+
+**The decoders come back, weakly.** At epoch 10 the ordinal median gains **+1.07 pp [+0.13, +2.00],
+P(>0) = 0.987** on s123 and **+0.54 pp [−0.25, +1.43], P(>0) = 0.890** on s42 — positive on both
+seeds, unlike the epoch-5 corrected slice where s123 was −1.8 pp. Even so, the best decoder reaches
+0.8410, still **0.9 pp short of 0.85**, and the class-prior lever stays where it was (best train
+correction +0.003 to +0.005).
+
+So the verdict holds — clause 2's QWK half is not met by any post-hoc lever — but the reason has
+changed with the schedule: at epoch 5 the binding constraint was a scale at 0.42 that nothing could
+reach; at epoch 10 it is a scale at 0.66 with two decoders each worth about a point and a bar two
+points away.
+
 ## What this closes
 
 Clause 2's QWK half is **not post-hoc fixable** in the aggregate. The four cheap
