@@ -179,95 +179,100 @@ not a constant offset. And the old committed 0.6B sweep (0.677 → 0.217, −46 
 indeed a description of a weak checkpoint: this one loses 17 points where that lost
 46.
 
-## Clause 2 is not moved by it, and its score half is not measurable at this size
+## Clause 2's ECE half passes at the reported checkpoint; its QWK half does not
 
-The arm that clears clause 1 by ten points was calibrated in full — 13,444 items,
-per-type temperature fitted on one half and reported on the other:
+The arm that clears clause 1 was calibrated **at the checkpoint the clause is
+claimed on** — epoch 5, 13,444 items, per-type temperature fitted on one half and
+reported on the other, both seeds, identical per-type counts:
 
-| type | n | accuracy | ECE at T=1 | fitted T | **ECE after T** |
+| type | n | accuracy (s123 / s42) | fitted T | **ECE after T** | bar |
 |---|---:|---:|---:|---:|---:|
-| noul | 4,688 | 0.8208 | 0.0375 | 1.140 | **0.0206** |
-| choice | 6,900 | 0.7258 | 0.0660 | 1.574 | **0.0250** |
-| score | 1,856 | 0.4348 | 0.1936 | 2.489 | **0.1024** |
+| noul | 4,688 | 0.8264 / 0.8279 | 1.186 / 1.093 | **0.0312 / 0.0278** | 0.05 |
+| choice | 6,900 | 0.7623 / 0.7684 | 1.237 / 1.245 | **0.0130 / 0.0181** | 0.05 |
+| score | 1,856 | 0.5663 / 0.5668 | 1.150 / 1.400 | **0.0461 / 0.0220** | 0.05 |
 
-So on this seed the ECE half of clause 2 passes on two types and fails on the
-third, by twice the bar — the same primitive, the same direction, as every earlier
-checkpoint. The next subsection adds the second seed, and it changes what that
-sentence is allowed to claim. Score also carries the QWK half: **mixed-scale QWK
-0.7062** against 0.85, on 1,856 items, with MAE 0.6446 and RPS 0.1152.
+**All three primitives pass on both seeds.** Score is the closest, at 0.0461 on
+s123 — eight per cent under the bar, with the temperature fitted on the other half —
+and 0.0220 on s42.
 
-### The second seed says the score primitive is not measurable at this size
+### Why this section used to say the opposite
 
-The matched-epoch calibration of s42 (`cal_xenc_split138_s42_ep3.json`, the same
-13,444 items and the same per-type counts — `compare_calibrations.py` printed the
-deltas, so the slices match) changes what can be said about this clause:
+Every earlier calibration of this arm was at **epoch 3**, where the picture was
+different and this section drew a much stronger conclusion from it:
 
-| type | n | s123 ECE@T | **s42 ECE@T** | bar |
+| type | n | s123 ECE@T | s42 ECE@T | bar |
 |---|---:|---:|---:|---:|
 | noul | 4,688 | 0.0206 | 0.0265 | 0.05 |
 | choice | 6,900 | 0.0250 | 0.0236 | 0.05 |
 | score | 1,856 | **0.1024** | **0.0259** | 0.05 |
 
-noul and choice pass on both seeds, tightly. **Score differs by a factor of four
-between seeds** — one fails by twice the bar, the other passes by half of it — and
-the underlying accuracy differs too (s123 0.4348, s42 0.5178). So "score fails
-clause 2's ECE half" is a statement about s123, not about the primitive: at 1,856
-items with this much seed variance, the clause is not decided for score in either
-direction.
+At epoch 3 the score primitive straddled the bar by a factor of four between seeds,
+and the section concluded it was not measurable at this n. The epoch-5 pair halves
+that spread (0.0461 against 0.0220) and puts both seeds under the bar, so the honest
+reading is narrower than either earlier version: **the clause's ECE half is met by
+the arm it is claimed on, and a score-ECE reading moves by up to 2× between seeds at
+n = 1,856**, which is why the table above has two seeds in it rather than one.
 
-QWK shows the same instability on the smallest scale:
+### QWK still fails, and on the scale that was always binding
 
-| level scale | n | s123 | s42 | tower ep5 (repaired) |
-|---|---:|---:|---:|---:|
-| 4 | 233 | 0.2862 | **0.0866** | 0.4196 |
-| 5 | 1,121 | 0.7391 | 0.8028 | 0.8314 |
-| 6 | 500 | 0.8281 | 0.8270 | 0.9222 |
-| mixed | | 0.7062 | 0.7193 | 0.7916 |
+| level scale | n | s123 ep3 | s123 ep5 | s42 ep5 | bar |
+|---|---:|---:|---:|---:|---:|
+| 4 | 233 | 0.2862 | 0.4273 | 0.3291 | 0.85 |
+| 5 | 1,121 | 0.7391 | 0.8294 | 0.8324 | 0.85 |
+| 6 | 500 | 0.8281 | **0.8897** | **0.8888** | 0.85 |
+| mixed | | 0.7062 | 0.7951 | 0.7844 | 0.85 |
 
-The five- and six-level scales are stable across seeds (0.74–0.80 and 0.828). The
-**four-level scale swings 0.20 between seeds** — from 0.286 to 0.087, i.e. from
-"weak" to "barely above chance" — on 233 items. `research/18` identifies that scale
-as the binding constraint for clause 2 and every post-hoc lever tested there moved
-it by less than 0.02. **A scale whose seed spread is ten times the largest effect
-measured on it cannot adjudicate that clause**, and the 233-item size is why.
+Training improves QWK on every scale, and the six-level scale now clears 0.85 on
+both seeds (0.8897 / 0.8888 — agreeing to a thousandth). What remains is the
+mixture at 0.78–0.80, the five-level scale at 0.83, and the four-level scale at
+0.33–0.43 on 233 items: the same scale `research/18` identifies as the binding
+constraint, still far from the bar, and still the one the four post-hoc levers moved
+by less than 0.02. The ordinal-loss route remains closed (RPS costs 8 QWK points,
+`research/11`). Score MAE at epoch 5 is 0.5338 and RPS 0.0850.
 
-What survives for clause 2 as a whole: the ECE half is met on noul and choice on
-two seeds; on score it is not measurable at this n; the QWK half fails on every
-scale against 0.85, most obviously on the four-level scale, which is both the
-lowest and the least stable. Both of the latter need a larger eval before a
-training-side fix can be shown to work.
+So clause 2 splits: **the calibration criterion is met on the reported arm, and the
+agreement criterion is not.** The Brier criterion is in neither column because, as
+`research/17` sets out, "Brier ≥ 0.85" is satisfied by a model worse than uniform and
+failed by a perfect one; the measured value is 0.5451 at epoch 5, lower is better.
 
-The paragraph below reads as if one seed settled the clause. It is kept because
-the mechanism it names (the shared trunk costing score) is still the reading that
-fits, but its numbers are now one seed of two. The tower column it compares
-against is the one in the table above, and both sides are on the **repaired**
-corpus — `#177` drops the STS-B rows whose gold label was never observed, at load
-time, so these runs and the "after" column of `research/18` are the like-for-like
-pair.
+### What the epoch-3 readings wrongly generalized from
 
-**The head change costs the score primitive on every scale.** The cross-encoder is
-13, 9 and 9 points below the tower on the 4-, 5- and 6-level scales and 8.5 points
-below on the mixture. That is the opposite of what its choice-side gains would
-predict, and the mechanism is the shared trunk: the two heads sit on one LoRA
-adapter, so re-aiming the choice objective changes what the score head is asked to
-read.
+Every number in the previous version of this section came from an **epoch-3**
+calibration of the same arm, and three claims built on it do not survive the
+epoch-5 measurement:
 
-Two caveats that keep this from being a settled verdict. The cross-encoder column
-is **epoch 3** and the tower's is **epoch 5**, so the arm may still recover; and
-the two runs draw slightly different numbers of score items (1,856 against 1,613
-after the drop), so the 4-level scale is 233 items here against 218 there — small,
-which is exactly why the 4-level scale is the fragile one.
+- *"Score ECE fails by twice the bar"* — it was 0.1024 at epoch 3 on s123, against
+  0.0461 at epoch 5 (and 0.0259 → 0.0220 on s42). The epoch-3 reading was
+  checkpoint-specific.
+- *"The head change costs the score primitive on every scale"* — at epoch 3 the
+  cross-encoder was 13, 9 and 9 points below the tower on the 4-, 5- and 6-level
+  scales. At matched epoch 5 the two arms are level: 0.4273 against 0.4196 on the
+  four-level scale, 0.8294 against 0.8314 on the five-level, 0.8897 against 0.9222
+  on the six-level and 0.7951 against 0.7916 on the mixture. The cross-encoder's
+  score head needed the epochs, exactly as its choice head did.
+- *"The four-level scale cannot adjudicate the clause"* — the scale did swing 0.20
+  between seeds at epoch 3 (0.2862 against 0.0866); at epoch 5 it swings 0.10
+  (0.4273 against 0.3291). It is still the weakest scale and still the binding one,
+  but the claim that its seed noise swamps every lever was an epoch-3 artefact.
 
-**A correction to two earlier drafts of this section.** I first wrote that the
-artifact had no per-scale breakdown and that 0.7062 could not be compared with
-`research/18` — wrong; the breakdown is in `score_metrics.qwk_by_levels` and the
-empty dict I saw came from my own inspection command filtering by key name. I then
-compared against `research/18`'s *pre-repair* column, which made the cross-encoder
-look 56 points better on the 6-level scale and 8 points better on the mixture;
+What does survive from that reading is the mechanism: the two heads share one LoRA
+adapter, so re-aiming the choice objective changes what the score head reads. It
+showed up as a large early deficit that training closed, not as a permanent cost —
+which is a more ordinary finding than the one the earlier draft reported.
+
+The tower comparison is on the **repaired** corpus (`#177` drops the STS-B rows
+whose gold label was never observed, at load time), so both columns are like-for-like
+with `research/18`'s "after" column. The two runs draw slightly different numbers of
+score items (1,856 against 1,613 after the drop), so the four-level scale is 233
+items here against 218 there.
+
+**Two corrections to earlier drafts of this section** are still worth naming. I
+first wrote that the artifact had no per-scale breakdown — wrong; the breakdown is in
+`score_metrics.qwk_by_levels` and the empty dict I saw came from my own inspection
+command filtering by key name. I then compared against `research/18`'s *pre-repair*
+column, which made the cross-encoder look 56 points better on the six-level scale;
 that column still carries the fabricated STS-B labels this run's loader drops. Both
-errors were about which slice a number came from, and both are worth naming: the
-per-scale table is only meaningful when the repair state and the epoch are
-matched.
+errors were about which slice a number came from.
 
 **Clause 3's flip half is confirmed on this arm**: 0 flips and 0.0000
 total-variation on all three probes — 6,900 choice items under an option
