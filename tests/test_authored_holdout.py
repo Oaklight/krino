@@ -135,30 +135,54 @@ def test_flag_gold_follows_from_the_stated_rule(items):
 
 def test_flag_labelled_instances_exist_on_both_sides(items):
     labels = collections.Counter(item["label"] for item in _by_group(items, "flag"))
-    assert labels["yes"] >= 10 and labels["no"] >= 10
+    # Balanced by construction: a lopsided family lets a constant answer score above
+    # chance, which is exactly what the first version of this family allowed.
+    assert labels["yes"] >= 20 and labels["no"] >= 20
 
 
 def test_severity_gold_follows_from_the_stated_rubric(items):
     for item in _by_group(items, "severity"):
         checks = int(re.search(r"(\d+) of the seven checks failed", item["state"]).group(1))
         if checks == 0:
-            expected = 1
+            level = 1
         elif checks == 1:
-            expected = 2
+            level = 2
         elif checks == 2:
-            expected = 3
+            level = 3
         elif checks <= 4:
-            expected = 4
+            level = 4
         else:
-            expected = 5
-        assert item["label"] == float(expected), item["state"]
+            level = 5
+        # Labels are level indices 0-4; the rubric in the text reads 1-5.
+        assert item["label"] == float(level - 1), item["state"]
         assert item["question"]["criteria"] == ["1", "2", "3", "4", "5"]
+        assert 0 <= item["label"] <= 4
 
 
 def test_score_levels_are_all_exercised(items):
     levels = collections.Counter(item["label"] for item in _by_group(items, "severity"))
-    assert set(levels) == {1.0, 2.0, 3.0, 4.0, 5.0}
+    assert set(levels) == {0.0, 1.0, 2.0, 3.0, 4.0}
     assert min(levels.values()) >= 3
+
+
+def test_score_labels_are_level_indices_not_display_levels(items):
+    """The project's score convention is a 0-based index; a 1-based label is dropped.
+
+    `data.sources.invalid_score_labels` keeps only labels on `0 .. n_levels-1`, and the
+    first version of this set emitted 1-5 and silently lost ten of its 51 score items.
+    """
+    from data.sources import invalid_score_labels
+
+    score = [item for item in items if item["question"]["type"] == "score"]
+    assert score and invalid_score_labels([]) == []
+
+    class _Stub:
+        def __init__(self, question, label):
+            self.question = question
+            self.label = label
+
+    stubs = [_Stub(item["question"], item["label"]) for item in score]
+    assert invalid_score_labels(stubs) == []
 
 
 def test_growing_the_set_does_not_disturb_existing_items():

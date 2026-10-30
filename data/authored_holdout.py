@@ -186,32 +186,42 @@ def _ownership(index: int, rng: random.Random) -> dict[str, Any]:
 
 
 def _flag(index: int, rng: random.Random) -> dict[str, Any]:
-    """A record whose status is decided by a small explicit rule."""
+    """A record whose status is decided by a small explicit rule.
+
+    The gold is drawn first and the state is built to match it, so the family is
+    balanced 50/50 by construction. That matters: an unbalanced family lets a model
+    that always answers one way score above chance and look like it read the rule. Three
+    very different checkpoints all scored exactly 31/51 on the first version of this
+    family, which is what a constant answer looks like.
+    """
     rule_kind = rng.choice(["expiry", "balance", "documents"])
+    flagged = rng.random() < 0.5
     if rule_kind == "expiry":
-        days = rng.choice([-30, -7, -1, 0, 1, 7, 30, 90])
-        flagged = days <= 0
-        state = (
-            "Account review: the certificate expired {} days ago. The rule is that an "
-            "account is flagged when its certificate has expired or expires today."
-            .format(abs(days))
-        )
-        if days > 0:
+        if flagged:
+            days = rng.randrange(0, 90)
+            state = (
+                "Account review: the certificate expired {} days ago. The rule is "
+                "that an account is flagged when its certificate has expired or "
+                "expires today.".format(days)
+            )
+        else:
+            days = rng.randrange(1, 90)
             state = (
                 "Account review: the certificate expires in {} days. The rule is that "
                 "an account is flagged when its certificate has expired or expires "
                 "today.".format(days)
             )
     elif rule_kind == "balance":
-        balance = rng.choice([-500, -25, 0, 25, 100, 2500])
-        flagged = balance < 0
+        if flagged:
+            balance = -rng.randrange(1, 2500, 5)
+        else:
+            balance = rng.randrange(0, 2500, 5)
         state = (
             "Account review: the ledger balance is {:,} units. The rule is that an "
             "account is flagged only when the balance is negative.".format(balance)
         )
     else:
-        missing = rng.choice([0, 1, 2, 3])
-        flagged = missing > 0
+        missing = rng.randrange(1, 4) if flagged else 0
         state = (
             "Document review: {} of the four required documents are missing. The rule "
             "is that a file is flagged when any required document is missing."
@@ -232,7 +242,14 @@ def _flag(index: int, rng: random.Random) -> dict[str, Any]:
 
 
 def _severity(index: int, rng: random.Random) -> dict[str, Any]:
-    """A rubric that maps a count to an ordinal level."""
+    """A rubric that maps a count to an ordinal level.
+
+    The rubric reads 1-5 for a human, and the label is the **level index** 0-4,
+    because that is this project's score convention: `data.sources.invalid_score_labels`
+    requires a label on `0 .. n_levels-1`, and a 1-based label is silently dropped as
+    out of range. The first version of this family emitted 1-5 and lost ten of its
+    fifty-one items that way.
+    """
     checks = rng.randrange(0, 8)
     if checks == 0:
         level = 1
@@ -257,7 +274,7 @@ def _severity(index: int, rng: random.Random) -> dict[str, Any]:
             "instructions": "What severity level does the rubric assign?",
             "criteria": ["1", "2", "3", "4", "5"],
         },
-        "label": float(level),
+        "label": float(level - 1),
         "source": SOURCE,
         "split": "test",
         "group": "severity",
@@ -323,8 +340,15 @@ def check_item(item: dict[str, Any]) -> list[str]:
             problems.append(f"noul label {label!r} is not yes/no")
     elif kind == "score":
         levels = question.get("criteria") or []
-        if str(int(label)) not in [str(level) for level in levels]:
-            problems.append(f"score label {label!r} is not one of the levels")
+        try:
+            index = int(label)
+        except (TypeError, ValueError):
+            problems.append(f"score label {label!r} is not numeric")
+        else:
+            if not 0 <= index <= len(levels) - 1:
+                problems.append(
+                    f"score label {label!r} is not a level index on 0..{len(levels) - 1}"
+                )
     else:
         problems.append(f"unknown question type {kind!r}")
     return problems
