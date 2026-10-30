@@ -1,0 +1,69 @@
+{
+  "benchmark_revision": "v1.7.3",
+  "fetched": "2026-10-30",
+  "n_ranked": 270,
+  "per_item_outcomes_present": false,
+  "per_task_artifact": {
+    "by_tier": {
+      "easy": 48,
+      "hard": 111,
+      "standard": 72
+    },
+    "note": "Outcome codes: c correct, w wrong, f failed (scored wrong), n not attempted. Topic = item family. Per-task outcomes only for public items; held-out and imported items only in aggregates. Tier 'standard' and 'judge' accuracies are over all items of the tier (failures count as wrong), as in the scores.",
+    "revision": "v1.3.0",
+    "source_url": "https://raw.githubusercontent.com/fstandhartinger/jevbench/main/results/v1.2/jevbench-v1.2-per-task.json",
+    "tasks": 231
+  },
+  "protocol": "jevbench::v1.7",
+  "roster_count": 290,
+  "rows": {
+    "best_open_weights": {
+      "class": "Jev-compatible decision model",
+      "jevbench_score": 73.78,
+      "key": "h2o-lightning-4b",
+      "open_hard_choice_accuracy": 0.698,
+      "open_hard_choice_n": 68,
+      "open_intelligence": 61.05,
+      "openness": "open weights",
+      "rank": 11
+    },
+    "jev-1.13.0": {
+      "class": "jev",
+      "jevbench_score": 71.45,
+      "key": "jev-1.13.0",
+      "open_hard_choice_accuracy": 0.7169,
+      "open_hard_choice_n": 68,
+      "open_intelligence": 65.6,
+      "openness": "no",
+      "rank": 21
+    },
+    "jev-1.14.0": {
+      "class": null,
+      "jevbench_score": 70.15,
+      "key": "jev-1.14.0",
+      "open_hard_choice_accuracy": 0.7358,
+      "open_hard_choice_n": 68,
+      "open_intelligence": 66.09,
+      "openness": null,
+      "rank": 29
+    },
+    "leaderboard_top": {
+      "class": null,
+      "jevbench_score": 78.48,
+      "key": "singularity-super-decider",
+      "open_hard_choice_accuracy": 0.7735,
+      "open_hard_choice_n": 68,
+      "open_intelligence": 78.81,
+      "openness": null,
+      "rank": 1
+    }
+  },
+  "sample": {
+    "open": 300,
+    "published_open": 300,
+    "sealed": 1200,
+    "total": 1500
+  },
+  "source_sha256": "95251a6582156ce62f01ffd8810eda48c034f52420ba17ea6d378952f03b88fd",
+  "source_url": "https://raw.githubusercontent.com/fstandhartinger/model-market-comparison/main/data/raw/benchmarks/jevbench/v1.7/jevbench-v1.7.3-results.json"
+}
