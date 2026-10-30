@@ -305,6 +305,48 @@ head and the native readout. Whatever limits this benchmark at 4B is in the
 model's ability to reason over a long composite state, not in how we render the
 prompt. That is worth knowing before anyone spends a training run on it.
 
+## The long state is the wall — measured, not asserted
+
+The paragraph above was a hypothesis when it was written. It is now a
+measurement: the per-item predictions (`--dump-predictions`) joined to each
+item's state length, for the trained head and for the backbone's zero-shot
+native readout on the **same checkpoint** (s123, epoch 10).
+
+| hard-tier state length | n | trained head | native readout |
+|---|---:|---:|---:|
+| 350 – 987 chars | 27 | **0.630** | **0.667** |
+| 995 – 1,493 | 27 | 0.407 | 0.407 |
+| 1,553 – 8,377 | 27 | 0.296 | 0.259 |
+| 8,566 – 14,986 | 30 | **0.300** | **0.367** |
+
+Both scorers lose about 30 points from the shortest quartile to the longest, at
+the same places. The longest state in the tier is ~3.7k tokens, inside the
+16,384 window, so this is not truncation, and the two scorers build their
+prompts differently — so it is not the prompt either.
+
+Two other cuts rule out the explanations that would have been cheaper to fix:
+
+- **Structured states are not the problem.** Hard-tier accuracy is 0.486 on the
+  35 dict-state items against 0.368 on the 76 string-state ones. The rendering
+  works, and the structured items are simply shorter.
+- **Option count is not the problem.** Hard items with 2–4 options score 0.444;
+  5–10 score 0.238.
+
+**And the head is not the problem either.** Swapping the tower head for the
+cross-encoder raises the board a lot and this tier not at all:
+
+| model | easy (48) | hard (111) | original (72) | overall (231) |
+|---|---:|---:|---:|---:|
+| 4B tower, epoch 10 | 0.792 | 0.405 | 0.486 | 0.511 |
+| 0.6B cross-encoder, epoch 1 | 1.000 | 0.396 | 0.611 | 0.589 |
+| 4B cross-encoder, epoch 1 | 1.000 | **0.405** | 0.722 | 0.628 |
+
+Three architectures, a fifth of the parameters in one of them, and the hard tier
+lands on the same number to three digits while the rest of the board moves 12 to
+24 points. Whatever closes the gap to the reference has to act on how much of a
+long state the backbone uses — training on long states, or compressing and
+retrieving over them — and no head, prompt or calibration change will.
+
 ## The reference numbers measure something other than accuracy
 
 The goal quotes "teacher 84.9, best open student 74.1" as JevBench references, and
