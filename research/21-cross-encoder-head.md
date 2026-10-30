@@ -32,6 +32,13 @@ replaces: choice goes +20.9 pp at 0.6B and +33 pp at 4B. The 4B cross-encoder's
 epoch **10** (0.626). The effect grows with the backbone rather than washing out,
 which is the opposite of what a rank-limited scorer would do.
 
+The 0.6B row replicates on a second seed: 0.6048 (s123) against **0.6028** (s42)
+overall, choice 0.5718 against 0.5648, noul 0.7302 against 0.7184, score 0.4056
+against 0.4520. Two seeds, 0.2 pp apart on the aggregate. The per-type counts
+differ slightly between the two draws (choice 6,887 against 6,900) because the
+eval mixture is sampled, so these are not identical item sets — which is the
+right caveat on a 0.2 pp agreement, not a reason to distrust it.
+
 `score` moves by much less (0.337 → 0.406 at 0.6B, 0.438 → 0.477 at 4B) and at
 4B epoch 1 it is still below the tower's epoch-10 score (0.477 against 0.547).
 The score head is untouched by this change and needs its epochs.
@@ -62,6 +69,25 @@ for the 4B tower and 4.9× for the 0.6B cross-encoder — measured on H100, whic
 the faster card, so the negative result only strengthens on the A100 the clause
 names. `bench_latency.py` gained `--choice-mode` so this is measurable at all
 (`#194`).
+
+## It widens the gap clause 5 cares about
+
+Clause 5 also asks for the 0.6B to sit within 3 pp of the 4B, and the cross-encoder
+moves that the wrong way. At matched epoch 1 on the same split:
+
+| | 0.6B | 4B | gap | allowance |
+|---|---:|---:|---:|---:|
+| tower (0.6B weighted, 4B `last`) | 0.4794 | 0.5399 | **6.1 pp** | 3 pp |
+| **cross-encoder** | **0.6048 / 0.6028** | **0.7231 / 0.7190** | **11.6–11.8 pp** | 3 pp |
+
+So the head that lifts the board by 12.5 points at 0.6B lifts it by 18.3 at 4B,
+and the capacity gap doubles from 6.1 to about 11.7 points. That is the expected
+shape of a change that lets the option interact with the state through the full
+depth: more capacity to use, and more of it at the larger size. It does not make
+clause 5's accuracy half reachable, and it is worth saying plainly that the two
+clauses are now further apart than they were before this change — the arm that
+meets clause 1 on the aggregate is not the arm that meets clause 5, and the
+cross-encoder is not the arm that meets either clause at 0.6B.
 
 ## On held-out data it does not move the hard tier
 
@@ -128,13 +154,14 @@ either way.
 
 ## Caveats
 
-- **One seed except where stated.** The 0.6B replication (seed 42) was still
-  training when this was written; the 4B row carries both seeds at epoch 1
-  (0.7231 and 0.7190, 0.4 pp apart).
-- **The schedules differ.** The tower baselines ran 10 epochs; both cross-encoder
-  arms run 5 (0.6B) or 5 (4B) in the runs quoted, so "epoch 1" is not the same
-  point on the two learning-rate curves. The comparison is at matched epoch and
-  matched data, not at matched schedule.
+- **Two seeds at 0.6B, two at 4B, all at epoch 1.** The 0.6B rows are 0.6048 and
+  0.6028, the 4B rows 0.7231 and 0.7190. The per-type counts differ by up to 13
+  items between seeds because the eval mixture is sampled, so the comparison
+  across seeds is not on identical items.
+- **The schedules differ.** The tower baselines ran 10 epochs; the 0.6B
+  cross-encoder arms are **one-epoch runs**, and the 4B arms run 5. So "epoch 1"
+  is the whole run at 0.6B and the first of five at 4B, and the comparison is at
+  matched epoch and matched data, not at matched schedule.
 - **The 0.6B JevBench row is one epoch**, so it is a floor, not a ceiling.
 - **Nothing here says the head helps `score` or `noul`**; the change is confined
   to choice, and the numbers above show it.
