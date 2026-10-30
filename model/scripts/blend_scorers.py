@@ -118,7 +118,10 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
         if part.strip()
     )
     rank = int(args.rank or cfg.get("rank") or 128)
-    noul_rank = int(args.noul_rank or cfg.get("noul_rank") or rank)
+    # Same resolution as `train_multitask`: an absent key means the linear noul
+    # head, not "the same width as rank". Defaulting to `rank` builds an MLP head
+    # for every 0.6B checkpoint, whose noul head is `noul_head.proj.{weight,bias}`.
+    noul_rank = args.noul_rank if args.noul_rank is not None else cfg.get("noul_rank")
     mlp_layers = int(args.mlp_layers if args.mlp_layers is not None else cfg.get("mlp_layers", 0))
 
     if args.data_root:
