@@ -158,6 +158,24 @@ not a configuration one, and further epochs spent on the in-distribution mixture
 
 ## Calibration on the best checkpoint
 
+> **Read this section as history.** Every number below was measured on the
+> **pre-repair** corpus, where the six-level (STS-B) eval split still carried 219 rows
+> whose gold label was never observed (`#177`). Two of its conclusions were overtaken
+> once those rows were dropped, and the current numbers are in the goal table and
+> `research/21`:
+>
+> - the six-level scale's QWK of 0.287 was those rows, not the model — it reads
+>   **0.9222** on the tower and **0.8897 / 0.8888** on the cross-encoder at epochs 5
+>   after the repair (`#185` establishes the artefact);
+> - so the "STS-B train/test mismatch" argument below describes the artefact: the
+>   56 % level-0 share in that "test" split was mostly the withheld-label rows, not a
+>   property of the benchmark;
+> - the mixture is **0.7916** (tower ep10) and **0.7951 / 0.7844** (cross-encoder ep5,
+>   both seeds), not the 0.6562 quoted below.
+>
+> What survives: the four-level group is a genuine model weakness, and it is the
+> scale still binding clause 2's QWK half.
+
 Full 13,444-item eval, epoch 10, fitted on one half and reported on the other. "Map (CV)" picks
 the map's regularisation by an inner cross-validation on the fitting half, so the number is not
 selected on the data it is reported on:
@@ -224,10 +242,19 @@ for level 0 to be rare, and then scored on a set where it dominates. **Its QWK o
 measures the benchmark's own train/test mismatch, not the model**, and its 500 items are 27% of
 the score eval.
 
+*Correction (`#185`): that reading was wrong about which side was broken. The 500-row "test"
+split contained 219 rows whose gold label was never observed, scored as the bottom level; dropping
+them leaves 281 rows, matches the train marginal, and the scale reads 0.92. The mismatch was the
+withheld labels, not the benchmark's split — which is why `#177` drops them at load time.*
+
 That is the strongest statement this note can make about clause 2: on the two sources whose
 distributions match and which are real human judgements (sst5 0.832, yelp 0.880), the model is at
 or near the 0.85 bar; the aggregate is pulled down by a benchmark that cannot be scored this way,
 and by the four-level group where the bottom-level aversion below is a genuine model weakness.
+
+*Post-repair, only the second half of that sentence is true: the six-level scale scores 0.89–0.92
+and the mixture 0.79–0.80, and what pulls it down is the four-level group and the five-level group
+sitting at 0.83.*
 
 **But fixing STS-B alone would not clear the bar.** Dropping it leaves 0.827 on the 1,113
 five-level items and 0.631 on the 218 four-level ones — a mixture of roughly 0.80 against a 0.85
