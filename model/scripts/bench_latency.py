@@ -103,6 +103,11 @@ def build_model(args: argparse.Namespace, cfg: dict, device: str):
                 flush=True,
             )
             readout = inferred
+    # The two choice heads cost different things: the tower encodes each option
+    # on its own, the cross-encoder repeats the state in front of every option.
+    # Timing one and reporting it as the model's latency is how a mode's cost
+    # goes unmeasured, so the flag is explicit and recorded in the JSON.
+    choice_mode = args.choice_mode or cfg.get("choice_mode") or "tower"
     model = DecisionModel(
         backbone=backbone,
         tokenizer=tokenizer,
@@ -111,6 +116,7 @@ def build_model(args: argparse.Namespace, cfg: dict, device: str):
         gpu_config=gpu_config,
         shared_attention=cfg.get("shared_attention", False),
         readout=readout,
+        choice_mode=choice_mode,
         readout_n=cfg.get("readout_n", 4),
         lora_layers=lora_layers,
         lora_rank=cfg.get("lora_rank", 16),
@@ -168,6 +174,12 @@ def main() -> int:
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--load-heads", type=Path, default=None)
     parser.add_argument("--readout", default=None)
+    parser.add_argument(
+        "--choice-mode",
+        choices=("tower", "cross_encoder"),
+        default=None,
+        help="Choice head shape; defaults to the config, then to `tower`.",
+    )
     parser.add_argument("--rank", type=int, default=None)
     parser.add_argument("--lora-layers", type=int, default=None)
     parser.add_argument("--max-length", type=int, default=None)
@@ -205,6 +217,17 @@ def main() -> int:
         # The first calls pay compilation and CUDA-graph capture.  Three warmup
         # iterations measure the compiler, not the model.
         warmup = max(warmup, 10)
+        # ``dynamic=False`` asks for one graph per shape, so a run over several
+        # option counts needs several captures per compiled frame.  Torch's
+        # default per-frame limit is 8; past it dynamo stops compiling and the
+        # later shapes are measured eager while still being reported as
+        # compiled.  On the 0.6B that inflated 256 options from 67.5 ms to
+        # 91.9 ms, which is enough to move a verdict against a 100 ms bar.
+        # Raised here rather than left to the caller because the flag that
+        # needs it is this script's own.
+        torch._dynamo.config.recompile_limit = max(
+            getattr(torch._dynamo.config, "recompile_limit", 8), 256
+        )
         # Latency here is launch-bound: the per-call cost is roughly flat from 2
         # to 20 options, which is the arithmetic being a small part of it.
         # CUDA graphs collapse the per-layer kernel launches, which is the only
@@ -229,6 +252,7 @@ def main() -> int:
         "state_tokens": len(model.tokenizer(STATE).input_ids),
         "max_length": model.max_length,
         "readout": getattr(model, "readout_mode", None),
+        "choice_mode": getattr(model, "choice_mode", "tower"),
         "compiled": bool(args.compile),
         "warmup": warmup,
         "repeats": args.repeats,
