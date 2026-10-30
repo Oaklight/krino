@@ -100,6 +100,34 @@ items are simply shorter), and option count is not (2–4 options 0.444, 5–10
 0.238). Whatever limits clause 4 is how much of a long state the backbone uses,
 and no head, prompt or calibration change addresses it.
 
+## The 4B arm collapses at epoch 2
+
+The epoch-1 numbers above are the highest this project has measured and they do not survive another
+epoch. The same run, at epoch 2:
+
+| | overall | choice | noul | score | eval loss |
+|---|---:|---:|---:|---:|---:|
+| 4B xenc, epoch 1 | **0.7231** | 0.721 | 0.822 | 0.477 | 0.727 |
+| 4B xenc, epoch 2 | **0.3761** | 0.292 | 0.555 | 0.229 | 1.362 |
+| 4B tower, epoch 2 | 0.5396 | 0.423 | 0.768 | 0.389 | — |
+
+Training loss kept falling (0.969 → 0.926) while eval loss more than doubled. That is not a
+learning-rate blow-up of the kind a diverging loss curve shows; it is a head that has stopped
+discriminating — choice accuracy is at chance for the option counts in the set — while its training
+objective improves. The 0.6B collapse earlier in the day had the same shape at `lr=1e-3` (0.4794 →
+0.3585 at epoch 2) and was fixed by dropping to `3e-4`; the 4B arm **was** already at `3e-4`, so the
+same fix is not available at this size.
+
+The tower, at the same LR and the same data, does not collapse at epoch 2. So the instability is a
+property of the cross-encoder head's training, not of the schedule — the most likely mechanism being
+that each option's prompt repeats the state, so the LoRA adapter can fit training items through the
+state alone while the linear read-out sees a representation that does not transfer.
+
+**What this means for the numbers above:** the epoch-1 figures are measured and reproducible, but
+they are one epoch of a run that does not stay there. Until an arm trains stably for several epochs,
+the cross-encoder's headline should be quoted as "epoch 1, before it diverged", not as the model's
+accuracy. The 0.6B JevBench row is unaffected — that run is one epoch by construction.
+
 ## Caveats
 
 - **One seed per arm.** The 0.6B replication (seed 42) and the 4B second seed were
