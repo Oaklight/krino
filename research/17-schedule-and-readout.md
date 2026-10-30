@@ -158,6 +158,24 @@ not a configuration one, and further epochs spent on the in-distribution mixture
 
 ## Calibration on the best checkpoint
 
+> **Read this section as history.** Every number below was measured on the
+> **pre-repair** corpus, where the six-level (STS-B) eval split still carried 219 rows
+> whose gold label was never observed (`#177`). Two of its conclusions were overtaken
+> once those rows were dropped, and the current numbers are in the goal table and
+> `research/21`:
+>
+> - the six-level scale's QWK of 0.287 was those rows, not the model — it reads
+>   **0.9222** on the tower and **0.8897 / 0.8888** on the cross-encoder at epochs 5
+>   after the repair (`#185` establishes the artefact);
+> - so the "STS-B train/test mismatch" argument below describes the artefact: the
+>   56 % level-0 share in that "test" split was mostly the withheld-label rows, not a
+>   property of the benchmark;
+> - the mixture is **0.7916** (tower ep10) and **0.7951 / 0.7844** (cross-encoder ep5,
+>   both seeds), not the 0.6562 quoted below.
+>
+> What survives: the four-level group is a genuine model weakness, and it is the
+> scale still binding clause 2's QWK half.
+
 Full 13,444-item eval, epoch 10, fitted on one half and reported on the other. "Map (CV)" picks
 the map's regularisation by an inner cross-validation on the fitting half, so the number is not
 selected on the data it is reported on:
@@ -224,10 +242,19 @@ for level 0 to be rare, and then scored on a set where it dominates. **Its QWK o
 measures the benchmark's own train/test mismatch, not the model**, and its 500 items are 27% of
 the score eval.
 
+*Correction (`#185`): that reading was wrong about which side was broken. The 500-row "test"
+split contained 219 rows whose gold label was never observed, scored as the bottom level; dropping
+them leaves 281 rows, matches the train marginal, and the scale reads 0.92. The mismatch was the
+withheld labels, not the benchmark's split — which is why `#177` drops them at load time.*
+
 That is the strongest statement this note can make about clause 2: on the two sources whose
 distributions match and which are real human judgements (sst5 0.832, yelp 0.880), the model is at
 or near the 0.85 bar; the aggregate is pulled down by a benchmark that cannot be scored this way,
 and by the four-level group where the bottom-level aversion below is a genuine model weakness.
+
+*Post-repair, only the second half of that sentence is true: the six-level scale scores 0.89–0.92
+and the mixture 0.79–0.80, and what pulls it down is the four-level group and the five-level group
+sitting at 0.83.*
 
 **But fixing STS-B alone would not clear the bar.** Dropping it leaves 0.827 on the 1,113
 five-level items and 0.631 on the 218 four-level ones — a mixture of roughly 0.80 against a 0.85
@@ -279,18 +306,56 @@ better than uniform and short of any demanding skill threshold.
 
 ## Goal status
 
+Rewritten for the cross-encoder arm (`research/21`, `#192`). That arm changes the
+answer to clauses 1, 3 and 5, so the table below is the state after it; the
+rule-based figures this table used to carry are kept only where they are still the
+best measurement of their clause, and they are labelled as superseded where not.
+
 | clause | state |
 |---|---|
-| 1. accuracy ≥ 65% | **met, two seeds at matched training length**: epoch-5 checkpoints give 70.12% (seed 123) and 71.88% (seed 42) with the blend rule from `research/19`, and 68.69% / 70.66% with the routing rule this note describes. The head alone is 62.16% / 64.18% — **under the bar on both seeds** — so the clause is met by the rule, not the head. Epoch 10 on seed 123 reaches 74.75%; the epoch-10 seed-42 checkpoint is still training |
-| 2. ECE ≤ 0.05, Brier/QWK ≥ 0.85 | **ECE met on every type** (0.0264 / 0.0137 / 0.0289 with the map, CV-selected). **QWK: the six-level scale passes on two seeds once the STS-B withheld labels are dropped** (0.9222 / 0.9181 against 0.85, from 0.2654 / 0.2969 — `research/18`, measured on the cluster-disjoint split at ep5). The **aggregate does not**: 0.7916 / 0.8136, and the binding scale is now the **four-level** one at 0.4196 / 0.5031 (`typed_decisions` 161 + synthetic 57). The five-level scale is 0.8314 / 0.8481. The posterior-mean decoder and the ordinal-median decoder are both withdrawn. The **Brier criterion is unsatisfiable as written** |
-| 3. flip ≤ 5%, >20 options within 5 pp | flip **met** (0/1,500, #182); count **fails** — −8.39 pp with the blend rule (`research/19`), −12.08 routing, −20.03 head. It passed at epoch 5 (3.6 pp) and fails at epoch 10 because banking77 improves faster than the short buckets |
-| 4. JevBench vs 84.9 / 74.1 | **not met** — 0.6475 (blend) / 0.6547 (native readout) on the 139 choice items; hard tier 0.37-0.49 and **seed-dependent**, so it is not a stable capability constant as this note first implied. The items are **provably held out** (`research/13`, zero overlap with 1.56M training items) and the two prompt-format hypotheses for the hard tier are measured and null (2 items on 139) |
-| 5. ≤100 ms at 256 options; 0.6B within 3 pp | **not met** — 183.6 ms at 256 options even compiled (#181). The accuracy half now looks lost rather than unmeasured: the 0.6B is ~20 pp behind the 4B at epoch 6-7 against a 3 pp allowance |
+| 1. accuracy ≥ 65% | **met, by the head, on two seeds, at every epoch.** The 4B cross-encoder reaches **0.7626** (s123) and **0.7613** (s42) at epoch 5 on the 13,444-item cluster-disjoint eval, and the seeds agree to 0.41, 0.04, 0.07 and 0.13 points at epochs 1, 3, 4 and 5. Both arms were still improving when they stopped (eval loss 0.727 → 0.590 and 0.752 → 0.599), so 0.7626 is a point on a rising curve, not a ceiling. The routing and blend rules from `research/19` are **superseded**: they were what met this clause when the head alone was 62.16 % / 64.18 %. |
+| 2. ECE ≤ 0.05, Brier/QWK ≥ 0.85 | **The ECE half is met at the reported checkpoint; the QWK half is not.** Calibrated at epoch 5 on both seeds, 13,444 items, temperature fitted on one half and reported on the other: noul **0.0312 / 0.0278**, choice **0.0130 / 0.0181**, score **0.0461 / 0.0220** (s123 / s42) — all three primitives under 0.05 on both seeds. Every earlier reading was at epoch 3, where score was 0.1024 / 0.0259; that checkpoint-specific outlier is why this row used to say the score primitive was unmeasurable. QWK improves with training but still fails the 0.85 bar on the mixture (**0.7951 / 0.7844**), the five-level scale (0.8294 / 0.8324) and the four-level scale (0.4273 / 0.3291, n = 233); the six-level scale now clears it (0.8897 / 0.8888). The four post-hoc levers are measured null (`research/18`) and the ordinal-loss route is closed (`research/11`). The **Brier criterion is unsatisfiable as written** — score Brier is 0.5451, lower is better. |
+| 3. flip ≤ 5%, >20 options within 5 pp | flip **met, structurally** — 0 flips and 0.0000 total-variation on 6,900 cross-encoder choice items and 1,856 score items under both probes. Count **fails, and the arm that meets clause 1 is not the closest to it**: on the matched 300-item banking77 sweep, K=4 → K=80 costs the cross-encoder **−31.7 pp** at epoch 3 (tower −57.3) and **−34.0 pp** at epoch 5 (tower −47.3), while the tower's ten-epoch run reaches **−12.7 pp**. The cross-encoder needs less training to reach a given large-K accuracy, but its slope does not flatten as the tower's does, and at epoch 10 the tower leads it at every K (0.8500 against 0.5067 at eighty). The 0.6B at its own best checkpoint decays **−17.0 pp** (0.9633 → 0.7933), so the clause is not escapable by size either; its chance-corrected curve keeps 0.951 → 0.791. |
+| 4. JevBench vs 84.9 / 74.1 | **not met, and neither side of the comparison is current.** The references the clause names (84.9 / 74.1) do not appear on the live board: under `jevbench::v1.7` Jev 1.13.0 sits at 71.45 composite / 65.60 open intelligence (rank 21 of 270), and the best open-weights row at 73.78 (`#197`, snapshot with source sha256 committed). The 4B cross-encoder spans 0.405 (ep1) to 0.450 (ep5) on the hard tier and 0.615-0.632 overall; **no paired comparison on 111 items clears chance** (tower vs ep5 16/21, p = 0.51; ep3 vs ep5 11/12, p = 1.00), and at the measured 36 discordant items the smallest difference that tier detects at 80 % power is **15.7 pp** — a ten-point gain has 38 % power (`#202`). Two mechanisms are measured on other instruments: the corpus contains 25 long-state choice items in 172,262 (`research/13`), and the tower's read-out loses 24 pp to 1,400 tokens of irrelevant padding where the cross-encoder loses 1 (`research/22`). The published set cannot be enlarged — `datasets/public/` ships 231 items and the hard tier is 111 of 220 — so closing this needs a held-out set of roughly 255 paired items, authored rather than found (`#202`). |
+| 5. ≤100 ms at 256 options; 0.6B within 3 pp | latency **met by the 0.6B tower, compiled**: 55.5 ms on the A100 the clause names and 67.4 ms on H100 (eager misses at 126.6 / 102.9). The 4B misses at every setting (183.6 compiled). Accuracy half **fails at nearly three times the allowance**: on matched 10-epoch schedules the 4B reaches **0.6871** and the 0.6B **0.6023** (its last two epochs 0.5971, 0.6023), a gap of **8.5 pp** against an allowance of 3. On the cross-encoder the gap is wider still: 0.6048 / 0.6028 against 0.7231 / 0.7190 at matched epoch 1, 11.6-11.8 pp. The gap is also option-count dependent: on the matched banking77 sweep the two towers are **1.3 pp apart at four options and 5.7 at eighty**, so the 3 pp allowance holds at short lists and fails at long ones. |
 
-## Clause 3's count half fails on the best checkpoint, and it got worse as the model improved
+## Four decisions the measurements cannot make
+
+Each of these is blocked on a choice of definition or scope rather than on more
+experiments, and each names the measurement that makes it a choice:
+
+1. **What "Brier ≥ 0.85" means** (clause 2). As written the inequality is satisfied by
+   a model worse than uniform and failed by a perfect one (the arithmetic is in the
+   section above). The three coherent readings score 0.5451 (Brier itself, lower
+   better), 0.455 (1 − Brier) and ~0.32 (Brier skill against the ~0.80 uniform
+   baseline) on the reported arm, so the answer depends entirely on which was intended.
+2. **Whether to author a larger held-out set** (clause 4). The published text stops at
+   231 items and the hard tier is 111 of 220, which puts the detection floor at
+   15.7 pp (`#202`). A ten-point claim needs roughly 255 paired items — the same size
+   as the whole public release. Author them, or report the 27–39 point deficit and
+   state that *progress* is not measurable on this tier.
+3. **Whether to change the score mixture** (clause 2's QWK). The binding scale is the
+   four-level one, at 0.33–0.43 on 233 items, and the four post-hoc levers moved it by
+   less than 0.02. The one untried lever is supply: `r2_reranker0.6b_scorebalanced.yaml`
+   raises caps on existing ordinal data and adds three ordinal sources that are not
+   materialised. Running it changes the training mixture every clause is measured on,
+   so it invalidates the current numbers and needs re-measuring — a scope decision, not
+   an experiment.
+4. **Whether to keep pushing the 0.6B** (clause 5). At convergence it is 8.5 pp from the
+   4B on the aggregate and 5.7 pp at eighty options, and no measured lever closes that:
+   epochs plateaued (0.5971 → 0.6023 over the last two), the gap is not a read-out
+   artefact, and distillation or a larger "small" model has not been tried. Either
+   accept the clause as failed or fund one of those.
+
+## Clause 3's count half fails on the tower at epoch 10, and it got worse as that model improved
 
 This needs stating plainly because an earlier note (#182) recorded the count half as passing, and
-that was true only for the weaker arm it measured. On the epoch-10 checkpoint:
+that was true only for the weaker arm it measured. The matched sweep in `research/21` is the
+measurement to read for the head-shape question — at epoch 3 the cross-encoder costs −31.7 pp from
+K=4 to K=80 against the tower's −57.3, and at epoch 5 it is −34.0 against −47.3 — and the numbers
+below are the *bucket* comparison on the tower at epoch 10, which mixes benchmarks and is kept here
+because the widening of the gap as that model trained is its own finding. On the epoch-10
+checkpoint:
 
 | choice, epoch 10 | n | accuracy |
 |---|---:|---:|

@@ -1,0 +1,94 @@
+{
+  "checkpoint": "/home/pding/projects/open-decisions/model/checkpoints/arch_4b_xenc_split138_s123/epoch_005.pt",
+  "config": "model/configs/r2_reranker4b.yaml",
+  "model": null,
+  "seed": 42,
+  "overall": {
+    "accuracy": 0.6147186147186147,
+    "correct": 142,
+    "total": 231,
+    "failed": 0
+  },
+  "by_tier": {
+    "easy": {
+      "accuracy": 0.9791666666666666,
+      "correct": 47,
+      "total": 48
+    },
+    "hard": {
+      "accuracy": 0.45045045045045046,
+      "correct": 50,
+      "total": 111
+    },
+    "original": {
+      "accuracy": 0.625,
+      "correct": 45,
+      "total": 72
+    }
+  },
+  "by_type": {
+    "choice": {
+      "accuracy": 0.6474820143884892,
+      "correct": 90,
+      "total": 139
+    },
+    "noul": {
+      "accuracy": 0.5945945945945946,
+      "correct": 44,
+      "total": 74
+    },
+    "score": {
+      "accuracy": 0.4444444444444444,
+      "correct": 8,
+      "total": 18
+    }
+  },
+  "by_tier_type": {
+    "easy": {
+      "choice": {
+        "accuracy": 0.9722222222222222,
+        "correct": 35,
+        "total": 36
+      },
+      "noul": {
+        "accuracy": 1.0,
+        "correct": 12,
+        "total": 12
+      }
+    },
+    "hard": {
+      "choice": {
+        "accuracy": 0.43283582089552236,
+        "correct": 29,
+        "total": 67
+      },
+      "noul": {
+        "accuracy": 0.5,
+        "correct": 19,
+        "total": 38
+      },
+      "score": {
+        "accuracy": 0.3333333333333333,
+        "correct": 2,
+        "total": 6
+      }
+    },
+    "original": {
+      "noul": {
+        "accuracy": 0.5416666666666666,
+        "correct": 13,
+        "total": 24
+      },
+      "choice": {
+        "accuracy": 0.7222222222222222,
+        "correct": 26,
+        "total": 36
+      },
+      "score": {
+        "accuracy": 0.5,
+        "correct": 6,
+        "total": 12
+      }
+    }
+  }
+}
