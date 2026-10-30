@@ -968,6 +968,7 @@ def train_multitask(
                     f"realised K mean {aug_stats.realised_mean:.1f} max "
                     f"{aug_stats.realised_max}, target mean {aug_stats.target_mean:.1f}, "
                     f"under-filled {aug_stats.under_filled}, "
+                    f"skipped-long-option {aug_stats.skipped_long_option}, "
                     f"teacher_probs dropped {aug_stats.teacher_probs_dropped})",
                     flush=True,
                 )

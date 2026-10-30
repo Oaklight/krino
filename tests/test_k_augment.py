@@ -397,3 +397,60 @@ def test_shrink_leaves_non_choice_and_label_mismatched_items_alone():
 
     assert shrink(noul, 1, random.Random(0)) is noul
     assert shrink(missing, 4, random.Random(0)) is missing
+
+
+def test_pool_skips_option_texts_longer_than_the_cap():
+    """A paragraph is not a distractor, and beside 79 short ones it is expensive.
+
+    The option encode pads every row to the longest option, so peak memory goes
+    as ``K * L**2``.  codesearchnet's options are whole code bodies and one
+    padded item there carries ~159,000 characters; the first augmented training
+    run OOMed in the attention kernel on exactly that.
+    """
+    short = _choice("c-short", "a", {"a": "alpha", "b": "beta"})
+    long = _choice("c-long", "a", {"a": "x" * 2001, "b": "y" * 2001})
+
+    capped = build_distractor_pool([short, long], max_chars=1000)
+    assert capped["src"] == ["alpha", "beta"]
+
+    uncapped = build_distractor_pool([short, long])
+    assert len(uncapped["src"]) == 4
+
+
+def test_a_document_length_option_is_selected_but_not_padded():
+    words = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta"]
+    items = [_choice("long", "a", {"a": "x" * 2001, "b": "y" * 2001})]
+    for index in range(0, len(words), 2):
+        items.append(
+            _choice(f"short-{index}", "a", {"a": words[index], "b": words[index + 1]})
+        )
+    cfg = KAugmentConfig(fraction=1.0, min_k=8, max_k=8, seed=3, max_option_chars=1000)
+    out, stats = apply_k_augment_with_stats(items, cfg, epoch=0)
+
+    by_id = {item.id: item for item in out}
+    assert len(by_id["long"].question["criteria"]) == 2
+    assert len(by_id["short-0"].question["criteria"]) == 8
+    assert stats.selected == len(items)
+    assert stats.skipped_long_option == 1
+    assert stats.padded == len(items) - 1
+
+
+def test_padding_never_adds_an_option_longer_than_the_cap():
+    cap = 50
+    items = [
+        _choice("short-1", "a", {"a": "alpha", "b": "beta"}),
+        _choice("short-2", "a", {"a": "gamma", "b": "delta"}),
+        _choice("long", "a", {"a": "x" * 80, "b": "y" * 80}),
+    ]
+    cfg = KAugmentConfig(fraction=1.0, min_k=6, max_k=6, seed=4, max_option_chars=cap)
+    out = apply_k_augment(items, cfg, epoch=0)
+
+    added = [
+        text
+        for item in out
+        for key, text in item.question["criteria"].items()
+        if key.startswith("__distractor_")
+    ]
+    assert added, "the two short items should still be padded"
+    assert max(len(text) for text in added) <= cap
+
