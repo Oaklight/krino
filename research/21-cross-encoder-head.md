@@ -89,7 +89,7 @@ clauses are now further apart than they were before this change — the arm that
 meets clause 1 on the aggregate is not the arm that meets clause 5, and the
 cross-encoder is not the arm that meets either clause at 0.6B.
 
-## On held-out data it does not move the hard tier
+## On held-out data it moves the board, and the hard tier moves too
 
 JevBench-public, 231 items, states rendered through the loader (`#180`), LoRA
 applied, same loader for every row:
@@ -99,33 +99,60 @@ applied, same loader for every row:
 | 4B tower, epoch 10 (s123) | 0.792 | 0.405 | 0.486 | 0.511 |
 | 0.6B cross-encoder, epoch 1 | **1.000** | 0.396 | **0.611** | **0.589** |
 | **4B cross-encoder, epoch 1** | **1.000** | **0.405** | **0.722** | **0.628** |
+| **4B cross-encoder, epoch 3** | **1.000** | **0.441** | 0.681 | **0.632** |
 
-The head lifts the board at both sizes — +11.7 pp at 4B, +23.6 pp on the
-`original` tier — and moves the **hard tier by exactly nothing**: 0.405 at 4B
-before the change and 0.405 after it, 0.396 at a fifth of the parameters. Three
-different models, one number to three digits. That is not memorisation: the leakage
-audit (`scripts/check_jevbench_leakage.py`) finds **0 exact duplicates, 0 state
-repeats and 0 near-duplicates above 0.5 shingle containment over 1,562,838
-training items** (max containment 0.001).
+**Correction.** An earlier revision of this note said the change moves the hard
+tier "by exactly nothing" — 0.405 at 4B before the change and 0.405 after it,
+0.396 at a fifth of the parameters, three models on one number. That is what
+epoch 1 said. At epoch 3 the same checkpoint scores **0.441** on the hard tier,
+3.6 points above the tower and above every other arm measured, while the overall
+board moves only 0.4 points (0.628 → 0.632). So the tier is not architecture-
+invariant: the head reaches it, and what reached it was training, not the shape.
+The four models are still within 4.5 points of each other on that column while
+spanning 0.511 to 0.632 overall, so the tier is much less responsive than the
+rest of the board — but "no response" was a one-epoch reading and is withdrawn.
 
-It also does not close the tier. The hard items are a **long-state wall**: split
-into quartiles by state length, both the trained head and the zero-shot native
-readout slide together.
+The leakage audit (`scripts/check_jevbench_leakage.py`) finds **0 exact
+duplicates, 0 state repeats and 0 near-duplicates above 0.5 shingle containment
+over 1,562,838 training items** (max containment 0.001), so none of the movement
+is memorisation.
 
-| hard-tier state length | n | trained head | native readout |
+It also does not close the tier. The hard items are a **long-state wall**, and the
+quartile cut below is recomputed so both architectures are on the same boundaries
+(`scripts/jevbench_quartiles.py`, which prints them):
+
+| hard-tier state length | n | 4B tower, ep10 | 4B cross-encoder, ep3 |
 |---|---:|---:|---:|
-| 350 – 987 chars | 27 | 0.630 | 0.667 |
-| 995 – 1,493 | 27 | 0.407 | 0.407 |
-| 1,553 – 8,377 | 27 | 0.296 | 0.259 |
-| 8,566 – 14,986 | 30 | 0.300 | 0.367 |
+| 350 – 987 chars | 27 | 0.630 | **0.704** |
+| 995 – 1,553 | 28 | 0.393 | 0.393 |
+| 1,583 – 8,619 | 28 | 0.357 | 0.250 |
+| 8,676 – 14,986 | 28 | **0.250** | **0.429** |
+| overall | 111 | 0.405 | 0.441 |
 
-Both lose about 30 points from the shortest to the longest quartile, at the same
-places, on items whose longest state is ~3.7k tokens — inside the 16,384 window,
-so this is not truncation. Structured states are not the problem either (0.486 on
-the 35 dict-state items against 0.368 on the 76 string-state ones; the structured
-items are simply shorter), and option count is not (2–4 options 0.444, 5–10
-0.238). Whatever limits clause 4 is how much of a long state the backbone uses,
-and no head, prompt or calibration change addresses it.
+The tower loses 38 points from the shortest to the longest quartile; the
+cross-encoder loses 27 and not monotonically, dipping in the third quartile and
+recovering in the fourth. With 27–28 items per cell a quartile's standard error is
+about 9 points, so only the tower's Q1-to-Q4 fall is clearly resolvable and the
+cross-encoder's non-monotonicity is not. What the cut does say is where the
+architecture difference lands: **on the longest quartile the cross-encoder is 18
+points ahead** (0.429 against 0.250), which is the quartile a read-out that
+attends over the whole context should lose first.
+
+The earlier version of this table carried a single "trained head" column and a
+native-readout column without naming the checkpoint behind the head, which is why
+the 0.405-invariance claim survived as long as it did. It was the tower.
+
+Neither loss is truncation: the longest state in the tier is ~3.7k tokens, inside
+the 16,384 window. Structured states are not the problem either (0.486 on the 35
+dict-state items against 0.368 on the 76 string-state ones; the structured items
+are simply shorter), and option count is not (2–4 options 0.444, 5–10 0.238).
+Whatever keeps clause 4 out of reach survives both heads and both read-outs, and
+`research/22` isolates part of it: the tower loses 24 points when the same
+question is padded with 1,400 tokens of irrelevant text, and the cross-encoder
+loses 1. So the tower's long-state penalty is at least partly dilution, which is
+the reading that fits it being 18 points behind on the longest quartile — and the
+cross-encoder's remaining 27-point spread over the quartiles is something else,
+on the same items, at the same lengths, with no padding involved.
 
 ## Epoch 2 dips and epoch 3 recovers — the dip is in the adapter, not the head
 
