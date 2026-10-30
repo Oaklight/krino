@@ -242,3 +242,31 @@ def test_committed_file_matches_the_generator():
     committed = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
     generated = list(build_items(per_family=51, seed=20261030))
     assert committed == generated
+
+
+def test_eval_config_scores_the_tracked_file_and_drops_nothing():
+    """The eval config must resolve to the committed file, not a copy beside it.
+
+    `load_source_items` does not dispatch through `LOADERS`; it reads whatever JSONL
+    the source config names, defaulting to `data/benchmarks/<source>.jsonl`. The first
+    scoring run named nothing, found a stale copy at that default path written before
+    the score labels became level indices, and lost ten of the 51 score items to the
+    `0..n_levels-1` check — with the run still reporting a clean score number. This
+    test runs the config's own source entry and requires the whole set back.
+    """
+    import random
+    from pathlib import Path
+
+    import yaml
+
+    from data.sources import load_source_items, resolve_path
+
+    root = Path(__file__).resolve().parents[1]
+    config = yaml.safe_load((root / "model" / "configs" / "eval_authored.yaml").read_text(encoding="utf-8"))
+    source_cfg = config["sources"]["authored_holdout"]
+    assert resolve_path(source_cfg["path"]) == root / "data" / "benchmarks" / "openjev" / "authored_holdout.jsonl"
+
+    train_items, eval_items = load_source_items("authored_holdout", source_cfg, random.Random(42))
+    assert train_items == []  # weight 0: an eval-only set never trains
+    kinds = collections.Counter(item.question["type"] for item in eval_items)
+    assert kinds == {"choice": 153, "noul": 51, "score": 51}
