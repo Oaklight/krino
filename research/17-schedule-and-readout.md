@@ -319,6 +319,34 @@ best measurement of their clause, and they are labelled as superseded where not.
 | 4. JevBench vs 84.9 / 74.1 | **not met, and neither side of the comparison is current.** The references the clause names (84.9 / 74.1) do not appear on the live board: under `jevbench::v1.7` Jev 1.13.0 sits at 71.45 composite / 65.60 open intelligence (rank 21 of 270), and the best open-weights row at 73.78 (`#197`, snapshot with source sha256 committed). The 4B cross-encoder spans 0.405 (ep1) to 0.450 (ep5) on the hard tier and 0.615-0.632 overall; **no paired comparison on 111 items clears chance** (tower vs ep5 16/21, p = 0.51; ep3 vs ep5 11/12, p = 1.00), and at the measured 36 discordant items the smallest difference that tier detects at 80 % power is **15.7 pp** — a ten-point gain has 38 % power (`#202`). Two mechanisms are measured on other instruments: the corpus contains 25 long-state choice items in 172,262 (`research/13`), and the tower's read-out loses 24 pp to 1,400 tokens of irrelevant padding where the cross-encoder loses 1 (`research/22`). The published set cannot be enlarged — `datasets/public/` ships 231 items and the hard tier is 111 of 220 — so closing this needs a held-out set of roughly 255 paired items, authored rather than found (`#202`). |
 | 5. ≤100 ms at 256 options; 0.6B within 3 pp | latency **met by the 0.6B tower, compiled**: 55.5 ms on the A100 the clause names and 67.4 ms on H100 (eager misses at 126.6 / 102.9). The 4B misses at every setting (183.6 compiled). Accuracy half **fails at nearly three times the allowance**: on matched 10-epoch schedules the 4B reaches **0.6871** and the 0.6B **0.6023** (its last two epochs 0.5971, 0.6023), a gap of **8.5 pp** against an allowance of 3. On the cross-encoder the gap is wider still: 0.6048 / 0.6028 against 0.7231 / 0.7190 at matched epoch 1, 11.6-11.8 pp. The gap is also option-count dependent: on the matched banking77 sweep the two towers are **1.3 pp apart at four options and 5.7 at eighty**, so the 3 pp allowance holds at short lists and fails at long ones. |
 
+## Four decisions the measurements cannot make
+
+Each of these is blocked on a choice of definition or scope rather than on more
+experiments, and each names the measurement that makes it a choice:
+
+1. **What "Brier ≥ 0.85" means** (clause 2). As written the inequality is satisfied by
+   a model worse than uniform and failed by a perfect one (the arithmetic is in the
+   section above). The three coherent readings score 0.5451 (Brier itself, lower
+   better), 0.455 (1 − Brier) and ~0.32 (Brier skill against the ~0.80 uniform
+   baseline) on the reported arm, so the answer depends entirely on which was intended.
+2. **Whether to author a larger held-out set** (clause 4). The published text stops at
+   231 items and the hard tier is 111 of 220, which puts the detection floor at
+   15.7 pp (`#202`). A ten-point claim needs roughly 255 paired items — the same size
+   as the whole public release. Author them, or report the 27–39 point deficit and
+   state that *progress* is not measurable on this tier.
+3. **Whether to change the score mixture** (clause 2's QWK). The binding scale is the
+   four-level one, at 0.33–0.43 on 233 items, and the four post-hoc levers moved it by
+   less than 0.02. The one untried lever is supply: `r2_reranker0.6b_scorebalanced.yaml`
+   raises caps on existing ordinal data and adds three ordinal sources that are not
+   materialised. Running it changes the training mixture every clause is measured on,
+   so it invalidates the current numbers and needs re-measuring — a scope decision, not
+   an experiment.
+4. **Whether to keep pushing the 0.6B** (clause 5). At convergence it is 8.5 pp from the
+   4B on the aggregate and 5.7 pp at eighty options, and no measured lever closes that:
+   epochs plateaued (0.5971 → 0.6023 over the last two), the gap is not a read-out
+   artefact, and distillation or a larger "small" model has not been tried. Either
+   accept the clause as failed or fund one of those.
+
 ## Clause 3's count half fails on the tower at epoch 10, and it got worse as that model improved
 
 This needs stating plainly because an earlier note (#182) recorded the count half as passing, and
