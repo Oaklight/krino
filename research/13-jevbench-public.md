@@ -359,16 +359,19 @@ tower ep10 against the cross-encoder at epochs 3 and 4 gives 16/20 and 16/21
 discordant items at **p = 0.62 and 0.51**, and epoch 3 against epoch 4 gives 9/10
 at p = 1.00. The models disagree on a third of the tier and split those
 disagreements evenly, which is what two models of similar quality look like on 111
-items. **This tier cannot resolve a difference below about ten points**, so every
-hard-tier figure in this note is a point estimate with that width and the column
-should be read as "about 0.4, and we cannot tell these models apart on it".
+items. **This tier cannot resolve a difference below sixteen points at 80 % power**
+(`#202` computes it exactly: 15.7 points at the measured 36 discordant items, and a
+ten-point gain has 38 % power), so every hard-tier figure in this note is a point
+estimate with that width and the column should be read as "about 0.4, and we
+cannot tell these models apart on it".
 
 What is left is the mechanism, which does not depend on a significance test:
 `research/22` isolates how much of the deficit is the tower's read-out rather than
 the state — padding the same questions with 1,400 tokens of irrelevant text costs
 the tower 24 points and the cross-encoder 1 — and the corpus audit below says why
-every architecture starts in the same place. Closing clause 4 needs a larger
-held-out set before any model change can be distinguished from noise.
+every architecture starts in the same place. Closing clause 4 needs a held-out set
+of roughly 255 paired items, and `datasets/public/` ships 231 against a hard tier
+that is 111 of 220 — so the set has to be authored, not found (`#202`).
 
 ### What the corpus contains is a long state asked as a noul question, and almost never as a choice
 
