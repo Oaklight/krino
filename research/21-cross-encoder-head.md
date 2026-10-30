@@ -143,13 +143,41 @@ the bar — the same primitive, the same direction, as every earlier checkpoint.
 Score also carries the QWK half: **mixed-scale QWK 0.7062** against 0.85, on
 1,856 items, with MAE 0.6446 and RPS 0.1152.
 
-The QWK number is a single figure. The artifact's `qwk_by_levels` came back empty
-(`qwk_excluded_scales: ['3']` is the one-item three-level scale), so this run did
-not record the per-scale breakdown that `research/18` reads, and **0.7062 should
-not be compared against that note's per-scale numbers** until it is re-run with the
-breakdown. What can be said is that the arm which lifts the board by ten points
-does not lift this clause past its bar, and that the trunk change did reach the
-score head — the QWK is not identical to the tower's.
+Per scale, which is the only way QWK means anything (a QWK is defined within one
+level scale). Both columns are on the **repaired** corpus — `#177` drops the
+STS-B rows whose gold label was never observed, at load time, so this run and the
+"after" column of `research/18` are the like-for-like pair:
+
+| level scale | n | cross-encoder ep3 | tower ep5 (repaired, `research/18`) |
+|---|---:|---:|---:|
+| 4 | 233 | 0.286 | **0.4196** |
+| 5 | 1,121 | 0.739 | **0.8314** |
+| 6 | 500 | 0.828 | **0.9222** |
+| mixed | | 0.7062 | **0.7916** |
+
+**The head change costs the score primitive on every scale.** The cross-encoder is
+13, 9 and 9 points below the tower on the 4-, 5- and 6-level scales and 8.5 points
+below on the mixture. That is the opposite of what its choice-side gains would
+predict, and the mechanism is the shared trunk: the two heads sit on one LoRA
+adapter, so re-aiming the choice objective changes what the score head is asked to
+read.
+
+Two caveats that keep this from being a settled verdict. The cross-encoder column
+is **epoch 3** and the tower's is **epoch 5**, so the arm may still recover; and
+the two runs draw slightly different numbers of score items (1,856 against 1,613
+after the drop), so the 4-level scale is 233 items here against 218 there — small,
+which is exactly why the 4-level scale is the fragile one.
+
+**A correction to two earlier drafts of this section.** I first wrote that the
+artifact had no per-scale breakdown and that 0.7062 could not be compared with
+`research/18` — wrong; the breakdown is in `score_metrics.qwk_by_levels` and the
+empty dict I saw came from my own inspection command filtering by key name. I then
+compared against `research/18`'s *pre-repair* column, which made the cross-encoder
+look 56 points better on the 6-level scale and 8 points better on the mixture;
+that column still carries the fabricated STS-B labels this run's loader drops. Both
+errors were about which slice a number came from, and both are worth naming: the
+per-scale table is only meaningful when the repair state and the epoch are
+matched.
 
 **Clause 3's flip half is confirmed on this arm**: 0 flips and 0.0000
 total-variation on all three probes — 6,900 choice items under an option
