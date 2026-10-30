@@ -346,6 +346,7 @@ def _mock_load_hf_parquet(dataset: str, config: str, split: str):
 
 EXPECTED_TYPES: dict[str, set[str]] = {
     "banking77": {"choice"},
+    "authored_holdout": {"choice", "noul", "score"},
     "sst2": {"noul"},
     "agnews": {"choice"},
     "mnli": {"noul"},
@@ -605,18 +606,18 @@ class TestLoaderRegistry:
             "mmlu", "winogrande", "piqa", "commonsenseqa", "logiqa", "anli", "boolq",
             "quality", "hotpotqa", "drop",
             "helpsteer", "wmt_da", "ultrafeedback",
-            "synthetic", "jevbench",
+            "synthetic", "jevbench", "authored_holdout",
         }
         assert set(pipeline.LOADERS.keys()) == expected
 
     def test_loader_count(self):
-        assert len(pipeline.LOADERS) == 33
+        assert len(pipeline.LOADERS) == 34
 
     def test_load_all_works(self):
         items = pipeline.load_all()
         assert len(items) > 0
         sources = {item.source for item in items}
-        assert len(sources) == 33
+        assert len(sources) == 34
 
     def test_load_all_single_source(self):
         items = pipeline.load_all(["sst2"])
