@@ -285,14 +285,22 @@ The 4B arm's first three epochs, both seeds:
 | s123, epoch 2 | **0.3761** | 0.292 | 0.555 | 0.229 | **1.362** |
 | s123, epoch 3 | **0.7291** | **0.737** | 0.825 | 0.452 | 0.745 |
 | s42, epoch 1 | 0.7190 | — | — | — | 0.752 |
-| **s42, epoch 2** | **0.7174** | — | — | — | 0.741 |
+| s42, epoch 2 | 0.7174 | — | — | — | 0.741 |
+| **s42, epoch 3** | **0.7287** | — | — | — | 0.687 |
 
-**The second seed does not dip.** s42 moves 0.7190 → 0.7174 across the same epoch
-— 0.2 points, in the direction of the training loss (0.9411 → 0.8437), with no
-excursion. So the epoch-2 collapse is a property of one run, not of the arm, and
-two earlier readings of it should be retired together: "the 4B arm collapses at
-epoch 2" (wrong — it recovered), and "the cross-encoder is unstable at epoch 2"
-(also wrong — it is unstable once, on s123, in a way that leaves no trace on s42).
+**The second seed does not dip** — s42 moves 0.7190 → 0.7174 across the epoch where
+s123 lost 35 points, then climbs to 0.7287. So the epoch-2 collapse is a property
+of one run, not of the arm, and two earlier readings of it should be retired
+together: "the 4B arm collapses at epoch 2" (wrong — it recovered), and "the
+cross-encoder is unstable at epoch 2" (also wrong — it is unstable once, on s123,
+in a way that leaves no trace on s42).
+
+**At matched epoch 3 the two seeds agree to 0.04 points** — 0.7291 against 0.7287 —
+on the same split, the same LoRA scope and the same schedule. That is the
+two-seed statement clause 1 rests on, and it holds at the epoch before the seeds'
+first divergence: s123 then gains 1.7 points at epoch 4 (0.7462) while s42 has not
+yet reached that epoch. Whether the epoch-4 gain replicates is the open question,
+not whether the arm is stable.
 
 **On s123, where the excursion lives.** Rebuilding that checkpoint with epoch 2's
 adapter and epoch 1's heads and scoring it: `choice` **0.289**, the same as epoch
