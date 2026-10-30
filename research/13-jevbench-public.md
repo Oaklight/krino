@@ -500,6 +500,44 @@ so it is not a yardstick for ours. Our hard-tier choice accuracy is **0.373-0.49
 in our harness**, full stop, and no statement about how that compares to the
 untrained base on the board's terms is available.
 
+### The reference pair is two protocol versions old, and the item-matched table cannot be refreshed
+
+The goal quotes "teacher 84.9, best open student 74.1". **Neither number appears on
+the live board.** Checked 2026-10-30 against `jevbench-v1.7.3-results.json`
+(sha256 `95251a65…`; the numbers are snapshotted in
+`model/experiments/jevbench_board_v1_7_3_snapshot.json` so this stays checkable
+after the board moves again):
+
+| row | rank | composite | open-half intelligence | open hard choice (n=68) |
+|---|---:|---:|---:|---:|
+| singularity-super-decider | 1 | 78.48 | 78.81 | 0.7735 |
+| h2o-lightning-4b — best *open weights* | 11 | 73.78 | 61.05 | 0.6980 |
+| **Jev 1.13.0** | 21 | **71.45** | **65.60** | 0.7169 |
+| Jev 1.14.0 | 29 | 70.15 | 66.09 | 0.7358 |
+
+That is 270 ranked rows under protocol `jevbench::v1.7`, over a **300-item open
+sample and 1,200 sealed items**, with the sealed share reported as half of the
+intelligence axis. The v1.2 artifact this note's item-matched table came from
+scored 534 decisions with a different composite. So the pair in the goal is not
+merely two different quantities (composite versus composite-adjacent
+intelligence); it is also from a protocol that has since been replaced, and no
+current row reports either value.
+
+**The item-matched table is pinned to the v1.3.0 artifact.** v1.7.3 publishes no
+per-item outcomes at all — there is no `tasks` or `public_tasks` payload anywhere
+in the 6.5 MB file. The only per-item file the benchmark ships is
+`results/v1.2/jevbench-v1.2-per-task.json`, whose `revision` is v1.3.0 and whose
+231 tasks are exactly the items we score (easy 48, standard 72 = our "original",
+hard 111). So the comparison in the section above can be rebuilt at any time, and
+cannot be extended: the live board's numbers are aggregates over its own open
+draw, whose item text it does not publish.
+
+Our 0.493 on the 67 hard choice items against Jev's 0.7169 on its 68 is therefore
+**indicative, not item-matched** — the counts are near-identical, which is
+suggestive but unverifiable without item ids, and it is 22 points rather than the
+27-39 the v1.3.0 item-matched table gives. Both readings say the same thing, and
+neither is the composite figure the goal names.
+
 ### Their documented mapping does not reproduce their number
 
 The board publishes the adapter (`jevbench/adapters/reranker.py` and
