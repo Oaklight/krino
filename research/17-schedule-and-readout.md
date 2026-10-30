@@ -168,8 +168,11 @@ selected on the data it is reported on:
 | choice | 0.0488 | **0.0180** | 0.0170 | **0.0137** |
 | score | 0.1733 | 0.1244 | 0.0313 | **0.0289** |
 
-**Goal item 2's ECE clause is met on every type of this checkpoint**: a temperature alone already
-brings noul and choice under 0.05, and the map brings score from 0.1733 to 0.0289. That is a
+**Goal item 2's ECE clause is met on every type of this checkpoint, but only with the map**: a
+temperature alone already brings noul and choice under 0.05, and it leaves score at **0.1244** —
+2.5× the bar — while the map brings score from 0.1733 to 0.0289. On the clause's literal reading
+("after per-type temperature scaling") the head therefore fails on score, and the pass is a
+monotone-map pass. That is a
 change from the epoch-8 sample, where the map *raised* noul and choice (0.0297 → 0.0384, 0.0533 →
 0.0545) — so the map's effect on those two types is small and its sign is not stable across
 checkpoints, while its effect on score is large and robust (0.1733 → 0.0289 here, 0.2036 → 0.0215
@@ -282,7 +285,7 @@ better than uniform and short of any demanding skill threshold.
 | clause | state |
 |---|---|
 | 1. accuracy ≥ 65% | **met, two seeds at matched training length**: epoch-5 checkpoints give 70.12% (seed 123) and 71.88% (seed 42) with the blend rule from `research/19`, and 68.69% / 70.66% with the routing rule this note describes. The head alone is 62.16% / 64.18% — **under the bar on both seeds** — so the clause is met by the rule, not the head. Epoch 10 on seed 123 reaches 74.75%; the epoch-10 seed-42 checkpoint is still training |
-| 2. ECE ≤ 0.05, Brier/QWK ≥ 0.85 | **ECE met on every type** (0.0264 / 0.0137 / 0.0289 with the map, CV-selected). **QWK: the six-level scale passes on two seeds once the STS-B withheld labels are dropped** (0.9222 / 0.9181 against 0.85, from 0.2654 / 0.2969 — `research/18`, measured on the cluster-disjoint split at ep5). The **aggregate does not**: 0.7916 / 0.8136, and the binding scale is now the **four-level** one at 0.4196 / 0.5031 (`typed_decisions` 161 + synthetic 57). The five-level scale is 0.8314 / 0.8481. The posterior-mean decoder and the ordinal-median decoder are both withdrawn. The **Brier criterion is unsatisfiable as written** |
+| 2. ECE ≤ 0.05, Brier/QWK ≥ 0.85 | **ECE: pending an author decision.** Two readings are measured and this row does not pick between them. Head alone, 0.0264 / 0.0137 / 0.0289 with the map, CV-selected. Under a per-type temperature the head meets the bar on noul and choice but not on score (0.1244). On the routed system (`research/20`): **one temperature for the whole choice set** gives 0.0607 / 0.0526 / 0.0774 — **above the bar on all three checkpoints** — and one per **path** gives 0.0355 / 0.0371 / 0.0382, below it on all three. The per-question-type reading is **not measured** on the routed system, whose records are choice-only. The native readout arrives at ECE 0.17 and wants T≈3-4; the head wants T≈1. **QWK: the six-level scale passes on two seeds once the STS-B withheld labels are dropped** (0.9222 / 0.9181 against 0.85, from 0.2654 / 0.2969 — `research/18`, measured on the cluster-disjoint split at ep5; `#185` is still open and carries both this claim and its retraction, so this sentence needs a re-check when `#185` lands). The **aggregate does not**: 0.7916 / 0.8136, and the binding scale is now the **four-level** one at 0.4196 / 0.5031 (`typed_decisions` 161 + synthetic 57). The five-level scale is 0.8314 / 0.8481. The posterior-mean decoder and the ordinal-median decoder are both withdrawn. The **Brier criterion is unsatisfiable as written** |
 | 3. flip ≤ 5%, >20 options within 5 pp | flip **met** (0/1,500, #182); count **fails** — −8.39 pp with the blend rule (`research/19`), −12.08 routing, −20.03 head. It passed at epoch 5 (3.6 pp) and fails at epoch 10 because banking77 improves faster than the short buckets |
 | 4. JevBench vs 84.9 / 74.1 | **not met** — 0.6475 (blend) / 0.6547 (native readout) on the 139 choice items; hard tier 0.37-0.49 and **seed-dependent**, so it is not a stable capability constant as this note first implied. The items are **provably held out** (`research/13`, zero overlap with 1.56M training items) and the two prompt-format hypotheses for the hard tier are measured and null (2 items on 139) |
 | 5. ≤100 ms at 256 options; 0.6B within 3 pp | **not met** — 183.6 ms at 256 options even compiled (#181). The accuracy half now looks lost rather than unmeasured: the 0.6B is ~20 pp behind the 4B at epoch 6-7 against a 3 pp allowance |
