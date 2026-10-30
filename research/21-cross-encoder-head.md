@@ -127,6 +127,37 @@ Clause 3's count half is still not met by either — 31.7 points against a 5-poi
 allowance — but the arm that meets clause 1 is now also the arm that comes
 closest to this one.
 
+## Clause 2 is not moved by it: score still carries the failure
+
+The arm that clears clause 1 by ten points was calibrated in full — 13,444 items,
+per-type temperature fitted on one half and reported on the other:
+
+| type | n | accuracy | ECE at T=1 | fitted T | **ECE after T** |
+|---|---:|---:|---:|---:|---:|
+| noul | 4,688 | 0.8208 | 0.0375 | 1.140 | **0.0206** |
+| choice | 6,900 | 0.7258 | 0.0660 | 1.574 | **0.0250** |
+| score | 1,856 | 0.4348 | 0.1936 | 2.489 | **0.1024** |
+
+So the ECE half of clause 2 passes on two types and fails on the third, by twice
+the bar — the same primitive, the same direction, as every earlier checkpoint.
+Score also carries the QWK half: **mixed-scale QWK 0.7062** against 0.85, on
+1,856 items, with MAE 0.6446 and RPS 0.1152.
+
+The QWK number is a single figure. The artifact's `qwk_by_levels` came back empty
+(`qwk_excluded_scales: ['3']` is the one-item three-level scale), so this run did
+not record the per-scale breakdown that `research/18` reads, and **0.7062 should
+not be compared against that note's per-scale numbers** until it is re-run with the
+breakdown. What can be said is that the arm which lifts the board by ten points
+does not lift this clause past its bar, and that the trunk change did reach the
+score head — the QWK is not identical to the tower's.
+
+**Clause 3's flip half is confirmed on this arm**: 0 flips and 0.0000
+total-variation on all three probes — 6,900 choice items under an option
+permutation, 1,856 score items under reversed levels and 1,856 under a permuted
+level order — at unchanged accuracy (0.7258 / 0.4348 / 0.4348). The invariance
+survives the head shape, as it should: both heads consume option texts and neither
+has a positional term.
+
 ## On held-out data it moves the board, and the hard tier moves too
 
 JevBench-public, 231 items, states rendered through the loader (`#180`), LoRA
