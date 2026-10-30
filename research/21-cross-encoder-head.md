@@ -1,4 +1,4 @@
-# The cross-encoder head: +18 points at 4B, half the option-count decay, and a hard tier too small to tell
+# The cross-encoder head: +18 points at 4B, half the option-count decay, and a hard tier that cannot resolve a sixteen-point gain
 
 The choice head has been a tower: the state is encoded once, each option on its
 own, and a rank-64 bilinear against the pooled state scores the option. The
@@ -269,9 +269,11 @@ the arm's own first-to-last epoch. The models differ on 35 to 37 of 111 items an
 split those differences roughly evenly, which is what two models of similar
 quality look like on a set this size. So the honest statement is not that the tier
 is invariant and not that it moves: it is that **this tier cannot resolve a
-difference below about ten points**, and every hard-tier claim in this note and in
-`research/13` should be read as a point estimate with that width. Closing clause 4
-needs a larger held-out set before any model change can be told apart from noise.
+difference below sixteen points at 80 % power** — the exact power calculation is
+in `#202`, and a ten-point gain on these 36 discordant items has 38 % power — and
+every hard-tier claim in this note and in `research/13` should be read as a point
+estimate with that width. Closing clause 4 needs a held-out set of roughly 255
+paired items, which the public release does not contain (`#202`).
 
 The leakage audit (`scripts/check_jevbench_leakage.py`) finds **0 exact
 duplicates, 0 state repeats and 0 near-duplicates above 0.5 shingle containment
