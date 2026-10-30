@@ -342,26 +342,33 @@ Two other cuts rule out the explanations that would have been cheaper to fix:
 - **Option count is not the problem.** Hard items with 2–4 options score 0.444;
   5–10 score 0.238.
 
-**Is the head the problem? At epoch 1 it looked like no; at epoch 3 it looks like
-partly.** Swapping the tower head for the cross-encoder raises the board a lot, and
-at epoch 1 it left this tier untouched:
+**Is the head the problem? This tier cannot say.** Swapping the tower head for the
+cross-encoder raises the board a lot and leaves the hard column where it was:
 
 | model | easy (48) | hard (111) | original (72) | overall (231) |
 |---|---:|---:|---:|---:|
 | 4B tower, epoch 10 | 0.792 | 0.405 | 0.486 | 0.511 |
 | 0.6B cross-encoder, epoch 1 | 1.000 | 0.396 | 0.611 | 0.589 |
 | 4B cross-encoder, epoch 1 | 1.000 | **0.405** | 0.722 | 0.628 |
-| **4B cross-encoder, epoch 3** | 1.000 | **0.441** | 0.681 | **0.632** |
+| **4B cross-encoder, epoch 3** | 1.000 | 0.441 | 0.681 | **0.632** |
+| **4B cross-encoder, epoch 4** | 1.000 | 0.450 | 0.597 | 0.610 |
 
-Three architectures, a fifth of the parameters in one of them, all on 0.405 to
-three digits — and then two more epochs on the same arm moved the tier to 0.441
-while the overall board moved 0.4 points. So the tier is **much less responsive**
-than the rest of the board rather than unresponsive, and "no head change reaches
-it" was a one-epoch reading. What closes the rest of the gap still has to act on
-how much of a long state the backbone uses — training on long states, or
-compressing and retrieving over them — and `research/22` isolates how much of it
-is the tower's read-out rather than the state: padding the same questions with
-1,400 tokens of irrelevant text costs the tower 24 points and the cross-encoder 1.
+The hard column drifts 0.396 → 0.450 across five models, and it reads as a
+movement. It is not one. Paired on the items (`model/scripts/paired_mcnemar.py`),
+tower ep10 against the cross-encoder at epochs 3 and 4 gives 16/20 and 16/21
+discordant items at **p = 0.62 and 0.51**, and epoch 3 against epoch 4 gives 9/10
+at p = 1.00. The models disagree on a third of the tier and split those
+disagreements evenly, which is what two models of similar quality look like on 111
+items. **This tier cannot resolve a difference below about ten points**, so every
+hard-tier figure in this note is a point estimate with that width and the column
+should be read as "about 0.4, and we cannot tell these models apart on it".
+
+What is left is the mechanism, which does not depend on a significance test:
+`research/22` isolates how much of the deficit is the tower's read-out rather than
+the state — padding the same questions with 1,400 tokens of irrelevant text costs
+the tower 24 points and the cross-encoder 1 — and the corpus audit below says why
+every architecture starts in the same place. Closing clause 4 needs a larger
+held-out set before any model change can be distinguished from noise.
 
 ### What the corpus contains is a long state asked as a noul question, and almost never as a choice
 
@@ -611,13 +618,14 @@ backbones, and for the easy and original tiers the work belongs in how the choic
 head scores an option list.
 
 **The hard tier is a different finding, and the last two sections change the
-prescription.** The head is not the whole constraint there — three architectures
-start on 0.405, one of them a fifth the size — but the tier is not inert either:
-the cross-encoder reached 0.441 two epochs later, and the quartile cut puts its
-gain where the padding probe predicts, on the longest quartile (0.429 against the
-tower's 0.250). Two mechanisms, in order: the corpus rarely asks the conjunction
-the tier is made of (25 items in 172,262), and the tower's read-out loses a
-further 24 points to dilution alone. The first needs long-state choice items; the
+prescription.** The head is not the whole constraint there — five models spanning
+0.511 to 0.632 overall sit within 5 points of each other on that column — but the
+column is also too narrow to separate them: no paired comparison on 111 items
+clears chance, so nothing on it can be called a gain or a loss. What the last two
+sections do establish is the mechanism, and it does not need a significance test.
+Two effects, in order: the corpus rarely asks the conjunction the tier is made of
+(25 items in 172,262), and the tower's read-out loses a further 24 points to
+dilution alone on the same questions. The first needs long-state choice items; the
 second is already fixed by scoring each option inside the state.
 
 That is one measurement, one seed, 231 items. The hard tier is where the
