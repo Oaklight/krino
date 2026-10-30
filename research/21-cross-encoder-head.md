@@ -101,33 +101,30 @@ items are simply shorter), and option count is not (2–4 options 0.444, 5–10
 0.238). Whatever limits clause 4 is how much of a long state the backbone uses,
 and no head, prompt or calibration change addresses it.
 
-## The 4B arm collapses at epoch 2
+## Epoch 2 dips and epoch 3 recovers — the dip is in the adapter, not the head
 
-The epoch-1 numbers above are the highest this project has measured and they do not survive another
-epoch. The same run, at epoch 2:
+The 4B arm's first three epochs, s123:
 
 | | overall | choice | noul | score | eval loss |
 |---|---:|---:|---:|---:|---:|
-| 4B xenc, epoch 1 | **0.7231** | 0.721 | 0.822 | 0.477 | 0.727 |
-| 4B xenc, epoch 2 | **0.3761** | 0.292 | 0.555 | 0.229 | 1.362 |
-| 4B tower, epoch 2 | 0.5396 | 0.423 | 0.768 | 0.389 | — |
+| epoch 1 | 0.7231 | 0.721 | 0.822 | 0.477 | 0.727 |
+| epoch 2 | **0.3761** | 0.292 | 0.555 | 0.229 | **1.362** |
+| epoch 3 | **0.7291** | **0.737** | 0.825 | 0.452 | 0.745 |
 
-Training loss kept falling (0.969 → 0.926) while eval loss more than doubled. That is not a
-learning-rate blow-up of the kind a diverging loss curve shows; it is a head that has stopped
-discriminating — choice accuracy is at chance for the option counts in the set — while its training
-objective improves. The 0.6B collapse earlier in the day had the same shape at `lr=1e-3` (0.4794 →
-0.3585 at epoch 2) and was fixed by dropping to `3e-4`; the 4B arm **was** already at `3e-4`, so the
-same fix is not available at this size.
+Epoch 2 is a transient excursion, not a terminal state: by epoch 3 the arm is back above its first
+epoch, with the best `choice` of the three (0.737), while training loss fell throughout
+(0.969 → 0.926 → 0.861).
 
-The tower, at the same LR and the same data, does not collapse at epoch 2. So the instability is a
-property of the cross-encoder head's training, not of the schedule — the most likely mechanism being
-that each option's prompt repeats the state, so the LoRA adapter can fit training items through the
-state alone while the linear read-out sees a representation that does not transfer.
+**Where the dip lives.** Rebuilding the checkpoint with epoch 2's adapter and epoch 1's heads and
+scoring it: `choice` **0.289** — the same as epoch 2's own pair (0.292). Putting the good head back
+does not recover the accuracy, so the excursion is in the **LoRA adapter**, not in the linear
+read-out: at epoch 2 the adapter is producing a representation that neither head can read.
 
-**What this means for the numbers above:** the epoch-1 figures are measured and reproducible, but
-they are one epoch of a run that does not stay there. Until an arm trains stably for several epochs,
-the cross-encoder's headline should be quoted as "epoch 1, before it diverged", not as the model's
-accuracy. The 0.6B JevBench row is unaffected — that run is one epoch by construction.
+**What that means for how to read the table above.** The epoch-1 figure is not "one epoch before the
+run falls apart" — the run does not fall apart, it dips and returns. What it still is: a single
+checkpoint's number, at one epoch, and the arm needs to finish its five before its accuracy is the
+arm's accuracy. The 0.6B JevBench row was scored at epoch 1 of a one-epoch run, so it is unaffected
+either way.
 
 ## Caveats
 
