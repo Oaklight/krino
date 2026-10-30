@@ -1496,8 +1496,47 @@ def load_jevbench() -> Iterator[TypedQuestion]:
                 )
 
 
+def load_authored_holdout() -> Iterator[TypedQuestion]:
+    """Load the deterministic authored held-out set.
+
+    The tracked file ``data/benchmarks/openjev/authored_holdout.jsonl`` is the artefact
+    a model is scored on, and `scripts/build_authored_holdout.py` is how it is rebuilt
+    from :mod:`data.authored_holdout`. When the file is absent — a fresh checkout of
+    only the code, or a sandboxed test — the generator is used directly; the two are
+    held identical by a test, so the fallback cannot change what is measured.
+
+    Yields:
+        One :class:`TypedQuestion` per item, ``split="test"``.
+    """
+    from data.authored_holdout import build_items
+
+    path = DATA_DIR / "openjev" / "authored_holdout.jsonl"
+    if path.exists():
+        with path.open("r", encoding="utf-8") as handle:
+            rows = [json.loads(line) for line in handle if line.strip()]
+    else:
+        rows = list(build_items())
+    for row in rows:
+        question = dict(row["question"])
+        label = row["label"]
+        if question["type"] == "score":
+            label = float(label)
+        elif question["type"] == "noul":
+            label = label == "yes"
+        yield TypedQuestion(
+            id=row["id"],
+            state=render_jevbench_state(row["state"]),
+            question=question,
+            label=label,
+            source="authored_holdout",
+            split=row.get("split", "test"),
+            group=row.get("group"),
+        )
+
+
 LOADERS = {
     "jevbench": load_jevbench,
+    "authored_holdout": load_authored_holdout,
     "banking77": load_banking77,
     "sst2": load_sst2,
     "agnews": load_agnews,
