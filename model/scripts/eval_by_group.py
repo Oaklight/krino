@@ -3,15 +3,18 @@
 
 The eval harness reports by source and by question type. The authored held-out set
 is a single source with five families under `group`, so a single accuracy hides
-which family a checkpoint fails — and on the first scoring run it hid a family
-where every checkpoint answered from a constant ("no" to all 51 flag items) and
-another where three very different checkpoints agreed exactly, which is what an
-inverted reading of a threshold table looks like.
+which family a checkpoint fails — and on the first scoring run it hid two families
+the checkpoints were not reading at all: one where every checkpoint answered "yes"
+four times in five, and one where a single level was predicted for all 51 items.
 
 This scores each item with the same heads the eval harness uses and groups the
 result by `TypedQuestion.group`, printing the prediction histogram beside each
 accuracy: an accuracy near chance can be a weak model or a constant answer, and
-the histogram says which.
+the histogram says which. `--dump-preds` writes the per-item gold/prediction pairs
+for the cases the histogram cannot settle — identical histograms across different
+checkpoints look like a shared prior, but only the per-item matrix shows whether
+the mapping has structure (a rotation, a threshold read one bracket off) or is
+diffuse.
 
 Usage:
     python model/scripts/eval_by_group.py \
@@ -98,6 +101,17 @@ def main() -> int:
         ),
     )
     parser.add_argument("--json", type=Path, default=None)
+    parser.add_argument(
+        "--dump-preds",
+        type=Path,
+        default=None,
+        help=(
+            "Write one JSON object per item (id, group, type, gold, pred, correct). "
+            "The per-group accuracy says a family fails; the predictions say how, "
+            "which is the difference between a weak model and one reading a "
+            "threshold ladder backwards."
+        ),
+    )
     args = parser.parse_args()
 
     cfg = yaml.safe_load(args.config.read_text(encoding="utf-8")) or {}
@@ -161,6 +175,7 @@ def main() -> int:
     correct: dict[tuple[Any, Any], list[int]] = collections.defaultdict(lambda: [0, 0])
     preds: dict[tuple[Any, Any], collections.Counter] = collections.defaultdict(collections.Counter)
     disagreements = 0
+    records: list[dict[str, Any]] = []
 
     with torch.no_grad():
         for item in items:
@@ -173,12 +188,24 @@ def main() -> int:
                 continue
             _, is_correct, _ = result
             predicted = _predict(model, item)
-            if (predicted == _gold(item)) != is_correct:
+            gold = _gold(item)
+            if (predicted == gold) != is_correct:
                 disagreements += 1
             key = (item.group, item.question.get("type"))
             correct[key][1] += 1
-            correct[key][0] += int(predicted == _gold(item))
+            correct[key][0] += int(predicted == gold)
             preds[key][predicted] += 1
+            if args.dump_preds:
+                records.append(
+                    {
+                        "id": item.id,
+                        "group": item.group,
+                        "type": item.question.get("type"),
+                        "gold": str(gold),
+                        "pred": str(predicted),
+                        "correct": bool(predicted == gold),
+                    }
+                )
 
     if disagreements:
         raise SystemExit(
@@ -209,6 +236,16 @@ def main() -> int:
             f"   preds={dict(preds[key])}"
         )
     print(f"  {'TOTAL':<12s} {'':<7s} {total_ok:>3d}/{total_n:<3d} = {total_ok / max(total_n, 1):.4f}")
+
+    if args.dump_preds:
+        import json
+
+        args.dump_preds.parent.mkdir(parents=True, exist_ok=True)
+        args.dump_preds.write_text(
+            "\n".join(json.dumps(record, sort_keys=True) for record in records) + "\n",
+            encoding="utf-8",
+        )
+        print(f"Predictions written to {args.dump_preds}")
 
     if args.json:
         import json
