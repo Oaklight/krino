@@ -1,0 +1,48 @@
+{
+  "by_target_chars": {
+    "0": {
+      "accuracy": 0.33,
+      "correct": 99,
+      "mean_chars": 297.22333333333336,
+      "mean_tokens": 69.53333333333333,
+      "n": 300
+    },
+    "1500": {
+      "accuracy": 0.2733333333333333,
+      "correct": 82,
+      "mean_chars": 1517.1033333333332,
+      "mean_tokens": 288.06333333333333,
+      "n": 300
+    },
+    "4000": {
+      "accuracy": 0.29,
+      "correct": 87,
+      "mean_chars": 4001.0,
+      "mean_tokens": 729.64,
+      "n": 300
+    },
+    "500": {
+      "accuracy": 0.31,
+      "correct": 93,
+      "mean_chars": 601.5033333333333,
+      "mean_tokens": 125.05333333333333,
+      "n": 300
+    },
+    "8000": {
+      "accuracy": 0.2966666666666667,
+      "correct": 89,
+      "mean_chars": 8001.0,
+      "mean_tokens": 1440.7166666666667,
+      "n": 300
+    }
+  },
+  "checkpoint": "/home/pding/projects/open-decisions/model/checkpoints/arch_4b_loraAll_32k_s123/epoch_010.pt",
+  "config": "model/configs/r2_reranker4b.yaml",
+  "elapsed_s": 286.2,
+  "items": 300,
+  "lora_layers": -1,
+  "max_length": 32768,
+  "readout": "last",
+  "seed": 42,
+  "source": "mmlu"
+}
