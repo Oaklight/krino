@@ -394,6 +394,12 @@ already carries a `long_doc` family at 8,000 characters and an 8-domain
 them rather than measure them wrongly. Whether the assembled corpus closes the
 length gap is a question about the loader, and the next thing to measure.
 
+That measurement exists for the second half of the question — whether the wall is
+about length or content — and it says mostly length: padding the same items with
+neutral prose reproduces 24 of the quartile table's 33 points without adding a
+single fact (`research/22`). So the corpus gap matters, but so does anything that
+stops a long sequence from diluting the pooled position.
+
 Two limits on this table. Lengths are characters of the `state` field, and what
 the model sees is `state + instructions`, so the gap in tokens is a little
 smaller than the gap in characters — not enough to matter at 20×. And the 67
