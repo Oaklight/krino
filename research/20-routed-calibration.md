@@ -65,6 +65,28 @@ bar — and it is the CV-selected map, not the temperature, that takes score to
 0.0289. So on the head the clause passes only if "per-type temperature scaling"
 is read as "whatever per-type post-hoc map"; read literally, it fails on score.
 
+**Which primitive carries the failure, and two numbers that are not the per-type
+column.** Split by type, the clause as worded passes on noul and choice and fails
+only on score. A second checkpoint measured the same way
+(`arch_4b_loraAll_32k/best_heads.pt`, `model/experiments/calibration_ecefit_4b_32k.json`,
+temperature fitted on half the type's items and applied to the other half) gives
+noul 0.0127, choice 0.0127 and **score 0.0631** — the same shape, a narrower
+score miss. That artifact also carries the unscaled column for the same
+checkpoint, **0.0274 / 0.0407 / 0.1568**, and both of those triples circulate as
+"the per-type ECE": 0.0407 is choice **at T=1** on that checkpoint, not under a
+fitted temperature, and it would read as the clause passing on choice for the
+wrong reason. What survives every reading is the claim about *which type*:
+choice and noul pass under a per-type temperature on both checkpoints, score
+fails on both (0.1244 and 0.0631), and score is the primitive whose gold labels
+`#177` shows were half fabricated — so the clause cannot be read as failing on
+that number until the repaired corpus is re-measured.
+
+Beside the routed system's 0.0607 the per-type head numbers are not comparable
+and the note should not put them in one sentence without saying so: 0.0607 is two
+scorers sharing one divisor over choice items, and the head's numbers are one
+scorer with a temperature per type. Neither is a per-question-type ECE of the
+deployed system.
+
 For the deployed system the per-type question cannot be answered from these
 records at all: they are choice-only, so there is no noul or score item to fit a
 temperature on. What can be answered is how many temperatures the choice set
@@ -157,6 +179,13 @@ be labelled as such wherever it appears. The head's temperature column is
 - **The head-only T=1 number at epoch 10 is 0.0509** — the head alone is right at
   the bar before scaling, which is worth knowing when reading any claim that the
   head "is calibrated" without a temperature.
-- **One set of artifacts per checkpoint.** The records are 3.4 MB each and are not
-  committed; the run is reproducible from the checkpoint with
-  `blend_scorers.py --dump-records`.
+- **The records are committed, and so is the two-fold pass.** Both were inputs
+  the note quoted but could not be re-run from a checkout: the per-item dumps
+  now live in `model/experiments/blend_records/` (3.4 MB each; the `/tmp` path
+  each run records as its `source` in `routed_calibration.json` is where they
+  were first written, not where they are now) and
+  `model/experiments/routed_calibration_folds2.json` is the output of the
+  fold-count check, so the 0.0278 / 0.0336 / 0.0324 and 0.0589 / 0.0517 / 0.0632
+  rows reproduce with
+  `eval_routed_calibration.py --records NAME=PATH … --folds 2` rather than from
+  the note alone.
