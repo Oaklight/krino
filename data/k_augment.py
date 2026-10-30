@@ -44,6 +44,14 @@ distribution whether or not it can actually be widened, and
 ``KAugmentConfig(control=True)`` runs the same selection and the same drop with
 no padding, for the baseline arm.
 
+Memory is bounded separately from encode count, and the bound is the longest
+option rather than the option count.  An item whose own options exceed
+``KAugmentConfig.max_option_chars`` (1,000 characters by default) is selected
+but left unpadded, and no distractor longer than that is ever drawn: one
+document-length option makes every one of the K batched rows that long, so peak
+attention scores go as ``K * L**2`` in that option.  The first augmented run
+died of exactly this on codesearchnet, whose options are code bodies.
+
 Cost: on the real 182,262-item pool at fraction 0.2, the default K range [8, 80]
 takes an epoch's option encodes from 44,558 to 69,467 (1.56x); the optional K
 range [8, 256] takes them to 107,053 (2.40x), and about 60% of that extra work
@@ -71,6 +79,25 @@ from .format import TypedQuestion
 # A blank value is skipped rather than replaced by its option key: a bare key is
 # not an option text, and admitting one puts the literal "B" in the option list.
 _MIN_DISTRACTOR_CHARS = 3
+
+# Longest option text this module will pad around, in characters.
+#
+# The choice head encodes all K options in one batched forward, so the longest
+# option sets the sequence length for every row and peak memory goes as
+# ``K * L**2``.  That is invisible while options are short labels, and it is not
+# while they are documents: codesearchnet's options are whole code bodies, and a
+# single padded item there carries ~159,000 characters over 71 options.  The
+# first augmented run died in ``sdpa_attention_forward`` on exactly such an item
+# — a 3.81 GiB allocation for one sequence of ~11,000 tokens — while the matched
+# control arm over the same data peaked at 16.8 GB.
+#
+# 1,000 characters is roughly 250 tokens.  At that length the worst padded item
+# costs ``80 * 16 heads * 250**2 * 2 bytes`` ~ 160 MB of attention scores, and
+# every source whose options are labels, phrases or short sentences (banking77
+# options average 50 characters) is unaffected.  A long-document option is not a
+# distractor-scale alternative to a short label in the first place, so gating it
+# out costs the intervention nothing it was trying to teach.
+_MAX_OPTION_CHARS = 1000
 
 
 def _norm(text: str) -> str:
@@ -104,6 +131,10 @@ class KAugmentConfig:
         control: run the selection and clear ``teacher_probs`` on the selected
             items but never pad.  Use this for the baseline arm of an A/B so the
             only difference between arms is the option list, not the loss type.
+        max_option_chars: longest option text to pad around, in characters.  An
+            item whose own options exceed it is selected but not padded, and no
+            distractor longer than it is drawn.  This bounds peak memory, which
+            goes as ``K * L**2`` in the longest option: see ``_MAX_OPTION_CHARS``.
     """
 
     fraction: float = 0.2
@@ -111,6 +142,7 @@ class KAugmentConfig:
     max_k: int = 80
     seed: int = 42
     control: bool = False
+    max_option_chars: int = _MAX_OPTION_CHARS
 
     def __post_init__(self) -> None:
         if not 0.0 <= self.fraction <= 1.0:
@@ -119,6 +151,11 @@ class KAugmentConfig:
             raise ValueError(f"min_k must be at least 2 (a choice needs 2 options), got {self.min_k}")
         if self.max_k < self.min_k:
             raise ValueError(f"max_k ({self.max_k}) must be >= min_k ({self.min_k})")
+        if self.max_option_chars < _MIN_DISTRACTOR_CHARS:
+            raise ValueError(
+                "max_option_chars must be at least "
+                f"{_MIN_DISTRACTOR_CHARS}, got {self.max_option_chars}"
+            )
 
 
 @dataclass(frozen=True)
@@ -135,6 +172,7 @@ class KAugmentStats:
     selected: int = 0
     padded: int = 0
     under_filled: int = 0
+    skipped_long_option: int = 0
     teacher_probs_dropped: int = 0
     encodes_before: int = 0
     encodes_after: int = 0
@@ -154,12 +192,17 @@ def _option_text(value: object, key: str) -> str:
     return text
 
 
-def build_distractor_pool(items: list[TypedQuestion]) -> dict[str, list[str]]:
+def build_distractor_pool(
+    items: list[TypedQuestion], max_chars: int | None = None
+) -> dict[str, list[str]]:
     """Collect option texts per source, in first-seen order and de-duplicated.
 
     Only choice items contribute, and only from ``items``: the pool is the
     provenance boundary that keeps evaluation data out of training distractors.
     Blank or very short values are skipped rather than replaced by their key.
+    Texts longer than ``max_chars`` are skipped too when it is given: an option
+    that is a paragraph is a poor distractor and an expensive one to encode
+    beside 79 short ones.
     """
     pools: dict[str, list[str]] = {}
     seen: dict[str, set[str]] = {}
@@ -175,6 +218,8 @@ def build_distractor_pool(items: list[TypedQuestion]) -> dict[str, list[str]]:
         for value in criteria.values():
             text = value.strip() if isinstance(value, str) else ""
             if len(text) < _MIN_DISTRACTOR_CHARS:
+                continue
+            if max_chars is not None and len(text) > max_chars:
                 continue
             norm = _norm(text)
             if norm in bucket_seen:
@@ -255,6 +300,7 @@ def pad_choice_item(
     pool: dict[str, list[str]],
     rng: random.Random,
     flat_pool: list[str] | None = None,
+    max_option_chars: int | None = None,
 ) -> TypedQuestion:
     """Return a copy of ``item`` with at least ``target_k`` options.
 
@@ -266,7 +312,10 @@ def pad_choice_item(
 
     Returns the original item when it cannot be padded safely: not a choice
     item, a list-valued criteria (some older loaders), a label missing from the
-    criteria, or no usable distractor texts.
+    criteria, no usable distractor texts, or — when ``max_option_chars`` is
+    given — an option already longer than that.  The last case is a memory
+    guard, not a semantic one: the option encode pads to the longest option, so
+    one document-length option makes every one of K rows that long.
     """
     question = item.question
     if question.get("type") != "choice":
@@ -281,14 +330,21 @@ def pad_choice_item(
     if target_k <= natural:
         return item
 
+    own_texts = [_option_text(v, k) for k, v in criteria.items()]
+    if max_option_chars is not None and max(len(text) for text in own_texts) > max_option_chars:
+        return item
+
     own = pool.get(item.source, [])
     flat = flat_pool if flat_pool is not None else _flatten_pool(pool)
+    if max_option_chars is not None:
+        own = [text for text in own if len(text) <= max_option_chars]
+        flat = [text for text in flat if len(text) <= max_option_chars]
     if not own and not flat:
         return item
 
     # Compare normalised, so a case or whitespace variant of an existing option
     # cannot be added as a distractor that is really a second correct answer.
-    original_texts = {_norm(_option_text(v, k)) for k, v in criteria.items()}
+    original_texts = {_norm(text) for text in own_texts}
     wanted = target_k - natural
     taken: set[str] = set()
 
@@ -377,11 +433,11 @@ def apply_k_augment_with_stats(
     if cfg.fraction <= 0.0:
         return items, replace(stats, encodes_before=encodes_before, encodes_after=encodes_before)
 
-    pool = {} if cfg.control else build_distractor_pool(items)
+    pool = {} if cfg.control else build_distractor_pool(items, max_chars=cfg.max_option_chars)
     flat_pool = _flatten_pool(pool)
 
     out: list[TypedQuestion] = []
-    choice_items = selected = padded = under_filled = dropped = 0
+    choice_items = selected = padded = under_filled = skipped_long = dropped = 0
     encodes_after = 0
     targets: list[int] = []
     realised: list[int] = []
@@ -409,7 +465,14 @@ def apply_k_augment_with_stats(
             new_item = _without_teacher_probs(item)
         else:
             target_k = draw_target_k(rng, cfg)
-            padded_item = pad_choice_item(item, target_k, pool, rng, flat_pool=flat_pool)
+            padded_item = pad_choice_item(
+                item,
+                target_k,
+                pool,
+                rng,
+                flat_pool=flat_pool,
+                max_option_chars=cfg.max_option_chars,
+            )
             # Clear the teacher distribution on selected-but-unpaddable items too;
             # the matched control run clears it on the same selection.
             new_item = (
@@ -425,6 +488,8 @@ def apply_k_augment_with_stats(
                     under_filled += 1
                 if new_width > natural:
                     padded += 1
+                elif max(len(_option_text(v, k)) for k, v in criteria.items()) > cfg.max_option_chars:
+                    skipped_long += 1
         if had_teacher and new_item is not item and getattr(new_item, "teacher_probs", None) is None:
             dropped += 1
         out.append(new_item)
@@ -435,6 +500,7 @@ def apply_k_augment_with_stats(
         selected=selected,
         padded=padded,
         under_filled=under_filled,
+        skipped_long_option=skipped_long,
         teacher_probs_dropped=dropped,
         encodes_before=encodes_before,
         encodes_after=encodes_after,
