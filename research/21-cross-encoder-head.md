@@ -157,6 +157,28 @@ which is the opposite of what an earlier draft of this section said, when the on
 tower curve in hand was its epoch-10 one and the cross-encoder's epoch-5 curve had
 not been measured.
 
+**The 0.6B at its best checkpoint fails the same way, more so.** Sweeping the
+clause-5 arm's own epoch-10 checkpoint over the same 300 items:
+
+| options | 4B tower ep10 | **0.6B tower ep10** | gap |
+|---:|---:|---:|---:|
+| 4 | 0.9767 | 0.9633 | 1.3 pp |
+| 8 | 0.9700 | 0.9467 | 2.3 pp |
+| 16 | 0.9533 | 0.9200 | 3.3 pp |
+| 32 | 0.9133 | 0.8700 | 4.3 pp |
+| 64 | 0.8733 | 0.8200 | 5.3 pp |
+| **80** | **0.8500** | **0.7933** | **5.7 pp** |
+| **K=4 → 80** | **−12.7 pp** | **−17.0 pp** | |
+
+So clause 3 is not a large-model problem that a small model escapes: the 0.6B
+decays 4.3 points more, and its chance-corrected curve (0.951 → 0.791) is 0.16
+against the 4B's 0.12. It also reframes clause 5's allowance: the two sizes sit
+**1.3 points apart at four options and 5.7 apart at eighty**, so "within 3 pp" holds
+at short lists and fails at long ones — the capacity gap is option-count-dependent,
+not a constant offset. And the old committed 0.6B sweep (0.677 → 0.217, −46 pp) was
+indeed a description of a weak checkpoint: this one loses 17 points where that lost
+46.
+
 ## Clause 2 is not moved by it, and its score half is not measurable at this size
 
 The arm that clears clause 1 by ten points was calibrated in full — 13,444 items,
