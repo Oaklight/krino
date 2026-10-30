@@ -127,7 +127,7 @@ Clause 3's count half is still not met by either — 31.7 points against a 5-poi
 allowance — but the arm that meets clause 1 is now also the arm that comes
 closest to this one.
 
-## Clause 2 is not moved by it: score still carries the failure
+## Clause 2 is not moved by it, and its score half is not measurable at this size
 
 The arm that clears clause 1 by ten points was calibrated in full — 13,444 items,
 per-type temperature fitted on one half and reported on the other:
@@ -138,22 +138,60 @@ per-type temperature fitted on one half and reported on the other:
 | choice | 6,900 | 0.7258 | 0.0660 | 1.574 | **0.0250** |
 | score | 1,856 | 0.4348 | 0.1936 | 2.489 | **0.1024** |
 
-So the ECE half of clause 2 passes on two types and fails on the third, by twice
-the bar — the same primitive, the same direction, as every earlier checkpoint.
-Score also carries the QWK half: **mixed-scale QWK 0.7062** against 0.85, on
-1,856 items, with MAE 0.6446 and RPS 0.1152.
+So on this seed the ECE half of clause 2 passes on two types and fails on the
+third, by twice the bar — the same primitive, the same direction, as every earlier
+checkpoint. The next subsection adds the second seed, and it changes what that
+sentence is allowed to claim. Score also carries the QWK half: **mixed-scale QWK
+0.7062** against 0.85, on 1,856 items, with MAE 0.6446 and RPS 0.1152.
 
-Per scale, which is the only way QWK means anything (a QWK is defined within one
-level scale). Both columns are on the **repaired** corpus — `#177` drops the
-STS-B rows whose gold label was never observed, at load time, so this run and the
-"after" column of `research/18` are the like-for-like pair:
+### The second seed says the score primitive is not measurable at this size
 
-| level scale | n | cross-encoder ep3 | tower ep5 (repaired, `research/18`) |
-|---|---:|---:|---:|
-| 4 | 233 | 0.286 | **0.4196** |
-| 5 | 1,121 | 0.739 | **0.8314** |
-| 6 | 500 | 0.828 | **0.9222** |
-| mixed | | 0.7062 | **0.7916** |
+The matched-epoch calibration of s42 (`cal_xenc_split138_s42_ep3.json`, the same
+13,444 items and the same per-type counts — `compare_calibrations.py` printed the
+deltas, so the slices match) changes what can be said about this clause:
+
+| type | n | s123 ECE@T | **s42 ECE@T** | bar |
+|---|---:|---:|---:|---:|
+| noul | 4,688 | 0.0206 | 0.0265 | 0.05 |
+| choice | 6,900 | 0.0250 | 0.0236 | 0.05 |
+| score | 1,856 | **0.1024** | **0.0259** | 0.05 |
+
+noul and choice pass on both seeds, tightly. **Score differs by a factor of four
+between seeds** — one fails by twice the bar, the other passes by half of it — and
+the underlying accuracy differs too (s123 0.4348, s42 0.5178). So "score fails
+clause 2's ECE half" is a statement about s123, not about the primitive: at 1,856
+items with this much seed variance, the clause is not decided for score in either
+direction.
+
+QWK shows the same instability on the smallest scale:
+
+| level scale | n | s123 | s42 | tower ep5 (repaired) |
+|---|---:|---:|---:|---:|
+| 4 | 233 | 0.2862 | **0.0866** | 0.4196 |
+| 5 | 1,121 | 0.7391 | 0.8028 | 0.8314 |
+| 6 | 500 | 0.8281 | 0.8270 | 0.9222 |
+| mixed | | 0.7062 | 0.7193 | 0.7916 |
+
+The five- and six-level scales are stable across seeds (0.74–0.80 and 0.828). The
+**four-level scale swings 0.20 between seeds** — from 0.286 to 0.087, i.e. from
+"weak" to "barely above chance" — on 233 items. `research/18` identifies that scale
+as the binding constraint for clause 2 and every post-hoc lever tested there moved
+it by less than 0.02. **A scale whose seed spread is ten times the largest effect
+measured on it cannot adjudicate that clause**, and the 233-item size is why.
+
+What survives for clause 2 as a whole: the ECE half is met on noul and choice on
+two seeds; on score it is not measurable at this n; the QWK half fails on every
+scale against 0.85, most obviously on the four-level scale, which is both the
+lowest and the least stable. Both of the latter need a larger eval before a
+training-side fix can be shown to work.
+
+The paragraph below reads as if one seed settled the clause. It is kept because
+the mechanism it names (the shared trunk costing score) is still the reading that
+fits, but its numbers are now one seed of two. The tower column it compares
+against is the one in the table above, and both sides are on the **repaired**
+corpus — `#177` drops the STS-B rows whose gold label was never observed, at load
+time, so these runs and the "after" column of `research/18` are the like-for-like
+pair.
 
 **The head change costs the score primitive on every scale.** The cross-encoder is
 13, 9 and 9 points below the tower on the 4-, 5- and 6-level scales and 8.5 points
