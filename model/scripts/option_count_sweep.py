@@ -134,7 +134,11 @@ def main() -> int:
         if part.strip()
     )
     rank = int(args.rank or cfg.get("rank") or 128)
-    noul_rank = int(args.noul_rank or cfg.get("noul_rank") or rank)
+    # Same resolution as `train_multitask`: an absent key means the linear noul
+    # head, not "the same width as rank". This sweep scores choice items only, so a
+    # wrong noul head does not change its numbers — but `load_heads` refuses the
+    # mismatch now, and a 0.6B sweep would fail on a head it never reads.
+    noul_rank = args.noul_rank if args.noul_rank is not None else cfg.get("noul_rank")
     mlp_layers = int(args.mlp_layers if args.mlp_layers is not None else cfg.get("mlp_layers", 0))
     choice_mode = args.choice_mode or str(cfg.get("choice_mode") or "tower")
 
