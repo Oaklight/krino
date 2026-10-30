@@ -70,10 +70,13 @@ applied, same loader for every row:
 | | easy (48) | hard (111) | original (72) | overall (231) |
 |---|---:|---:|---:|---:|
 | 4B tower, epoch 10 (s123) | 0.792 | 0.405 | 0.486 | 0.511 |
-| **0.6B cross-encoder, epoch 1** | **1.000** | **0.396** | **0.611** | **0.589** |
+| 0.6B cross-encoder, epoch 1 | **1.000** | 0.396 | **0.611** | **0.589** |
+| **4B cross-encoder, epoch 1** | **1.000** | **0.405** | **0.722** | **0.628** |
 
-A 0.6B model with this head matches the 4B tower's hard tier and beats it on the
-board, 48/48 on the easy items included. That is not memorisation: the leakage
+The head lifts the board at both sizes — +11.7 pp at 4B, +23.6 pp on the
+`original` tier — and moves the **hard tier by exactly nothing**: 0.405 at 4B
+before the change and 0.405 after it, 0.396 at a fifth of the parameters. Three
+different models, one number to three digits. That is not memorisation: the leakage
 audit (`scripts/check_jevbench_leakage.py`) finds **0 exact duplicates, 0 state
 repeats and 0 near-duplicates above 0.5 shingle containment over 1,562,838
 training items** (max containment 0.001).
