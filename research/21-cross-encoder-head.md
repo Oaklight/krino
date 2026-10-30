@@ -1,4 +1,4 @@
-# The cross-encoder head: +18 points at 4B, half the option-count decay, and a hard tier that cannot resolve a sixteen-point gain
+# The cross-encoder head: +18 points at 4B, less option-count decay at matched epochs, and a hard tier that cannot resolve a sixteen-point gain
 
 The choice head has been a tower: the state is encoded once, each option on its
 own, and a rank-64 bilinear against the pooled state scores the option. The
@@ -89,43 +89,56 @@ clauses are now further apart than they were before this change — the arm that
 meets clause 1 on the aggregate is not the arm that meets clause 5, and the
 cross-encoder is not the arm that meets either clause at 0.6B.
 
-## It halves the option-count degradation
+## It degrades less with option count at matched epochs, and the tower catches up
 
 Clause 3's count half asks accuracy at more than twenty options to sit within 5
 points of accuracy at five or fewer. `research/17` measured a matched sweep on the
 tower — 300 fixed banking77 items, the same questions padded and shrunk to each K —
-and found 12.67 points at epoch 10. The same sweep on the two head shapes at the
-**same training length** (4B, split138, epoch 3, seed 42, 300 items, the same
-distractor pool):
+and found 12.67 points at epoch 10. The same sweep now runs on five checkpoints:
+the tower and the cross-encoder at the matched epoch 3, at the matched epoch 5, the
+cross-encoder at epoch 4, and the tower at its epoch 10 (4B, split138, seed 42, 300
+items, the same distractor pool):
 
-| options | tower | cross-encoder |
-|---:|---:|---:|
-| 4 | 0.7300 | 0.7367 |
-| 8 | 0.6467 | 0.6567 |
-| 16 | 0.4433 | 0.5733 |
-| 32 | 0.3300 | 0.4933 |
-| 64 | 0.1700 | 0.4433 |
-| **80** | **0.1567** | **0.4200** |
-| K=4 → 80 | **−57.3 pp** | **−31.7 pp** |
+| options | tower ep3 | xenc ep3 | tower ep5 | xenc ep4 | xenc ep5 | tower ep10 |
+|---:|---:|---:|---:|---:|---:|---:|
+| 4 | 0.7300 | 0.7367 | **0.8967** | 0.8100 | 0.8467 | 0.9767 |
+| 8 | 0.6467 | 0.6567 | **0.8367** | 0.7167 | 0.7733 | 0.9700 |
+| 16 | 0.4433 | 0.5733 | 0.7000 | 0.6400 | **0.7067** | 0.9533 |
+| 32 | 0.3300 | 0.4933 | 0.5700 | 0.5533 | **0.6233** | 0.9133 |
+| 64 | 0.1700 | 0.4433 | 0.4600 | 0.4800 | **0.5400** | 0.8733 |
+| **80** | **0.1567** | **0.4200** | 0.4233 | 0.4667 | **0.5067** | **0.8500** |
+| **K=4 → 80** | **−57.3 pp** | **−31.7 pp** | **−47.3 pp** | **−34.3 pp** | **−34.0 pp** | **−12.7 pp** |
 
-At matched training the two shapes are level at four options and 26 points apart
-at eighty, and the degradation is roughly halved. That is what a head that reads
-each option out of the state's full context should do: the tower compares option
-vectors against one encoded state through a rank-limited attention, so adding
-distractors dilutes the comparison; the cross-encoder never has to compare, it
-scores each option in place.
+Bold marks the winner of each matched-epoch pair, so the crossover inside the
+epoch-5 columns is visible: tower at 4 and 8 options, cross-encoder from 16 up.
 
-**Two comparisons that must not be confused.** The tower at epoch **10** scores
-0.9767 / 0.9700 / 0.9533 / 0.9133 / 0.8733 / 0.8500 on this sweep — 12.67 points,
-better than *either* epoch-3 arm. Training length dominates the level, so the
-epoch-3 pair is the comparison that isolates the head shape and the epoch-10 pair
-is the one that says how far training takes it. Whether the cross-encoder's
-five-epoch run approaches that curve is not yet measured; at epoch 3 it is already
-26 points ahead at eighty options, on 42 % against 16 %.
+**At matched training the cross-encoder decays less, twice.** Epoch 3: −31.7
+against −57.3, and 26 points ahead at eighty options. Epoch 5: −34.0 against
+−47.3, ahead at every K from 16 up. So the head does what the mechanism predicts —
+it scores each option in place rather than comparing it against one encoded state
+through a rank-limited attention, and dilution costs it less.
 
-Clause 3's count half is still not met by either — 31.7 points against a 5-point
-allowance — but the arm that meets clause 1 is now also the arm that comes
-closest to this one.
+**What the extra epochs do not do is flatten its own curve.** The cross-encoder's
+decay is 31.7 → 34.3 → 34.0 points across epochs 3, 4 and 5 while its level climbs
+12 points: training lifts the whole curve and leaves its slope where it was. The
+tower's decay, over its longer run, goes 57.3 → 47.3 → **12.7**: it more than halves
+again. At epoch 10 the tower is ahead of the cross-encoder at *every* K on this
+sweep, by 34 points at eighty options (0.8500 against 0.5067).
+
+So the honest version of the earlier "it halves the degradation" is narrower: at
+equal training the cross-encoder halves it relative to the tower, and the advantage
+shrinks from 26 points to 13 as both train, because the shape that converges on
+this axis is the tower given its epochs. The mechanism claim survives — a
+cross-encoder needs less training to reach a given large-K accuracy, since its
+epoch-5 curve at K=80 (0.5067) is above the tower's epoch-5 curve (0.4233) — and
+the "wins at large K" claim does not, once the tower has ten epochs.
+
+Clause 3's count half is still not met by any arm: the closest is the tower at
+epoch 10 at −12.7 points against a 5-point allowance, 2.5× over. And the arm that
+meets clause 1 by ten points is **not** the arm that comes closest to this one —
+which is the opposite of what an earlier draft of this section said, when the only
+tower curve in hand was its epoch-10 one and the cross-encoder's epoch-5 curve had
+not been measured.
 
 ## Clause 2 is not moved by it, and its score half is not measurable at this size
 

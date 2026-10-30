@@ -1,0 +1,63 @@
+{
+  "by_option_count": {
+    "16": {
+      "accuracy": 0.64,
+      "chance": 0.0625,
+      "changed": 300,
+      "correct": 192,
+      "mean_options": 80.0,
+      "n": 300
+    },
+    "32": {
+      "accuracy": 0.5533333333333333,
+      "chance": 0.03125,
+      "changed": 300,
+      "correct": 166,
+      "mean_options": 80.0,
+      "n": 300
+    },
+    "4": {
+      "accuracy": 0.81,
+      "chance": 0.25,
+      "changed": 300,
+      "correct": 243,
+      "mean_options": 80.0,
+      "n": 300
+    },
+    "64": {
+      "accuracy": 0.48,
+      "chance": 0.015625,
+      "changed": 300,
+      "correct": 144,
+      "mean_options": 80.0,
+      "n": 300
+    },
+    "8": {
+      "accuracy": 0.7166666666666667,
+      "chance": 0.125,
+      "changed": 300,
+      "correct": 215,
+      "mean_options": 80.0,
+      "n": 300
+    },
+    "80": {
+      "accuracy": 0.4666666666666667,
+      "chance": 0.0125,
+      "changed": 0,
+      "correct": 140,
+      "mean_options": 80.0,
+      "n": 300
+    }
+  },
+  "checkpoint": "/home/pding/projects/open-decisions/model/checkpoints/arch_4b_xenc_split138_s123/epoch_004.pt",
+  "choice_mode": "cross_encoder",
+  "config": "model/configs/r2_reranker4b.yaml",
+  "distractor_pool_size": 80,
+  "elapsed_s": 265.3,
+  "items": 300,
+  "lora_layers": -1,
+  "max_length": 32768,
+  "readout": "weighted",
+  "seed": 42,
+  "source": "banking77"
+}
