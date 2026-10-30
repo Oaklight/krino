@@ -356,23 +356,23 @@ The 4B arm's epochs, both seeds:
 | s42, epoch 2 | 0.7174 | — | — | — | 0.741 |
 | **s42, epoch 3** | **0.7287** | — | — | — | 0.687 |
 | **s42, epoch 4** | **0.7455** | 0.749 | 0.825 | 0.531 | 0.653 |
+| **s42, epoch 5** | **0.7613** | 0.768 | 0.828 | 0.567 | 0.599 |
 
 **The arm is still improving when it stops, on both seeds.** s123 runs 0.7231 →
 0.7291 → 0.7462 → 0.7626 over epochs 1, 3, 4 and 5, with the eval loss falling at
-every step (0.727 → 0.745 → 0.659 → 0.590). s42 walks the same four epochs 0.7190 →
-0.7287 → 0.7455 with its loss falling (0.752 → 0.687 → 0.653), and its epoch 4 sits
-0.07 points from s123's. **0.7626 is therefore a point on a rising curve, not the
-arm's ceiling** — the five-epoch budget was set before the arm existed, and the
-honest reading is that clause 1 is cleared by 11.3 points with training still to
-spare.
+every step (0.727 → 0.745 → 0.659 → 0.590). s42 runs 0.7190 → 0.7287 → 0.7455 →
+0.7613 with its loss falling (0.752 → 0.687 → 0.653 → 0.599). **0.7626 is therefore
+a point on a rising curve, not the arm's ceiling** — the five-epoch budget was set
+before the arm existed, and the honest reading is that clause 1 is cleared by 11.3
+points with training still to spare.
 
-**The two seeds track each other at matched epochs, and the late gain replicates.**
-0.7291 against 0.7287 at epoch 3 (0.04 points), then **0.7462 against 0.7455 at
-epoch 4 (0.07 points)** — the same +1.7-point step on both seeds, on the same
-split, the same LoRA scope and the same schedule. That is a stronger two-seed
-statement than one matched epoch was, because the quantity clause 1 rests on is
-the *gain*, not the level. Only s42's epoch 5 is now missing; the open question is
-whether it lands near 0.7626, not whether the curve is real.
+**The two seeds track each other at every matched epoch.** 0.7291 / 0.7287 at
+epoch 3 (0.04 points), 0.7462 / 0.7455 at epoch 4 (0.07), and **0.7626 / 0.7613 at
+epoch 5 (0.13)**, with the per-type splits agreeing to 0.4 points on choice, 0.2 on
+noul and 1.4 on score. Including epoch 1, which lands 0.41 points apart, the four
+matched epochs agree to 0.41, 0.04, 0.07 and 0.13 points: the quantity clause 1
+rests on — the gain, not one reading of it — replicates, and it replicates within
+half a point at every epoch where both seeds have a checkpoint.
 
 **On s123, where the excursion lives.** Rebuilding that checkpoint with epoch 2's
 adapter and epoch 1's heads and scoring it: `choice` **0.289**, the same as epoch
@@ -408,12 +408,11 @@ one-epoch run and is unaffected either way.
 
 ## Caveats
 
-- **Two seeds at 0.6B, two at 4B, compared at epoch 1; both 4B seeds also have
-  epochs 2-4 and s123 has epoch 5.** The 0.6B rows are 0.6048 and 0.6028, the 4B
-  rows 0.7231 and 0.7190, and the two 4B seeds agree to 0.04 points at epoch 3 and
-  0.07 at epoch 4. The per-type counts differ by up to 13 items between seeds
-  because the eval mixture is sampled, so the comparison across seeds is not on
-  identical items.
+- **Two seeds at 0.6B, two at 4B, compared at epoch 1; both 4B seeds now have all
+  five epochs.** The 0.6B rows are 0.6048 and 0.6028, the 4B rows 0.7231 and 0.7190,
+  and the two 4B seeds agree to 0.41, 0.04, 0.07 and 0.13 points at epochs 1, 3, 4
+  and 5. The per-type counts differ by up to 13 items between seeds because the eval
+  mixture is sampled, so the comparison across seeds is not on identical items.
 - **The schedules differ.** The tower baselines ran 10 epochs; the 0.6B
   cross-encoder arms are **one-epoch runs**, and the 4B arms run 5. So "epoch 1"
   is the whole run at 0.6B and the first of five at 4B, and the comparison is at
