@@ -217,6 +217,17 @@ def main() -> int:
         # The first calls pay compilation and CUDA-graph capture.  Three warmup
         # iterations measure the compiler, not the model.
         warmup = max(warmup, 10)
+        # ``dynamic=False`` asks for one graph per shape, so a run over several
+        # option counts needs several captures per compiled frame.  Torch's
+        # default per-frame limit is 8; past it dynamo stops compiling and the
+        # later shapes are measured eager while still being reported as
+        # compiled.  On the 0.6B that inflated 256 options from 67.5 ms to
+        # 91.9 ms, which is enough to move a verdict against a 100 ms bar.
+        # Raised here rather than left to the caller because the flag that
+        # needs it is this script's own.
+        torch._dynamo.config.recompile_limit = max(
+            getattr(torch._dynamo.config, "recompile_limit", 8), 256
+        )
         # Latency here is launch-bound: the per-call cost is roughly flat from 2
         # to 20 options, which is the arithmetic being a small part of it.
         # CUDA graphs collapse the per-layer kernel launches, which is the only

@@ -84,6 +84,41 @@ the per-call Python), not the architecture. This note does not establish that
 split; timing the same call at a 2-token state would, and it is the next
 measurement.
 
+### The missing compiled shapes were a harness bug, and the completed curve is on H100
+
+The caveat in *Caveats* used to say that a six-shape compiled run "stalled in
+graph capture", which is why only two 0.6B compiled points existed. It did not stall.
+`--compile` passes `dynamic=False`, so every option count is its own graph, and
+torch's default recompile limit is 8 per frame — past it, dynamo stops compiling
+and the remaining shapes run **eager while still being written to the record as
+`"compiled": true`**. The five-shape run that produced 91.9 ms at 256 options was
+measuring the eager path for its last two rows; an isolated run of the same shape
+gives 67.5 ms. `bench_latency.py` now raises `torch._dynamo.config.recompile_limit`
+to 256 with the reason in a comment, and the curve completes without a warning.
+
+Measured on one H100 NVL, 186-token state, batch 1, same flags as every other
+row in this note — a different host from the A100 table above, so it is reported
+separately rather than merged into it:
+
+| options | 0.6B eager | 0.6B compiled | 4B eager |
+|---:|---:|---:|---:|
+| 2 | 51.9 | 11.0 | 66.7 |
+| 5 | 53.0 | 11.8 | 68.4 |
+| 20 | 56.7 | 17.0 | 75.8 |
+| 64 | 69.4 | 29.6 | 98.6 |
+| **256** | **102.9** | **67.4** | **243.8** |
+
+Three things this adds. **The verdict repeats on a second device**: eager misses
+the 100 ms bar (102.9 ms) and compiled clears it (67.4 ms), which is the same
+ordering as 126.6 against 55.5 on the A100. **The compiled curve is not linear**,
+so Finding 3's two-point line overstates the marginal cost above 20 options: the
+0.6B pays 0.33 ms per option from 2 to 20 and 0.21 ms per option from 20 to 256,
+against the 0.165 a two-point fit reports. And **the two devices do not agree on
+which is faster**: the H100 is 1.3× faster than the A100 at 5 options (11.8
+against 13.8) and 1.2× *slower* at 255 (67.4 against 55.5). Both clear the bar, so
+neither reading changes Finding 1, but the cross-device ratio is not stable and a
+number from one card should not be scaled to another.
+
 ## Finding 4 — the accuracy half of item 5 fails by 3x the allowed gap
 
 The clause allows the 0.6B to be 3 pp behind the 4B. On the configuration sweep's
@@ -136,9 +171,11 @@ other one said.
 * **Compile time is excluded.** Capturing the graph for a new option count takes
   tens of seconds; it is a one-off per shape, but it is real and it is not in the
   table.
-* **The 0.6B compiled run was measured on two shapes only** (5 and 255), after a
-  six-shape run stalled in graph capture. The two numbers it reports are the two
-  the clause needs, and the eager column covers the shape dependence.
+* **The 0.6B compiled column in the A100 table is two shapes** (5 and 255). It was
+  two shapes because a six-shape run was silently measuring the eager path for its
+  last rows — see *The missing compiled shapes were a harness bug*. With the limit
+  raised the curve completes; the completed one is on H100 above and the A100 pair
+  is still the pair the clause needs.
 * **`weighted` readout on both sizes.** The `last` readout pools one hidden state
   instead of 37, so it may be cheaper per option; it has not been measured here.
 
