@@ -89,6 +89,44 @@ clauses are now further apart than they were before this change — the arm that
 meets clause 1 on the aggregate is not the arm that meets clause 5, and the
 cross-encoder is not the arm that meets either clause at 0.6B.
 
+## It halves the option-count degradation
+
+Clause 3's count half asks accuracy at more than twenty options to sit within 5
+points of accuracy at five or fewer. `research/17` measured a matched sweep on the
+tower — 300 fixed banking77 items, the same questions padded and shrunk to each K —
+and found 12.67 points at epoch 10. The same sweep on the two head shapes at the
+**same training length** (4B, split138, epoch 3, seed 42, 300 items, the same
+distractor pool):
+
+| options | tower | cross-encoder |
+|---:|---:|---:|
+| 4 | 0.7300 | 0.7367 |
+| 8 | 0.6467 | 0.6567 |
+| 16 | 0.4433 | 0.5733 |
+| 32 | 0.3300 | 0.4933 |
+| 64 | 0.1700 | 0.4433 |
+| **80** | **0.1567** | **0.4200** |
+| K=4 → 80 | **−57.3 pp** | **−31.7 pp** |
+
+At matched training the two shapes are level at four options and 26 points apart
+at eighty, and the degradation is roughly halved. That is what a head that reads
+each option out of the state's full context should do: the tower compares option
+vectors against one encoded state through a rank-limited attention, so adding
+distractors dilutes the comparison; the cross-encoder never has to compare, it
+scores each option in place.
+
+**Two comparisons that must not be confused.** The tower at epoch **10** scores
+0.9767 / 0.9700 / 0.9533 / 0.9133 / 0.8733 / 0.8500 on this sweep — 12.67 points,
+better than *either* epoch-3 arm. Training length dominates the level, so the
+epoch-3 pair is the comparison that isolates the head shape and the epoch-10 pair
+is the one that says how far training takes it. Whether the cross-encoder's
+five-epoch run approaches that curve is not yet measured; at epoch 3 it is already
+26 points ahead at eighty options, on 42 % against 16 %.
+
+Clause 3's count half is still not met by either — 31.7 points against a 5-point
+allowance — but the arm that meets clause 1 is now also the arm that comes
+closest to this one.
+
 ## On held-out data it moves the board, and the hard tier moves too
 
 JevBench-public, 231 items, states rendered through the loader (`#180`), LoRA
@@ -197,5 +235,9 @@ one-epoch run and is unaffected either way.
   is the whole run at 0.6B and the first of five at 4B, and the comparison is at
   matched epoch and matched data, not at matched schedule.
 - **The 0.6B JevBench row is one epoch**, so it is a floor, not a ceiling.
+- **The option-count sweep's two arms differ in readout as well as in head.** The
+  epoch-3 tower checkpoint is a `last` arm and the cross-encoder a `weighted` one,
+  because that is how each was trained. Readout is not the manipulation, so part of
+  the 26-point gap at eighty options could be the readout rather than the head.
 - **Nothing here says the head helps `score` or `noul`**; the change is confined
   to choice, and the numbers above show it.
