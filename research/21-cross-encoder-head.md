@@ -23,7 +23,8 @@ cluster-disjoint eval:
 | **0.6B cross-encoder** | **0.6048** | **0.5718** | 0.7302 | 0.4056 |
 | — | | | | |
 | 4B tower (`last`) | 0.5399 | 0.391 | 0.797 | 0.438 |
-| **4B cross-encoder** | **0.7231** | **0.721** | 0.822 | 0.477 |
+| **4B cross-encoder, s123** | **0.7231** | **0.721** | 0.822 | 0.477 |
+| **4B cross-encoder, s42** | **0.7190** | **0.715** | 0.823 | 0.470 |
 
 **+12.5 pp at 0.6B and +18.3 pp at 4B**, and the gain sits in the slot the head
 replaces: choice goes +20.9 pp at 0.6B and +33 pp at 4B. The 4B cross-encoder's
@@ -130,8 +131,9 @@ accuracy. The 0.6B JevBench row is unaffected — that run is one epoch by const
 
 ## Caveats
 
-- **One seed per arm.** The 0.6B replication (seed 42) and the 4B second seed were
-  still training when this was written; every number above is seed 123.
+- **One seed except where stated.** The 0.6B replication (seed 42) was still
+  training when this was written; the 4B row carries both seeds at epoch 1
+  (0.7231 and 0.7190, 0.4 pp apart).
 - **The schedules differ.** The tower baselines ran 10 epochs; both cross-encoder
   arms run 5 (0.6B) or 5 (4B) in the runs quoted, so "epoch 1" is not the same
   point on the two learning-rate curves. The comparison is at matched epoch and
