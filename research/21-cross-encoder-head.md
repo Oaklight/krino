@@ -1,4 +1,4 @@
-# The cross-encoder head: +18 points at 4B, +21 on the slot it replaces, and nothing on the hard tier
+# The cross-encoder head: +18 points at 4B, half the option-count decay, and a hard tier too small to tell
 
 The choice head has been a tower: the state is encoded once, each option on its
 own, and a rank-64 bilinear against the pooled state scores the option. The
