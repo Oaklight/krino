@@ -50,6 +50,7 @@ from model.evaluation.gate import (
     summarize,
     summarize_by,
     summarize_schema_split,
+    chance_corrected_accuracy,
 )
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
@@ -173,7 +174,24 @@ class RawReranker:
             keys=tuple(label for label, _ in options),
             source=item.source,
             schema=schema_key(q),
+            tier=jevbench_tier(item),
         )
+
+
+_JEVBENCH_TIERS = ("easy", "hard", "original")
+
+
+def jevbench_tier(item: Any) -> str:
+    """Tier of a JevBench item, from its id prefix.
+
+    The public suite ships three files whose ids start with the tier name.
+    ``load_jevbench`` flattens them into one stream and keeps no tier field,
+    so the id is the only stable signal.
+    """
+    if getattr(item, "source", "") != "jevbench":
+        return ""
+    head = str(getattr(item, "id", "")).split("-", 1)[0]
+    return head if head in _JEVBENCH_TIERS else ""
 
 
 # ---------------------------------------------------------------------------
@@ -295,6 +313,7 @@ def predict_row(
         keys=keys,
         source=item.source,
         schema=schema_key(q),
+        tier=jevbench_tier(item),
     )
 
 
@@ -319,6 +338,7 @@ def predict_reversed(model: DecisionModel | RawReranker, item: Any) -> Predictio
             keys=tuple(str(key) for key in keys),
             source=item.source,
             schema=schema_key(q),
+            tier=jevbench_tier(item),
         )
     if q_type == "score":
         criteria = q["criteria"]
@@ -574,6 +594,24 @@ def main() -> None:
             "data_sha256": items_digest(items),
         },
         "overall": summarize(rows, args.bins),
+        "intelligence": {
+            **chance_corrected_accuracy(rows),
+            # The public 231-item suite ships easy/hard/original only. The
+            # official Intelligence also weights standard (0.28), judge
+            # (0.28) and 308 sealed items; those tiers are not public, so
+            # this is an unweighted per-item proxy over the visible 231.
+            "proxy": "unweighted per-item chance-corrected accuracy, 231 public items",
+            "chance_model": "uniform 1 / n_options per item; noul uses 0.5",
+            "tiers_present": ["easy", "hard", "original"],
+            "tiers_missing": ["standard", "judge", "sealed"],
+            "official_weights_not_applied": {
+                "easy": 0.14,
+                "standard": 0.28,
+                "judge": 0.28,
+                "hard": 0.30,
+            },
+        },
+        "by_tier": summarize_by(rows, lambda row: row.tier or "unknown", args.bins),
         "by_type": summarize_by(rows, lambda row: row.q_type, args.bins),
         "by_source": summarize_by(rows, lambda row: row.source, args.bins),
         "by_k_bucket": summarize_by(
