@@ -1,0 +1,562 @@
+{
+ "config": "model/configs/screen_ettin150m.yaml",
+ "totals": {
+  "n": 195706,
+  "with_teacher_probs": 10916
+ },
+ "types": {
+  "choice": 78839,
+  "noul": 93479,
+  "score": 23388
+ },
+ "state_chars": {
+  "p50": 280,
+  "p75": 1001,
+  "p90": 2084,
+  "p99": 13570,
+  "gt4k": 7613,
+  "gt8k": 4901
+ },
+ "sources": [
+  {
+   "source": "banking77",
+   "n": 5500,
+   "types": {
+    "choice": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "80": 5500
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 47,
+    "p90": 104,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "agnews",
+   "n": 5500,
+   "types": {
+    "choice": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "4": 5500
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 235,
+    "p90": 303,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "arc",
+   "n": 3870,
+   "types": {
+    "choice": 3870
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "3": 8,
+    "4": 3857,
+    "5": 5
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 95,
+    "p90": 209,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "race",
+   "n": 5500,
+   "types": {
+    "choice": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "4": 5500
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 1589,
+    "p90": 2162,
+    "gt4k": 18,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "hellaswag",
+   "n": 5500,
+   "types": {
+    "choice": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "4": 5500
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 250,
+    "p90": 361,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "codesearchnet",
+   "n": 3300,
+   "types": {
+    "choice": 3300
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "4": 3300
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 148,
+    "p90": 531,
+    "gt4k": 3,
+    "gt8k": 1
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "swag",
+   "n": 5500,
+   "types": {
+    "choice": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "4": 5500
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 67,
+    "p90": 117,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "fever",
+   "n": 5500,
+   "types": {
+    "choice": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "3": 5500
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 229,
+    "p90": 400,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "mmlu",
+   "n": 5500,
+   "types": {
+    "choice": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "4": 5500
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 1488,
+    "p90": 2157,
+    "gt4k": 11,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "winogrande",
+   "n": 5500,
+   "types": {
+    "choice": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "2": 5500
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 97,
+    "p90": 121,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "piqa",
+   "n": 5500,
+   "types": {
+    "choice": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "2": 5500
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 34,
+    "p90": 58,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "commonsenseqa",
+   "n": 10241,
+   "types": {
+    "choice": 10241
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "5": 10241
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 64,
+    "p90": 107,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "logiqa",
+   "n": 7876,
+   "types": {
+    "choice": 7876
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "4": 7876
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 457,
+    "p90": 798,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "sst2",
+   "n": 5500,
+   "types": {
+    "noul": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {},
+   "score_levels": {},
+   "state_chars": {
+    "p50": 44,
+    "p90": 129,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "mnli",
+   "n": 10500,
+   "types": {
+    "noul": 10500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {},
+   "score_levels": {},
+   "state_chars": {
+    "p50": 178,
+    "p90": 307,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "tabfact",
+   "n": 5500,
+   "types": {
+    "noul": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {},
+   "score_levels": {},
+   "state_chars": {
+    "p50": 850,
+    "p90": 1909,
+    "gt4k": 25,
+    "gt8k": 1
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "multirc",
+   "n": 27740,
+   "types": {
+    "noul": 27740
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {},
+   "score_levels": {},
+   "state_chars": {
+    "p50": 1659,
+    "p90": 2566,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "mednli",
+   "n": 11732,
+   "types": {
+    "noul": 11732
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {},
+   "score_levels": {},
+   "state_chars": {
+    "p50": 138,
+    "p90": 241,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "contractnli",
+   "n": 14510,
+   "types": {
+    "noul": 14510
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {},
+   "score_levels": {},
+   "state_chars": {
+    "p50": 2774,
+    "p90": 15074,
+    "gt4k": 6840,
+    "gt8k": 4790
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "anli",
+   "n": 5500,
+   "types": {
+    "noul": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {},
+   "score_levels": {},
+   "state_chars": {
+    "p50": 390,
+    "p90": 514,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "boolq",
+   "n": 5500,
+   "types": {
+    "noul": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {},
+   "score_levels": {},
+   "state_chars": {
+    "p50": 580,
+    "p90": 1034,
+    "gt4k": 1,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "sst5",
+   "n": 9044,
+   "types": {
+    "score": 9044
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {},
+   "score_levels": {
+    "5": 9044
+   },
+   "state_chars": {
+    "p50": 98,
+    "p90": 173,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "stsb",
+   "n": 6249,
+   "types": {
+    "score": 6249
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {},
+   "score_levels": {
+    "6": 6249
+   },
+   "state_chars": {
+    "p50": 119,
+    "p90": 243,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "yelp",
+   "n": 5500,
+   "types": {
+    "score": 5500
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {},
+   "score_levels": {
+    "5": 5500
+   },
+   "state_chars": {
+    "p50": 556,
+    "p90": 1579,
+    "gt4k": 30,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "synthetic",
+   "n": 11000,
+   "types": {
+    "noul": 6227,
+    "choice": 3170,
+    "score": 1603
+   },
+   "with_teacher_probs": 10916,
+   "choice_k": {
+    "3": 3,
+    "4": 2016,
+    "5": 1151
+   },
+   "score_levels": {
+    "3": 13,
+    "4": 532,
+    "5": 1058
+   },
+   "state_chars": {
+    "p50": 689,
+    "p90": 2250,
+    "gt4k": 685,
+    "gt8k": 109
+   },
+   "label_vs_teacher_disagree": 1962,
+   "label_vs_teacher_compared": 9326
+  },
+  {
+   "source": "authored144",
+   "n": 144,
+   "types": {
+    "choice": 144
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "3": 144
+   },
+   "score_levels": {},
+   "state_chars": {
+    "p50": 112,
+    "p90": 211,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  },
+  {
+   "source": "typed_decisions",
+   "n": 2500,
+   "types": {
+    "noul": 770,
+    "score": 992,
+    "choice": 738
+   },
+   "with_teacher_probs": 0,
+   "choice_k": {
+    "4": 500,
+    "5": 238
+   },
+   "score_levels": {
+    "4": 855,
+    "5": 137
+   },
+   "state_chars": {
+    "p50": 725,
+    "p90": 1035,
+    "gt4k": 0,
+    "gt8k": 0
+   },
+   "label_vs_teacher_disagree": 0,
+   "label_vs_teacher_compared": 0
+  }
+ ]
+}
