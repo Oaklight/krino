@@ -40,6 +40,32 @@ Two facts drive the design:
 Head training so far loses 25-40 points. Any arm that cannot reproduce the
 raw base at step 0 is measuring a different model, not an improvement.
 
+## Corpus audit (commit e02ab0c)
+
+`model/experiments/corpus_audit.json`, built by
+`model/scripts/audit_corpus.py` on the run config, 195,706 train+eval items:
+
+| Property | Corpus | JevBench public |
+|---|---|---|
+| noul / choice / score | 47.8 / 40.3 / 12.0 % | 32.0 / 60.2 / 7.8 % |
+| teacher_probs coverage | 10,916 (5.6%), synthetic only | n/a |
+| context p90 | 2,084 chars | hard tier ~3.7K tokens |
+| >8K chars | 4,901 (2.5%), 4,790 of them contractnli | |
+| choice K | 2, 3, 4, 5, 80 (banking77) | includes K=6 |
+| score levels | 3, 4, 5, 6 (stsb 6,249) | 3-5 |
+| hard label vs teacher argmax | 21.0% disagree | n/a |
+
+Consequences:
+
+1. The corpus is 94.4% hard-label CE. An arm trained on it is generic SFT,
+   not Jev distillation. Do not report it as distillation.
+2. Teacher-labeling 40-50K benchmark items would take coverage to ~25-30%
+   and is the cheapest way to make a distillation claim credible.
+3. Type mix must be reweighted toward choice for the 4B arm; 0.32 / 0.60 /
+   0.08 is feasible from the current pools at 15K x 5.
+4. Long context is a contractnli monoculture. Raising `synthetic.max_train`
+   helps only if the long synthetic domains are upweighted.
+
 ## Design rules
 
 1. Do not train on JevBench public. The within-corpus schema holdout is the
