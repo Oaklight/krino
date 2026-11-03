@@ -1188,28 +1188,80 @@ _AUGMENTED_TEACHER_PRIORITY = ("jev_augmented", "gpt_5_6_luna_augmented")
 _STANDARD_TEACHER_PRIORITY = ("jev", "gpt_5_6_luna", "qwen3_8_27b")
 
 
-def _select_teacher_probs(
-    cached: dict[str, dict[str, float]],
-    question: dict[str, Any],
-) -> dict[str, float] | None:
-    """Select the best teacher probs from the nested multi-teacher cache.
+_TEACHER_ALIASES = {
+    "luna": "gpt_5_6_luna",
+    "qwen": "qwen3_8_27b",
+}
 
-    For augmented noul items (question has augmented_options), prefer
-    augmented teachers. For standard items, prefer Jev > Luna > Qwen.
-    Returns a flat ``{option_key: probability}`` dict or None.
+
+def _teacher_keys(
+    question: dict[str, Any],
+    teacher: str | None = None,
+) -> tuple[str, ...]:
+    """Teacher keys to try, in order, for one question.
+
+    With an explicit ``teacher`` there is no fallback: a missing teacher
+    returns no probs rather than silently borrowing another model's labels.
+    Without one, keep the historical Jev > Luna > Qwen priority.
     """
     is_augmented_noul = (
         question.get("type") == "noul"
         and question.get("augmented_options")
     )
-    priority = _AUGMENTED_TEACHER_PRIORITY if is_augmented_noul else _STANDARD_TEACHER_PRIORITY
-    for key in priority:
-        if key in cached and cached[key]:
-            return cached[key]
+    if teacher is None:
+        return (
+            _AUGMENTED_TEACHER_PRIORITY
+            if is_augmented_noul
+            else _STANDARD_TEACHER_PRIORITY
+        )
+    name = _TEACHER_ALIASES.get(teacher, teacher)
+    return (f"{name}_augmented", name) if is_augmented_noul else (name,)
+
+
+def _select_teacher_entry(
+    cached: dict[str, dict[str, float]],
+    question: dict[str, Any],
+    teacher: str | None = None,
+) -> tuple[str | None, dict[str, float] | None]:
+    """Return ``(teacher_key, probs)`` for the selected teacher."""
+    for key in _teacher_keys(question, teacher):
+        if cached.get(key):
+            return key, cached[key]
+    if teacher is not None:
+        return None, None
     for key in _STANDARD_TEACHER_PRIORITY:
-        if key in cached and cached[key]:
-            return cached[key]
-    return None
+        if cached.get(key):
+            return key, cached[key]
+    return None, None
+
+
+def _select_teacher_probs(
+    cached: dict[str, dict[str, float]],
+    question: dict[str, Any],
+    teacher: str | None = None,
+) -> dict[str, float] | None:
+    """Select teacher probs; returns a flat option->probability dict or None.
+
+    ``teacher`` pins one teacher key (aliases: ``luna``, ``qwen``). With an
+    explicit teacher there is no fallback, so a run cannot silently train on
+    a different teacher than the one named in its config.
+    """
+    _, probs = _select_teacher_entry(cached, question, teacher)
+    return probs
+
+
+def _label_teacher_key(filename: str, key: str) -> str:
+    """Repair a known label-file key mismatch.
+
+    The ``*_qwen3_8_27b_labels.jsonl`` files were written by
+    ``fill_luna_gaps.py``, which hardcodes the Luna key. The filename is the
+    only surviving provenance, so re-key those rows to ``qwen3_8_27b``.
+    The Luna bucket itself remains mixed Luna/DeepSeek and cannot be split
+    without per-row metadata.
+    """
+    if "_qwen3_8_27b_" in filename:
+        return "qwen3_8_27b"
+    return key
 
 
 def _synthetic_family_split(
@@ -1251,8 +1303,14 @@ def _synthetic_family_split(
     return "test" if int(digest[:8], 16) / 0xFFFFFFFF < eval_ratio else "train"
 
 
-def load_synthetic() -> Iterator[TypedQuestion]:
-    """Load synthetic data by assembling from families + variants + labels on the fly."""
+def load_synthetic(teacher: str | None = None) -> Iterator[TypedQuestion]:
+    """Load synthetic data by assembling from families + variants + labels.
+
+    ``teacher`` pins one teacher key (``jev``, ``gpt_5_6_luna``,
+    ``qwen3_8_27b``; aliases ``luna`` and ``qwen``). When set, an item without
+    that teacher's labels is left without ``teacher_probs`` rather than falling
+    back to another teacher.
+    """
     synth_dir = DATA_DIR / "synthetic"
     if not synth_dir.exists():
         return
@@ -1264,11 +1322,15 @@ def load_synthetic() -> Iterator[TypedQuestion]:
     )
     from .synthetic_templates import DOMAIN_TEMPLATES
 
-    # Load all label files into a single lookup
+    # Load all label files into a single lookup. The qwen3_8_27b files were
+    # written with the Luna key by fill_luna_gaps.py; re-key by filename so
+    # they do not overwrite the Luna bucket.
     label_cache: dict[str, dict] = {}
     for label_file in sorted(synth_dir.glob("*_labels.jsonl")):
         for lbl in _load_jsonl(label_file):
-            label_cache.setdefault(lbl["id"], {}).update(lbl.get("teacher_probs", {}))
+            for key, probs in (lbl.get("teacher_probs") or {}).items():
+                key = _label_teacher_key(label_file.name, key)
+                label_cache.setdefault(lbl["id"], {})[key] = probs
 
     for domain in DOMAIN_TEMPLATES:
         families_path = synth_dir / f"{domain}_families.jsonl"
@@ -1290,9 +1352,12 @@ def load_synthetic() -> Iterator[TypedQuestion]:
             for item_dict in items:
                 cached = label_cache.get(item_dict["id"])
                 if cached:
-                    flat = _select_teacher_probs(cached, item_dict.get("question", {}))
+                    key, flat = _select_teacher_entry(
+                        cached, item_dict.get("question", {}), teacher
+                    )
                     if flat:
                         item_dict["teacher_probs"] = flat
+                        item_dict["teacher_name"] = key
                 yield TypedQuestion(**item_dict)
 
 
