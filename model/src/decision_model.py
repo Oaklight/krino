@@ -29,9 +29,28 @@ from .heads import (
 from .lora import inject_lora
 
 
+_CAUSAL_CLASS_SUFFIXES = ("ForCausalLM", "LMHeadModel", "ForConditionalGeneration")
+
+
 def _is_encoder_model(backbone: PreTrainedModel) -> bool:
-    """Detect whether backbone is an encoder (bidirectional) or causal decoder."""
-    return not getattr(backbone.config, "is_decoder", True)
+    """Detect whether backbone is an encoder (bidirectional) or causal decoder.
+
+    ``config.is_decoder`` is unreliable: HuggingFace causal configs such as
+    Qwen3 and ModernBERT both leave it unset, so the old ``not is_decoder``
+    test classified every ModernBERT reranker as causal.  The class or
+    declared architecture name is the discriminating signal, because the
+    causal loaders return a ``*ForCausalLM`` wrapper while the encoder loader
+    returns a bare ``*Model``.
+    """
+    config = backbone.config
+    if getattr(config, "is_decoder", False) is True:
+        return False
+    names = list(getattr(config, "architectures", None) or ())
+    names.append(type(backbone).__name__)
+    for name in names:
+        if name.endswith(_CAUSAL_CLASS_SUFFIXES):
+            return False
+    return True
 
 
 class DecisionModel(nn.Module):
@@ -709,6 +728,8 @@ class DecisionModel(nn.Module):
         self,
         prefix_inputs: dict,
         chunks: list[list[list[int]]],
+        *,
+        warn: bool = True,
     ) -> torch.Tensor:
         """Fallback that re-encodes the context for each option chunk.
 
@@ -716,7 +737,7 @@ class DecisionModel(nn.Module):
         caller forces gradient checkpointing).  It still chunks the options,
         so memory stays bounded, but the prefix is paid once per chunk.
         """
-        if not getattr(self, "_warned_no_cache", False):
+        if warn and not getattr(self, "_warned_no_cache", False):
             print(
                 "  Warning: backbone returned no KV cache for the option-marker "
                 "readout; re-encoding the context per chunk",
@@ -775,7 +796,9 @@ class DecisionModel(nn.Module):
         prefix_inputs = self._tokenize_context(state, instructions, prefix_budget)
 
         if self.is_encoder:
-            return self._forward_options_no_cache(prefix_inputs, chunks)
+            # Encoders have no KV cache; re-encoding the prefix per chunk is
+            # the expected path, not a fallback worth warning about.
+            return self._forward_options_no_cache(prefix_inputs, chunks, warn=False)
         prefix_outputs = self._backbone_forward(
             prefix_inputs,
             output_hidden_states=False,
