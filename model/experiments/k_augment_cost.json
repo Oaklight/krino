@@ -1,0 +1,39 @@
+{
+  "config": "model/configs/r2_reranker0.6b.yaml",
+  "seed": 42,
+  "measurement": "data.k_augment.apply_k_augment_with_stats on MultitaskSampler.sample_epoch(0)",
+  "pool_train_items": 182262,
+  "epoch_items": 15000,
+  "choice_items_in_epoch": 5000,
+  "provenance": "Re-read on 2026-10-28 while addressing review. The earlier figures quoted in the PR (44,125 encodes, 998 selected) were taken from a previous load of the same pool; the current snapshot drops a few synthetic rows, so the baseline is 44,558 and 992 selected. The ratio is unchanged in substance.",
+  "results": [
+    {
+      "fraction": 0.2,
+      "k_range": [8, 80],
+      "selected": 992,
+      "padded": 924,
+      "under_filled": 0,
+      "teacher_probs_dropped": 31,
+      "encodes_before": 44558,
+      "encodes_after": 69467,
+      "encode_ratio": 1.559,
+      "target_mean": 30.81,
+      "realised_mean": 30.81,
+      "realised_max": 80
+    },
+    {
+      "fraction": 0.2,
+      "k_range": [8, 256],
+      "selected": 992,
+      "padded": 944,
+      "under_filled": 0,
+      "teacher_probs_dropped": 31,
+      "encodes_before": 44558,
+      "encodes_after": 107053,
+      "encode_ratio": 2.4026,
+      "target_mean": 71.67,
+      "realised_mean": 71.67,
+      "realised_max": 254
+    }
+  ]
+}

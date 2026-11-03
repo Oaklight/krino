@@ -1,0 +1,599 @@
+#!/usr/bin/env python3
+"""One-command evaluation gate for Krino v3.
+
+Loads a checkpoint and writes one JSON with every acceptance field: accuracy,
+ECE, Brier, Brier skill, QWK, RPS, MAE, per-type, per-source, per-option-count,
+per-schema, schema holdout, risk-coverage, option-order robustness, and an
+optional K-sweep.
+
+Acceptance is JevBench public. Banking77 is diagnostic only.
+
+Examples:
+
+    python -m model.scripts.eval_gate --repo oaklight/krino-qwen3-reranker-0.6b-heads \
+        --jevbench --output results/gate/reranker06_jevbench.json
+
+    python -m model.scripts.eval_gate --model Qwen/Qwen3-Reranker-0.6B \
+        --heads checkpoints/heads.pt --data data/benchmarks/stsb.jsonl \
+        --arm reranker06_stsb --output results/gate/reranker06_stsb.json
+
+The arm name, data digest, and every configuration field are written into the
+JSON so a number can never be separated from the run that produced it.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import random
+import sys
+import time
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+
+import torch
+from huggingface_hub import hf_hub_download
+from safetensors.torch import load_file
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from data.pipeline import load_jevbench, load_jsonl
+from model.evaluation.gate import (
+    Prediction,
+    k_bucket,
+    order_sensitivity,
+    risk_coverage,
+    schema_key,
+    summarize,
+    summarize_by,
+    summarize_schema_split,
+)
+from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
+from model.src.decision_model import DecisionModel
+
+
+# ---------------------------------------------------------------------------
+# Raw Qwen3-Reranker baseline
+# ---------------------------------------------------------------------------
+
+RAW_RERANKER_INSTRUCTION = (
+    "Classify: which option correctly answers the question for the given situation? "
+    "Rate how well each option fits."
+)
+
+
+def _raw_options(
+    question: dict[str, Any], reverse: bool = False
+) -> list[tuple[str, str]]:
+    criteria = question.get("criteria", {})
+    q_type = question.get("type")
+    if q_type == "noul":
+        options = [
+            ("no", str(criteria.get("false", criteria.get("no", "No")))),
+            ("yes", str(criteria.get("true", criteria.get("yes", "Yes")))),
+        ]
+    elif q_type == "choice":
+        options = [(str(key), str(value)) for key, value in criteria.items()]
+    elif q_type == "score":
+        options = [(str(i), str(description)) for i, description in enumerate(criteria)]
+    else:
+        raise ValueError(f"Unsupported question type: {q_type}")
+    return list(reversed(options)) if reverse else options
+
+
+class RawReranker:
+    """Raw Qwen3-Reranker, judged with yes/no logits.
+
+    This is the baseline the goal's +10 pp training target is measured against.
+    Options are scored independently and their P(yes) values are normalised into
+    a distribution so the same gate metrics apply.
+    """
+
+    def __init__(self, model_name: str, device: str) -> None:
+        self.device = device
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, padding_side="left")
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name, dtype=torch.bfloat16
+        ).to(device)
+        self.model.eval()
+        self.true_id = self.tokenizer.convert_tokens_to_ids("yes")
+        self.false_id = self.tokenizer.convert_tokens_to_ids("no")
+        prefix = (
+            "<|im_start|>system\n"
+            "Judge whether the Document meets the requirements based on the Query "
+            "and the Instruct provided. Note that the answer can only be \"yes\" or \"no\"."
+            "<|im_end|>\n<|im_start|>user\n"
+        )
+        suffix = "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
+        self.prefix_tokens = self.tokenizer.encode(prefix, add_special_tokens=False)
+        self.suffix_tokens = self.tokenizer.encode(suffix, add_special_tokens=False)
+        self.max_length = 8192
+
+    @torch.inference_mode()
+    def _score_option(
+        self,
+        state: str,
+        instructions: str,
+        q_type: str,
+        label: str,
+        description: str,
+    ) -> float:
+        query = f"{state}\n\nQuestion: {instructions}"
+        if q_type == "score":
+            document = f"Rubric level {label}: {description}"
+        else:
+            document = f"Answer option {label}: {description}"
+        text = (
+            f"<Instruct>: {RAW_RERANKER_INSTRUCTION}\n"
+            f"<Query>: {query}\n"
+            f"<Document>: {document}"
+        )
+        tokens = self.tokenizer.encode(text, add_special_tokens=False)
+        budget = self.max_length - len(self.prefix_tokens) - len(self.suffix_tokens)
+        input_ids = self.prefix_tokens + tokens[:budget] + self.suffix_tokens
+        inputs = {
+            "input_ids": torch.tensor([input_ids], device=self.device),
+            "attention_mask": torch.ones(1, len(input_ids), device=self.device),
+        }
+        logits = self.model(**inputs).logits[:, -1, :]
+        true_logit = logits[:, self.true_id].item()
+        false_logit = logits[:, self.false_id].item()
+        return torch.softmax(
+            torch.tensor([false_logit, true_logit]), dim=0
+        )[1].item()
+
+    def predict_row(
+        self,
+        item: Any,
+        question: dict[str, Any] | None = None,
+        item_id: str | None = None,
+        reverse: bool = False,
+    ) -> Prediction:
+        q = question or item.question
+        options = _raw_options(q, reverse=reverse)
+        scores = [
+            self._score_option(
+                item.state, q.get("instructions", ""), q["type"], label, description
+            )
+            for label, description in options
+        ]
+        total = sum(scores)
+        if total > 0:
+            probs = tuple(score / total for score in scores)
+        else:
+            probs = tuple(1.0 / len(scores) for _ in scores)
+        return Prediction(
+            item_id=item_id or item.id,
+            q_type=q["type"],
+            label=item.label,
+            probs=probs,
+            keys=tuple(label for label, _ in options),
+            source=item.source,
+            schema=schema_key(q),
+        )
+
+
+# ---------------------------------------------------------------------------
+# Model loading
+# ---------------------------------------------------------------------------
+
+
+def _backbone_loader(loader_type: str, name: str, device: str, dtype: torch.dtype):
+    if loader_type == "encoder":
+        return load_encoder(name, device=device, dtype=dtype)
+    if loader_type == "qwen35_base":
+        return load_qwen35_base(name, device=device, dtype=dtype)
+    return load_causal_lm(name, device=device, dtype=dtype)
+
+
+def load_model(args: argparse.Namespace, device: str) -> tuple[DecisionModel, str]:
+    dtype = torch.float32 if device == "cpu" or args.dtype == "float32" else torch.bfloat16
+
+    if args.repo:
+        config_path = hf_hub_download(args.repo, "config.json")
+        with open(config_path) as handle:
+            config = json.load(handle)
+        backbone_name = config["backbone"]["name"]
+        loader_type = config["backbone"].get("loader", "causal_lm")
+        rank = int(config["heads"]["rank"])
+        dropout = float(config["heads"].get("dropout", 0.1))
+        backbone, tokenizer = _backbone_loader(loader_type, backbone_name, device, dtype)
+        model = DecisionModel(
+            backbone=backbone,
+            tokenizer=tokenizer,
+            rank=rank,
+            dropout=dropout,
+            readout=args.readout,
+            readout_n=args.readout_n,
+            readout_layer=args.readout_layer,
+            lora_layers=args.lora_layers,
+            lora_rank=args.lora_rank,
+            max_length=args.max_length,
+        )
+        weights_path = hf_hub_download(args.repo, "head_weights.safetensors")
+        model.load_state_dict(load_file(weights_path, device=device), strict=False)
+    else:
+        if not args.model or not args.heads:
+            raise SystemExit("Specify --repo, or both --model and --heads")
+        backbone, tokenizer = _backbone_loader(
+            "encoder" if args.encoder else ("qwen35_base" if args.qwen35_base else "causal_lm"),
+            args.model,
+            device,
+            dtype,
+        )
+        model = DecisionModel(
+            backbone=backbone,
+            tokenizer=tokenizer,
+            rank=args.rank,
+            dropout=args.dropout,
+            readout=args.readout,
+            readout_n=args.readout_n,
+            readout_layer=args.readout_layer,
+            lora_layers=args.lora_layers,
+            lora_rank=args.lora_rank,
+            max_length=args.max_length,
+        )
+        model.load_heads(args.heads)
+
+    model.eval()
+    return model, backbone_name if args.repo else args.model
+
+
+# ---------------------------------------------------------------------------
+# Inference
+# ---------------------------------------------------------------------------
+
+
+@torch.inference_mode()
+def predict_row(
+    model: DecisionModel | RawReranker,
+    item: Any,
+    question: dict[str, Any] | None = None,
+    item_id: str | None = None,
+) -> Prediction:
+    """Score one item without the rounding ``DecisionModel.predict`` applies."""
+    if isinstance(model, RawReranker):
+        return model.predict_row(item, question, item_id)
+    q = question or item.question
+    q_type = q.get("type")
+    state = item.state
+    instructions = q.get("instructions", "")
+
+    if q_type == "noul":
+        logit = model.forward_noul(state, instructions)
+        prob_true = torch.sigmoid(logit).reshape(-1)[0].item()
+        keys = ("no", "yes")
+        probs = (1.0 - prob_true, prob_true)
+    elif q_type == "choice":
+        criteria = q["criteria"]
+        keys = tuple(str(key) for key in criteria)
+        texts = [criteria[key] or key for key in keys]
+        logits = model.forward_choice(state, instructions, texts)
+        probs = tuple(torch.softmax(logits, dim=-1)[0].tolist())
+    elif q_type == "score":
+        criteria = q["criteria"]
+        keys = tuple(str(i) for i in range(len(criteria)))
+        logits = model.forward_score(state, instructions, criteria)
+        probs = tuple(torch.softmax(logits, dim=-1)[0].tolist())
+    else:
+        raise ValueError(f"Unsupported question type: {q_type}")
+
+    return Prediction(
+        item_id=item_id or item.id,
+        q_type=q_type,
+        label=item.label,
+        probs=probs,
+        keys=keys,
+        source=item.source,
+        schema=schema_key(q),
+    )
+
+
+@torch.inference_mode()
+def predict_reversed(model: DecisionModel | RawReranker, item: Any) -> Prediction:
+    """Score the same item with its options or levels presented in reverse."""
+    if isinstance(model, RawReranker):
+        return model.predict_row(item, reverse=True)
+    q = item.question
+    q_type = q.get("type")
+    if q_type == "choice":
+        criteria = q["criteria"]
+        keys = list(criteria)[::-1]
+        texts = [criteria[key] or key for key in keys]
+        logits = model.forward_choice(item.state, q.get("instructions", ""), texts)
+        probs = tuple(torch.softmax(logits, dim=-1)[0].tolist())
+        return Prediction(
+            item_id=item.id,
+            q_type="choice",
+            label=item.label,
+            probs=probs,
+            keys=tuple(str(key) for key in keys),
+            source=item.source,
+            schema=schema_key(q),
+        )
+    if q_type == "score":
+        criteria = q["criteria"]
+        n_levels = len(criteria)
+        order = list(range(n_levels))[::-1]
+        texts = [criteria[i] for i in order]
+        logits = model.forward_score(item.state, q.get("instructions", ""), texts)
+        probs = tuple(torch.softmax(logits, dim=-1)[0].tolist())
+        # Logit position j holds the text of original level n_levels-1-j.
+        keys = tuple(str(n_levels - 1 - j) for j in range(n_levels))
+        return Prediction(
+            item_id=item.id,
+            q_type="score",
+            label=item.label,
+            probs=probs,
+            keys=keys,
+            source=item.source,
+            schema=schema_key(q),
+        )
+    raise ValueError(f"Order sensitivity is undefined for {q_type}")
+
+
+# ---------------------------------------------------------------------------
+# K-sweep
+# ---------------------------------------------------------------------------
+
+
+def build_distractor_pool(items: list[Any]) -> list[tuple[str, str]]:
+    """Deduplicated (key, text) distractors from every choice item."""
+    pool: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for item in items:
+        if item.question.get("type") != "choice":
+            continue
+        for key, text in item.question.get("criteria", {}).items():
+            label = text or str(key)
+            if label not in seen:
+                seen.add(label)
+                pool.append((str(key), label))
+    return pool
+
+
+def make_k_question(
+    item: Any,
+    pool: list[tuple[str, str]],
+    k: int,
+    seed: int,
+) -> dict[str, Any] | None:
+    """Keep the gold option and draw ``k-1`` distractors from other items."""
+    criteria = item.question["criteria"]
+    gold = str(item.label)
+    if gold not in criteria:
+        return None
+    gold_text = criteria[gold] or gold
+    candidates = [
+        (key, text) for key, text in pool if key != gold and text != gold_text
+    ]
+    if len(candidates) < k - 1:
+        return None
+    rng = random.Random(f"{seed}:{item.id}:{k}")
+    picked = rng.sample(candidates, k - 1)
+    merged = {gold: gold_text}
+    for j, (key, text) in enumerate(picked):
+        merged[f"d{j}:{key}"] = text
+    question = dict(item.question)
+    question["criteria"] = merged
+    return question
+
+
+def run_k_sweep(
+    model: DecisionModel,
+    items: list[Any],
+    pool_items: list[Any],
+    ks: list[int],
+    max_items: int,
+    seed: int,
+    n_bins: int,
+) -> dict[str, dict[str, Any]]:
+    pool = build_distractor_pool(pool_items)
+    choices = [item for item in items if item.question.get("type") == "choice"]
+    if max_items:
+        choices = choices[:max_items]
+    results: dict[str, dict[str, Any]] = {}
+    for k in ks:
+        rows: list[Prediction] = []
+        for item in choices:
+            question = make_k_question(item, pool, k, seed)
+            if question is None:
+                continue
+            rows.append(
+                predict_row(model, item, question=question, item_id=f"{item.id}-k{k}")
+            )
+        results[str(k)] = summarize(rows, n_bins)
+        print(f"    K={k:<4} n={results[str(k)].get('n', 0)}")
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Data
+# ---------------------------------------------------------------------------
+
+
+def items_digest(items: list[Any]) -> str:
+    digest = hashlib.sha256()
+    for item in items:
+        digest.update(item.id.encode("utf-8"))
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def load_items(args: argparse.Namespace) -> tuple[list[Any], str]:
+    if args.jevbench:
+        items = list(load_jevbench())
+        return items, "jevbench"
+    items: list[Any] = []
+    for path in args.data or []:
+        items.extend(load_jsonl(Path(path)))
+    if not items:
+        raise SystemExit("Specify --jevbench or --data")
+    return items, ",".join(str(path) for path in args.data)
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Krino v3 evaluation gate")
+    parser.add_argument("--repo", help="HuggingFace repo with config.json and head_weights.safetensors")
+    parser.add_argument("--model", help="Backbone name for a local checkpoint")
+    parser.add_argument("--heads", type=Path, help="Local head checkpoint")
+    parser.add_argument("--encoder", action="store_true", help="Backbone is an encoder")
+    parser.add_argument("--qwen35-base", action="store_true", help="Backbone uses the Qwen3.5 base loader")
+    parser.add_argument(
+        "--raw-reranker",
+        action="store_true",
+        help="Score with Qwen3-Reranker yes/no logits instead of Krino heads",
+    )
+    parser.add_argument("--rank", type=int, default=64)
+    parser.add_argument("--dropout", type=float, default=0.1)
+    parser.add_argument("--readout", default="last", help="last|mean_last_n|weighted|layer|fuse_pair")
+    parser.add_argument("--readout-n", type=int, default=4)
+    parser.add_argument("--readout-layer", type=int, default=None)
+    parser.add_argument("--lora-layers", type=int, default=None)
+    parser.add_argument("--lora-rank", type=int, default=16)
+    parser.add_argument("--max-length", type=int, default=None)
+    parser.add_argument("--device", default=None)
+    parser.add_argument("--dtype", choices=("bfloat16", "float32"), default="bfloat16")
+    parser.add_argument("--jevbench", action="store_true", help="Evaluate the JevBench public suite")
+    parser.add_argument("--data", nargs="+", type=Path, help="One or more TypedQuestion JSONL files")
+    parser.add_argument("--max-items", type=int, default=None)
+    parser.add_argument("--bins", type=int, default=10, help="ECE bins")
+    parser.add_argument("--no-order-sensitivity", action="store_true")
+    parser.add_argument("--k-sweep", default="", help="Comma-separated option counts, e.g. 4,16,64,256")
+    parser.add_argument("--k-sweep-max-items", type=int, default=50)
+    parser.add_argument("--schema-split", type=Path, default=None,
+                        help="JSON mapping schema hash to seen|heldout")
+    parser.add_argument("--arm", default=None, help="Arm name written into the JSON")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--output", type=Path, default=None)
+    args = parser.parse_args()
+
+    device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Device: {device}")
+    if args.raw_reranker:
+        raw_name = args.model or "Qwen/Qwen3-Reranker-4B"
+        print(f"Raw reranker: {raw_name}")
+        model = RawReranker(raw_name, device)
+        backbone_name = raw_name
+    else:
+        model, backbone_name = load_model(args, device)
+    items, data_label = load_items(args)
+    all_items = items
+    if args.max_items:
+        items = items[: args.max_items]
+    print(f"Items: {len(items)} ({data_label})")
+
+    arm = args.arm or f"{backbone_name.split('/')[-1]}_{args.readout}"
+    arm = arm.replace("/", "_").replace(" ", "_")
+    output = args.output or Path(f"results/gate/{arm}.json")
+
+    rows: list[Prediction] = []
+    latencies: list[float] = []
+    failed = 0
+    for i, item in enumerate(items):
+        start = time.monotonic()
+        try:
+            rows.append(predict_row(model, item))
+        except Exception as error:  # noqa: BLE001 - report and keep the run alive
+            print(f"  WARN: {item.id} failed: {error}", file=sys.stderr)
+            failed += 1
+            continue
+        latencies.append(time.monotonic() - start)
+        if (i + 1) % 100 == 0:
+            print(f"  {i + 1}/{len(items)}")
+
+    order: dict[str, Any] = {}
+    if not args.no_order_sensitivity:
+        source_rows = [row for row in rows if row.q_type in ("choice", "score")]
+        permuted: list[Prediction] = []
+        for item in items:
+            if item.question.get("type") not in ("choice", "score"):
+                continue
+            try:
+                permuted.append(predict_reversed(model, item))
+            except Exception as error:  # noqa: BLE001
+                print(f"  WARN: reversed {item.id} failed: {error}", file=sys.stderr)
+        order = order_sensitivity(source_rows, permuted)
+
+    sweep: dict[str, Any] = {}
+    if args.k_sweep:
+        ks = [int(value) for value in args.k_sweep.split(",") if value.strip()]
+        print(f"K-sweep: {ks}")
+        sweep = run_k_sweep(
+            model, items, all_items, ks, args.k_sweep_max_items, args.seed, args.bins
+        )
+
+    schema_split: dict[str, str] | None = None
+    if args.schema_split:
+        with open(args.schema_split) as handle:
+            schema_split = json.load(handle)
+
+    by_schema = summarize_by(rows, lambda row: row.schema, args.bins)
+    top_schemas = dict(
+        sorted(by_schema.items(), key=lambda pair: -pair[1].get("n", 0))[:50]
+    )
+
+    latencies.sort()
+    result = {
+        "arm": arm,
+        "config": {
+            "backbone": backbone_name,
+            "readout": args.readout,
+            "readout_n": args.readout_n,
+            "readout_layer": args.readout_layer,
+            "max_length": args.max_length,
+            "lora_layers": args.lora_layers,
+            "lora_rank": args.lora_rank,
+            "seed": args.seed,
+            "bins": args.bins,
+            "data": data_label,
+            "data_sha256": items_digest(items),
+        },
+        "overall": summarize(rows, args.bins),
+        "by_type": summarize_by(rows, lambda row: row.q_type, args.bins),
+        "by_source": summarize_by(rows, lambda row: row.source, args.bins),
+        "by_k_bucket": summarize_by(
+            rows, lambda row: k_bucket(len(row.keys)), args.bins
+        ),
+        "schema": {
+            "n_schemas": len(by_schema),
+            "by_schema": top_schemas,
+            "split": summarize_schema_split(rows, schema_split, args.bins),
+        },
+        "risk_coverage": risk_coverage(rows),
+        "order_sensitivity": order,
+        "k_sweep": sweep,
+        "counts": {"items": len(items), "scored": len(rows), "failed": failed},
+        "latency": {
+            "mean_s": sum(latencies) / len(latencies) if latencies else 0.0,
+            "median_s": latencies[len(latencies) // 2] if latencies else 0.0,
+        },
+    }
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(result, indent=2, ensure_ascii=False))
+    print(f"\nWrote {output}")
+
+    overall = result["overall"]
+    print(
+        f"overall: n={overall.get('n', 0)} acc={overall.get('accuracy', 0):.4f} "
+        f"ece={overall.get('ece', 0):.4f} brier={overall.get('brier', 0):.4f} "
+        f"bss={overall.get('bss')}"
+    )
+    for name, metrics in result["by_type"].items():
+        print(
+            f"  {name:7s} n={metrics.get('n', 0):5d} acc={metrics.get('accuracy', 0):.4f} "
+            f"ece={metrics.get('ece', 0):.4f}"
+        )
+
+
+if __name__ == "__main__":
+    main()
