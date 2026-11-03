@@ -68,3 +68,21 @@ B2 is only worth its cost if B1 shows the gate learns anything at all.
 - The corpus label space and JevBench's differ. KL-preservation protects the
   base ranking but not the label mapping; the label loss must be small
   enough not to rewrite the option order.
+
+## Concrete residual formulation
+
+The base arm already produces a distribution `p_base` over options: P(yes)
+per option, normalised across options. Its logit vector is therefore
+`b_i = log(p_base_i + eps)`, which softmaxes back to `p_base` exactly.
+
+The trained arm is `logits_i = b_i + alpha * h_i`, with `h_i` the head's
+option logits and `alpha` a scalar initialised to 0. At step 0 the arm is
+bit-identical to the reference. The loss is
+
+    CE(logits, label) + beta * KL(p_base || softmax(logits))
+
+with `alpha` and the head trained jointly from the first step, and `beta`
+fixed, not tuned per run.
+
+`p_base` is precomputed per training item and cached by item id, because one
+4B forward per (context, option) pair dominates the cost.
