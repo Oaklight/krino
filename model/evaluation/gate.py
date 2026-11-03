@@ -32,6 +32,7 @@ class Prediction:
     keys: tuple[str, ...]
     source: str = ""
     schema: str = ""
+    tier: str = ""
 
     @property
     def label_index(self) -> int | None:
@@ -215,6 +216,37 @@ def _reference_probs(
     if total == 0:
         return [1.0 / len(row.keys)] * len(row.keys)
     return [w / total for w in weights]
+
+
+def chance_corrected_accuracy(rows: Iterable[Prediction]) -> dict[str, float]:
+    """Chance-corrected accuracy, the local Intelligence proxy.
+
+    Each item is normalised by its own chance level ``c = 1 / n_options``:
+    ``(correct - c) / (1 - c)``.  A model that always guesses scores 0, a
+    perfect model scores 1, and an item with one option is skipped because it
+    carries no decision.  The JevBench tier weights are not applied here
+    because the standard, judge and sealed tiers are not public.
+    """
+    raw: list[float] = []
+    corrected: list[float] = []
+    chances: list[float] = []
+    for row in rows:
+        n_options = len(row.probs)
+        if n_options < 2:
+            continue
+        chance = 1.0 / n_options
+        correct = 1.0 if row.predicted_index == row.label_index else 0.0
+        raw.append(correct)
+        chances.append(chance)
+        corrected.append((correct - chance) / (1.0 - chance))
+    if not corrected:
+        return {"n": 0, "accuracy": 0.0, "chance": 0.0, "corrected": 0.0}
+    return {
+        "n": len(corrected),
+        "accuracy": sum(raw) / len(raw),
+        "chance": sum(chances) / len(chances),
+        "corrected": sum(corrected) / len(corrected),
+    }
 
 
 def summarize(rows: Iterable[Prediction], n_bins: int = 10) -> dict[str, Any]:

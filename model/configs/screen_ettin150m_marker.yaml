@@ -7,7 +7,9 @@
 model: cross-encoder/ettin-reranker-150m-v1
 encoder: true
 option_marker: true
-option_chunk_size: 32
+# One option per sequence: a larger chunk lets options in the same chunk
+# attend to each other, so the score would depend on K.
+option_chunk_size: 1
 option_max_tokens: 64
 rank: 64
 epochs: 5
