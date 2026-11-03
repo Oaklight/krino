@@ -291,7 +291,10 @@ class _ForwardBackbone(nn.Module):
         attention_mask: torch.Tensor | None = None,
         output_hidden_states: bool = True,
         use_cache: bool = False,
+        **kwargs,
     ):
+        # The model passes ``logits_to_keep`` to causal LM backbones; this
+        # stub returns hidden states only, so it accepts and ignores it.
         from types import SimpleNamespace
 
         batch, seq = input_ids.shape

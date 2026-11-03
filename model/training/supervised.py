@@ -288,11 +288,16 @@ def _compute_augmented_noul_batch(
         option_texts = [ao[k] for k in keys]
         teacher_probs = item.teacher_probs
 
-        context_text = f"{item.state} {item.question.get('instructions', '')}"
-        context_hidden = model._encode_with_sequence(context_text)
-        option_pooled = model._encode_text(option_texts)
-        opt_hidden = option_pooled.unsqueeze(0)
-        logits = model.choice_head(context_hidden, opt_hidden)
+        if getattr(model, "option_marker", False):
+            logits = model.forward_choice(
+                item.state, item.question.get("instructions", ""), option_texts
+            )
+        else:
+            context_text = f"{item.state} {item.question.get('instructions', '')}"
+            context_hidden = model._encode_with_sequence(context_text)
+            option_pooled = model._encode_text(option_texts)
+            opt_hidden = option_pooled.unsqueeze(0)
+            logits = model.choice_head(context_hidden, opt_hidden)
 
         losses.append(_teacher_loss(logits, teacher_probs, keys))
     return losses
@@ -310,11 +315,16 @@ def _compute_choice_batch(
         option_texts = [v or k for k, v in criteria.items()]
         teacher_probs = getattr(item, "teacher_probs", None)
 
-        context_text = f"{item.state} {item.question.get('instructions', '')}"
-        context_hidden = model._encode_with_sequence(context_text)  # [1, seq_len, hidden]
-        option_pooled = model._encode_text(option_texts)  # [K, hidden]
-        opt_hidden = option_pooled.unsqueeze(0)  # [1, K, hidden]
-        logits = model.choice_head(context_hidden, opt_hidden)
+        if getattr(model, "option_marker", False):
+            logits = model.forward_choice(
+                item.state, item.question.get("instructions", ""), option_texts
+            )
+        else:
+            context_text = f"{item.state} {item.question.get('instructions', '')}"
+            context_hidden = model._encode_with_sequence(context_text)  # [1, seq_len, hidden]
+            option_pooled = model._encode_text(option_texts)  # [K, hidden]
+            opt_hidden = option_pooled.unsqueeze(0)  # [1, K, hidden]
+            logits = model.choice_head(context_hidden, opt_hidden)
 
         if teacher_probs:
             losses.append(_teacher_loss(logits, teacher_probs, keys))
@@ -339,11 +349,16 @@ def _compute_score_batch(
         n_levels = len(criteria)
         teacher_probs = getattr(item, "teacher_probs", None)
 
-        context_text = f"{item.state} {item.question.get('instructions', '')}"
-        context_hidden = model._encode_with_sequence(context_text)  # [1, seq_len, hidden]
-        level_pooled = model._encode_text(criteria)  # [L, hidden]
-        lvl_hidden = level_pooled.unsqueeze(0)  # [1, L, hidden]
-        logits = model.score_head(context_hidden, lvl_hidden)
+        if getattr(model, "option_marker", False):
+            logits = model.forward_score(
+                item.state, item.question.get("instructions", ""), criteria
+            )
+        else:
+            context_text = f"{item.state} {item.question.get('instructions', '')}"
+            context_hidden = model._encode_with_sequence(context_text)  # [1, seq_len, hidden]
+            level_pooled = model._encode_text(criteria)  # [L, hidden]
+            lvl_hidden = level_pooled.unsqueeze(0)  # [1, L, hidden]
+            logits = model.score_head(context_hidden, lvl_hidden)
 
         if teacher_probs:
             level_keys = [str(j) for j in range(n_levels)]
