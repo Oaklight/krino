@@ -212,6 +212,9 @@ def load_model(args: argparse.Namespace, device: str) -> tuple[DecisionModel, st
             lora_layers=args.lora_layers,
             lora_rank=args.lora_rank,
             max_length=args.max_length,
+            option_marker=args.option_marker,
+            option_chunk_size=args.option_chunk_size,
+            option_max_tokens=args.option_max_tokens,
         )
         weights_path = hf_hub_download(args.repo, "head_weights.safetensors")
         model.load_state_dict(load_file(weights_path, device=device), strict=False)
@@ -235,6 +238,9 @@ def load_model(args: argparse.Namespace, device: str) -> tuple[DecisionModel, st
             lora_layers=args.lora_layers,
             lora_rank=args.lora_rank,
             max_length=args.max_length,
+            option_marker=args.option_marker,
+            option_chunk_size=args.option_chunk_size,
+            option_max_tokens=args.option_max_tokens,
         )
         model.load_heads(args.heads)
 
@@ -460,6 +466,13 @@ def main() -> None:
     parser.add_argument("--lora-layers", type=int, default=None)
     parser.add_argument("--lora-rank", type=int, default=16)
     parser.add_argument("--max-length", type=int, default=None)
+    parser.add_argument(
+        "--option-marker",
+        action="store_true",
+        help="Score choice/score options at a marker token after each option",
+    )
+    parser.add_argument("--option-chunk-size", type=int, default=32)
+    parser.add_argument("--option-max-tokens", type=int, default=64)
     parser.add_argument("--device", default=None)
     parser.add_argument("--dtype", choices=("bfloat16", "float32"), default="bfloat16")
     parser.add_argument("--jevbench", action="store_true", help="Evaluate the JevBench public suite")
@@ -549,6 +562,9 @@ def main() -> None:
             "readout": args.readout,
             "readout_n": args.readout_n,
             "readout_layer": args.readout_layer,
+            "option_marker": args.option_marker,
+            "option_chunk_size": args.option_chunk_size if args.option_marker else None,
+            "option_max_tokens": args.option_max_tokens if args.option_marker else None,
             "max_length": args.max_length,
             "lora_layers": args.lora_layers,
             "lora_rank": args.lora_rank,
