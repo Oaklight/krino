@@ -25,19 +25,28 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--max-items", type=int, default=1000)
+    parser.add_argument("--split", choices=("train", "eval"), default="eval")
+    parser.add_argument(
+        "--sources",
+        default="",
+        help="Comma-separated source names to keep; empty keeps all",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
     config = yaml.safe_load(args.config.read_text())
     rng = random.Random(args.seed)
+    keep = {name.strip() for name in args.sources.split(",") if name.strip()}
     items = []
     sources = config.get("sources") or {}
     for name, source_cfg in sources.items():
         if not isinstance(source_cfg, dict):
             continue
-        _, eval_items = load_source_items(name, source_cfg, rng)
-        items.extend(eval_items)
+        if keep and name not in keep:
+            continue
+        train_items, eval_items = load_source_items(name, source_cfg, rng)
+        items.extend(train_items if args.split == "train" else eval_items)
     rng.shuffle(items)
     items = items[: args.max_items]
 
@@ -45,7 +54,7 @@ def main() -> int:
     with args.output.open("w", encoding="utf-8") as handle:
         for item in items:
             handle.write(json.dumps(item.to_dict(), ensure_ascii=False) + "\n")
-    print(f"wrote {len(items)} eval items to {args.output}", flush=True)
+    print(f"wrote {len(items)} {args.split} items to {args.output}", flush=True)
     return 0
 
 

@@ -83,6 +83,13 @@ class DecisionModel(nn.Module):
     The softmax over all marker logits is still the option distribution, so
     the losses and evaluation code do not change.
 
+    Exactness note: options are concatenated into one sequence per chunk, so
+    within a chunk each option attends to the other options' text.  The score
+    of an option then depends on its chunk-mates and on ``K``, which a
+    reranker-style decision should not allow.  ``option_chunk_size=1`` makes
+    every option its own sequence and is the only exact setting; larger
+    chunks trade that invariance for fewer backbone forwards.
+
     Many-candidate cost model (``option_marker`` only).  Let ``L`` be the
     context length, ``K`` the option count, ``B`` ``option_chunk_size``, and
     ``S`` the token length of one option plus its marker.  The context is

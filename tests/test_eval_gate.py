@@ -7,6 +7,7 @@ import pytest
 from model.evaluation.gate import (
     Prediction,
     brier_skill_score,
+    chance_corrected_accuracy,
     expected_calibration_error,
     k_bucket,
     multiclass_brier,
@@ -174,3 +175,44 @@ class TestSummarize:
     def test_unmapped_labels_are_excluded(self):
         rows = [choice("1", [0.5, 0.5], ["a", "b"], "missing")]
         assert summarize(rows) == {"n": 0}
+
+
+class TestChanceCorrectedAccuracy:
+    """Local Intelligence proxy: per-item chance normalisation."""
+
+    def test_guessing_scores_zero(self):
+        # Two options, always wrong.
+        rows = [
+            Prediction("a", "noul", True, (1.0, 0.0), ("false", "true")),
+            Prediction("b", "noul", True, (1.0, 0.0), ("false", "true")),
+        ]
+        out = chance_corrected_accuracy(rows)
+        assert out["accuracy"] == 0.0
+        assert out["chance"] == pytest.approx(0.5)
+        assert out["corrected"] == pytest.approx(-1.0)
+
+    def test_perfect_scores_one(self):
+        rows = [Prediction("a", "noul", True, (0.0, 1.0), ("false", "true"))]
+        assert chance_corrected_accuracy(rows)["corrected"] == pytest.approx(1.0)
+
+    def test_five_options_are_normalised_by_five(self):
+        rows = [Prediction("a", "choice", "x", (0.4, 0.3, 0.2, 0.1, 0.0), ("x", "b", "c", "d", "e"))]
+        out = chance_corrected_accuracy(rows)
+        assert out["corrected"] == pytest.approx(1.0)
+        assert out["chance"] == pytest.approx(0.2)
+
+    def test_single_option_items_are_skipped(self):
+        rows = [Prediction("a", "choice", "x", (1.0,), ("x",))]
+        assert chance_corrected_accuracy(rows)["n"] == 0
+
+    def test_matches_raw_accuracy_relation(self):
+        # Chance-corrected = (acc - c) / (1 - c) when chance is uniform.
+        rows = [
+            Prediction("a", "choice", "x", (0.6, 0.4), ("x", "y")),
+            Prediction("b", "choice", "x", (0.6, 0.4), ("x", "y")),
+            Prediction("c", "choice", "y", (0.6, 0.4), ("x", "y")),
+            Prediction("d", "choice", "y", (0.6, 0.4), ("x", "y")),
+        ]
+        out = chance_corrected_accuracy(rows)
+        assert out["accuracy"] == pytest.approx(0.5)
+        assert out["corrected"] == pytest.approx(0.0)
