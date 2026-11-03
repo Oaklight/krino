@@ -1,5 +1,7 @@
 """Tests for MultitaskSampler."""
 
+import pytest
+
 from data.format import TypedQuestion
 from data.sampler import MultitaskSampler, SamplerConfig
 
@@ -366,3 +368,22 @@ class TestSyntheticReplayRatio:
         if noul_items:
             noul_ratio = noul_syn / len(noul_items)
             assert 0.30 <= noul_ratio <= 0.50, f"noul synthetic ratio {noul_ratio:.2f} outside [0.30, 0.50]"
+
+
+class TestSamplerTemperatureValidation:
+    def test_non_positive_temperature_rejected(self):
+        for value in (0.0, -1.0):
+            with pytest.raises(ValueError, match="sampling_temperature"):
+                SamplerConfig(sampling_temperature=value)
+
+    def test_temperature_is_reciprocal_of_mt5_alpha(self):
+        items = _make_items("big", "noul", 500) + _make_items("small", "noul", 50)
+        config = SamplerConfig(
+            type_ratios={"noul": 1.0},
+            sampling_temperature=1.0 / 0.3,
+            epoch_size=10,
+        )
+        sampler = MultitaskSampler(items, config, seed=0)
+        weights = dict(sampler._source_weights["noul"])
+        assert weights["big"] == pytest.approx(500 ** 0.3)
+        assert weights["small"] == pytest.approx(50 ** 0.3)

@@ -35,7 +35,11 @@ class SamplerConfig:
         sampling_temperature: Temperature for size-based source weighting (mT5/PaLM
             style). Weight for source i = n_i^(1/T) where n_i is pool size after
             caps. T=1: proportional to size, T→∞: uniform, T<1: amplifies size
-            differences. Typical range: 0.3-0.7. Overrides manual source_weights.
+            differences. This T is the **reciprocal** of mT5's exponent alpha:
+            mT5 samples p_i ∝ n_i^alpha with alpha=0.3, which is T≈3.33 here.
+            Use T >= 1 for the mT5 regime; T in 0.3-0.7 (alpha in 1.4-3.3) is
+            far more skewed than mT5 and was the untested regime. Overrides
+            manual source_weights.
         synthetic_sources: Source names that are considered synthetic data.
         synthetic_ratio: Target proportion of synthetic data per type (0.0 to 1.0).
             None means no synthetic/benchmark split — all sources sampled together.
@@ -50,6 +54,13 @@ class SamplerConfig:
     sampling_temperature: float | None = None
     synthetic_sources: set[str] = field(default_factory=set)
     synthetic_ratio: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.sampling_temperature is not None and self.sampling_temperature <= 0:
+            raise ValueError(
+                "sampling_temperature must be > 0; it is the reciprocal of the "
+                "mT5 exponent (weight = n_i^(1/T)). Use T=3.33 for alpha=0.3."
+            )
 
 
 def sampling_type(item: TypedQuestion) -> str:

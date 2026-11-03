@@ -141,6 +141,54 @@ def _load_jsonl(path: Path) -> list[dict]:
         return [json.loads(line) for line in f if line.strip()]
 
 
+def ensure_unique_family_indices(families: list[dict], domain: str = "") -> int:
+    """Make ``_family_idx`` unique within a domain, mutating in place.
+
+    Item ids and groups are built from ``_family_idx``, so a duplicate index
+    collides ids across different families and makes cached teacher labels
+    ambiguous. Existing unique indices are preserved so item ids stay stable;
+    a duplicate or missing index is reassigned to the next unused integer.
+
+    Args:
+        families: Family records for one domain.
+        domain: Domain name, used only in the warning message.
+
+    Returns:
+        Number of indices reassigned.
+    """
+    seen: set[int] = set()
+    next_idx = 0
+    for family in families:
+        idx = family.get("_family_idx")
+        if isinstance(idx, int):
+            next_idx = max(next_idx, idx + 1)
+
+    reassigned = 0
+    for family in families:
+        idx = family.get("_family_idx")
+        if isinstance(idx, int) and idx not in seen:
+            seen.add(idx)
+            continue
+        while next_idx in seen:
+            next_idx += 1
+        family["_family_idx"] = next_idx
+        seen.add(next_idx)
+        next_idx += 1
+        reassigned += 1
+
+    if len(seen) != len(families):
+        raise AssertionError(
+            f"{domain or 'domain'}: could not make all family indices unique"
+        )
+    if reassigned and domain:
+        logger.warning(
+            "  %s: reassigned %d duplicate/missing _family_idx values",
+            domain,
+            reassigned,
+        )
+    return reassigned
+
+
 # --- LLM helpers ---
 
 
@@ -532,6 +580,8 @@ async def run_validate_stage(
     result: dict[str, list[dict]] = {}
 
     for domain, families in families_by_domain.items():
+        if ensure_unique_family_indices(families, domain):
+            _save_jsonl(families, DATA_DIR / f"{domain}_families.jsonl")
         logger.info("  Validating %d families in %s...", len(families), domain)
         val_tasks = [
             validate_family(client, f, LLM_JUDGE_MODEL, LLM_BASE_URL)
@@ -1057,6 +1107,10 @@ async def run_pipeline(
                     _save_jsonl(updated, DATA_DIR / f"{domain}_families.jsonl")
                 logger.info("  %s: noul-augment %d augmented, %d failed (template-only)", domain, aug_count, aug_failed)
 
+    # Item ids are derived from _family_idx; repair collisions before conversion.
+    for domain, families in families_by_domain.items():
+        ensure_unique_family_indices(families, domain)
+
     # Verify alignment before conversion
     for domain, families in families_by_domain.items():
         domain_variants = variants_by_domain.get(domain, [])
@@ -1277,6 +1331,7 @@ def run_report(domains: list[str]) -> None:
 
     for domain in domains:
         families = _load_jsonl(DATA_DIR / f"{domain}_families.jsonl")
+        ensure_unique_family_indices(families, domain)
         variants = _load_jsonl(DATA_DIR / f"{domain}_variants.jsonl")
         n_fam = len(families)
         n_var = len(variants)
