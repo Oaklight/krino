@@ -257,15 +257,44 @@ STS_LEVELS = [
 ]
 
 
+def stsb_level(raw: Any) -> int | None:
+    """Map an STS-B score to a level index, or ``None`` when it is withheld.
+
+    GLUE ships ``label = -1.0`` for **every** row of the STS-B test split — the
+    labels are withheld, and -1 is the sentinel, not a score. Clamping it into
+    range the way ``min(5, max(0, round(x)))`` does would turn all 1,379 test
+    rows into gold level 0 ("No similarity"), which is what the loader used to
+    do: half the stsb eval slice carried a fabricated label.
+
+    Args:
+        raw: The ``label`` field of a GLUE STS-B row.
+
+    Returns:
+        An index into :data:`STS_LEVELS`, or ``None`` if the row is unlabeled
+        or the value is not numeric.
+    """
+    try:
+        score = float(raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if score < 0:
+        return None
+    return int(min(len(STS_LEVELS) - 1, max(0, round(score))))
+
+
 def load_stsb() -> Iterator[TypedQuestion]:
     for split_name in ("train", "validation", "test"):
         rows = _load_hf_parquet("nyu-mll/glue", "stsb", split_name)
         out_split = "test" if split_name in ("validation", "test") else "train"
         for i, row in enumerate(rows):
+            level = stsb_level(row.get("label"))
+            if level is None:
+                # Only the test split hits this; train and validation are
+                # fully labeled.
+                continue
             sentence1 = row.get("sentence1", "")
             sentence2 = row.get("sentence2", "")
-            score = float(row.get("label", 0))
-            label = float(min(5, max(0, round(score))))
+            label = float(level)
             state = f"Sentence A: {sentence1}\nSentence B: {sentence2}"
             yield TypedQuestion.score(
                 id=f"stsb-{split_name}-{i:05d}",
@@ -1011,45 +1040,145 @@ def load_hotpotqa() -> Iterator[TypedQuestion]:
 # --- DROP (Discrete Reasoning Over Paragraphs, Noul/Score) ---
 
 
+DROP_SCORE_LEVELS = [
+    "Incorrect: the candidate is not the answer in the passage",
+    "Close: the candidate is approximately correct but not exact",
+    "Exact: the candidate matches the answer in the passage exactly",
+]
+
+
+def _drop_score_candidates(value: float) -> list[tuple[float, str]]:
+    """Return ``(label, candidate)`` pairs covering all three score levels.
+
+    The candidates are derived from the gold value without an external model:
+    the gold itself is Exact, a small perturbation is Close, and a large
+    perturbation is Incorrect. The caller must not present the gold as the
+    expected answer; each candidate is the object being graded.
+    """
+    if float(value).is_integer():
+        gold = int(value)
+        close = gold + 1
+        far = gold * 3 + 7
+    else:
+        gold = value
+        close = round(value * 1.05, 6)
+        if close == value:
+            close = round(value + 1.0, 6)
+        far = round(value * 3 + 7, 6)
+    return [(2.0, str(gold)), (1.0, str(close)), (0.0, str(far))]
+
+
+def _drop_negative_answers(
+    answers_by_length: dict[int, list[str]],
+    gold: str,
+    row_index: int,
+) -> list[str]:
+    """Pick a hard negative with a similar answer length, excluding the gold."""
+    for length in (len(gold), len(gold) + 1, len(gold) - 1):
+        bucket = answers_by_length.get(length, [])
+        for offset in range(1, len(bucket) + 1):
+            candidate = bucket[(row_index + offset) % len(bucket)]
+            if candidate != gold:
+                return [candidate]
+    for bucket in answers_by_length.values():
+        for offset in range(1, len(bucket) + 1):
+            candidate = bucket[(row_index + offset) % len(bucket)]
+            if candidate != gold:
+                return [candidate]
+    return []
+
+
+def _drop_row_items(
+    row: dict,
+    row_index: int,
+    split_name: str,
+    answers_by_length: dict[int, list[str]],
+) -> list[TypedQuestion]:
+    """Convert one DROP row into non-degenerate score and noul items."""
+    passage = row.get("passage", "")
+    question = row.get("question", "")
+    spans = (row.get("answers_spans") or {}).get("spans") or []
+    if not passage or not question or not spans:
+        return []
+    gold = str(spans[0]).strip()
+    if not gold:
+        return []
+
+    state = f"{passage}\n\nQuestion: {question}"
+    out_split = "test" if split_name == "validation" else "train"
+    group = f"drop-{split_name}-{row_index:05d}"
+    items: list[TypedQuestion] = []
+
+    try:
+        value = float(gold.replace(",", ""))
+    except ValueError:
+        value = None
+
+    if value is not None:
+        for level, (label, candidate) in enumerate(_drop_score_candidates(value)):
+            items.append(
+                TypedQuestion.score(
+                    id=f"drop-{split_name}-{row_index:05d}-score-{level}",
+                    state=state,
+                    instructions=(
+                        f"Candidate answer: {candidate}\n"
+                        "Is this candidate answer supported by the passage?"
+                    ),
+                    criteria=DROP_SCORE_LEVELS,
+                    label=label,
+                    source="drop",
+                    split=out_split,
+                    group=group,
+                )
+            )
+    else:
+        items.append(
+            TypedQuestion.noul(
+                id=f"drop-{split_name}-{row_index:05d}-noul-pos",
+                state=state,
+                instructions=(
+                    f"Based on the passage, is '{gold}' the correct answer "
+                    "to the question?"
+                ),
+                label=True,
+                source="drop",
+                split=out_split,
+                group=group,
+            )
+        )
+        for j, negative in enumerate(
+            _drop_negative_answers(answers_by_length, gold, row_index)
+        ):
+            items.append(
+                TypedQuestion.noul(
+                    id=f"drop-{split_name}-{row_index:05d}-noul-neg-{j}",
+                    state=state,
+                    instructions=(
+                        f"Based on the passage, is '{negative}' the correct "
+                        "answer to the question?"
+                    ),
+                    label=False,
+                    source="drop",
+                    split=out_split,
+                    group=group,
+                )
+            )
+    return items
+
+
 def load_drop() -> Iterator[TypedQuestion]:
     for split_name in ("train", "validation"):
         rows = _load_hf_parquet("ucinlp/drop", "default", split_name)
-        out_split = "test" if split_name == "validation" else "train"
-        for i, row in enumerate(rows):
-            passage = row.get("passage", "")
-            question = row.get("question", "")
-            answers = row.get("answers_spans", {})
-            spans = answers.get("spans", [])
-            if not passage or not question or not spans:
+        answers_by_length: dict[int, list[str]] = {}
+        for row in rows:
+            spans = (row.get("answers_spans") or {}).get("spans") or []
+            if not spans:
                 continue
-            answer = spans[0]
-            state = f"{passage}\n\nQuestion: {question}"
-            try:
-                num = float(answer.replace(",", ""))
-                yield TypedQuestion.score(
-                    id=f"drop-{split_name}-{i:05d}",
-                    state=state,
-                    instructions=f"What is the numerical answer? (expected: {num})",
-                    criteria=[
-                        "Incorrect: answer is wrong",
-                        "Close: answer is approximately correct",
-                        "Exact: answer matches exactly",
-                    ],
-                    label=2.0,
-                    source="drop",
-                    split=out_split,
-                    group=f"drop-{i % 100}",
-                )
-            except ValueError:
-                yield TypedQuestion.noul(
-                    id=f"drop-{split_name}-{i:05d}",
-                    state=state,
-                    instructions=f"Based on the passage, is '{answer}' the correct answer?",
-                    label=True,
-                    source="drop",
-                    split=out_split,
-                    group=f"drop-{i % 100}",
-                )
+            answer = str(spans[0]).strip()
+            if answer:
+                answers_by_length.setdefault(len(answer), []).append(answer)
+        for i, row in enumerate(rows):
+            yield from _drop_row_items(row, i, split_name, answers_by_length)
 
 
 # --- Synthetic (generated data) ---
@@ -1128,7 +1257,11 @@ def load_synthetic() -> Iterator[TypedQuestion]:
     if not synth_dir.exists():
         return
 
-    from .synthetic import family_to_typed_questions, _load_jsonl
+    from .synthetic import (
+        _load_jsonl,
+        ensure_unique_family_indices,
+        family_to_typed_questions,
+    )
     from .synthetic_templates import DOMAIN_TEMPLATES
 
     # Load all label files into a single lookup
@@ -1144,6 +1277,7 @@ def load_synthetic() -> Iterator[TypedQuestion]:
             continue
 
         families = _load_jsonl(families_path)
+        ensure_unique_family_indices(families, domain)
         variants = _load_jsonl(variants_path) if variants_path.exists() else []
 
         for idx, fam in enumerate(families):

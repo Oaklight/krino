@@ -534,3 +534,41 @@ class TestBalanceCaps:
             assert isinstance(cap, int) and cap > 0, (
                 f"DEFAULT_CAPS['{source}'] should be positive int, got {cap}"
             )
+
+
+class TestDropLoader:
+    """DROP must produce real ordinal/binary supervision, not constants."""
+
+    ROWS = [
+        {"passage": "Team A scored 12 points.", "question": "How many points?",
+         "answers_spans": {"spans": ["12"]}},
+        {"passage": "The match ended in 1999.", "question": "When did it end?",
+         "answers_spans": {"spans": ["1999"]}},
+        {"passage": "The winner was Alice.", "question": "Who won?",
+         "answers_spans": {"spans": ["Alice"]}},
+        {"passage": "The winner was Bob.", "question": "Who won?",
+         "answers_spans": {"spans": ["Bob"]}},
+    ]
+
+    def _load(self):
+        def rows(dataset, config, split):
+            return self.ROWS if split == "train" else []
+
+        with patch.object(pipeline, "_load_hf_parquet", side_effect=rows):
+            return list(pipeline.load_drop())
+
+    def test_score_covers_all_levels(self):
+        labels = {i.label for i in self._load() if i.question["type"] == "score"}
+        assert labels == {0.0, 1.0, 2.0}
+
+    def test_noul_covers_both_labels(self):
+        labels = {i.label for i in self._load() if i.question["type"] == "noul"}
+        assert labels == {True, False}
+
+    def test_instruction_does_not_name_expected_answer(self):
+        for item in self._load():
+            assert "(expected:" not in item.question["instructions"]
+
+    def test_ids_are_unique(self):
+        ids = [i.id for i in self._load()]
+        assert len(ids) == len(set(ids))
