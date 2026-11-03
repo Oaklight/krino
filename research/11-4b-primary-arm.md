@@ -19,6 +19,14 @@ Local JevBench public, 231 items, `model/scripts/eval_gate.py`:
 By type on the same arm: choice 0.6187, noul 0.6351, score 0.8333.
 Chance is the per-item uniform baseline (1/K; 0.5 for noul), mean 0.3176.
 
+The same raw arm on the internal eval split (400 items drawn from the run
+config) scores 0.6325 raw and 0.4137 chance-corrected, close to its JevBench
+numbers. The base model is therefore equally strong on both distributions.
+The trained 4B head reaches 0.595 on the internal split (research/07), which
+is 3.8 points *below* doing nothing there, and 20+ points below on JevBench.
+Head training is not a transfer problem alone; it is a loss even
+in-distribution.
+
 Trained heads on the 26-task corpus score 0.325-0.429 raw and 0.045-0.192
 chance-corrected on the same suite. The board's strict encoders sit at
 Intelligence median 3.76 and max 7.43. The target is 50.
