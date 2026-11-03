@@ -93,6 +93,21 @@ Consequences:
 
 B2 is only worth its cost if B1 shows the gate learns anything at all.
 
+## Arm B1 (running)
+
+`model/scripts/train_residual.py`, `model/experiments/residual/B1`:
+
+- 5,000 cached items, stratified 80/20 by (type, option count).
+- rank 32, no MLP, lr 1e-3 for the head, 1e-2 for the per-type alphas.
+- KL weight 1.0, CE weight 0.2, teacher probabilities as the CE target when
+  present, hard labels otherwise.
+- Early stop on held-out chance-corrected accuracy, patience 1.
+- Each epoch logs `kl_mean`, `ce_mean`, `kl_ce_ratio`, and every alpha. An
+  alpha that stays near zero is a result: the base is already at its ceiling
+  for that type.
+- The gate reports pre (raw 4B JSON) and post (residual JSON) overall, per
+  type, per tier, and per K bucket.
+
 ## Open problems
 
 - The base logits per option cost one forward per (context, option) pair.
