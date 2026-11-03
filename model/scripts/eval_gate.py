@@ -54,6 +54,8 @@ from model.evaluation.gate import (
 )
 from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
 from model.src.decision_model import DecisionModel
+from model.src.gpu_config import GPUConfig
+from model.scripts.train_residual import fusion_logits, head_logits
 
 
 # ---------------------------------------------------------------------------
@@ -194,6 +196,76 @@ def jevbench_tier(item: Any) -> str:
     return head if head in _JEVBENCH_TIERS else ""
 
 
+class ResidualScorer:
+    """Base reranker plus a zero-gated residual head.
+
+    ``logits = log(p_base) + alpha_type * head_logits``.  With the alphas a
+    residual checkpoint carries, the arm is exactly the base wherever an
+    alpha is 0.
+    """
+
+    def __init__(self, base_model_name: str, device: str, checkpoint_path: Path) -> None:
+        from model.src.backbone import load_causal_lm
+
+        self.device = device
+        self.base = RawReranker(base_model_name, device)
+        checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+        config = checkpoint["config"]
+        backbone, tokenizer = load_causal_lm(
+            config["backbone"], device=device, freeze=True, flash_attention=False
+        )
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=True,
+            max_length=config["max_length"],
+            gradient_checkpointing=False,
+        )
+        self.model = DecisionModel(
+            backbone=backbone,
+            tokenizer=tokenizer,
+            rank=config["rank"],
+            mlp_layers=0,
+            gpu_config=gpu,
+            max_length=config["max_length"],
+        )
+        self.model.load_state_dict(checkpoint["heads"], strict=False)
+        self.model.eval()
+        self.alpha = {k: float(v) for k, v in checkpoint["alpha"].items()}
+
+    @torch.inference_mode()
+    def predict_row(
+        self,
+        item: Any,
+        question: dict[str, Any] | None = None,
+        item_id: str | None = None,
+        reverse: bool = False,
+    ) -> Prediction:
+        q = question or item.question
+        options = _raw_options(q, reverse=reverse)
+        scores = [
+            self.base._score_option(
+                item.state, q.get("instructions", ""), q["type"], label, description
+            )
+            for label, description in options
+        ]
+        total = sum(scores) or 1.0
+        base = torch.tensor([score / total for score in scores], dtype=torch.float32)
+        head = head_logits(self.model, item).reshape(-1).cpu()
+        alpha = torch.tensor(self.alpha.get(q["type"], 0.0))
+        logits = fusion_logits(base, head, alpha)
+        probs = tuple(torch.softmax(logits, dim=-1).tolist())
+        return Prediction(
+            item_id=item_id or item.id,
+            q_type=q["type"],
+            label=item.label,
+            probs=probs,
+            keys=tuple(label for label, _ in options),
+            source=item.source,
+            schema=schema_key(q),
+            tier=jevbench_tier(item),
+        )
+
+
 # ---------------------------------------------------------------------------
 # Model loading
 # ---------------------------------------------------------------------------
@@ -279,7 +351,7 @@ def predict_row(
     item_id: str | None = None,
 ) -> Prediction:
     """Score one item without the rounding ``DecisionModel.predict`` applies."""
-    if isinstance(model, RawReranker):
+    if isinstance(model, (RawReranker, ResidualScorer)):
         return model.predict_row(item, question, item_id)
     q = question or item.question
     q_type = q.get("type")
@@ -471,6 +543,12 @@ def main() -> None:
     parser.add_argument("--repo", help="HuggingFace repo with config.json and head_weights.safetensors")
     parser.add_argument("--model", help="Backbone name for a local checkpoint")
     parser.add_argument("--heads", type=Path, help="Local head checkpoint")
+    parser.add_argument(
+        "--residual-heads",
+        type=Path,
+        default=None,
+        help="residual.pt from train_residual.py; fuses with the raw reranker",
+    )
     parser.add_argument("--encoder", action="store_true", help="Backbone is an encoder")
     parser.add_argument("--qwen35-base", action="store_true", help="Backbone uses the Qwen3.5 base loader")
     parser.add_argument(
@@ -511,11 +589,11 @@ def main() -> None:
 
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
-    if args.raw_reranker:
+    if args.residual_heads:
         raw_name = args.model or "Qwen/Qwen3-Reranker-4B"
-        print(f"Raw reranker: {raw_name}")
-        model = RawReranker(raw_name, device)
-        backbone_name = raw_name
+        print(f"Residual arm on {raw_name}: {args.residual_heads}")
+        model = ResidualScorer(raw_name, device, args.residual_heads)
+        backbone_name = f"{raw_name}+residual"
     else:
         model, backbone_name = load_model(args, device)
     items, data_label = load_items(args)
