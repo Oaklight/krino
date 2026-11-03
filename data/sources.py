@@ -112,7 +112,8 @@ def load_source_items(
     path_str = source_cfg.get("path")
     if not path_str and is_synthetic_source(source_name, source_cfg):
         # Synthetic data is assembled on the fly from families + variants + labels.
-        items = list(load_synthetic())
+        # ``teacher`` pins one teacher key for a clean distillation arm.
+        items = list(load_synthetic(teacher=source_cfg.get("teacher")))
         if not items:
             print(
                 f"  WARNING: {source_name}: synthetic source assembled 0 items — "

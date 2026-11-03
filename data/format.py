@@ -37,6 +37,7 @@ class TypedQuestion:
     split: str
     group: str | None = None
     teacher_probs: dict[str, float] | None = None
+    teacher_name: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {k: v for k, v in asdict(self).items() if v is not None}
