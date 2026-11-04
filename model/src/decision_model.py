@@ -7,6 +7,7 @@ LM and encoder backbones.
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -15,10 +16,12 @@ import torch.nn as nn
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 from .backbone import is_hybrid_model
+from .choice_prompts import fit_option_prompts
 from .gpu_config import GPUConfig, print_gpu_info
 from .heads import (
     AttentionHead,
     ChoiceHead,
+    CrossEncoderHead,
     LayerMixer,
     MLPProjector,
     NoulHead,
@@ -155,8 +158,17 @@ class DecisionModel(nn.Module):
         option_chunk_size: int = 32,
         option_max_tokens: int = 64,
         option_batch: int = 1,
+        choice_mode: str = "tower",
     ) -> None:
         super().__init__()
+        if choice_mode not in ("tower", "cross_encoder"):
+            raise ValueError(
+                f"choice_mode={choice_mode!r} is not 'tower' or 'cross_encoder'"
+            )
+        self.choice_mode = choice_mode
+        #: Items whose cross-encoder prompts had to shorten the state to keep
+        #: the option inside max_length. Reported once, then counted.
+        self.truncated_prompts = 0
         self.backbone = backbone
         self.tokenizer = tokenizer
         self.hidden_size = hidden_size or backbone.config.hidden_size
@@ -216,7 +228,17 @@ class DecisionModel(nn.Module):
         # 0.6B model OOMs at its 16K max length.  The reentrant implementation
         # (the default) needs an input that requires grad; LoRA's adapters sit
         # inside the blocks, so it would silently produce no gradients.
-        needs_checkpointing = gpu_config.gradient_checkpointing or lora_layers is not None
+        #
+        # An *explicit* "off" is a different matter: the caller has asked for
+        # the memory-for-speed trade, and overriding it silently made
+        # --no-gradient-checkpointing a no-op whenever LoRA was on.
+        explicit_off = (
+            gpu_config.gradient_checkpointing_explicit
+            and not gpu_config.gradient_checkpointing
+        )
+        needs_checkpointing = gpu_config.gradient_checkpointing or (
+            lora_layers is not None and not explicit_off
+        )
         if option_marker and lora_layers is not None:
             # HF turns use_cache off when checkpointing is enabled, and the
             # marker readout's whole cost argument depends on reusing the
@@ -241,6 +263,13 @@ class DecisionModel(nn.Module):
                         "(auto-detect left it off)",
                         flush=True,
                     )
+        elif lora_layers is not None and explicit_off:
+            print(
+                "  Gradient checkpointing: disabled by request with LoRA — "
+                "every adapted block keeps its activations, so memory use is "
+                "much higher",
+                flush=True,
+            )
 
         print_gpu_info(gpu_config)
         print(f"  max_length={self.max_length} (effective)", flush=True)
@@ -363,6 +392,19 @@ class DecisionModel(nn.Module):
                 f"chunk={self.option_chunk_size}, "
                 f"max_option_tokens={self.option_max_tokens}, "
                 f"scorer={marker_params:,} params",
+            )
+        elif choice_mode == "cross_encoder":
+            # One prompt per option, each carrying the state; the score is a
+            # linear read-out of that prompt's pooled hidden state. Score and
+            # noul keep the default path — only the choice slot changes.
+            self.unified = None  # type: ignore[assignment]
+            self.noul_head = NoulHead(self.hidden_size, rank=noul_rank, dropout=dropout)
+            self.choice_head = CrossEncoderHead(self.hidden_size, dropout)
+            self.score_head = ScoreHead(self.hidden_size, rank, dropout)
+            params = sum(p.numel() for p in self.choice_head.parameters())
+            print(
+                f"  Choice head: cross-encoder (one prompt per option, "
+                f"state in the prompt), {params:,} params",
                 flush=True,
             )
         elif unified_head:
@@ -528,12 +570,26 @@ class DecisionModel(nn.Module):
         fwd_kwargs = dict(**inputs, output_hidden_states=output_hidden_states)
         if not self.is_encoder:
             fwd_kwargs["use_cache"] = False if use_cache is None else use_cache
-            # The CausalLM wrapper projects every token to the vocabulary by
-            # default.  A 16K-token context times a 16-item batch makes a
-            # multi-GB [tokens, vocab] tensor that this model never reads.
-            # Keeping one token's logits removes it from the memory peak;
-            # hidden states and the KV cache are unaffected.
-            fwd_kwargs["logits_to_keep"] = 1
+            # The projection to vocabulary is pure waste here: nothing in this
+            # model reads ``.logits`` — the heads take ``hidden_states`` and the
+            # prefix-cache path takes the cache. Qwen3's vocabulary is 151,669,
+            # so one 16,384-token sequence materialises 4.6 GiB in bf16 before
+            # any batching; sixteen of them is 74 GiB, which is how a run OOMed
+            # while asking for a single 26.13 GiB allocation (~5.6 sequences).
+            #
+            # Only pass this when the backbone actually has a vocabulary head.
+            # ``is_encoder`` answers "is this bidirectional", not "can this
+            # forward project": ``load_qwen35_base`` returns
+            # ``AutoModelForCausalLM(...).model``, which has no ``lm_head`` and
+            # would raise on the kwarg. Hidden states and the KV cache are
+            # unaffected by the slice.
+            #
+            # Do NOT add this to ``model/src/logit_scorer.py``: that module reads
+            # ``ctx_out.logits[0, -1]`` and the shifted ``out.logits[:, :-1, :]``
+            # over option tokens, so keeping one position would silently zero its
+            # token scores.
+            if getattr(self.backbone, "lm_head", None) is not None:
+                fwd_kwargs["logits_to_keep"] = 1
 
         use_autocast = (
             self.gpu_config.bf16_compute
@@ -572,9 +628,7 @@ class DecisionModel(nn.Module):
         The readout layers return bf16 under autocast; the projections and
         the heads are fp32, so upcast before either projection runs.
         """
-        outputs = self._run_backbone(
-            self.backbone, inputs, self.backbone_requires_grad
-        )
+        outputs = self._backbone_forward(inputs)
         hidden = self.readout_project(self.readout(outputs.hidden_states).float())
         if self.second_backbone is None:
             return hidden
@@ -957,6 +1011,40 @@ class DecisionModel(nn.Module):
         """Returns logits [1, n_options] for choice prediction."""
         if self.option_marker:
             return self._forward_options_by_marker(state, instructions, option_texts)
+        if self.choice_mode == "cross_encoder":
+            # Each option is scored from the whole prompt, so the state and the
+            # option interact through the full depth of the backbone rather
+            # than through a rank-limited attention. One batched forward for
+            # all options; the softmax across them lives in the loss.
+            #
+            # The option is the suffix of the prompt and the tokenizer truncates
+            # from the right, so a state that fills the window would drop the
+            # option — silently, and only on the longest items. The state is
+            # shortened instead, and a truncated prompt is reported once.
+            prompts, dropped = fit_option_prompts(
+                state,
+                instructions,
+                option_texts,
+                self.max_length,
+                encode=lambda text: self.tokenizer(text, add_special_tokens=False)["input_ids"],
+                decode=lambda ids: self.tokenizer.decode(ids, skip_special_tokens=True),
+                # One tokenizer call for all K options instead of K calls per
+                # item: the per-call path is what keeps the GPU waiting.
+                encode_batch=lambda texts: self.tokenizer(
+                    texts, add_special_tokens=False
+                )["input_ids"],
+            )
+            if dropped:
+                self.truncated_prompts += 1
+                if self.truncated_prompts == 1:
+                    warnings.warn(
+                        "cross-encoder prompts exceeded max_length: dropped "
+                        f"{dropped} leading state tokens so the option survives. "
+                        "Long states are shortened, never the option.",
+                        stacklevel=2,
+                    )
+            option_pooled = self._encode_text(prompts)
+            return self.choice_head(option_pooled).unsqueeze(0)
         context_text = f"{state} {instructions}"
         context_hidden = self._encode_with_sequence(context_text)
         option_pooled = self._encode_text(option_texts)
@@ -1032,28 +1120,80 @@ class DecisionModel(nn.Module):
         torch.save(head_state, path)
 
     def load_heads(self, path: Path | str) -> None:
-        """Load head parameters from a checkpoint.
+        """Load head parameters from a checkpoint, refusing a mismatched architecture.
 
-        A ``strict=False`` load is deliberate: the backbone is loaded from the
-        pretrained model, so its weights are absent from the checkpoint.  A
-        missing or unexpected non-backbone key, however, usually means the
-        checkpoint was trained with a different head architecture and part of
-        its head silently did not load.  Report those keys instead of
-        accepting a random head.
+        A checkpoint records the architecture that produced it.  Loading it into a
+        model built with different head settings used to succeed silently:
+        ``load_state_dict(strict=False)`` leaves every key it cannot match at its
+        initial value, so the run reports a number for a head that was never
+        trained.  Two measured cases:
+
+        * ``eval_authored.yaml`` mirrors a 4B run whose ``noul_rank`` is 128, but
+          the config did not say so.  The model got a linear noul head, the
+          checkpoint's ``noul_head.proj.*`` went nowhere, and the set scored
+          26/51 on the flag family — chance — against 34/51 with the head loaded.
+        * An eval of the tower checkpoint ``arch_4b_32k_split138_s123`` under a
+          cross-encoder config scored 0.2680 on choice instead of 0.1765: the
+          cross-encoder choice head stayed random.
+
+        A key the model cannot hold, or one whose shape differs, is always a
+        mismatch, so those raise.  A model parameter the checkpoint does not carry
+        only warns: that is what a legitimate partial load looks like (frozen
+        backbone weights are never saved, and a heads-only checkpoint says
+        nothing about adapters).
+
+        Raises:
+            ValueError: If the checkpoint carries parameters this model does not
+                have, or with different shapes.  The message names the keys and
+                says which setting produced them, because the mismatch is almost
+                always a config that does not mirror the training run.
         """
         head_state = torch.load(Path(path), map_location=self.device, weights_only=True)
-        result = self.load_state_dict(head_state, strict=False)
-        missing = [k for k in result.missing_keys if not k.startswith("backbone.")]
-        unexpected = [
-            k for k in result.unexpected_keys if not k.startswith("backbone.")
+        own = self.state_dict()
+
+        shape_mismatches = [
+            f"{name}: checkpoint {tuple(value.shape)} vs model {tuple(own[name].shape)}"
+            for name, value in head_state.items()
+            if name in own and own[name].shape != value.shape
         ]
-        if missing or unexpected:
-            print(
-                f"  Warning: checkpoint {path} does not match the model's heads; "
-                f"missing={missing[:5]}{'...' if len(missing) > 5 else ''} "
-                f"unexpected={unexpected[:5]}{'...' if len(unexpected) > 5 else ''}",
-                flush=True,
+        unexpected = sorted(name for name in head_state if name not in own)
+        if shape_mismatches or unexpected:
+            parts = []
+            if unexpected:
+                shown = ", ".join(unexpected[:8])
+                more = f" (+{len(unexpected) - 8} more)" if len(unexpected) > 8 else ""
+                parts.append(f"{len(unexpected)} key(s) the model does not have: {shown}{more}")
+            if shape_mismatches:
+                shown = "; ".join(shape_mismatches[:4])
+                more = f" (+{len(shape_mismatches) - 4} more)" if len(shape_mismatches) > 4 else ""
+                parts.append(f"{len(shape_mismatches)} shape mismatch(es): {shown}{more}")
+            raise ValueError(
+                f"{Path(path)} does not match this model's architecture — "
+                + "; ".join(parts)
+                + ". Check that the config's rank/noul_rank/choice_mode/readout "
+                "match the run that wrote the checkpoint."
             )
+
+        # What `save_heads` would have written: every non-backbone entry, plus the
+        # trainable backbone parameters (the LoRA adapters).
+        trainable_names = {name for name, p in self.named_parameters() if p.requires_grad}
+        expected = {
+            name
+            for name in own
+            if "backbone" not in name or name in trainable_names
+        }
+        missing = sorted(expected - set(head_state))
+        if missing:
+            shown = ", ".join(missing[:8])
+            more = f" (+{len(missing) - 8} more)" if len(missing) > 8 else ""
+            warnings.warn(
+                f"{Path(path)} has no value for {len(missing)} parameter(s) this "
+                f"model expects: {shown}{more}. They keep their initial values.",
+                stacklevel=2,
+            )
+
+        self.load_state_dict(head_state, strict=False)
+
 
     def trainable_parameters(self) -> int:
         return sum(p.numel() for p in self.parameters() if p.requires_grad)

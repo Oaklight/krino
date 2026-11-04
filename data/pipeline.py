@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import random
 import sys
@@ -12,6 +11,12 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from .format import TypedQuestion
+from .synthetic_split import (
+    CACHE_NAME,
+    corpus_fingerprint,
+    domain_splits,
+    split_from_key,
+)
 
 DATA_DIR = Path(__file__).resolve().parent / "benchmarks"
 
@@ -264,7 +269,9 @@ def stsb_level(raw: Any) -> int | None:
     labels are withheld, and -1 is the sentinel, not a score. Clamping it into
     range the way ``min(5, max(0, round(x)))`` does would turn all 1,379 test
     rows into gold level 0 ("No similarity"), which is what the loader used to
-    do: half the stsb eval slice carried a fabricated label.
+    do: half the stsb eval slice carried a fabricated label, and since all of
+    them were 0 they scored 0.11 accuracy and QWK 0.0000 while dragging the
+    score primitive's QWKmix down by 0.16.
 
     Args:
         raw: The ``label`` field of a GLUE STS-B row.
@@ -289,8 +296,8 @@ def load_stsb() -> Iterator[TypedQuestion]:
         for i, row in enumerate(rows):
             level = stsb_level(row.get("label"))
             if level is None:
-                # Only the test split hits this; train and validation are
-                # fully labeled.
+                # Only the test split hits this; the train and validation
+                # splits are fully labeled.
                 continue
             sentence1 = row.get("sentence1", "")
             sentence2 = row.get("sentence2", "")
@@ -1181,6 +1188,210 @@ def load_drop() -> Iterator[TypedQuestion]:
             yield from _drop_row_items(row, i, split_name, answers_by_length)
 
 
+# --- HelpSteer (Human-Rated Response Quality, Score) ---
+
+# One row yields five score questions, one per annotated attribute.  The
+# attributes are independent 0-4 ratings, so each uses its own ordered rubric.
+HELPSTEER_ATTRIBUTES: dict[str, tuple[str, list[str]]] = {
+    "helpfulness": (
+        "How helpful is the response to the prompt?",
+        ["Not helpful at all", "Slightly helpful", "Moderately helpful",
+         "Very helpful", "Extremely helpful"],
+    ),
+    "correctness": (
+        "How factually correct is the response?",
+        ["Completely incorrect", "Mostly incorrect", "Partially correct",
+         "Mostly correct", "Completely correct"],
+    ),
+    "coherence": (
+        "How coherent and well organized is the response?",
+        ["Incoherent", "Poorly organized", "Somewhat coherent",
+         "Coherent", "Highly coherent"],
+    ),
+    "complexity": (
+        "How complex is the response?",
+        ["Very simple", "Simple", "Moderately complex", "Complex", "Very complex"],
+    ),
+    "verbosity": (
+        "How verbose is the response?",
+        ["Very concise", "Concise", "Moderately verbose", "Verbose",
+         "Very verbose"],
+    ),
+}
+
+_HELPSTEER_TRAIN_ROWS = 5_000
+_HELPSTEER_EVAL_ROWS = 1_000
+
+
+def _helpsteer_level(rating: int) -> int:
+    """HelpSteer's 0-4 rating is already the level index: 0 is the worst end."""
+    return rating
+
+
+def load_helpsteer() -> Iterator[TypedQuestion]:
+    """Convert HelpSteer's human 0-4 attribute ratings into score questions.
+
+    Licence: CC-BY-4.0.  Each sampled row contributes one score item per
+    attribute, with the attribute's 0-4 rating as the expected level.  Train
+    rows are capped at 5,000 (25,000 items); validation at 1,000 rows.
+    """
+    rng = random.Random(42)
+    for split_name, out_split, cap in (
+        ("train", "train", _HELPSTEER_TRAIN_ROWS),
+        ("validation", "test", _HELPSTEER_EVAL_ROWS),
+    ):
+        rows = _load_hf_parquet("nvidia/HelpSteer", "default", split_name)
+        rows = [r for r in rows if r.get("prompt") and r.get("response")]
+        if len(rows) > cap:
+            rows = rng.sample(rows, cap)
+        for i, row in enumerate(rows):
+            state = f"Prompt: {row['prompt']}\n\nResponse: {row['response']}"
+            for attribute, (instructions, levels) in HELPSTEER_ATTRIBUTES.items():
+                value = row.get(attribute)
+                if not isinstance(value, int) or not 0 <= value < len(levels):
+                    continue
+                yield TypedQuestion.score(
+                    id=f"helpsteer-{out_split}-{i:05d}-{attribute}",
+                    state=state,
+                    instructions=instructions,
+                    criteria=levels,
+                    label=float(_helpsteer_level(value)),
+                    source="helpsteer",
+                    split=out_split,
+                    group=f"helpsteer-{i % 100}",
+                )
+
+
+# --- WMT Direct Assessment (Human Translation Quality, Score) ---
+
+WMT_DA_LEVELS = ["Very poor", "Poor", "Fair", "Good", "Excellent"]
+
+_WMT_DA_TRAIN_ROWS = 25_000
+_WMT_DA_EVAL_ROWS = 2_000
+
+
+def _wmt_da_level(raw_score: float) -> int:
+    """Map a 0-100 direct-assessment score to a five-level quality band."""
+    return min(4, max(0, int(raw_score // 20)))
+
+
+def load_wmt_da() -> Iterator[TypedQuestion]:
+    """Convert WMT direct-assessment scores into translation-quality scores.
+
+    Licence: Apache-2.0 (dataset release; underlying WMT source text retains
+    its own terms).  The 0-100 ``raw`` score is banded into five 20-point
+    levels.  Year 2022 is held out for evaluation; train rows are capped at
+    25,000 and eval at 2,000, both sampled with a fixed seed.
+    """
+    rng = random.Random(42)
+    rows = _load_hf_parquet(
+        "RicardoRei/wmt-da-human-evaluation", "default", "train"
+    )
+    train_rows: list[dict[str, Any]] = []
+    eval_rows: list[dict[str, Any]] = []
+    for row in rows:
+        if not row.get("src") or not row.get("mt"):
+            continue
+        try:
+            float(row.get("raw"))
+        except (TypeError, ValueError):
+            continue
+        if str(row.get("year")) == "2022":
+            eval_rows.append(row)
+        else:
+            train_rows.append(row)
+
+    for out_split, split_rows, cap in (
+        ("train", train_rows, _WMT_DA_TRAIN_ROWS),
+        ("test", eval_rows, _WMT_DA_EVAL_ROWS),
+    ):
+        if len(split_rows) > cap:
+            split_rows = rng.sample(split_rows, cap)
+        for i, row in enumerate(split_rows):
+            level = _wmt_da_level(float(row["raw"]))
+            yield TypedQuestion.score(
+                id=f"wmt-da-{out_split}-{i:05d}",
+                state=f"Source: {row['src']}\n\nTranslation: {row['mt']}",
+                instructions=(
+                    "How well does the translation preserve the meaning and "
+                    "quality of the source text?"
+                ),
+                criteria=WMT_DA_LEVELS,
+                label=float(level),
+                source="wmt_da",
+                split=out_split,
+                group=f"wmt-da-{row.get('lp', 'unknown')}",
+            )
+
+
+# --- UltraFeedback (Rated Response Quality, Score) ---
+
+ULTRAFEEDBACK_LEVELS = ["Very poor", "Poor", "Fair", "Good", "Excellent"]
+
+_ULTRAFEEDBACK_TRAIN_ROWS = 12_500
+_ULTRAFEEDBACK_EVAL_ROWS = 1_000
+
+
+def _ultrafeedback_level(overall_score: float) -> int:
+    """Map UltraFeedback's 1-10 overall score to five equal-width levels."""
+    return min(4, max(0, int((overall_score - 1.0) / 9.0 * 5.0)))
+
+
+def _last_assistant_content(conversation: Any) -> str:
+    if not isinstance(conversation, list):
+        return ""
+    for message in reversed(conversation):
+        if isinstance(message, dict) and message.get("role") == "assistant":
+            return str(message.get("content", ""))
+    return ""
+
+
+def load_ultrafeedback() -> Iterator[TypedQuestion]:
+    """Convert UltraFeedback overall scores into response-quality questions.
+
+    Licence: MIT for the released annotations (the prompts come from several
+    upstream collections with their own terms).  Each row contributes two
+    items, one for the chosen and one for the rejected response; the 1-10
+    overall score maps to five equal-width levels.  Train is capped at 12,500
+    rows (25,000 items), test at 1,000 rows.
+    """
+    rng = random.Random(42)
+    for split_name, out_split, cap in (
+        ("train_prefs", "train", _ULTRAFEEDBACK_TRAIN_ROWS),
+        ("test_prefs", "test", _ULTRAFEEDBACK_EVAL_ROWS),
+    ):
+        rows = _load_hf_parquet(
+            "HuggingFaceH4/ultrafeedback_binarized", "default", split_name
+        )
+        rows = [
+            r for r in rows
+            if r.get("prompt") and r.get("score_chosen") is not None
+            and r.get("score_rejected") is not None
+        ]
+        if len(rows) > cap:
+            rows = rng.sample(rows, cap)
+        for i, row in enumerate(rows):
+            prompt = row["prompt"]
+            for response_key, score_key, suffix in (
+                ("chosen", "score_chosen", "chosen"),
+                ("rejected", "score_rejected", "rejected"),
+            ):
+                response = _last_assistant_content(row.get(response_key))
+                if not response:
+                    continue
+                level = _ultrafeedback_level(float(row[score_key]))
+                yield TypedQuestion.score(
+                    id=f"ultrafeedback-{out_split}-{i:05d}-{suffix}",
+                    state=f"Instruction: {prompt}\n\nResponse: {response}",
+                    instructions="How well does the response satisfy the instruction?",
+                    criteria=ULTRAFEEDBACK_LEVELS,
+                    label=float(level),
+                    source="ultrafeedback",
+                    split=out_split,
+                    group=f"ultrafeedback-{row.get('prompt_id') or i}",
+                )
+
+
 # --- Synthetic (generated data) ---
 
 
@@ -1274,9 +1485,11 @@ def _synthetic_family_split(
     side. Splitting per item would leak paraphrases across the boundary and
     inflate eval accuracy.
 
-    Uses md5 rather than ``hash()`` because Python's string hash is randomised
-    per process (PYTHONHASHSEED), which would make the split unstable across
-    runs and machines.
+    ``load_synthetic`` does not use this function directly for a family that
+    shares a state with another family: it clusters near-duplicate families and
+    gives each cluster one split (see :mod:`data.synthetic_split`). A family
+    with no near-duplicate keeps the value returned here, so in practice this
+    is still the split rule for almost every family.
 
     Two limits are worth knowing:
 
@@ -1285,10 +1498,9 @@ def _synthetic_family_split(
       fixed corpus, but not across regenerating it: reordering families shifts
       families across the boundary (a +1 shift on every index moves ~18% of
       families).
-    * Family-disjointness is not state-disjointness. A handful of states appear
-      in more than one family (two such states in ``safety_moderation``); if
-      those families split, the same state is evaluated on text it was trained
-      on. The effect is negligible at this scale but is not zero.
+    * Family-disjointness is not state-disjointness on its own. A handful of
+      states appear in more than one family; the cluster-aware split in
+      ``data.synthetic_split`` is what closes that gap (#120).
 
     Args:
         domain: Synthetic domain name, e.g. ``"medical_triage"``.
@@ -1299,8 +1511,7 @@ def _synthetic_family_split(
         ``"test"`` or ``"train"`` — ``"test"`` matches the split name the
         benchmark loaders use, which is what ``load_source_items`` filters on.
     """
-    digest = hashlib.md5(f"{domain}-{family_idx}".encode()).hexdigest()
-    return "test" if int(digest[:8], 16) / 0xFFFFFFFF < eval_ratio else "train"
+    return split_from_key(f"{domain}-{family_idx}", eval_ratio)
 
 
 def load_synthetic(teacher: str | None = None) -> Iterator[TypedQuestion]:
@@ -1341,11 +1552,22 @@ def load_synthetic(teacher: str | None = None) -> Iterator[TypedQuestion]:
         families = _load_jsonl(families_path)
         ensure_unique_family_indices(families, domain)
         variants = _load_jsonl(variants_path) if variants_path.exists() else []
+        family_idxs = [
+            fam.get("_family_idx", idx) for idx, fam in enumerate(families)
+        ]
+        fam_splits = domain_splits(
+            domain,
+            families,
+            variants,
+            family_idxs,
+            content_key=corpus_fingerprint([families_path, variants_path]),
+            cache_path=synth_dir / CACHE_NAME,
+        )
 
         for idx, fam in enumerate(families):
             vd = variants[idx] if idx < len(variants) else {}
-            fam_idx = fam.get("_family_idx", idx)
-            fam_split = _synthetic_family_split(domain, fam_idx)
+            fam_idx = family_idxs[idx]
+            fam_split = fam_splits[idx]
             items = family_to_typed_questions(
                 fam, vd, domain, fam_idx, split=fam_split
             )
@@ -1377,6 +1599,35 @@ def _download_text(url: str, cache_path: Path) -> Path:
     return cache_path
 
 
+def render_jevbench_state(state: Any) -> str:
+    """Render a JevBench ``state`` as the text a model should read.
+
+    Most public items carry a plain string, but 35 of the 111 hard-tier items
+    carry a structured state: an agent policy, a conversation, contact records,
+    a service table. Those are the items whose point is that the answer needs
+    several parts of the state at once.
+
+    Passing the object straight through is not harmless. Both scorers build
+    their prompt with an f-string, so a dict arrives at the model as Python's
+    ``repr`` -- single-quoted keys, escaped unicode, one line, no structure --
+    and the item is scored on a rendering nobody authored. Rendering it as
+    indented JSON keeps the keys, the nesting and the order the author wrote,
+    and it is the same text for every scorer because this is the loader.
+
+    Args:
+        state: The raw ``state`` field.
+
+    Returns:
+        The string to feed the model. Non-dict values are str()-ed, and a
+        string is returned unchanged.
+    """
+    if isinstance(state, str):
+        return state
+    if isinstance(state, (dict, list)):
+        return json.dumps(state, indent=2, ensure_ascii=False)
+    return str(state)
+
+
 def load_jevbench() -> Iterator[TypedQuestion]:
     """Load JevBench public data (easy/hard/original tiers) as TypedQuestion items."""
     cache_dir = DATA_DIR / "jevbench"
@@ -1406,7 +1657,7 @@ def load_jevbench() -> Iterator[TypedQuestion]:
 
                 yield TypedQuestion(
                     id=task["id"],
-                    state=task["state"],
+                    state=render_jevbench_state(task["state"]),
                     question=q,
                     label=label,
                     source="jevbench",
@@ -1415,8 +1666,47 @@ def load_jevbench() -> Iterator[TypedQuestion]:
                 )
 
 
+def load_authored_holdout() -> Iterator[TypedQuestion]:
+    """Load the deterministic authored held-out set.
+
+    The tracked file ``data/benchmarks/openjev/authored_holdout.jsonl`` is the artefact
+    a model is scored on, and `scripts/build_authored_holdout.py` is how it is rebuilt
+    from :mod:`data.authored_holdout`. When the file is absent — a fresh checkout of
+    only the code, or a sandboxed test — the generator is used directly; the two are
+    held identical by a test, so the fallback cannot change what is measured.
+
+    Yields:
+        One :class:`TypedQuestion` per item, ``split="test"``.
+    """
+    from data.authored_holdout import build_items
+
+    path = DATA_DIR / "openjev" / "authored_holdout.jsonl"
+    if path.exists():
+        with path.open("r", encoding="utf-8") as handle:
+            rows = [json.loads(line) for line in handle if line.strip()]
+    else:
+        rows = list(build_items())
+    for row in rows:
+        question = dict(row["question"])
+        label = row["label"]
+        if question["type"] == "score":
+            label = float(label)
+        elif question["type"] == "noul":
+            label = label == "yes"
+        yield TypedQuestion(
+            id=row["id"],
+            state=render_jevbench_state(row["state"]),
+            question=question,
+            label=label,
+            source="authored_holdout",
+            split=row.get("split", "test"),
+            group=row.get("group"),
+        )
+
+
 LOADERS = {
     "jevbench": load_jevbench,
+    "authored_holdout": load_authored_holdout,
     "banking77": load_banking77,
     "sst2": load_sst2,
     "agnews": load_agnews,
@@ -1430,6 +1720,9 @@ LOADERS = {
     "tabfact": load_tabfact,
     "fever": load_fever,
     "yelp": load_yelp,
+    "helpsteer": load_helpsteer,
+    "wmt_da": load_wmt_da,
+    "ultrafeedback": load_ultrafeedback,
     "swag": load_swag,
     "multirc": load_multirc,
     "mednli": load_mednli,

@@ -2,13 +2,17 @@
 
 The choice head encodes each option independently, pools, and takes a softmax
 over K logits.  That is well defined for any K, but the training data only ever
-supplies K in 2..80, with 92.7% of evaluation *choice* items at K <= 5.
-Accuracy therefore collapses as options are added: on a fixed 300-item banking77
-sweep the pooled-attention baseline falls from 0.677 at K=4 to 0.217 at K=256,
-where the goal asks for a 5 pp difference between the <=5-option and >20-option
-regimes.  Both measurements are committed: the sweep is
-``model/experiments/optcount_pooled.json`` and the augmentation cost is
-``model/experiments/k_augment_cost.json``.
+supplies K in 2..80, with 92.7% of evaluation *choice* items at K <= 5.  Accuracy
+degrades as options are added, and the size of that degradation depends on the
+checkpoint: on a fixed 300-item banking77 sweep the 0.6B 5-epoch
+pooled-attention baseline falls from 0.677 at K=4 to 0.217 at K=256, while the
+4B 10-epoch model falls only from 0.977 to 0.850 between K=4 and K=80 — 12.67 pp,
+against a goal that asks for 5 pp between the <=5-option and >20-option regimes.
+All three measurements are committed: ``model/experiments/optcount_pooled.json``
+(0.6B), ``model/experiments/optcount_4b_ep10.json`` (4B) and
+``model/experiments/k_augment_cost.json``.  The 0.6B curve is not a description of
+the 4B model, so this module is aimed at the smaller residual gap, not the
+collapse.
 
 This module widens the option count at training time.  A fraction of choice
 items get their option list padded up to a target K drawn log-uniformly from a
@@ -303,6 +307,48 @@ def pad_choice_item(
     new_question = dict(question)
     new_question["criteria"] = new_criteria
     return replace(item, question=new_question, teacher_probs=None)
+
+
+def shrink_choice_item(
+    item: TypedQuestion, target_k: int, rng: random.Random
+) -> TypedQuestion:
+    """Return a copy of ``item`` with at most ``target_k`` options, gold included.
+
+    :func:`pad_choice_item` only widens, which is right for training — nothing is
+    ever removed, so supervision is untouched — but it cannot vary K *downward*.
+    A source whose items already carry its full option inventory is then
+    unchanged by every target below that count: banking77 puts all 80 intents on
+    every item, so a pad-only sweep scores the same unmodified item at K=4, 8,
+    16, 32, 64 and 80 and reports perfect option-count robustness.
+
+    This keeps the gold key and ``target_k - 1`` others drawn with ``rng``, in the
+    source's own order so the item still reads as its author wrote it. Used by
+    ``model/scripts/option_count_sweep.py`` to hold an item fixed while its option
+    count changes; training does not call it.
+
+    Args:
+        item: A choice item whose ``criteria`` is a mapping.
+        target_k: Option count to keep, including the gold.
+        rng: Seeded generator deciding which other options survive.
+
+    Returns:
+        A copy with at most ``target_k`` options, or ``item`` itself when it is
+        not a choice item, the gold is missing, or it is already small enough.
+    """
+    criteria = item.question.get("criteria")
+    if not isinstance(criteria, dict) or item.label not in criteria:
+        return item
+    if len(criteria) <= target_k:
+        return item
+
+    others = [key for key in criteria if key != item.label]
+    rng.shuffle(others)
+    kept = {item.label, *others[: max(target_k - 1, 0)]}
+    new_question = dict(item.question)
+    new_question["criteria"] = {
+        key: value for key, value in criteria.items() if key in kept
+    }
+    return replace(item, question=new_question)
 
 
 def apply_k_augment_with_stats(

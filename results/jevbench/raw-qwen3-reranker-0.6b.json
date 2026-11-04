@@ -1,0 +1,43 @@
+{
+  "model": "Qwen/Qwen3-Reranker-0.6B",
+  "mode": "raw_reranker",
+  "overall": {
+    "accuracy": 0.47619047619047616,
+    "correct": 110,
+    "total": 231
+  },
+  "by_tier": {
+    "easy": {
+      "accuracy": 0.8541666666666666,
+      "correct": 41,
+      "total": 48
+    },
+    "hard": {
+      "accuracy": 0.3063063063063063,
+      "correct": 34,
+      "total": 111
+    },
+    "original": {
+      "accuracy": 0.4861111111111111,
+      "correct": 35,
+      "total": 72
+    }
+  },
+  "by_type": {
+    "choice": {
+      "accuracy": 0.48201438848920863,
+      "correct": 67,
+      "total": 139
+    },
+    "noul": {
+      "accuracy": 0.4594594594594595,
+      "correct": 34,
+      "total": 74
+    },
+    "score": {
+      "accuracy": 0.5,
+      "correct": 9,
+      "total": 18
+    }
+  }
+}

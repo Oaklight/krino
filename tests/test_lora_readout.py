@@ -348,3 +348,217 @@ class TestTwoBackboneFusion:
         with pytest.raises(ValueError, match="equal hidden sizes"):
             self._model(second_backbone=_ForwardBackbone(8), fusion="sum")
 
+
+class TestReadoutInferredFromCheckpoint:
+    """The evaluation scripts read the readout off the saved tensors.
+
+    ``infer_readout`` matches on the name of the layer-mixing parameter, so it
+    is only correct while a saved checkpoint spells that parameter
+    ``readout.layer_logits``.  This round-trips a real model to pin the name.
+    """
+
+    def _model(self, readout: str):
+        from model.src.decision_model import DecisionModel
+        from model.src.gpu_config import GPUConfig
+
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=False,
+            max_length=128,
+            gradient_checkpointing=False,
+        )
+        return DecisionModel(
+            backbone=_FakeBackbone(),
+            tokenizer=None,
+            rank=8,
+            gpu_config=gpu,
+            readout=readout,
+        )
+
+    def test_weighted_checkpoint_is_reported_as_weighted(self, tmp_path) -> None:
+        from model.evaluation.checkpoint_readout import infer_readout
+
+        path = tmp_path / "weighted.pt"
+        self._model("weighted").save_heads(path)
+        state = torch.load(path, weights_only=True)
+
+        assert "readout.layer_logits" in state
+        assert infer_readout(state.keys()) == "weighted"
+
+    def test_last_checkpoint_is_not_reported_as_weighted(self, tmp_path) -> None:
+        from model.evaluation.checkpoint_readout import infer_readout
+
+        path = tmp_path / "last.pt"
+        self._model("last").save_heads(path)
+
+        assert infer_readout(torch.load(path, weights_only=True).keys()) is None
+
+    def test_the_mixture_survives_load_heads(self, tmp_path) -> None:
+        # load_heads is not strict; if save_heads dropped the mixture the
+        # inference above would still pass but the model would be wrong.
+        path = tmp_path / "weighted.pt"
+        trained = self._model("weighted")
+        with torch.no_grad():
+            trained.readout.layer_logits.copy_(torch.arange(3, dtype=torch.float32))
+        trained.save_heads(path)
+
+        fresh = self._model("weighted")
+        with torch.no_grad():
+            fresh.readout.layer_logits.zero_()
+        fresh.load_heads(path)
+
+        assert torch.equal(
+            fresh.readout.layer_logits, torch.arange(3, dtype=torch.float32)
+        )
+
+
+class _RecordingBackbone(_FakeBackbone):
+    """Fake backbone that records gradient-checkpointing enable calls."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.gc_calls: list[dict] = []
+
+    def gradient_checkpointing_enable(self, **kwargs) -> None:
+        self.gc_calls.append(kwargs)
+
+
+class TestLoraGradientCheckpointing:
+    """LoRA forces checkpointing on, but an explicit "off" must be honoured.
+
+    The force exists because a frozen backbone stores no activations while an
+    adapted one does — without it the 0.6B model OOMs at 16K.  Applying the
+    same rule to a caller who asked for checkpointing *off* silently made
+    ``--no-gradient-checkpointing`` a no-op whenever LoRA was enabled, which
+    removes the only way to trade memory for speed.
+    """
+
+    def _build(self, backbone, **gpu_kwargs):
+        from model.src.decision_model import DecisionModel
+        from model.src.gpu_config import GPUConfig
+
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=False,
+            max_length=128,
+            gradient_checkpointing=gpu_kwargs.pop("gradient_checkpointing", False),
+            **gpu_kwargs,
+        )
+        return DecisionModel(
+            backbone=backbone,
+            tokenizer=None,
+            rank=8,
+            gpu_config=gpu,
+            lora_layers=-1,
+        )
+
+    def test_forced_on_when_auto_detect_left_it_off(self) -> None:
+        backbone = _RecordingBackbone()
+        self._build(backbone)
+        assert len(backbone.gc_calls) == 1
+        assert backbone.gc_calls[0]["gradient_checkpointing_kwargs"] == {
+            "use_reentrant": False
+        }
+
+    def test_explicit_off_is_honoured(self) -> None:
+        backbone = _RecordingBackbone()
+        self._build(
+            backbone,
+            gradient_checkpointing=False,
+            gradient_checkpointing_explicit=True,
+        )
+        assert backbone.gc_calls == []
+
+    def test_explicit_on_uses_non_reentrant(self) -> None:
+        backbone = _RecordingBackbone()
+        self._build(
+            backbone,
+            gradient_checkpointing=True,
+            gradient_checkpointing_explicit=True,
+        )
+        assert len(backbone.gc_calls) == 1
+        assert backbone.gc_calls[0]["gradient_checkpointing_kwargs"] == {
+            "use_reentrant": False
+        }
+
+    def test_without_lora_an_explicit_off_does_not_enable(self) -> None:
+        from model.src.decision_model import DecisionModel
+        from model.src.gpu_config import GPUConfig
+
+        backbone = _RecordingBackbone()
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=False,
+            max_length=128,
+            gradient_checkpointing=False,
+            gradient_checkpointing_explicit=True,
+        )
+        DecisionModel(backbone=backbone, tokenizer=None, rank=8, gpu_config=gpu)
+        assert backbone.gc_calls == []
+
+
+class TestLoadHeadsRefusesMismatch:
+    """A checkpoint from a different head architecture must not load quietly.
+
+    ``load_state_dict(strict=False)`` leaves every unmatched key at its initial
+    value, so a mismatched load produces a number for a head nothing trained.
+    Both halves of this were measured: a 4B eval config without ``noul_rank``
+    scored 26/51 (chance) where the loaded head scores 34/51, and a tower
+    checkpoint evaluated under a cross-encoder config reported 0.2680 on choice
+    against its real 0.1765.
+    """
+
+    def _model(self, **kwargs):
+        from model.src.decision_model import DecisionModel
+        from model.src.gpu_config import GPUConfig
+
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=False,
+            max_length=128,
+            gradient_checkpointing=False,
+        )
+        return DecisionModel(
+            backbone=_FakeBackbone(), tokenizer=None, rank=8, gpu_config=gpu, **kwargs
+        )
+
+    def test_a_different_noul_head_is_refused(self, tmp_path) -> None:
+        path = tmp_path / "heads.pt"
+        self._model(noul_rank=None).save_heads(path)
+
+        with pytest.raises(ValueError, match="does not match this model's architecture"):
+            self._model(noul_rank=8).load_heads(path)
+
+    def test_a_different_choice_head_is_refused(self, tmp_path) -> None:
+        path = tmp_path / "heads.pt"
+        self._model(choice_mode="tower").save_heads(path)
+
+        with pytest.raises(ValueError, match="choice_head"):
+            self._model(choice_mode="cross_encoder").load_heads(path)
+
+    def test_a_matching_checkpoint_loads(self, tmp_path) -> None:
+        path = tmp_path / "heads.pt"
+        first = self._model(noul_rank=8)
+        with torch.no_grad():
+            for param in first.parameters():
+                param.fill_(1.0)
+        first.save_heads(path)
+
+        fresh = self._model(noul_rank=8)
+        with torch.no_grad():
+            for param in fresh.parameters():
+                param.fill_(0.0)
+        fresh.load_heads(path)
+
+        assert any(torch.count_nonzero(p) for p in fresh.parameters())
+
+    def test_a_checkpoint_missing_a_parameter_warns_instead_of_failing(
+        self, tmp_path
+    ) -> None:
+        # A heads-only checkpoint for a model that expects adapters is a legitimate
+        # partial load; it must be visible without being fatal.
+        path = tmp_path / "heads.pt"
+        self._model(lora_layers=None).save_heads(path)
+
+        with pytest.warns(UserWarning, match="has no value for"):
+            self._model(lora_layers=-1).load_heads(path)

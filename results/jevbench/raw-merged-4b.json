@@ -1,0 +1,43 @@
+{
+  "model": "/home/pding/lambda_home/projects/wt-merge/merged_4b_weighted",
+  "mode": "raw_reranker",
+  "overall": {
+    "accuracy": 0.6233766233766234,
+    "correct": 144,
+    "total": 231
+  },
+  "by_tier": {
+    "easy": {
+      "accuracy": 1.0,
+      "correct": 48,
+      "total": 48
+    },
+    "hard": {
+      "accuracy": 0.38738738738738737,
+      "correct": 43,
+      "total": 111
+    },
+    "original": {
+      "accuracy": 0.7361111111111112,
+      "correct": 53,
+      "total": 72
+    }
+  },
+  "by_type": {
+    "choice": {
+      "accuracy": 0.60431654676259,
+      "correct": 84,
+      "total": 139
+    },
+    "noul": {
+      "accuracy": 0.6351351351351351,
+      "correct": 47,
+      "total": 74
+    },
+    "score": {
+      "accuracy": 0.7222222222222222,
+      "correct": 13,
+      "total": 18
+    }
+  }
+}

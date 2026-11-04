@@ -26,47 +26,11 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from data.pipeline import load_jevbench
-
-INSTRUCTION = (
-    "Classify: which option correctly answers the question for the given situation? "
-    "Rate how well each option fits."
+from model.src.reranker_prompt import (
+    build_query_doc,
+    get_options,
+    score_options_native,
 )
-
-
-def build_query_doc(item, label: str, description: str) -> str:
-    """Build a query-document pair in Qwen3-Reranker's expected format."""
-    q = item.question
-    query_text = f"{item.state}\n\nQuestion: {q['instructions']}"
-    q_type = q["type"]
-    if q_type == "score":
-        doc_text = f"Rubric level {label}: {description}"
-    else:
-        doc_text = f"Answer option {label}: {description}"
-
-    return (
-        f"<Instruct>: {INSTRUCTION}\n"
-        f"<Query>: {query_text}\n"
-        f"<Document>: {doc_text}"
-    )
-
-
-def get_options(item) -> list[tuple[str, str]]:
-    """Return (label, description) pairs for each answer option."""
-    q = item.question
-    criteria = q.get("criteria", {})
-    if q["type"] == "noul":
-        return [
-            ("no", str(criteria.get("false", criteria.get("no", "No")))),
-            ("yes", str(criteria.get("true", criteria.get("yes", "Yes")))),
-        ]
-    elif q["type"] == "choice":
-        return [(k, str(v)) for k, v in criteria.items()]
-    elif q["type"] == "score":
-        if isinstance(criteria, list):
-            return [(str(i), str(desc)) for i, desc in enumerate(criteria)]
-        return [(k, str(v)) for k, v in criteria.items()]
-    return []
-
 
 def tier_from_id(item_id: str) -> str:
     return item_id.split("-")[0]
@@ -89,18 +53,9 @@ def main():
         model = model.to(device)
     model.eval()
 
-    token_true_id = tokenizer.convert_tokens_to_ids("yes")
-    token_false_id = tokenizer.convert_tokens_to_ids("no")
-
-    prefix = (
-        "<|im_start|>system\n"
-        "Judge whether the Document meets the requirements based on the Query "
-        "and the Instruct provided. Note that the answer can only be \"yes\" or \"no\"."
-        "<|im_end|>\n<|im_start|>user\n"
-    )
-    suffix = "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
-    prefix_tokens = tokenizer.encode(prefix, add_special_tokens=False)
-    suffix_tokens = tokenizer.encode(suffix, add_special_tokens=False)
+    # Prompt template, option extraction and the yes/no read live in
+    # model/src/reranker_prompt.py so the general eval harness can score options
+    # the same way; this script only decides what to do with the scores.
     max_length = 8192
 
     print(f"Model loaded on {device}")
@@ -123,25 +78,9 @@ def main():
         options = get_options(item)
 
         t0 = time.monotonic()
-        scores = []
-        for label, desc in options:
-            text = build_query_doc(item, label, desc)
-            tokens = tokenizer.encode(text, add_special_tokens=False)
-            tokens = tokens[: max_length - len(prefix_tokens) - len(suffix_tokens)]
-            input_ids = prefix_tokens + tokens + suffix_tokens
-            inputs = {
-                "input_ids": torch.tensor([input_ids], device=device),
-                "attention_mask": torch.ones(1, len(input_ids), device=device),
-            }
-            with torch.no_grad():
-                logits = model(**inputs).logits[:, -1, :]
-            true_logit = logits[:, token_true_id].item()
-            false_logit = logits[:, token_false_id].item()
-            score = torch.softmax(
-                torch.tensor([false_logit, true_logit]), dim=0
-            )[1].item()
-            scores.append(score)
-
+        scores = score_options_native(
+            model, tokenizer, item.state, item.question, options, max_length=max_length, device=device
+        )
         elapsed = time.monotonic() - t0
         latencies.append(elapsed)
 
