@@ -218,7 +218,7 @@ def _reference_probs(
     return [w / total for w in weights]
 
 
-def chance_corrected_accuracy(rows: Iterable[Prediction]) -> dict[str, float]:
+def chance_corrected_accuracy(rows: Iterable[Prediction]) -> dict[str, Any]:
     """Chance-corrected accuracy, the local Intelligence proxy.
 
     Each item is normalised by its own chance level ``c = 1 / n_options``:
@@ -226,10 +226,15 @@ def chance_corrected_accuracy(rows: Iterable[Prediction]) -> dict[str, float]:
     perfect model scores 1, and an item with one option is skipped because it
     carries no decision.  The JevBench tier weights are not applied here
     because the standard, judge and sealed tiers are not public.
+
+    ``by_options`` holds the item and correct counts per option count.  The
+    correction is linear in ``correct`` within one option count, so these
+    counts reproduce ``corrected`` exactly; the mean ``chance`` alone does not.
     """
     raw: list[float] = []
     corrected: list[float] = []
     chances: list[float] = []
+    by_options: dict[int, dict[str, int]] = {}
     for row in rows:
         n_options = len(row.probs)
         if n_options < 2:
@@ -239,14 +244,29 @@ def chance_corrected_accuracy(rows: Iterable[Prediction]) -> dict[str, float]:
         raw.append(correct)
         chances.append(chance)
         corrected.append((correct - chance) / (1.0 - chance))
+        cell = by_options.setdefault(n_options, {"n": 0, "correct": 0})
+        cell["n"] += 1
+        cell["correct"] += int(correct)
     if not corrected:
-        return {"n": 0, "accuracy": 0.0, "chance": 0.0, "corrected": 0.0}
+        return {"n": 0, "accuracy": 0.0, "chance": 0.0, "corrected": 0.0, "by_options": {}}
     return {
         "n": len(corrected),
         "accuracy": sum(raw) / len(raw),
         "chance": sum(chances) / len(chances),
         "corrected": sum(corrected) / len(corrected),
+        "by_options": {str(k): by_options[k] for k in sorted(by_options)},
     }
+
+
+def corrected_from_counts(by_options: dict[str, dict[str, int]]) -> float:
+    """Recompute chance-corrected accuracy from ``by_options`` counts."""
+    total = 0.0
+    items = 0
+    for key, cell in by_options.items():
+        chance = 1.0 / int(key)
+        total += (cell["correct"] - cell["n"] * chance) / (1.0 - chance)
+        items += cell["n"]
+    return total / items if items else 0.0
 
 
 def summarize(rows: Iterable[Prediction], n_bins: int = 10) -> dict[str, Any]:

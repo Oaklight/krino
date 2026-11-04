@@ -10,6 +10,7 @@ from model.evaluation.gate import (
     Prediction,
     brier_skill_score,
     chance_corrected_accuracy,
+    corrected_from_counts,
     expected_calibration_error,
     k_bucket,
     multiclass_brier,
@@ -218,6 +219,23 @@ class TestChanceCorrectedAccuracy:
         out = chance_corrected_accuracy(rows)
         assert out["accuracy"] == pytest.approx(0.5)
         assert out["corrected"] == pytest.approx(0.0)
+
+    def test_option_counts_reproduce_the_corrected_score(self):
+        # Mixed K: the mean chance cannot recover the score, the counts can.
+        rows = [
+            Prediction("a", "noul", True, (0.0, 1.0), ("false", "true")),
+            Prediction("b", "noul", True, (1.0, 0.0), ("false", "true")),
+            Prediction("c", "choice", "x", (0.4, 0.3, 0.2, 0.1, 0.0), ("x", "b", "c", "d", "e")),
+            Prediction("d", "choice", "x", (0.0, 0.3, 0.2, 0.1, 0.4), ("x", "b", "c", "d", "e")),
+            Prediction("e", "choice", "x", (0.9, 0.1, 0.0), ("x", "y", "z")),
+        ]
+        out = chance_corrected_accuracy(rows)
+        assert out["by_options"] == {
+            "2": {"n": 2, "correct": 1},
+            "3": {"n": 1, "correct": 1},
+            "5": {"n": 2, "correct": 1},
+        }
+        assert corrected_from_counts(out["by_options"]) == pytest.approx(out["corrected"])
 
 
 class TestResidualHeadQuestionOverride:
