@@ -27,6 +27,14 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 
+ABSTENTION_REASONS = (
+    "insufficient",
+    "out_of_scope",
+    "none_of_these",
+    "no_applicable_tool",
+)
+
+
 @dataclass
 class TypedQuestion:
     id: str
@@ -38,6 +46,11 @@ class TypedQuestion:
     group: str | None = None
     teacher_probs: dict[str, float] | None = None
     teacher_name: str | None = None
+    # ``answerable=None`` means not annotated, not True.  The training loader
+    # treats an item with a gold label as answerable=True unless this is
+    # explicitly False; abstention sets must set False and a reason.
+    answerable: bool | None = None
+    reason: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {k: v for k, v in asdict(self).items() if v is not None}

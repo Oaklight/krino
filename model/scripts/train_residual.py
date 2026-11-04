@@ -62,6 +62,19 @@ def _stratum(item) -> tuple[str, int]:
     return (item.question["type"], min(n, 8))
 
 
+def answerable_target(item) -> bool:
+    """Label for the answerable head.
+
+    An explicit ``answerable`` field wins.  Otherwise a gold-carrying item is
+    answerable by construction; an item whose gold was removed must set the
+    field, which the abstention sets do.
+    """
+    value = getattr(item, "answerable", None)
+    if value is not None:
+        return bool(value)
+    return _label_index(item) >= 0
+
+
 def split_items(items: list, val_fraction: float, seed: int) -> tuple[list, list]:
     """Stratified split by (type, K bucket)."""
     rng = random.Random(seed)
@@ -156,6 +169,8 @@ def item_loss(
     alphas: dict[str, torch.Tensor],
     kl_weight: float,
     ce_weight: float,
+    answerable_weight: float = 0.0,
+    answerable_pos_weight: float = 1.0,
 ) -> tuple[torch.Tensor, float, float]:
     q_type = item.question["type"]
     head = head_logits(model, item).reshape(-1)
@@ -176,7 +191,25 @@ def item_loss(
         )
     else:
         ce = torch.zeros((), device=logits.device)
-    return kl_weight * kl + ce_weight * ce, float(kl.detach()), float(ce.detach())
+    answerable_loss = torch.zeros((), device=logits.device)
+    if answerable_weight and getattr(model, "answerable_head", None) is not None:
+        logit = model.forward_answerable(
+            item.state, item.question.get("instructions", "")
+        ).reshape(())
+        ans_label = torch.tensor(
+            float(answerable_target(item)), device=logit.device
+        )
+        pos_weight = torch.tensor(
+            [answerable_pos_weight], device=logit.device, dtype=logit.dtype
+        )
+        answerable_loss = answerable_weight * F.binary_cross_entropy_with_logits(
+            logit, ans_label, pos_weight=pos_weight
+        )
+    return (
+        kl_weight * kl + ce_weight * ce + answerable_loss,
+        float(kl.detach()),
+        float(ce.detach()),
+    )
 
 
 @torch.no_grad()
@@ -253,6 +286,25 @@ def main() -> int:
     parser.add_argument("--alpha-lr", type=float, default=1e-2)
     parser.add_argument("--kl-weight", type=float, default=1.0)
     parser.add_argument("--ce-weight", type=float, default=0.2)
+    parser.add_argument(
+        "--answerable-head",
+        action="store_true",
+        help="Add the Bernoulli answerable head (abstention); needs --answerable-items",
+    )
+    parser.add_argument("--answerable-weight", type=float, default=1.0)
+    parser.add_argument(
+        "--answerable-pos-weight",
+        type=float,
+        default=None,
+        help="BCE positive weight; None balances by the training counts",
+    )
+    parser.add_argument(
+        "--answerable-items",
+        type=Path,
+        nargs="*",
+        default=None,
+        help="Abstention JSONL files; appended to train only, never to val",
+    )
     parser.add_argument("--val-fraction", type=float, default=0.2)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="cuda")
@@ -268,8 +320,31 @@ def main() -> int:
     if args.limit:
         items = items[: args.limit]
     train_items, val_items = split_items(items, args.val_fraction, args.seed)
+    answerable_items = []
+    for path in args.answerable_items or []:
+        answerable_items.extend(load_jsonl(path))
+    answerable_items = [
+        item
+        for item in answerable_items
+        if item.id in base_probs and getattr(item, "answerable", None) is not None
+    ]
+    if args.answerable_head and not answerable_items:
+        print(
+            "  WARNING: --answerable-head is on but --answerable-items added no "
+            "labeled items; the head will not train",
+            flush=True,
+        )
+    if answerable_items:
+        # Abstention sets are synthetic supervision, so they never enter val.
+        train_items.extend(answerable_items)
+    answerable_pos_weight = args.answerable_pos_weight
+    if answerable_pos_weight is None:
+        n_pos = sum(1 for item in train_items if answerable_target(item))
+        n_neg = len(train_items) - n_pos
+        answerable_pos_weight = n_neg / max(n_pos, 1)
     print(
         f"train {len(train_items)} val {len(val_items)} "
+        f"answerable {len(answerable_items)} pos_weight {answerable_pos_weight:.3f} "
         f"types { {t: sum(1 for i in items if i.question['type'] == t) for t in TYPES} }",
         flush=True,
     )
@@ -297,6 +372,7 @@ def main() -> int:
         lora_layers=args.lora_layers,
         lora_rank=args.lora_rank,
         lora_alpha=args.lora_alpha,
+        answerable_head=args.answerable_head,
     )
     alphas = {t: torch.nn.Parameter(torch.zeros((), device=args.device)) for t in TYPES}
     head_params = [p for p in model.parameters() if p.requires_grad]
@@ -324,7 +400,14 @@ def main() -> int:
         started = time.time()
         for index, item in enumerate(order, 1):
             loss, kl_value, ce_value = item_loss(
-                model, item, base_probs[item.id], alphas, args.kl_weight, args.ce_weight
+                model,
+                item,
+                base_probs[item.id],
+                alphas,
+                args.kl_weight,
+                args.ce_weight,
+                args.answerable_weight,
+                answerable_pos_weight,
             )
             kl_total += kl_value
             ce_total += ce_value
@@ -388,6 +471,8 @@ def main() -> int:
                 "lora_layers": args.lora_layers,
                 "lora_rank": args.lora_rank if args.lora_layers is not None else None,
                 "lora_alpha": args.lora_alpha if args.lora_layers is not None else None,
+                "answerable_head": args.answerable_head,
+                "answerable_pos_weight": answerable_pos_weight,
             },
             "history": history,
         },
