@@ -30,7 +30,7 @@ class _TinyModel(nn.Module):
         super().__init__()
         self.head = nn.Linear(1, 1)
 
-    def forward_noul(self, state, instructions):
+    def forward_noul(self, state, instructions, criteria=None):
         return self.head(torch.zeros(1, 1))
 
 

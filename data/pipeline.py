@@ -1047,45 +1047,145 @@ def load_hotpotqa() -> Iterator[TypedQuestion]:
 # --- DROP (Discrete Reasoning Over Paragraphs, Noul/Score) ---
 
 
+DROP_SCORE_LEVELS = [
+    "Incorrect: the candidate is not the answer in the passage",
+    "Close: the candidate is approximately correct but not exact",
+    "Exact: the candidate matches the answer in the passage exactly",
+]
+
+
+def _drop_score_candidates(value: float) -> list[tuple[float, str]]:
+    """Return ``(label, candidate)`` pairs covering all three score levels.
+
+    The candidates are derived from the gold value without an external model:
+    the gold itself is Exact, a small perturbation is Close, and a large
+    perturbation is Incorrect. The caller must not present the gold as the
+    expected answer; each candidate is the object being graded.
+    """
+    if float(value).is_integer():
+        gold = int(value)
+        close = gold + 1
+        far = gold * 3 + 7
+    else:
+        gold = value
+        close = round(value * 1.05, 6)
+        if close == value:
+            close = round(value + 1.0, 6)
+        far = round(value * 3 + 7, 6)
+    return [(2.0, str(gold)), (1.0, str(close)), (0.0, str(far))]
+
+
+def _drop_negative_answers(
+    answers_by_length: dict[int, list[str]],
+    gold: str,
+    row_index: int,
+) -> list[str]:
+    """Pick a hard negative with a similar answer length, excluding the gold."""
+    for length in (len(gold), len(gold) + 1, len(gold) - 1):
+        bucket = answers_by_length.get(length, [])
+        for offset in range(1, len(bucket) + 1):
+            candidate = bucket[(row_index + offset) % len(bucket)]
+            if candidate != gold:
+                return [candidate]
+    for bucket in answers_by_length.values():
+        for offset in range(1, len(bucket) + 1):
+            candidate = bucket[(row_index + offset) % len(bucket)]
+            if candidate != gold:
+                return [candidate]
+    return []
+
+
+def _drop_row_items(
+    row: dict,
+    row_index: int,
+    split_name: str,
+    answers_by_length: dict[int, list[str]],
+) -> list[TypedQuestion]:
+    """Convert one DROP row into non-degenerate score and noul items."""
+    passage = row.get("passage", "")
+    question = row.get("question", "")
+    spans = (row.get("answers_spans") or {}).get("spans") or []
+    if not passage or not question or not spans:
+        return []
+    gold = str(spans[0]).strip()
+    if not gold:
+        return []
+
+    state = f"{passage}\n\nQuestion: {question}"
+    out_split = "test" if split_name == "validation" else "train"
+    group = f"drop-{split_name}-{row_index:05d}"
+    items: list[TypedQuestion] = []
+
+    try:
+        value = float(gold.replace(",", ""))
+    except ValueError:
+        value = None
+
+    if value is not None:
+        for level, (label, candidate) in enumerate(_drop_score_candidates(value)):
+            items.append(
+                TypedQuestion.score(
+                    id=f"drop-{split_name}-{row_index:05d}-score-{level}",
+                    state=state,
+                    instructions=(
+                        f"Candidate answer: {candidate}\n"
+                        "Is this candidate answer supported by the passage?"
+                    ),
+                    criteria=DROP_SCORE_LEVELS,
+                    label=label,
+                    source="drop",
+                    split=out_split,
+                    group=group,
+                )
+            )
+    else:
+        items.append(
+            TypedQuestion.noul(
+                id=f"drop-{split_name}-{row_index:05d}-noul-pos",
+                state=state,
+                instructions=(
+                    f"Based on the passage, is '{gold}' the correct answer "
+                    "to the question?"
+                ),
+                label=True,
+                source="drop",
+                split=out_split,
+                group=group,
+            )
+        )
+        for j, negative in enumerate(
+            _drop_negative_answers(answers_by_length, gold, row_index)
+        ):
+            items.append(
+                TypedQuestion.noul(
+                    id=f"drop-{split_name}-{row_index:05d}-noul-neg-{j}",
+                    state=state,
+                    instructions=(
+                        f"Based on the passage, is '{negative}' the correct "
+                        "answer to the question?"
+                    ),
+                    label=False,
+                    source="drop",
+                    split=out_split,
+                    group=group,
+                )
+            )
+    return items
+
+
 def load_drop() -> Iterator[TypedQuestion]:
     for split_name in ("train", "validation"):
         rows = _load_hf_parquet("ucinlp/drop", "default", split_name)
-        out_split = "test" if split_name == "validation" else "train"
-        for i, row in enumerate(rows):
-            passage = row.get("passage", "")
-            question = row.get("question", "")
-            answers = row.get("answers_spans", {})
-            spans = answers.get("spans", [])
-            if not passage or not question or not spans:
+        answers_by_length: dict[int, list[str]] = {}
+        for row in rows:
+            spans = (row.get("answers_spans") or {}).get("spans") or []
+            if not spans:
                 continue
-            answer = spans[0]
-            state = f"{passage}\n\nQuestion: {question}"
-            try:
-                num = float(answer.replace(",", ""))
-                yield TypedQuestion.score(
-                    id=f"drop-{split_name}-{i:05d}",
-                    state=state,
-                    instructions=f"What is the numerical answer? (expected: {num})",
-                    criteria=[
-                        "Incorrect: answer is wrong",
-                        "Close: answer is approximately correct",
-                        "Exact: answer matches exactly",
-                    ],
-                    label=2.0,
-                    source="drop",
-                    split=out_split,
-                    group=f"drop-{i % 100}",
-                )
-            except ValueError:
-                yield TypedQuestion.noul(
-                    id=f"drop-{split_name}-{i:05d}",
-                    state=state,
-                    instructions=f"Based on the passage, is '{answer}' the correct answer?",
-                    label=True,
-                    source="drop",
-                    split=out_split,
-                    group=f"drop-{i % 100}",
-                )
+            answer = str(spans[0]).strip()
+            if answer:
+                answers_by_length.setdefault(len(answer), []).append(answer)
+        for i, row in enumerate(rows):
+            yield from _drop_row_items(row, i, split_name, answers_by_length)
 
 
 # --- HelpSteer (Human-Rated Response Quality, Score) ---
@@ -1299,28 +1399,80 @@ _AUGMENTED_TEACHER_PRIORITY = ("jev_augmented", "gpt_5_6_luna_augmented")
 _STANDARD_TEACHER_PRIORITY = ("jev", "gpt_5_6_luna", "qwen3_8_27b")
 
 
-def _select_teacher_probs(
-    cached: dict[str, dict[str, float]],
-    question: dict[str, Any],
-) -> dict[str, float] | None:
-    """Select the best teacher probs from the nested multi-teacher cache.
+_TEACHER_ALIASES = {
+    "luna": "gpt_5_6_luna",
+    "qwen": "qwen3_8_27b",
+}
 
-    For augmented noul items (question has augmented_options), prefer
-    augmented teachers. For standard items, prefer Jev > Luna > Qwen.
-    Returns a flat ``{option_key: probability}`` dict or None.
+
+def _teacher_keys(
+    question: dict[str, Any],
+    teacher: str | None = None,
+) -> tuple[str, ...]:
+    """Teacher keys to try, in order, for one question.
+
+    With an explicit ``teacher`` there is no fallback: a missing teacher
+    returns no probs rather than silently borrowing another model's labels.
+    Without one, keep the historical Jev > Luna > Qwen priority.
     """
     is_augmented_noul = (
         question.get("type") == "noul"
         and question.get("augmented_options")
     )
-    priority = _AUGMENTED_TEACHER_PRIORITY if is_augmented_noul else _STANDARD_TEACHER_PRIORITY
-    for key in priority:
-        if key in cached and cached[key]:
-            return cached[key]
+    if teacher is None:
+        return (
+            _AUGMENTED_TEACHER_PRIORITY
+            if is_augmented_noul
+            else _STANDARD_TEACHER_PRIORITY
+        )
+    name = _TEACHER_ALIASES.get(teacher, teacher)
+    return (f"{name}_augmented", name) if is_augmented_noul else (name,)
+
+
+def _select_teacher_entry(
+    cached: dict[str, dict[str, float]],
+    question: dict[str, Any],
+    teacher: str | None = None,
+) -> tuple[str | None, dict[str, float] | None]:
+    """Return ``(teacher_key, probs)`` for the selected teacher."""
+    for key in _teacher_keys(question, teacher):
+        if cached.get(key):
+            return key, cached[key]
+    if teacher is not None:
+        return None, None
     for key in _STANDARD_TEACHER_PRIORITY:
-        if key in cached and cached[key]:
-            return cached[key]
-    return None
+        if cached.get(key):
+            return key, cached[key]
+    return None, None
+
+
+def _select_teacher_probs(
+    cached: dict[str, dict[str, float]],
+    question: dict[str, Any],
+    teacher: str | None = None,
+) -> dict[str, float] | None:
+    """Select teacher probs; returns a flat option->probability dict or None.
+
+    ``teacher`` pins one teacher key (aliases: ``luna``, ``qwen``). With an
+    explicit teacher there is no fallback, so a run cannot silently train on
+    a different teacher than the one named in its config.
+    """
+    _, probs = _select_teacher_entry(cached, question, teacher)
+    return probs
+
+
+def _label_teacher_key(filename: str, key: str) -> str:
+    """Repair a known label-file key mismatch.
+
+    The ``*_qwen3_8_27b_labels.jsonl`` files were written by
+    ``fill_luna_gaps.py``, which hardcodes the Luna key. The filename is the
+    only surviving provenance, so re-key those rows to ``qwen3_8_27b``.
+    The Luna bucket itself remains mixed Luna/DeepSeek and cannot be split
+    without per-row metadata.
+    """
+    if "_qwen3_8_27b_" in filename:
+        return "qwen3_8_27b"
+    return key
 
 
 def _synthetic_family_split(
@@ -1362,20 +1514,34 @@ def _synthetic_family_split(
     return split_from_key(f"{domain}-{family_idx}", eval_ratio)
 
 
-def load_synthetic() -> Iterator[TypedQuestion]:
-    """Load synthetic data by assembling from families + variants + labels on the fly."""
+def load_synthetic(teacher: str | None = None) -> Iterator[TypedQuestion]:
+    """Load synthetic data by assembling from families + variants + labels.
+
+    ``teacher`` pins one teacher key (``jev``, ``gpt_5_6_luna``,
+    ``qwen3_8_27b``; aliases ``luna`` and ``qwen``). When set, an item without
+    that teacher's labels is left without ``teacher_probs`` rather than falling
+    back to another teacher.
+    """
     synth_dir = DATA_DIR / "synthetic"
     if not synth_dir.exists():
         return
 
-    from .synthetic import family_to_typed_questions, _load_jsonl
+    from .synthetic import (
+        _load_jsonl,
+        ensure_unique_family_indices,
+        family_to_typed_questions,
+    )
     from .synthetic_templates import DOMAIN_TEMPLATES
 
-    # Load all label files into a single lookup
+    # Load all label files into a single lookup. The qwen3_8_27b files were
+    # written with the Luna key by fill_luna_gaps.py; re-key by filename so
+    # they do not overwrite the Luna bucket.
     label_cache: dict[str, dict] = {}
     for label_file in sorted(synth_dir.glob("*_labels.jsonl")):
         for lbl in _load_jsonl(label_file):
-            label_cache.setdefault(lbl["id"], {}).update(lbl.get("teacher_probs", {}))
+            for key, probs in (lbl.get("teacher_probs") or {}).items():
+                key = _label_teacher_key(label_file.name, key)
+                label_cache.setdefault(lbl["id"], {})[key] = probs
 
     for domain in DOMAIN_TEMPLATES:
         families_path = synth_dir / f"{domain}_families.jsonl"
@@ -1384,6 +1550,7 @@ def load_synthetic() -> Iterator[TypedQuestion]:
             continue
 
         families = _load_jsonl(families_path)
+        ensure_unique_family_indices(families, domain)
         variants = _load_jsonl(variants_path) if variants_path.exists() else []
         family_idxs = [
             fam.get("_family_idx", idx) for idx, fam in enumerate(families)
@@ -1407,9 +1574,12 @@ def load_synthetic() -> Iterator[TypedQuestion]:
             for item_dict in items:
                 cached = label_cache.get(item_dict["id"])
                 if cached:
-                    flat = _select_teacher_probs(cached, item_dict.get("question", {}))
+                    key, flat = _select_teacher_entry(
+                        cached, item_dict.get("question", {}), teacher
+                    )
                     if flat:
                         item_dict["teacher_probs"] = flat
+                        item_dict["teacher_name"] = key
                 yield TypedQuestion(**item_dict)
 
 

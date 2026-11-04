@@ -35,7 +35,7 @@ from collections import Counter
 from pathlib import Path
 
 import torch
-from _vendor import yaml
+from _vendor import yaml  # zerodep YAML; no PyYAML dependency
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -60,7 +60,6 @@ from model.training.distributed import (
     shutdown,
     world_info,
 )
-from model.src.model_factory import build_decision_model
 from model.training.readout_guard import schedule_warning
 from model.training.supervised import eval_epoch_detailed, train_multitask
 
@@ -69,6 +68,31 @@ def load_config(path: Path) -> dict:
     """Load YAML config file."""
     with open(path) as f:
         return yaml.load(f)
+
+
+def parse_layer_pair(
+    value: str | tuple[int, int] | list[int] | None,
+) -> tuple[int, int] | None:
+    """Parse a two-layer readout selection from a CLI string or config list.
+
+    Args:
+        value: ``"16,32"``, a two-element list/tuple, or None.
+
+    Returns:
+        The pair as ``(first, second)``, or None when unset.
+
+    Raises:
+        ValueError: If the value does not contain exactly two integers.
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        parts = [part.strip() for part in value.split(",") if part.strip()]
+    else:
+        parts = list(value)
+    if len(parts) != 2:
+        raise ValueError(f"expected two layer indices, got {value!r}")
+    return int(parts[0]), int(parts[1])
 
 
 def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
@@ -205,9 +229,21 @@ def main() -> int:
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
     parser.add_argument("--shared-attention", action="store_true", default=None, help="Share AttentionHead weights between choice and score heads")
     parser.add_argument("--unified-head", action="store_true", default=None, help="Use single unified attention head for all types (noul via true/false options)")
-    parser.add_argument("--readout", choices=["last", "mean_last_n", "weighted"], default=None, help="Which backbone layers feed the heads (default: weighted; last has collapsed at 8B and on long schedules, see model/training/readout_guard.py)")
+    parser.add_argument("--readout", choices=["last", "mean_last_n", "weighted", "layer", "fuse_pair"], default=None, help="Which backbone layers feed the heads (default: weighted)")
     parser.add_argument("--choice-mode", choices=["tower", "cross_encoder"], default=None, help="How choice options are scored: 'tower' encodes the state and each option separately and scores with cross-attention; 'cross_encoder' puts the state into every option's prompt and reads out a linear score (the shape the backbone's own reranker uses, ~3x training cost) (default: tower)")
     parser.add_argument("--readout-n", type=int, default=None, help="Layer window for --readout mean_last_n (default: 4)")
+    parser.add_argument("--readout-layer", type=int, default=None, help="Single layer index for --readout layer (0 = embedding output)")
+    parser.add_argument("--readout-layers", type=str, default=None, help="Two comma-separated layer indices for --readout fuse_pair, e.g. 16,32")
+    parser.add_argument("--readout-fusion", choices=["concat", "sum"], default=None, help="How --readout fuse_pair combines the two layers (default: concat)")
+    parser.add_argument("--second-model", default=None, help="Second backbone to concatenate with the primary one (e.g. Qwen/Qwen3-0.6B)")
+    parser.add_argument("--second-readout", choices=["last", "mean_last_n", "weighted", "layer", "fuse_pair"], default=None, help="Readout for the second backbone (default: last)")
+    parser.add_argument("--second-readout-n", type=int, default=None, help="Layer window for the second backbone's mean_last_n readout")
+    parser.add_argument("--second-readout-layer", type=int, default=None, help="Single layer index for the second backbone")
+    parser.add_argument("--second-readout-layers", type=str, default=None, help="Two comma-separated layer indices for the second backbone")
+    parser.add_argument("--second-readout-fusion", choices=["concat", "sum"], default=None, help="How the second backbone's fuse_pair combines layers (default: concat)")
+    parser.add_argument("--second-lora-layers", type=int, default=None, help="LoRA scope on the second backbone: -1 = all, N = last N, 0 = off")
+    parser.add_argument("--fusion", choices=["concat", "sum"], default=None, help="How the two backbones are fused (default: concat)")
+    parser.add_argument("--mlp-dim", type=int, default=None, help="Hidden width of the MLP projector (default: backbone width)")
     parser.add_argument("--lora-layers", type=int, default=None, help="LoRA scope: -1 = all blocks, N = last N blocks, 0 = off (default: off)")
     parser.add_argument("--lora-rank", type=int, default=None, help="LoRA bottleneck rank (default: 16)")
     parser.add_argument("--lora-alpha", type=int, default=None, help="LoRA scaling numerator (default: 32)")
@@ -221,6 +257,9 @@ def main() -> int:
     parser.add_argument("--k-augment-max-k", type=int, default=None, help="Largest padded option count (default: 80, the widest evaluation item)")
     parser.add_argument("--k-augment-control", action="store_true", default=None, help="Baseline arm for a K-augmentation A/B: select the same items and drop teacher_probs on them, but do not pad. Pair with the same --k-augment-fraction and seed.")
     parser.add_argument("--synthetic-ratio", type=float, default=None, help="Target proportion of synthetic data (0.0 to 1.0)")
+    parser.add_argument("--option-marker", action="store_true", default=None, help="Score choice/score options at a marker token after each option in the context sequence (Laya-style readout) instead of pooling each option separately")
+    parser.add_argument("--option-chunk-size", type=int, default=None, help="Options per marker-readout chunk (default: 32); controls how many suffix forwards a question costs")
+    parser.add_argument("--option-max-tokens", type=int, default=None, help="Token cap per option in the marker readout (default: 64)")
 
     # GPU memory optimization flags
     flash_group = parser.add_mutually_exclusive_group()
@@ -293,7 +332,7 @@ def main() -> int:
     eval_every = args.eval_every if args.eval_every is not None else cfg.get("eval_every", 2)
     rival_aware = cfg.get("rival_aware", False)
     mlp_layers, mlp_layers_src = resolve_setting(args.mlp_layers, cfg, "mlp_layers", 0)
-    mlp_dim = cfg.get("mlp_dim", None)
+    mlp_dim = args.mlp_dim if args.mlp_dim is not None else cfg.get("mlp_dim", None)
     noul_rank = args.noul_rank if args.noul_rank is not None else cfg.get("noul_rank", None)
     max_length, max_length_src = resolve_setting(args.max_length, cfg, "max_length", None)
     mlp_lr, mlp_lr_src = resolve_setting(args.mlp_lr, cfg, "mlp_lr", None)
@@ -320,6 +359,57 @@ def main() -> int:
             flush=True,
         )
     readout_n = args.readout_n if args.readout_n is not None else cfg.get("readout_n", 4)
+    readout_layer = (
+        args.readout_layer
+        if args.readout_layer is not None
+        else cfg.get("readout_layer")
+    )
+    readout_pair = parse_layer_pair(
+        args.readout_layers
+        if args.readout_layers is not None
+        else cfg.get("readout_layers")
+    )
+    readout_fusion = (
+        args.readout_fusion
+        if args.readout_fusion is not None
+        else cfg.get("readout_fusion", "concat")
+    )
+    second_model_name = (
+        args.second_model
+        if args.second_model is not None
+        else cfg.get("second_model")
+    )
+    second_readout = (
+        args.second_readout
+        if args.second_readout is not None
+        else cfg.get("second_readout", "last")
+    )
+    second_readout_n = (
+        args.second_readout_n
+        if args.second_readout_n is not None
+        else cfg.get("second_readout_n", 4)
+    )
+    second_readout_layer = (
+        args.second_readout_layer
+        if args.second_readout_layer is not None
+        else cfg.get("second_readout_layer")
+    )
+    second_readout_pair = parse_layer_pair(
+        args.second_readout_layers
+        if args.second_readout_layers is not None
+        else cfg.get("second_readout_layers")
+    )
+    second_readout_fusion = (
+        args.second_readout_fusion
+        if args.second_readout_fusion is not None
+        else cfg.get("second_readout_fusion", "concat")
+    )
+    second_lora_layers, second_lora_layers_src = resolve_setting(
+        args.second_lora_layers, cfg, "second_lora_layers", None
+    )
+    if second_lora_layers == 0:
+        second_lora_layers = None
+    fusion = args.fusion if args.fusion is not None else cfg.get("fusion", "concat")
     lora_layers, lora_layers_src = resolve_setting(
         args.lora_layers, cfg, "lora_layers", None
     )
@@ -381,6 +471,21 @@ def main() -> int:
             seed=int(seed),
             control=bool(k_augment_control),
         )
+    option_marker = (
+        args.option_marker
+        if args.option_marker is not None
+        else cfg.get("option_marker", False)
+    )
+    option_chunk_size = (
+        args.option_chunk_size
+        if args.option_chunk_size is not None
+        else cfg.get("option_chunk_size", 32)
+    )
+    option_max_tokens = (
+        args.option_max_tokens
+        if args.option_max_tokens is not None
+        else cfg.get("option_max_tokens", 64)
+    )
 
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None and cfg.get("checkpoint_dir"):
@@ -405,8 +510,12 @@ def main() -> int:
     print(f"Backbone: {model_name} ({arch_label})", flush=True)
     print(f"Config: {args.config}", flush=True)
 
-    # Auto-detect GPU config, then apply CLI overrides
+    # Auto-detect GPU config, then apply CLI overrides.  A second backbone
+    # adds its parameters to the size estimate so the default sequence
+    # length is chosen for the combined model, not just the primary one.
     model_billions = estimate_model_billions(model_name)
+    if second_model_name:
+        model_billions += estimate_model_billions(second_model_name)
     gpu_config = GPUConfig.auto_detect(model_billions)
 
     # Resolve CLI boolean flags (mutually exclusive groups)
@@ -504,12 +613,43 @@ def main() -> int:
 
     # Load backbone and build model
     print(f"\nLoading backbone: {model_name}", flush=True)
-    model = build_decision_model(
-        model_name=model_name,
-        gpu_config=gpu_config,
-        device=device,
-        use_encoder=use_encoder,
-        qwen35_base=qwen35_base,
+    flash_att = gpu_config.flash_attention
+    if qwen35_base:
+        backbone, tokenizer = load_qwen35_base(
+            model_name, device=device, freeze=True, flash_attention=flash_att,
+        )
+    elif use_encoder:
+        backbone, tokenizer = load_encoder(
+            model_name, device=device, freeze=True, flash_attention=flash_att,
+        )
+    else:
+        backbone, tokenizer = load_causal_lm(
+            model_name, device=device, freeze=True, flash_attention=flash_att,
+        )
+
+    second_backbone = None
+    if second_model_name:
+        print(f"\nLoading second backbone: {second_model_name}", flush=True)
+        second_backbone, second_tokenizer = load_causal_lm(
+            second_model_name, device=device, freeze=True,
+            flash_attention=flash_att,
+        )
+        # Both backbones consume the same token ids; a vocabulary mismatch
+        # would silently score different inputs against each representation.
+        if tokenizer.get_vocab() != second_tokenizer.get_vocab():
+            raise ValueError(
+                "primary and second backbone must share a tokenizer; "
+                f"{model_name} and {second_model_name} differ"
+            )
+        print(
+            f"  Second backbone loaded: {second_model_name} "
+            f"(hidden={second_backbone.config.hidden_size})",
+            flush=True,
+        )
+
+    model = DecisionModel(
+        backbone=backbone,
+        tokenizer=tokenizer,
         rank=rank,
         rival_aware=rival_aware,
         mlp_layers=mlp_layers,
@@ -520,11 +660,25 @@ def main() -> int:
         unified_head=unified_head_flag,
         readout=readout,
         readout_n=readout_n,
+        readout_layer=readout_layer,
+        readout_pair=readout_pair,
+        readout_fusion=readout_fusion,
         lora_layers=lora_layers,
         lora_rank=lora_rank,
         lora_alpha=lora_alpha,
         lora_dropout=lora_dropout,
         lora_targets=lora_targets,
+        second_backbone=second_backbone,
+        second_readout=second_readout,
+        second_readout_n=second_readout_n,
+        second_readout_layer=second_readout_layer,
+        second_readout_pair=second_readout_pair,
+        second_readout_fusion=second_readout_fusion,
+        second_lora_layers=second_lora_layers,
+        fusion=fusion,
+        option_marker=option_marker,
+        option_chunk_size=option_chunk_size,
+        option_max_tokens=option_max_tokens,
         choice_mode=choice_mode,
     )
 
@@ -559,13 +713,30 @@ def main() -> int:
                     f"{k_augment_min_src}/{k_augment_max_src}",
                 ),
                 ("k_augment_control", bool(k_augment_control), k_augment_control_src),
+                ("option_marker", option_marker, "config"),
+                ("option_chunk_size", option_chunk_size, "config"),
+                ("option_max_tokens", option_max_tokens, "config"),
                 ("max_length", model.max_length, max_length_source),
                 ("epochs", epochs, epochs_src),
                 ("rank", rank, rank_src),
+                ("batch_backbone", batch_backbone, "config"),
                 ("accumulation_steps", accumulation_steps, accumulation_steps_src),
                 ("seed", seed, seed_src),
             ]
         ),
+        flush=True,
+    )
+    readout_detail = {
+        "layer": f"[layer={readout_layer}]",
+        "fuse_pair": f"[layers={readout_pair},{readout_fusion}]",
+        "mean_last_n": f"[n={readout_n}]",
+    }.get(readout, "")
+    print(
+        f"  Architecture: readout={readout}{readout_detail}  "
+        f"mlp_dim={mlp_dim}  "
+        f"second_model={second_model_name or '-'}  "
+        f"second_readout={second_readout if second_model_name else '-'}  "
+        f"fusion={fusion if second_model_name else '-'}",
         flush=True,
     )
 
