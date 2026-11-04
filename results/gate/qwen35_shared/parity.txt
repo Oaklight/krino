@@ -1,0 +1,12 @@
+qwen3_reranker_4b {'po_bf16': 0.6407, 'po_f32': 0.632, 'shared_f32': 0.6364} exact-0.5 {'po_bf16': 0, 'po_f32': 0, 'shared_f32': 0}
+   po_bf16 -> po_f32     flips  2 (+0/-2) mcnemar p=0.500 mean|dp| 0.0029
+    po_f32 -> shared_f32 flips  4 (+2/-1) mcnemar p=1.000 mean|dp| 0.0055
+   po_bf16 -> shared_f32 flips  2 (+0/-1) mcnemar p=1.000 mean|dp| 0.0065
+qwen35_4b_instruct {'po_bf16': 0.6883, 'po_f32': 0.684, 'shared_f32': 0.6883} exact-0.5 {'po_bf16': 0, 'po_f32': 0, 'shared_f32': 0}
+   po_bf16 -> po_f32     flips  3 (+0/-1) mcnemar p=1.000 mean|dp| 0.0058
+    po_f32 -> shared_f32 flips  1 (+1/-0) mcnemar p=1.000 mean|dp| 0.0068
+   po_bf16 -> shared_f32 flips  4 (+1/-1) mcnemar p=1.000 mean|dp| 0.0090
+qwen35_4b_base {'po_bf16': 0.684, 'po_f32': 0.6883, 'shared_f32': 0.6883} exact-0.5 {'po_bf16': 1, 'po_f32': 0, 'shared_f32': 0}
+   po_bf16 -> po_f32     flips 10 (+4/-3) mcnemar p=1.000 mean|dp| 0.0056
+    po_f32 -> shared_f32 flips  3 (+1/-1) mcnemar p=1.000 mean|dp| 0.0031
+   po_bf16 -> shared_f32 flips 10 (+5/-4) mcnemar p=1.000 mean|dp| 0.0052
