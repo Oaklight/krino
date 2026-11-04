@@ -1,0 +1,118 @@
+{
+ "arm": "teacher20k",
+ "checkpoint": "/home/pding/projects/krino-v3/model/experiments/residual/teacher20k/residual.pt/residual.pt",
+ "truncated_ids": [
+  "hard-opus-a-long_policy-01",
+  "hard-opus-a-long_policy-04",
+  "hard-opus-a-long_policy-08",
+  "hard-opus-a-long_policy-09",
+  "hard-opus-a-long_policy-11",
+  "hard-opus-a-long_policy-13",
+  "hard-opus-a-long_policy-17",
+  "hard-opus-a-long_policy-19",
+  "hard-opus-b-multi_hop-03",
+  "hard-opus-b-multi_hop-04",
+  "hard-opus-b-multi_hop-05",
+  "hard-opus-b-multi_hop-07",
+  "hard-opus-b-multi_hop-08",
+  "hard-opus-c-long_policy-02",
+  "hard-opus-c-long_policy-03",
+  "hard-opus-c-long_policy-04",
+  "hard-opus-c-long_policy-05",
+  "hard-opus-c-long_policy-08",
+  "hard-opus-c-long_policy-10",
+  "hard-opus-c-long_policy-11",
+  "hard-sol-a-multi_hop-01",
+  "hard-sol-a-multi_hop-02",
+  "hard-sol-a-multi_hop-05",
+  "hard-sol-a-multi_hop-07",
+  "hard-sol-a-multi_hop-08",
+  "hard-sol-a-multi_hop-09",
+  "hard-sol-a-multi_hop-10",
+  "hard-sol-a-multi_hop-12",
+  "hard-sol-b-long_policy-01",
+  "hard-sol-b-long_policy-02",
+  "hard-sol-b-long_policy-05",
+  "hard-sol-b-long_policy-06",
+  "hard-sol-c-multi_hop-07",
+  "hard-sol-c-multi_hop-09",
+  "hard-sol-c-multi_hop-11",
+  "hard-sol-c-multi_hop-13"
+ ],
+ "runs": {
+  "2048": {
+   "max_length": 2048,
+   "failed": 0,
+   "seconds": 45.1,
+   "overall": {
+    "n": 231,
+    "acc": 0.6407,
+    "cc": 0.4545
+   },
+   "by_tier": {
+    "easy": {
+     "n": 48,
+     "acc": 1.0,
+     "cc": 1.0
+    },
+    "hard": {
+     "n": 111,
+     "acc": 0.4324,
+     "cc": 0.1372
+    },
+    "original": {
+     "n": 72,
+     "acc": 0.7222,
+     "cc": 0.5801
+    }
+   },
+   "truncated_subset": {
+    "n": 36,
+    "acc": 0.3333,
+    "cc": 0.0931
+   },
+   "hard_nontrunc": {
+    "n": 75,
+    "acc": 0.48,
+    "cc": 0.1584
+   }
+  },
+  "4096": {
+   "max_length": 4096,
+   "failed": 0,
+   "seconds": 48.1,
+   "overall": {
+    "n": 231,
+    "acc": 0.6407,
+    "cc": 0.4513
+   },
+   "by_tier": {
+    "easy": {
+     "n": 48,
+     "acc": 1.0,
+     "cc": 1.0
+    },
+    "hard": {
+     "n": 111,
+     "acc": 0.4324,
+     "cc": 0.1305
+    },
+    "original": {
+     "n": 72,
+     "acc": 0.7222,
+     "cc": 0.5801
+    }
+   },
+   "truncated_subset": {
+    "n": 36,
+    "acc": 0.3333,
+    "cc": 0.0722
+   },
+   "hard_nontrunc": {
+    "n": 75,
+    "acc": 0.48,
+    "cc": 0.1584
+   }
+  }
+ }
+}
