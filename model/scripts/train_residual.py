@@ -103,7 +103,9 @@ def head_logits(
     q = question or item.question
     instructions = q.get("instructions", "")
     if q["type"] == "noul":
-        logit = model.forward_noul(item.state, instructions).reshape(1)
+        logit = model.forward_noul(
+            item.state, instructions, q.get("criteria")
+        ).reshape(1)
         return torch.stack([torch.zeros_like(logit), logit], dim=-1)
     if q["type"] == "choice":
         return model.forward_choice(item.state, instructions, _options(q))
@@ -263,6 +265,12 @@ def main() -> int:
         action="store_true",
         help="Score options at a marker token (chunk=1 is the only exact setting)",
     )
+    parser.add_argument(
+        "--noul-marker",
+        action="store_true",
+        help="Score noul through the shared marker readout as a two-option "
+        "question instead of the pooled binary head",
+    )
     parser.add_argument("--option-chunk-size", type=int, default=1)
     parser.add_argument("--option-max-tokens", type=int, default=64)
     parser.add_argument(
@@ -384,6 +392,7 @@ def main() -> int:
         gpu_config=gpu,
         max_length=args.max_length,
         option_marker=args.option_marker,
+        noul_marker=args.noul_marker,
         option_chunk_size=args.option_chunk_size,
         option_max_tokens=args.option_max_tokens,
         option_batch=args.option_batch,
@@ -483,6 +492,7 @@ def main() -> int:
                 "ce_weight": args.ce_weight,
                 "seed": args.seed,
                 "option_marker": args.option_marker,
+                "noul_marker": args.noul_marker,
                 "option_chunk_size": args.option_chunk_size if args.option_marker else None,
                 "option_max_tokens": args.option_max_tokens if args.option_marker else None,
                 "option_batch": args.option_batch if args.option_marker else None,

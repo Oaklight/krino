@@ -18,6 +18,7 @@ from transformers import PreTrainedModel, PreTrainedTokenizerBase
 from .backbone import is_hybrid_model
 from .choice_prompts import fit_option_prompts
 from .gpu_config import GPUConfig, print_gpu_info
+from .shape_buckets import PREFIX_BUCKETS, bucket_length, left_pad
 from .heads import (
     AttentionHead,
     ChoiceHead,
@@ -62,6 +63,20 @@ def _is_encoder_model(backbone: PreTrainedModel) -> bool:
         if name.endswith(_CAUSAL_CLASS_SUFFIXES):
             return False
     return True
+
+
+def _noul_option_texts(criteria: Any) -> list[str]:
+    """Option texts for noul in marker mode: false first, true second.
+
+    Criteria may use true/false or yes/no keys; either shape maps onto the
+    same two-slot order that ``forward_noul`` expects.  A bare question with
+    no criteria keeps the literal words.
+    """
+    if not isinstance(criteria, dict):
+        criteria = {}
+    false_text = criteria.get("false") or criteria.get("no") or "No"
+    true_text = criteria.get("true") or criteria.get("yes") or "Yes"
+    return [str(false_text), str(true_text)]
 
 
 class DecisionModel(nn.Module):
@@ -163,6 +178,7 @@ class DecisionModel(nn.Module):
         second_lora_layers: int | None = None,
         fusion: str = "concat",
         option_marker: bool = False,
+        noul_marker: bool = False,
         option_chunk_size: int = 32,
         option_max_tokens: int = 64,
         option_batch: int = 1,
@@ -186,6 +202,9 @@ class DecisionModel(nn.Module):
         self.shared_attention = shared_attention
         self._unified_head = unified_head
         self.option_marker = option_marker
+        if noul_marker and not option_marker:
+            raise ValueError("noul_marker needs option_marker=True")
+        self.noul_marker = bool(noul_marker)
         self.option_chunk_size = max(1, option_chunk_size)
         self.option_max_tokens = max(1, option_max_tokens)
         self.option_batch = max(1, option_batch)
@@ -384,13 +403,17 @@ class DecisionModel(nn.Module):
             self.projector = nn.Identity()
 
         if option_marker:
-            # Noul keeps the binary pooled head: it has no candidate set, so
-            # a marker readout would add two full option sequences for no
-            # benefit.  Choice and score share one marker scorer, which is
-            # what shared_attention would have done for the attention head.
+            # Noul keeps the binary pooled head by default: it has no
+            # candidate set, so a marker readout would add two option
+            # sequences per item.  ``noul_marker`` instead scores the
+            # explicit "false"/"true" options with the same marker scorer
+            # choice and score use, so all three types share one readout and
+            # noul sees its options in context.
             self.unified = None  # type: ignore[assignment]
-            self.noul_head = NoulHead(
-                self.hidden_size, rank=noul_rank, dropout=dropout
+            self.noul_head = (
+                None
+                if noul_marker
+                else NoulHead(self.hidden_size, rank=noul_rank, dropout=dropout)
             )
             self.marker_head = OptionMarkerHead(self.hidden_size, rank, dropout)
             self.choice_head = self.marker_head
@@ -671,6 +694,145 @@ class DecisionModel(nn.Module):
             return self.fusion_project(hidden + hidden2)
         return self.fusion_project(torch.cat([hidden, hidden2], dim=-1))
 
+    @torch.inference_mode()
+    def warmup_prefix_buckets(self) -> None:
+        """Run one dummy forward per shape bucket to load its CUDA kernels.
+
+        A shape's first forward costs 0.4-1.3 s at 4B, and the cost is per
+        shape rather than per request.  Paying it at construction keeps every
+        request at the steady-state latency.  The dummy masks are all ones:
+        the kernel shape depends on tensor dimensions, not values.
+        """
+        device = self.device
+        prefix_buckets = [b for b in PREFIX_BUCKETS if b <= self.max_length]
+        width = 64
+        rows = min(8, max(1, self.option_batch))
+        for length in prefix_buckets:
+            # An exact-fit request has no padding and takes SDPA's
+            # all-visible path; a shorter one carries masked pad positions
+            # and takes the masked path.  They load different kernels, so
+            # warm both.  The pooled readout pads on the right, the marker
+            # readout on the left.
+            for padded in (False, True):
+                pooled_inputs = {
+                    "input_ids": torch.zeros(
+                        (1, length), dtype=torch.long, device=device
+                    ),
+                    "attention_mask": torch.ones(
+                        (1, length), dtype=torch.long, device=device
+                    ),
+                    "position_ids": torch.arange(length, device=device).unsqueeze(0),
+                }
+                if padded:
+                    pooled_inputs["attention_mask"][0, -1] = 0
+                    pooled_inputs["position_ids"][0, -1] = 0
+                pooled_hidden = self._hidden_sequence(dict(pooled_inputs))
+                mask = pooled_inputs["attention_mask"]
+                if self.is_encoder:
+                    weights = mask.unsqueeze(-1).float()
+                    pooled = (pooled_hidden * weights).sum(1) / weights.sum(
+                        1
+                    ).clamp(min=1e-9)
+                else:
+                    lengths = mask.sum(dim=1) - 1
+                    pooled = pooled_hidden[
+                        torch.arange(pooled_hidden.size(0), device=device), lengths
+                    ]
+                pooled = self.projector(pooled.float())
+                if self.noul_head is not None:
+                    self.noul_head(pooled)
+                if self.answerable_head is not None:
+                    self.answerable_head(pooled)
+                if not self.option_marker:
+                    continue
+                marker_inputs = {
+                    "input_ids": torch.zeros(
+                        (1, length), dtype=torch.long, device=device
+                    ),
+                    "attention_mask": torch.ones(
+                        (1, length), dtype=torch.long, device=device
+                    ),
+                    "position_ids": torch.arange(length, device=device).unsqueeze(0),
+                }
+                if padded:
+                    marker_inputs["attention_mask"][0, 0] = 0
+                outputs = self._backbone_forward(
+                    marker_inputs, output_hidden_states=False, use_cache=True
+                )
+                cache = getattr(outputs, "past_key_values", None)
+                if cache is None:
+                    continue
+                if rows > 1:
+                    cache.batch_repeat_interleave(rows)
+                suffix = {
+                    "input_ids": torch.zeros(
+                        (rows, width), dtype=torch.long, device=device
+                    ),
+                    "attention_mask": torch.ones(
+                        (rows, length + width), dtype=torch.long, device=device
+                    ),
+                    "position_ids": torch.arange(
+                        length, length + width, device=device
+                    ).unsqueeze(0).repeat(rows, 1),
+                    "past_key_values": cache,
+                }
+                if padded:
+                    suffix["attention_mask"][:, 0] = 0
+                out = self._backbone_forward(suffix)
+                hidden = self.projector(
+                    self.readout_project(self.readout(out.hidden_states).float())
+                )
+                picked = hidden[torch.arange(rows, device=device), 0]
+                self.marker_head(picked.unsqueeze(0))
+                self._crop_cache(cache, width)
+                del cache, outputs, out, hidden, picked
+
+    def _pad_to_bucket(self, inputs: dict, max_length: int) -> dict:
+        """Right-pad a tokenized batch to a fixed length bucket.
+
+        A new sequence length costs a 0.4-1.3 s first kernel load on H100;
+        an evaluation that walks items with distinct lengths pays it once per
+        item.  Right padding keeps the last real token at index
+        ``real_length - 1``, which is exactly the index the causal pooling
+        below reads, and the padded positions are masked out.
+        """
+        ids = inputs["input_ids"]
+        mask = inputs.get("attention_mask", torch.ones_like(ids))
+        real = ids.shape[1]
+        target = bucket_length(real, PREFIX_BUCKETS, limit=max_length)
+        if target <= real:
+            return inputs
+        pad_id = getattr(self.tokenizer, "pad_token_id", None)
+        if pad_id is None:
+            pad_id = getattr(self.tokenizer, "eos_token_id", None) or 0
+        pad = target - real
+        padded_ids = torch.cat(
+            [
+                ids,
+                torch.full(
+                    (ids.shape[0], pad),
+                    pad_id,
+                    dtype=ids.dtype,
+                    device=ids.device,
+                ),
+            ],
+            dim=1,
+        )
+        padded_mask = torch.cat(
+            [
+                mask,
+                torch.zeros(
+                    (mask.shape[0], pad), dtype=mask.dtype, device=mask.device
+                ),
+            ],
+            dim=1,
+        )
+        out = {"input_ids": padded_ids, "attention_mask": padded_mask}
+        if not self.is_encoder:
+            # Real tokens keep positions 0..L-1; pads sit at 0 and are masked.
+            out["position_ids"] = (padded_mask.cumsum(-1) - 1).clamp(min=0) * padded_mask
+        return out
+
     def _encode_text(
         self, text: str | list[str], max_length: int | None = None
     ) -> torch.Tensor:
@@ -689,6 +851,7 @@ class DecisionModel(nn.Module):
             max_length=max_length,
             padding=True,
         ).to(self.device)
+        inputs = self._pad_to_bucket(inputs, max_length)
         hidden = self._hidden_sequence(inputs)
         if self.is_encoder:
             mask = inputs["attention_mask"].unsqueeze(-1).float()
@@ -883,10 +1046,49 @@ class DecisionModel(nn.Module):
                 f"option_marker needs room for a suffix of {widest} tokens "
                 f"inside max_length={self.max_length}; lower --option-max-tokens"
             )
+        # Fixed shapes, for the same reason as the base reranker: a new
+        # tensor shape costs a 0.4-1.3 s first kernel load on H100.  The
+        # option block is a fixed 64 tokens (65 for a maximum-length option)
+        # and the context is tokenized against that reserve, so every long
+        # item lands on the same 1984-token prefix bucket instead of an
+        # exact length.  Every padded position is masked out.
+        width = max(64, widest)
         prefix_inputs = self._tokenize_context(
-            state, instructions, self.max_length - widest
+            state, instructions, self.max_length - width
         )
-        prefix_len = prefix_inputs["input_ids"].shape[1]
+        real_prefix_len = prefix_inputs["input_ids"].shape[1]
+        prefix_bucket = bucket_length(
+            real_prefix_len, PREFIX_BUCKETS, limit=self.max_length - width
+        )
+        if prefix_bucket + width > self.max_length:
+            prefix_bucket, width = real_prefix_len, widest
+        pad_id = getattr(self.tokenizer, "pad_token_id", None)
+        if pad_id is None:
+            pad_id = getattr(self.tokenizer, "eos_token_id", None) or 0
+        padded_ids, pad = left_pad(
+            prefix_inputs["input_ids"][0].tolist(), prefix_bucket, pad_id
+        )
+        prefix_inputs = {
+            "input_ids": torch.tensor(
+                [padded_ids], dtype=torch.long, device=self.device
+            ),
+            "attention_mask": torch.cat(
+                [
+                    torch.zeros((1, pad), dtype=torch.long, device=self.device),
+                    torch.ones(
+                        (1, real_prefix_len), dtype=torch.long, device=self.device
+                    ),
+                ],
+                dim=1,
+            ),
+            "position_ids": torch.cat(
+                [
+                    torch.zeros((1, pad), dtype=torch.long, device=self.device),
+                    torch.arange(real_prefix_len, device=self.device).unsqueeze(0),
+                ],
+                dim=1,
+            ),
+        }
 
         prefix_outputs = self._backbone_forward(
             prefix_inputs,
@@ -899,7 +1101,10 @@ class DecisionModel(nn.Module):
                 prefix_inputs, self._chunk_option_ids(option_ids)
             )
 
-        rows = min(group_size, len(blocks))
+        # Eight rows, matching the base path: at long context the suffix
+        # attention dominates and 16 rows cost twice the 8-row time.
+        rows = min(8, group_size)
+        group_size = rows
         if rows > 1:
             cache.batch_repeat_interleave(rows)
 
@@ -908,22 +1113,24 @@ class DecisionModel(nn.Module):
             group = blocks[start : start + group_size]
             padded = group + [group[-1]] * (rows - len(group))
             input_ids = torch.zeros(
-                (rows, widest), dtype=torch.long, device=self.device
+                (rows, width), dtype=torch.long, device=self.device
             )
             attention_mask = torch.zeros(
-                (rows, prefix_len + widest), dtype=torch.long, device=self.device
+                (rows, prefix_bucket + width),
+                dtype=torch.long,
+                device=self.device,
             )
-            attention_mask[:, :prefix_len] = prefix_inputs["attention_mask"]
+            attention_mask[:, :prefix_bucket] = prefix_inputs["attention_mask"]
             position_ids = torch.full(
-                (rows, widest), prefix_len, dtype=torch.long, device=self.device
+                (rows, width), real_prefix_len, dtype=torch.long, device=self.device
             )
             marker_index = torch.zeros(rows, dtype=torch.long, device=self.device)
             for row, block in enumerate(padded):
                 n = len(block)
                 input_ids[row, :n] = torch.tensor(block, device=self.device)
-                attention_mask[row, prefix_len : prefix_len + n] = 1
+                attention_mask[row, prefix_bucket : prefix_bucket + n] = 1
                 position_ids[row, :n] = torch.arange(
-                    prefix_len, prefix_len + n, device=self.device
+                    real_prefix_len, real_prefix_len + n, device=self.device
                 )
                 marker_index[row] = n - 1
             outputs = self._backbone_forward(
@@ -939,7 +1146,7 @@ class DecisionModel(nn.Module):
             )
             picked = hidden[torch.arange(rows, device=self.device), marker_index]
             all_logits.append(self.marker_head(picked.unsqueeze(0)))
-            self._crop_cache(cache, widest)
+            self._crop_cache(cache, width)
         return torch.cat(all_logits, dim=-1)[:, : len(blocks)]
 
     def _forward_options_by_marker(
@@ -1016,14 +1223,29 @@ class DecisionModel(nn.Module):
             self._crop_cache(cache, suffix_ids.shape[1])
         return torch.cat(all_logits, dim=-1)
 
-    def forward_noul(self, state: str, instructions: str) -> torch.Tensor:
+    def forward_noul(
+        self,
+        state: str,
+        instructions: str,
+        criteria: dict[str, Any] | None = None,
+    ) -> torch.Tensor:
         """Returns logit [1, 1] for noul prediction.
 
-        When unified_head is enabled, encodes "false" and "true" as two
-        options and uses cross-attention.  The returned logit is the
-        difference (true - false) so that sigmoid gives P(true), which is
-        mathematically equivalent to softmax over the two options.
+        With ``noul_marker``, the two answers are scored as options by the
+        shared marker readout, so noul sees "false"/"true" in the same
+        context-conditioned representation as choice and score.  Otherwise
+        the pooled ``NoulHead`` (or the unified attention head) is used.
+
+        The returned logit is the difference (true - false) so that sigmoid
+        gives P(true), which is mathematically equivalent to softmax over
+        the two options.
         """
+        if self.noul_marker:
+            option_texts = _noul_option_texts(criteria)
+            logits = self._forward_options_by_marker(
+                state, instructions, option_texts
+            )
+            return logits[:, 1:2] - logits[:, 0:1]
         if self.unified is not None:
             context_text = f"{state} {instructions}"
             context_hidden = self._encode_with_sequence(context_text)
@@ -1114,7 +1336,9 @@ class DecisionModel(nn.Module):
         instructions = question.get("instructions", "")
 
         if q_type == "noul":
-            logit = self.forward_noul(state, instructions)
+            logit = self.forward_noul(
+                state, instructions, question.get("criteria")
+            )
             noul = torch.sigmoid(logit).item()
             return {"type": "noul", "noul": round(max(0.01, min(0.99, noul)), 2)}
 

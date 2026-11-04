@@ -61,6 +61,12 @@ from model.src.backbone import (
 )
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig
+from model.src.shape_buckets import (
+    PREFIX_BUCKETS,
+    SUFFIX_BUCKETS,
+    bucket_length,
+    left_pad,
+)
 from model.scripts.train_residual import fusion_logits, head_logits
 
 
@@ -282,35 +288,76 @@ class RawReranker:
         if not docs:
             return []
 
-        prefix_tensor = torch.tensor([prefix_ids], device=self.device)
-        prefix_mask = torch.ones(1, prefix_len, dtype=torch.long, device=self.device)
-        prefix_out = self.model(
-            input_ids=prefix_tensor, attention_mask=prefix_mask, use_cache=True
+        # Fixed shapes: every request is padded into one of a handful of
+        # (prefix, suffix-width, rows) buckets.  A new tensor shape costs a
+        # 0.4-1.3 s first kernel load on H100; without bucketing a 231-item
+        # evaluation pays that once per item.  Padding is masked out, so the
+        # real tokens see the same computation.
+        widest = max(len(doc) for doc in docs)
+        # One fixed width: 64 tokens covers a normal option description plus
+        # the reranker suffix.  Variable widths would each pay their own cold
+        # kernel load, which is the cost this is meant to remove.
+        width = max(
+            64,
+            bucket_length(widest, SUFFIX_BUCKETS, limit=self.max_length - prefix_len),
         )
+        prefix_bucket = bucket_length(
+            prefix_len, PREFIX_BUCKETS, limit=self.max_length - width
+        )
+        if prefix_bucket + width > self.max_length:
+            # No bucket fits beside the suffix; keep the exact shapes.
+            prefix_bucket, width = prefix_len, widest
+        pad_id = getattr(self.tokenizer, "pad_token_id", None)
+        if pad_id is None:
+            pad_id = getattr(self.tokenizer, "eos_token_id", None) or 0
+        padded_ids, pad = left_pad(prefix_ids, prefix_bucket, pad_id)
+        prefix_tensor = torch.tensor([padded_ids], device=self.device)
+        prefix_mask = torch.zeros(1, prefix_bucket, dtype=torch.long, device=self.device)
+        prefix_mask[:, pad:] = 1
+        prefix_positions = torch.zeros(
+            1, prefix_bucket, dtype=torch.long, device=self.device
+        )
+        prefix_positions[0, pad:] = torch.arange(prefix_len, device=self.device)
+        # The prefix pass exists only for its KV cache.  A causal LM would
+        # otherwise project every prefix position to the 151k vocabulary,
+        # which measured +28% on a 2048-token prefix.  Bare text towers have
+        # no lm_head and do not accept the kwarg.
+        prefix_kwargs: dict[str, Any] = {
+            "input_ids": prefix_tensor,
+            "attention_mask": prefix_mask,
+            "position_ids": prefix_positions,
+            "use_cache": True,
+        }
+        if getattr(self.model, "lm_head", None) is not None:
+            prefix_kwargs["logits_to_keep"] = 1
+        prefix_out = self.model(**prefix_kwargs)
         cache = prefix_out.past_key_values
-        rows = min(group_size, len(docs))
+        # Eight rows is the latency sweet spot: at 4096 context the suffix
+        # forward costs 0.124 s at 16 rows and 0.066 s at 8, while fewer rows
+        # barely help.  K > 8 uses extra groups over the same prefix cache.
+        rows = min(8, group_size)
+        group_size = rows
         if rows > 1:
             cache.batch_repeat_interleave(rows)
-        widest = max(len(doc) for doc in docs)
         base = getattr(self.model, "model", None)
 
         scores: list[float] = []
         for start in range(0, len(docs), group_size):
             group = docs[start : start + group_size]
             padded = group + [group[-1]] * (rows - len(group))
-            ids = torch.zeros((rows, widest), dtype=torch.long, device=self.device)
+            ids = torch.zeros((rows, width), dtype=torch.long, device=self.device)
             mask = torch.zeros(
-                (rows, prefix_len + widest), dtype=torch.long, device=self.device
+                (rows, prefix_bucket + width), dtype=torch.long, device=self.device
             )
-            mask[:, :prefix_len] = 1
+            mask[:, :prefix_bucket] = prefix_mask
             positions = torch.full(
-                (rows, widest), prefix_len, dtype=torch.long, device=self.device
+                (rows, width), prefix_len, dtype=torch.long, device=self.device
             )
             last = torch.zeros(rows, dtype=torch.long, device=self.device)
             for row, doc in enumerate(padded):
                 n = len(doc)
                 ids[row, :n] = torch.tensor(doc, device=self.device)
-                mask[row, prefix_len : prefix_len + n] = 1
+                mask[row, prefix_bucket : prefix_bucket + n] = 1
                 positions[row, :n] = torch.arange(
                     prefix_len, prefix_len + n, device=self.device
                 )
@@ -329,13 +376,73 @@ class RawReranker:
                 else:
                     logits = self.model.lm_head(picked)
             else:
-                logits = self._logits(self.model(**inputs))[:, -1, :]
+                logits = self._logits(self.model(**inputs))
+                if logits.ndim == 3:
+                    # Text towers return every suffix position; the last real
+                    # token differs per row, so ``-1`` would read padding.
+                    logits = logits[torch.arange(rows, device=self.device), last]
             pair = torch.stack(
                 [logits[:, self.false_id], logits[:, self.true_id]], dim=-1
             )
             scores.extend(torch.softmax(pair, dim=-1)[:, 1].tolist())
-            cache.crop(-widest)
+            cache.crop(-width)
         return scores[: len(docs)]
+
+    @torch.inference_mode()
+    def warmup_prefix_buckets(self, rows: int = 8, width: int = 64) -> None:
+        """Load the CUDA kernels for every prefix bucket.
+
+        The first forward at a given tensor shape costs 0.4-1.3 s at 4B; a
+        request stream with variable context lengths otherwise pays it on
+        every new length.  Warm once at construction.
+        """
+        device = self.device
+        for length in PREFIX_BUCKETS:
+            if length > self.max_length:
+                continue
+            # Two mask variants: an exact-fit request has no padding (SDPA's
+            # all-visible path), a shorter one carries masked pad positions
+            # (the masked path).  They load different kernels; warm both.
+            for padded in (False, True):
+                prefix = {
+                    "input_ids": torch.zeros(
+                        (1, length), dtype=torch.long, device=device
+                    ),
+                    "attention_mask": torch.ones(
+                        (1, length), dtype=torch.long, device=device
+                    ),
+                    "position_ids": torch.arange(length, device=device).unsqueeze(0),
+                    "use_cache": True,
+                }
+                if padded:
+                    prefix["attention_mask"][0, 0] = 0
+                if getattr(self.model, "lm_head", None) is not None:
+                    prefix["logits_to_keep"] = 1
+                out = self.model(**prefix)
+                cache = out.past_key_values
+                if rows > 1:
+                    cache.batch_repeat_interleave(rows)
+                suffix = {
+                    "input_ids": torch.zeros(
+                        (rows, width), dtype=torch.long, device=device
+                    ),
+                    "attention_mask": torch.ones(
+                        (rows, length + width), dtype=torch.long, device=device
+                    ),
+                    "position_ids": torch.arange(
+                        length, length + width, device=device
+                    ).unsqueeze(0).repeat(rows, 1),
+                    "past_key_values": cache,
+                }
+                if padded:
+                    suffix["attention_mask"][:, 0] = 0
+                base = getattr(self.model, "model", None)
+                if base is not None:
+                    base(**suffix)
+                else:
+                    self.model(**suffix)
+                cache.crop(-width)
+                del cache, out
 
     def predict_row(
         self,
@@ -385,6 +492,20 @@ def jevbench_tier(item: Any) -> str:
     return head if head in _JEVBENCH_TIERS else ""
 
 
+def _same_backbone(left: str, right: str) -> bool:
+    """Whether two backbone references name the same weights.
+
+    A checkpoint stores the HF repo id while the gate may be called with the
+    same repo id or a local snapshot path, so compare both spellings.
+    """
+    if left.rstrip("/") == right.rstrip("/"):
+        return True
+    left_path, right_path = Path(left), Path(right)
+    if left_path.exists() and right_path.exists():
+        return left_path.resolve() == right_path.resolve()
+    return False
+
+
 class ResidualScorer:
     """Base reranker plus a zero-gated residual head.
 
@@ -399,6 +520,7 @@ class ResidualScorer:
         device: str,
         checkpoint_path: Path,
         loader_type: str | None = None,
+        warmup: bool = True,
     ) -> None:
         from model.src.backbone import load_causal_lm
 
@@ -406,7 +528,20 @@ class ResidualScorer:
         self.base = RawReranker(base_model_name, device, loader_type=loader_type)
         checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
         config = checkpoint["config"]
-        if loader_type == "qwen35_base":
+        # One 4B copy when the checkpoint was trained on the reranker itself.
+        # Two copies of the same weights cost 8 GiB and buy nothing: the
+        # heads read the same hidden states the base already computes.  The
+        # tokenizer is reloaded because the reranker pads on the left and
+        # the pooled heads assume right padding.
+        if _same_backbone(config["backbone"], base_model_name):
+            backbone = self.base.model
+            tokenizer = AutoTokenizer.from_pretrained(config["backbone"])
+            print(
+                "  Residual arm shares the raw reranker backbone "
+                "(one model copy)",
+                flush=True,
+            )
+        elif loader_type == "qwen35_base":
             backbone, tokenizer = load_qwen35_base(
                 config["backbone"], device=device, freeze=True, flash_attention=False
             )
@@ -430,6 +565,7 @@ class ResidualScorer:
             # A marker arm must be rebuilt with the same readout it trained
             # with, or the head's input and its saved weights disagree.
             option_marker=bool(config.get("option_marker", False)),
+            noul_marker=bool(config.get("noul_marker", False)),
             option_chunk_size=int(config.get("option_chunk_size") or 1),
             option_max_tokens=int(config.get("option_max_tokens") or 64),
             option_batch=int(config.get("option_batch") or 1),
@@ -442,6 +578,12 @@ class ResidualScorer:
         self.model.load_state_dict(checkpoint["heads"], strict=False)
         self.model.eval()
         self.alpha = {k: float(v) for k, v in checkpoint["alpha"].items()}
+        if warmup:
+            # The first forward at each tensor shape costs 0.4-1.3 s.  Pay
+            # that at construction so a request never sees it.
+            print("  Warming shape buckets", flush=True)
+            self.base.warmup_prefix_buckets()
+            self.model.warmup_prefix_buckets()
 
     @torch.inference_mode()
     def predict_row(
@@ -453,12 +595,12 @@ class ResidualScorer:
     ) -> Prediction:
         q = question or item.question
         options = _raw_options(q, reverse=reverse)
-        scores = [
-            self.base._score_option(
-                item.state, q.get("instructions", ""), q["type"], label, description
-            )
-            for label, description in options
-        ]
+        # One prefix encode for all K options instead of K full forwards.
+        # Same computation as the per-option loop below, up to bf16
+        # reduction order (measured max |delta p| < 0.03).
+        scores = self.base.score_many(
+            item.state, q.get("instructions", ""), q["type"], options
+        )
         total = sum(scores) or 1.0
         base = torch.tensor([score / total for score in scores], dtype=torch.float32)
         head = head_logits(self.model, item, q).reshape(-1).cpu()
@@ -558,6 +700,7 @@ def load_model(args: argparse.Namespace, device: str) -> tuple[DecisionModel, st
             lora_rank=args.lora_rank,
             max_length=args.max_length,
             option_marker=args.option_marker,
+            noul_marker=args.noul_marker,
             option_chunk_size=args.option_chunk_size,
             option_max_tokens=args.option_max_tokens,
         )
@@ -584,6 +727,7 @@ def load_model(args: argparse.Namespace, device: str) -> tuple[DecisionModel, st
             lora_rank=args.lora_rank,
             max_length=args.max_length,
             option_marker=args.option_marker,
+            noul_marker=args.noul_marker,
             option_chunk_size=args.option_chunk_size,
             option_max_tokens=args.option_max_tokens,
         )
@@ -614,7 +758,7 @@ def predict_row(
     instructions = q.get("instructions", "")
 
     if q_type == "noul":
-        logit = model.forward_noul(state, instructions)
+        logit = model.forward_noul(state, instructions, q.get("criteria"))
         prob_true = torch.sigmoid(logit).reshape(-1)[0].item()
         keys = ("no", "yes")
         probs = (1.0 - prob_true, prob_true)
@@ -824,6 +968,11 @@ def main() -> None:
         action="store_true",
         help="Score choice/score options at a marker token after each option",
     )
+    parser.add_argument(
+        "--noul-marker",
+        action="store_true",
+        help="Score noul through the shared marker readout as a two-option question",
+    )
     parser.add_argument("--option-chunk-size", type=int, default=32)
     parser.add_argument("--option-max-tokens", type=int, default=64)
     parser.add_argument(
@@ -852,6 +1001,11 @@ def main() -> None:
         default=None,
         help="Per-item JSONL for eval_abstention.py (needs the answerable head)",
     )
+    parser.add_argument(
+        "--no-warmup",
+        action="store_true",
+        help="Skip the per-bucket warmup forwards (latency will include cold shapes)",
+    )
     args = parser.parse_args()
 
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -864,6 +1018,7 @@ def main() -> None:
             device,
             args.residual_heads,
             loader_type="qwen35_base" if args.qwen35_base else None,
+            warmup=not args.no_warmup,
         )
         if args.option_batch:
             model.model.option_batch = args.option_batch
@@ -957,6 +1112,7 @@ def main() -> None:
             "readout_n": args.readout_n,
             "readout_layer": args.readout_layer,
             "option_marker": args.option_marker,
+            "noul_marker": args.noul_marker,
             "option_chunk_size": args.option_chunk_size if args.option_marker else None,
             "option_max_tokens": args.option_max_tokens if args.option_marker else None,
             "max_length": args.max_length,

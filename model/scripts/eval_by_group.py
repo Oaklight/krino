@@ -62,7 +62,7 @@ def _predict(model: Any, item: Any) -> Any:
     if kind == "noul":
         # `_eval_item` coerces a string label with `label.lower() in ("true", ...)`,
         # so a prediction has to be a bool to compare against either form.
-        return bool(torch.sigmoid(model.forward_noul(state, instructions)).item() > 0.5)
+        return bool(torch.sigmoid(model.forward_noul(state, instructions, question.get("criteria"))).item() > 0.5)
     logits = model.forward_score(state, instructions, question["criteria"]).float().cpu()
     return int(logits.argmax())
 

@@ -158,7 +158,7 @@ def compute_loss(
             # Override q_type so uncertainty weighting uses "choice" log_var
             q_type = "choice"
         else:
-            logit = model.forward_noul(state, instructions)
+            logit = model.forward_noul(state, instructions, question.get("criteria"))
             if isinstance(label, str):
                 label = label.lower() in ("true", "yes", "1")
             if teacher_probs and "noul" in teacher_probs:
@@ -248,7 +248,7 @@ def _compute_standard_noul_batch(
         losses: list[torch.Tensor] = []
         for item in items:
             instructions = item.question.get("instructions", "")
-            logit = model.forward_noul(item.state, instructions)
+            logit = model.forward_noul(item.state, instructions, item.question.get("criteria"))
             label = item.label
             if isinstance(label, str):
                 label = label.lower() in ("true", "yes", "1")
@@ -677,7 +677,7 @@ def _eval_item(
             target_key = "true" if label else "false"
             return (loss.item(), pred_key == target_key, None)
         else:
-            logit = model.forward_noul(state, instructions)
+            logit = model.forward_noul(state, instructions, question.get("criteria"))
             target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
             loss = F.binary_cross_entropy_with_logits(logit, target)
             pred = torch.sigmoid(logit).item() > 0.5
