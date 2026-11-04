@@ -44,10 +44,18 @@ class Prediction:
             return self.keys.index(label) if label in self.keys else None
         if self.q_type == "score":
             try:
-                idx = int(round(float(self.label)))
+                level = int(round(float(self.label)))
             except (TypeError, ValueError):
                 return None
-            return idx if 0 <= idx < len(self.probs) else None
+            # Score keys are level numbers.  Resolve through them so a row
+            # presented in permuted order (``predict_reversed``) still finds
+            # its gold level; a positional read scored every correct reversed
+            # score item as wrong.  In natural order keys[i] == str(i), so this
+            # is the same index as before.
+            if self.keys and all(key.lstrip("-").isdigit() for key in self.keys):
+                key = str(level)
+                return self.keys.index(key) if key in self.keys else None
+            return level if 0 <= level < len(self.probs) else None
         return None
 
     @property
@@ -403,6 +411,7 @@ def order_sensitivity(
     after_by_id = {row.item_id: row for row in after}
     changed = 0
     tv_distances: list[float] = []
+    accuracy_before: list[bool] = []
     accuracy_after: list[bool] = []
     for item_id, original in before_by_id.items():
         permuted = after_by_id.get(item_id)
@@ -416,12 +425,18 @@ def order_sensitivity(
         tv_distances.append(
             0.5 * sum(abs(original_probs.get(k, 0.0) - permuted_probs.get(k, 0.0)) for k in keys)
         )
-        accuracy_after.append(permuted.correct)
+        # An unmapped gold label is not a wrong answer; keep it out of both
+        # accuracies so they cover the same items and can be compared.
+        if original.label_index is not None and permuted.label_index is not None:
+            accuracy_before.append(original.correct)
+            accuracy_after.append(permuted.correct)
     n = len(tv_distances)
     return {
         "n": n,
         "changed_fraction": changed / n if n else 0.0,
         "mean_tv": _mean(tv_distances),
+        "n_scored": len(accuracy_after),
+        "accuracy_before": _mean([1.0 if c else 0.0 for c in accuracy_before]),
         "accuracy_after": _mean([1.0 if c else 0.0 for c in accuracy_after]),
     }
 

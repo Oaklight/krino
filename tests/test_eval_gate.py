@@ -139,6 +139,44 @@ class TestOrderSensitivity:
         assert result["mean_tv"] == pytest.approx(0.8)
         assert result["accuracy_after"] == pytest.approx(0.0)
 
+    def test_a_reversed_score_item_keeps_its_gold_level(self):
+        # Same distribution over levels, presented in reverse order.
+        before = [score("1", [0.02, 0.03, 0.05, 0.80, 0.07, 0.03], 3)]
+        after = [
+            Prediction(
+                item_id="1",
+                q_type="score",
+                label=3.0,
+                probs=(0.03, 0.07, 0.80, 0.05, 0.03, 0.02),
+                keys=("5", "4", "3", "2", "1", "0"),
+            )
+        ]
+        assert after[0].correct
+        result = order_sensitivity(before, after)
+        assert result["changed_fraction"] == pytest.approx(0.0)
+        assert result["mean_tv"] == pytest.approx(0.0)
+        assert result["accuracy_after"] == pytest.approx(result["accuracy_before"])
+        assert result["accuracy_after"] == pytest.approx(1.0)
+
+    def test_natural_order_score_index_is_unchanged(self):
+        row = score("1", [0.1, 0.2, 0.7], 2)
+        assert row.label_index == 2
+
+    def test_unmapped_gold_is_left_out_of_both_accuracies(self):
+        before = [
+            choice("1", [0.9, 0.1], ["a", "b"], "a"),
+            choice("2", [0.9, 0.1], ["a", "b"], "z"),
+        ]
+        after = [
+            choice("1", [0.1, 0.9], ["b", "a"], "a"),
+            choice("2", [0.1, 0.9], ["b", "a"], "z"),
+        ]
+        result = order_sensitivity(before, after)
+        assert result["n"] == 2
+        assert result["n_scored"] == 1
+        assert result["accuracy_before"] == pytest.approx(1.0)
+        assert result["accuracy_after"] == pytest.approx(1.0)
+
 
 class TestRiskCoverage:
     def test_confident_correct_items_are_kept_first(self):

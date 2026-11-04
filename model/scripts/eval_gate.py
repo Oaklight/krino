@@ -61,8 +61,10 @@ from model.src.backbone import (
 )
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig
+from model.src.hybrid_cache import fork_prefix_cache
 from model.src.shape_buckets import (
     PREFIX_BUCKETS,
+    SHARED_PREFIX_ROWS,
     SUFFIX_BUCKETS,
     bucket_length,
     left_pad,
@@ -172,6 +174,17 @@ class RawReranker:
         self.prefix_tokens = self.tokenizer.encode(prefix, add_special_tokens=False)
         self.suffix_tokens = self.tokenizer.encode(suffix, add_special_tokens=False)
         self.max_length = 8192
+        #: Score options through ``score_many`` (one shared prefix, bucketed
+        #: shapes) instead of one full forward per option.  Off by default so
+        #: the frozen raw baselines keep their measured path.
+        self.shared_prefix = False
+
+    @property
+    def scoring_path(self) -> dict[str, str]:
+        """Which path and readout produced the scores, for the result config."""
+        if self.shared_prefix:
+            return {"path": "shared_prefix", "readout": "float32_two_token"}
+        return {"path": "per_option", "readout": "lm_head_model_dtype"}
 
     def _load_qwen35(self, model_name: str) -> None:
         """Load the text tower and vocabulary head of a Qwen3.5 checkpoint."""
@@ -248,14 +261,11 @@ class RawReranker:
         every option, so its cost is O(K) full forwards.  Here the prefix is
         encoded once and the documents are scored as rows of a batched
         forward: same computation, O(1) prefix passes.
+
+        A hybrid (GDN) cache cannot be cropped, because its recurrent state
+        is overwritten in place; each row group then runs on a fork of the
+        one-row prefix cache instead (``fork_prefix_cache``).
         """
-        if self.is_hybrid:
-            # GDN layers do not support KV-cache batching.  Score each option
-            # on its own rather than sharing one cache across rows.
-            return [
-                self._score_option(state, instructions, q_type, label, description)
-                for label, description in options
-            ]
         query = f"{state}\n\nQuestion: {instructions}"
         # End the prefix at the colon and lead every document with the
         # space, so prefix + document tokenises exactly like the full string
@@ -331,14 +341,12 @@ class RawReranker:
         if getattr(self.model, "lm_head", None) is not None:
             prefix_kwargs["logits_to_keep"] = 1
         prefix_out = self.model(**prefix_kwargs)
-        cache = prefix_out.past_key_values
-        # Eight rows is the latency sweet spot: at 4096 context the suffix
-        # forward costs 0.124 s at 16 rows and 0.066 s at 8, while fewer rows
-        # barely help.  K > 8 uses extra groups over the same prefix cache.
-        rows = min(8, group_size)
+        prefix_cache = prefix_out.past_key_values
+        # K > SHARED_PREFIX_ROWS uses extra groups over the same prefix cache.
+        rows = min(SHARED_PREFIX_ROWS, group_size)
         group_size = rows
-        if rows > 1:
-            cache.batch_repeat_interleave(rows)
+        if not self.is_hybrid and rows > 1:
+            prefix_cache.batch_repeat_interleave(rows)
         base = getattr(self.model, "model", None)
 
         scores: list[float] = []
@@ -362,34 +370,55 @@ class RawReranker:
                     prefix_len, prefix_len + n, device=self.device
                 )
                 last[row] = n - 1
+            cache = (
+                fork_prefix_cache(prefix_cache, rows) if self.is_hybrid else prefix_cache
+            )
             inputs = {
                 "input_ids": ids,
                 "attention_mask": mask,
                 "position_ids": positions,
                 "past_key_values": cache,
             }
+            picks = torch.arange(rows, device=self.device)
+            logits = None
             if base is not None:
-                hidden = base(**inputs).last_hidden_state
-                picked = hidden[torch.arange(rows, device=self.device), last]
-                if self.lm_head is not None:
-                    logits = self.lm_head(picked)
-                else:
-                    logits = self.model.lm_head(picked)
+                picked = base(**inputs).last_hidden_state[picks, last]
             else:
-                logits = self._logits(self.model(**inputs))
-                if logits.ndim == 3:
-                    # Text towers return every suffix position; the last real
-                    # token differs per row, so ``-1`` would read padding.
-                    logits = logits[torch.arange(rows, device=self.device), last]
-            pair = torch.stack(
-                [logits[:, self.false_id], logits[:, self.true_id]], dim=-1
-            )
+                outputs = self.model(**inputs)
+                if getattr(outputs, "logits", None) is not None:
+                    # The last real token differs per row, so ``-1`` would
+                    # read padding.
+                    logits = outputs.logits[picks, last]
+                else:
+                    picked = outputs.last_hidden_state[picks, last]
+            if logits is None:
+                # Project onto the two answer tokens only, in float32.  A
+                # bf16 lm_head rounds logits near 20 to steps of 0.125, so
+                # close options tie or swap on rounding alone: on Qwen3.5-4B-
+                # Base both options of original-adequacy-04-0 read (no, yes) =
+                # (20.375, 21.375) and tied at 0.5, while float32 gives yes-no
+                # gaps of 0.980 and 0.948.  It also skips the 151k-248k
+                # vocabulary projection.
+                head = self.lm_head if self.lm_head is not None else self.model.lm_head
+                weight = head.weight[[self.false_id, self.true_id]].float()
+                pair = picked.float() @ weight.T
+                if getattr(head, "bias", None) is not None:
+                    pair = pair + head.bias[[self.false_id, self.true_id]].float()
+            else:
+                pair = torch.stack(
+                    [logits[:, self.false_id], logits[:, self.true_id]], dim=-1
+                ).float()
             scores.extend(torch.softmax(pair, dim=-1)[:, 1].tolist())
-            cache.crop(-width)
+            if self.is_hybrid:
+                del cache
+            else:
+                cache.crop(-width)
         return scores[: len(docs)]
 
     @torch.inference_mode()
-    def warmup_prefix_buckets(self, rows: int = 8, width: int = 64) -> None:
+    def warmup_prefix_buckets(
+        self, rows: int = SHARED_PREFIX_ROWS, width: int = 64
+    ) -> None:
         """Load the CUDA kernels for every prefix bucket.
 
         The first forward at a given tensor shape costs 0.4-1.3 s at 4B; a
@@ -420,7 +449,9 @@ class RawReranker:
                     prefix["logits_to_keep"] = 1
                 out = self.model(**prefix)
                 cache = out.past_key_values
-                if rows > 1:
+                if self.is_hybrid:
+                    cache = fork_prefix_cache(cache, rows)
+                elif rows > 1:
                     cache.batch_repeat_interleave(rows)
                 suffix = {
                     "input_ids": torch.zeros(
@@ -441,7 +472,8 @@ class RawReranker:
                     base(**suffix)
                 else:
                     self.model(**suffix)
-                cache.crop(-width)
+                if not self.is_hybrid:
+                    cache.crop(-width)
                 del cache, out
 
     def predict_row(
@@ -453,12 +485,17 @@ class RawReranker:
     ) -> Prediction:
         q = question or item.question
         options = _raw_options(q, reverse=reverse)
-        scores = [
-            self._score_option(
-                item.state, q.get("instructions", ""), q["type"], label, description
+        if self.shared_prefix:
+            scores = self.score_many(
+                item.state, q.get("instructions", ""), q["type"], options
             )
-            for label, description in options
-        ]
+        else:
+            scores = [
+                self._score_option(
+                    item.state, q.get("instructions", ""), q["type"], label, description
+                )
+                for label, description in options
+            ]
         total = sum(scores)
         if total > 0:
             probs = tuple(score / total for score in scores)
@@ -955,6 +992,14 @@ def main() -> None:
         action="store_true",
         help="Score with Qwen3-Reranker yes/no logits instead of Krino heads",
     )
+    parser.add_argument(
+        "--shared-prefix",
+        action="store_true",
+        help="With --raw-reranker: encode the prefix once and score options as "
+        "8-row batches instead of one forward each; hybrid Qwen3.5 caches are "
+        "forked per row group because their recurrent state cannot be cropped. "
+        "Reads P(yes) through a float32 two-token projection",
+    )
     parser.add_argument("--rank", type=int, default=64)
     parser.add_argument("--dropout", type=float, default=0.1)
     parser.add_argument("--readout", default="last", help="last|mean_last_n|weighted|layer|fuse_pair")
@@ -1034,6 +1079,10 @@ def main() -> None:
             device,
             loader_type="qwen35_base" if args.qwen35_base else None,
         )
+        if args.shared_prefix:
+            model.shared_prefix = True
+            if not args.no_warmup:
+                model.warmup_prefix_buckets()
         backbone_name = raw_name
     else:
         model, backbone_name = load_model(args, device)
@@ -1122,6 +1171,9 @@ def main() -> None:
             "bins": args.bins,
             "data": data_label,
             "data_sha256": items_digest(items),
+            "raw_scoring": (
+                getattr(model, "scoring_path", None) if args.raw_reranker else None
+            ),
         },
         "overall": summarize(rows, args.bins),
         "intelligence": {
