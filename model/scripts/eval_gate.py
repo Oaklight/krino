@@ -868,6 +868,18 @@ def main() -> None:
         if args.option_batch:
             model.model.option_batch = args.option_batch
         backbone_name = f"{raw_name}+residual"
+    elif args.raw_reranker:
+        # The raw arm is the baseline the trained arms are measured against:
+        # no heads, just the checkpoint's own yes/no logits.  It has to be
+        # constructible here or every baseline needs a throwaway checkpoint.
+        raw_name = args.model or "Qwen/Qwen3-Reranker-4B"
+        print(f"Raw reranker: {raw_name}")
+        model = RawReranker(
+            raw_name,
+            device,
+            loader_type="qwen35_base" if args.qwen35_base else None,
+        )
+        backbone_name = raw_name
     else:
         model, backbone_name = load_model(args, device)
     items, data_label = load_items(args)
