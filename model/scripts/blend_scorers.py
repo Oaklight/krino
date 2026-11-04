@@ -92,7 +92,7 @@ def option_texts(question: dict[str, Any]) -> tuple[list[str], list[str]] | None
 def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
     """Score every sampled choice item with both the head and the native readout."""
     import torch
-    import yaml
+    from _vendor import yaml
 
     import data.pipeline as pipeline_mod
     import data.sources as sources_mod
@@ -102,7 +102,7 @@ def score_choice_items(args: argparse.Namespace) -> list[dict[str, Any]]:
     from model.src.model_factory import build_decision_model
     from model.src.reranker_prompt import score_options_native
 
-    cfg = yaml.safe_load(args.config.read_text(encoding="utf-8")) or {}
+    cfg = yaml.load(args.config.read_text(encoding="utf-8")) or {}
     model_name = args.model or cfg.get("model")
     max_length = int(args.max_length or cfg.get("max_length") or 32768)
     readout = args.readout or cfg.get("readout", "last")

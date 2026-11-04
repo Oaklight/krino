@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 import torch
-import yaml
+from _vendor import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -855,7 +855,7 @@ def _warn_architecture_mismatch(model: Any, checkpoint: Path) -> None:
 
 def _load_config(path: Path) -> dict[str, Any]:
     with open(path) as handle:
-        return yaml.safe_load(handle)
+        return yaml.load(handle)
 
 
 def _resolve(cli_value: Any, cfg: dict[str, Any], key: str, default: Any) -> Any:
