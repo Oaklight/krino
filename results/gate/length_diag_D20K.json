@@ -1,0 +1,118 @@
+{
+ "arm": "D20K",
+ "checkpoint": "<HOME>/projects/krino-v3/model/experiments/residual/D20K/residual.pt/residual.pt",
+ "truncated_ids": [
+  "hard-opus-a-long_policy-01",
+  "hard-opus-a-long_policy-04",
+  "hard-opus-a-long_policy-08",
+  "hard-opus-a-long_policy-09",
+  "hard-opus-a-long_policy-11",
+  "hard-opus-a-long_policy-13",
+  "hard-opus-a-long_policy-17",
+  "hard-opus-a-long_policy-19",
+  "hard-opus-b-multi_hop-03",
+  "hard-opus-b-multi_hop-04",
+  "hard-opus-b-multi_hop-05",
+  "hard-opus-b-multi_hop-07",
+  "hard-opus-b-multi_hop-08",
+  "hard-opus-c-long_policy-02",
+  "hard-opus-c-long_policy-03",
+  "hard-opus-c-long_policy-04",
+  "hard-opus-c-long_policy-05",
+  "hard-opus-c-long_policy-08",
+  "hard-opus-c-long_policy-10",
+  "hard-opus-c-long_policy-11",
+  "hard-sol-a-multi_hop-01",
+  "hard-sol-a-multi_hop-02",
+  "hard-sol-a-multi_hop-05",
+  "hard-sol-a-multi_hop-07",
+  "hard-sol-a-multi_hop-08",
+  "hard-sol-a-multi_hop-09",
+  "hard-sol-a-multi_hop-10",
+  "hard-sol-a-multi_hop-12",
+  "hard-sol-b-long_policy-01",
+  "hard-sol-b-long_policy-02",
+  "hard-sol-b-long_policy-05",
+  "hard-sol-b-long_policy-06",
+  "hard-sol-c-multi_hop-07",
+  "hard-sol-c-multi_hop-09",
+  "hard-sol-c-multi_hop-11",
+  "hard-sol-c-multi_hop-13"
+ ],
+ "runs": {
+  "2048": {
+   "max_length": 2048,
+   "failed": 0,
+   "seconds": 293.5,
+   "overall": {
+    "n": 231,
+    "acc": 0.6147,
+    "cc": 0.4205
+   },
+   "by_tier": {
+    "easy": {
+     "n": 48,
+     "acc": 1.0,
+     "cc": 1.0
+    },
+    "hard": {
+     "n": 111,
+     "acc": 0.4144,
+     "cc": 0.1144
+    },
+    "original": {
+     "n": 72,
+     "acc": 0.6667,
+     "cc": 0.506
+    }
+   },
+   "truncated_subset": {
+    "n": 36,
+    "acc": 0.2778,
+    "cc": 0.0412
+   },
+   "hard_nontrunc": {
+    "n": 75,
+    "acc": 0.48,
+    "cc": 0.1496
+   }
+  },
+  "4096": {
+   "max_length": 4096,
+   "failed": 0,
+   "seconds": 116.2,
+   "overall": {
+    "n": 231,
+    "acc": 0.6277,
+    "cc": 0.4311
+   },
+   "by_tier": {
+    "easy": {
+     "n": 48,
+     "acc": 1.0,
+     "cc": 1.0
+    },
+    "hard": {
+     "n": 111,
+     "acc": 0.4414,
+     "cc": 0.1365
+    },
+    "original": {
+     "n": 72,
+     "acc": 0.6667,
+     "cc": 0.506
+    }
+   },
+   "truncated_subset": {
+    "n": 36,
+    "acc": 0.3611,
+    "cc": 0.1093
+   },
+   "hard_nontrunc": {
+    "n": 75,
+    "acc": 0.48,
+    "cc": 0.1496
+   }
+  }
+ }
+}
