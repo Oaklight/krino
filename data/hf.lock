@@ -1,7 +1,7 @@
 {
  "repo": "oaklight/krino-data",
  "repo_type": "dataset",
- "revision": "e8eeebaca977c83bd6f338f42e0fa8c5150896b0",
+ "revision": "160229fac27db81b13fc143f0300f6736d93ad58",
  "files": {
   "derived/abstention/20k/train.jsonl": {
    "local": "data/benchmarks/abstention_20k/train.jsonl",
@@ -132,6 +132,66 @@
    "local": "data/benchmarks/label_target_30k_jev_noul_union_agree_mix50.stats.json",
    "sha256": "1023bbbf8337d1cde3c3dae645dc57df3c87738876341d72ee7115153a2f614a",
    "bytes": 652
+  },
+  "derived/long_context/mmlu_pro/mmlu_pro_short_reasoning_choice.jsonl": {
+   "local": "data/benchmarks/mmlu_pro_short_reasoning_choice.jsonl",
+   "sha256": "fb0a9fad58fded2bc075a32ff84b237c0aec866324aaf9de6269df6dbaef9fa8",
+   "bytes": 12417143
+  },
+  "derived/long_context/mmlu_pro/mmlu_pro_short_reasoning_choice.stats.json": {
+   "local": "data/benchmarks/mmlu_pro_short_reasoning_choice.stats.json",
+   "sha256": "e9b7ece6dacf7283309e6667872f1c605ca3ae8f9ee025b09919e475f177d1f6",
+   "bytes": 1280
+  },
+  "derived/long_context/race/race_short_passage_choice.jsonl": {
+   "local": "data/benchmarks/race_short_passage_choice.jsonl",
+   "sha256": "3ef4dbbd6486db62e3a3c6466d92a1b01fa0c964f013960fd5d2f5fec1c4aa21",
+   "bytes": 1206137
+  },
+  "derived/long_context/race/race_short_passage_choice.stats.json": {
+   "local": "data/benchmarks/race_short_passage_choice.stats.json",
+   "sha256": "3bdd4c401b63a14d6cf2ee5fc408c13601ef6a3b6ad279cfdd82bc7ef368caf8",
+   "bytes": 729
+  },
+  "derived/long_context/longbench/longbench_long_choice.jsonl": {
+   "local": "data/benchmarks/longbench_long_choice.jsonl",
+   "sha256": "5fe42350e1346643261df652e7357878e4450d2dbca27393190e9050379a5506",
+   "bytes": 12009744
+  },
+  "derived/long_context/longbench/longbench_long_choice.stats.json": {
+   "local": "data/benchmarks/longbench_long_choice.stats.json",
+   "sha256": "3d4bace983a2baa3507579f59b2a980253d731826cc731e08755eccd8c9f83c7",
+   "bytes": 921
+  },
+  "derived/long_context/twowiki/twowiki_long_choice.jsonl": {
+   "local": "data/benchmarks/twowiki_long_choice.jsonl",
+   "sha256": "3d32c06c0b50dd5d998ca662893e25c7d2ad6de86cf6d3eec50addb7372343ff",
+   "bytes": 1518505
+  },
+  "derived/long_context/twowiki/twowiki_long_choice.stats.json": {
+   "local": "data/benchmarks/twowiki_long_choice.stats.json",
+   "sha256": "eb724852146db4f48725005477d3aaea8779d5f5cd33b81e32467237779066cd",
+   "bytes": 844
+  },
+  "derived/tool_call/apigen/arguments/apigen_tool_argument.jsonl": {
+   "local": "data/benchmarks/apigen_tool_argument.jsonl",
+   "sha256": "ad172e6cbf099964e29b24d8de51d9a00238ae45cfb1f20ee93e86abd307c253",
+   "bytes": 44811296
+  },
+  "derived/tool_call/apigen/arguments/apigen_tool_argument.stats.json": {
+   "local": "data/benchmarks/apigen_tool_argument.stats.json",
+   "sha256": "c82af79bb344b590f5572cff0ed0e4eb11d0eb4b03606711a60704db1421177e",
+   "bytes": 1092
+  },
+  "derived/tool_call/apigen/next_action/apigen_tool_next_action.jsonl": {
+   "local": "data/benchmarks/apigen_tool_next_action.jsonl",
+   "sha256": "4e96bfc517b760e3f4e75c67254dcae40141b8d21241b701f5ec30fff25a497d",
+   "bytes": 38050717
+  },
+  "derived/tool_call/apigen/next_action/apigen_tool_next_action.stats.json": {
+   "local": "data/benchmarks/apigen_tool_next_action.stats.json",
+   "sha256": "bda89b981554d9379876503cd7cac97cb435cfd7e7c10ba1090c235d69c6f6cd",
+   "bytes": 905
   }
  }
 }
