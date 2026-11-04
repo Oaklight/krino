@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 import torch
-import yaml
+from _vendor import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -41,7 +41,7 @@ from model.training.calibration import CalibrationLossConfig, train
 def load_config(path: Path, run_name: str | None = None) -> dict:
     """Load YAML config, optionally selecting a specific run."""
     with open(path) as f:
-        cfg = yaml.safe_load(f)
+        cfg = yaml.load(f)
 
     defaults = cfg.get("defaults", {})
 
