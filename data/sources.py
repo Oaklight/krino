@@ -59,11 +59,40 @@ def collect_synthetic_sources(
     return {name for name, cfg in sources_cfg.items() if is_synthetic_source(name, cfg)}
 
 
+def missing_sources(
+    counts: dict[str, tuple[int, int]],
+    sources_cfg: dict,
+) -> list[str]:
+    """Sources that produced no items and are not marked ``allow_missing``.
+
+    A configured source that yields nothing means the mixture is not the one
+    the config describes, and the run's numbers are not comparable with the
+    rest of the project. That has to be an error, not a warning: a fresh
+    worktree without the prepared benchmark files silently trained on 10k of
+    182k items, with one stderr line per source as the only signal.
+
+    Args:
+        counts: ``{source_name: (n_train, n_eval)}`` as loaded.
+        sources_cfg: The config's ``sources`` mapping.
+
+    Returns:
+        Names of the sources that loaded nothing and were not opted out.
+    """
+    missing: list[str] = []
+    for name, (n_train, n_eval) in counts.items():
+        cfg = sources_cfg.get(name) or {}
+        if cfg.get("allow_missing"):
+            continue
+        if n_train + n_eval == 0:
+            missing.append(name)
+    return missing
+
+
 def invalid_score_labels(items: list[TypedQuestion]) -> list[TypedQuestion]:
-    """Return score items whose label cannot be a level on their own scale.
+    """Return the score items whose label cannot be a level on their own scale.
 
     The rule is the invariant rather than the source name: a level index has to
-    fall on ``0 .. n_levels-1`` for the item's own criteria list. That catches a
+    fall on `0 .. n_levels-1` for the item's own criteria list. That catches a
     negative sentinel, a label past the end of the scale, and a non-numeric
     label, for any source, without naming stsb.
 
@@ -71,7 +100,8 @@ def invalid_score_labels(items: list[TypedQuestion]) -> list[TypedQuestion]:
     corpus in the wild: that corpus was built with the sentinel already clamped
     to 0, so the offending labels sit inside the valid range and no read-time
     check can tell them from a genuine "No similarity" (#176). Those corpora
-    have to be rebuilt with the fixed loader.
+    have to be rebuilt with the fixed loader, which is what
+    `python -m data.pipeline stsb` does.
 
     Args:
         items: Items from one source, already filtered to supported types.
@@ -142,9 +172,9 @@ def load_source_items(
     supported = {"noul", "choice", "score"}
     items = [it for it in items if it.question.get("type") in supported]
 
-    # Drop score items whose label is not a level on their own scale. This has
-    # to happen on read, not only in the loader that writes the JSONL: corpora
-    # built before the loader fix still carry the rows (#176).
+    # Drop score items whose label is not a level on their own scale. This has to
+    # happen on read, not only in the loader that writes the JSONL: corpora built
+    # before the loader fix still carry the rows (#176).
     bad = invalid_score_labels(items)
     if bad:
         bad_ids = {id(item) for item in bad}

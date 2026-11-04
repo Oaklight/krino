@@ -28,8 +28,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import sys
+from collections import Counter
 from pathlib import Path
 
 import torch
@@ -39,13 +41,26 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from data.format import TypedQuestion
-from data.sampler import SamplerConfig
+from data.pool_report import print_pool_report
+from data.sampler import SamplerConfig, sampling_type
 from data.score_form import convert_training_items
-from data.sources import collect_synthetic_sources, load_source_items
+from data.sources import (
+    collect_synthetic_sources,
+    load_source_items,
+    missing_sources,
+)
+from model.evaluation.breakdown import format_detailed_eval
 from model.settings import describe_effective_length, format_settings, resolve_setting
-from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
-from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig, estimate_model_billions, print_gpu_info
+from model.training.distributed import (
+    gather_eval_stats,
+    init_process_group,
+    is_main_process,
+    shard,
+    shutdown,
+    world_info,
+)
+from model.training.readout_guard import schedule_warning
 from model.training.supervised import eval_epoch_detailed, train_multitask
 
 
@@ -124,17 +139,30 @@ def build_sampler_config(cfg: dict, sources_cfg: dict) -> SamplerConfig:
 def print_data_summary(
     train_items: list[TypedQuestion],
     eval_items: list[TypedQuestion],
+    sampling: dict | None = None,
 ) -> None:
-    """Print a summary of loaded data by source and type."""
-    from collections import Counter
+    """Print a summary of loaded data by source and type.
 
+    Args:
+        train_items: Training items after any source caps and score-form
+            conversion.
+        eval_items: Evaluation items.
+        sampling: The config's ``sampling`` section. When it carries
+            ``epoch_size`` and type weights, the per-type pool is compared
+            against the slots the sampler gives that type per epoch.
+    """
     train_by_source: Counter[str] = Counter()
     train_by_type: Counter[str] = Counter()
     eval_by_source: Counter[str] = Counter()
 
     for item in train_items:
         train_by_source[item.source] += 1
-        train_by_type[item.question.get("type", "?")] += 1
+        # The type the sampler actually pools on, not the declared one: score
+        # form rewrites `type` to "score" and keeps the original in
+        # `score_form.source_type`.  Reporting the declared field would print
+        # `{'score': 182262}` for a run whose sampler is still balancing the
+        # original three types, which reads as a collapsed mix.
+        train_by_type[sampling_type(item)] += 1
     for item in eval_items:
         eval_by_source[item.source] += 1
 
@@ -150,7 +178,22 @@ def print_data_summary(
         print(f"  {source:<20} {t:>8,} {e:>8,}", flush=True)
     print(f"  {'TOTAL':<20} {len(train_items):>8,} {len(eval_items):>8,}", flush=True)
 
-    print(f"\n  Type distribution (train): {dict(train_by_type)}", flush=True)
+    print(f"\n  Type distribution (train, as sampled): {dict(train_by_type)}", flush=True)
+
+    n_converted = sum(
+        1 for item in train_items
+        if isinstance(item.question.get("score_form"), dict)
+    )
+    if n_converted:
+        print(
+            f"  {n_converted:,} items are in score form: their declared type is "
+            f"'score', but they are pooled by the original type above, so "
+            f"type_ratios still apply",
+            flush=True,
+        )
+
+    if sampling:
+        print_pool_report(train_by_type, sampling)
 
 
 def main() -> int:
@@ -186,7 +229,8 @@ def main() -> int:
     parser.add_argument("--eval-every", type=int, default=None, help="Override eval frequency")
     parser.add_argument("--shared-attention", action="store_true", default=None, help="Share AttentionHead weights between choice and score heads")
     parser.add_argument("--unified-head", action="store_true", default=None, help="Use single unified attention head for all types (noul via true/false options)")
-    parser.add_argument("--readout", choices=["last", "mean_last_n", "weighted", "layer", "fuse_pair"], default=None, help="Which backbone layers feed the heads (default: last)")
+    parser.add_argument("--readout", choices=["last", "mean_last_n", "weighted", "layer", "fuse_pair"], default=None, help="Which backbone layers feed the heads (default: weighted)")
+    parser.add_argument("--choice-mode", choices=["tower", "cross_encoder"], default=None, help="How choice options are scored: 'tower' encodes the state and each option separately and scores with cross-attention; 'cross_encoder' puts the state into every option's prompt and reads out a linear score (the shape the backbone's own reranker uses, ~3x training cost) (default: tower)")
     parser.add_argument("--readout-n", type=int, default=None, help="Layer window for --readout mean_last_n (default: 4)")
     parser.add_argument("--readout-layer", type=int, default=None, help="Single layer index for --readout layer (0 = embedding output)")
     parser.add_argument("--readout-layers", type=str, default=None, help="Two comma-separated layer indices for --readout fuse_pair, e.g. 16,32")
@@ -261,6 +305,25 @@ def main() -> int:
     lr, lr_src = resolve_setting(args.lr, cfg, "lr", 1e-3)
     seed, seed_src = resolve_setting(args.seed, cfg, "seed", 42)
     device = args.device or cfg.get("device")
+
+    # Distributed launch: torchrun sets RANK/WORLD_SIZE/LOCAL_RANK.  Each rank
+    # is pinned to its own GPU and the group must be initialised before any
+    # CUDA work so the NCCL communicator binds to the right device.
+    world_rank, world_size, local_rank = world_info()
+    if world_size > 1:
+        world_rank, world_size = init_process_group(local_rank)
+        if torch.cuda.is_available():
+            device = f"cuda:{local_rank}"
+        if world_rank == 0:
+            print(
+                f"Distributed: {world_size} ranks, backend="
+                f"{'nccl' if torch.cuda.is_available() else 'gloo'}",
+                flush=True,
+            )
+        else:
+            # Ranks write to one merged log, so only rank 0 keeps stdout. Errors
+            # still reach stderr, which is where a crashed rank shows up.
+            sys.stdout = open(os.devnull, "w")
     accumulation_steps, accumulation_steps_src = resolve_setting(
         None, cfg, "accumulation_steps", 8
     )
@@ -279,7 +342,22 @@ def main() -> int:
     uncertainty_weighting = args.uncertainty_weighting if args.uncertainty_weighting is not None else cfg.get("uncertainty_weighting", False)
     shared_attention = args.shared_attention if args.shared_attention is not None else cfg.get("shared_attention", False)
     unified_head_flag = args.unified_head if args.unified_head is not None else cfg.get("unified_head", False)
-    readout = args.readout if args.readout is not None else cfg.get("readout", "last")
+    readout = args.readout if args.readout is not None else cfg.get("readout", "weighted")
+    warning = schedule_warning(readout, epochs, model_name)
+    if warning:
+        print(warning, flush=True)
+    choice_mode = (
+        args.choice_mode if args.choice_mode is not None else cfg.get("choice_mode", "tower")
+    )
+    if choice_mode == "cross_encoder" and (unified_head_flag or shared_attention):
+        # Both of those settings describe the attention head this mode
+        # replaces, and both configs set shared_attention, so this is a note
+        # rather than an error: the cross-encoder branch in DecisionModel wins.
+        print(
+            "  Note: --choice-mode cross_encoder replaces the attention head, "
+            "so unified_head/shared_attention are ignored for choice.",
+            flush=True,
+        )
     readout_n = args.readout_n if args.readout_n is not None else cfg.get("readout_n", 4)
     readout_layer = (
         args.readout_layer
@@ -478,6 +556,7 @@ def main() -> int:
     rng = random.Random(seed)
     all_train: list[TypedQuestion] = []
     all_eval: list[TypedQuestion] = []
+    loaded: dict[str, tuple[int, int]] = {}
 
     for source_name, source_cfg in sources_cfg.items():
         if source_cfg is None:
@@ -487,8 +566,32 @@ def main() -> int:
         all_eval.extend(eval_items)
         n_train = len(train_items)
         n_eval = len(eval_items)
+        loaded[source_name] = (n_train, n_eval)
         if n_train > 0 or n_eval > 0:
             print(f"  {source_name}: {n_train} train, {n_eval} eval", flush=True)
+
+    empty = missing_sources(loaded, sources_cfg)
+    if empty:
+        print(
+            f"\nError: {len(empty)} configured source(s) produced no items: "
+            f"{', '.join(empty)}",
+            file=sys.stderr,
+            flush=True,
+        )
+        print(
+            "The run would train on a different mixture than the config "
+            "describes, and its numbers would not be comparable with the rest "
+            "of the project. Prepare the data or set `allow_missing: true` on "
+            "the source if the gap is intended.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 1
+    print(
+        f"\n  {len(all_train):,} train / {len(all_eval):,} eval items "
+        f"from {len(sources_cfg)} configured sources",
+        flush=True,
+    )
 
     if score_form != "off":
         # Training only: evaluation keeps the original types so accuracy stays
@@ -506,7 +609,7 @@ def main() -> int:
             flush=True,
         )
 
-    print_data_summary(all_train, all_eval)
+    print_data_summary(all_train, all_eval, cfg.get("sampling") or {})
 
     # Load backbone and build model
     print(f"\nLoading backbone: {model_name}", flush=True)
@@ -553,7 +656,6 @@ def main() -> int:
         mlp_dim=mlp_dim,
         noul_rank=noul_rank,
         max_length=max_length,
-        gpu_config=gpu_config,
         shared_attention=shared_attention,
         unified_head=unified_head_flag,
         readout=readout,
@@ -577,7 +679,9 @@ def main() -> int:
         option_marker=option_marker,
         option_chunk_size=option_chunk_size,
         option_max_tokens=option_max_tokens,
+        choice_mode=choice_mode,
     )
+
     print(f"Trainable: {model.trainable_parameters():,} params", flush=True)
     print(f"Frozen:    {model.frozen_parameters():,} params", flush=True)
 
@@ -601,6 +705,7 @@ def main() -> int:
                 ("lora_lr", lora_lr, lora_lr_src),
                 ("score_form", score_form, score_form_src),
                 ("score_loss", score_loss, score_loss_src),
+                ("choice_mode", choice_mode, "cli/config"),
                 ("k_augment_fraction", k_augment_fraction, k_augment_src),
                 (
                     "k_augment_k_range",
@@ -643,14 +748,21 @@ def main() -> int:
     # Eval-only mode
     if args.eval_only:
         print("\n=== Eval-only mode ===", flush=True)
-        eval_stats = eval_epoch_detailed(model, all_eval)
+        eval_stats = gather_eval_stats(
+            eval_epoch_detailed(
+                model, shard(all_eval, world_rank, world_size)
+            ),
+            world_size=world_size,
+        )
         _print_detailed_eval(eval_stats)
 
         if output:
             output = Path(output)
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(json.dumps(eval_stats, indent=2, default=str))
-            print(f"\nResults saved to {output}", flush=True)
+            if is_main_process():
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_text(json.dumps(eval_stats, indent=2, default=str))
+                print(f"\nResults saved to {output}", flush=True)
+        shutdown()
         return 0
 
     # Apply CLI sampling_temperature override
@@ -686,6 +798,8 @@ def main() -> int:
         accumulation_steps=accumulation_steps,
         seed=seed,
         batch_backbone=batch_backbone,
+        rank=world_rank,
+        world_size=world_size,
         save_every_epoch=save_every_epoch,
         mlp_lr=mlp_lr,
         noul_lr=noul_lr,
@@ -695,6 +809,10 @@ def main() -> int:
         uncertainty_weighting=uncertainty_weighting,
         score_loss=score_loss,
         k_augment=k_augment_cfg,
+        # A `candidates` run converts every choice item into score questions, so
+        # the choice head is never trained; the epoch eval has to read choice
+        # accuracy out of the score head or it reports chance.
+        choice_from_score=score_form == "candidates",
     )
 
     # Print final eval summary
@@ -711,44 +829,22 @@ def main() -> int:
     # Save results
     if output:
         output = Path(output)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(results, indent=2, default=str))
-        print(f"\nResults saved to {output}", flush=True)
+        if is_main_process():
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(results, indent=2, default=str))
+            print(f"\nResults saved to {output}", flush=True)
 
+    shutdown()
     return 0
 
 
 def _print_detailed_eval(eval_stats: dict) -> None:
-    """Print formatted detailed eval results."""
-    agg = eval_stats["aggregate"]
-    print(
-        f"  Aggregate: loss={agg['mean_loss']:.4f} acc={agg['accuracy']:.4f} ({agg['n_items']} items)",
-        flush=True,
-    )
+    """Print formatted detailed eval results.
 
-    by_type = eval_stats.get("by_type", {})
-    if by_type:
-        print("\n  By type:", flush=True)
-        for t in sorted(by_type):
-            ts = by_type[t]
-            print(
-                f"    {t:<10} loss={ts['mean_loss']:.4f} acc={ts['accuracy']:.4f} ({ts['n_items']} items)",
-                flush=True,
-            )
-
-    by_source = eval_stats.get("by_source", {})
-    if by_source:
-        print(
-            f"\n  {'Source':<20} {'Type':<8} {'Loss':>8} {'Acc':>8} {'N':>6}",
-            flush=True,
-        )
-        print(f"  {'-' * 20} {'-' * 8} {'-' * 8} {'-' * 8} {'-' * 6}", flush=True)
-        for src in sorted(by_source):
-            ss = by_source[src]
-            print(
-                f"  {src:<20} {ss['type']:<8} {ss['mean_loss']:>8.4f} "
-                f"{ss['accuracy']:>8.4f} {ss['n_items']:>6}"
-            )
+    The rendering lives in :mod:`model.evaluation.breakdown` so it can be tested
+    without torch; this is the CLI's thin wrapper.
+    """
+    print(format_detailed_eval(eval_stats), end="")
 
 
 if __name__ == "__main__":

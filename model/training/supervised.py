@@ -18,7 +18,15 @@ import torch.nn.functional as F
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 
-from .losses import rps_loss
+from .distributed import (
+    average_gradients,
+    gather_eval_stats,
+    gather_train_stats,
+    shard,
+)
+from .losses import rps_from_probs, rps_loss
+from .memory import format_epoch_memory, peak_snapshot
+from ..evaluation.breakdown import build_eval_breakdown
 
 
 def _score_target(label: Any, n_levels: int, device: torch.device) -> torch.Tensor:
@@ -288,16 +296,11 @@ def _compute_augmented_noul_batch(
         option_texts = [ao[k] for k in keys]
         teacher_probs = item.teacher_probs
 
-        if getattr(model, "option_marker", False):
-            logits = model.forward_choice(
-                item.state, item.question.get("instructions", ""), option_texts
-            )
-        else:
-            context_text = f"{item.state} {item.question.get('instructions', '')}"
-            context_hidden = model._encode_with_sequence(context_text)
-            option_pooled = model._encode_text(option_texts)
-            opt_hidden = option_pooled.unsqueeze(0)
-            logits = model.choice_head(context_hidden, opt_hidden)
+        # Go through forward_choice so the choice head has one caller: a
+        # cross-encoder head takes the joint prompts, not (context, options).
+        logits = model.forward_choice(
+            item.state, item.question.get("instructions", ""), option_texts
+        )
 
         losses.append(_teacher_loss(logits, teacher_probs, keys))
     return losses
@@ -315,16 +318,11 @@ def _compute_choice_batch(
         option_texts = [v or k for k, v in criteria.items()]
         teacher_probs = getattr(item, "teacher_probs", None)
 
-        if getattr(model, "option_marker", False):
-            logits = model.forward_choice(
-                item.state, item.question.get("instructions", ""), option_texts
-            )
-        else:
-            context_text = f"{item.state} {item.question.get('instructions', '')}"
-            context_hidden = model._encode_with_sequence(context_text)  # [1, seq_len, hidden]
-            option_pooled = model._encode_text(option_texts)  # [K, hidden]
-            opt_hidden = option_pooled.unsqueeze(0)  # [1, K, hidden]
-            logits = model.choice_head(context_hidden, opt_hidden)
+        # Same reason as above: forward_choice owns the head's calling
+        # convention, so the cross-encoder mode works in training too.
+        logits = model.forward_choice(
+            item.state, item.question.get("instructions", ""), option_texts
+        )
 
         if teacher_probs:
             losses.append(_teacher_loss(logits, teacher_probs, keys))
@@ -377,6 +375,7 @@ def train_epoch(
     batch_backbone: int = 0,
     log_vars: dict[str, nn.Parameter] | None = None,
     score_loss: str = "ce",
+    world_size: int = 1,
 ) -> dict[str, float]:
     """Train for one epoch. Returns loss statistics.
 
@@ -389,12 +388,38 @@ def train_epoch(
             weighting (Kendall et al. 2018). None disables weighting.
         score_loss: ``"ce"`` for cross-entropy over levels, or ``"rps"`` for
             the ranked probability score, which respects the level order.
+        world_size: number of data-parallel processes. > 1 averages gradients
+            across ranks before each optimizer step; ``train_items`` must
+            already be this rank's shard.
     """
     model.train()
     total_loss = 0.0
     n_items = 0
     n_skipped = 0
-    accum_count = 0
+    # Counts *positions consumed*, not successful losses. Step boundaries must be
+    # a function of the shard alone: if a rank skips a different number of items
+    # (a label missing from its criteria, say), counting only successes makes the
+    # ranks issue different numbers of all-reduces and the group hangs.
+    positions = 0
+    n_steps = 0
+    # Every trainable tensor the optimizer steps, including tensors that are not
+    # registered on the model — the uncertainty log_vars are attached to the
+    # optimizer only, and leaving them out would let the replicas diverge.
+    trainable_params = [
+        p
+        for group in optimizer.param_groups
+        for p in group["params"]
+        if p.requires_grad
+    ]
+
+    def _finish_step() -> None:
+        nonlocal n_steps
+        if world_size > 1:
+            average_gradients(trainable_params, world_size)
+        torch.nn.utils.clip_grad_norm_(trainable_params, max_grad_norm)
+        optimizer.step()
+        optimizer.zero_grad()
+        n_steps += 1
 
     optimizer.zero_grad()
 
@@ -458,57 +483,52 @@ def train_epoch(
                 scaled_loss.backward()
                 total_loss += window_loss.item()
                 n_items += len(all_weighted)
-                accum_count += len(all_weighted)
 
-            if accum_count >= accumulation_steps:
-                torch.nn.utils.clip_grad_norm_(
-                    [p for p in model.parameters() if p.requires_grad], max_grad_norm
-                )
-                optimizer.step()
-                optimizer.zero_grad()
-                accum_count = 0
+            # Count the window's positions, not its successes, so the step
+            # boundary is identical on every rank.
+            positions += len(window)
+            if positions >= accumulation_steps:
+                _finish_step()
+                positions = 0
     else:
         for item in train_items:
             loss = compute_loss(model, item, log_vars=log_vars, score_loss=score_loss)
+            positions += 1
             if loss is None:
                 n_skipped += 1
-                continue
+            else:
+                scaled_loss = loss / accumulation_steps
+                scaled_loss.backward()
+                total_loss += loss.item()
+                n_items += 1
 
-            scaled_loss = loss / accumulation_steps
-            scaled_loss.backward()
-            total_loss += loss.item()
-            n_items += 1
-            accum_count += 1
+            if positions >= accumulation_steps:
+                _finish_step()
+                positions = 0
 
-            if accum_count >= accumulation_steps:
-                torch.nn.utils.clip_grad_norm_(
-                    [p for p in model.parameters() if p.requires_grad], max_grad_norm
-                )
-                optimizer.step()
-                optimizer.zero_grad()
-                accum_count = 0
-
-    if accum_count > 0:
-        if accum_count < accumulation_steps:
-            scale = accumulation_steps / accum_count
-            for p in model.parameters():
-                if p.requires_grad and p.grad is not None:
+    if positions > 0:
+        if positions < accumulation_steps:
+            # Fewer valid losses than positions may have accumulated here; scale
+            # by the positions consumed so the step's magnitude matches the
+            # full steps above rather than inflating a short tail.
+            scale = accumulation_steps / positions
+            for p in trainable_params:
+                if p.grad is not None:
                     p.grad.mul_(scale)
-        torch.nn.utils.clip_grad_norm_(
-            [p for p in model.parameters() if p.requires_grad], max_grad_norm
-        )
-        optimizer.step()
-        optimizer.zero_grad()
+        _finish_step()
 
     return {
         "mean_loss": total_loss / max(n_items, 1),
         "n_items": n_items,
         "n_skipped": n_skipped,
+        "n_steps": n_steps,
     }
 
 
 @torch.no_grad()
-def eval_epoch(model: nn.Module, eval_items: list) -> dict[str, Any]:
+def eval_epoch(
+    model: nn.Module, eval_items: list, choice_from_score: bool = False
+) -> dict[str, Any]:
     """Evaluate on a set of items. Returns loss and accuracy statistics."""
     model.eval()
     total_loss = 0.0
@@ -516,10 +536,10 @@ def eval_epoch(model: nn.Module, eval_items: list) -> dict[str, Any]:
     correct = 0
 
     for item in eval_items:
-        result = _eval_item(model, item)
+        result = _eval_item(model, item, choice_from_score)
         if result is None:
             continue
-        loss_val, is_correct = result
+        loss_val, is_correct, _details = result
         total_loss += loss_val
         n_items += 1
         if is_correct:
@@ -544,8 +564,18 @@ def train(
     checkpoint_dir: Path | None = None,
     eval_every: int = 1,
     accumulation_steps: int = 1,
+    mlp_lr: float | None = None,
 ) -> dict[str, Any]:
-    """Full training loop with evaluation and checkpointing."""
+    """Full training loop with evaluation and checkpointing.
+
+    Args:
+        mlp_lr: Separate learning rate for the MLP projector. None uses
+            ``lr``. Appended after the original parameters so existing
+            positional calls keep their meaning.
+    """
+    # `trainable` is printed below and used by the single-group branch; the
+    # per-component branch does not define it, which left it unbound.
+    trainable = [p for p in model.parameters() if p.requires_grad]
     if mlp_lr is not None and hasattr(model, "projector") and not isinstance(model.projector, nn.Identity):
         projector_params = list(model.projector.parameters())
         projector_ids = {id(p) for p in projector_params}
@@ -556,7 +586,6 @@ def train(
         ], weight_decay=weight_decay)
         print(f"  Per-component LR: heads={lr}, mlp={mlp_lr}", flush=True)
     else:
-        trainable = [p for p in model.parameters() if p.requires_grad]
         optimizer = AdamW(trainable, lr=lr, weight_decay=weight_decay)
     warmup_epochs = max(1, epochs // 10)
     warmup = LinearLR(optimizer, start_factor=0.1, total_iters=warmup_epochs)
@@ -616,10 +645,15 @@ def train(
 def _eval_item(
     model: nn.Module,
     item: Any,
-) -> tuple[float, bool] | None:
-    """Evaluate a single item, returning (loss, is_correct).
+    choice_from_score: bool = False,
+) -> tuple[float, bool, dict[str, float] | None] | None:
+    """Evaluate a single item, returning (loss, is_correct, details).
 
-    Shared logic for eval_epoch and eval_epoch_detailed.
+    Shared logic for eval_epoch and eval_epoch_detailed. ``details`` carries
+    ``rps`` and ``mae`` for score items -- the two metrics that respect the
+    order of the levels, and the ones that can tell a near miss from a far one
+    -- and is ``None`` for noul and choice, whose levels are unordered.
+
     Returns None if the item was skipped (e.g. label not in option keys).
     """
     state = item.state
@@ -641,18 +675,34 @@ def _eval_item(
             pred_idx = logits.argmax(dim=-1).item()
             pred_key = keys[pred_idx]
             target_key = "true" if label else "false"
-            return (loss.item(), pred_key == target_key)
+            return (loss.item(), pred_key == target_key, None)
         else:
             logit = model.forward_noul(state, instructions)
             target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
             loss = F.binary_cross_entropy_with_logits(logit, target)
             pred = torch.sigmoid(logit).item() > 0.5
-            return (loss.item(), pred == label)
+            return (loss.item(), pred == label, None)
 
     elif q_type == "choice":
         criteria = question["criteria"]
         keys = list(criteria.keys())
         option_texts = [v or k for k, v in criteria.items()]
+        if choice_from_score:
+            # A `--score-form candidates` run never trained the choice head, so
+            # scoring choice items with it would report chance. The log-odds per
+            # candidate stand in as logits: cross-entropy softmaxes them, which
+            # preserves the argmax and gives a loss on the same scale as a
+            # choice item scored by its own head.
+            from model.evaluation.choice_candidates import score_candidates
+
+            if label not in keys:
+                return None
+            logits = torch.tensor(
+                [score_candidates(model, item)], dtype=torch.float32
+            )
+            target = torch.tensor([keys.index(label)], device=logits.device)
+            correct = logits.argmax().item() == keys.index(label)
+            return (F.cross_entropy(logits, target).item(), correct, None)
         logits = model.forward_choice(state, instructions, option_texts)
         if label not in keys:
             return None
@@ -660,7 +710,7 @@ def _eval_item(
         target = torch.tensor([target_idx], device=logits.device)
         loss = F.cross_entropy(logits, target)
         pred_idx = logits.argmax(dim=-1).item()
-        return (loss.item(), keys[pred_idx] == label)
+        return (loss.item(), keys[pred_idx] == label, None)
 
     elif q_type == "score":
         criteria = question["criteria"]
@@ -675,101 +725,52 @@ def _eval_item(
         pred_idx = logits.argmax(dim=-1).item()
         gold_idx = int(round(float(label)))
         gold_idx = max(0, min(n_levels - 1, gold_idx))
-        return (loss.item(), pred_idx == gold_idx)
+        probs = torch.softmax(logits, dim=-1)
+        rps = rps_from_probs(probs, target.unsqueeze(0)).item()
+        expected_level = (probs[0] * torch.arange(n_levels, device=probs.device)).sum()
+        mae = (expected_level - float(label)).abs().item()
+        return (loss.item(), pred_idx == gold_idx, {"rps": rps, "mae": mae})
 
     return None
 
 
 @torch.no_grad()
-def eval_epoch_detailed(model: nn.Module, eval_items: list) -> dict[str, Any]:
+def eval_epoch_detailed(
+    model: nn.Module, eval_items: list, choice_from_score: bool = False
+) -> dict[str, Any]:
     """Evaluate with per-type and per-source breakdowns.
 
-    Uses the same per-item logic as eval_epoch (forward pass + loss + prediction),
-    but accumulates into buckets keyed by question type and source.
+    Uses the same per-item logic as eval_epoch (forward pass + loss + prediction)
+    and hands one ``(source, type, loss, correct)`` row per scored item to
+    :func:`model.evaluation.breakdown.build_eval_breakdown`, which owns the
+    arithmetic. Keeping the aggregation out of this module lets it be tested on
+    an interpreter without torch, which is what CI has.
 
     Returns:
-        Dict with keys:
-        - "aggregate": {"mean_loss", "accuracy", "n_items", "correct"}
-        - "by_type": {type_name: {"mean_loss", "accuracy", "n_items", "correct"}}
-        - "by_source": {source_name: {"mean_loss", "accuracy", "n_items", "correct", "type"}}
+        Dict with keys ``aggregate``, ``by_type``, ``by_source`` and
+        ``by_source_type``; see :func:`build_eval_breakdown` for their shapes.
+        ``by_source[source]["type"]`` is ``None`` for a source that contributes
+        more than one question type, rather than naming whichever arrived first.
     """
     model.eval()
 
-    # Aggregate accumulators
-    total_loss = 0.0
-    n_items = 0
-    correct = 0
-
-    # Per-type accumulators
-    type_stats: dict[str, dict[str, float]] = {}
-    # Per-source accumulators
-    source_stats: dict[str, dict[str, Any]] = {}
-
+    rows: list[tuple[Any, ...]] = []
     for item in eval_items:
-        result = _eval_item(model, item)
+        result = _eval_item(model, item, choice_from_score)
         if result is None:
             continue
+        loss_val, is_correct, details = result
+        row: tuple[Any, ...] = (
+            item.source,
+            item.question.get("type", "noul"),
+            loss_val,
+            is_correct,
+        )
+        if details is not None:
+            row = row + (details["rps"], details["mae"])
+        rows.append(row)
 
-        loss_val, is_correct = result
-        q_type = item.question.get("type", "noul")
-        source = item.source
-
-        # Aggregate
-        total_loss += loss_val
-        n_items += 1
-        if is_correct:
-            correct += 1
-
-        # Per-type
-        if q_type not in type_stats:
-            type_stats[q_type] = {"total_loss": 0.0, "n_items": 0, "correct": 0}
-        type_stats[q_type]["total_loss"] += loss_val
-        type_stats[q_type]["n_items"] += 1
-        if is_correct:
-            type_stats[q_type]["correct"] += 1
-
-        # Per-source
-        if source not in source_stats:
-            source_stats[source] = {"total_loss": 0.0, "n_items": 0, "correct": 0, "type": q_type}
-        source_stats[source]["total_loss"] += loss_val
-        source_stats[source]["n_items"] += 1
-        if is_correct:
-            source_stats[source]["correct"] += 1
-
-    # Build result dicts
-    aggregate = {
-        "mean_loss": total_loss / max(n_items, 1),
-        "accuracy": correct / max(n_items, 1),
-        "n_items": n_items,
-        "correct": correct,
-    }
-
-    by_type = {}
-    for t, s in type_stats.items():
-        n = s["n_items"]
-        by_type[t] = {
-            "mean_loss": s["total_loss"] / max(n, 1),
-            "accuracy": s["correct"] / max(n, 1),
-            "n_items": n,
-            "correct": int(s["correct"]),
-        }
-
-    by_source = {}
-    for src, s in source_stats.items():
-        n = s["n_items"]
-        by_source[src] = {
-            "mean_loss": s["total_loss"] / max(n, 1),
-            "accuracy": s["correct"] / max(n, 1),
-            "n_items": n,
-            "correct": int(s["correct"]),
-            "type": s["type"],
-        }
-
-    return {
-        "aggregate": aggregate,
-        "by_type": by_type,
-        "by_source": by_source,
-    }
+    return build_eval_breakdown(rows)
 
 
 def train_multitask(
@@ -786,6 +787,8 @@ def train_multitask(
     accumulation_steps: int = 1,
     seed: int = 42,
     batch_backbone: int = 0,
+    rank: int = 0,
+    world_size: int = 1,
     save_every_epoch: bool = False,
     mlp_lr: float | None = None,
     noul_lr: float | None = None,
@@ -795,6 +798,7 @@ def train_multitask(
     uncertainty_weighting: bool = False,
     score_loss: str = "ce",
     k_augment: "KAugmentConfig | None" = None,
+    choice_from_score: bool = False,
 ) -> dict[str, Any]:
     """Multi-task training loop with type-balanced sampling and detailed eval.
 
@@ -821,14 +825,18 @@ def train_multitask(
             parameters (Kendall et al. 2018) to automatically balance losses.
         score_loss: ``"ce"`` or ``"rps"`` — how score-question levels are
             scored during training.  Evaluation is unaffected.
+        rank: This process's rank when ``world_size`` > 1.
+        world_size: Number of data-parallel processes. Each rank trains on a
+            stride shard of the epoch and gradients are averaged before every
+            optimizer step; evaluation is sharded and merged, so the reported
+            metrics match a single-process run.
         k_augment: option-count augmentation for choice items.  When set, a
-            ``fraction`` of each epoch's choice items are padded to a
-            log-uniform target K, with distractors drawn from the training
-            pool.  Eval items are never padded.  Selected items lose
-            ``teacher_probs`` whether or not they can be widened;
-            ``control=True`` selects the same items and drops the same teacher
-            distributions without padding, for an A/B baseline.  None (default)
-            leaves the data untouched.
+            ``fraction`` of each epoch's choice items are padded to a log-uniform
+            target K, with distractors drawn from the training pool.  Eval items
+            are never padded.  Selected items lose ``teacher_probs`` whether or
+            not they can be widened; ``control=True`` selects the same items and
+            drops the same teacher distributions without padding, for an A/B
+            baseline.  None (default) leaves the data untouched.
     """
     from data.k_augment import apply_k_augment_with_stats
     from data.sampler import MultitaskSampler
@@ -943,6 +951,9 @@ def train_multitask(
     best_eval_loss = float("inf")
     history: list[dict[str, Any]] = []
 
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+
     for epoch in range(1, epochs + 1):
         t0 = time.monotonic()
 
@@ -954,24 +965,28 @@ def train_multitask(
             if epoch == 1 or epoch % 5 == 0:
                 mode = "control" if k_augment.control else "pad"
                 print(
-                    f"  k_augment ({mode}): choice options "
-                    f"{aug_stats.encodes_before} -> {aug_stats.encodes_after} "
-                    f"(fraction={k_augment.fraction}, K in "
-                    f"[{k_augment.min_k}, {k_augment.max_k}], selected "
-                    f"{aug_stats.selected}/{aug_stats.choice_items}, padded "
-                    f"{aug_stats.padded}, realised K mean "
-                    f"{aug_stats.realised_mean:.1f} max {aug_stats.realised_max}, "
-                    f"target mean {aug_stats.target_mean:.1f}, under-filled "
-                    f"{aug_stats.under_filled}, teacher_probs dropped "
-                    f"{aug_stats.teacher_probs_dropped})",
+                    f"  k_augment ({mode}): choice options {aug_stats.encodes_before} -> "
+                    f"{aug_stats.encodes_after} "
+                    f"(fraction={k_augment.fraction}, K in [{k_augment.min_k}, "
+                    f"{k_augment.max_k}], selected {aug_stats.selected}/"
+                    f"{aug_stats.choice_items}, padded {aug_stats.padded}, "
+                    f"realised K mean {aug_stats.realised_mean:.1f} max "
+                    f"{aug_stats.realised_max}, target mean {aug_stats.target_mean:.1f}, "
+                    f"under-filled {aug_stats.under_filled}, "
+                    f"teacher_probs dropped {aug_stats.teacher_probs_dropped})",
                     flush=True,
                 )
+        # Augment the full epoch before sharding: every rank sees the same
+        # distractor pool and the same per-item selection, then trains on its
+        # stride shard.
+        epoch_items = shard(epoch_items, rank, world_size)
 
         train_stats = train_epoch(
             model, epoch_items, optimizer, max_grad_norm,
             accumulation_steps, batch_backbone, log_vars=log_vars,
-            score_loss=score_loss,
+            score_loss=score_loss, world_size=world_size,
         )
+        train_stats = gather_train_stats(train_stats, world_size)
         scheduler.step()
 
         elapsed = time.monotonic() - t0
@@ -983,16 +998,60 @@ def train_multitask(
             "lr": scheduler.get_last_lr()[0],
         }
 
+        # Device memory per epoch.  An 8B LoRA run reached 89 GiB and OOMed on
+        # its fifth epoch (issue #161); without a per-epoch series there is no
+        # way to tell growth from fragmentation after the fact.
+        #
+        # Both numbers are *peaks* over the phase they describe, not point
+        # samples: mixing a peak with an instantaneous reading produces pairs
+        # where reserved < allocated, which reads as a bug in the model rather
+        # than in the logger. `peak_reserved - peak_allocated` is the
+        # fragmentation figure the issue is actually about.
+        #
+        # The counters are reset *between* the phases, not once per epoch, so
+        # training and eval are never charged to each other. A single snapshot
+        # taken before eval would silently attribute eval's peak to the next
+        # epoch, which is exactly the shape that makes a heavier eval look like
+        # growth across epochs.
+        on_cuda = device.type == "cuda"
+
+        def _peak_snapshot() -> dict[str, Any] | None:
+            if not on_cuda:
+                return None
+            return peak_snapshot(
+                torch.cuda.max_memory_allocated,
+                torch.cuda.max_memory_reserved,
+                torch.cuda.memory_stats,
+                torch.cuda.reset_peak_memory_stats,
+            )
+
+        train_mem = _peak_snapshot()
+        if train_mem is not None:
+            log["gpu_mem_gb"] = {"train": train_mem}
+
         if epoch % eval_every == 0 or epoch == epochs:
-            eval_stats = eval_epoch_detailed(model, eval_items)
+            eval_stats = gather_eval_stats(
+                eval_epoch_detailed(
+                    model,
+                    shard(eval_items, rank, world_size),
+                    choice_from_score=choice_from_score,
+                ),
+                world_size=world_size,
+            )
             log["eval"] = eval_stats
 
+            eval_mem = _peak_snapshot()
+            if eval_mem is not None:
+                log["gpu_mem_gb"]["eval"] = eval_mem
+
             agg = eval_stats["aggregate"]
-            print(
-                f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} "
-                f"eval_loss={agg['mean_loss']:.4f} eval_acc={agg['accuracy']:.4f} "
-                f"({elapsed:.1f}s)"
-            )
+            mem_text = format_epoch_memory(train_mem, eval_mem)
+            if rank == 0:
+                print(
+                    f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} "
+                    f"eval_loss={agg['mean_loss']:.4f} eval_acc={agg['accuracy']:.4f} "
+                    f"({elapsed:.1f}s){mem_text}"
+                )
 
             # Per-type summary
             by_type = eval_stats.get("by_type", {})
@@ -1000,7 +1059,7 @@ def train_multitask(
             for t in sorted(by_type):
                 ts = by_type[t]
                 type_parts.append(f"{t}={ts['accuracy']:.3f}({ts['n_items']})")
-            if type_parts:
+            if type_parts and rank == 0:
                 print(f"    by_type: {' | '.join(type_parts)}", flush=True)
 
             # Log uncertainty weights if enabled
@@ -1011,13 +1070,14 @@ def train_multitask(
                     val = log_vars[t].item()
                     lv_parts.append(f"{t}={val:.4f}")
                     lv_snapshot[t] = round(val, 6)
-                print(f"    log_var: {' | '.join(lv_parts)}", flush=True)
+                if rank == 0:
+                    print(f"    log_var: {' | '.join(lv_parts)}", flush=True)
                 log["log_vars"] = lv_snapshot
 
             if agg["mean_loss"] < best_eval_loss:
                 best_eval_loss = agg["mean_loss"]
                 log["best"] = True
-                if checkpoint_dir:
+                if checkpoint_dir and rank == 0:
                     model.save_heads(checkpoint_dir / "best_heads.pt")
                     torch.save(
                         {
@@ -1029,14 +1089,14 @@ def train_multitask(
                         checkpoint_dir / "training_state.pt",
                     )
 
-            if save_every_epoch and checkpoint_dir:
+            if save_every_epoch and checkpoint_dir and rank == 0:
                 model.save_heads(checkpoint_dir / f"epoch_{epoch:03d}.pt")
-        else:
+        elif rank == 0:
             print(f"  epoch {epoch}/{epochs}: train_loss={train_stats['mean_loss']:.4f} ({elapsed:.1f}s)", flush=True)
 
         history.append(log)
 
-    if checkpoint_dir:
+    if checkpoint_dir and rank == 0:
         (checkpoint_dir / "history.json").write_text(json.dumps(history, indent=2, default=str))
 
     return {"history": history, "best_eval_loss": best_eval_loss}
