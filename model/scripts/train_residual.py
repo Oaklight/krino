@@ -78,8 +78,16 @@ def split_items(items: list, val_fraction: float, seed: int) -> tuple[list, list
     return train, val
 
 
-def head_logits(model: DecisionModel, item) -> torch.Tensor:
-    q = item.question
+def head_logits(
+    model: DecisionModel, item, question: dict | None = None
+) -> torch.Tensor:
+    """Head logits for an item, optionally over a substituted question.
+
+    The K-sweep swaps in a question with fewer options, so the head must score
+    the same option list the base distribution covers; otherwise the fused
+    logits have mismatched lengths.
+    """
+    q = question or item.question
     instructions = q.get("instructions", "")
     if q["type"] == "noul":
         logit = model.forward_noul(item.state, instructions).reshape(1)
@@ -89,13 +97,36 @@ def head_logits(model: DecisionModel, item) -> torch.Tensor:
     return model.forward_score(item.state, instructions, _options(q))
 
 
+def _active_teacher(probs: dict, name: str | None) -> dict | None:
+    """Pick one teacher from the multi-teacher mapping.
+
+    ``TypedQuestion.teacher_probs`` is namespaced by teacher
+    (``{"jev": {...}, "gpt": {...}}``).  Older caches stored a flat
+    ``{option: prob}`` dict, so both shapes must work; a namespaced dict read
+    as flat would silently fail the option-key check and drop every label.
+    """
+    if not probs:
+        return None
+    if all(isinstance(value, dict) for value in probs.values()):
+        for candidate in (name, "jev"):
+            if candidate and candidate in probs:
+                return probs[candidate]
+        return next(iter(probs.values()))
+    if any(isinstance(value, dict) for value in probs.values()):
+        return None
+    return probs
+
+
 def soft_target(item, n_options: int) -> torch.Tensor | None:
     """Teacher distribution over options, when the item carries one.
 
     Returns ``None`` when the item has no teacher_probs or when the labels do
     not line up with the option keys, so the caller falls back to a hard label.
     """
-    probs = getattr(item, "teacher_probs", None)
+    probs = _active_teacher(
+        getattr(item, "teacher_probs", None) or {},
+        getattr(item, "teacher_name", None),
+    )
     if not probs or len(probs) != n_options:
         return None
     q = item.question
@@ -194,6 +225,28 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--rank", type=int, default=32)
     parser.add_argument("--max-length", type=int, default=2048)
+    parser.add_argument(
+        "--option-marker",
+        action="store_true",
+        help="Score options at a marker token (chunk=1 is the only exact setting)",
+    )
+    parser.add_argument("--option-chunk-size", type=int, default=1)
+    parser.add_argument("--option-max-tokens", type=int, default=64)
+    parser.add_argument(
+        "--option-batch",
+        type=int,
+        default=1,
+        help="Score this many options per forward along the batch dimension "
+        "(1 = one suffix forward per option, the sequential path)",
+    )
+    parser.add_argument(
+        "--lora-layers",
+        type=int,
+        default=None,
+        help="Inject LoRA into the last N blocks (negative = every block)",
+    )
+    parser.add_argument("--lora-rank", type=int, default=16)
+    parser.add_argument("--lora-alpha", type=int, default=32)
     parser.add_argument("--epochs", type=int, default=4)
     parser.add_argument("--patience", type=int, default=1)
     parser.add_argument("--lr", type=float, default=1e-3)
@@ -237,9 +290,17 @@ def main() -> int:
         mlp_layers=0,
         gpu_config=gpu,
         max_length=args.max_length,
+        option_marker=args.option_marker,
+        option_chunk_size=args.option_chunk_size,
+        option_max_tokens=args.option_max_tokens,
+        option_batch=args.option_batch,
+        lora_layers=args.lora_layers,
+        lora_rank=args.lora_rank,
+        lora_alpha=args.lora_alpha,
     )
     alphas = {t: torch.nn.Parameter(torch.zeros((), device=args.device)) for t in TYPES}
     head_params = [p for p in model.parameters() if p.requires_grad]
+    trainable_names = {name for name, p in model.named_parameters() if p.requires_grad}
     optimizer = torch.optim.AdamW(
         [
             {"params": head_params, "lr": args.lr},
@@ -294,7 +355,13 @@ def main() -> int:
             best = metrics["corrected"]
             stale = 0
             best_state = {
-                "heads": {k: v.detach().cpu() for k, v in model.state_dict().items()},
+                # Head-only for a frozen backbone; LoRA adapters sit under
+                # ``backbone.`` and stay because they are trainable.
+                "heads": {
+                    k: v.detach().cpu()
+                    for k, v in model.state_dict().items()
+                    if "backbone" not in k or k in trainable_names
+                },
                 "alpha": {t: float(a.detach()) for t, a in alphas.items()},
             }
         else:
@@ -314,12 +381,22 @@ def main() -> int:
                 "kl_weight": args.kl_weight,
                 "ce_weight": args.ce_weight,
                 "seed": args.seed,
+                "option_marker": args.option_marker,
+                "option_chunk_size": args.option_chunk_size if args.option_marker else None,
+                "option_max_tokens": args.option_max_tokens if args.option_marker else None,
+                "option_batch": args.option_batch if args.option_marker else None,
+                "lora_layers": args.lora_layers,
+                "lora_rank": args.lora_rank if args.lora_layers is not None else None,
+                "lora_alpha": args.lora_alpha if args.lora_layers is not None else None,
             },
             "history": history,
         },
         args.output / "residual.pt",
     )
     (args.output / "history.json").write_text(json.dumps(history, indent=1))
+    if torch.cuda.is_available():
+        peak = torch.cuda.max_memory_allocated() / 2**30
+        print(f"max_memory_allocated {peak:.1f} GiB", flush=True)
     print(f"saved {args.output/'residual.pt'} best_cc={best:.4f}", flush=True)
     return 0
 

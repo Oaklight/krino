@@ -216,3 +216,98 @@ class TestChanceCorrectedAccuracy:
         out = chance_corrected_accuracy(rows)
         assert out["accuracy"] == pytest.approx(0.5)
         assert out["corrected"] == pytest.approx(0.0)
+
+
+class TestResidualHeadQuestionOverride:
+    """The K-sweep swaps in a shorter question; the head must follow it."""
+
+    def test_head_logits_scores_the_substituted_question(self):
+        pytest.importorskip("torch")
+        from model.scripts.train_residual import head_logits
+
+        seen: list[list[str]] = []
+
+        class _Model:
+            def forward_choice(self, state, instructions, texts):
+                import torch
+
+                seen.append(list(texts))
+                return torch.zeros(1, len(texts))
+
+        class _Item:
+            id = "x"
+            state = "s"
+            question = {
+                "type": "choice",
+                "instructions": "pick",
+                "criteria": {"a": "A", "b": "B", "c": "C", "d": "D", "e": "E"},
+            }
+
+        swept = {"type": "choice", "instructions": "pick", "criteria": {"a": "A", "b": "B"}}
+        out = head_logits(_Model(), _Item(), swept)
+        assert out.shape == (1, 2)
+        assert seen == [["A", "B"]]
+
+    def test_head_logits_defaults_to_the_item_question(self):
+        pytest.importorskip("torch")
+        from model.scripts.train_residual import head_logits
+
+        seen: list[list[str]] = []
+
+        class _Model:
+            def forward_choice(self, state, instructions, texts):
+                import torch
+
+                seen.append(list(texts))
+                return torch.zeros(1, len(texts))
+
+        class _Item:
+            id = "x"
+            state = "s"
+            question = {
+                "type": "choice",
+                "instructions": "pick",
+                "criteria": {"a": "A", "b": "B"},
+            }
+
+        out = head_logits(_Model(), _Item())
+        assert out.shape == (1, 2)
+        assert seen == [["A", "B"]]
+
+
+class TestSoftTarget:
+    def test_namespaced_teacher_is_unwrapped(self):
+        pytest.importorskip("torch")
+        from model.scripts.train_residual import soft_target
+
+        class _Item:
+            teacher_name = "jev"
+            teacher_probs = {"jev": {"false": 0.25, "true": 0.75}}
+            question = {"type": "noul"}
+
+        out = soft_target(_Item(), 2)
+        assert out is not None
+        assert out.tolist() == pytest.approx([0.25, 0.75])
+
+    def test_flat_legacy_dict_still_works(self):
+        pytest.importorskip("torch")
+        from model.scripts.train_residual import soft_target
+
+        class _Item:
+            teacher_name = None
+            teacher_probs = {"false": 0.5, "true": 0.5}
+            question = {"type": "noul"}
+
+        out = soft_target(_Item(), 2)
+        assert out.tolist() == pytest.approx([0.5, 0.5])
+
+    def test_mismatched_keys_fall_back(self):
+        pytest.importorskip("torch")
+        from model.scripts.train_residual import soft_target
+
+        class _Item:
+            teacher_name = "jev"
+            teacher_probs = {"jev": {"a": 0.5, "b": 0.5}}
+            question = {"type": "noul"}
+
+        assert soft_target(_Item(), 2) is None

@@ -154,6 +154,7 @@ class DecisionModel(nn.Module):
         option_marker: bool = False,
         option_chunk_size: int = 32,
         option_max_tokens: int = 64,
+        option_batch: int = 1,
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -166,6 +167,7 @@ class DecisionModel(nn.Module):
         self.option_marker = option_marker
         self.option_chunk_size = max(1, option_chunk_size)
         self.option_max_tokens = max(1, option_max_tokens)
+        self.option_batch = max(1, option_batch)
         if option_marker and unified_head:
             raise ValueError(
                 "option_marker and unified_head are mutually exclusive: "
@@ -650,7 +652,10 @@ class DecisionModel(nn.Module):
         instruction_ids = self.tokenizer(
             " " + instructions, add_special_tokens=False
         )["input_ids"]
-        state_ids = self.tokenizer(state, add_special_tokens=False)["input_ids"]
+        # JevBench hard items carry a structured dict state; the concatenation
+        # above stringifies it, so the fallback must do the same or the
+        # tokenizer raises on a non-str input.
+        state_ids = self.tokenizer(str(state), add_special_tokens=False)["input_ids"]
         if len(instruction_ids) >= max_length:
             kept = instruction_ids[:max_length]
         else:
@@ -769,6 +774,91 @@ class DecisionModel(nn.Module):
             all_logits.append(self.marker_head(marker_hidden))
         return torch.cat(all_logits, dim=-1)
 
+    def _forward_options_batched(
+        self,
+        state: str,
+        instructions: str,
+        option_texts: list[str],
+        *,
+        group_size: int,
+    ) -> torch.Tensor:
+        """Score options in parallel along the batch dimension.
+
+        The sequential marker path runs one suffix forward per option, each
+        carrying a single query token, so the GPU is mostly idle.  This path
+        expands the prefix KV cache to ``group_size`` rows and scores that
+        many options in one forward.  Every row carries the shared prefix plus
+        exactly one ``option + marker`` block, so an option still sees only
+        the prefix and itself -- the property that forces chunk=1 in the
+        concatenating path.
+        """
+        option_ids = self._tokenize_option_ids(option_texts)
+        blocks = [ids + [self.marker_token_id] for ids in option_ids]
+        widest = max(len(block) for block in blocks)
+        if widest >= self.max_length:
+            raise ValueError(
+                f"option_marker needs room for a suffix of {widest} tokens "
+                f"inside max_length={self.max_length}; lower --option-max-tokens"
+            )
+        prefix_inputs = self._tokenize_context(
+            state, instructions, self.max_length - widest
+        )
+        prefix_len = prefix_inputs["input_ids"].shape[1]
+
+        prefix_outputs = self._backbone_forward(
+            prefix_inputs,
+            output_hidden_states=False,
+            use_cache=True,
+        )
+        cache = getattr(prefix_outputs, "past_key_values", None)
+        if cache is None or not hasattr(cache, "batch_repeat_interleave"):
+            return self._forward_options_no_cache(
+                prefix_inputs, self._chunk_option_ids(option_ids)
+            )
+
+        rows = min(group_size, len(blocks))
+        if rows > 1:
+            cache.batch_repeat_interleave(rows)
+
+        all_logits: list[torch.Tensor] = []
+        for start in range(0, len(blocks), group_size):
+            group = blocks[start : start + group_size]
+            padded = group + [group[-1]] * (rows - len(group))
+            input_ids = torch.zeros(
+                (rows, widest), dtype=torch.long, device=self.device
+            )
+            attention_mask = torch.zeros(
+                (rows, prefix_len + widest), dtype=torch.long, device=self.device
+            )
+            attention_mask[:, :prefix_len] = prefix_inputs["attention_mask"]
+            position_ids = torch.full(
+                (rows, widest), prefix_len, dtype=torch.long, device=self.device
+            )
+            marker_index = torch.zeros(rows, dtype=torch.long, device=self.device)
+            for row, block in enumerate(padded):
+                n = len(block)
+                input_ids[row, :n] = torch.tensor(block, device=self.device)
+                attention_mask[row, prefix_len : prefix_len + n] = 1
+                position_ids[row, :n] = torch.arange(
+                    prefix_len, prefix_len + n, device=self.device
+                )
+                marker_index[row] = n - 1
+            outputs = self._backbone_forward(
+                {
+                    "input_ids": input_ids,
+                    "attention_mask": attention_mask,
+                    "position_ids": position_ids,
+                    "past_key_values": cache,
+                }
+            )
+            hidden = self.projector(
+                self.readout_project(self.readout(outputs.hidden_states).float())
+            )
+            picked = hidden[torch.arange(rows, device=self.device), marker_index]
+            all_logits.append(self.marker_head(picked.unsqueeze(0)))
+            self._crop_cache(cache, widest)
+        return torch.cat(all_logits, dim=-1)[:, : len(blocks)]
+
     def _forward_options_by_marker(
         self,
         state: str,
@@ -787,6 +877,10 @@ class DecisionModel(nn.Module):
         """
         if not option_texts:
             raise ValueError("option_marker readout needs at least one option")
+        if self.option_batch > 1:
+            return self._forward_options_batched(
+                state, instructions, option_texts, group_size=self.option_batch
+            )
 
         option_ids = self._tokenize_option_ids(option_texts)
         chunks = self._chunk_option_ids(option_ids)

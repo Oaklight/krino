@@ -33,18 +33,49 @@ def main() -> int:
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--shard",
+        type=int,
+        default=0,
+        help="This worker's slice index; use with --shards to split a run",
+    )
+    parser.add_argument("--shards", type=int, default=1)
+    parser.add_argument(
+        "--resume-from",
+        type=Path,
+        nargs="*",
+        default=None,
+        help="Extra cache files whose ids are already scored; added to --output's done set",
+    )
+    parser.add_argument(
+        "--option-batch",
+        type=int,
+        default=16,
+        help="Score this many options per forward by sharing the prefix KV cache",
+    )
     args = parser.parse_args()
 
+    if not 0 <= args.shard < args.shards:
+        raise SystemExit("--shard must be in [0, --shards)")
+
     done: set[str] = set()
-    if args.output.exists():
-        for line in args.output.read_text().splitlines():
+    resume_files = ([args.output] if args.output.exists() else []) + list(args.resume_from or [])
+    for resume in resume_files:
+        if not resume.exists():
+            continue
+        for line in resume.read_text().splitlines():
             if line.strip():
-                done.add(json.loads(line)["id"])
+                try:
+                    done.add(json.loads(line)["id"])
+                except json.JSONDecodeError:
+                    continue
+    if done:
         print(f"resuming: {len(done)} items already cached", flush=True)
 
     items = [item for item in load_jsonl(args.items) if item.id not in done]
     if args.limit is not None:
         items = items[: args.limit]
+    items = items[args.shard :: args.shards]
     print(f"{len(items)} items to score", flush=True)
 
     scorer = RawReranker(args.model, args.device)
@@ -57,10 +88,13 @@ def main() -> int:
             options = _raw_options(q)
             if len(options) < 2:
                 continue
-            scores = [
-                scorer._score_option(item.state, q.get("instructions", ""), q["type"], label, desc)
-                for label, desc in options
-            ]
+            scores = scorer.score_many(
+                item.state,
+                q.get("instructions", ""),
+                q["type"],
+                options,
+                group_size=args.option_batch,
+            )
             total = sum(scores) or 1.0
             record = {
                 "id": item.id,
