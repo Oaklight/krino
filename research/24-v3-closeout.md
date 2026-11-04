@@ -18,7 +18,8 @@ resamples, on the Qwen3.5-4B predictions). The hard tier alone (111 items)
 needs about 16 pp of accuracy for 80% power (`research/23`). Arm rows, commands
 and pre-registered gates are in `model/experiments/residual/manifest.jsonl`;
 per-arm results are the `jevbench*.json` and `history.json` files beside it and
-in `results/gate/`.
+in `results/gate/`. The manifest is append-only: an arm can have several rows,
+and its last row is its current status.
 
 ## What was measured
 
@@ -47,8 +48,10 @@ B2 gain they confirmed.
 | abstention20k | answerable Bernoulli head | AURC 0.4978 / 0.4611 / 0.4948 vs max-prob 0.6315 / 0.5872 / 0.6401 | — | confirmed (3 seeds) |
 
 The two noul label-repair arms (`noul_union_marker`, `noul_union_pooled`) were
-started by the data line and are gated in their own manifest rows; they belong
-to #207, not to this note.
+started by the data line and belong to #207, not to this note. Their gate is
+manifest row 76 (`noul_union_marker` rejected: cc 0.3926 vs 0.4318, hard
+0.4054 vs 0.4414, noul 0.6081 vs 0.6486) and row 77 (the pooled control), with
+`jevbench.json` and predictions committed beside each arm.
 
 The cc column can be audited item by item only where a prediction file was
 committed (`results/gate/*_predictions.jsonl`, `results/gate/qwen35_raw/paired/`):

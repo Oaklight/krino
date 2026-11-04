@@ -565,6 +565,10 @@ class ResidualScorer:
         self.base = RawReranker(base_model_name, device, loader_type=loader_type)
         checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
         config = checkpoint["config"]
+        #: The training config the scorer was rebuilt from.  The result JSON
+        #: records it, because the CLI readout flags do not apply to a
+        #: residual checkpoint and would mislabel what was evaluated.
+        self.checkpoint_config = dict(config)
         # One 4B copy when the checkpoint was trained on the reranker itself.
         # Two copies of the same weights cost 8 GiB and buy nothing: the
         # heads read the same hidden states the base already computes.  The
@@ -1174,6 +1178,7 @@ def main() -> None:
             "raw_scoring": (
                 getattr(model, "scoring_path", None) if args.raw_reranker else None
             ),
+            "checkpoint_config": getattr(model, "checkpoint_config", None),
         },
         "overall": summarize(rows, args.bins),
         "intelligence": {
