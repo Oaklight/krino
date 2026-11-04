@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from model.evaluation.gate import (
@@ -311,3 +313,75 @@ class TestSoftTarget:
             question = {"type": "noul"}
 
         assert soft_target(_Item(), 2) is None
+
+
+class TestRawRerankerDispatch:
+    """``--raw-reranker`` scores with the checkpoint's own logits, no heads."""
+
+    def test_the_raw_flag_bypasses_the_head_requirement(self, monkeypatch, tmp_path):
+        pytest.importorskip("torch")
+        from model.scripts import eval_gate
+
+        created: dict[str, str | None] = {}
+
+        class _Raw:
+            def __init__(self, name, device, loader_type=None):
+                created["name"] = name
+                created["loader_type"] = loader_type
+
+            def predict_row(self, item, question=None, item_id=None):
+                return Prediction(
+                    item_id=item.id,
+                    q_type="noul",
+                    label=item.label,
+                    probs=(0.2, 0.8),
+                    keys=("no", "yes"),
+                )
+
+        def _no_heads(*args, **kwargs):
+            raise AssertionError("load_model must not run for --raw-reranker")
+
+        monkeypatch.setattr(eval_gate, "RawReranker", _Raw)
+        monkeypatch.setattr(eval_gate, "load_model", _no_heads)
+        items = tmp_path / "items.jsonl"
+        items.write_text(
+            json.dumps(
+                {
+                    "id": "unit-1",
+                    "state": "the customer is angry",
+                    "question": {"type": "noul", "instructions": "answer?"},
+                    "label": True,
+                    "source": "unit",
+                    "split": "test",
+                }
+            )
+            + "\n"
+        )
+        output = tmp_path / "gate.json"
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "eval_gate.py",
+                "--raw-reranker",
+                "--model",
+                "Qwen/Qwen3.5-4B-Base",
+                "--qwen35-base",
+                "--data",
+                str(items),
+                "--no-order-sensitivity",
+                "--device",
+                "cpu",
+                "--output",
+                str(output),
+            ],
+        )
+
+        eval_gate.main()
+
+        assert created == {
+            "name": "Qwen/Qwen3.5-4B-Base",
+            "loader_type": "qwen35_base",
+        }
+        result = json.loads(output.read_text())
+        assert result["config"]["backbone"] == "Qwen/Qwen3.5-4B-Base"
+        assert result["counts"]["scored"] == 1
