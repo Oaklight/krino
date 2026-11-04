@@ -425,6 +425,29 @@ class TestBatchedOptionReadout:
         assert len(cache) == 1 + 3
 
 
+class TestTrainSafeBuckets:
+    """The padding-only variant must not change the scores."""
+
+    def test_scores_match_the_default_path(self) -> None:
+        # One model, two padding schemes, so the weights are identical.
+        model = _build_model(option_batch=16, option_chunk_size=1)
+        model.eval()
+        options = ["a", "bb", "ccc", "dddd", "eeeee"]
+        expected = model.forward_choice("state", "instr", options)
+        model.train_safe_buckets = True
+        actual = model.forward_choice("state", "instr", options)
+        assert torch.allclose(expected, actual, atol=1e-5)
+
+    def test_the_suffix_is_padded_to_a_multiple_of_eight(self) -> None:
+        model = _build_model(option_batch=16, train_safe_buckets=True)
+        model.forward_choice("state", "instr", ["o0", "o1", "o2"])
+        suffix_widths = [
+            width for kind, width in model.backbone.calls if kind == "suffix"
+        ]
+        assert suffix_widths and all(width % 8 == 0 for width in suffix_widths)
+        assert max(suffix_widths) < 64
+
+
 class TestNoulMarker:
     """Noul can share the marker readout as a two-option question."""
 
