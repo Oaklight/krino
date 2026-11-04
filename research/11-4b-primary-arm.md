@@ -1,6 +1,6 @@
 # 4B primary arm: preserve the base decision, add only what transfers
 
-Status: design. No trained arm yet.
+Status: B1 measured and killed (2026-11-03). No arm yet meets the primary gate.
 
 ## Why this note exists
 
@@ -107,6 +107,69 @@ B2 is only worth its cost if B1 shows the gate learns anything at all.
   for that type.
 - The gate reports pre (raw 4B JSON) and post (residual JSON) overall, per
   type, per tier, and per K bucket.
+
+## Arm B1 result (2026-11-03)
+
+`model/experiments/residual/B1/jevbench.json`, 231 public items, same scorer as B0:
+
+| Arm | Raw acc | cc | ECE | easy | hard | original |
+|---|---:|---:|---:|---:|---:|---:|
+| B0 raw 4B | 0.6407 | 0.4459 | 0.065 | 1.000 | 0.459 | 0.681 |
+| B1 residual | 0.6320 | 0.4395 | 0.088 | 1.000 | 0.423 | 0.708 |
+
+Per type, B1 vs B0: choice 0.597 vs 0.619, noul 0.662 vs 0.635, score 0.778
+vs 0.833. The alphas at the saved epoch are noul -0.036, choice 0.006,
+score 0.001: the gate barely moved, and the movement does not transfer.
+
+Held-out (n=999) chance-corrected went 0.447 -> 0.510 -> 0.459 -> 0.448 over
+four epochs. The 0.510 peak is one draw on a 999-item split; JevBench, the
+pre-registered instrument, lands 0.64 points below the base.
+
+Verdict: killed by its own rule (cc < 0.4459). The residual keeps the base
+distribution intact (ECE 0.088, QWK 0.893) but adds nothing on hard, which is
+where the 5.4-point gap lives. B2 is conditional on B1 showing transfer and
+therefore does not start. B3's precondition ("B1 fails structurally") is not
+met: B1 reproduced the base at step 0 and stayed within 0.9 points of it.
+
+Two facts for the next attempt: 5,000 cached items is one thirtieth of the
+designed 20-40K subset, and 94.4% of the corpus is hard-label CE. A rerun at
+the same scale with the same recipe would repeat this result; the lever is
+data (teacher-labeled items, long-context hard items), not another epoch.
+
+## Arm B2 result (2026-11-03): the marker readout clears the gate
+
+`model/experiments/residual/B2/jevbench.json`. Same cache, split, rank, KL and
+CE weights as B1; only the readout differs (marker, chunk 1).
+
+| Arm | Raw acc | cc | ECE | easy | hard | original | choice | noul | score |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| B0 raw 4B | 0.6407 | 0.4459 | 0.065 | 1.000 | 0.459 | 0.681 | 0.619 | 0.635 | 0.833 |
+| B1 pooled residual | 0.6320 | 0.4395 | 0.088 | 1.000 | 0.423 | 0.708 | 0.597 | 0.662 | 0.778 |
+| B2 marker residual | **0.6494** | **0.4603** | 0.075 | 1.000 | 0.459 | 0.708 | 0.626 | 0.649 | 0.833 |
+
+B2 beats the base by 1.44 cc points and B1 by 2.08, ties hard exactly, and
+keeps B1's original gain. The alphas engage this time: noul -0.041, choice
+-0.048, score -0.127, against B1's +0.006 for choice. Held-out cc reached
+0.531 at epoch 4 without early stopping.
+
+The pre-registered gate was `cc >= 0.4459 and hard >= 0.459`. Both hold, so
+B2 is promoted to the confirm stage.
+
+Read the size honestly: 1.44 points on 231 items is inside the per-item noise
+band (about 3.3 points at one standard error). Promotion means it cleared a
+bar fixed before the run, not that the improvement is established. The confirm
+stage is the instrument for that, and it is registered as `confirm_frozen` in
+`model/experiments/residual/manifest.jsonl` before it starts.
+
+## Confirm stage (2026-11-03, running)
+
+Two seeds (43, 44), 20 epochs, patience 1, same cache and recipe as B2.
+Gate: confirmed if both seeds reach cc >= 0.4459; rejected if either falls
+below 0.4395; otherwise inconclusive.
+
+§7's confirm stage also lists a LoRA arm. `train_residual.py` has no LoRA path
+yet, and the marker readout disables gradient checkpointing by design, so a
+LoRA confirmation needs a memory check first. It is not started.
 
 ## Open problems
 
