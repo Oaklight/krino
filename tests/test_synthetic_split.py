@@ -6,8 +6,16 @@ Imports nothing from torch, so it runs on a bare interpreter (and in CI).
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from pathlib import Path
+
+import pytest
 
 from data.pipeline import _synthetic_family_split
+
+# The corpus is on HuggingFace, not in git; skip the real-data checks on a
+# fresh clone until `python -m data.hf_sync` has run.
+SYNTHETIC_DIR = Path(__file__).resolve().parents[1] / "data" / "benchmarks" / "synthetic"
+HAS_SYNTHETIC = any(SYNTHETIC_DIR.glob("*_families.jsonl"))
 
 
 class TestFamilySplit:
@@ -69,6 +77,10 @@ class TestFamilySplit:
         assert all(_synthetic_family_split("d", i, 1.0) == "test" for i in range(50))
 
 
+@pytest.mark.skipif(
+    not HAS_SYNTHETIC,
+    reason="synthetic corpus not synced; run `python -m data.hf_sync`",
+)
 class TestRealDataSplit:
     def test_no_family_leaks_across_splits(self):
         """Every variant of a family must land on the same side."""
