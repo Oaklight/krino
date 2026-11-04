@@ -45,9 +45,10 @@ Reading it:
   reversing the options changes 0 predictions on both paths, `mean_tv` is 0.0,
   and `accuracy_before == accuracy_after` (0.6943 shared, 0.6879 per-option).
   Raw scoring rates each option independently, and the shared path keeps that.
-  The stock bf16 runs in `results/gate/qwen35_raw/` show 1-36 reversal flips
-  (`changed_fraction` 0.013-0.229); those come from argmax ties broken by
-  position under the bf16 readout.
+  The stock bf16 runs in `results/gate/qwen35_raw/` show 2-36 reversal flips
+  (`changed_fraction` 0.013-0.229). Inference, not checked per item: with each
+  option scored independently, the likely cause is exact bf16 ties broken by
+  position, the same mechanism as the exact-0.5 tie below.
 - `accuracy_after` before this PR: `Prediction.label_index` read a score label
   as a position, so a reversed score item that kept its answer was counted
   wrong. 37 older artifacts carry that field (`results/gate/`,
