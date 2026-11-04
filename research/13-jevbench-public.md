@@ -305,6 +305,136 @@ head and the native readout. Whatever limits this benchmark at 4B is in the
 model's ability to reason over a long composite state, not in how we render the
 prompt. That is worth knowing before anyone spends a training run on it.
 
+## The long state is the wall — measured, not asserted
+
+The paragraph above was a hypothesis when it was written. It is now a
+measurement: the per-item predictions (`--dump-predictions`) joined to each
+item's state length, for the **tower** head and for the backbone's zero-shot
+native readout on the **same checkpoint** (s123, epoch 10).
+
+| hard-tier state length | n | tower head | native readout |
+|---|---:|---:|---:|
+| 350 – 987 chars | 27 | **0.630** | **0.667** |
+| 995 – 1,493 | 27 | 0.407 | 0.407 |
+| 1,553 – 8,377 | 27 | 0.296 | 0.259 |
+| 8,566 – 14,986 | 30 | **0.300** | **0.367** |
+
+Both scorers lose about 30 points from the shortest quartile to the longest, at
+the same places. The longest state in the tier is ~3.7k tokens, inside the
+16,384 window, so this is not truncation, and the two scorers build their
+prompts differently — so it is not the prompt either.
+
+**The head column is the tower's, and the cross-encoder's cut differs.** On one
+recomputed cut for both (`research/21`, `model/scripts/jevbench_quartiles.py`) the
+cross-encoder scores 0.704 / 0.393 / 0.250 / 0.429 across the same quartiles — a
+27-point spread rather than 38, and not monotone. Both columns are 27–28 items
+wide, so a quartile's standard error is about 9 points and only the tower's fall is
+clearly resolvable. What separates them is the longest quartile, where the
+cross-encoder is 18 points ahead — and `research/22` measures why that is the
+quartile a tower loses: the same questions padded with 1,400 tokens of irrelevant
+text cost the tower 24 points and the cross-encoder 1.
+
+Two other cuts rule out the explanations that would have been cheaper to fix:
+
+- **Structured states are not the problem.** Hard-tier accuracy is 0.486 on the
+  35 dict-state items against 0.368 on the 76 string-state ones. The rendering
+  works, and the structured items are simply shorter.
+- **Option count is not the problem.** Hard items with 2–4 options score 0.444;
+  5–10 score 0.238.
+
+**Is the head the problem? This tier cannot say.** Swapping the tower head for the
+cross-encoder raises the board a lot and leaves the hard column where it was:
+
+| model | easy (48) | hard (111) | original (72) | overall (231) |
+|---|---:|---:|---:|---:|
+| 4B tower, epoch 10 | 0.792 | 0.405 | 0.486 | 0.511 |
+| 0.6B cross-encoder, epoch 1 | 1.000 | 0.396 | 0.611 | 0.589 |
+| 4B cross-encoder, epoch 1 | 1.000 | **0.405** | 0.722 | 0.628 |
+| **4B cross-encoder, epoch 3** | 1.000 | 0.441 | 0.681 | **0.632** |
+| **4B cross-encoder, epoch 4** | 1.000 | 0.450 | 0.597 | 0.610 |
+
+The hard column drifts 0.396 → 0.450 across five models, and it reads as a
+movement. It is not one. Paired on the items (`model/scripts/paired_mcnemar.py`),
+tower ep10 against the cross-encoder at epochs 3 and 4 gives 16/20 and 16/21
+discordant items at **p = 0.62 and 0.51**, and epoch 3 against epoch 4 gives 9/10
+at p = 1.00. The models disagree on a third of the tier and split those
+disagreements evenly, which is what two models of similar quality look like on 111
+items. **This tier cannot resolve a difference below sixteen points at 80 % power**
+(`#202` computes it exactly: 15.7 points at the measured 36 discordant items, and a
+ten-point gain has 38 % power), so every hard-tier figure in this note is a point
+estimate with that width and the column should be read as "about 0.4, and we
+cannot tell these models apart on it".
+
+What is left is the mechanism, which does not depend on a significance test:
+`research/22` isolates how much of the deficit is the tower's read-out rather than
+the state — padding the same questions with 1,400 tokens of irrelevant text costs
+the tower 24 points and the cross-encoder 1 — and the corpus audit below says why
+every architecture starts in the same place. Closing clause 4 needs a held-out set
+of roughly 255 paired items, and `datasets/public/` ships 231 against a hard tier
+that is 111 of 220 — so the set has to be authored, not found (`#202`).
+
+### What the corpus contains is a long state asked as a noul question, and almost never as a choice
+
+The wall has an explanation one query away, and it is about the input
+distribution rather than the model. `scripts/state_length_audit.py` reads the
+`state` field of every source the training config names, on the train split and
+capped at each source's own `max_train` — the corpus a run actually draws from,
+not the union of every file — and splits it by question type, because the
+conjunction is what the hard tier is made of.
+
+| | n | p50 | p90 | p99 | max |
+|---|---:|---:|---:|---:|---:|
+| corpus, all types | 172,262 | 246 | 2,017 | 14,093 | 54,765 |
+| **corpus, choice only** | **69,287** | **117** | **770** | 1,600 | 38,047 |
+| **JevBench hard, choice only** | **67** | **2,533** | — | — | 14,986 |
+
+The hard tier's *shortest quarter* starts at 1,274 characters, above the corpus's
+90th percentile for choice. Concretely, of the 69,287 choice items in the corpus:
+
+- **3.13 %** (2,167 items) are at least as long as a hard-tier item in its
+  shortest quarter;
+- **0.036 %** (25 items) reach the tier's median;
+- **0.003 %** (2 items) reach its upper quarter.
+
+The corpus does contain long states — `contractnli` at p50 2,774 characters,
+`multirc` at 1,661, `tabfact` at 847, `boolq` at 578 — but **every one of those
+sources is noul**. The choice sources are uniformly short: `banking77` p50 46
+characters, `piqa` 35, `commonsenseqa` 64, `swag` 67, `winogrande` 97,
+`hellaswag` 126. The only choice source of any size with real length is
+`typed_decisions` (p50 397, max 1,559, 800 items), and its maximum is still well
+below the 8,566 characters where the tier's longest quartile begins.
+
+So the model has been trained to answer long states as yes/no questions and short
+states as choice questions, and the hard tier asks a third thing — a 2.5 kB state
+with a list of options — that appears 25 times in 172,262 training items. That is
+where the region the tier lives in *is*, and it is why every architecture starts
+on the same 0.405: they differ in how they score an option, and none of them was
+trained where the tier sits. Moving off that number took two more training epochs
+on the cross-encoder, not a different scorer, and `research/22` shows the tower's
+extra loss on long items is its read-out diluting over a dilated context — a
+separate defect on top of the distribution one.
+
+The implication for what to build is specific and cheap relative to the accuracy
+it could recover: **generate long-state choice items**. The synthetic pipeline
+already carries a `long_doc` family at 8,000 characters and an 8-domain
+"long-horizon" assembly, but the per-domain files are not what training reads —
+`data/pipeline.py` assembles synthetic states at load time, so this audit excludes
+them rather than measure them wrongly. Whether the assembled corpus closes the
+length gap is a question about the loader, and the next thing to measure.
+
+That measurement exists for the second half of the question — whether the wall is
+about length or content — and it says mostly length: padding the same items with
+neutral prose reproduces 24 of the quartile table's 33 points without adding a
+single fact (`research/22`). So the corpus gap matters, but so does anything that
+stops a long sequence from diluting the pooled position.
+
+Two limits on this table. Lengths are characters of the `state` field, and what
+the model sees is `state + instructions`, so the gap in tokens is a little
+smaller than the gap in characters — not enough to matter at 20×. And the 67
+hard-tier choice items are 60 % of the 111-item tier; the remaining 44 are noul,
+whose accuracy is not split out by state length here, so this explains most of
+the tier's deficit but not measurably all of it.
+
 ## The reference numbers measure something other than accuracy
 
 The goal quotes "teacher 84.9, best open student 74.1" as JevBench references, and
@@ -369,6 +499,44 @@ on the same weights. Their row is not reproducible from their own documentation,
 so it is not a yardstick for ours. Our hard-tier choice accuracy is **0.373-0.493
 in our harness**, full stop, and no statement about how that compares to the
 untrained base on the board's terms is available.
+
+### The reference pair is two protocol versions old, and the item-matched table cannot be refreshed
+
+The goal quotes "teacher 84.9, best open student 74.1". **Neither number appears on
+the live board.** Checked 2026-10-30 against `jevbench-v1.7.3-results.json`
+(sha256 `95251a65…`; the numbers are snapshotted in
+`model/experiments/jevbench_board_v1_7_3_snapshot.json` so this stays checkable
+after the board moves again):
+
+| row | rank | composite | open-half intelligence | open hard choice (n=68) |
+|---|---:|---:|---:|---:|
+| singularity-super-decider | 1 | 78.48 | 78.81 | 0.7735 |
+| h2o-lightning-4b — best *open weights* | 11 | 73.78 | 61.05 | 0.6980 |
+| **Jev 1.13.0** | 21 | **71.45** | **65.60** | 0.7169 |
+| Jev 1.14.0 | 29 | 70.15 | 66.09 | 0.7358 |
+
+That is 270 ranked rows under protocol `jevbench::v1.7`, over a **300-item open
+sample and 1,200 sealed items**, with the sealed share reported as half of the
+intelligence axis. The v1.2 artifact this note's item-matched table came from
+scored 534 decisions with a different composite. So the pair in the goal is not
+merely two different quantities (composite versus composite-adjacent
+intelligence); it is also from a protocol that has since been replaced, and no
+current row reports either value.
+
+**The item-matched table is pinned to the v1.3.0 artifact.** v1.7.3 publishes no
+per-item outcomes at all — there is no `tasks` or `public_tasks` payload anywhere
+in the 6.5 MB file. The only per-item file the benchmark ships is
+`results/v1.2/jevbench-v1.2-per-task.json`, whose `revision` is v1.3.0 and whose
+231 tasks are exactly the items we score (easy 48, standard 72 = our "original",
+hard 111). So the comparison in the section above can be rebuilt at any time, and
+cannot be extended: the live board's numbers are aggregates over its own open
+draw, whose item text it does not publish.
+
+Our 0.493 on the 67 hard choice items against Jev's 0.7169 on its 68 is therefore
+**indicative, not item-matched** — the counts are near-identical, which is
+suggestive but unverifiable without item ids, and it is 22 points rather than the
+27-39 the v1.3.0 item-matched table gives. Both readings say the same thing, and
+neither is the composite figure the goal names.
 
 ### Their documented mapping does not reproduce their number
 
@@ -482,16 +650,24 @@ whole reason the aggregate needed two seeds first.
 ## What this means for the goal
 
 Item 4 is the widest gap in the goal — 0.463 against a 74.1 reference — and
-Finding 4 says where it is. The fine-tuned backbones keep the reranker
+Finding 4 says where part of it is. The fine-tuned backbones keep the reranker
 capability (0.541 at 0.6B, where it improves on the base, and 0.623 at 4B, where
-it holds), and the choice head throws 14 to 21 points of it away. So the sentence
-this note would have ended on — that the model we train is worse than the model
-we started from — is true of the heads and false of the backbones, and the work
-belongs in how the choice head scores an option list. The trained choice head
-scores exactly 0.396 at both model sizes, which is the number that says the head,
-not the backbone, is the constraint — with Finding 5's qualification that the
-native readout wins only on short lists, and that the head is what keeps long
-lists and calibrated probabilities working.
+it holds), and the choice head throws 14 to 21 points of it away on the board as
+a whole. So the sentence this note would have ended on — that the model we train
+is worse than the model we started from — is true of the heads and false of the
+backbones, and for the easy and original tiers the work belongs in how the choice
+head scores an option list.
+
+**The hard tier is a different finding, and the last two sections change the
+prescription.** The head is not the whole constraint there — five models spanning
+0.511 to 0.632 overall sit within 5 points of each other on that column — but the
+column is also too narrow to separate them: no paired comparison on 111 items
+clears chance, so nothing on it can be called a gain or a loss. What the last two
+sections do establish is the mechanism, and it does not need a significance test.
+Two effects, in order: the corpus rarely asks the conjunction the tier is made of
+(25 items in 172,262), and the tower's read-out loses a further 24 points to
+dilution alone on the same questions. The first needs long-state choice items; the
+second is already fixed by scoring each option inside the state.
 
 That is one measurement, one seed, 231 items. The hard tier is where the
 remaining gap sits (0.351 against a 0.336 chance floor), and it is the column to
