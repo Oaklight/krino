@@ -1,0 +1,137 @@
+{
+ "repo": "oaklight/krino-data",
+ "repo_type": "dataset",
+ "revision": "e8eeebaca977c83bd6f338f42e0fa8c5150896b0",
+ "files": {
+  "derived/abstention/20k/train.jsonl": {
+   "local": "data/benchmarks/abstention_20k/train.jsonl",
+   "sha256": "6642067e35d58f7ba543d2ad4cd884f816431d0ea3e1230b0ef873cfd4caf710",
+   "bytes": 3319592
+  },
+  "derived/abstention/20k/eval_negatives.jsonl": {
+   "local": "data/benchmarks/abstention_20k/eval_negatives.jsonl",
+   "sha256": "686c0749522958f0c850e3a83124dfc7d3037d9db2a7addd529ade30334cfa9e",
+   "bytes": 594515
+  },
+  "derived/abstention/20k/eval_positives.jsonl": {
+   "local": "data/benchmarks/abstention_20k/eval_positives.jsonl",
+   "sha256": "325fc6807630b49cc2a55e84189dc7a3f61c47e5d910aded02409bc42b30299f",
+   "bytes": 797704
+  },
+  "derived/abstention/20k/eval_mix.jsonl": {
+   "local": "data/benchmarks/abstention_20k/eval_mix.jsonl",
+   "sha256": "b2e949594e4539473f5d9eca219d3ffab4335b45ed9608532386e29fc2eeed1e",
+   "bytes": 1392219
+  },
+  "derived/abstention/20k/eval_base_ids.txt": {
+   "local": "data/benchmarks/abstention_20k/eval_base_ids.txt",
+   "sha256": "41315a8e21f154b9105da9f93bcf8aff229f683a30f5ab0250fd75bbab0fbe1f",
+   "bytes": 10741
+  },
+  "derived/abstention/20k/split.stats.json": {
+   "local": "data/benchmarks/abstention_20k/split.stats.json",
+   "sha256": "a52c1ddcc837dd6251075d241d0cf35662b4d04e369b41b5f7ce59fc8a2ac8a4",
+   "bytes": 427
+  },
+  "derived/abstention/30k/train.jsonl": {
+   "local": "data/benchmarks/abstention_30k/train.jsonl",
+   "sha256": "b37b3761c1325c260cd9734675785bdd098a10f3fedf88e71992d1e95909d5d1",
+   "bytes": 3957937
+  },
+  "derived/abstention/30k/eval_negatives.jsonl": {
+   "local": "data/benchmarks/abstention_30k/eval_negatives.jsonl",
+   "sha256": "dff442b2e59cf2a6ff6b8a1e4c0cf9c43563e2d278d696f0c34cfb0d04686854",
+   "bytes": 736763
+  },
+  "derived/abstention/30k/eval_positives.jsonl": {
+   "local": "data/benchmarks/abstention_30k/eval_positives.jsonl",
+   "sha256": "d61201aea9b7cbf83af32ea94c5cd78f2193964a613c3e9642d903b3b1d43453",
+   "bytes": 1075148
+  },
+  "derived/abstention/30k/eval_mix.jsonl": {
+   "local": "data/benchmarks/abstention_30k/eval_mix.jsonl",
+   "sha256": "e880027345933d644c6484226a194194b68bb35715f5041887caa3b3325f6c93",
+   "bytes": 1811911
+  },
+  "derived/abstention/30k/eval_base_ids.txt": {
+   "local": "data/benchmarks/abstention_30k/eval_base_ids.txt",
+   "sha256": "4d1bf8ee9c6d30a00e259b74cbef0d54832ad5b29467ab0bc504b8bda6fbdd81",
+   "bytes": 10372
+  },
+  "derived/abstention/30k/split.stats.json": {
+   "local": "data/benchmarks/abstention_30k/split.stats.json",
+   "sha256": "75b21f28e3dc708bef712d6aa365fc240000e3813c03b4287f2697d43a374d81",
+   "bytes": 427
+  },
+  "derived/long_context/hotpotqa/hotpotqa_long_choice.jsonl": {
+   "local": "data/benchmarks/hotpotqa_long_choice.jsonl",
+   "sha256": "647d217ce1f7f3fbf21e8cc75367f74afd39185884ea404de4df1092eb7af95a",
+   "bytes": 2467489
+  },
+  "derived/long_context/hotpotqa/hotpotqa_long_choice.stats.json": {
+   "local": "data/benchmarks/hotpotqa_long_choice.stats.json",
+   "sha256": "e5ad5946c6364f4a2eaca3735c63c9c333084eb334fba4c3ce9191d658a0c83f",
+   "bytes": 534
+  },
+  "derived/long_context/musique/musique_long_choice.jsonl": {
+   "local": "data/benchmarks/musique_long_choice.jsonl",
+   "sha256": "1128b8192380e290c1be9e6e5bf71d2b139f132baff8f9c6ddb181f62ef1e61f",
+   "bytes": 4139322
+  },
+  "derived/long_context/musique/musique_long_choice.stats.json": {
+   "local": "data/benchmarks/musique_long_choice.stats.json",
+   "sha256": "56c6a6efe64152e1678ed9ab06b7e24c68a1c59cdecae18cc36dfe3311306232",
+   "bytes": 475
+  },
+  "derived/tool_call/apigen/choice/apigen_tool_choice.jsonl": {
+   "local": "data/benchmarks/apigen_tool_choice.jsonl",
+   "sha256": "6fe7ba4b48e5e00546ee6efa456bc4b3f10818168a0d803169afe2ccb5d0e547",
+   "bytes": 16533087
+  },
+  "derived/tool_call/apigen/choice/apigen_tool_choice.stats.json": {
+   "local": "data/benchmarks/apigen_tool_choice.stats.json",
+   "sha256": "30437fc83db797714f5e714704c9cd35b619193cefe0e6bef3e720ce1db88c13",
+   "bytes": 658
+  },
+  "derived/tool_call/apigen/action/apigen_tool_action.jsonl": {
+   "local": "data/benchmarks/apigen_tool_action.jsonl",
+   "sha256": "1e198cec2e22f97ac01ba5e749d8e39c1777f3d81fcf354a518cdedad482a7a8",
+   "bytes": 13798985
+  },
+  "derived/tool_call/apigen/action/apigen_tool_action.stats.json": {
+   "local": "data/benchmarks/apigen_tool_action.stats.json",
+   "sha256": "21c54e99355a6e0f396cbde10bfc142511b3383fe2b5d796c9626c503f986c20",
+   "bytes": 473
+  },
+  "derived/tool_call/apigen/policy/apigen_policy_compliance.jsonl": {
+   "local": "data/benchmarks/apigen_policy_compliance.jsonl",
+   "sha256": "c10869a3a42c78bc92156ea0058e88a64523947ea8857de0c579152bc5d206d1",
+   "bytes": 5410583
+  },
+  "derived/tool_call/apigen/policy/apigen_policy_compliance.stats.json": {
+   "local": "data/benchmarks/apigen_policy_compliance.stats.json",
+   "sha256": "d42d319841a58c94b5698cd74282ac903ae6572e9773a82916db0884ebc35670",
+   "bytes": 384
+  },
+  "derived/noul_repair/union/label_target_30k_jev_noul_union_mix50.jsonl": {
+   "local": "data/benchmarks/label_target_30k_jev_noul_union_mix50.jsonl",
+   "sha256": "526d1a312cb48d0d2abbfe89271647d869fee6209db2bd5176fd480ccca9f54e",
+   "bytes": 79049660
+  },
+  "derived/noul_repair/union/label_target_30k_jev_noul_union_mix50.stats.json": {
+   "local": "data/benchmarks/label_target_30k_jev_noul_union_mix50.stats.json",
+   "sha256": "584140164def1969adf763dae0e80ce4a9286571083da8210a5981c41277b63c",
+   "bytes": 616
+  },
+  "derived/noul_repair/union/label_target_30k_jev_noul_union_agree_mix50.jsonl": {
+   "local": "data/benchmarks/label_target_30k_jev_noul_union_agree_mix50.jsonl",
+   "sha256": "1f84b245b59abc65f46c77b05397d293d535a3fdc1fc41b3c8fc8ab521d57cdb",
+   "bytes": 72356274
+  },
+  "derived/noul_repair/union/label_target_30k_jev_noul_union_agree_mix50.stats.json": {
+   "local": "data/benchmarks/label_target_30k_jev_noul_union_agree_mix50.stats.json",
+   "sha256": "1023bbbf8337d1cde3c3dae645dc57df3c87738876341d72ee7115153a2f614a",
+   "bytes": 652
+  }
+ }
+}
