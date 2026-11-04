@@ -25,7 +25,7 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v
 
-  # Eleven test files start with pytest.importorskip("torch") and therefore
+  # Eighteen test files call pytest.importorskip("torch") and therefore
   # never ran: the job above has no torch, so they counted as skips. That is the
   # hole a merge bug would hide in -- the LoRA merge is checked by exactly these
   # tests. This job installs the CPU wheel and runs those files.
