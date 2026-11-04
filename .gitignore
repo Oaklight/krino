@@ -20,6 +20,10 @@ data/benchmarks/*.jsonl
 !data/benchmarks/openjev/authored144.jsonl
 !data/benchmarks/openjev/authored_holdout.jsonl
 
+# The synthetic corpus lives on HuggingFace (oaklight/krino-data) and is
+# restored by `python -m data.hf_sync`; data/hf.lock pins every file.
+data/benchmarks/synthetic/*.jsonl
+
 
 # Web dashboard
 web/node_modules/
