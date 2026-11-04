@@ -165,9 +165,9 @@ def main() -> int:
         pipeline_mod.DATA_DIR = args.data_root / "data" / "benchmarks"
 
     cfg_path = ROOT / "model" / "configs" / "r2_reranker4b.yaml"
-    import yaml
+    from _vendor import yaml
 
-    cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    cfg = yaml.load(cfg_path.read_text(encoding="utf-8")) or {}
     from model.src.gpu_config import GPUConfig, estimate_model_billions
     from model.src.model_factory import build_decision_model
 

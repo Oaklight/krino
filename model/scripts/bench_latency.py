@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Any
 
 import torch
-import yaml
+from _vendor import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -193,7 +193,7 @@ def main() -> int:
     parser.add_argument("--warmup", type=int, default=3)
     args = parser.parse_args()
 
-    cfg = yaml.safe_load(args.config.read_text())
+    cfg = yaml.load(args.config.read_text())
     device = args.device
     use_cuda = device.startswith("cuda") and torch.cuda.is_available()
     if not use_cuda:

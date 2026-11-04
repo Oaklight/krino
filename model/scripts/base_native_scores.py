@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Any
 
 import torch
-import yaml
+from _vendor import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -66,7 +66,7 @@ def main() -> int:
     parser.add_argument("--json", type=Path, required=True)
     args = parser.parse_args()
 
-    cfg = yaml.safe_load(args.config.read_text(encoding="utf-8")) or {}
+    cfg = yaml.load(args.config.read_text(encoding="utf-8")) or {}
     if args.data_root:
         sources_mod.ROOT = args.data_root
         pipeline_mod.DATA_DIR = args.data_root / "data" / "benchmarks"
