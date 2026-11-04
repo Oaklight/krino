@@ -16,7 +16,7 @@ import random
 import sys
 from pathlib import Path
 
-import yaml
+from _vendor import yaml  # zerodep YAML; no PyYAML dependency
 
 from data.sources import load_source_items
 
@@ -35,7 +35,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
-    config = yaml.safe_load(args.config.read_text())
+    config = yaml.load(args.config.read_text())
     rng = random.Random(args.seed)
     keep = {name.strip() for name in args.sources.split(",") if name.strip()}
     items = []

@@ -33,7 +33,7 @@ import sys
 from pathlib import Path
 
 import torch
-import yaml
+from _vendor import yaml  # zerodep YAML; no PyYAML dependency
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -52,7 +52,7 @@ from model.training.supervised import eval_epoch_detailed, train_multitask
 def load_config(path: Path) -> dict:
     """Load YAML config file."""
     with open(path) as f:
-        return yaml.safe_load(f)
+        return yaml.load(f)
 
 
 def parse_layer_pair(
