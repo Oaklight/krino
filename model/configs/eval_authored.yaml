@@ -19,6 +19,12 @@
 
 model: Qwen/Qwen3-Reranker-4B
 rank: 128
+# The 4B runs were trained with `noul_rank: 128` (`r2_reranker4b.yaml`), so their
+# noul head is an MLP. Leaving this out builds a linear head, which the checkpoint
+# cannot fill: `load_heads` used to accept the mismatch silently and the flag family
+# scored 26/51 — chance — instead of 34/51. It now refuses the mismatch, so this
+# line is what makes the config load at all.
+noul_rank: 128
 readout: weighted
 choice_mode: cross_encoder
 shared_attention: true
