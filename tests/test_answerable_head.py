@@ -216,3 +216,32 @@ class TestAnswerableTarget:
         from model.scripts.train_residual import answerable_target
 
         assert answerable_target(self._item("gone", {"a": "", "b": ""})) is False
+
+
+class TestAnswerableLoss:
+    def test_item_loss_with_pos_weight_is_scalar(self) -> None:
+        """The BCE term must broadcast against a scalar logit.
+
+        A [1]-shaped pos_weight against a [] logit raised
+        "output with shape [] doesn't match the broadcast shape [1]" on the
+        first real training step.
+        """
+        from model.scripts.train_residual import item_loss
+
+        class _Item:
+            id = "i"
+            state = "the customer is angry"
+            label = False
+            answerable = False
+            teacher_probs = None
+            question = {"type": "noul", "instructions": "is it answerable?"}
+
+        model = _model(answerable_head=True)
+        base = torch.tensor([0.5, 0.5])
+        alphas = {
+            name: torch.zeros((), requires_grad=True)
+            for name in ("noul", "choice", "score")
+        }
+        loss, _, _ = item_loss(model, _Item(), base, alphas, 1.0, 0.2, 1.0, 0.5)
+        assert loss.ndim == 0
+        assert torch.isfinite(loss)

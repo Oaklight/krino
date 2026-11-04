@@ -200,7 +200,7 @@ def item_loss(
             float(answerable_target(item)), device=logit.device
         )
         pos_weight = torch.tensor(
-            [answerable_pos_weight], device=logit.device, dtype=logit.dtype
+            answerable_pos_weight, device=logit.device, dtype=logit.dtype
         )
         answerable_loss = answerable_weight * F.binary_cross_entropy_with_logits(
             logit, ans_label, pos_weight=pos_weight
@@ -305,6 +305,13 @@ def main() -> int:
         default=None,
         help="Abstention JSONL files; appended to train only, never to val",
     )
+    parser.add_argument(
+        "--exclude-ids",
+        type=Path,
+        default=None,
+        help="Text file of ids to drop from the main items and answerable items "
+        "(abstention eval base ids, so the eval never appears in training)",
+    )
     parser.add_argument("--val-fraction", type=float, default=0.2)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="cuda")
@@ -317,6 +324,15 @@ def main() -> int:
         rec["id"]: torch.tensor(rec["probs"], dtype=torch.float32) for rec in base_records
     }
     items = [item for item in items if item.id in base_probs]
+    exclude_ids: set[str] = set()
+    if args.exclude_ids:
+        exclude_ids = {
+            line.strip()
+            for line in args.exclude_ids.read_text().splitlines()
+            if line.strip()
+        }
+    if exclude_ids:
+        items = [item for item in items if item.id not in exclude_ids]
     if args.limit:
         items = items[: args.limit]
     train_items, val_items = split_items(items, args.val_fraction, args.seed)
@@ -326,7 +342,9 @@ def main() -> int:
     answerable_items = [
         item
         for item in answerable_items
-        if item.id in base_probs and getattr(item, "answerable", None) is not None
+        if item.id in base_probs
+        and item.id not in exclude_ids
+        and getattr(item, "answerable", None) is not None
     ]
     if args.answerable_head and not answerable_items:
         print(
