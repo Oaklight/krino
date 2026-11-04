@@ -15,7 +15,11 @@
     "seed": 42,
     "bins": 10,
     "data": "jevbench",
-    "data_sha256": "dcb90f876056ab65ffb2a5cdd606e1c42d98573dbfe794f122ab7a3c29e977fb"
+    "data_sha256": "dcb90f876056ab65ffb2a5cdd606e1c42d98573dbfe794f122ab7a3c29e977fb",
+    "raw_scoring": {
+      "path": "shared_prefix",
+      "readout": "float32_two_token"
+    }
   },
   "overall": {
     "n": 231,
@@ -664,7 +668,7 @@
     "failed": 0
   },
   "latency": {
-    "mean_s": 0.08821284880527008,
-    "median_s": 0.0769640770740807
+    "mean_s": 0.08700323074822237,
+    "median_s": 0.07577652507461607
   }
 }

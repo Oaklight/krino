@@ -29,6 +29,12 @@ SUFFIX_BUCKETS = (16, 32, 64, 96, 128, 256, 512)
 #: vary with K.
 ROW_BUCKETS = (1, 2, 4, 8, 16)
 
+#: Rows per ``RawReranker.score_many`` suffix batch.  Its warmup uses the same
+#: value; warming another row count leaves the served shape cold.  Eight is the
+#: latency sweet spot: at 4096 context the suffix forward costs 0.124 s at 16
+#: rows and 0.066 s at 8, while fewer rows barely help.
+SHARED_PREFIX_ROWS = 8
+
 
 def bucket_length(
     length: int,

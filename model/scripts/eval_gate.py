@@ -64,6 +64,7 @@ from model.src.gpu_config import GPUConfig
 from model.src.hybrid_cache import fork_prefix_cache
 from model.src.shape_buckets import (
     PREFIX_BUCKETS,
+    SHARED_PREFIX_ROWS,
     SUFFIX_BUCKETS,
     bucket_length,
     left_pad,
@@ -177,6 +178,13 @@ class RawReranker:
         #: shapes) instead of one full forward per option.  Off by default so
         #: the frozen raw baselines keep their measured path.
         self.shared_prefix = False
+
+    @property
+    def scoring_path(self) -> dict[str, str]:
+        """Which path and readout produced the scores, for the result config."""
+        if self.shared_prefix:
+            return {"path": "shared_prefix", "readout": "float32_two_token"}
+        return {"path": "per_option", "readout": "lm_head_model_dtype"}
 
     def _load_qwen35(self, model_name: str) -> None:
         """Load the text tower and vocabulary head of a Qwen3.5 checkpoint."""
@@ -334,10 +342,8 @@ class RawReranker:
             prefix_kwargs["logits_to_keep"] = 1
         prefix_out = self.model(**prefix_kwargs)
         prefix_cache = prefix_out.past_key_values
-        # Eight rows is the latency sweet spot: at 4096 context the suffix
-        # forward costs 0.124 s at 16 rows and 0.066 s at 8, while fewer rows
-        # barely help.  K > 8 uses extra groups over the same prefix cache.
-        rows = min(8, group_size)
+        # K > SHARED_PREFIX_ROWS uses extra groups over the same prefix cache.
+        rows = min(SHARED_PREFIX_ROWS, group_size)
         group_size = rows
         if not self.is_hybrid and rows > 1:
             prefix_cache.batch_repeat_interleave(rows)
@@ -387,9 +393,11 @@ class RawReranker:
                     picked = outputs.last_hidden_state[picks, last]
             if logits is None:
                 # Project onto the two answer tokens only, in float32.  A
-                # bf16 lm_head rounds logits near 10 to steps of 0.0625, so
-                # close options tie or swap on rounding alone (two JevBench
-                # noul items scored exactly 0.5); it also skips the 151k-248k
+                # bf16 lm_head rounds logits near 20 to steps of 0.125, so
+                # close options tie or swap on rounding alone: on Qwen3.5-4B-
+                # Base both options of original-adequacy-04-0 read (no, yes) =
+                # (20.375, 21.375) and tied at 0.5, while float32 gives yes-no
+                # gaps of 0.980 and 0.948.  It also skips the 151k-248k
                 # vocabulary projection.
                 head = self.lm_head if self.lm_head is not None else self.model.lm_head
                 weight = head.weight[[self.false_id, self.true_id]].float()
@@ -408,7 +416,9 @@ class RawReranker:
         return scores[: len(docs)]
 
     @torch.inference_mode()
-    def warmup_prefix_buckets(self, rows: int = 8, width: int = 64) -> None:
+    def warmup_prefix_buckets(
+        self, rows: int = SHARED_PREFIX_ROWS, width: int = 64
+    ) -> None:
         """Load the CUDA kernels for every prefix bucket.
 
         The first forward at a given tensor shape costs 0.4-1.3 s at 4B; a
@@ -986,7 +996,9 @@ def main() -> None:
         "--shared-prefix",
         action="store_true",
         help="With --raw-reranker: encode the prefix once and score options as "
-        "batched rows (also on hybrid Qwen3.5 caches) instead of one forward each",
+        "8-row batches instead of one forward each; hybrid Qwen3.5 caches are "
+        "forked per row group because their recurrent state cannot be cropped. "
+        "Reads P(yes) through a float32 two-token projection",
     )
     parser.add_argument("--rank", type=int, default=64)
     parser.add_argument("--dropout", type=float, default=0.1)
@@ -1159,6 +1171,9 @@ def main() -> None:
             "bins": args.bins,
             "data": data_label,
             "data_sha256": items_digest(items),
+            "raw_scoring": (
+                getattr(model, "scoring_path", None) if args.raw_reranker else None
+            ),
         },
         "overall": summarize(rows, args.bins),
         "intelligence": {
