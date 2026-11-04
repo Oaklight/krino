@@ -18,7 +18,12 @@ from transformers import PreTrainedModel, PreTrainedTokenizerBase
 from .backbone import is_hybrid_model
 from .choice_prompts import fit_option_prompts
 from .gpu_config import GPUConfig, print_gpu_info
-from .shape_buckets import PREFIX_BUCKETS, bucket_length, left_pad
+from .shape_buckets import (
+    PREFIX_BUCKETS,
+    bucket_length,
+    bucket_rows,
+    left_pad,
+)
 from .heads import (
     AttentionHead,
     ChoiceHead,
@@ -182,6 +187,7 @@ class DecisionModel(nn.Module):
         option_chunk_size: int = 32,
         option_max_tokens: int = 64,
         option_batch: int = 1,
+        train_safe_buckets: bool = False,
         choice_mode: str = "tower",
         answerable_head: bool = False,
     ) -> None:
@@ -208,6 +214,10 @@ class DecisionModel(nn.Module):
         self.option_chunk_size = max(1, option_chunk_size)
         self.option_max_tokens = max(1, option_max_tokens)
         self.option_batch = max(1, option_batch)
+        #: Padding-only bucket variant for training: keeps the semantic input
+        #: (context budget and reserve) identical, but pads the option block
+        #: to a multiple of 8 and the row count to a power-of-two bucket.
+        self.train_safe_buckets = bool(train_safe_buckets)
         if option_marker and unified_head:
             raise ValueError(
                 "option_marker and unified_head are mutually exclusive: "
@@ -1052,13 +1062,18 @@ class DecisionModel(nn.Module):
         # and the context is tokenized against that reserve, so every long
         # item lands on the same 1984-token prefix bucket instead of an
         # exact length.  Every padded position is masked out.
-        width = max(64, widest)
+        #
+        # ``train_safe_buckets`` keeps the same context budget and reserve,
+        # so the tokens the model sees are identical; it only shrinks the
+        # padded suffix to a multiple of 8.
+        reserve = max(64, widest)
+        width = ((widest + 7) // 8) * 8 if self.train_safe_buckets else reserve
         prefix_inputs = self._tokenize_context(
-            state, instructions, self.max_length - width
+            state, instructions, self.max_length - reserve
         )
         real_prefix_len = prefix_inputs["input_ids"].shape[1]
         prefix_bucket = bucket_length(
-            real_prefix_len, PREFIX_BUCKETS, limit=self.max_length - width
+            real_prefix_len, PREFIX_BUCKETS, limit=self.max_length - reserve
         )
         if prefix_bucket + width > self.max_length:
             prefix_bucket, width = real_prefix_len, widest
@@ -1102,8 +1117,14 @@ class DecisionModel(nn.Module):
             )
 
         # Eight rows, matching the base path: at long context the suffix
-        # attention dominates and 16 rows cost twice the 8-row time.
-        rows = min(8, group_size)
+        # attention dominates and 16 rows cost twice the 8-row time.  The
+        # training-safe variant buckets the row count to the actual option
+        # count, so small K does not pay for eight rows.
+        rows = (
+            bucket_rows(min(8, len(blocks)))
+            if self.train_safe_buckets
+            else min(8, group_size)
+        )
         group_size = rows
         if rows > 1:
             cache.batch_repeat_interleave(rows)

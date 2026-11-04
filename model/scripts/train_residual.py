@@ -281,6 +281,12 @@ def main() -> int:
         "(1 = one suffix forward per option, the sequential path)",
     )
     parser.add_argument(
+        "--train-safe-buckets",
+        action="store_true",
+        help="Pad the option block to a multiple of 8 and the row count to a "
+        "power-of-two bucket; identical tokens, smaller padded shapes",
+    )
+    parser.add_argument(
         "--lora-layers",
         type=int,
         default=None,
@@ -396,6 +402,7 @@ def main() -> int:
         option_chunk_size=args.option_chunk_size,
         option_max_tokens=args.option_max_tokens,
         option_batch=args.option_batch,
+        train_safe_buckets=args.train_safe_buckets,
         lora_layers=args.lora_layers,
         lora_rank=args.lora_rank,
         lora_alpha=args.lora_alpha,
@@ -496,6 +503,7 @@ def main() -> int:
                 "option_chunk_size": args.option_chunk_size if args.option_marker else None,
                 "option_max_tokens": args.option_max_tokens if args.option_marker else None,
                 "option_batch": args.option_batch if args.option_marker else None,
+                "train_safe_buckets": args.train_safe_buckets,
                 "lora_layers": args.lora_layers,
                 "lora_rank": args.lora_rank if args.lora_layers is not None else None,
                 "lora_alpha": args.lora_alpha if args.lora_layers is not None else None,
