@@ -252,3 +252,155 @@ def test_derives_correct_from_pred_when_missing():
     record = {"id": "1", "gold": "a", "pred": "a", "p_answerable": 0.9}
     summary = _summary([record], "p_answerable")
     assert summary["coverage"][-1]["answered_accuracy"] == 1.0
+
+
+# ---------------------------------------------------------------------------
+# Train/eval split
+# ---------------------------------------------------------------------------
+
+
+def _abstention_fixture() -> tuple[list[TypedQuestion], list[TypedQuestion]]:
+    from model.scripts.build_abstention_sets import (
+        _choice_without_gold,
+        _insufficient,
+        _out_of_scope,
+    )
+
+    corpus: list[TypedQuestion] = []
+    negatives: list[TypedQuestion] = []
+    for i in range(10):
+        choice = _choice(f"c{i}")
+        corpus.append(choice)
+        negatives.append(_choice_without_gold(choice))
+        noul = _noul(f"n{i}", state="One. Two. Three. Four.")
+        corpus.append(noul)
+        negatives.append(_insufficient(noul, 0.5))
+        if i < 5:
+            negatives.append(_out_of_scope(noul, "a donor state"))
+    return corpus, [item for item in negatives if item is not None]
+
+
+def test_split_keeps_base_ids_on_one_side():
+    from model.scripts.split_abstention import base_id, split
+
+    corpus, negatives = _abstention_fixture()
+    parts = split(negatives, corpus, eval_fraction=0.2, seed=3)
+    train_bases = {base_id(item) for item in parts["train"]}
+    eval_bases = set(parts["eval_bases"])
+    assert eval_bases
+    assert not (train_bases & eval_bases)
+    assert train_bases | eval_bases == {item.id for item in corpus}
+    assert len(parts["train"]) + len(parts["eval_negatives"]) == len(negatives)
+
+
+def test_split_eval_mix_pairs_positives_with_negatives():
+    from model.scripts.split_abstention import base_id, split
+
+    corpus, negatives = _abstention_fixture()
+    parts = split(negatives, corpus, eval_fraction=0.2, seed=3)
+    assert {item.id for item in parts["eval_positives"]} == set(parts["eval_bases"])
+    for positive in parts["eval_positives"]:
+        assert positive.answerable is True
+        assert positive.reason is None
+        assert positive.split == "test"
+        assert positive.label is not None
+    for negative in parts["eval_negatives"]:
+        assert negative.answerable is False
+        assert negative.split == "test"
+        assert base_id(negative) in set(parts["eval_bases"])
+    assert all(item.split == "train" for item in parts["train"])
+
+
+def test_split_is_deterministic_and_honours_overrides():
+    from model.scripts.split_abstention import split
+
+    corpus, negatives = _abstention_fixture()
+    first = split(negatives, corpus, 0.2, 7)
+    second = split(negatives, corpus, 0.2, 7)
+    assert first["eval_bases"] == second["eval_bases"]
+
+    forced = split(negatives, corpus, 0.2, 7, eval_overrides={"c4", "n9"})
+    assert {"c4", "n9"} <= set(forced["eval_bases"])
+    assert len(forced["eval_bases"]) == len(first["eval_bases"])
+
+
+def test_split_main_writes_files_and_stats(tmp_path: Path):
+    from model.scripts.split_abstention import main as split_main
+
+    corpus, negatives = _abstention_fixture()
+    abstention_path = tmp_path / "abstention.jsonl"
+    corpus_path = tmp_path / "corpus.jsonl"
+    save_jsonl(negatives, abstention_path)
+    save_jsonl(corpus, corpus_path)
+
+    import sys
+
+    argv = sys.argv
+    sys.argv = [
+        "split_abstention.py",
+        "--abstention", str(abstention_path),
+        "--corpus", str(corpus_path),
+        "--out-dir", str(tmp_path / "split"),
+        "--eval-fraction", "0.2",
+        "--seed", "3",
+    ]
+    try:
+        assert split_main() == 0
+    finally:
+        sys.argv = argv
+
+    out = tmp_path / "split"
+    train = load_jsonl(out / "train.jsonl")
+    eval_negatives = load_jsonl(out / "eval_negatives.jsonl")
+    eval_positives = load_jsonl(out / "eval_positives.jsonl")
+    eval_mix = load_jsonl(out / "eval_mix.jsonl")
+    assert len(eval_mix) == len(eval_negatives) + len(eval_positives)
+    assert len(train) + len(eval_negatives) == len(negatives)
+
+    stats = json.loads((out / "split.stats.json").read_text())
+    assert stats["base_id_overlap"] == 0
+    assert stats["eval_negatives"] == len(eval_negatives)
+    assert stats["eval_positives"] == len(eval_positives)
+    assert stats["eval_bases_without_positive"] == []
+    assert stats["eval_base_ids"] == len(eval_positives)
+
+    ids = (out / "eval_base_ids.txt").read_text().splitlines()
+    assert len(ids) == len(eval_positives)
+
+
+def test_strict_counting_marks_answered_negative_incorrect():
+    records = [
+        _pred("1", True, 0.9, 0.9),
+        _pred("2", True, 0.8, 0.8, reason="out_of_scope"),
+        _pred("3", True, 0.2, 0.2, reason="insufficient"),
+    ]
+    strict = _summary(records, "p_answerable")
+    task = _summary(records, "p_answerable", strict_abstention=False)
+    # 50% of 3 -> ceil(1.5) = 2 answered: the positive plus one negative.
+    assert strict["coverage"][0]["answered"] == 2
+    assert strict["coverage"][0]["answered_accuracy"] == 0.5
+    # At 100% coverage strict counts only the positive; task counting credits all.
+    assert strict["coverage"][-1]["answered_accuracy"] == 1 / 3
+    assert task["coverage"][-1]["answered_accuracy"] == 1.0
+    assert strict["aurc"] > task["aurc"]
+
+
+def test_recall_by_reason_uses_global_cutoff():
+    from model.scripts.eval_abstention import _recall_by_reason
+
+    records = [
+        _pred("1", True, 0.9, 0.9),
+        _pred("2", True, 0.8, 0.8),
+        _pred("3", False, 0.4, 0.4, reason="none_of_these"),
+        _pred("4", False, 0.3, 0.3, reason="none_of_these"),
+        _pred("5", False, 0.2, 0.2, reason="insufficient"),
+        _pred("6", False, 0.1, 0.1, reason="insufficient"),
+    ]
+    recall = _recall_by_reason(records, "p_answerable", 50)
+    # cutoff = ceil(6*0.5) = 3 -> items 4-6 are abstained.
+    assert recall["none_of_these"] == 0.5
+    assert recall["insufficient"] == 1.0
+    recall_70 = _recall_by_reason(records, "p_answerable", 70)
+    # cutoff = ceil(6*0.7) = 5 -> only the last item is abstained.
+    assert recall_70["none_of_these"] == 0.0
+    assert recall_70["insufficient"] == 0.5
