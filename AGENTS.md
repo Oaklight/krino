@@ -47,7 +47,7 @@ tests/            — pytest test suite
 - Pipeline entry: `python -m data.synthetic`
 - Composable stages: `--stages base,counterfactual,paraphrase,negation,shuffle,fill-variants,repair,dedup,validate,llm-label,jev-label,report`
 - Data lives in `data/benchmarks/synthetic/` (gitignored)
-- Data is stored on HuggingFace: `oaklight/krino-synthetic` (private)
+- Data is stored on HuggingFace: `oaklight/krino-data` (public)
 - Config via `.env` at repo root (LLM_BASE_URL, LLM_API_KEY, etc.)
 
 ### Vendored Modules
@@ -79,10 +79,10 @@ tests/            — pytest test suite
 
 ```bash
 # Push synthetic data to HF
-python -m data.synthetic --push-to-hf oaklight/krino-synthetic
+python -m data.synthetic --push-to-hf oaklight/krino-data
 
 # Or via CLI
-hf upload oaklight/krino-synthetic data/benchmarks/synthetic/ . --repo-type dataset
+hf upload oaklight/krino-data data/benchmarks/synthetic/ . --repo-type dataset
 ```
 
 ## Before Committing

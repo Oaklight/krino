@@ -65,7 +65,7 @@ python model/scripts/train.py --encoder --model answerdotai/ModernBERT-base \
 | 论文 | [Oaklight/krino-paper](https://github.com/Oaklight/krino-paper) |
 | PyPI | [krino](https://pypi.org/project/krino/) |
 | 模型 | [oaklight/krino-*](https://huggingface.co/models?search=oaklight/krino) |
-| 数据集 | [oaklight/krino-synthetic](https://huggingface.co/datasets/oaklight/krino-synthetic) |
+| 数据集 | [oaklight/krino-data](https://huggingface.co/datasets/oaklight/krino-data) |
 | 文档 | [oaklight.github.io/krino](https://oaklight.github.io/krino) |
 | TypeSafe 文档 | [docs.typesafe.ai](https://docs.typesafe.ai) |
 
