@@ -516,17 +516,9 @@ class TestRawRerankerQwen35:
         score = reranker._score_option("state", "instr", "noul", "yes", "Yes")
         assert score == pytest.approx(0.99966466, rel=1e-5)
         assert set(tower.calls[-1]) == {"input_ids", "attention_mask"}
-
-        scores = reranker.score_many(
-            "state",
-            "instr",
-            "noul",
-            [("no", "No"), ("yes", "Yes")],
-        )
-        assert len(scores) == 2
-        for call in tower.calls:
-            assert "past_key_values" not in call
-            assert "use_cache" not in call
+        # Shared-prefix scoring on a hybrid cache needs a real cache object;
+        # tests/test_hybrid_prefix.py checks it against this per-option path
+        # on a tiny Qwen3.5 model.
 
     def test_qwen3_causal_path_is_unchanged(self, monkeypatch):
         eval_gate = pytest.importorskip("model.scripts.eval_gate")
