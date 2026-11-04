@@ -153,7 +153,7 @@ def _predict_original(
                 "source": item.source,
                 "_item": item,
             }
-        logit = float(model.forward_noul(state, instructions).reshape(-1)[0].item())
+        logit = float(model.forward_noul(state, instructions, question.get("criteria")).reshape(-1)[0].item())
         return {
             "type": "noul",
             "logits": [0.0, logit],

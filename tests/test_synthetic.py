@@ -12,6 +12,7 @@ import pytest
 
 from data.format import TypedQuestion
 from data.lsh import LSHIndex, MinHash, char_ngrams
+from data.synthetic import ensure_unique_family_indices
 from data.synthetic_dedup import dedup_families
 from data.synthetic_label import (
     CONFIDENCE_BUCKETS,
@@ -433,3 +434,28 @@ class TestJsonCompact:
     def test_compact_list(self):
         result = json_compact([1, 2, 3])
         assert result == "[1, 2, 3]"
+
+
+class TestFamilyIndices:
+    def test_duplicate_indices_are_reassigned(self):
+        families = [{"_family_idx": 0}, {"_family_idx": 0}, {"_family_idx": 2}]
+        reassigned = ensure_unique_family_indices(families, "domain")
+        assert reassigned == 1
+        assert [f["_family_idx"] for f in families] == [0, 3, 2]
+
+    def test_unique_indices_are_preserved(self):
+        families = [{"_family_idx": 7}, {"_family_idx": 3}]
+        assert ensure_unique_family_indices(families) == 0
+        assert [f["_family_idx"] for f in families] == [7, 3]
+
+    def test_missing_index_is_assigned(self):
+        families = [{"_family_idx": 0}, {}]
+        assert ensure_unique_family_indices(families) == 1
+        assert families[1]["_family_idx"] == 1
+
+    def test_repeated_calls_are_stable(self):
+        families = [{"_family_idx": 1}, {"_family_idx": 1}]
+        ensure_unique_family_indices(families)
+        first = [f["_family_idx"] for f in families]
+        assert ensure_unique_family_indices(families) == 0
+        assert [f["_family_idx"] for f in families] == first

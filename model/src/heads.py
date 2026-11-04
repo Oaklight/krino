@@ -8,6 +8,11 @@ Three type-specific heads, one per primitive:
 Plus one unified head that handles all three types via cross-attention:
   UnifiedHead: single AttentionHead for noul/choice/score
 
+One alternative readout:
+  OptionMarkerHead: scores the backbone hidden state at a marker token that
+  follows each option in the same sequence, instead of pooling each option
+  separately and cross-attending it to the context.
+
 LayerMixer sits between the backbone and the heads and chooses which
 backbone layers feed them (final layer, a mean of the last few, or a
 learned softmax mixture over all of them).
@@ -68,29 +73,67 @@ class LayerMixer(nn.Module):
     layers.  ``weighted`` learns a softmax mixture over every layer; it is
     initialised to put :data:`_INIT_LAST_WEIGHT` of the weight on the final
     layer, so training starts from the representation the frozen baseline
-    used and moves away from it only where that helps.
+    used and moves away from it only where that helps.  ``layer`` takes a
+    single middle layer.  ``fuse_pair`` takes two layers, concatenated or
+    summed; a concatenation doubles the output width, which a projection
+    downstream must bring back to the backbone width.
+
+    Layer indices follow ``hidden_states``: index 0 is the embedding output
+    and index ``k`` is the output of the ``k``-th transformer block, so a
+    28-layer backbone has 29 entries and ``layer=16`` reads block 16.
 
     Args:
         n_layers: Number of entries in the backbone's ``hidden_states``
             tuple, i.e. transformer layers plus the embedding output.
-        mode: ``"last"``, ``"mean_last_n"`` or ``"weighted"``.
+        mode: ``"last"``, ``"mean_last_n"``, ``"weighted"``, ``"layer"`` or
+            ``"fuse_pair"``.
         n: Window size for ``mean_last_n``.  Ignored by the other modes.
+        layer: Layer index for ``layer``.
+        pair: Two layer indices for ``fuse_pair``.
+        fusion: ``"concat"`` or ``"sum"`` for ``fuse_pair``.
 
     Raises:
-        ValueError: If ``mode`` is unknown or ``n`` is out of range.
+        ValueError: If ``mode`` is unknown, ``n`` is out of range, or the
+            mode-specific layer selection is incomplete or out of range.
     """
 
-    MODES = ("last", "mean_last_n", "weighted")
+    MODES = ("last", "mean_last_n", "weighted", "layer", "fuse_pair")
 
-    def __init__(self, n_layers: int, mode: str = "last", n: int = 4) -> None:
+    def __init__(
+        self,
+        n_layers: int,
+        mode: str = "last",
+        n: int = 4,
+        layer: int | None = None,
+        pair: tuple[int, int] | None = None,
+        fusion: str = "concat",
+    ) -> None:
         super().__init__()
         if mode not in self.MODES:
             raise ValueError(f"Unknown readout mode {mode!r}; expected one of {self.MODES}")
         if mode == "mean_last_n" and not 1 <= n <= n_layers:
             raise ValueError(f"readout n={n} outside [1, {n_layers}]")
+        if mode == "layer" and (layer is None or not 0 <= layer < n_layers):
+            raise ValueError(
+                f"readout layer={layer!r} outside [0, {n_layers - 1}]"
+            )
+        if mode == "fuse_pair":
+            if pair is None or len(pair) != 2:
+                raise ValueError(f"readout pair={pair!r} needs two layer indices")
+            if not all(0 <= index < n_layers for index in pair):
+                raise ValueError(
+                    f"readout pair={pair!r} outside [0, {n_layers - 1}]"
+                )
+            if fusion not in ("concat", "sum"):
+                raise ValueError(
+                    f"readout fusion={fusion!r}; expected 'concat' or 'sum'"
+                )
         self.mode = mode
         self.n = n
         self.n_layers = n_layers
+        self.layer = layer
+        self.pair = tuple(pair) if pair is not None else None
+        self.fusion = fusion
         if mode == "weighted":
             logits = torch.zeros(n_layers)
             if n_layers > 1:
@@ -102,12 +145,29 @@ class LayerMixer(nn.Module):
                 logits[-1] = math.log((n_layers - 1) * weight / (1.0 - weight))
             self.layer_logits = nn.Parameter(logits)
 
+    @property
+    def out_mult(self) -> int:
+        """Width multiplier relative to one hidden state's last dimension."""
+        return 2 if self.mode == "fuse_pair" and self.fusion == "concat" else 1
+
     def forward(self, hidden_states: tuple[torch.Tensor, ...]) -> torch.Tensor:
-        """Returns the mixed hidden states, shaped like one layer's output."""
+        """Returns the mixed hidden states, shaped like one layer's output.
+
+        ``fuse_pair`` with ``fusion="concat"`` returns twice the hidden width;
+        the caller is responsible for projecting it back down.
+        """
         if self.mode == "last":
             return hidden_states[-1]
         if self.mode == "mean_last_n":
             return torch.stack(hidden_states[-self.n :]).mean(0)
+        if self.mode == "layer":
+            return hidden_states[self.layer]
+        if self.mode == "fuse_pair":
+            first, second = self.pair
+            left, right = hidden_states[first], hidden_states[second]
+            if self.fusion == "concat":
+                return torch.cat([left, right], dim=-1)
+            return left + right
 
         weights = torch.softmax(self.layer_logits, dim=0).to(hidden_states[0].dtype)
         out = hidden_states[0] * weights[0]
@@ -285,6 +345,69 @@ class AttentionHead(nn.Module):
         q_orig = self.query(opt)
         gate = torch.sigmoid(self.rival_gate(torch.cat([q_orig, rival_ctx], dim=-1)))
         return opt + gate * rival_ctx
+
+
+class OptionMarkerHead(nn.Module):
+    """Score options at their own marker positions.
+
+    The option-marker readout puts a marker token right after each candidate
+    option in one sequence that starts with the state and instructions.  The
+    backbone has already attended from the marker position to the context and
+    to the options that precede it, so this head only has to turn one hidden
+    vector per option into a logit.  It is the readout used by Laya-style
+    decision models, adapted to a causal decoder by keeping the context in a
+    cached prefix and appending the options after it.
+
+    The scorer is an MLP rather than a linear probe.  Its hidden width is
+    ``rank * expansion`` with ``expansion=3``: :class:`AttentionHead` learns
+    three rank-``r`` maps (Q, K, V), so this keeps the two readouts within a
+    few percent of the same parameter count at the same ``rank``.  That
+    matters when the comparison is the readout rather than the head size.
+
+    Args:
+        hidden_size: Backbone hidden dimension.
+        rank: Nominal width, matching the attention head's rank.
+        dropout: Dropout probability.
+        expansion: Multiplier from ``rank`` to the scorer's hidden width.
+    """
+
+    def __init__(
+        self,
+        hidden_size: int,
+        rank: int = 64,
+        dropout: float = 0.1,
+        expansion: int = 3,
+    ) -> None:
+        super().__init__()
+        hidden = max(1, rank * expansion)
+        self.layer_norm = nn.LayerNorm(hidden_size)
+        self.scorer = nn.Sequential(
+            nn.Dropout(dropout),
+            nn.Linear(hidden_size, hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, 1),
+        )
+
+    def forward(
+        self,
+        marker_hidden: torch.Tensor,
+        option_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Score option markers.
+
+        Args:
+            marker_hidden: [batch, n_options, hidden_size] — backbone hidden
+                state at each option's marker token.
+            option_mask: [batch, n_options] — True for valid options.
+
+        Returns:
+            logits: [batch, n_options] — one score per option (pre-softmax).
+        """
+        logits = self.scorer(self.layer_norm(marker_hidden)).squeeze(-1)
+        if option_mask is not None:
+            logits = logits.masked_fill(~option_mask, float("-inf"))
+        return logits
 
 
 class ChoiceHead(nn.Module):

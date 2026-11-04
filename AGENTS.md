@@ -4,7 +4,7 @@ Instructions for AI coding agents working in Krino.
 
 ## Read These First
 
-Read all `.md` files in `~/.config/agent-rules/` at session start for global conventions (git, testing, code style, submit workflow, etc.).
+Read `~/.config/agent-rules/AGENTS.md` at session start. Read a detail rule under `~/.config/agent-rules/rules/` only when its task trigger applies.
 
 ## Project Overview
 
@@ -90,4 +90,4 @@ hf upload oaklight/krino-synthetic data/benchmarks/synthetic/ . --repo-type data
 1. Run `python -m pytest tests/` — all tests must pass
 2. Do not commit data files (they are gitignored)
 3. Do not add AI co-author lines to commit messages
-4. Follow the submit workflow in `~/.config/agent-rules/submit-workflow.md`
+4. Follow the submit workflow in `~/.config/agent-rules/rules/workflow/submit-workflow.md`

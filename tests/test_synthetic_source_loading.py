@@ -51,7 +51,7 @@ def test_synthetic_without_path_uses_load_synthetic(monkeypatch):
     ]
     called = {"n": 0}
 
-    def fake_load_synthetic():
+    def fake_load_synthetic(teacher=None):
         called["n"] += 1
         return iter(sentinel)
 
@@ -66,12 +66,29 @@ def test_synthetic_without_path_uses_load_synthetic(monkeypatch):
     assert eval_items == []
 
 
+def test_synthetic_forwards_teacher_key(monkeypatch):
+    """A source-level teacher key reaches load_synthetic()."""
+    import data.sources as src
+
+    seen = {}
+
+    def fake_load_synthetic(teacher=None):
+        seen["teacher"] = teacher
+        return iter([])
+
+    monkeypatch.setattr(src, "load_synthetic", fake_load_synthetic)
+    load_source_items(
+        "synthetic", {"weight": 1.0, "teacher": "jev"}, random.Random(0)
+    )
+    assert seen["teacher"] == "jev"
+
+
 def test_synthetic_respects_max_train(monkeypatch):
     """max_train caps the synthetic train split."""
     import data.sources as src
 
     items = [_make_item(f"synthetic-a-{i:04d}-noul-x") for i in range(50)]
-    monkeypatch.setattr(src, "load_synthetic", lambda: iter(items))
+    monkeypatch.setattr(src, "load_synthetic", lambda teacher=None: iter(items))
 
     train_items, _ = load_source_items(
         "synthetic", {"weight": 1.0, "max_train": 10}, random.Random(0)
@@ -83,7 +100,7 @@ def test_synthetic_empty_assembly_warns_and_returns_empty(monkeypatch, capsys):
     """An empty synthetic assembly must warn rather than fail silently."""
     import data.sources as src
 
-    monkeypatch.setattr(src, "load_synthetic", lambda: iter([]))
+    monkeypatch.setattr(src, "load_synthetic", lambda teacher=None: iter([]))
 
     train_items, eval_items = load_source_items(
         "synthetic", {"weight": 1.0}, random.Random(0)
@@ -98,7 +115,7 @@ def test_synthetic_explicit_path_still_read_from_file(monkeypatch, tmp_path):
     """An explicit path overrides the on-the-fly assembly."""
     import data.sources as src
 
-    def boom():
+    def boom(teacher=None):
         raise AssertionError("load_synthetic must not be called when path is set")
 
     monkeypatch.setattr(src, "load_synthetic", boom)
@@ -160,7 +177,7 @@ def test_synthetic_named_source_without_path_uses_assembly(monkeypatch):
     import data.sources as src
 
     sentinel = [_make_item("synthetic-aug-0001-noul-x")]
-    monkeypatch.setattr(src, "load_synthetic", lambda: iter(sentinel))
+    monkeypatch.setattr(src, "load_synthetic", lambda teacher=None: iter(sentinel))
 
     train_items, _ = load_source_items(
         "synthetic_aug", {"weight": 1.0}, random.Random(0)

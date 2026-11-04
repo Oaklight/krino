@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 import torch
-from _vendor import yaml
+from _vendor import yaml  # zerodep YAML; no PyYAML dependency
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))

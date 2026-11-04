@@ -85,7 +85,7 @@ def _forward_and_extract(
     instructions = question.get("instructions", "")
 
     if q_type == "noul":
-        logit = model.forward_noul(state, instructions)
+        logit = model.forward_noul(state, instructions, question.get("criteria"))
         if isinstance(label, str):
             label = label.lower() in ("true", "yes", "1")
         target = torch.tensor([[1.0 if label else 0.0]], device=logit.device)
