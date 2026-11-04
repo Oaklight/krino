@@ -52,7 +52,13 @@ from model.evaluation.gate import (
     summarize_schema_split,
     chance_corrected_accuracy,
 )
-from model.src.backbone import load_causal_lm, load_encoder, load_qwen35_base
+from model.src.backbone import (
+    is_hybrid_model,
+    load_causal_lm,
+    load_encoder,
+    load_qwen35_base,
+    load_qwen35_base_with_head,
+)
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig
 from model.scripts.train_residual import fusion_logits, head_logits
@@ -87,21 +93,67 @@ def _raw_options(
     return list(reversed(options)) if reverse else options
 
 
+_UNSUPPORTED_ARCH_MARKERS = (
+    "unrecognized configuration class",
+    "unrecognized model",
+    "does not recognize",
+    "does not support",
+    "not a supported",
+    "not supported",
+    "unsupported model type",
+)
+
+
+def _is_unsupported_architecture_error(error: BaseException) -> bool:
+    """True when ``AutoModelForCausalLM`` rejected the checkpoint's config."""
+    text = str(error).lower()
+    return any(marker in text for marker in _UNSUPPORTED_ARCH_MARKERS)
+
+
 class RawReranker:
     """Raw Qwen3-Reranker, judged with yes/no logits.
+
+    Also scores Qwen3.5 checkpoints.  Text-only Qwen3.5 0.8B/2B load through
+    ``AutoModelForCausalLM``; the 4B family is a multimodal
+    ``Qwen3_5ForConditionalGeneration`` whose text tower and ``lm_head`` are
+    extracted by :func:`load_qwen35_base_with_head`.  Only text inputs are
+    used; the vision tower is never called.
 
     This is the baseline the goal's +10 pp training target is measured against.
     Options are scored independently and their P(yes) values are normalised into
     a distribution so the same gate metrics apply.
     """
 
-    def __init__(self, model_name: str, device: str) -> None:
+    def __init__(
+        self,
+        model_name: str,
+        device: str,
+        loader_type: str | None = None,
+    ) -> None:
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, padding_side="left")
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_name, dtype=torch.bfloat16
-        ).to(device)
-        self.model.eval()
+        self.is_hybrid = False
+        self.lm_head = None
+        if loader_type == "qwen35_base":
+            self._load_qwen35(model_name)
+        else:
+            try:
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    model_name, dtype=torch.bfloat16
+                ).to(device)
+            except ValueError as error:
+                # A Qwen3.5 4B config has no causal-LM auto mapping.  An
+                # explicit loader choice stays authoritative; otherwise fall
+                # back to the architecture-aware Qwen3.5 path.
+                if loader_type is not None or not _is_unsupported_architecture_error(
+                    error
+                ):
+                    raise
+                self._load_qwen35(model_name)
+            else:
+                self.model.eval()
+                self.lm_head = getattr(self.model, "lm_head", None)
+                self.is_hybrid = is_hybrid_model(getattr(self.model, "config", None))
         self.true_id = self.tokenizer.convert_tokens_to_ids("yes")
         self.false_id = self.tokenizer.convert_tokens_to_ids("no")
         prefix = (
@@ -114,6 +166,32 @@ class RawReranker:
         self.prefix_tokens = self.tokenizer.encode(prefix, add_special_tokens=False)
         self.suffix_tokens = self.tokenizer.encode(suffix, add_special_tokens=False)
         self.max_length = 8192
+
+    def _load_qwen35(self, model_name: str) -> None:
+        """Load the text tower and vocabulary head of a Qwen3.5 checkpoint."""
+        backbone, _, lm_head = load_qwen35_base_with_head(
+            model_name,
+            device=self.device,
+            dtype=torch.bfloat16,
+            tokenizer=self.tokenizer,
+        )
+        self.model = backbone
+        self.lm_head = lm_head
+        self.is_hybrid = is_hybrid_model(backbone.config)
+
+    def _logits(self, outputs: Any) -> torch.Tensor:
+        """Vocabulary logits from a causal LM or a bare text tower."""
+        logits = getattr(outputs, "logits", None)
+        if logits is not None:
+            return logits
+        hidden = getattr(outputs, "last_hidden_state", None)
+        if hidden is None:
+            hidden = outputs.hidden_states[-1]
+        if self.lm_head is None:
+            raise RuntimeError(
+                "Backbone returned hidden states but no lm_head is available"
+            )
+        return self.lm_head(hidden)
 
     @torch.inference_mode()
     def _score_option(
@@ -141,7 +219,7 @@ class RawReranker:
             "input_ids": torch.tensor([input_ids], device=self.device),
             "attention_mask": torch.ones(1, len(input_ids), device=self.device),
         }
-        logits = self.model(**inputs).logits[:, -1, :]
+        logits = self._logits(self.model(**inputs))[:, -1, :]
         true_logit = logits[:, self.true_id].item()
         false_logit = logits[:, self.false_id].item()
         return torch.softmax(
@@ -165,6 +243,13 @@ class RawReranker:
         encoded once and the documents are scored as rows of a batched
         forward: same computation, O(1) prefix passes.
         """
+        if self.is_hybrid:
+            # GDN layers do not support KV-cache batching.  Score each option
+            # on its own rather than sharing one cache across rows.
+            return [
+                self._score_option(state, instructions, q_type, label, description)
+                for label, description in options
+            ]
         query = f"{state}\n\nQuestion: {instructions}"
         # End the prefix at the colon and lead every document with the
         # space, so prefix + document tokenises exactly like the full string
@@ -239,9 +324,12 @@ class RawReranker:
             if base is not None:
                 hidden = base(**inputs).last_hidden_state
                 picked = hidden[torch.arange(rows, device=self.device), last]
-                logits = self.model.lm_head(picked)
+                if self.lm_head is not None:
+                    logits = self.lm_head(picked)
+                else:
+                    logits = self.model.lm_head(picked)
             else:
-                logits = self.model(**inputs).logits[:, -1, :]
+                logits = self._logits(self.model(**inputs))[:, -1, :]
             pair = torch.stack(
                 [logits[:, self.false_id], logits[:, self.true_id]], dim=-1
             )
@@ -305,16 +393,27 @@ class ResidualScorer:
     alpha is 0.
     """
 
-    def __init__(self, base_model_name: str, device: str, checkpoint_path: Path) -> None:
+    def __init__(
+        self,
+        base_model_name: str,
+        device: str,
+        checkpoint_path: Path,
+        loader_type: str | None = None,
+    ) -> None:
         from model.src.backbone import load_causal_lm
 
         self.device = device
-        self.base = RawReranker(base_model_name, device)
+        self.base = RawReranker(base_model_name, device, loader_type=loader_type)
         checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
         config = checkpoint["config"]
-        backbone, tokenizer = load_causal_lm(
-            config["backbone"], device=device, freeze=True, flash_attention=False
-        )
+        if loader_type == "qwen35_base":
+            backbone, tokenizer = load_qwen35_base(
+                config["backbone"], device=device, freeze=True, flash_attention=False
+            )
+        else:
+            backbone, tokenizer = load_causal_lm(
+                config["backbone"], device=device, freeze=True, flash_attention=False
+            )
         gpu = GPUConfig(
             flash_attention=False,
             bf16_compute=True,
@@ -760,7 +859,12 @@ def main() -> None:
     if args.residual_heads:
         raw_name = args.model or "Qwen/Qwen3-Reranker-4B"
         print(f"Residual arm on {raw_name}: {args.residual_heads}")
-        model = ResidualScorer(raw_name, device, args.residual_heads)
+        model = ResidualScorer(
+            raw_name,
+            device,
+            args.residual_heads,
+            loader_type="qwen35_base" if args.qwen35_base else None,
+        )
         if args.option_batch:
             model.model.option_batch = args.option_batch
         backbone_name = f"{raw_name}+residual"
