@@ -1,0 +1,2242 @@
+{
+  "residual_heads": "/home/pding/projects/krino-v3/model/experiments/residual/D20K/residual.pt/residual.pt",
+  "backbone": "Qwen/Qwen3-Reranker-4B",
+  "alpha": {
+    "noul": -0.03883647173643112,
+    "choice": -0.23438802361488342,
+    "score": -0.16215607523918152
+  },
+  "overall": {
+    "n": 231,
+    "base": 0.6277056277056277,
+    "head": 0.2510822510822511,
+    "fused": 0.6363636363636364,
+    "base_wrong": 86,
+    "fused_fixes": 7,
+    "head_fixes": 23,
+    "fused_breaks": 5
+  },
+  "base_log_margin_p50": 0.6451379060745239,
+  "by_tier": {
+    "easy": {
+      "n": 48,
+      "base": 1.0,
+      "head": 0.1875,
+      "fused": 1.0,
+      "base_wrong": 0,
+      "fused_fixes": 0,
+      "head_fixes": 0,
+      "fused_breaks": 0
+    },
+    "hard": {
+      "n": 111,
+      "base": 0.44144144144144143,
+      "head": 0.25225225225225223,
+      "fused": 0.4594594594594595,
+      "base_wrong": 62,
+      "fused_fixes": 5,
+      "head_fixes": 20,
+      "fused_breaks": 3
+    },
+    "original": {
+      "n": 72,
+      "base": 0.6666666666666666,
+      "head": 0.2916666666666667,
+      "fused": 0.6666666666666666,
+      "base_wrong": 24,
+      "fused_fixes": 2,
+      "head_fixes": 3,
+      "fused_breaks": 2
+    }
+  },
+  "by_type": {
+    "choice": {
+      "n": 139,
+      "base": 0.6115107913669064,
+      "head": 0.12949640287769784,
+      "fused": 0.5971223021582733,
+      "base_wrong": 54,
+      "fused_fixes": 1,
+      "head_fixes": 10,
+      "fused_breaks": 3
+    },
+    "noul": {
+      "n": 74,
+      "base": 0.6216216216216216,
+      "head": 0.5,
+      "fused": 0.6756756756756757,
+      "base_wrong": 28,
+      "fused_fixes": 6,
+      "head_fixes": 12,
+      "fused_breaks": 2
+    },
+    "score": {
+      "n": 18,
+      "base": 0.7777777777777778,
+      "head": 0.16666666666666666,
+      "fused": 0.7777777777777778,
+      "base_wrong": 4,
+      "fused_fixes": 0,
+      "head_fixes": 1,
+      "fused_breaks": 0
+    }
+  },
+  "alpha_sweep": {
+    "choice": {
+      "n": 139,
+      "trained_alpha": -0.23438802361488342,
+      "acc_at_trained_alpha": 0.5971223021582733,
+      "acc_at_zero": 0.6115107913669064,
+      "best_alpha": 0.35,
+      "best_acc": 0.6187050359712231,
+      "curve": {
+        "-1.00": 0.60431654676259,
+        "-0.75": 0.5971223021582733,
+        "-0.50": 0.60431654676259,
+        "-0.35": 0.60431654676259,
+        "-0.25": 0.60431654676259,
+        "-0.15": 0.5899280575539568,
+        "-0.10": 0.5899280575539568,
+        "+0.00": 0.6115107913669064,
+        "+0.10": 0.6115107913669064,
+        "+0.15": 0.60431654676259,
+        "+0.25": 0.6115107913669064,
+        "+0.35": 0.6187050359712231,
+        "+0.50": 0.6187050359712231,
+        "+0.75": 0.6187050359712231,
+        "+1.00": 0.6187050359712231
+      }
+    },
+    "noul": {
+      "n": 74,
+      "trained_alpha": -0.03883647173643112,
+      "acc_at_trained_alpha": 0.6756756756756757,
+      "acc_at_zero": 0.6216216216216216,
+      "best_alpha": -0.15,
+      "best_acc": 0.6621621621621622,
+      "curve": {
+        "-1.00": 0.5135135135135135,
+        "-0.75": 0.5135135135135135,
+        "-0.50": 0.527027027027027,
+        "-0.35": 0.5675675675675675,
+        "-0.25": 0.6216216216216216,
+        "-0.15": 0.6621621621621622,
+        "-0.10": 0.6621621621621622,
+        "+0.00": 0.6216216216216216,
+        "+0.10": 0.5540540540540541,
+        "+0.15": 0.5405405405405406,
+        "+0.25": 0.527027027027027,
+        "+0.35": 0.5,
+        "+0.50": 0.5,
+        "+0.75": 0.5,
+        "+1.00": 0.5
+      }
+    },
+    "score": {
+      "n": 18,
+      "trained_alpha": -0.16215607523918152,
+      "acc_at_trained_alpha": 0.7777777777777778,
+      "acc_at_zero": 0.7777777777777778,
+      "best_alpha": 0.1,
+      "best_acc": 0.8333333333333334,
+      "curve": {
+        "-1.00": 0.7222222222222222,
+        "-0.75": 0.7222222222222222,
+        "-0.50": 0.7222222222222222,
+        "-0.35": 0.7777777777777778,
+        "-0.25": 0.7777777777777778,
+        "-0.15": 0.7777777777777778,
+        "-0.10": 0.7777777777777778,
+        "+0.00": 0.7777777777777778,
+        "+0.10": 0.8333333333333334,
+        "+0.15": 0.8333333333333334,
+        "+0.25": 0.8333333333333334,
+        "+0.35": 0.8333333333333334,
+        "+0.50": 0.8333333333333334,
+        "+0.75": 0.8333333333333334,
+        "+1.00": 0.8333333333333334
+      }
+    }
+  },
+  "items": [
+    {
+      "id": "easy-intent-00",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 5.189287185668945
+    },
+    {
+      "id": "easy-intent-01",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 4.94225549697876
+    },
+    {
+      "id": "easy-intent-02",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 5.193201065063477
+    },
+    {
+      "id": "easy-intent-03",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 1.451094388961792
+    },
+    {
+      "id": "easy-intent-04",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 3.617872476577759
+    },
+    {
+      "id": "easy-intent-05",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 6.547398090362549
+    },
+    {
+      "id": "easy-intent-06",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.770557403564453
+    },
+    {
+      "id": "easy-intent-07",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 6.55530309677124
+    },
+    {
+      "id": "easy-intent-08",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 6.61684513092041
+    },
+    {
+      "id": "easy-intent-09",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 5.839416980743408
+    },
+    {
+      "id": "easy-intent-10",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 6.8340163230896
+    },
+    {
+      "id": "easy-intent-11",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 6.002758502960205
+    },
+    {
+      "id": "easy-fact-00",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.1441524028778076
+    },
+    {
+      "id": "easy-fact-01",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 2.354172468185425
+    },
+    {
+      "id": "easy-fact-02",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.3485288619995117
+    },
+    {
+      "id": "easy-fact-03",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 2.6665704250335693
+    },
+    {
+      "id": "easy-fact-04",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 1.9452197551727295
+    },
+    {
+      "id": "easy-fact-05",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 2.878480911254883
+    },
+    {
+      "id": "easy-fact-06",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.578484296798706
+    },
+    {
+      "id": "easy-fact-07",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 2.385251045227051
+    },
+    {
+      "id": "easy-fact-08",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 2.0375943183898926
+    },
+    {
+      "id": "easy-fact-09",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 2.870706558227539
+    },
+    {
+      "id": "easy-fact-10",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.3883490562438965
+    },
+    {
+      "id": "easy-fact-11",
+      "tier": "easy",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.5987530946731567
+    },
+    {
+      "id": "easy-extraction-00",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.441925287246704
+    },
+    {
+      "id": "easy-extraction-01",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 2.605534553527832
+    },
+    {
+      "id": "easy-extraction-02",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 2.1064701080322266
+    },
+    {
+      "id": "easy-extraction-03",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.3925325870513916
+    },
+    {
+      "id": "easy-extraction-04",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.0100622177124023
+    },
+    {
+      "id": "easy-extraction-05",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.39899253845214844
+    },
+    {
+      "id": "easy-extraction-06",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 2.819990873336792
+    },
+    {
+      "id": "easy-extraction-07",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 2.1664528846740723
+    },
+    {
+      "id": "easy-extraction-08",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.4568469524383545
+    },
+    {
+      "id": "easy-extraction-09",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 2.4145259857177734
+    },
+    {
+      "id": "easy-extraction-10",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.8646435737609863
+    },
+    {
+      "id": "easy-extraction-11",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.6104323863983154
+    },
+    {
+      "id": "easy-tool_selection-00",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 6.368487358093262
+    },
+    {
+      "id": "easy-tool_selection-01",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 7.391687393188477
+    },
+    {
+      "id": "easy-tool_selection-02",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 7.488127708435059
+    },
+    {
+      "id": "easy-tool_selection-03",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 6.062560081481934
+    },
+    {
+      "id": "easy-tool_selection-04",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 8.05206298828125
+    },
+    {
+      "id": "easy-tool_selection-05",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 4.8759355545043945
+    },
+    {
+      "id": "easy-tool_selection-06",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 7.991468906402588
+    },
+    {
+      "id": "easy-tool_selection-07",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 5.545177459716797
+    },
+    {
+      "id": "easy-tool_selection-08",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 7.15461540222168
+    },
+    {
+      "id": "easy-tool_selection-09",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 7.053215026855469
+    },
+    {
+      "id": "easy-tool_selection-10",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 6.242269515991211
+    },
+    {
+      "id": "easy-tool_selection-11",
+      "tier": "easy",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 7.745347499847412
+    },
+    {
+      "id": "hard-opus-a-long_policy-01",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.6678293347358704
+    },
+    {
+      "id": "hard-opus-a-long_policy-04",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.004264354705810547
+    },
+    {
+      "id": "hard-opus-a-long_policy-08",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.9708077907562256
+    },
+    {
+      "id": "hard-opus-a-long_policy-09",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.7469089031219482
+    },
+    {
+      "id": "hard-opus-a-long_policy-11",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.07711726427078247
+    },
+    {
+      "id": "hard-opus-a-long_policy-13",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.02479463815689087
+    },
+    {
+      "id": "hard-opus-a-long_policy-17",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.02839946746826172
+    },
+    {
+      "id": "hard-opus-a-long_policy-19",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.01980268955230713
+    },
+    {
+      "id": "hard-opus-a-probability-03",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.40546512603759766
+    },
+    {
+      "id": "hard-opus-a-probability-04",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.6451379060745239
+    },
+    {
+      "id": "hard-opus-a-probability-07",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.0042105913162231445
+    },
+    {
+      "id": "hard-opus-a-probability-08",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.0796440839767456
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-03",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.007874011993408203
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-06",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.138586163520813
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-07",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.030614614486694336
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-09",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.003976106643676758
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-12",
+      "tier": "hard",
+      "type": "score",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.1481805443763733
+    },
+    {
+      "id": "hard-opus-b-ambiguous-02",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.13935548067092896
+    },
+    {
+      "id": "hard-opus-b-ambiguous-03",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.0039293766021728516
+    },
+    {
+      "id": "hard-opus-b-ambiguous-07",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 2.4577205181121826
+    },
+    {
+      "id": "hard-opus-b-ambiguous-09",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.7485769987106323
+    },
+    {
+      "id": "hard-opus-b-ambiguous-10",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.011881351470947266
+    },
+    {
+      "id": "hard-opus-b-ambiguous-11",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.5436155200004578
+    },
+    {
+      "id": "hard-opus-b-ambiguous-13",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.09352600574493408
+    },
+    {
+      "id": "hard-opus-b-multi_hop-03",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.004454255104064941
+    },
+    {
+      "id": "hard-opus-b-multi_hop-04",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.012270212173461914
+    },
+    {
+      "id": "hard-opus-b-multi_hop-05",
+      "tier": "hard",
+      "type": "score",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.0
+    },
+    {
+      "id": "hard-opus-b-multi_hop-07",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.053843140602111816
+    },
+    {
+      "id": "hard-opus-b-multi_hop-08",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.060624539852142334
+    },
+    {
+      "id": "hard-opus-b-probability-01",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.24163818359375
+    },
+    {
+      "id": "hard-opus-b-probability-02",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.20668232440948486
+    },
+    {
+      "id": "hard-opus-b-probability-03",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.5344748497009277
+    },
+    {
+      "id": "hard-opus-b-probability-04",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.9532469511032104
+    },
+    {
+      "id": "hard-opus-b-probability-06",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.04898941516876221
+    },
+    {
+      "id": "hard-opus-b-tradeoff-01",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.008368253707885742
+    },
+    {
+      "id": "hard-opus-b-tradeoff-03",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.42326974868774414
+    },
+    {
+      "id": "hard-opus-b-tradeoff-06",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.4762732982635498
+    },
+    {
+      "id": "hard-opus-b-tradeoff-07",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.024097561836242676
+    },
+    {
+      "id": "hard-opus-b-tradeoff-08",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.03666400909423828
+    },
+    {
+      "id": "hard-opus-b-tradeoff-12",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.14818060398101807
+    },
+    {
+      "id": "hard-opus-c-long_policy-02",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.23447805643081665
+    },
+    {
+      "id": "hard-opus-c-long_policy-03",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.05177628993988037
+    },
+    {
+      "id": "hard-opus-c-long_policy-04",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.08985632658004761
+    },
+    {
+      "id": "hard-opus-c-long_policy-05",
+      "tier": "hard",
+      "type": "score",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.09116935729980469
+    },
+    {
+      "id": "hard-opus-c-long_policy-08",
+      "tier": "hard",
+      "type": "score",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.2424677610397339
+    },
+    {
+      "id": "hard-opus-c-long_policy-10",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.06506359577178955
+    },
+    {
+      "id": "hard-opus-c-long_policy-11",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.06613975763320923
+    },
+    {
+      "id": "hard-opus-c-probability-03",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.07376611232757568
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-02",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.01980268955230713
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-03",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.012270092964172363
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-04",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.0
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-06",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.0
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-08",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.003960371017456055
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-12",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.27069926261901855
+    },
+    {
+      "id": "hard-sol-a-adversarial-01",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.12993645668029785
+    },
+    {
+      "id": "hard-sol-a-adversarial-06",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.312508225440979
+    },
+    {
+      "id": "hard-sol-a-adversarial-07",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.13955187797546387
+    },
+    {
+      "id": "hard-sol-a-adversarial-08",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.22543972730636597
+    },
+    {
+      "id": "hard-sol-a-adversarial-09",
+      "tier": "hard",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.00407332181930542
+    },
+    {
+      "id": "hard-sol-a-adversarial-11",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.00404047966003418
+    },
+    {
+      "id": "hard-sol-a-multi_hop-01",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.5886032581329346
+    },
+    {
+      "id": "hard-sol-a-multi_hop-02",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.30637413263320923
+    },
+    {
+      "id": "hard-sol-a-multi_hop-05",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.8082164525985718
+    },
+    {
+      "id": "hard-sol-a-multi_hop-07",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.41100525856018066
+    },
+    {
+      "id": "hard-sol-a-multi_hop-08",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.0
+    },
+    {
+      "id": "hard-sol-a-multi_hop-09",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.013015389442443848
+    },
+    {
+      "id": "hard-sol-a-multi_hop-10",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.06931179761886597
+    },
+    {
+      "id": "hard-sol-a-multi_hop-12",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.008333444595336914
+    },
+    {
+      "id": "hard-sol-a-trap-02",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.2453365325927734
+    },
+    {
+      "id": "hard-sol-a-trap-04",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.5404449701309204
+    },
+    {
+      "id": "hard-sol-a-trap-05",
+      "tier": "hard",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.2131490707397461
+    },
+    {
+      "id": "hard-sol-a-trap-06",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.9567997455596924
+    },
+    {
+      "id": "hard-sol-a-trap-08",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.019802629947662354
+    },
+    {
+      "id": "hard-sol-a-trap-10",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.23638880252838135
+    },
+    {
+      "id": "hard-sol-a-trap-13",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.158510446548462
+    },
+    {
+      "id": "hard-sol-a-trap-15",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.23638874292373657
+    },
+    {
+      "id": "hard-sol-b-judge_hard-01",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.0302776098251343
+    },
+    {
+      "id": "hard-sol-b-judge_hard-02",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.17531096935272217
+    },
+    {
+      "id": "hard-sol-b-judge_hard-05",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.39949488639831543
+    },
+    {
+      "id": "hard-sol-b-judge_hard-08",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.445311039686203
+    },
+    {
+      "id": "hard-sol-b-judge_hard-10",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.6852035522460938
+    },
+    {
+      "id": "hard-sol-b-judge_hard-14",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.41419875621795654
+    },
+    {
+      "id": "hard-sol-b-judge_hard-15",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.15624934434890747
+    },
+    {
+      "id": "hard-sol-b-judge_hard-18",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.360614538192749
+    },
+    {
+      "id": "hard-sol-b-long_policy-01",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 1.7360706329345703
+    },
+    {
+      "id": "hard-sol-b-long_policy-02",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.58852219581604
+    },
+    {
+      "id": "hard-sol-b-long_policy-05",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.09116947650909424
+    },
+    {
+      "id": "hard-sol-b-long_policy-06",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.011881351470947266
+    },
+    {
+      "id": "hard-sol-b-routing_hard-01",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.28248727321624756
+    },
+    {
+      "id": "hard-sol-b-routing_hard-02",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.039845824241638184
+    },
+    {
+      "id": "hard-sol-b-routing_hard-03",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.04427284002304077
+    },
+    {
+      "id": "hard-sol-b-routing_hard-07",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.6853039860725403
+    },
+    {
+      "id": "hard-sol-b-routing_hard-09",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.7339691519737244
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-01",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.2731796503067017
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-02",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.031162738800049
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-03",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.2824872136116028
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-04",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 0.050858378410339355
+    },
+    {
+      "id": "hard-sol-c-judge_hard-03",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.27422285079956055
+    },
+    {
+      "id": "hard-sol-c-judge_hard-05",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.3348923921585083
+    },
+    {
+      "id": "hard-sol-c-judge_hard-07",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.18074804544448853
+    },
+    {
+      "id": "hard-sol-c-judge_hard-08",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 1.7395737171173096
+    },
+    {
+      "id": "hard-sol-c-judge_hard-09",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.20854473114013672
+    },
+    {
+      "id": "hard-sol-c-judge_hard-10",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.24008464813232422
+    },
+    {
+      "id": "hard-sol-c-judge_hard-11",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.22906655073165894
+    },
+    {
+      "id": "hard-sol-c-judge_hard-13",
+      "tier": "hard",
+      "type": "noul",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.19671034812927246
+    },
+    {
+      "id": "hard-sol-c-judge_hard-15",
+      "tier": "hard",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 1.3473789691925049
+    },
+    {
+      "id": "hard-sol-c-multi_hop-07",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.14895588159561157
+    },
+    {
+      "id": "hard-sol-c-multi_hop-09",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.5312345027923584
+    },
+    {
+      "id": "hard-sol-c-multi_hop-11",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.4098414182662964
+    },
+    {
+      "id": "hard-sol-c-multi_hop-12",
+      "tier": "hard",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.14469635486602783
+    },
+    {
+      "id": "hard-sol-c-multi_hop-13",
+      "tier": "hard",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.6613984107971191
+    },
+    {
+      "id": "original-policy-01-0",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 2.1049206256866455
+    },
+    {
+      "id": "original-policy-01-1",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.6960523128509521
+    },
+    {
+      "id": "original-policy-02-0",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.055429816246032715
+    },
+    {
+      "id": "original-policy-02-1",
+      "tier": "original",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.348731279373169
+    },
+    {
+      "id": "original-policy-03-0",
+      "tier": "original",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.03261160850524902
+    },
+    {
+      "id": "original-policy-03-1",
+      "tier": "original",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 3.465735912322998
+    },
+    {
+      "id": "original-policy-04-0",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 3.0654654502868652
+    },
+    {
+      "id": "original-policy-04-1",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.3414438962936401
+    },
+    {
+      "id": "original-policy-05-0",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 2.004939079284668
+    },
+    {
+      "id": "original-policy-05-1",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 0.9939874410629272
+    },
+    {
+      "id": "original-policy-06-0",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.04908961057662964
+    },
+    {
+      "id": "original-policy-06-1",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.9249486923217773
+    },
+    {
+      "id": "original-intent-01-0",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 0.09699231386184692
+    },
+    {
+      "id": "original-intent-01-1",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.8240845203399658
+    },
+    {
+      "id": "original-intent-02-0",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.7786692976951599
+    },
+    {
+      "id": "original-intent-02-1",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.10363489389419556
+    },
+    {
+      "id": "original-intent-03-0",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.860201358795166
+    },
+    {
+      "id": "original-intent-03-1",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 1.688575267791748
+    },
+    {
+      "id": "original-intent-04-0",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.3101549744606018
+    },
+    {
+      "id": "original-intent-04-1",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 0.32695597410202026
+    },
+    {
+      "id": "original-intent-05-0",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.9989691972732544
+    },
+    {
+      "id": "original-intent-05-1",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 0.33052968978881836
+    },
+    {
+      "id": "original-intent-06-0",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 2.2046046257019043
+    },
+    {
+      "id": "original-intent-06-1",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.22426027059555054
+    },
+    {
+      "id": "original-ordinal-01-0",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 0.563808798789978
+    },
+    {
+      "id": "original-ordinal-01-1",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.2824050188064575
+    },
+    {
+      "id": "original-ordinal-02-0",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 1.8595820665359497
+    },
+    {
+      "id": "original-ordinal-02-1",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 2.441847085952759
+    },
+    {
+      "id": "original-ordinal-03-0",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 3.9428796768188477
+    },
+    {
+      "id": "original-ordinal-03-1",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 4.078840255737305
+    },
+    {
+      "id": "original-ordinal-04-0",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 5.223795413970947
+    },
+    {
+      "id": "original-ordinal-04-1",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 4.962233066558838
+    },
+    {
+      "id": "original-ordinal-05-0",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.664816677570343
+    },
+    {
+      "id": "original-ordinal-05-1",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 0.9451690316200256
+    },
+    {
+      "id": "original-ordinal-06-0",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.8266785740852356
+    },
+    {
+      "id": "original-ordinal-06-1",
+      "tier": "original",
+      "type": "score",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 2.5186734199523926
+    },
+    {
+      "id": "original-extraction-01-0",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.0704224705696106
+    },
+    {
+      "id": "original-extraction-01-1",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": true,
+      "fused": false,
+      "base_log_margin": 0.4153956174850464
+    },
+    {
+      "id": "original-extraction-02-0",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.5212969183921814
+    },
+    {
+      "id": "original-extraction-02-1",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.2518726587295532
+    },
+    {
+      "id": "original-extraction-03-0",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.036221325397491455
+    },
+    {
+      "id": "original-extraction-03-1",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.027945995330810547
+    },
+    {
+      "id": "original-extraction-04-0",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.0
+    },
+    {
+      "id": "original-extraction-04-1",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.62455153465271
+    },
+    {
+      "id": "original-extraction-05-0",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.0771172046661377
+    },
+    {
+      "id": "original-extraction-05-1",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.023810625076293945
+    },
+    {
+      "id": "original-extraction-06-0",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.003944814205169678
+    },
+    {
+      "id": "original-extraction-06-1",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.003960371017456055
+    },
+    {
+      "id": "original-adequacy-01-0",
+      "tier": "original",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 2.238506317138672
+    },
+    {
+      "id": "original-adequacy-01-1",
+      "tier": "original",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.8884559273719788
+    },
+    {
+      "id": "original-adequacy-02-0",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 2.928838014602661
+    },
+    {
+      "id": "original-adequacy-02-1",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 4.432312965393066
+    },
+    {
+      "id": "original-adequacy-03-0",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.165452241897583
+    },
+    {
+      "id": "original-adequacy-03-1",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.0986123085021973
+    },
+    {
+      "id": "original-adequacy-04-0",
+      "tier": "original",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.0
+    },
+    {
+      "id": "original-adequacy-04-1",
+      "tier": "original",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.8820064067840576
+    },
+    {
+      "id": "original-adequacy-05-0",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 2.102015972137451
+    },
+    {
+      "id": "original-adequacy-05-1",
+      "tier": "original",
+      "type": "noul",
+      "base": true,
+      "head": true,
+      "fused": true,
+      "base_log_margin": 1.096024990081787
+    },
+    {
+      "id": "original-adequacy-06-0",
+      "tier": "original",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 2.2411437034606934
+    },
+    {
+      "id": "original-adequacy-06-1",
+      "tier": "original",
+      "type": "noul",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.7061343193054199
+    },
+    {
+      "id": "original-routing-01-0",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 0.3864169120788574
+    },
+    {
+      "id": "original-routing-01-1",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.2245922088623047
+    },
+    {
+      "id": "original-routing-02-0",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.23958230018615723
+    },
+    {
+      "id": "original-routing-02-1",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 0.2286837100982666
+    },
+    {
+      "id": "original-routing-03-0",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 2.231633424758911
+    },
+    {
+      "id": "original-routing-03-1",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 1.8035939931869507
+    },
+    {
+      "id": "original-routing-04-0",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 2.1916279792785645
+    },
+    {
+      "id": "original-routing-04-1",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 2.2014198303222656
+    },
+    {
+      "id": "original-routing-05-0",
+      "tier": "original",
+      "type": "choice",
+      "base": true,
+      "head": false,
+      "fused": true,
+      "base_log_margin": 1.487297534942627
+    },
+    {
+      "id": "original-routing-05-1",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.5761207342147827
+    },
+    {
+      "id": "original-routing-06-0",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 1.6601831912994385
+    },
+    {
+      "id": "original-routing-06-1",
+      "tier": "original",
+      "type": "choice",
+      "base": false,
+      "head": false,
+      "fused": false,
+      "base_log_margin": 2.1719932556152344
+    }
+  ]
+}
