@@ -338,6 +338,7 @@ class ResidualScorer:
             lora_layers=config.get("lora_layers"),
             lora_rank=int(config.get("lora_rank") or 16),
             lora_alpha=int(config.get("lora_alpha") or 32),
+            answerable_head=bool(config.get("answerable_head", False)),
         )
         self.model.load_state_dict(checkpoint["heads"], strict=False)
         self.model.eval()
@@ -375,6 +376,50 @@ class ResidualScorer:
             schema=schema_key(q),
             tier=jevbench_tier(item),
         )
+
+    @torch.inference_mode()
+    def p_answerable(self, item: Any) -> float | None:
+        """Answerable probability, or None when the checkpoint has no head."""
+        if getattr(self.model, "answerable_head", None) is None:
+            return None
+        logit = self.model.forward_answerable(
+            item.state, item.question.get("instructions", "")
+        )
+        return float(torch.sigmoid(logit).reshape(()).item())
+
+
+def write_prediction_records(
+    path: Path, rows: list[Prediction], items: list[Any], model: Any
+) -> int:
+    """Write the per-item JSONL ``eval_abstention.py`` consumes.
+
+    Fields: id, q_type, n_options, gold, pred, correct, max_prob,
+    p_answerable, reason.  ``p_answerable`` is null unless the model carries
+    the answerable head.
+    """
+    by_id = {item.id: item for item in items}
+    p_answerable = getattr(model, "p_answerable", None)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    written = 0
+    with path.open("w", encoding="utf-8") as handle:
+        for row in rows:
+            item = by_id.get(row.item_id)
+            record = {
+                "id": row.item_id,
+                "q_type": row.q_type,
+                "n_options": len(row.probs),
+                "gold": row.label,
+                "pred": row.predicted_key,
+                "correct": bool(row.correct),
+                "max_prob": float(row.confidence),
+                "p_answerable": (
+                    p_answerable(item) if (p_answerable and item is not None) else None
+                ),
+                "reason": getattr(item, "reason", None) if item is not None else None,
+            }
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+            written += 1
+    return written
 
 
 # ---------------------------------------------------------------------------
@@ -702,6 +747,12 @@ def main() -> None:
     parser.add_argument("--arm", default=None, help="Arm name written into the JSON")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output", type=Path, default=None)
+    parser.add_argument(
+        "--predictions-out",
+        type=Path,
+        default=None,
+        help="Per-item JSONL for eval_abstention.py (needs the answerable head)",
+    )
     args = parser.parse_args()
 
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -739,6 +790,10 @@ def main() -> None:
         latencies.append(time.monotonic() - start)
         if (i + 1) % 100 == 0:
             print(f"  {i + 1}/{len(items)}")
+
+    if args.predictions_out:
+        written = write_prediction_records(args.predictions_out, rows, items, model)
+        print(f"Predictions: {written} rows -> {args.predictions_out}")
 
     order: dict[str, Any] = {}
     if not args.no_order_sensitivity:

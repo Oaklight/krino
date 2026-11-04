@@ -159,6 +159,7 @@ class DecisionModel(nn.Module):
         option_max_tokens: int = 64,
         option_batch: int = 1,
         choice_mode: str = "tower",
+        answerable_head: bool = False,
     ) -> None:
         super().__init__()
         if choice_mode not in ("tower", "cross_encoder"):
@@ -452,6 +453,24 @@ class DecisionModel(nn.Module):
             self.choice_head = ChoiceHead(self.hidden_size, rank, rival_aware, dropout)
             self.score_head = ScoreHead(self.hidden_size, rank, dropout)
 
+        # The answerable head is a Bernoulli decision over the whole item, not
+        # over an option set, so it reads the pooled context like noul and is
+        # independent of the choice/score readout.  At inference it combines
+        # with the option distribution as a mixture, never as an extra option:
+        # p(abstain) = 1 - sigmoid(logit), p(option_i) = sigmoid(logit) * p_i.
+        self.answerable_head = (
+            NoulHead(self.hidden_size, rank=noul_rank, dropout=dropout)
+            if answerable_head
+            else None
+        )
+        if self.answerable_head is not None:
+            ans_params = sum(p.numel() for p in self.answerable_head.parameters())
+            print(
+                f"  Answerable head: Bernoulli over the pooled context, "
+                f"{ans_params:,} params",
+                flush=True,
+            )
+
         for param in self.backbone.parameters():
             param.requires_grad_(False)
 
@@ -537,6 +556,8 @@ class DecisionModel(nn.Module):
             self.unified = self.unified.to(device).float()
         self.choice_head = self.choice_head.to(device).float()
         self.score_head = self.score_head.to(device).float()
+        if self.answerable_head is not None:
+            self.answerable_head = self.answerable_head.to(device).float()
 
     @property
     def device(self) -> torch.device:
@@ -1004,6 +1025,22 @@ class DecisionModel(nn.Module):
         text = f"{state} {instructions}"
         pooled = self._encode_text(text)
         return self.noul_head(pooled)
+
+    def forward_answerable(self, state: str, instructions: str) -> torch.Tensor:
+        """Returns the answerable logit [1] for the whole item.
+
+        The decision is Bernoulli over the pooled context: there is no option
+        set to score.  At inference ``sigmoid(logit)`` is the answerable
+        probability and ``1 - sigmoid(logit)`` is the abstain probability; the
+        option distribution is scaled by ``sigmoid(logit)`` as a mixture, not
+        extended with a ``none`` key.
+        """
+        if self.answerable_head is None:
+            raise RuntimeError(
+                "forward_answerable needs answerable_head=True at construction"
+            )
+        pooled = self._encode_text(f"{state} {instructions}")
+        return self.answerable_head(pooled).reshape(-1)
 
     def forward_choice(
         self, state: str, instructions: str, option_texts: list[str]
