@@ -48,6 +48,14 @@ def _is_encoder_model(backbone: PreTrainedModel) -> bool:
     config = backbone.config
     if getattr(config, "is_decoder", False) is True:
         return False
+    # Qwen3.5 text towers are causal decoders even when the nested text
+    # config carries no ``architectures`` entry (the 4B family exposes only
+    # ``Qwen3_5TextModel``, which has no causal suffix).  GDN hybrids are
+    # decoder-only by construction.
+    if is_hybrid_model(config) or str(
+        getattr(config, "model_type", "")
+    ).startswith("qwen3_5"):
+        return False
     names = list(getattr(config, "architectures", None) or ())
     names.append(type(backbone).__name__)
     for name in names:
