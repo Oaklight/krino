@@ -1,7 +1,7 @@
 {
  "repo": "oaklight/krino-data",
  "repo_type": "dataset",
- "revision": "160229fac27db81b13fc143f0300f6736d93ad58",
+ "revision": "f10dd07df7e9568e6dbf6416ec720b742ca2e4b7",
  "files": {
   "derived/abstention/20k/train.jsonl": {
    "local": "data/benchmarks/abstention_20k/train.jsonl",
@@ -192,6 +192,1156 @@
    "local": "data/benchmarks/apigen_tool_next_action.stats.json",
    "sha256": "bda89b981554d9379876503cd7cac97cb435cfd7e7c10ba1090c235d69c6f6cd",
    "bytes": 905
+  },
+  "academic_reasoning_families.jsonl": {
+   "local": "data/benchmarks/synthetic/academic_reasoning_families.jsonl",
+   "sha256": "be6c4e240dd7695ef2c83e27ff2df6514a75342111c7931ebda8e338e59c2d7f",
+   "bytes": 1623970
+  },
+  "academic_reasoning_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/academic_reasoning_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "0f5707a797366911b5848bceb46f7790cf8ed190b78f7044712c367d7d2df93e",
+   "bytes": 894610
+  },
+  "academic_reasoning_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/academic_reasoning_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "aecace2c1812d5d30897efb313c96ea42b8990bd6b7c890152c33552b92ddfd2",
+   "bytes": 189366
+  },
+  "academic_reasoning_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/academic_reasoning_gpt_5_6_luna_labels.jsonl",
+   "sha256": "94d9623c5483cd377cdb3afc452474586654f838f04bdcd1265d461ab4d56f38",
+   "bytes": 1061493
+  },
+  "academic_reasoning_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/academic_reasoning_jev_augmented_labels.jsonl",
+   "sha256": "c4433097f4199ece30b050613058f77773db8584c6e267cf3cf66270bd72db30",
+   "bytes": 839384
+  },
+  "academic_reasoning_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/academic_reasoning_jev_augmented_llm_labels.jsonl",
+   "sha256": "fb711b29b8ddb46be229d3e12e9455e0233a2072e391ea4ad6dbfe33d25748a5",
+   "bytes": 178352
+  },
+  "academic_reasoning_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/academic_reasoning_jev_labels.jsonl",
+   "sha256": "5a66339fd0a9a7f6d2821c92f2c2f95e0176bcef8e7308a6f87983ebac26a041",
+   "bytes": 1003818
+  },
+  "academic_reasoning_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/academic_reasoning_llm_confounders.jsonl",
+   "sha256": "fb6804ddc5dd7d8d6f4c59fdb8737ae4288bf0738b38542eb60d46b3fb212dfd",
+   "bytes": 460458
+  },
+  "academic_reasoning_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/academic_reasoning_qwen3_8_27b_labels.jsonl",
+   "sha256": "1b5a96910544b1bacb3f16e7eea713b5fa9c6f6aa843adc4d5afd03cb8fc4b54",
+   "bytes": 53469
+  },
+  "academic_reasoning_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/academic_reasoning_variants.jsonl",
+   "sha256": "4e0b36335ed8af8b1bc09a714622c71149e618d2a544c42625bfa307f2611877",
+   "bytes": 1482974
+  },
+  "adversarial_inference_families.jsonl": {
+   "local": "data/benchmarks/synthetic/adversarial_inference_families.jsonl",
+   "sha256": "fb2da29e7753574f0e116b3865db7f65dd2d0f2994421fe1e077bde1ef1aee89",
+   "bytes": 1365466
+  },
+  "adversarial_inference_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/adversarial_inference_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "b418952c8f4816404c9a6059cc575fa521101501879a79697ced73c3fa1843e8",
+   "bytes": 912661
+  },
+  "adversarial_inference_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/adversarial_inference_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "42b5b2e06b8c77fb5cee000bcfb71abf60b750b1a203796c5379454879eee9eb",
+   "bytes": 192214
+  },
+  "adversarial_inference_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/adversarial_inference_gpt_5_6_luna_labels.jsonl",
+   "sha256": "1f3b830d4c33fd62243745ab91e5e3f44964c0bd3ccc49872c75e8819f489106",
+   "bytes": 1075623
+  },
+  "adversarial_inference_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/adversarial_inference_jev_augmented_labels.jsonl",
+   "sha256": "326dc5c2c6fe035b054c0d1b36355c1047d9318bd4c116624091e030cebad0b5",
+   "bytes": 856342
+  },
+  "adversarial_inference_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/adversarial_inference_jev_augmented_llm_labels.jsonl",
+   "sha256": "b61660968ecad753af6a565be64d2774bf9d875b46888f44ef438430dd908c4a",
+   "bytes": 180829
+  },
+  "adversarial_inference_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/adversarial_inference_jev_labels.jsonl",
+   "sha256": "9544ab6736926f905b9455cb5e39dfd652f69a66fa896785229047a48fb14b7a",
+   "bytes": 1014464
+  },
+  "adversarial_inference_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/adversarial_inference_llm_confounders.jsonl",
+   "sha256": "16ee758531fcd52fe49d459d3c873a7176af32c04c8b2755df03e4334e1bd72f",
+   "bytes": 463392
+  },
+  "adversarial_inference_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/adversarial_inference_qwen3_8_27b_labels.jsonl",
+   "sha256": "2eb8bead5db282c63d4ca3b2e3d0eeb966238b6ee1e05b7bbee9ad0736a2287a",
+   "bytes": 17064
+  },
+  "adversarial_inference_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/adversarial_inference_variants.jsonl",
+   "sha256": "7e0068eb6925ea3319b950a4896665a999c619fe96391709701b4b2472a9776f",
+   "bytes": 1008952
+  },
+  "code_review_families.jsonl": {
+   "local": "data/benchmarks/synthetic/code_review_families.jsonl",
+   "sha256": "e38e9d9a2f09f10933356d6dd45138f44215286b9a34e9869fd9ced37d673bca",
+   "bytes": 1345545
+  },
+  "code_review_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/code_review_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "3637e52d38bb00252e3a9dd10f3a16fec14ad1c440388cf0562ea4b8a652f774",
+   "bytes": 875805
+  },
+  "code_review_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/code_review_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "a8c9dd8fab9a87e433e695cde89bcf8e00188e711072091bf422119f6850c591",
+   "bytes": 188043
+  },
+  "code_review_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/code_review_gpt_5_6_luna_labels.jsonl",
+   "sha256": "f71424ce77341ada42b6f599040a7ca1860b4bca2e17340f2655ab7780c92610",
+   "bytes": 1016804
+  },
+  "code_review_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/code_review_jev_augmented_labels.jsonl",
+   "sha256": "c31d90b7530373353ff2d980f21d36f5493b9876d7b9afd9119d2940891b4895",
+   "bytes": 822593
+  },
+  "code_review_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/code_review_jev_augmented_llm_labels.jsonl",
+   "sha256": "3f1e9f2f9809fa44a8e87e3a4847d059901e3fe72342f28cf62a2cbdb8d34e03",
+   "bytes": 177587
+  },
+  "code_review_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/code_review_jev_labels.jsonl",
+   "sha256": "96c44231d90f04df4dbc2ae94c153e33687fd85e4052b6dc34832466533ef13b",
+   "bytes": 943132
+  },
+  "code_review_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/code_review_llm_confounders.jsonl",
+   "sha256": "f9115b9efd1fa9bbf1278972fced849d2db3cddb281f77180bc0d42318560960",
+   "bytes": 461484
+  },
+  "code_review_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/code_review_qwen3_8_27b_labels.jsonl",
+   "sha256": "b749c8a5f9e47d7893d8c43c4aa9d2458d07212ee3b1bb321a9c80845dff7a61",
+   "bytes": 28976
+  },
+  "code_review_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/code_review_variants.jsonl",
+   "sha256": "36e2fceff9e549b3f581e776c1f1c821e5620fad99e18d4e519786c3402f6ac8",
+   "bytes": 982324
+  },
+  "commonsense_decision_families.jsonl": {
+   "local": "data/benchmarks/synthetic/commonsense_decision_families.jsonl",
+   "sha256": "96bea8036d507c2c28d5f2a48df95412efecfb47b88badaea64ad2f85c49ae11",
+   "bytes": 1300191
+  },
+  "commonsense_decision_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/commonsense_decision_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "464d900e28efe389b1aa52f22be72b3e8ff2580fe8984661f23bafaf66782656",
+   "bytes": 907571
+  },
+  "commonsense_decision_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/commonsense_decision_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "1f6a9c459fdbc8fb726f4a95dacaeae6edcf3254f4f5f5c58fe9b4afdbbafaef",
+   "bytes": 190393
+  },
+  "commonsense_decision_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/commonsense_decision_gpt_5_6_luna_labels.jsonl",
+   "sha256": "a4685123c41ed455df081f8e43a95850731ef35dee8c1a65b9cd88623bbd0b40",
+   "bytes": 1080835
+  },
+  "commonsense_decision_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/commonsense_decision_jev_augmented_labels.jsonl",
+   "sha256": "26eea4470491dcd21b8e0bd6f406e0b1c61b33409c150a387de1b8d25b7625f3",
+   "bytes": 860809
+  },
+  "commonsense_decision_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/commonsense_decision_jev_augmented_llm_labels.jsonl",
+   "sha256": "df696055fe2797fdb022d0f0148abe150b51e0971cab1c984c0b2f1f871546b0",
+   "bytes": 180629
+  },
+  "commonsense_decision_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/commonsense_decision_jev_labels.jsonl",
+   "sha256": "4f6769f7a7dcbdb5ec7bb9d9f114c92c3262ff4841a0460e6cf3354f6a7d97b0",
+   "bytes": 1008869
+  },
+  "commonsense_decision_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/commonsense_decision_llm_confounders.jsonl",
+   "sha256": "c372ae6d7bca2efffa0280ff03b3d1199abf97b700bb284e638c4424b97bc1e3",
+   "bytes": 464313
+  },
+  "commonsense_decision_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/commonsense_decision_qwen3_8_27b_labels.jsonl",
+   "sha256": "477973dd59b1c25feb1f3f21f6319e18f5e029b3c733f1c8ee4dcaac2b4913d1",
+   "bytes": 29271
+  },
+  "commonsense_decision_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/commonsense_decision_variants.jsonl",
+   "sha256": "e0fb6404fe335068c8461f0f562545bc10ba6e5fb8b8cbbf16f7f2d5923bac6d",
+   "bytes": 884159
+  },
+  "content_analysis_families.jsonl": {
+   "local": "data/benchmarks/synthetic/content_analysis_families.jsonl",
+   "sha256": "5e44151c12bf399f558779804c4d964ce8623c88e658bca6bc78230998fddad7",
+   "bytes": 1309083
+  },
+  "content_analysis_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/content_analysis_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "1802a83d3c20961786faf95e317c886cb9ffcf33d556a07249cea7f58af97053",
+   "bytes": 898592
+  },
+  "content_analysis_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/content_analysis_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "36b96a3f0d3532ffb6ec5f2dc25e51e9db95be71ffb2cbf8a57b546e842bb13e",
+   "bytes": 188429
+  },
+  "content_analysis_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/content_analysis_gpt_5_6_luna_labels.jsonl",
+   "sha256": "f173288aec65cada2979f445f77a0cf585745ae66fd837189a57e08c9943c305",
+   "bytes": 1024902
+  },
+  "content_analysis_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/content_analysis_jev_augmented_labels.jsonl",
+   "sha256": "b5f3a1f2bf23e8081226afb89c50b452e6ac245015e4e9f74e8053fd64da11af",
+   "bytes": 842016
+  },
+  "content_analysis_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/content_analysis_jev_augmented_llm_labels.jsonl",
+   "sha256": "9a91548430f61b605b753ab4b4952b444aefd72dd9f77f13946b44ed4bdfaef7",
+   "bytes": 177139
+  },
+  "content_analysis_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/content_analysis_jev_labels.jsonl",
+   "sha256": "1dbc0c60f00ddd46e37f65705f8b6cd901544eb873c78eeede584038f4135ba9",
+   "bytes": 962301
+  },
+  "content_analysis_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/content_analysis_llm_confounders.jsonl",
+   "sha256": "00edb6300c91c6d4596cbbc508b3c9f8e946ea9e6db29f0ed0f7947a9ea0e4a5",
+   "bytes": 460917
+  },
+  "content_analysis_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/content_analysis_qwen3_8_27b_labels.jsonl",
+   "sha256": "d6d4377048da989a99f6cfa9821a8ebeb2636dd90027f66da9dfed3cd884aec4",
+   "bytes": 9036
+  },
+  "content_analysis_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/content_analysis_variants.jsonl",
+   "sha256": "ced879e3ffee6ec7750fe970ceaa1561207efd06fad4e53904e6bd8c3d8e74e3",
+   "bytes": 950039
+  },
+  "education_assessment_families.jsonl": {
+   "local": "data/benchmarks/synthetic/education_assessment_families.jsonl",
+   "sha256": "2cbbdf4dd804b06e3f22070119295deaf2002e9c105f38b507c4be2e813a2d80",
+   "bytes": 1464812
+  },
+  "education_assessment_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/education_assessment_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "c20542f4570f7776d3459bc4ad739fdae60cd5758accdbd81caae4b0fc45d96f",
+   "bytes": 902943
+  },
+  "education_assessment_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/education_assessment_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "d1f0f8bbcfbed572f0a24631abc35077053ce4d067cbdb7c2702a53f03f8383d",
+   "bytes": 194616
+  },
+  "education_assessment_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/education_assessment_gpt_5_6_luna_labels.jsonl",
+   "sha256": "e528b9d0da2f367565ad5b5b2ce3be0b35d475c25a6cd53436786b3e94ebe395",
+   "bytes": 1098076
+  },
+  "education_assessment_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/education_assessment_jev_augmented_labels.jsonl",
+   "sha256": "6bbeb4d01158985cdb78e9250d704971272eef60caf17fdc553bc5df15a1d644",
+   "bytes": 842924
+  },
+  "education_assessment_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/education_assessment_jev_augmented_llm_labels.jsonl",
+   "sha256": "157e16691364a1cf2add1d1275d0f31d211a63fc3b42389133dc9c59f7f8e5b4",
+   "bytes": 183786
+  },
+  "education_assessment_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/education_assessment_jev_labels.jsonl",
+   "sha256": "b38432da40a0dafeef90e06a7e0a582f4038505dcfcf06dd57bea04d43acb357",
+   "bytes": 1041546
+  },
+  "education_assessment_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/education_assessment_llm_confounders.jsonl",
+   "sha256": "29e18e4d0c77ed03ae88b67413c9209a243b8623d6c78a92580207cbc35d8e60",
+   "bytes": 472648
+  },
+  "education_assessment_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/education_assessment_qwen3_8_27b_labels.jsonl",
+   "sha256": "11d0bc823b246052009d8243089f2c3fc1340babaf5acdd036de22d9c0059c6c",
+   "bytes": 23241
+  },
+  "education_assessment_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/education_assessment_variants.jsonl",
+   "sha256": "5f369226f479dba98e7db775d593f662dd81221de33394fcbf0211b78cc45420",
+   "bytes": 1133536
+  },
+  "financial_analysis_families.jsonl": {
+   "local": "data/benchmarks/synthetic/financial_analysis_families.jsonl",
+   "sha256": "5fae5136751601ccdb9a95a74b381f64451a95259bea64364d9b8c6654804321",
+   "bytes": 1496315
+  },
+  "financial_analysis_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/financial_analysis_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "54c068693fe3f604aeceb935bce9989380ea8fd7feb1a63fae5bc9c22fec11c5",
+   "bytes": 893918
+  },
+  "financial_analysis_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/financial_analysis_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "dc529849bee666f929d9ea0a33dc605688ea323f804ce70ed1bfa477f754454c",
+   "bytes": 189901
+  },
+  "financial_analysis_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/financial_analysis_gpt_5_6_luna_labels.jsonl",
+   "sha256": "0aa8434258a039de6ce56593eee55e7a15a53ebabf362ef1b35774d8389fe22c",
+   "bytes": 1043152
+  },
+  "financial_analysis_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/financial_analysis_jev_augmented_labels.jsonl",
+   "sha256": "f8de72574f191d0d09f29afe365b1dfac9696a3b9089dbff9b53fbd3a31b7bd9",
+   "bytes": 834753
+  },
+  "financial_analysis_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/financial_analysis_jev_augmented_llm_labels.jsonl",
+   "sha256": "939426de5b141acde3e226cf23a58efc96b8433a9f8fd925c5b1e0f61e315ad0",
+   "bytes": 177840
+  },
+  "financial_analysis_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/financial_analysis_jev_labels.jsonl",
+   "sha256": "493c4392144b12c60e6a3e967ff6f1aeccde6e7eda8b80399fe2513f1e64a86f",
+   "bytes": 980650
+  },
+  "financial_analysis_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/financial_analysis_llm_confounders.jsonl",
+   "sha256": "4319526db79e0a4805abf9870113fbebc00d9f8610c1fe66cc7e53778090ced4",
+   "bytes": 452213
+  },
+  "financial_analysis_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/financial_analysis_qwen3_8_27b_labels.jsonl",
+   "sha256": "bc6f860d938ba97dd8a35d67bed3f24f84c2ea2a030a1847ada84b66b4e43363",
+   "bytes": 96766
+  },
+  "financial_analysis_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/financial_analysis_variants.jsonl",
+   "sha256": "a1b977e5b52738e3316a4c9d5ce2d7d144b3fc72a74c6700b91f6c006d85854e",
+   "bytes": 1337119
+  },
+  "game_strategy_families.jsonl": {
+   "local": "data/benchmarks/synthetic/game_strategy_families.jsonl",
+   "sha256": "2372ad2eebc268d11229bd2686fcab94027eadcaa6924760891fcd285dcb908c",
+   "bytes": 1585110
+  },
+  "game_strategy_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/game_strategy_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "16cbd0b57e1989b0a4ea7d054b073ca068f1a7557c9a3562cf51fc091dd49c63",
+   "bytes": 844950
+  },
+  "game_strategy_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/game_strategy_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "ffcc0fd08a82ce38615ff6590ce18ddf6c3a403fea4a638b46a87976db1f62c4",
+   "bytes": 182260
+  },
+  "game_strategy_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/game_strategy_gpt_5_6_luna_labels.jsonl",
+   "sha256": "cb83857d50a85d88f664ad687bde244bcae20177fa8b5435d95d73c793ee1717",
+   "bytes": 1027580
+  },
+  "game_strategy_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/game_strategy_jev_augmented_labels.jsonl",
+   "sha256": "627f00a610e523e549bb39d482b5789a7839d0c0ce151fc292773a59e8d46b1a",
+   "bytes": 794783
+  },
+  "game_strategy_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/game_strategy_jev_augmented_llm_labels.jsonl",
+   "sha256": "ebaa1657bf1c8dbd11557f9aa08c20e8ccf3788ecce2660273d3489793c99ebb",
+   "bytes": 172346
+  },
+  "game_strategy_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/game_strategy_jev_labels.jsonl",
+   "sha256": "52a9f7e26bcc7bfa2190f8adfa19b3a616245810639c27be7b1e9b8216bca697",
+   "bytes": 934229
+  },
+  "game_strategy_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/game_strategy_llm_confounders.jsonl",
+   "sha256": "2f1ca822a260f2f533894ae04337c9af2c408bf29ddd9a03c9e9d0557740d2f4",
+   "bytes": 438846
+  },
+  "game_strategy_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/game_strategy_qwen3_8_27b_labels.jsonl",
+   "sha256": "3b0d4ac317c5ece9afb469de25b89814d48e13c56d2a037debec9b82cdd1c885",
+   "bytes": 267543
+  },
+  "game_strategy_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/game_strategy_variants.jsonl",
+   "sha256": "52daa1cb93cae44d236d0fbd124e50ac7eaa0032c5c488c97bf1e0df7f3aa2f4",
+   "bytes": 1364181
+  },
+  "legal_judgment_families.jsonl": {
+   "local": "data/benchmarks/synthetic/legal_judgment_families.jsonl",
+   "sha256": "c0045f7ff6b3a9109bb55188947975dbb2dd8dc2c953ef76ac71f148b190732d",
+   "bytes": 2480658
+  },
+  "legal_judgment_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/legal_judgment_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "0a0dfa1a5a7f745344bad14493412f11b707d317fe8080f460fb078633466746",
+   "bytes": 808116
+  },
+  "legal_judgment_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/legal_judgment_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "1cfd31aa21287fa856ba9ce1e5f23ea321c1f2ece7f9e76cc7c96d23994a0395",
+   "bytes": 188774
+  },
+  "legal_judgment_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/legal_judgment_gpt_5_6_luna_labels.jsonl",
+   "sha256": "12e127cbc4b86deb6bc9c7be175dcf8c04169cd1650c07a4f060275e3996a2ba",
+   "bytes": 980292
+  },
+  "legal_judgment_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/legal_judgment_jev_augmented_labels.jsonl",
+   "sha256": "5c0e8a8ae1f6df2f732d25675f9ff82c7ae45a646f03f1399d4c35724aa13394",
+   "bytes": 755617
+  },
+  "legal_judgment_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/legal_judgment_jev_augmented_llm_labels.jsonl",
+   "sha256": "e972c418145e7e15aea0e19ac756cd1c92b28eeb1b08a5cf3334fc0744d045f1",
+   "bytes": 177136
+  },
+  "legal_judgment_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/legal_judgment_jev_labels.jsonl",
+   "sha256": "83b98766858b77078cba965a14eacce2d8adefa2a129afd14370d94380ab066f",
+   "bytes": 910146
+  },
+  "legal_judgment_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/legal_judgment_llm_confounders.jsonl",
+   "sha256": "72cedf42af06966ef2ce5492e7e3ac46b9dbdee3f15c9d5453d993c3a1a4d4ae",
+   "bytes": 459662
+  },
+  "legal_judgment_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/legal_judgment_qwen3_8_27b_labels.jsonl",
+   "sha256": "95ac93ddc76c9d4fcd8321f14e9664c3be7fe0a2e32da1627738169109591ea3",
+   "bytes": 60976
+  },
+  "legal_judgment_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/legal_judgment_variants.jsonl",
+   "sha256": "4726bab71d71d91fc4e329ce5fad0a0c25aacc6f7cb3c828278d42e7a2c1ef4a",
+   "bytes": 1767476
+  },
+  "logical_inference_families.jsonl": {
+   "local": "data/benchmarks/synthetic/logical_inference_families.jsonl",
+   "sha256": "372c513e1dd7b2a4413b277091f522b96fe5e53c96c2ecf9cf3959b290f572c1",
+   "bytes": 1439501
+  },
+  "logical_inference_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/logical_inference_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "aa5f02d38a27557419640567b8ec8f08b656c9de6bbc94914ce364d50e64d88b",
+   "bytes": 889911
+  },
+  "logical_inference_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/logical_inference_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "389cd1d00f1461ae3d811620046bda98c62fa9b9d14bb69b63b37f5cb4796791",
+   "bytes": 190116
+  },
+  "logical_inference_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/logical_inference_gpt_5_6_luna_labels.jsonl",
+   "sha256": "f7547288ef68174a890663aaeaea22ea1e06be668f8419bd53afde18a10f9bc3",
+   "bytes": 1068990
+  },
+  "logical_inference_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/logical_inference_jev_augmented_labels.jsonl",
+   "sha256": "d96d1fcfcdfeb05acbf3f676e196fe394d259125129e8d297d0a5e2fe84d6a4e",
+   "bytes": 837607
+  },
+  "logical_inference_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/logical_inference_jev_augmented_llm_labels.jsonl",
+   "sha256": "79a7501bf1357b1d3e853134e85ddd30715cabd0984dc40dfa6f790c3703566b",
+   "bytes": 179508
+  },
+  "logical_inference_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/logical_inference_jev_labels.jsonl",
+   "sha256": "814789221089e5ee281e98a52fd9d0a9a6399ab73157fc7484dffde7a0840943",
+   "bytes": 993503
+  },
+  "logical_inference_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/logical_inference_llm_confounders.jsonl",
+   "sha256": "e703568999e19d81d940ed2d95481470366cb41dd2ad194176105df8fe343722",
+   "bytes": 466294
+  },
+  "logical_inference_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/logical_inference_qwen3_8_27b_labels.jsonl",
+   "sha256": "500d17085243860daa3a27bd46a55445c0f81d727758ce3a1c969d716aae22f7",
+   "bytes": 61976
+  },
+  "logical_inference_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/logical_inference_variants.jsonl",
+   "sha256": "c992b003e33600df33d7a93f65b244403456dd6ae22eda7708ccdc3c3e436635",
+   "bytes": 1138699
+  },
+  "long_document_families.jsonl": {
+   "local": "data/benchmarks/synthetic/long_document_families.jsonl",
+   "sha256": "e9ffb671906d2c188170556eaeb87c29bbc0988dddd6c70bbf32e99d7ba8f3ca",
+   "bytes": 1645724
+  },
+  "long_document_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/long_document_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "a19cd44de704e5fcfb67cd6b02b286fe947df287e2c5f70360cc7284d68a332e",
+   "bytes": 211944
+  },
+  "long_document_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/long_document_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "091e2302713fc09c0803c1846a71001f3543a9214d5aa9ab8642fff7892e78bd",
+   "bytes": 101052
+  },
+  "long_document_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/long_document_gpt_5_6_luna_labels.jsonl",
+   "sha256": "de5cbaeb353b85348b85583f28a283583d66554a4926b7314952baf4d0cb2399",
+   "bytes": 371266
+  },
+  "long_document_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/long_document_jev_augmented_labels.jsonl",
+   "sha256": "7fd49a3a6573690d27832686af399d09abd8075a2df9b96da577c34352ab1cde",
+   "bytes": 199149
+  },
+  "long_document_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/long_document_jev_augmented_llm_labels.jsonl",
+   "sha256": "873ce8930c3226580b4d88c0f30f60ad5e948e3543e03928c5b84a6f6c5d8b84",
+   "bytes": 95765
+  },
+  "long_document_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/long_document_jev_labels.jsonl",
+   "sha256": "3b8a5cc7d6bdb01dc51a786a0bacb770de6fa573876f7e99181cc5990e2ed4e2",
+   "bytes": 343779
+  },
+  "long_document_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/long_document_llm_confounders.jsonl",
+   "sha256": "4953c2a643b68a055541983f669cabac397841445a58188b313511009acbad4c",
+   "bytes": 249088
+  },
+  "long_document_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/long_document_qwen3_8_27b_labels.jsonl",
+   "sha256": "29bd7d29f94c5e6ef9e5c58f274c241990ab052554b5d4b7d3de382a7e37ffd8",
+   "bytes": 28547
+  },
+  "long_document_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/long_document_variants.jsonl",
+   "sha256": "aa46b89558d4fa128600cee4eb2846e5f544861814266d3c9f4cab234324b2d5",
+   "bytes": 799885
+  },
+  "medical_triage_families.jsonl": {
+   "local": "data/benchmarks/synthetic/medical_triage_families.jsonl",
+   "sha256": "8845630b59185afab9e78b327d075138e0d684bb2764d7ea0868b7947b91cbad",
+   "bytes": 1332972
+  },
+  "medical_triage_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/medical_triage_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "a55a380a71755f553af48fd6645b29601bc477dd8ad7ac705dc3398f87584589",
+   "bytes": 867849
+  },
+  "medical_triage_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/medical_triage_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "ae4d35035a6769c222cfd1ae021bdc18440c072d4645dc87d734c5bc79dc6e71",
+   "bytes": 185299
+  },
+  "medical_triage_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/medical_triage_gpt_5_6_luna_labels.jsonl",
+   "sha256": "403fe2e98daaac5cbd8e71b2a484cab1a0752a8ef1a017718cb493b478c42b0e",
+   "bytes": 1038815
+  },
+  "medical_triage_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/medical_triage_jev_augmented_labels.jsonl",
+   "sha256": "2820f54a12d6b904e6a2fcea2f2f29590494c20086def3c8f86fb022e1456455",
+   "bytes": 818408
+  },
+  "medical_triage_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/medical_triage_jev_augmented_llm_labels.jsonl",
+   "sha256": "66d31642342c9d5b6fd6f9b6778223ee162a7b423ccc8942b92483a47c3cacb6",
+   "bytes": 175486
+  },
+  "medical_triage_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/medical_triage_jev_labels.jsonl",
+   "sha256": "ebf034f58352b6f6f1efe26ebad03a41fe7b0ee95445accd4f810cbbc942f6bc",
+   "bytes": 974974
+  },
+  "medical_triage_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/medical_triage_llm_confounders.jsonl",
+   "sha256": "9f1afabab757c2316abd1a757aa01eda403032a067dd140c16045aa73ab38047",
+   "bytes": 458610
+  },
+  "medical_triage_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/medical_triage_qwen3_8_27b_labels.jsonl",
+   "sha256": "be59c786e73a2137b624d583cd6cfc42967a60d96fa583424cc5d40dd2e9bab2",
+   "bytes": 10484
+  },
+  "medical_triage_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/medical_triage_variants.jsonl",
+   "sha256": "eeba255e5fca6a6b709eafe4c46ca7b1b7f9d2c09237cfc024bfde2bc86e8e51",
+   "bytes": 930286
+  },
+  "multi_agent_coordination_families.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_agent_coordination_families.jsonl",
+   "sha256": "7265a3dcab9fe38340db6d1580eae05b870e53a1c604953b1533292e34d8e2b9",
+   "bytes": 1789142
+  },
+  "multi_agent_coordination_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_agent_coordination_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "b9290f9e88ee41d36802b4e595c700453405e6b53eee5800caeca4cebe58b14a",
+   "bytes": 924117
+  },
+  "multi_agent_coordination_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_agent_coordination_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "3616bf48ce8a1e8222f606a457da03902558f40d50e721aedf8f4e5052b05c76",
+   "bytes": 200259
+  },
+  "multi_agent_coordination_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_agent_coordination_gpt_5_6_luna_labels.jsonl",
+   "sha256": "6de0f584490a863d79f5b6213c8f492391a7f22cd9c67d0e1594ebe55a0107cb",
+   "bytes": 1109763
+  },
+  "multi_agent_coordination_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_agent_coordination_jev_augmented_labels.jsonl",
+   "sha256": "bf34efe4143382f7084437d32b3c9580b7a98d7ff38e4657d24b67975aa45009",
+   "bytes": 874042
+  },
+  "multi_agent_coordination_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_agent_coordination_jev_augmented_llm_labels.jsonl",
+   "sha256": "79a27df887b06f5421620fe1c6dade2d256cb2886436e433c6660d268ec84736",
+   "bytes": 190163
+  },
+  "multi_agent_coordination_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_agent_coordination_jev_labels.jsonl",
+   "sha256": "0322171679a9badcf5d3cb4b142845969c5a5df7a17c9f72c85f199054b50736",
+   "bytes": 1041758
+  },
+  "multi_agent_coordination_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_agent_coordination_llm_confounders.jsonl",
+   "sha256": "0959b9ff13bbaff0236d1eb28c3537c0fbd699824214dcc2de428101f7f77e29",
+   "bytes": 474358
+  },
+  "multi_agent_coordination_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_agent_coordination_qwen3_8_27b_labels.jsonl",
+   "sha256": "1e085e5ed40a433bb33ecaf90974e865e6afb33b3d1fb97ad51e3674a78d28cf",
+   "bytes": 67385
+  },
+  "multi_agent_coordination_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_agent_coordination_variants.jsonl",
+   "sha256": "7252b38501bbf7d21308dd503cc9f74b6383bf5a3a402947537846512ef88bc6",
+   "bytes": 1791150
+  },
+  "multi_hop_reasoning_families.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_hop_reasoning_families.jsonl",
+   "sha256": "4d24924511c423b14d96caf524abcea97a32756596009077f7f075b4541ee6c7",
+   "bytes": 2477142
+  },
+  "multi_hop_reasoning_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_hop_reasoning_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "8287d329de9ffc3b3a34b67f3667a2f3d34f4f15b46a1d71fe8304510f7dbf1b",
+   "bytes": 875604
+  },
+  "multi_hop_reasoning_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_hop_reasoning_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "a0ca4be9164a4af28918134db4572adc468073cf74ca4af58ec0943a856fdaa4",
+   "bytes": 193976
+  },
+  "multi_hop_reasoning_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_hop_reasoning_gpt_5_6_luna_labels.jsonl",
+   "sha256": "7e72e602af4bf6e71e50d508440bbfbbe98848a1e12b8f521f1a8432fd4a30ec",
+   "bytes": 1089293
+  },
+  "multi_hop_reasoning_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_hop_reasoning_jev_augmented_labels.jsonl",
+   "sha256": "02e4dc88f36496f8426025eaa5c6ddcb6effa869d48747bee3aa70cf21497783",
+   "bytes": 814476
+  },
+  "multi_hop_reasoning_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_hop_reasoning_jev_augmented_llm_labels.jsonl",
+   "sha256": "e8866d0b2f5c122c1bc19e41f545f578afde3a926896a330e521af3297a6d4bf",
+   "bytes": 180882
+  },
+  "multi_hop_reasoning_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_hop_reasoning_jev_labels.jsonl",
+   "sha256": "992852476feda3065f4a4099b37c50a7fcb42ee87957b1d403c7993aa59095d4",
+   "bytes": 971755
+  },
+  "multi_hop_reasoning_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_hop_reasoning_llm_confounders.jsonl",
+   "sha256": "e72335953fb59474937c88acb4dcfd7dfb3a71d32556044b6ddd983311e71ad8",
+   "bytes": 458900
+  },
+  "multi_hop_reasoning_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_hop_reasoning_qwen3_8_27b_labels.jsonl",
+   "sha256": "cc21f4cf18ca6eb8dfa2ec2c60c82954c5c0848aef241106e55aba72af59a0cf",
+   "bytes": 121744
+  },
+  "multi_hop_reasoning_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/multi_hop_reasoning_variants.jsonl",
+   "sha256": "1187d76b7d8fe788db4add58a196ba6d0da3c2fdfb6f369581fbc88f533aca48",
+   "bytes": 2743484
+  },
+  "navigation_planning_families.jsonl": {
+   "local": "data/benchmarks/synthetic/navigation_planning_families.jsonl",
+   "sha256": "e9d12d5dacc013138b83c79ea37cbdcc82a613bbab3c724484eda525b14c4b78",
+   "bytes": 1568947
+  },
+  "navigation_planning_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/navigation_planning_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "bac5bd6e04f40a7553b4a3bbd263acbec290210e515c2ec73f55ee40278ee5aa",
+   "bytes": 912134
+  },
+  "navigation_planning_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/navigation_planning_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "e55a041a852bfb30e750de735010afd2c002bb674acf08f711b136cfe0747c81",
+   "bytes": 192970
+  },
+  "navigation_planning_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/navigation_planning_gpt_5_6_luna_labels.jsonl",
+   "sha256": "3212d8b04013e059637df35fca44fdfd380081436ec6bedaa8b26f6427534c93",
+   "bytes": 1083610
+  },
+  "navigation_planning_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/navigation_planning_jev_augmented_labels.jsonl",
+   "sha256": "17b63be68b7915631008272391e4afd96035d788aa3f002586407c8ae143d7fe",
+   "bytes": 855937
+  },
+  "navigation_planning_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/navigation_planning_jev_augmented_llm_labels.jsonl",
+   "sha256": "fe54d56c2b459f6623a9cff9e827fa06a3267fdd6abcfa1032b8140a27e2f8a5",
+   "bytes": 181713
+  },
+  "navigation_planning_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/navigation_planning_jev_labels.jsonl",
+   "sha256": "735313775e1e6b81c86ab32bbd70136d67127ec36efa3a3a7c04c38fa1d94827",
+   "bytes": 1002889
+  },
+  "navigation_planning_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/navigation_planning_llm_confounders.jsonl",
+   "sha256": "e3c74ab05ac607151b35e9e7bd4b46d954b7f98031e0fb3f76b11b83451500c9",
+   "bytes": 460470
+  },
+  "navigation_planning_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/navigation_planning_qwen3_8_27b_labels.jsonl",
+   "sha256": "b06637a04ac742163e163f9555c132fea56f4bb7036d39235a9123530072f0e4",
+   "bytes": 187770
+  },
+  "navigation_planning_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/navigation_planning_variants.jsonl",
+   "sha256": "cc9ba421de69fab54aa41f0e98f13078ba54218dc42bebe1e70961e8fd844d00",
+   "bytes": 1393221
+  },
+  "numerical_reasoning_families.jsonl": {
+   "local": "data/benchmarks/synthetic/numerical_reasoning_families.jsonl",
+   "sha256": "4ecdbbf5d477a03f4b6225a6bfa3740db6ead1af8d87c814f2865caf4c724202",
+   "bytes": 1479537
+  },
+  "numerical_reasoning_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/numerical_reasoning_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "323994b1e8be2f508a8632db7d47cdf41bbb38ed2a9d1d42efa445664716671c",
+   "bytes": 886508
+  },
+  "numerical_reasoning_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/numerical_reasoning_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "7f63fe8aaff5f75b05e043b90456ff7d5170920870ef638fe5b71a02f2e3edcb",
+   "bytes": 189722
+  },
+  "numerical_reasoning_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/numerical_reasoning_gpt_5_6_luna_labels.jsonl",
+   "sha256": "143080e83373149179bba6be211848da74f2d9d1bc0dead3103e636081d41a1e",
+   "bytes": 1115321
+  },
+  "numerical_reasoning_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/numerical_reasoning_jev_augmented_labels.jsonl",
+   "sha256": "2c356495cc9885c82af9ec574aeb2c35c1f447a1a6dd3ad794550305c8c590ca",
+   "bytes": 832819
+  },
+  "numerical_reasoning_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/numerical_reasoning_jev_augmented_llm_labels.jsonl",
+   "sha256": "12ee5cd532aa6362c3a5cb409d47c02d4b8534b425f917ddab4aff6c3ae8c86a",
+   "bytes": 179054
+  },
+  "numerical_reasoning_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/numerical_reasoning_jev_labels.jsonl",
+   "sha256": "b1f47ec45239a382d0d776aec6b4ec598b07b53189d83ed8e0cc5160dcff628e",
+   "bytes": 979059
+  },
+  "numerical_reasoning_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/numerical_reasoning_llm_confounders.jsonl",
+   "sha256": "15fd028f1e9c77bf1063ec5490c20bfee25426c569ab2596afd81e3c704b673f",
+   "bytes": 450385
+  },
+  "numerical_reasoning_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/numerical_reasoning_qwen3_8_27b_labels.jsonl",
+   "sha256": "99605c46330a781bb5f54196d52ecbafdd87038ebcce024d9472c6ab75f9960d",
+   "bytes": 199077
+  },
+  "numerical_reasoning_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/numerical_reasoning_variants.jsonl",
+   "sha256": "d643f5a08cd86022d5c7051f109b24b011a5f6422f98512b91131109d963889a",
+   "bytes": 1335914
+  },
+  "passage_decision_families.jsonl": {
+   "local": "data/benchmarks/synthetic/passage_decision_families.jsonl",
+   "sha256": "7f71aa25c1018fbe6152d8c6b0db4ec75a26c24263dce0038c42f96083eccfd7",
+   "bytes": 1432058
+  },
+  "passage_decision_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/passage_decision_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "b72cbfc10ebe1dacb056821486feed5baf5bec7a89ae2632c24c614b7c663d56",
+   "bytes": 898547
+  },
+  "passage_decision_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/passage_decision_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "401d5f7087534c84ce996526d0c2ce8d985e43cf6f517e0e43cf0b301ae27061",
+   "bytes": 191163
+  },
+  "passage_decision_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/passage_decision_gpt_5_6_luna_labels.jsonl",
+   "sha256": "250e59aca19e04d19825c0f3647cbbca25633bf2a1a23333d300873cd1aeb737",
+   "bytes": 1041376
+  },
+  "passage_decision_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/passage_decision_jev_augmented_labels.jsonl",
+   "sha256": "fda1731b594e40cfbd4946a7e1756cdcb31c9a212482886c5dad8c22b5cb4d49",
+   "bytes": 837104
+  },
+  "passage_decision_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/passage_decision_jev_augmented_llm_labels.jsonl",
+   "sha256": "cffbfe63ee6ba8f959dde969e82955e6c263f88ab92d0c37fb347f5b8b700ae0",
+   "bytes": 178547
+  },
+  "passage_decision_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/passage_decision_jev_labels.jsonl",
+   "sha256": "045b4351f11742b597ca4294444b6dbc03e79cdfec4ec34c2f3740eedb325cb6",
+   "bytes": 976881
+  },
+  "passage_decision_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/passage_decision_llm_confounders.jsonl",
+   "sha256": "987ae7942c77995f85dc2301f4c401a2b13bba4d331ba087a6df69978ec6ce87",
+   "bytes": 465886
+  },
+  "passage_decision_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/passage_decision_qwen3_8_27b_labels.jsonl",
+   "sha256": "c9dedfdd11403e46a388fff720eeccf425056212b7c97047510870e9b4915605",
+   "bytes": 19001
+  },
+  "passage_decision_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/passage_decision_variants.jsonl",
+   "sha256": "c104c82db2a0af386e3105ff82973d80d5ecfe00665b6b78c37bde905e3c738e",
+   "bytes": 1128860
+  },
+  "product_categorization_families.jsonl": {
+   "local": "data/benchmarks/synthetic/product_categorization_families.jsonl",
+   "sha256": "8562f679736a910d08c6e713bcd69c4b6c3370c7da8fd701cdfbda5db473ba4a",
+   "bytes": 1468620
+  },
+  "product_categorization_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/product_categorization_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "0836b525c69ad61571e2e86e94aedbf85c6d769ec1a096ea85fc8b1967ed28ce",
+   "bytes": 920438
+  },
+  "product_categorization_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/product_categorization_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "b55f0018b80aa09c5c474279aebe878ca4be32710c207cbaffa36c21f8baf33c",
+   "bytes": 196656
+  },
+  "product_categorization_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/product_categorization_gpt_5_6_luna_labels.jsonl",
+   "sha256": "5e807a400bd996edc3c57bf6b9622e73b2068b43034108f03ffee88c68d4527e",
+   "bytes": 1078786
+  },
+  "product_categorization_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/product_categorization_jev_augmented_labels.jsonl",
+   "sha256": "7d4a6d6d72f7b22e21704d61431b4fb0270512ad16418c55ffc583eb342fcf0b",
+   "bytes": 864696
+  },
+  "product_categorization_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/product_categorization_jev_augmented_llm_labels.jsonl",
+   "sha256": "eb4b3320b13e340bbd18dfd528bc56718305288e8bd20e5e08569f074e2cfc8a",
+   "bytes": 185538
+  },
+  "product_categorization_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/product_categorization_jev_labels.jsonl",
+   "sha256": "d264dbc61f16ec76beb62dd4eb7d3b72c4a92239589815614340f987146ff3dc",
+   "bytes": 1015948
+  },
+  "product_categorization_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/product_categorization_llm_confounders.jsonl",
+   "sha256": "e87867b0547009b56596b820a2ae2c05df035a2d0cc4ba8bb29d26e7f2d3d5b0",
+   "bytes": 470525
+  },
+  "product_categorization_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/product_categorization_qwen3_8_27b_labels.jsonl",
+   "sha256": "955ed4ed601644943b32e5bb6c60cdf73811be83b82b566e6ac43b5e57ba9216",
+   "bytes": 565
+  },
+  "product_categorization_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/product_categorization_variants.jsonl",
+   "sha256": "38f96ceacec2d0812c707e83c2e57272ca5c17206577f00017306e4e7c92f936",
+   "bytes": 1141119
+  },
+  "resource_management_families.jsonl": {
+   "local": "data/benchmarks/synthetic/resource_management_families.jsonl",
+   "sha256": "ff3d3e22158a4eeb54df5a9e8741245391817a07c9c6117e8462658ec01d6d8d",
+   "bytes": 1768391
+  },
+  "resource_management_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/resource_management_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "df114337a46a5ba92248951f6a8191d79f92444bcf7aef3a9750910c5a2ae2ad",
+   "bytes": 916177
+  },
+  "resource_management_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/resource_management_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "115e04568d949ef0786fba3de0113ec50e81516cec5d671f179171d36958d4da",
+   "bytes": 198617
+  },
+  "resource_management_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/resource_management_gpt_5_6_luna_labels.jsonl",
+   "sha256": "cdced56d073e3a26781872b22b71c6c8c6cf992fd3d0a3398055a331d13e2d55",
+   "bytes": 1106975
+  },
+  "resource_management_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/resource_management_jev_augmented_labels.jsonl",
+   "sha256": "0f8492a6389717c9a0829a4590b4b27675bf58c464b3e7a981dedc83b45fde49",
+   "bytes": 856882
+  },
+  "resource_management_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/resource_management_jev_augmented_llm_labels.jsonl",
+   "sha256": "f090dcb285547c23b7eb6003be8ef96788562eebbc5a0d661fe5accb08a93fba",
+   "bytes": 187448
+  },
+  "resource_management_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/resource_management_jev_labels.jsonl",
+   "sha256": "7fe3c6a5c15ab4a04670876d1f6732f538fc61c231df224c08bc1e19ca8b0cfe",
+   "bytes": 1034478
+  },
+  "resource_management_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/resource_management_llm_confounders.jsonl",
+   "sha256": "bcaf1990760dcc244dfee97ae5c29a6619b01ae49f9e9aa72ffd7e7eb2d3c30a",
+   "bytes": 462829
+  },
+  "resource_management_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/resource_management_qwen3_8_27b_labels.jsonl",
+   "sha256": "8e50d6d7d6da9e67cb9fc3b4d3560ceecb44195362b0874bf7b9f9b8c3662463",
+   "bytes": 266326
+  },
+  "resource_management_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/resource_management_variants.jsonl",
+   "sha256": "749cf8357c4f23d150bf58d8d02e7753a64cbe869cc5047659db966b9df026e4",
+   "bytes": 1649369
+  },
+  "safety_moderation_families.jsonl": {
+   "local": "data/benchmarks/synthetic/safety_moderation_families.jsonl",
+   "sha256": "2e5c11cfd25373ee6baddf03c36b900de902de1ffdb1b123ff1829fedd821e31",
+   "bytes": 1376391
+  },
+  "safety_moderation_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/safety_moderation_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "f4ad99b738417aeb87f50ba7f5b511e07c3ddc58ca54d21ad85e8f9d849c9268",
+   "bytes": 893248
+  },
+  "safety_moderation_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/safety_moderation_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "7846ed46beb0687aec9cfe7c6c9a7d6520955da09273dbd667c34c0b3bbcf73e",
+   "bytes": 188025
+  },
+  "safety_moderation_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/safety_moderation_gpt_5_6_luna_labels.jsonl",
+   "sha256": "5f5cdbc6a9354b7b3919bfb4fbf909172a530429d613e8f085e0eef2861880cb",
+   "bytes": 1059455
+  },
+  "safety_moderation_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/safety_moderation_jev_augmented_labels.jsonl",
+   "sha256": "868eaeda2cb2bef49eb422bbcd32d7925d0a7a8ef89f2c1c83b9c61d3097c060",
+   "bytes": 848102
+  },
+  "safety_moderation_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/safety_moderation_jev_augmented_llm_labels.jsonl",
+   "sha256": "e1f7f9daca8b81710e8e728d636e823c07e8ca41cfdf024f1db3bb2bc00c0fc8",
+   "bytes": 179153
+  },
+  "safety_moderation_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/safety_moderation_jev_labels.jsonl",
+   "sha256": "2e8085957babacb7d81f68f1965c2fec57536d80c10579710ffb6276c8ec54be",
+   "bytes": 995041
+  },
+  "safety_moderation_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/safety_moderation_llm_confounders.jsonl",
+   "sha256": "700c77b1700ce6439830ab1eb660994dfde1557f9f7d7fc1689731ac0cbac868",
+   "bytes": 459698
+  },
+  "safety_moderation_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/safety_moderation_qwen3_8_27b_labels.jsonl",
+   "sha256": "f145fe225c4730ff542498fea85cd465525a2cab48aea9e7019fd7064d24cdb0",
+   "bytes": 3844
+  },
+  "safety_moderation_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/safety_moderation_variants.jsonl",
+   "sha256": "cb2d56e1b99cacc3f754e6d68c75e6fe9151bdd3e8f7180ebc4adc31815c6c63",
+   "bytes": 999224
+  },
+  "scientific_reasoning_families.jsonl": {
+   "local": "data/benchmarks/synthetic/scientific_reasoning_families.jsonl",
+   "sha256": "91095eba9fb1141ba8105186ee41412146ce882d141962a4b992928042ab4353",
+   "bytes": 1378069
+  },
+  "scientific_reasoning_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/scientific_reasoning_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "8b62023ae720ad097a7ffa2acc43bb5112eb64221206b246416c86b2e3dadebd",
+   "bytes": 913807
+  },
+  "scientific_reasoning_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/scientific_reasoning_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "92bcf84806e9631e18872d037eafd402a94cae9500e48402e66c0c96b0d7cc55",
+   "bytes": 194089
+  },
+  "scientific_reasoning_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/scientific_reasoning_gpt_5_6_luna_labels.jsonl",
+   "sha256": "a39f8c03ca6cb9eee5a202a6d23524d7e98970742372fab6c5c4cd0ba67b379f",
+   "bytes": 1121180
+  },
+  "scientific_reasoning_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/scientific_reasoning_jev_augmented_labels.jsonl",
+   "sha256": "00c31825684b37b3dfb599ce99adfe7009ebd5f6a676c76fe5dbb46816f0200f",
+   "bytes": 858411
+  },
+  "scientific_reasoning_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/scientific_reasoning_jev_augmented_llm_labels.jsonl",
+   "sha256": "96d6ee0bffceb71673094951b5411a9d14caf1f8eb54a23ea47dc809325244a1",
+   "bytes": 182426
+  },
+  "scientific_reasoning_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/scientific_reasoning_jev_labels.jsonl",
+   "sha256": "ed7a9bfc68d4e6a6f0e8d5c541956310bcdcbe341c5ad19c7d29b982dde30fd8",
+   "bytes": 1051612
+  },
+  "scientific_reasoning_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/scientific_reasoning_llm_confounders.jsonl",
+   "sha256": "df338938216831da0bd5e4193b7c35291868fcecdfecdf4e1e1956e1acf0acbd",
+   "bytes": 471426
+  },
+  "scientific_reasoning_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/scientific_reasoning_qwen3_8_27b_labels.jsonl",
+   "sha256": "2d3c4a67f282b9e0fe3d1d91f3b47df76b7b03747b084b931721db4909a8d781",
+   "bytes": 19467
+  },
+  "scientific_reasoning_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/scientific_reasoning_variants.jsonl",
+   "sha256": "900e0f8643b51116229891d7d4e3c9d234927da48309735fccff9d744c148a85",
+   "bytes": 978121
+  },
+  "sequential_action_families.jsonl": {
+   "local": "data/benchmarks/synthetic/sequential_action_families.jsonl",
+   "sha256": "4b4c5f01ffb96284ab8dbfe0e8eea6d5170ec58abf48b6fb8c289451d7c49fbd",
+   "bytes": 1788794
+  },
+  "sequential_action_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/sequential_action_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "d2c8ab4d7abab3b70bc01078d469d8b827d35f0fa57294b1cfe442f7cc7e7295",
+   "bytes": 903769
+  },
+  "sequential_action_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/sequential_action_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "a6544456da21db181da9acfc86cefa771d8ad5ece4fa941dbd3d4dbeca09af8a",
+   "bytes": 192423
+  },
+  "sequential_action_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/sequential_action_gpt_5_6_luna_labels.jsonl",
+   "sha256": "e01506dd5d3cd3f2989a2e8fe24b1f363a0d497dbe6195b635eff0e8dc8b7b3c",
+   "bytes": 1066724
+  },
+  "sequential_action_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/sequential_action_jev_augmented_labels.jsonl",
+   "sha256": "d20e8ed28c05ae04b40218d5eb8da0ce5cc2747d87cd3dbcbad1d94524db0b01",
+   "bytes": 846139
+  },
+  "sequential_action_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/sequential_action_jev_augmented_llm_labels.jsonl",
+   "sha256": "7d992468653b1d68a9fca0d982123ee9d3a9cbc64200104263f4a8e869daf3a7",
+   "bytes": 180911
+  },
+  "sequential_action_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/sequential_action_jev_labels.jsonl",
+   "sha256": "2b6fdc5b58d9c97d6594bde4b54b4ceca1b3ce78b6f739fffcd65fb8754bffc4",
+   "bytes": 1002190
+  },
+  "sequential_action_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/sequential_action_llm_confounders.jsonl",
+   "sha256": "232c355a2bb52baa14513c6f127fdcd406bd2b8e9fa086c986498d28442d24a5",
+   "bytes": 459459
+  },
+  "sequential_action_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/sequential_action_qwen3_8_27b_labels.jsonl",
+   "sha256": "952557bb90d8b43cd661c36f023bb287f541c751e1e3b34d21f2b4eb350ae8dd",
+   "bytes": 53435
+  },
+  "sequential_action_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/sequential_action_variants.jsonl",
+   "sha256": "bddedc4c4053fb5da1bcaf06c35a2e09d219d221cfa97013f179bce391cadcad",
+   "bytes": 1712784
+  },
+  "spatial_reasoning_families.jsonl": {
+   "local": "data/benchmarks/synthetic/spatial_reasoning_families.jsonl",
+   "sha256": "2c073fe9d89a6f6449147b13a11763ea629e3a0a01335ba00a0fd9b15a215b16",
+   "bytes": 1386704
+  },
+  "spatial_reasoning_gpt_5_6_luna_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/spatial_reasoning_gpt_5_6_luna_augmented_labels.jsonl",
+   "sha256": "31db212d6d01606a56ce8597c2c46563c086a97feeaeefa12aac7aacaabd569b",
+   "bytes": 906373
+  },
+  "spatial_reasoning_gpt_5_6_luna_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/spatial_reasoning_gpt_5_6_luna_augmented_llm_labels.jsonl",
+   "sha256": "10004c04b13859a7e518a4f34c3959b72fb4dd6c49e047dd128942896cd2e3ed",
+   "bytes": 192956
+  },
+  "spatial_reasoning_gpt_5_6_luna_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/spatial_reasoning_gpt_5_6_luna_labels.jsonl",
+   "sha256": "4ba3ef64c61d1e188aa2acfee43927aedbef282450180a6016ddb369fa33823e",
+   "bytes": 1055269
+  },
+  "spatial_reasoning_jev_augmented_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/spatial_reasoning_jev_augmented_labels.jsonl",
+   "sha256": "d0e048aeff5454b10fe98f201a41745a1b151489b3049eb93b4e14a77eab0320",
+   "bytes": 848876
+  },
+  "spatial_reasoning_jev_augmented_llm_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/spatial_reasoning_jev_augmented_llm_labels.jsonl",
+   "sha256": "06647caa764c157713951cc7ea96b431d76fa3735dab7544f88d82ec7b7b994c",
+   "bytes": 181395
+  },
+  "spatial_reasoning_jev_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/spatial_reasoning_jev_labels.jsonl",
+   "sha256": "c3744e9a253a0b898e4b4080c8847f02f31b4f4340df95c921077655a84e66ec",
+   "bytes": 965665
+  },
+  "spatial_reasoning_llm_confounders.jsonl": {
+   "local": "data/benchmarks/synthetic/spatial_reasoning_llm_confounders.jsonl",
+   "sha256": "f5095cdfc4e4f79bf7a9b8a7628bb9e09b55e0e36ed6096fe4386426df36f14e",
+   "bytes": 459998
+  },
+  "spatial_reasoning_qwen3_8_27b_labels.jsonl": {
+   "local": "data/benchmarks/synthetic/spatial_reasoning_qwen3_8_27b_labels.jsonl",
+   "sha256": "a304a43b0db001119990197f0b7f8a54123e28beababbdc740fe5b9f1fc736f8",
+   "bytes": 218550
+  },
+  "spatial_reasoning_variants.jsonl": {
+   "local": "data/benchmarks/synthetic/spatial_reasoning_variants.jsonl",
+   "sha256": "67422ee332af2834acb19af04af7ef47da2747e16c87e8805311b065f1eb85e9",
+   "bytes": 1195709
   }
  }
 }

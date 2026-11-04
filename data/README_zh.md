@@ -62,6 +62,8 @@ python -m data.synthetic --stages report    # 检查状态，不执行
 阶段：`base` → `counterfactual,paraphrase,negation` → `shuffle` → `fill-variants` → `repair` → `dedup` → `validate` → `llm-label` → `jev-label` → `report`
 
 数据存储在 HuggingFace：[`oaklight/krino-data`](https://huggingface.co/datasets/oaklight/krino-data)（公开）。
+Git 不保留数据：`data/benchmarks/synthetic/*.jsonl` 已被忽略，用
+`python -m data.hf_sync` 从 Hub 恢复。
 
 ## 结构
 
