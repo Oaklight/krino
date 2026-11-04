@@ -9,9 +9,18 @@ from data.long_context_choice import (
     acceptable_distractor,
     answer_type,
     build_item,
+    build_item_reason,
+    build_long_context_item,
+    build_mmlu_item,
+    build_race_item,
     hotpot_row,
+    longbench_row,
+    mmlu_pro_row,
     pick_distractors,
+    pick_distractors_scan,
+    race_row,
     select_paragraphs,
+    twowiki_row,
 )
 
 
@@ -251,3 +260,225 @@ def test_organizations_are_not_person_distractors():
         question="Who is the spouse of the Green performer?",
     )
     assert sorted(picked) == ["Clio Goldsmith", "J. Robert Oppenheimer"]
+
+
+def test_mmlu_pro_row_and_item_use_ten_options():
+    row = {
+        "question_id": 7,
+        "question": "What is the characteristic of the ring 2Z?",
+        "options": [str(index) for index in range(10)],
+        "answer": "C",
+        "answer_index": 2,
+        "category": "math",
+        "src": "cot_lib-abstract_algebra",
+    }
+    example = mmlu_pro_row(row, "test")
+    assert example["id"] == "mmlu-pro-7"
+    assert example["answer"] == "2"
+    assert example["group"] == "short_reasoning:math"
+    assert example["options"] == [str(index) for index in range(10)]
+
+    item, reason = build_mmlu_item(example)
+    assert reason is None
+    assert isinstance(item, TypedQuestion)
+    assert item.state == "What is the characteristic of the ring 2Z?"
+    assert item.source == "mmlu_pro_short_reasoning_choice"
+    assert item.question["instructions"] == item.state
+    assert len(item.question["criteria"]) == 10
+    assert item.question["criteria"][item.label] == "2"
+    # MMLU-Pro keeps the dataset option order; nothing is mined or shuffled.
+    assert list(item.question["criteria"].values()) == [
+        str(index) for index in range(10)
+    ]
+    assert len(set(item.question["criteria"].values())) == 10
+
+
+def test_mmlu_pro_drops_rows_without_ten_valid_options():
+    row = {
+        "question_id": 8,
+        "question": "q",
+        "options": [f"option {index}" for index in range(9)],
+        "answer": "A",
+        "answer_index": 0,
+        "category": "math",
+    }
+    example = mmlu_pro_row(row, "test")
+    item, reason = build_mmlu_item(example)
+    assert item is None
+    assert reason == "not_10_options"
+
+    row["answer_index"] = 99
+    assert mmlu_pro_row(row, "test") is None
+    assert build_mmlu_item(mmlu_pro_row({**row, "answer_index": 0}, "test"), k=8)[1] == (
+        "not_10_options"
+    )
+
+
+def test_race_row_and_item_preserve_original_options():
+    row = {
+        "example_id": "high1.txt",
+        "article": "The film was shot in California. " * 80,
+        "answer": "C",
+        "question": "Who directed the film?",
+        "options": ["Scott Derrickson", "Ed Wood", "Tim Burton", "Joel Coen"],
+    }
+    example = race_row(row, "validation")
+    assert example["answer"] == "Tim Burton"
+    assert example["group"] == "short_passage_rc"
+    assert example["options"] == row["options"]
+
+    pool = row["options"] + [
+        "David Lynch", "Ethan Coen", "Wes Anderson", "Spike Lee",
+    ]
+    item, reason = build_race_item(
+        example, pool, k=8, min_chars=500, max_chars=4000,
+        rng=random.Random(11),
+    )
+    assert reason is None
+    assert isinstance(item, TypedQuestion)
+    assert item.source == "race_short_passage_choice"
+    criteria = item.question["criteria"]
+    assert len(criteria) == 8
+    for original in row["options"]:
+        assert original in criteria.values()
+    assert criteria[item.label] == "Tim Burton"
+    assert len({value.lower() for value in criteria.values()}) == 8
+    assert len(item.state) <= 4000
+
+
+def test_race_item_respects_min_chars_and_pool_size():
+    row = {
+        "example_id": "high2.txt",
+        "article": "short",
+        "answer": "A",
+        "question": "Who directed the film?",
+        "options": ["Scott Derrickson", "Ed Wood", "Tim Burton", "Joel Coen"],
+    }
+    example = race_row(row, "validation")
+    item, reason = build_race_item(
+        example, row["options"], k=8, min_chars=500, max_chars=4000,
+        rng=random.Random(12),
+    )
+    assert item is None
+    assert reason == "short_state"
+
+    example["paragraphs"] = [("", "The film was shot in California. " * 80)]
+    item, reason = build_race_item(
+        example, ["Scott Derrickson", "Ed Wood", "Tim Burton", "Joel Coen"],
+        k=8, min_chars=500, max_chars=4000, rng=random.Random(12),
+    )
+    assert item is None
+    assert reason == "insufficient_distractors"
+
+
+def test_longbench_row_and_item_build_choice():
+    row = {
+        "_id": "abc",
+        "input": "Who is the spouse of the Green performer?",
+        "context": "evidence text. " * 200,
+        "answers": ["Miquette Giraudy", "Miquette"],
+    }
+    example = longbench_row(row, "narrativeqa", "test")
+    assert example["id"] == "longbench-narrativeqa-abc"
+    assert example["answer"] == "Miquette Giraudy"
+    assert example["aliases"] == ["Miquette"]
+    assert example["group"] == "narrativeqa"
+
+    pool = [
+        "Miquette Giraudy", "Miquette", "Steve Hillage", "Alice Coltrane",
+        "John McLaughlin", "Daevid Allen", "Gilli Smyth",
+    ]
+    item, reason = build_long_context_item(
+        example, pool, k=6, min_chars=500, max_chars=2000,
+        rng=random.Random(13),
+    )
+    assert reason is None
+    assert isinstance(item, TypedQuestion)
+    assert item.source == "longbench_long_choice"
+    criteria = item.question["criteria"]
+    assert len(criteria) == 6
+    assert criteria[item.label] == "Miquette Giraudy"
+    assert "Miquette" not in criteria.values()
+    assert len({value.lower() for value in criteria.values()}) == 6
+    assert len(item.state) <= 2000
+
+
+def test_longbench_item_drops_short_state_and_yes_no():
+    short = longbench_row(
+        {"_id": "s", "input": "q", "context": "short", "answers": ["Paris"]},
+        "qasper", "test",
+    )
+    item, reason = build_long_context_item(
+        short, ["London", "Berlin"], k=4, min_chars=500, max_chars=2000,
+        rng=random.Random(14),
+    )
+    assert item is None
+    assert reason == "short_state"
+
+    yes = longbench_row(
+        {"_id": "y", "input": "q", "context": "evidence " * 200,
+         "answers": ["yes"]},
+        "qasper", "test",
+    )
+    item, reason = build_long_context_item(
+        yes, ["no", "maybe"], k=4, min_chars=500, max_chars=2000,
+        rng=random.Random(14),
+    )
+    assert item is None
+    assert reason == "yes_no_answer"
+
+
+def test_twowiki_row_normalises_context_and_supporting_facts():
+    row = {
+        "_id": "abc",
+        "type": "compositional",
+        "question": "Who is the spouse of the Green performer?",
+        "answer": "Miquette Giraudy",
+        "context": [
+            ["A", "sentence a"],
+            ["B", ["sentence b1", "sentence b2"]],
+        ],
+        "supporting_facts": [["B", 0]],
+    }
+    example = twowiki_row(row, "validation")
+    assert example["id"] == "2wiki-long-abc"
+    assert example["paragraphs"] == [
+        ("A", "sentence a"), ("B", "sentence b1 sentence b2")
+    ]
+    assert example["supporting_titles"] == {"B"}
+    assert example["group"] == "compositional"
+
+    example["paragraphs"] = [
+        (f"T{index}", "evidence " * 100) for index in range(10)
+    ]
+    example["supporting_titles"] = {"T0", "T1"}
+    pool = [
+        "Steve Hillage", "Alice Coltrane", "John McLaughlin", "Daevid Allen",
+    ]
+    item, reason = build_item_reason(
+        example, pool, k=4, min_chars=3000, target_chars=4000,
+        max_chars=8000, rng=random.Random(15), source="2wiki_long_choice",
+    )
+    assert reason is None
+    assert isinstance(item, TypedQuestion)
+    assert item.source == "2wiki_long_choice"
+    assert item.state.startswith("T0:")
+    assert item.question["criteria"][item.label] == "Miquette Giraudy"
+    assert len(item.question["criteria"]) == 4
+
+
+def test_pick_distractors_scan_applies_the_same_filters():
+    pool = [
+        "Ed Wood", "Tim Burton", "Joel Coen", "Ethan Coen", "David Lynch",
+        "1984", "Scott Derrickson",
+    ]
+    picked = pick_distractors_scan(
+        "Scott Derrickson", pool, "clean state", k=4, rng=random.Random(16),
+        question="Who directed the film?",
+    )
+    assert picked is not None
+    assert len(picked) == 3
+    assert len(set(picked)) == 3
+    assert "Scott Derrickson" not in picked
+    assert "1984" not in picked
+    assert all(answer_type(value) == "proper" for value in picked)
