@@ -39,7 +39,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 import torch  # noqa: E402
-import yaml  # noqa: E402
+from _vendor import yaml  # noqa: E402
 
 import data.pipeline as pipeline_mod  # noqa: E402
 import data.sources as sources_mod  # noqa: E402
@@ -120,7 +120,7 @@ def main() -> int:
     parser.add_argument("--json", type=Path, default=None)
     args = parser.parse_args()
 
-    cfg = yaml.safe_load(args.config.read_text(encoding="utf-8")) or {}
+    cfg = yaml.load(args.config.read_text(encoding="utf-8")) or {}
     model_name = args.model or cfg.get("model")
     max_length = int(args.max_length or cfg.get("max_length") or 32768)
     readout = args.readout or cfg.get("readout", "last")

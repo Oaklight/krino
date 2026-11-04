@@ -33,7 +33,7 @@ import sys
 from pathlib import Path
 
 import torch
-import yaml
+from _vendor import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -77,7 +77,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    cfg = yaml.safe_load(args.config.read_text())
+    cfg = yaml.load(args.config.read_text())
     model_name = args.model or cfg.get("model", "Qwen/Qwen3-Reranker-0.6B")
     max_length = args.max_length or cfg.get("max_length")
     gpu_config = GPUConfig.auto_detect(estimate_model_billions(model_name))
