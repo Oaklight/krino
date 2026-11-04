@@ -14,10 +14,11 @@ data/benchmarks/synthetic/.hf_manifest.json
 data/benchmarks/synthetic/.split_clusters.json
 
 # Materialised benchmark corpora: hundreds of megabytes, rebuilt on demand by
-# `python -m data.pipeline <source>`.  The authored eval set is hand-written and
-# stays tracked.
+# `python -m data.pipeline <source>`.  The authored eval sets stay tracked: they
+# are small, and a held-out set that moves with a rebuild is not held out.
 data/benchmarks/*.jsonl
 !data/benchmarks/openjev/authored144.jsonl
+!data/benchmarks/openjev/authored_holdout.jsonl
 
 
 # Web dashboard

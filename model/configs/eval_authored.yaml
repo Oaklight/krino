@@ -1,0 +1,43 @@
+# Eval-only: the deterministic authored held-out set against a trained checkpoint.
+#
+# This set exists because JevBench's public hard tier cannot decide an effect below
+# 15.7 points (`research/23`, `#202`): 111 items, 36 discordant pairs, 38 % power on a
+# ten-point gain. 255 paired items with computed golds make a paired comparison
+# decidable where the public tier does not.
+#
+# It is a **paired instrument**, not a benchmark: the templates are learnable, so it
+# tells two checkpoints apart and must be reported beside JevBench, never instead of it.
+# Training never uses it (weight 0, eval-only).
+#
+# The architecture settings below mirror `arch_4b_xenc_split138_s123`; change `model`,
+# `rank`, `readout` and `max_length` for a different arm, as `eval_jevbench.yaml` says.
+#
+# Usage:
+#   python model/scripts/train_multitask.py --config model/configs/eval_authored.yaml \
+#       --eval-only \
+#       --load-heads model/checkpoints/arch_4b_xenc_split138_s123/epoch_005.pt
+
+model: Qwen/Qwen3-Reranker-4B
+rank: 128
+readout: weighted
+choice_mode: cross_encoder
+shared_attention: true
+lora_layers: -1
+lora_rank: 16
+lora_alpha: 32
+lora_targets: q_proj,v_proj
+max_length: 32768
+eval_every: 1
+
+sources:
+  authored_holdout:
+    weight: 0
+    max_eval: 300
+    # `load_source_items` reads a prepared JSONL and does not dispatch through
+    # LOADERS, so the path has to name the tracked file explicitly. Without it the
+    # loader looks for `data/benchmarks/authored_holdout.jsonl`, and a stale copy
+    # there wins silently — the first scoring run read exactly such a copy, one
+    # written before the score labels were level indices, and lost ten of the 51
+    # score items to the 0..n_levels-1 check without anything in the log saying the
+    # set was not the committed one.
+    path: data/benchmarks/openjev/authored_holdout.jsonl
