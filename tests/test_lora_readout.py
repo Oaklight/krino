@@ -379,3 +379,70 @@ class TestLoraGradientCheckpointing:
         DecisionModel(backbone=backbone, tokenizer=None, rank=8, gpu_config=gpu)
         assert backbone.gc_calls == []
 
+
+class TestLoadHeadsRefusesMismatch:
+    """A checkpoint from a different head architecture must not load quietly.
+
+    ``load_state_dict(strict=False)`` leaves every unmatched key at its initial
+    value, so a mismatched load produces a number for a head nothing trained.
+    Both halves of this were measured: a 4B eval config without ``noul_rank``
+    scored 26/51 (chance) where the loaded head scores 34/51, and a tower
+    checkpoint evaluated under a cross-encoder config reported 0.2680 on choice
+    against its real 0.1765.
+    """
+
+    def _model(self, **kwargs):
+        from model.src.decision_model import DecisionModel
+        from model.src.gpu_config import GPUConfig
+
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=False,
+            max_length=128,
+            gradient_checkpointing=False,
+        )
+        return DecisionModel(
+            backbone=_FakeBackbone(), tokenizer=None, rank=8, gpu_config=gpu, **kwargs
+        )
+
+    def test_a_different_noul_head_is_refused(self, tmp_path) -> None:
+        path = tmp_path / "heads.pt"
+        self._model(noul_rank=None).save_heads(path)
+
+        with pytest.raises(ValueError, match="does not match this model's architecture"):
+            self._model(noul_rank=8).load_heads(path)
+
+    def test_a_different_choice_head_is_refused(self, tmp_path) -> None:
+        path = tmp_path / "heads.pt"
+        self._model(choice_mode="tower").save_heads(path)
+
+        with pytest.raises(ValueError, match="choice_head"):
+            self._model(choice_mode="cross_encoder").load_heads(path)
+
+    def test_a_matching_checkpoint_loads(self, tmp_path) -> None:
+        path = tmp_path / "heads.pt"
+        first = self._model(noul_rank=8)
+        with torch.no_grad():
+            for param in first.parameters():
+                param.fill_(1.0)
+        first.save_heads(path)
+
+        fresh = self._model(noul_rank=8)
+        with torch.no_grad():
+            for param in fresh.parameters():
+                param.fill_(0.0)
+        fresh.load_heads(path)
+
+        assert any(torch.count_nonzero(p) for p in fresh.parameters())
+
+    def test_a_checkpoint_missing_a_parameter_warns_instead_of_failing(
+        self, tmp_path
+    ) -> None:
+        # A heads-only checkpoint for a model that expects adapters is a legitimate
+        # partial load; it must be visible without being fatal.
+        path = tmp_path / "heads.pt"
+        self._model(lora_layers=None).save_heads(path)
+
+        with pytest.warns(UserWarning, match="has no value for"):
+            self._model(lora_layers=-1).load_heads(path)
+
