@@ -38,7 +38,7 @@ from pathlib import Path
 from typing import Any
 
 import torch
-import yaml
+from _vendor import yaml  # zerodep YAML; no PyYAML dependency
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -198,7 +198,7 @@ def main() -> int:
         parser.error("option counts must be at least 2")
 
     with open(args.config) as handle:
-        cfg = yaml.safe_load(handle)
+        cfg = yaml.load(handle)
 
     rng = random.Random(args.seed)
     train_items, eval_items = load_source_items(

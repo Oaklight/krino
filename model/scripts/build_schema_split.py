@@ -21,7 +21,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-import yaml
+from _vendor import yaml  # zerodep YAML; no PyYAML dependency
 
 from data.pipeline import load_jevbench
 from data.sources import load_source_items
@@ -29,7 +29,7 @@ from model.evaluation.gate import schema_key
 
 
 def training_schemas(config_path: Path) -> Counter[str]:
-    config = yaml.safe_load(config_path.read_text())
+    config = yaml.load(config_path.read_text())
     sources = config.get("sources") or {}
     if not sources:
         raise SystemExit(f"{config_path}: no sources block")
