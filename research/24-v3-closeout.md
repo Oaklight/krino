@@ -55,7 +55,11 @@ committed (`results/gate/*_predictions.jsonl`, `results/gate/qwen35_raw/paired/`
 the correction is per item, so the mean chance in older gate JSONs does not
 reproduce it. From this PR on, the gate writes `intelligence.by_options`
 (item and correct counts per option count), which reproduces cc exactly
-(`model.evaluation.gate.corrected_from_counts`).
+(`model.evaluation.gate.corrected_from_counts`). `results/gate/qwen35_raw/by_options/` holds the Qwen3-Reranker-4B
+control and Qwen3.5-4B instruct rerun with the field; their counts give
+0.4459 and 0.5187 exactly. The proxy is the mean of the per-item correction
+over all 231 items, not `(acc − mean chance) / (1 − mean chance)`, which gives
+0.4735 and 0.5432 on the same predictions.
 
 ## Why it stopped at 0.46
 
