@@ -61,7 +61,7 @@ python -m data.synthetic --stages report    # check status without running
 
 Stages: `base` → `counterfactual,paraphrase,negation` → `shuffle` → `fill-variants` → `repair` → `dedup` → `validate` → `llm-label` → `jev-label` → `report`
 
-Data is stored on HuggingFace: [`oaklight/krino-synthetic`](https://huggingface.co/datasets/oaklight/krino-synthetic) (private).
+Data is stored on HuggingFace: [`oaklight/krino-data`](https://huggingface.co/datasets/oaklight/krino-data) (public).
 
 ## Structure
 
@@ -90,3 +90,15 @@ data/
 | `lsh.py` | Standalone MinHash/LSH for deduplication |
 | `sampler.py` | Stratified sampling for balanced evaluation subsets |
 | `sources.py` | Source loading for the multitask trainer (torch-free) |
+
+## Data access
+
+The code repo does not carry data. `data/hf.lock` pins the revision of
+[`oaklight/krino-data`](https://huggingface.co/datasets/oaklight/krino-data)
+and maps every remote file to its local path and SHA-256.
+
+```bash
+python -m data.hf_sync --list    # show the pinned files
+python -m data.hf_sync           # download, verify, copy into data/benchmarks
+python -m data.hf_sync --check   # verify local copies without downloading
+```

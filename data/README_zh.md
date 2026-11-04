@@ -61,7 +61,7 @@ python -m data.synthetic --stages report    # 检查状态，不执行
 
 阶段：`base` → `counterfactual,paraphrase,negation` → `shuffle` → `fill-variants` → `repair` → `dedup` → `validate` → `llm-label` → `jev-label` → `report`
 
-数据存储在 HuggingFace：[`oaklight/krino-synthetic`](https://huggingface.co/datasets/oaklight/krino-synthetic)（私有）。
+数据存储在 HuggingFace：[`oaklight/krino-data`](https://huggingface.co/datasets/oaklight/krino-data)（公开）。
 
 ## 结构
 
@@ -90,3 +90,15 @@ data/
 | `lsh.py` | 独立的 MinHash/LSH 去重模块 |
 | `sampler.py` | 分层采样，用于平衡的评估子集 |
 | `sources.py` | 多任务训练脚本的数据源加载（不依赖 torch） |
+
+## 数据访问
+
+代码仓库不保存数据。`data/hf.lock` 固定
+[`oaklight/krino-data`](https://huggingface.co/datasets/oaklight/krino-data)
+的 revision，并记录每个远端文件的本地路径与 SHA-256。
+
+```bash
+python -m data.hf_sync --list    # 查看固定文件
+python -m data.hf_sync           # 下载、校验并复制到 data/benchmarks
+python -m data.hf_sync --check   # 只校验本地副本
+```
