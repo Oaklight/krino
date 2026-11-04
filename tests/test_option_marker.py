@@ -423,3 +423,72 @@ class TestBatchedOptionReadout:
         model.forward_choice("state", "instr", [f"o{i}" for i in range(7)])
         cache = model.backbone.calls  # prefix then ceil(7/3) suffixes
         assert len(cache) == 1 + 3
+
+
+class TestNoulMarker:
+    """Noul can share the marker readout as a two-option question."""
+
+    def test_noul_marker_uses_the_shared_marker_readout(self) -> None:
+        model = _build_model(noul_marker=True)
+        assert model.noul_marker is True
+        assert model.noul_head is None
+
+        captured: dict[str, object] = {}
+
+        def fake_marker(state, instructions, option_texts):
+            captured["state"] = state
+            captured["instructions"] = instructions
+            captured["texts"] = option_texts
+            return torch.tensor([[0.25, 0.75]])
+
+        model._forward_options_by_marker = fake_marker
+        logit = model.forward_noul(
+            "the state", "is it supported?", {"false": "No", "true": "Yes"}
+        )
+
+        assert captured["texts"] == ["No", "Yes"]
+        assert captured["state"] == "the state"
+        assert logit.shape == (1, 1)
+        assert abs(logit.item() - 0.5) < 1e-6  # 0.75 - 0.25
+
+    def test_noul_marker_maps_yes_no_criteria_and_defaults(self) -> None:
+        model = _build_model(noul_marker=True)
+        seen: list[list[str]] = []
+        model._forward_options_by_marker = (
+            lambda state, instructions, texts: (
+                seen.append(list(texts)) or torch.zeros(1, 2)
+            )
+        )
+
+        model.forward_noul("s", "q", {"no": "unsupported", "yes": "supported"})
+        model.forward_noul("s", "q", None)
+
+        assert seen[0] == ["unsupported", "supported"]
+        assert seen[1] == ["No", "Yes"]
+
+    def test_noul_marker_gradients_reach_the_marker_head(self) -> None:
+        model = _build_model(noul_marker=True)
+        logit = model.forward_noul("abc", "def", {"false": "No", "true": "Yes"})
+        logit.sum().backward()
+        assert any(p.grad is not None for p in model.marker_head.parameters())
+
+    def test_pooled_noul_head_is_still_the_default(self) -> None:
+        model = _build_model()
+        assert model.noul_marker is False
+        assert model.noul_head is not None
+
+    def test_noul_marker_requires_option_marker(self) -> None:
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=False,
+            max_length=512,
+            gradient_checkpointing=False,
+        )
+        with pytest.raises(ValueError, match="noul_marker"):
+            DecisionModel(
+                backbone=_MarkerBackbone(),
+                tokenizer=_FakeTokenizer(),
+                rank=8,
+                gpu_config=gpu,
+                noul_marker=True,
+            )
