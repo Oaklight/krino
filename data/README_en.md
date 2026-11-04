@@ -62,6 +62,8 @@ python -m data.synthetic --stages report    # check status without running
 Stages: `base` → `counterfactual,paraphrase,negation` → `shuffle` → `fill-variants` → `repair` → `dedup` → `validate` → `llm-label` → `jev-label` → `report`
 
 Data is stored on HuggingFace: [`oaklight/krino-data`](https://huggingface.co/datasets/oaklight/krino-data) (public).
+Git tracks no data: `data/benchmarks/synthetic/*.jsonl` is gitignored and
+restored from the Hub by `python -m data.hf_sync`.
 
 ## Structure
 
