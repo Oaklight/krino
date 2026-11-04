@@ -61,6 +61,10 @@ class _FakeTokenizer:
 class _FakeCache:
     def __init__(self, length: int) -> None:
         self.length = length
+        self.batch = 1
+
+    def batch_repeat_interleave(self, repeats: int) -> None:
+        self.batch = repeats
 
     def get_seq_length(self) -> int:
         return self.length
@@ -347,3 +351,75 @@ class TestEncoderBackbone:
                 option_marker=True,
                 second_backbone=_EncoderBackbone(),
             )
+
+
+class _StrictTokenizer(_FakeTokenizer):
+    """Raises on non-str input, like the HuggingFace tokenizers do."""
+
+    def __call__(self, text, **kwargs):
+        if not isinstance(text, str):
+            raise TypeError("text input must be of type `str`")
+        return super().__call__(text, **kwargs)
+
+
+class TestStructuredState:
+    """JevBench hard items carry a dict state, not a string."""
+
+    def _model(self) -> DecisionModel:
+        gpu = GPUConfig(
+            flash_attention=False,
+            bf16_compute=False,
+            max_length=512,
+            gradient_checkpointing=False,
+        )
+        return DecisionModel(
+            backbone=_EncoderBackbone(),
+            tokenizer=_StrictTokenizer(),
+            rank=8,
+            gpu_config=gpu,
+            option_marker=True,
+            option_chunk_size=1,
+        )
+
+    def test_truncation_stringifies_a_dict_state(self) -> None:
+        model = self._model()
+        state = {"archive": ["a" * 200], "note": "x" * 200}
+        inputs = model._tokenize_context(state, "which one", max_length=20)
+        assert inputs["input_ids"].shape[1] == 20
+
+    def test_marker_forward_accepts_a_dict_state(self) -> None:
+        model = self._model()
+        state = {"archive": ["a" * 200], "note": "x" * 200}
+        logits = model.forward_choice(state, "which one", ["alpha", "beta"])
+        assert logits.shape == (1, 2)
+
+
+class TestBatchedOptionReadout:
+    """``option_batch`` scores several options per forward, not per chunk."""
+
+    def test_options_are_scored_in_batches(self) -> None:
+        model = _build_model(option_batch=4)
+        logits = model.forward_choice(
+            "state", "instructions", [f"o{i}" for i in range(10)]
+        )
+        assert logits.shape == (1, 10)
+        kinds = [kind for kind, _ in model.backbone.calls]
+        assert kinds.count("prefix") == 1
+        assert kinds.count("suffix") == 3  # ceil(10 / 4)
+
+    def test_batched_path_matches_the_sequential_path(self) -> None:
+        # One model, two readout paths, so the weights are identical.
+        # eval() disables the head's dropout, which is the only randomness.
+        model = _build_model(option_chunk_size=1)
+        model.eval()
+        options = [f"o{i}" for i in range(6)]
+        expected = model.forward_choice("state", "instr", options)
+        model.option_batch = 8
+        actual = model.forward_choice("state", "instr", options)
+        assert torch.allclose(expected, actual, atol=1e-5)
+
+    def test_the_cache_is_expanded_to_the_group_size(self) -> None:
+        model = _build_model(option_batch=3)
+        model.forward_choice("state", "instr", [f"o{i}" for i in range(7)])
+        cache = model.backbone.calls  # prefix then ceil(7/3) suffixes
+        assert len(cache) == 1 + 3

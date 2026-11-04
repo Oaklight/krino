@@ -148,6 +148,107 @@ class RawReranker:
             torch.tensor([false_logit, true_logit]), dim=0
         )[1].item()
 
+    @torch.inference_mode()
+    def score_many(
+        self,
+        state: str,
+        instructions: str,
+        q_type: str,
+        options: list[tuple[str, str]],
+        *,
+        group_size: int = 16,
+    ) -> list[float]:
+        """P(yes) for every option, sharing one prefix KV cache.
+
+        ``_score_option`` re-encodes the identical instruct+query prefix for
+        every option, so its cost is O(K) full forwards.  Here the prefix is
+        encoded once and the documents are scored as rows of a batched
+        forward: same computation, O(1) prefix passes.
+        """
+        query = f"{state}\n\nQuestion: {instructions}"
+        # End the prefix at the colon and lead every document with the
+        # space, so prefix + document tokenises exactly like the full string
+        # in _score_option; a prefix ending in a space merges that space into
+        # the first document token and changes the prompt.
+        prefix_text = (
+            f"<Instruct>: {RAW_RERANKER_INSTRUCTION}\n"
+            f"<Query>: {query}\n"
+            "<Document>:"
+        )
+        prefix_ids = self.prefix_tokens + self.tokenizer.encode(
+            prefix_text, add_special_tokens=False
+        )
+        prefix_len = len(prefix_ids)
+        budget = self.max_length - prefix_len - len(self.suffix_tokens)
+        if budget <= 0:
+            return [
+                self._score_option(state, instructions, q_type, label, desc)
+                for label, desc in options
+            ]
+
+        docs: list[list[int]] = []
+        for label, description in options:
+            if q_type == "score":
+                document = f" Rubric level {label}: {description}"
+            else:
+                document = f" Answer option {label}: {description}"
+            ids = self.tokenizer.encode(document, add_special_tokens=False)[:budget]
+            docs.append(ids + self.suffix_tokens)
+        if not docs:
+            return []
+
+        prefix_tensor = torch.tensor([prefix_ids], device=self.device)
+        prefix_mask = torch.ones(1, prefix_len, dtype=torch.long, device=self.device)
+        prefix_out = self.model(
+            input_ids=prefix_tensor, attention_mask=prefix_mask, use_cache=True
+        )
+        cache = prefix_out.past_key_values
+        rows = min(group_size, len(docs))
+        if rows > 1:
+            cache.batch_repeat_interleave(rows)
+        widest = max(len(doc) for doc in docs)
+        base = getattr(self.model, "model", None)
+
+        scores: list[float] = []
+        for start in range(0, len(docs), group_size):
+            group = docs[start : start + group_size]
+            padded = group + [group[-1]] * (rows - len(group))
+            ids = torch.zeros((rows, widest), dtype=torch.long, device=self.device)
+            mask = torch.zeros(
+                (rows, prefix_len + widest), dtype=torch.long, device=self.device
+            )
+            mask[:, :prefix_len] = 1
+            positions = torch.full(
+                (rows, widest), prefix_len, dtype=torch.long, device=self.device
+            )
+            last = torch.zeros(rows, dtype=torch.long, device=self.device)
+            for row, doc in enumerate(padded):
+                n = len(doc)
+                ids[row, :n] = torch.tensor(doc, device=self.device)
+                mask[row, prefix_len : prefix_len + n] = 1
+                positions[row, :n] = torch.arange(
+                    prefix_len, prefix_len + n, device=self.device
+                )
+                last[row] = n - 1
+            inputs = {
+                "input_ids": ids,
+                "attention_mask": mask,
+                "position_ids": positions,
+                "past_key_values": cache,
+            }
+            if base is not None:
+                hidden = base(**inputs).last_hidden_state
+                picked = hidden[torch.arange(rows, device=self.device), last]
+                logits = self.model.lm_head(picked)
+            else:
+                logits = self.model(**inputs).logits[:, -1, :]
+            pair = torch.stack(
+                [logits[:, self.false_id], logits[:, self.true_id]], dim=-1
+            )
+            scores.extend(torch.softmax(pair, dim=-1)[:, 1].tolist())
+            cache.crop(-widest)
+        return scores[: len(docs)]
+
     def predict_row(
         self,
         item: Any,
@@ -227,6 +328,16 @@ class ResidualScorer:
             mlp_layers=0,
             gpu_config=gpu,
             max_length=config["max_length"],
+            # A marker arm must be rebuilt with the same readout it trained
+            # with, or the head's input and its saved weights disagree.
+            option_marker=bool(config.get("option_marker", False)),
+            option_chunk_size=int(config.get("option_chunk_size") or 1),
+            option_max_tokens=int(config.get("option_max_tokens") or 64),
+            option_batch=int(config.get("option_batch") or 1),
+            # LoRA modules must exist before their weights can load.
+            lora_layers=config.get("lora_layers"),
+            lora_rank=int(config.get("lora_rank") or 16),
+            lora_alpha=int(config.get("lora_alpha") or 32),
         )
         self.model.load_state_dict(checkpoint["heads"], strict=False)
         self.model.eval()
@@ -250,7 +361,7 @@ class ResidualScorer:
         ]
         total = sum(scores) or 1.0
         base = torch.tensor([score / total for score in scores], dtype=torch.float32)
-        head = head_logits(self.model, item).reshape(-1).cpu()
+        head = head_logits(self.model, item, q).reshape(-1).cpu()
         alpha = torch.tensor(self.alpha.get(q["type"], 0.0))
         logits = fusion_logits(base, head, alpha)
         probs = tuple(torch.softmax(logits, dim=-1).tolist())
@@ -392,7 +503,7 @@ def predict_row(
 @torch.inference_mode()
 def predict_reversed(model: DecisionModel | RawReranker, item: Any) -> Prediction:
     """Score the same item with its options or levels presented in reverse."""
-    if isinstance(model, RawReranker):
+    if isinstance(model, (RawReranker, ResidualScorer)):
         return model.predict_row(item, reverse=True)
     q = item.question
     q_type = q.get("type")
@@ -571,6 +682,12 @@ def main() -> None:
     )
     parser.add_argument("--option-chunk-size", type=int, default=32)
     parser.add_argument("--option-max-tokens", type=int, default=64)
+    parser.add_argument(
+        "--option-batch",
+        type=int,
+        default=None,
+        help="Override the checkpoint's option_batch (options scored per forward)",
+    )
     parser.add_argument("--device", default=None)
     parser.add_argument("--dtype", choices=("bfloat16", "float32"), default="bfloat16")
     parser.add_argument("--jevbench", action="store_true", help="Evaluate the JevBench public suite")
@@ -593,6 +710,8 @@ def main() -> None:
         raw_name = args.model or "Qwen/Qwen3-Reranker-4B"
         print(f"Residual arm on {raw_name}: {args.residual_heads}")
         model = ResidualScorer(raw_name, device, args.residual_heads)
+        if args.option_batch:
+            model.model.option_batch = args.option_batch
         backbone_name = f"{raw_name}+residual"
     else:
         model, backbone_name = load_model(args, device)
@@ -638,9 +757,15 @@ def main() -> None:
     if args.k_sweep:
         ks = [int(value) for value in args.k_sweep.split(",") if value.strip()]
         print(f"K-sweep: {ks}")
-        sweep = run_k_sweep(
-            model, items, all_items, ks, args.k_sweep_max_items, args.seed, args.bins
-        )
+        try:
+            sweep = run_k_sweep(
+                model, items, all_items, ks, args.k_sweep_max_items, args.seed, args.bins
+            )
+        except Exception as error:  # noqa: BLE001 - keep the main results
+            # The 231-item pass is the acceptance number; a sweep failure must
+            # not discard it after an hour of 4B inference.
+            print(f"  WARN: K-sweep failed: {error}", file=sys.stderr)
+            sweep = {"error": f"{type(error).__name__}: {error}"}
 
     schema_split: dict[str, str] | None = None
     if args.schema_split:
