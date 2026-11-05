@@ -10,8 +10,8 @@ is fused exactly as in training::
 Usage:
     python model/scripts/eval_listwise.py \
         --checkpoint model/experiments/listwise_b1/listwise.pt \
-        --items data/benchmarks/jevbench/hard.jsonl \
-        --base-probs data/benchmarks/base_probs_jevbench_qwen35.jsonl \
+        --jevbench \
+        --base-probs data/benchmarks/base_probs_jevbench_qwen35_4b.jsonl \
         --subsets data/benchmarks/stage1_top4.json \
         --output model/experiments/listwise_b1/hard.pred.jsonl
 """
@@ -25,7 +25,7 @@ from pathlib import Path
 
 import torch
 
-from data.pipeline import load_jsonl
+from data.pipeline import load_jevbench, load_jsonl
 from model.scripts.train_residual import _label_index, _options
 from model.src.backbone import load_causal_lm
 from model.src.decision_model import DecisionModel
@@ -76,7 +76,13 @@ def score_item(
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", type=Path, required=True)
-    parser.add_argument("--items", type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--items", type=Path, help="TypedQuestion JSONL")
+    source.add_argument(
+        "--jevbench",
+        action="store_true",
+        help="Score the JevBench tiers through load_jevbench",
+    )
     parser.add_argument("--base-probs", type=Path, default=None)
     parser.add_argument(
         "--subsets",
@@ -141,7 +147,9 @@ def main() -> int:
                 )
     subsets = _load_subsets(args.subsets)
 
-    items = load_jsonl(args.items)
+    # JevBench rows carry ``expected``/``labels`` rather than a TypedQuestion
+    # question dict, so they go through the same loader the gate uses.
+    items = list(load_jevbench()) if args.jevbench else load_jsonl(args.items)
     if args.limit:
         items = items[: args.limit]
     records = []
