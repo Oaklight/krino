@@ -9,6 +9,7 @@ subset file format the combined arm feeds in.
 from __future__ import annotations
 
 import json
+import random
 
 import pytest
 
@@ -121,3 +122,12 @@ def test_the_val_split_reuses_the_residual_split():
     from model.scripts import train_residual
 
     assert split_items is train_residual.split_items
+
+
+def test_sampling_honours_a_max_size():
+    from model.src.listwise import ListwiseMarkerReadout
+
+    rng = random.Random(0)
+    for _ in range(50):
+        subset = ListwiseMarkerReadout.sample_subset(30, 0, rng, max_size=4)
+        assert len(subset) <= 4 and 0 in subset

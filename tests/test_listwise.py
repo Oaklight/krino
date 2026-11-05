@@ -294,3 +294,26 @@ def test_item_loss_is_zero_for_an_item_without_gold(readout):
         1.0, 0.2, 2, False,
     )
     assert float(loss) == 0.0 and kl == 0.0 and ce == 0.0
+
+
+def test_suffix_length_counts_every_marker(readout):
+    ids = readout.model._tokenize_option_ids(OPTIONS)
+    expected = sum(len(option_ids) + 1 for option_ids in ids)
+    assert readout.suffix_length(OPTIONS) == expected
+
+
+def test_fits_rejects_a_set_longer_than_max_length(readout):
+    assert readout.fits(OPTIONS)
+    # Options are capped at option_max_tokens, so length alone does not blow
+    # the budget; the option count does.
+    assert not readout.fits(["x"] * 300)
+
+
+def test_sampling_respects_the_capacity_cap(readout):
+    rng = random.Random(0)
+    for _ in range(100):
+        subset = ListwiseMarkerReadout.sample_subset(
+            40, 7, rng, min_size=2, max_size=5
+        )
+        assert 2 <= len(subset) <= 5
+        assert 7 in subset
