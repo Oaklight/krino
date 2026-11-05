@@ -26,6 +26,7 @@ import torch.nn.functional as F
 
 from .decision_model import DecisionModel
 from .hybrid_cache import fork_prefix_cache
+from .shape_buckets import PREFIX_BUCKETS, SUFFIX_BUCKETS, bucket_length, left_pad
 
 
 class ListwiseMarkerReadout:
@@ -65,21 +66,69 @@ class ListwiseMarkerReadout:
                 f"inside max_length={model.max_length}; shorten the state, the "
                 "options, or the option set"
             )
-        prefix_inputs = model._tokenize_context(
-            state, instructions, model.max_length - suffix_len
+        # Fixed shapes: every item otherwise presents a new (prefix, suffix)
+        # pair, and a new tensor shape costs a 0.4-1.3 s first kernel load on
+        # <accelerator>.  Bucketing turned a measured 0.78 items/s into the steady-state
+        # rate this readout is meant to have.  Padding is masked out, so the
+        # real tokens see the same computation.
+        width = bucket_length(
+            suffix_len, SUFFIX_BUCKETS, limit=model.max_length
         )
+        prefix_inputs = model._tokenize_context(
+            state, instructions, model.max_length - width
+        )
+        real_prefix_len = prefix_inputs["input_ids"].shape[1]
+        prefix_bucket = bucket_length(
+            real_prefix_len, PREFIX_BUCKETS, limit=model.max_length - width
+        )
+        if prefix_bucket + width > model.max_length:
+            prefix_bucket, width = real_prefix_len, suffix_len
+        pad_id = getattr(model.tokenizer, "pad_token_id", None)
+        if pad_id is None:
+            pad_id = getattr(model.tokenizer, "eos_token_id", None) or 0
+        padded_ids, pad = left_pad(
+            prefix_inputs["input_ids"][0].tolist(), prefix_bucket, pad_id
+        )
+        prefix_inputs = {
+            "input_ids": torch.tensor(
+                [padded_ids], dtype=torch.long, device=model.device
+            ),
+            "attention_mask": torch.cat(
+                [
+                    torch.zeros((1, pad), dtype=torch.long, device=model.device),
+                    torch.ones(
+                        (1, real_prefix_len), dtype=torch.long, device=model.device
+                    ),
+                ],
+                dim=1,
+            ),
+            "position_ids": torch.cat(
+                [
+                    torch.zeros((1, pad), dtype=torch.long, device=model.device),
+                    torch.arange(real_prefix_len, device=model.device).unsqueeze(0),
+                ],
+                dim=1,
+            ),
+        }
 
         ids: list[int] = []
         positions: list[int] = []
         for block in blocks:
             ids.extend(block)
             positions.append(len(ids) - 1)
-        suffix = torch.tensor([ids], dtype=torch.long, device=model.device)
+        suffix = torch.zeros((1, width), dtype=torch.long, device=model.device)
+        suffix[0, :suffix_len] = torch.tensor(
+            ids, dtype=torch.long, device=model.device
+        )
         marker_index = torch.tensor(
             positions, dtype=torch.long, device=model.device
         )
+        suffix_mask = torch.zeros(
+            (1, width), dtype=torch.long, device=model.device
+        )
+        suffix_mask[0, :suffix_len] = 1
         attention_mask = torch.cat(
-            [prefix_inputs["attention_mask"], torch.ones_like(suffix)], dim=1
+            [prefix_inputs["attention_mask"], suffix_mask], dim=1
         )
 
         prefix_outputs = model._backbone_forward(
@@ -92,13 +141,22 @@ class ListwiseMarkerReadout:
             outputs = model._backbone_forward(
                 {"input_ids": input_ids, "attention_mask": attention_mask}
             )
-            marker_index = marker_index + prefix_inputs["input_ids"].shape[1]
+            marker_index = marker_index + prefix_bucket
         else:
+            position_ids = torch.full(
+                (1, width), real_prefix_len, dtype=torch.long, device=model.device
+            )
+            position_ids[0, :suffix_len] = torch.arange(
+                real_prefix_len,
+                real_prefix_len + suffix_len,
+                device=model.device,
+            )
             chunk_cache = fork_prefix_cache(cache, 1) if model.is_hybrid else cache
             outputs = model._backbone_forward(
                 {
                     "input_ids": suffix,
                     "attention_mask": attention_mask,
+                    "position_ids": position_ids,
                     "past_key_values": chunk_cache,
                 }
             )
