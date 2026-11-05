@@ -1,13 +1,18 @@
 """Top-m recall of the gold option under the raw shared-prefix scorer.
 
-Diagnostic for the v4 head choice (manifest arm ``topm_recall_diag``).  For
-every choice/score item with K >= 3 options on JevBench public, rank the
-options by the raw yes/no score and record where the gold lands.  High
-recall@2 means a base shortlist plus a pairwise rerank can reach the gold;
-low recall@3 means the base ranking itself is the bottleneck and a listwise
-set head goes first.
+Diagnostic input to the v4 head discussion (manifest arm ``topm_recall_diag``).
+For every choice/score item with K >= 3 options on JevBench public, rank the
+options by the raw yes/no score and record where the gold lands.  noul items
+are K=2 and excluded: any ranking of two options has recall@2 = 1.
 
-Inference only.  Writes one JSON with the summary and per-item ranks.
+It measures how often the base ranking keeps the gold near the top; on its
+own it does not select a head.  JevBench public has only 16 items with K >= 6,
+the regime where a shortlist matters most, so cell-level comparisons there
+are underpowered.  ``informative@m`` drops items with K <= m, which are free
+hits at m.
+
+Inference only.  Writes one JSON with the summary, per-item ranks, and the
+model revision and library versions.
 """
 
 from __future__ import annotations
@@ -22,12 +27,23 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+import torch  # noqa: E402
+import transformers  # noqa: E402
+from huggingface_hub import model_info  # noqa: E402
+
 from model.evaluation.topm_recall import gold_rank, k_bucket, summarize  # noqa: E402
 from model.scripts.eval_gate import (  # noqa: E402
     RawReranker,
     items_digest,
     load_jevbench,
 )
+
+
+def _revision(name: str) -> str | None:
+    try:
+        return model_info(name).sha
+    except Exception:  # offline: the cache still loaded the weights
+        return None
 
 
 def main() -> None:
@@ -83,6 +99,9 @@ def main() -> None:
         "path": "raw shared_prefix, float32_two_token",
         "filter": "choice/score with K>=3",
         "skipped": dict(skipped),
+        "skipped_note": "noul items are K=2; every ranking of two options has recall@2 = 1",
+        "model_revision": _revision(args.model),
+        "versions": {"torch": torch.__version__, "transformers": transformers.__version__},
         "elapsed_s": round(elapsed, 1),
         "overall": summarize(rows),
         "groups": {name: summarize(g) for name, g in sorted(groups.items())},

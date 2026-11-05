@@ -33,5 +33,20 @@ def test_summarize_recall_and_se():
 
 
 def test_empty_group_returns_none():
-    out = summarize([], max_m=2)
-    assert out == {"n": 0, "recall@1": None, "se@1": None, "recall@2": None, "se@2": None}
+    out = summarize([], max_m=1)
+    assert out == {
+        "n": 0,
+        "recall@1": None,
+        "se@1": None,
+        "n_informative@1": 0,
+        "informative@1": None,
+    }
+
+
+def test_informative_drops_free_hits():
+    # K=3 at m=3 is a guaranteed hit; only the K=6 row is informative.
+    rows = [{"rank": 3, "k": 3}, {"rank": 5, "k": 6}]
+    out = summarize(rows, max_m=3)
+    assert out["recall@3"] == 0.5
+    assert out["n_informative@3"] == 1
+    assert out["informative@3"] == 0.0

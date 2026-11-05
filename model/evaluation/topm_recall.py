@@ -21,15 +21,25 @@ def k_bucket(k: int) -> str:
     return "3-5" if k <= 5 else "6+"
 
 
+def _rate(rows: list[dict], m: int) -> tuple[float | None, float | None]:
+    if not rows:
+        return None, None
+    p = sum(r["rank"] <= m for r in rows) / len(rows)
+    return round(p, 4), round(math.sqrt(p * (1 - p) / len(rows)), 4)
+
+
 def summarize(rows: list[dict], max_m: int = MAX_M) -> dict:
-    """Recall@1..max_m with binomial SE; ``None`` for an empty group."""
+    """Recall@1..max_m with binomial SE; ``None`` for an empty group.
+
+    ``recall@m`` counts every row, so a row with K <= m is a free hit.
+    ``informative@m`` keeps only rows with K > m, where the scorer can miss;
+    ``n_informative@m`` is its denominator.  Rows without ``k`` count as
+    informative.
+    """
     out: dict = {"n": len(rows)}
     for m in range(1, max_m + 1):
-        if not rows:
-            out[f"recall@{m}"] = None
-            out[f"se@{m}"] = None
-            continue
-        p = sum(r["rank"] <= m for r in rows) / len(rows)
-        out[f"recall@{m}"] = round(p, 4)
-        out[f"se@{m}"] = round(math.sqrt(p * (1 - p) / len(rows)), 4)
+        out[f"recall@{m}"], out[f"se@{m}"] = _rate(rows, m)
+        informative = [r for r in rows if r.get("k", m + 1) > m]
+        out[f"n_informative@{m}"] = len(informative)
+        out[f"informative@{m}"], _ = _rate(informative, m)
     return out
