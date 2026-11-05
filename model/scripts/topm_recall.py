@@ -22,31 +22,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from model.evaluation.topm_recall import gold_rank, k_bucket, summarize  # noqa: E402
 from model.scripts.eval_gate import (  # noqa: E402
     RawReranker,
     items_digest,
     load_jevbench,
 )
-
-MAX_M = 5
-
-
-def gold_rank(probs: tuple[float, ...], gold: int) -> int:
-    """1-based rank of ``gold``; ties count against the gold."""
-    return 1 + sum(1 for i, p in enumerate(probs) if i != gold and p >= probs[gold])
-
-
-def k_bucket(k: int) -> str:
-    return "3-5" if k <= 5 else "6+"
-
-
-def summarize(rows: list[dict]) -> dict:
-    out = {"n": len(rows)}
-    for m in range(1, MAX_M + 1):
-        out[f"recall@{m}"] = (
-            round(sum(r["rank"] <= m for r in rows) / len(rows), 4) if rows else None
-        )
-    return out
 
 
 def main() -> None:
@@ -93,6 +74,7 @@ def main() -> None:
         groups[f"tier:{row['tier']}"].append(row)
         groups[f"type:{row['q_type']}"].append(row)
         groups[f"k:{k_bucket(row['k'])}"].append(row)
+        groups[f"k={row['k']}"].append(row)
     result = {
         "model": args.model,
         "data": "jevbench",
