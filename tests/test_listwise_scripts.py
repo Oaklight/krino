@@ -18,6 +18,7 @@ torch = pytest.importorskip("torch")
 from model.scripts.eval_listwise import _load_subsets, score_item  # noqa: E402
 from model.scripts.train_listwise import (  # noqa: E402
     _subset_probs,
+    build_parser,
     fused_logits,
     split_items,
 )
@@ -131,3 +132,20 @@ def test_sampling_honours_a_max_size():
     for _ in range(50):
         subset = ListwiseMarkerReadout.sample_subset(30, 0, rng, max_size=4)
         assert len(subset) <= 4 and 0 in subset
+
+
+def test_the_split_seed_is_separate_from_the_training_seed():
+    """A replication seed must not reshuffle which items are held out."""
+    args = build_parser().parse_args(
+        ["--items", "a.jsonl", "--base-probs", "b.jsonl", "--output", "out"]
+    )
+    assert args.split_seed == 42
+    assert args.seed == 42
+    rerun = build_parser().parse_args(
+        [
+            "--items", "a.jsonl", "--base-probs", "b.jsonl", "--output", "out",
+            "--seed", "43", "--split-seed", "42",
+        ]
+    )
+    assert rerun.seed == 43
+    assert rerun.split_seed == 42
