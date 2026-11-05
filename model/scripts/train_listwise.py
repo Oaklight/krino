@@ -195,7 +195,7 @@ def evaluate(
     }
 
 
-def main() -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--items", type=Path, required=True)
     parser.add_argument("--base-probs", type=Path, required=True)
@@ -211,34 +211,46 @@ def main() -> int:
     parser.add_argument("--kl-weight", type=float, default=1.0)
     parser.add_argument("--ce-weight", type=float, default=0.2)
     parser.add_argument(
-        "--min-subset",
-        type=int,
-        default=2,
-        help="Smallest gold-containing subset sampled during training",
+    "--min-subset",
+    type=int,
+    default=2,
+    help="Smallest gold-containing subset sampled during training",
     )
     parser.add_argument(
-        "--max-subset",
-        type=int,
-        default=20,
-        help="Largest option subset one sequence scores; also the eval "
-        "fallback for sets that do not fit max_length",
+    "--max-subset",
+    type=int,
+    default=20,
+    help="Largest option subset one sequence scores; also the eval "
+    "fallback for sets that do not fit max_length",
     )
     parser.add_argument(
-        "--shuffle-score",
-        action="store_true",
-        help="Also shuffle score items; off because rubric levels are ordered",
+    "--shuffle-score",
+    action="store_true",
+    help="Also shuffle score items; off because rubric levels are ordered",
     )
     parser.add_argument(
-        "--eval-shifts",
-        type=int,
-        default=4,
-        help="Cyclic shifts averaged at evaluation",
+    "--eval-shifts",
+    type=int,
+    default=4,
+    help="Cyclic shifts averaged at evaluation",
     )
     parser.add_argument("--val-fraction", type=float, default=0.2)
+    parser.add_argument(
+    "--split-seed",
+    type=int,
+    default=42,
+    help="Seed for the train/val split.  Keep it at 42 to match D20K "
+    "when --seed varies the training run, or the seeds stop being "
+    "replications of one recipe.",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int, default=None)
-    args = parser.parse_args()
+    return parser
+
+
+def main() -> int:
+    args = build_parser().parse_args()
 
     items = load_jsonl(args.items)
     base_records = [
@@ -250,8 +262,10 @@ def main() -> int:
     items = [item for item in items if item.id in base_probs]
     if args.limit:
         items = items[: args.limit]
-    # The same call as train_residual, so the val split matches D20K.
-    train_items, val_items = split_items(items, args.val_fraction, args.seed)
+    # The same call as train_residual, so the val split matches D20K.  The
+    # split seed is separate from the training seed: a replication seed must
+    # vary init and item order, not which items are held out.
+    train_items, val_items = split_items(items, args.val_fraction, args.split_seed)
     train_items = [
         item for item in train_items if item.question["type"] in TRAINED_TYPES
     ]
@@ -376,6 +390,7 @@ def main() -> int:
                 "kl_weight": args.kl_weight,
                 "ce_weight": args.ce_weight,
                 "seed": args.seed,
+                "split_seed": args.split_seed,
                 "option_marker": True,
                 "option_chunk_size": 1,
                 "option_max_tokens": args.option_max_tokens,
