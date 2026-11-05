@@ -18,6 +18,7 @@ from transformers import PreTrainedModel, PreTrainedTokenizerBase
 from .backbone import is_hybrid_model
 from .choice_prompts import fit_option_prompts
 from .gpu_config import GPUConfig, print_gpu_info
+from .hybrid_cache import fork_prefix_cache
 from .shape_buckets import (
     PREFIX_BUCKETS,
     bucket_length,
@@ -1111,10 +1112,17 @@ class DecisionModel(nn.Module):
             use_cache=True,
         )
         cache = getattr(prefix_outputs, "past_key_values", None)
-        if cache is None or not hasattr(cache, "batch_repeat_interleave"):
+        if cache is None or (
+            not self.is_hybrid and not hasattr(cache, "batch_repeat_interleave")
+        ):
             return self._forward_options_no_cache(
                 prefix_inputs, self._chunk_option_ids(option_ids)
             )
+        # A hybrid (GDN) cache cannot be repeated or cropped: every group runs
+        # on its own fork of the one-row prefix cache, which leaves ``cache``
+        # untouched for the next group.  A full-attention cache is repeated
+        # once and cropped back after each group instead.
+        fork = self.is_hybrid
 
         # Eight rows, matching the base path: at long context the suffix
         # attention dominates and 16 rows cost twice the 8-row time.  The
@@ -1126,7 +1134,7 @@ class DecisionModel(nn.Module):
             else min(8, group_size)
         )
         group_size = rows
-        if rows > 1:
+        if rows > 1 and not fork:
             cache.batch_repeat_interleave(rows)
 
         all_logits: list[torch.Tensor] = []
@@ -1159,7 +1167,9 @@ class DecisionModel(nn.Module):
                     "input_ids": input_ids,
                     "attention_mask": attention_mask,
                     "position_ids": position_ids,
-                    "past_key_values": cache,
+                    "past_key_values": (
+                        fork_prefix_cache(cache, rows) if fork else cache
+                    ),
                 }
             )
             hidden = self.projector(
@@ -1167,7 +1177,8 @@ class DecisionModel(nn.Module):
             )
             picked = hidden[torch.arange(rows, device=self.device), marker_index]
             all_logits.append(self.marker_head(picked.unsqueeze(0)))
-            self._crop_cache(cache, width)
+            if not fork:
+                self._crop_cache(cache, width)
         return torch.cat(all_logits, dim=-1)[:, : len(blocks)]
 
     def _forward_options_by_marker(
@@ -1217,8 +1228,12 @@ class DecisionModel(nn.Module):
             use_cache=True,
         )
         cache = getattr(prefix_outputs, "past_key_values", None)
-        if cache is None or not hasattr(cache, "crop"):
+        if cache is None or (not self.is_hybrid and not hasattr(cache, "crop")):
             return self._forward_options_no_cache(prefix_inputs, chunks)
+        # GDN state is overwritten in place and cannot be cropped, so each
+        # chunk runs on a fresh fork of the one-row prefix cache.  A
+        # full-attention cache is reused and cropped back instead.
+        fork = self.is_hybrid
 
         all_logits: list[torch.Tensor] = []
         for chunk in chunks:
@@ -1230,7 +1245,9 @@ class DecisionModel(nn.Module):
                 {
                     "input_ids": suffix_ids,
                     "attention_mask": attention_mask,
-                    "past_key_values": cache,
+                    "past_key_values": (
+                        fork_prefix_cache(cache, 1) if fork else cache
+                    ),
                 }
             )
             hidden = self.projector(
@@ -1240,8 +1257,10 @@ class DecisionModel(nn.Module):
             all_logits.append(self.marker_head(marker_hidden))
             # Qwen3 appends the suffix K/V to the cache even with
             # use_cache=False.  Drop them so every chunk starts from the same
-            # prefix instead of seeing the previous chunk's options.
-            self._crop_cache(cache, suffix_ids.shape[1])
+            # prefix instead of seeing the previous chunk's options.  The
+            # hybrid fork is discarded with its chunk, so nothing to undo.
+            if not fork:
+                self._crop_cache(cache, suffix_ids.shape[1])
         return torch.cat(all_logits, dim=-1)
 
     def forward_noul(
