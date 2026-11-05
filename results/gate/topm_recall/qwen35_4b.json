@@ -1,0 +1,2570 @@
+{
+  "model": "Qwen/Qwen3.5-4B",
+  "data": "jevbench",
+  "data_sha256_prefix": "dcb90f87",
+  "n_items": 231,
+  "path": "raw shared_prefix, float32_two_token",
+  "filter": "choice/score with K>=3",
+  "skipped": {
+    "noul_k2": 74
+  },
+  "elapsed_s": 20.7,
+  "overall": {
+    "n": 157,
+    "recall@1": 0.6943,
+    "se@1": 0.0368,
+    "n_informative@1": 157,
+    "informative@1": 0.6943,
+    "recall@2": 0.8089,
+    "se@2": 0.0314,
+    "n_informative@2": 157,
+    "informative@2": 0.8089,
+    "recall@3": 0.9172,
+    "se@3": 0.022,
+    "n_informative@3": 142,
+    "informative@3": 0.9085,
+    "recall@4": 0.9809,
+    "se@4": 0.0109,
+    "n_informative@4": 72,
+    "informative@4": 0.9583,
+    "recall@5": 1.0,
+    "se@5": 0.0,
+    "n_informative@5": 16,
+    "informative@5": 1.0
+  },
+  "groups": {
+    "k:3-5": {
+      "n": 141,
+      "recall@1": 0.7518,
+      "se@1": 0.0364,
+      "n_informative@1": 141,
+      "informative@1": 0.7518,
+      "recall@2": 0.8652,
+      "se@2": 0.0288,
+      "n_informative@2": 141,
+      "informative@2": 0.8652,
+      "recall@3": 0.9362,
+      "se@3": 0.0206,
+      "n_informative@3": 126,
+      "informative@3": 0.9286,
+      "recall@4": 0.9929,
+      "se@4": 0.0071,
+      "n_informative@4": 56,
+      "informative@4": 0.9821,
+      "recall@5": 1.0,
+      "se@5": 0.0,
+      "n_informative@5": 0,
+      "informative@5": null
+    },
+    "k:6+": {
+      "n": 16,
+      "recall@1": 0.1875,
+      "se@1": 0.0976,
+      "n_informative@1": 16,
+      "informative@1": 0.1875,
+      "recall@2": 0.3125,
+      "se@2": 0.1159,
+      "n_informative@2": 16,
+      "informative@2": 0.3125,
+      "recall@3": 0.75,
+      "se@3": 0.1083,
+      "n_informative@3": 16,
+      "informative@3": 0.75,
+      "recall@4": 0.875,
+      "se@4": 0.0827,
+      "n_informative@4": 16,
+      "informative@4": 0.875,
+      "recall@5": 1.0,
+      "se@5": 0.0,
+      "n_informative@5": 16,
+      "informative@5": 1.0
+    },
+    "k=3": {
+      "n": 15,
+      "recall@1": 0.3333,
+      "se@1": 0.1217,
+      "n_informative@1": 15,
+      "informative@1": 0.3333,
+      "recall@2": 0.7333,
+      "se@2": 0.1142,
+      "n_informative@2": 15,
+      "informative@2": 0.7333,
+      "recall@3": 1.0,
+      "se@3": 0.0,
+      "n_informative@3": 0,
+      "informative@3": null,
+      "recall@4": 1.0,
+      "se@4": 0.0,
+      "n_informative@4": 0,
+      "informative@4": null,
+      "recall@5": 1.0,
+      "se@5": 0.0,
+      "n_informative@5": 0,
+      "informative@5": null
+    },
+    "k=4": {
+      "n": 70,
+      "recall@1": 0.7714,
+      "se@1": 0.0502,
+      "n_informative@1": 70,
+      "informative@1": 0.7714,
+      "recall@2": 0.9,
+      "se@2": 0.0359,
+      "n_informative@2": 70,
+      "informative@2": 0.9,
+      "recall@3": 0.9571,
+      "se@3": 0.0242,
+      "n_informative@3": 70,
+      "informative@3": 0.9571,
+      "recall@4": 1.0,
+      "se@4": 0.0,
+      "n_informative@4": 0,
+      "informative@4": null,
+      "recall@5": 1.0,
+      "se@5": 0.0,
+      "n_informative@5": 0,
+      "informative@5": null
+    },
+    "k=5": {
+      "n": 56,
+      "recall@1": 0.8393,
+      "se@1": 0.0491,
+      "n_informative@1": 56,
+      "informative@1": 0.8393,
+      "recall@2": 0.8571,
+      "se@2": 0.0468,
+      "n_informative@2": 56,
+      "informative@2": 0.8571,
+      "recall@3": 0.8929,
+      "se@3": 0.0413,
+      "n_informative@3": 56,
+      "informative@3": 0.8929,
+      "recall@4": 0.9821,
+      "se@4": 0.0177,
+      "n_informative@4": 56,
+      "informative@4": 0.9821,
+      "recall@5": 1.0,
+      "se@5": 0.0,
+      "n_informative@5": 0,
+      "informative@5": null
+    },
+    "k=6": {
+      "n": 16,
+      "recall@1": 0.1875,
+      "se@1": 0.0976,
+      "n_informative@1": 16,
+      "informative@1": 0.1875,
+      "recall@2": 0.3125,
+      "se@2": 0.1159,
+      "n_informative@2": 16,
+      "informative@2": 0.3125,
+      "recall@3": 0.75,
+      "se@3": 0.1083,
+      "n_informative@3": 16,
+      "informative@3": 0.75,
+      "recall@4": 0.875,
+      "se@4": 0.0827,
+      "n_informative@4": 16,
+      "informative@4": 0.875,
+      "recall@5": 1.0,
+      "se@5": 0.0,
+      "n_informative@5": 16,
+      "informative@5": 1.0
+    },
+    "tier:easy": {
+      "n": 36,
+      "recall@1": 1.0,
+      "se@1": 0.0,
+      "n_informative@1": 36,
+      "informative@1": 1.0,
+      "recall@2": 1.0,
+      "se@2": 0.0,
+      "n_informative@2": 36,
+      "informative@2": 1.0,
+      "recall@3": 1.0,
+      "se@3": 0.0,
+      "n_informative@3": 36,
+      "informative@3": 1.0,
+      "recall@4": 1.0,
+      "se@4": 0.0,
+      "n_informative@4": 27,
+      "informative@4": 1.0,
+      "recall@5": 1.0,
+      "se@5": 0.0,
+      "n_informative@5": 0,
+      "informative@5": null
+    },
+    "tier:hard": {
+      "n": 73,
+      "recall@1": 0.4932,
+      "se@1": 0.0585,
+      "n_informative@1": 73,
+      "informative@1": 0.4932,
+      "recall@2": 0.6986,
+      "se@2": 0.0537,
+      "n_informative@2": 73,
+      "informative@2": 0.6986,
+      "recall@3": 0.8493,
+      "se@3": 0.0419,
+      "n_informative@3": 58,
+      "informative@3": 0.8103,
+      "recall@4": 0.9726,
+      "se@4": 0.0191,
+      "n_informative@4": 21,
+      "informative@4": 0.9048,
+      "recall@5": 1.0,
+      "se@5": 0.0,
+      "n_informative@5": 4,
+      "informative@5": 1.0
+    },
+    "tier:original": {
+      "n": 48,
+      "recall@1": 0.7708,
+      "se@1": 0.0607,
+      "n_informative@1": 48,
+      "informative@1": 0.7708,
+      "recall@2": 0.8333,
+      "se@2": 0.0538,
+      "n_informative@2": 48,
+      "informative@2": 0.8333,
+      "recall@3": 0.9583,
+      "se@3": 0.0288,
+      "n_informative@3": 48,
+      "informative@3": 0.9583,
+      "recall@4": 0.9792,
+      "se@4": 0.0206,
+      "n_informative@4": 24,
+      "informative@4": 0.9583,
+      "recall@5": 1.0,
+      "se@5": 0.0,
+      "n_informative@5": 12,
+      "informative@5": 1.0
+    },
+    "type:choice": {
+      "n": 139,
+      "recall@1": 0.6835,
+      "se@1": 0.0395,
+      "n_informative@1": 139,
+      "informative@1": 0.6835,
+      "recall@2": 0.8058,
+      "se@2": 0.0336,
+      "n_informative@2": 139,
+      "informative@2": 0.8058,
+      "recall@3": 0.9209,
+      "se@3": 0.0229,
+      "n_informative@3": 124,
+      "informative@3": 0.9113,
+      "recall@4": 0.9784,
+      "se@4": 0.0123,
+      "n_informative@4": 71,
+      "informative@4": 0.9577,
+      "recall@5": 1.0,
+      "se@5": 0.0,
+      "n_informative@5": 16,
+      "informative@5": 1.0
+    },
+    "type:score": {
+      "n": 18,
+      "recall@1": 0.7778,
+      "se@1": 0.098,
+      "n_informative@1": 18,
+      "informative@1": 0.7778,
+      "recall@2": 0.8333,
+      "se@2": 0.0878,
+      "n_informative@2": 18,
+      "informative@2": 0.8333,
+      "recall@3": 0.8889,
+      "se@3": 0.0741,
+      "n_informative@3": 18,
+      "informative@3": 0.8889,
+      "recall@4": 1.0,
+      "se@4": 0.0,
+      "n_informative@4": 1,
+      "informative@4": 1.0,
+      "recall@5": 1.0,
+      "se@5": 0.0,
+      "n_informative@5": 0,
+      "informative@5": null
+    }
+  },
+  "items": [
+    {
+      "id": "easy-intent-00",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 4,
+      "rank": 1,
+      "probs": [
+        0.042409,
+        0.024545,
+        0.022348,
+        0.009168,
+        0.90153
+      ]
+    },
+    {
+      "id": "easy-intent-01",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.045391,
+        0.90456,
+        0.019403,
+        0.010394,
+        0.020252
+      ]
+    },
+    {
+      "id": "easy-intent-02",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.033905,
+        0.033855,
+        0.914852,
+        0.003811,
+        0.013578
+      ]
+    },
+    {
+      "id": "easy-intent-03",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.065038,
+        0.058461,
+        0.034554,
+        0.819472,
+        0.022475
+      ]
+    },
+    {
+      "id": "easy-intent-04",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.919057,
+        0.023896,
+        0.021277,
+        0.009829,
+        0.025941
+      ]
+    },
+    {
+      "id": "easy-intent-05",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 4,
+      "rank": 1,
+      "probs": [
+        0.030468,
+        0.02295,
+        0.01923,
+        0.005371,
+        0.921981
+      ]
+    },
+    {
+      "id": "easy-intent-06",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.015481,
+        0.199656,
+        0.767582,
+        0.004605,
+        0.012677
+      ]
+    },
+    {
+      "id": "easy-intent-07",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.915499,
+        0.050519,
+        0.015651,
+        0.006927,
+        0.011404
+      ]
+    },
+    {
+      "id": "easy-intent-08",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 4,
+      "rank": 1,
+      "probs": [
+        0.015008,
+        0.020221,
+        0.026934,
+        0.005552,
+        0.932286
+      ]
+    },
+    {
+      "id": "easy-intent-09",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.016002,
+        0.943451,
+        0.01928,
+        0.006836,
+        0.014431
+      ]
+    },
+    {
+      "id": "easy-intent-10",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.031055,
+        0.015333,
+        0.009252,
+        0.926561,
+        0.017799
+      ]
+    },
+    {
+      "id": "easy-intent-11",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.018369,
+        0.016401,
+        0.931808,
+        0.009536,
+        0.023887
+      ]
+    },
+    {
+      "id": "easy-extraction-00",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.032105,
+        0.038855,
+        0.057699,
+        0.871341
+      ]
+    },
+    {
+      "id": "easy-extraction-01",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.01894,
+        0.907554,
+        0.047121,
+        0.026385
+      ]
+    },
+    {
+      "id": "easy-extraction-02",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.899203,
+        0.031449,
+        0.030577,
+        0.038771
+      ]
+    },
+    {
+      "id": "easy-extraction-03",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.549474,
+        0.062721,
+        0.05308,
+        0.334725
+      ]
+    },
+    {
+      "id": "easy-extraction-04",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.058359,
+        0.828313,
+        0.082505,
+        0.030823
+      ]
+    },
+    {
+      "id": "easy-extraction-05",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.123846,
+        0.066861,
+        0.023387,
+        0.785907
+      ]
+    },
+    {
+      "id": "easy-extraction-06",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.231262,
+        0.618231,
+        0.140904,
+        0.009603
+      ]
+    },
+    {
+      "id": "easy-extraction-07",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.141517,
+        0.168616,
+        0.164063,
+        0.525803
+      ]
+    },
+    {
+      "id": "easy-extraction-08",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.010839,
+        0.041602,
+        0.90736,
+        0.011026,
+        0.029173
+      ]
+    },
+    {
+      "id": "easy-extraction-09",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.034593,
+        0.885169,
+        0.015274,
+        0.034642,
+        0.030321
+      ]
+    },
+    {
+      "id": "easy-extraction-10",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.880076,
+        0.042002,
+        0.021677,
+        0.02055,
+        0.035695
+      ]
+    },
+    {
+      "id": "easy-extraction-11",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.025618,
+        0.037784,
+        0.893414,
+        0.043184
+      ]
+    },
+    {
+      "id": "easy-tool_selection-00",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.011278,
+        0.015376,
+        0.93214,
+        0.010129,
+        0.031076
+      ]
+    },
+    {
+      "id": "easy-tool_selection-01",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.005378,
+        0.013399,
+        0.007264,
+        0.961777,
+        0.012182
+      ]
+    },
+    {
+      "id": "easy-tool_selection-02",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.003726,
+        0.957225,
+        0.012811,
+        0.019237,
+        0.007002
+      ]
+    },
+    {
+      "id": "easy-tool_selection-03",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.699699,
+        0.006279,
+        0.006713,
+        0.008831,
+        0.278478
+      ]
+    },
+    {
+      "id": "easy-tool_selection-04",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 4,
+      "rank": 1,
+      "probs": [
+        0.007246,
+        0.032843,
+        0.015785,
+        0.020662,
+        0.923464
+      ]
+    },
+    {
+      "id": "easy-tool_selection-05",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.003863,
+        0.947114,
+        0.01034,
+        0.031492,
+        0.007191
+      ]
+    },
+    {
+      "id": "easy-tool_selection-06",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.00516,
+        0.008758,
+        0.005161,
+        0.975921,
+        0.004999
+      ]
+    },
+    {
+      "id": "easy-tool_selection-07",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.948954,
+        0.011643,
+        0.008614,
+        0.003986,
+        0.026803
+      ]
+    },
+    {
+      "id": "easy-tool_selection-08",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 4,
+      "rank": 1,
+      "probs": [
+        0.01531,
+        0.00704,
+        0.005542,
+        0.002555,
+        0.969554
+      ]
+    },
+    {
+      "id": "easy-tool_selection-09",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.008599,
+        0.008381,
+        0.964885,
+        0.007577,
+        0.010558
+      ]
+    },
+    {
+      "id": "easy-tool_selection-10",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.014356,
+        0.958082,
+        0.008788,
+        0.008362,
+        0.010412
+      ]
+    },
+    {
+      "id": "easy-tool_selection-11",
+      "q_type": "choice",
+      "tier": "easy",
+      "k": 5,
+      "gold": 4,
+      "rank": 1,
+      "probs": [
+        0.008922,
+        0.006001,
+        0.005709,
+        0.002386,
+        0.976982
+      ]
+    },
+    {
+      "id": "hard-opus-a-long_policy-01",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 4,
+      "rank": 1,
+      "probs": [
+        0.11619,
+        0.189484,
+        0.037308,
+        0.050543,
+        0.606476
+      ]
+    },
+    {
+      "id": "hard-opus-a-long_policy-04",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 1,
+      "rank": 3,
+      "probs": [
+        0.089856,
+        0.230885,
+        0.311026,
+        0.087597,
+        0.280635
+      ]
+    },
+    {
+      "id": "hard-opus-a-long_policy-08",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.017961,
+        0.408826,
+        0.478361,
+        0.094852
+      ]
+    },
+    {
+      "id": "hard-opus-a-long_policy-09",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.197009,
+        0.635761,
+        0.101192,
+        0.066037
+      ]
+    },
+    {
+      "id": "hard-opus-a-long_policy-17",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 0,
+      "rank": 4,
+      "probs": [
+        0.064189,
+        0.678642,
+        0.101275,
+        0.099845,
+        0.056049
+      ]
+    },
+    {
+      "id": "hard-opus-a-probability-04",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 2,
+      "rank": 2,
+      "probs": [
+        0.210599,
+        0.472586,
+        0.316816
+      ]
+    },
+    {
+      "id": "hard-opus-a-probability-07",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 0,
+      "rank": 2,
+      "probs": [
+        0.350602,
+        0.114083,
+        0.535315
+      ]
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-07",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 2,
+      "rank": 4,
+      "probs": [
+        0.223309,
+        0.171021,
+        0.201046,
+        0.203363,
+        0.201261
+      ]
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-12",
+      "q_type": "score",
+      "tier": "hard",
+      "k": 4,
+      "gold": 1,
+      "rank": 3,
+      "probs": [
+        0.1023,
+        0.228437,
+        0.234606,
+        0.434657
+      ]
+    },
+    {
+      "id": "hard-opus-b-ambiguous-02",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.070946,
+        0.249367,
+        0.679687
+      ]
+    },
+    {
+      "id": "hard-opus-b-ambiguous-03",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 1,
+      "rank": 3,
+      "probs": [
+        0.520436,
+        0.15476,
+        0.324804
+      ]
+    },
+    {
+      "id": "hard-opus-b-ambiguous-07",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 2,
+      "rank": 3,
+      "probs": [
+        0.285864,
+        0.636574,
+        0.077562
+      ]
+    },
+    {
+      "id": "hard-opus-b-ambiguous-09",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 2,
+      "rank": 2,
+      "probs": [
+        0.62483,
+        0.124208,
+        0.250962
+      ]
+    },
+    {
+      "id": "hard-opus-b-ambiguous-10",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 0,
+      "rank": 2,
+      "probs": [
+        0.315156,
+        0.499356,
+        0.185488
+      ]
+    },
+    {
+      "id": "hard-opus-b-ambiguous-11",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.479802,
+        0.340272,
+        0.179926
+      ]
+    },
+    {
+      "id": "hard-opus-b-ambiguous-13",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.594425,
+        0.199294,
+        0.104887,
+        0.101393
+      ]
+    },
+    {
+      "id": "hard-opus-b-multi_hop-03",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 2,
+      "rank": 2,
+      "probs": [
+        0.070092,
+        0.261124,
+        0.291435,
+        0.37735
+      ]
+    },
+    {
+      "id": "hard-opus-b-multi_hop-04",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 6,
+      "gold": 1,
+      "rank": 5,
+      "probs": [
+        0.15807,
+        0.139003,
+        0.124341,
+        0.228569,
+        0.208569,
+        0.141448
+      ]
+    },
+    {
+      "id": "hard-opus-b-multi_hop-05",
+      "q_type": "score",
+      "tier": "hard",
+      "k": 5,
+      "gold": 2,
+      "rank": 4,
+      "probs": [
+        0.190926,
+        0.171446,
+        0.156051,
+        0.374295,
+        0.107282
+      ]
+    },
+    {
+      "id": "hard-opus-b-multi_hop-07",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 6,
+      "gold": 1,
+      "rank": 4,
+      "probs": [
+        0.097906,
+        0.127286,
+        0.240803,
+        0.246296,
+        0.235484,
+        0.052225
+      ]
+    },
+    {
+      "id": "hard-opus-b-probability-01",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.264224,
+        0.208832,
+        0.526944
+      ]
+    },
+    {
+      "id": "hard-opus-b-probability-02",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 2,
+      "rank": 2,
+      "probs": [
+        0.863617,
+        0.059437,
+        0.076946
+      ]
+    },
+    {
+      "id": "hard-opus-b-probability-04",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.554425,
+        0.194342,
+        0.251233
+      ]
+    },
+    {
+      "id": "hard-opus-b-probability-06",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 2,
+      "rank": 2,
+      "probs": [
+        0.182462,
+        0.486181,
+        0.331357
+      ]
+    },
+    {
+      "id": "hard-opus-b-tradeoff-01",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.495012,
+        0.076046,
+        0.02239,
+        0.116366,
+        0.290185
+      ]
+    },
+    {
+      "id": "hard-opus-b-tradeoff-03",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.104088,
+        0.744683,
+        0.064194,
+        0.087035
+      ]
+    },
+    {
+      "id": "hard-opus-b-tradeoff-07",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 1,
+      "rank": 2,
+      "probs": [
+        0.057399,
+        0.326095,
+        0.11257,
+        0.407708,
+        0.096228
+      ]
+    },
+    {
+      "id": "hard-opus-b-tradeoff-12",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.153021,
+        0.090475,
+        0.135037,
+        0.476038,
+        0.145429
+      ]
+    },
+    {
+      "id": "hard-opus-c-long_policy-02",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.056871,
+        0.654552,
+        0.096355,
+        0.084251,
+        0.107971
+      ]
+    },
+    {
+      "id": "hard-opus-c-long_policy-03",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 6,
+      "gold": 4,
+      "rank": 3,
+      "probs": [
+        0.289666,
+        0.104778,
+        0.12043,
+        0.139591,
+        0.153747,
+        0.191789
+      ]
+    },
+    {
+      "id": "hard-opus-c-long_policy-05",
+      "q_type": "score",
+      "tier": "hard",
+      "k": 4,
+      "gold": 1,
+      "rank": 4,
+      "probs": [
+        0.282296,
+        0.143142,
+        0.334649,
+        0.239913
+      ]
+    },
+    {
+      "id": "hard-opus-c-long_policy-08",
+      "q_type": "score",
+      "tier": "hard",
+      "k": 4,
+      "gold": 1,
+      "rank": 2,
+      "probs": [
+        0.166166,
+        0.180981,
+        0.489881,
+        0.162972
+      ]
+    },
+    {
+      "id": "hard-opus-c-long_policy-10",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 0,
+      "rank": 4,
+      "probs": [
+        0.030944,
+        0.123614,
+        0.485955,
+        0.359487
+      ]
+    },
+    {
+      "id": "hard-opus-c-probability-03",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.1753,
+        0.535644,
+        0.289055
+      ]
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-03",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 2,
+      "rank": 4,
+      "probs": [
+        0.209619,
+        0.191641,
+        0.183642,
+        0.235178,
+        0.17992
+      ]
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-04",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 3,
+      "rank": 5,
+      "probs": [
+        0.237152,
+        0.199257,
+        0.223297,
+        0.156583,
+        0.183711
+      ]
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-06",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 6,
+      "gold": 4,
+      "rank": 3,
+      "probs": [
+        0.357313,
+        0.125846,
+        0.090409,
+        0.178177,
+        0.128066,
+        0.120189
+      ]
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-08",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 1,
+      "rank": 4,
+      "probs": [
+        0.200163,
+        0.190415,
+        0.186172,
+        0.209888,
+        0.213363
+      ]
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-12",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 2,
+      "rank": 3,
+      "probs": [
+        0.416094,
+        0.386051,
+        0.197855
+      ]
+    },
+    {
+      "id": "hard-sol-a-adversarial-01",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.009937,
+        0.392308,
+        0.260688,
+        0.337067
+      ]
+    },
+    {
+      "id": "hard-sol-a-adversarial-07",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.15152,
+        0.033286,
+        0.146598,
+        0.668596
+      ]
+    },
+    {
+      "id": "hard-sol-a-adversarial-09",
+      "q_type": "score",
+      "tier": "hard",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.124572,
+        0.135098,
+        0.46539,
+        0.27494
+      ]
+    },
+    {
+      "id": "hard-sol-a-adversarial-11",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 3,
+      "rank": 2,
+      "probs": [
+        0.5547,
+        0.026707,
+        0.01682,
+        0.401773
+      ]
+    },
+    {
+      "id": "hard-sol-a-multi_hop-01",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 0,
+      "rank": 2,
+      "probs": [
+        0.277769,
+        0.231509,
+        0.43602,
+        0.054702
+      ]
+    },
+    {
+      "id": "hard-sol-a-multi_hop-02",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 3,
+      "rank": 2,
+      "probs": [
+        0.06346,
+        0.081658,
+        0.528687,
+        0.326194
+      ]
+    },
+    {
+      "id": "hard-sol-a-multi_hop-05",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.292673,
+        0.210395,
+        0.362854,
+        0.134078
+      ]
+    },
+    {
+      "id": "hard-sol-a-multi_hop-07",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 0,
+      "rank": 3,
+      "probs": [
+        0.232724,
+        0.341126,
+        0.328594,
+        0.097556
+      ]
+    },
+    {
+      "id": "hard-sol-a-multi_hop-08",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.450399,
+        0.117607,
+        0.385009,
+        0.046985
+      ]
+    },
+    {
+      "id": "hard-sol-a-multi_hop-09",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.250019,
+        0.261896,
+        0.377827,
+        0.110258
+      ]
+    },
+    {
+      "id": "hard-sol-a-multi_hop-10",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 0,
+      "rank": 3,
+      "probs": [
+        0.170388,
+        0.440653,
+        0.11073,
+        0.278229
+      ]
+    },
+    {
+      "id": "hard-sol-a-multi_hop-12",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.29006,
+        0.127063,
+        0.458541,
+        0.124336
+      ]
+    },
+    {
+      "id": "hard-sol-a-trap-05",
+      "q_type": "score",
+      "tier": "hard",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.325203,
+        0.204281,
+        0.321832,
+        0.148684
+      ]
+    },
+    {
+      "id": "hard-sol-a-trap-06",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.144348,
+        0.0214,
+        0.089995,
+        0.744257
+      ]
+    },
+    {
+      "id": "hard-sol-a-trap-08",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.117828,
+        0.048542,
+        0.637219,
+        0.196412
+      ]
+    },
+    {
+      "id": "hard-sol-a-trap-10",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.070335,
+        0.849007,
+        0.035727,
+        0.044932
+      ]
+    },
+    {
+      "id": "hard-sol-b-long_policy-01",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.186585,
+        0.283418,
+        0.193535,
+        0.336461
+      ]
+    },
+    {
+      "id": "hard-sol-b-long_policy-02",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.156234,
+        0.3497,
+        0.345297,
+        0.148769
+      ]
+    },
+    {
+      "id": "hard-sol-b-long_policy-05",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 3,
+      "rank": 2,
+      "probs": [
+        0.175764,
+        0.44981,
+        0.168555,
+        0.20587
+      ]
+    },
+    {
+      "id": "hard-sol-b-long_policy-06",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.310663,
+        0.245106,
+        0.160437,
+        0.283794
+      ]
+    },
+    {
+      "id": "hard-sol-b-routing_hard-01",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.036772,
+        0.041205,
+        0.035564,
+        0.787434,
+        0.099025
+      ]
+    },
+    {
+      "id": "hard-sol-b-routing_hard-02",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.088742,
+        0.037359,
+        0.791667,
+        0.02545,
+        0.056783
+      ]
+    },
+    {
+      "id": "hard-sol-b-routing_hard-03",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.03959,
+        0.104028,
+        0.332505,
+        0.508952,
+        0.014925
+      ]
+    },
+    {
+      "id": "hard-sol-b-routing_hard-07",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 4,
+      "rank": 1,
+      "probs": [
+        0.05812,
+        0.102073,
+        0.075458,
+        0.027941,
+        0.736407
+      ]
+    },
+    {
+      "id": "hard-sol-b-routing_hard-09",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 5,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.04903,
+        0.026756,
+        0.300078,
+        0.58622,
+        0.037917
+      ]
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-01",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 2,
+      "rank": 4,
+      "probs": [
+        0.312556,
+        0.226244,
+        0.160673,
+        0.300527
+      ]
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-02",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.116355,
+        0.094834,
+        0.47698,
+        0.311831
+      ]
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-03",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 3,
+      "rank": 2,
+      "probs": [
+        0.248562,
+        0.234972,
+        0.263871,
+        0.252595
+      ]
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-04",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 3,
+      "gold": 2,
+      "rank": 3,
+      "probs": [
+        0.326151,
+        0.404651,
+        0.269198
+      ]
+    },
+    {
+      "id": "hard-sol-c-multi_hop-07",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 1,
+      "rank": 2,
+      "probs": [
+        0.144608,
+        0.313395,
+        0.226434,
+        0.315562
+      ]
+    },
+    {
+      "id": "hard-sol-c-multi_hop-09",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.440661,
+        0.148785,
+        0.11693,
+        0.293624
+      ]
+    },
+    {
+      "id": "hard-sol-c-multi_hop-11",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.120146,
+        0.181277,
+        0.553911,
+        0.144666
+      ]
+    },
+    {
+      "id": "hard-sol-c-multi_hop-12",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 0,
+      "rank": 3,
+      "probs": [
+        0.215769,
+        0.188207,
+        0.226859,
+        0.369166
+      ]
+    },
+    {
+      "id": "hard-sol-c-multi_hop-13",
+      "q_type": "choice",
+      "tier": "hard",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.172345,
+        0.411764,
+        0.207079,
+        0.208812
+      ]
+    },
+    {
+      "id": "original-intent-01-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.048143,
+        0.011735,
+        0.214563,
+        0.717388,
+        0.008171
+      ]
+    },
+    {
+      "id": "original-intent-01-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.062464,
+        0.021524,
+        0.291647,
+        0.585263,
+        0.039102
+      ]
+    },
+    {
+      "id": "original-intent-02-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 4,
+      "rank": 3,
+      "probs": [
+        0.051463,
+        0.290712,
+        0.437188,
+        0.056274,
+        0.164363
+      ]
+    },
+    {
+      "id": "original-intent-02-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 4,
+      "rank": 1,
+      "probs": [
+        0.021862,
+        0.030304,
+        0.333885,
+        0.017936,
+        0.596013
+      ]
+    },
+    {
+      "id": "original-intent-03-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.016743,
+        0.721721,
+        0.209727,
+        0.031444,
+        0.020364
+      ]
+    },
+    {
+      "id": "original-intent-03-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.026116,
+        0.67465,
+        0.263364,
+        0.018102,
+        0.017768
+      ]
+    },
+    {
+      "id": "original-intent-04-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.533416,
+        0.01139,
+        0.358774,
+        0.052845,
+        0.043573
+      ]
+    },
+    {
+      "id": "original-intent-04-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.51493,
+        0.00969,
+        0.395005,
+        0.066932,
+        0.013444
+      ]
+    },
+    {
+      "id": "original-intent-05-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.163159,
+        0.017898,
+        0.543046,
+        0.259001,
+        0.016897
+      ]
+    },
+    {
+      "id": "original-intent-05-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.210414,
+        0.021479,
+        0.473593,
+        0.274861,
+        0.019653
+      ]
+    },
+    {
+      "id": "original-intent-06-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 4,
+      "rank": 1,
+      "probs": [
+        0.045549,
+        0.014583,
+        0.326079,
+        0.121724,
+        0.492066
+      ]
+    },
+    {
+      "id": "original-intent-06-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 5,
+      "gold": 4,
+      "rank": 1,
+      "probs": [
+        0.030022,
+        0.008873,
+        0.400752,
+        0.036337,
+        0.524015
+      ]
+    },
+    {
+      "id": "original-ordinal-01-0",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.59951,
+        0.316553,
+        0.031043,
+        0.052894
+      ]
+    },
+    {
+      "id": "original-ordinal-01-1",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.526697,
+        0.434299,
+        0.024506,
+        0.014498
+      ]
+    },
+    {
+      "id": "original-ordinal-02-0",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.167454,
+        0.707626,
+        0.090183,
+        0.034737
+      ]
+    },
+    {
+      "id": "original-ordinal-02-1",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.308752,
+        0.637148,
+        0.014351,
+        0.039749
+      ]
+    },
+    {
+      "id": "original-ordinal-03-0",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.166027,
+        0.10352,
+        0.675727,
+        0.054726
+      ]
+    },
+    {
+      "id": "original-ordinal-03-1",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.165797,
+        0.056319,
+        0.751483,
+        0.026401
+      ]
+    },
+    {
+      "id": "original-ordinal-04-0",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.0947,
+        0.127525,
+        0.041749,
+        0.736026
+      ]
+    },
+    {
+      "id": "original-ordinal-04-1",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.088912,
+        0.100282,
+        0.054323,
+        0.756482
+      ]
+    },
+    {
+      "id": "original-ordinal-05-0",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.756388,
+        0.165841,
+        0.046031,
+        0.03174
+      ]
+    },
+    {
+      "id": "original-ordinal-05-1",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.73253,
+        0.100281,
+        0.028626,
+        0.138563
+      ]
+    },
+    {
+      "id": "original-ordinal-06-0",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.252072,
+        0.216082,
+        0.5041,
+        0.027747
+      ]
+    },
+    {
+      "id": "original-ordinal-06-1",
+      "q_type": "score",
+      "tier": "original",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.204456,
+        0.159168,
+        0.620332,
+        0.016044
+      ]
+    },
+    {
+      "id": "original-extraction-01-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.249436,
+        0.442968,
+        0.055228,
+        0.252368
+      ]
+    },
+    {
+      "id": "original-extraction-01-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 1,
+      "rank": 2,
+      "probs": [
+        0.079013,
+        0.266404,
+        0.186735,
+        0.467848
+      ]
+    },
+    {
+      "id": "original-extraction-02-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.053596,
+        0.195925,
+        0.196484,
+        0.553995
+      ]
+    },
+    {
+      "id": "original-extraction-02-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.039712,
+        0.151046,
+        0.03799,
+        0.771252
+      ]
+    },
+    {
+      "id": "original-extraction-03-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.340945,
+        0.280806,
+        0.111207,
+        0.267041
+      ]
+    },
+    {
+      "id": "original-extraction-03-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.479529,
+        0.216126,
+        0.149296,
+        0.155048
+      ]
+    },
+    {
+      "id": "original-extraction-04-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.045646,
+        0.05472,
+        0.470427,
+        0.429207
+      ]
+    },
+    {
+      "id": "original-extraction-04-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 2,
+      "rank": 1,
+      "probs": [
+        0.078984,
+        0.047651,
+        0.53373,
+        0.339634
+      ]
+    },
+    {
+      "id": "original-extraction-05-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.009509,
+        0.108774,
+        0.022623,
+        0.859094
+      ]
+    },
+    {
+      "id": "original-extraction-05-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 3,
+      "rank": 1,
+      "probs": [
+        0.083106,
+        0.276359,
+        0.155,
+        0.485535
+      ]
+    },
+    {
+      "id": "original-extraction-06-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.448071,
+        0.081159,
+        0.166518,
+        0.304252
+      ]
+    },
+    {
+      "id": "original-extraction-06-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 4,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.468404,
+        0.178297,
+        0.09359,
+        0.259709
+      ]
+    },
+    {
+      "id": "original-routing-01-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 4,
+      "rank": 3,
+      "probs": [
+        0.153784,
+        0.209859,
+        0.149792,
+        0.197679,
+        0.160726,
+        0.128159
+      ]
+    },
+    {
+      "id": "original-routing-01-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 4,
+      "rank": 3,
+      "probs": [
+        0.158023,
+        0.245913,
+        0.146463,
+        0.201308,
+        0.158499,
+        0.089793
+      ]
+    },
+    {
+      "id": "original-routing-02-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 0,
+      "rank": 2,
+      "probs": [
+        0.336405,
+        0.370333,
+        0.110591,
+        0.101137,
+        0.019476,
+        0.062058
+      ]
+    },
+    {
+      "id": "original-routing-02-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 0,
+      "rank": 1,
+      "probs": [
+        0.36365,
+        0.262421,
+        0.177519,
+        0.099152,
+        0.031417,
+        0.065842
+      ]
+    },
+    {
+      "id": "original-routing-03-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.059115,
+        0.675765,
+        0.15326,
+        0.077077,
+        0.010999,
+        0.023783
+      ]
+    },
+    {
+      "id": "original-routing-03-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 1,
+      "rank": 1,
+      "probs": [
+        0.072253,
+        0.535744,
+        0.206086,
+        0.137673,
+        0.010139,
+        0.038105
+      ]
+    },
+    {
+      "id": "original-routing-04-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 2,
+      "rank": 5,
+      "probs": [
+        0.174053,
+        0.385769,
+        0.113819,
+        0.151414,
+        0.052397,
+        0.122548
+      ]
+    },
+    {
+      "id": "original-routing-04-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 2,
+      "rank": 4,
+      "probs": [
+        0.175385,
+        0.487853,
+        0.092806,
+        0.136007,
+        0.031394,
+        0.076556
+      ]
+    },
+    {
+      "id": "original-routing-05-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 5,
+      "rank": 2,
+      "probs": [
+        0.103928,
+        0.207072,
+        0.131284,
+        0.293435,
+        0.023081,
+        0.2412
+      ]
+    },
+    {
+      "id": "original-routing-05-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 5,
+      "rank": 3,
+      "probs": [
+        0.155168,
+        0.303974,
+        0.105445,
+        0.256054,
+        0.017013,
+        0.162346
+      ]
+    },
+    {
+      "id": "original-routing-06-0",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 3,
+      "rank": 3,
+      "probs": [
+        0.14806,
+        0.25024,
+        0.199015,
+        0.175101,
+        0.077702,
+        0.149883
+      ]
+    },
+    {
+      "id": "original-routing-06-1",
+      "q_type": "choice",
+      "tier": "original",
+      "k": 6,
+      "gold": 3,
+      "rank": 3,
+      "probs": [
+        0.160607,
+        0.295624,
+        0.184101,
+        0.179068,
+        0.052634,
+        0.127966
+      ]
+    }
+  ],
+  "skipped_note": "noul items are K=2; every ranking of two options has recall@2 = 1",
+  "model_revision": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a",
+  "versions": {
+    "torch": "2.11.0+cu128",
+    "transformers": "5.21.0"
+  },
+  "provenance_note": "model_revision and versions added after the run from the gpu-host-a HF cache snapshot and the jev-fla env; reruns record them directly"
+}
