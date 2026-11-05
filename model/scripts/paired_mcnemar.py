@@ -16,7 +16,16 @@ from pathlib import Path
 
 
 def load(path: Path) -> dict[str, bool]:
-    payload = json.loads(path.read_text(encoding="utf-8"))["predictions"]
+    """Per-item correctness from a prediction dump.
+
+    Accepts a JSON object with a ``predictions`` array, or JSONL with one
+    prediction per line (what ``eval_gate.py --predictions-out`` writes).
+    """
+    text = path.read_text(encoding="utf-8")
+    try:
+        payload = json.loads(text)["predictions"]
+    except json.JSONDecodeError:
+        payload = [json.loads(line) for line in text.splitlines() if line.strip()]
     return {row["id"]: bool(row["correct"]) for row in payload}
 
 
