@@ -74,6 +74,7 @@ def item_loss(
     ce_weight: float,
     min_subset: int,
     shuffle_score: bool,
+    max_subset: int | None = None,
 ) -> tuple[torch.Tensor, float, float]:
     """Listwise loss on one item over a sampled subset."""
     q = item.question
@@ -84,11 +85,11 @@ def item_loss(
         return zero, 0.0, 0.0
     if q["type"] == "choice":
         subset = ListwiseMarkerReadout.sample_subset(
-            len(options), gold, rng, min_size=min_subset
+            len(options), gold, rng, min_size=min_subset, max_size=max_subset
         )
     elif shuffle_score:
         subset = ListwiseMarkerReadout.sample_subset(
-            len(options), gold, rng, min_size=min_subset
+            len(options), gold, rng, min_size=min_subset, max_size=max_subset
         )
     else:
         # Rubric levels are ordered; shuffling them breaks the scale.
@@ -128,6 +129,7 @@ def evaluate(
     base_probs: dict[str, torch.Tensor],
     alphas: dict[str, torch.Tensor],
     shifts: int,
+    max_set: int = 20,
 ) -> dict[str, float]:
     """Full-set evaluation.
 
@@ -140,6 +142,7 @@ def evaluate(
     correct = 0.0
     corrected = 0.0
     n = 0
+    capped = 0
     per_type: dict[str, list[float]] = defaultdict(list)
     for item in items:
         base = base_probs.get(item.id)
@@ -153,11 +156,21 @@ def evaluate(
             probs = base
         else:
             options = _options(item.question)
+            scored_options = options
+            if not readout.fits(options):
+                # One sequence cannot hold the whole set; score a gold-anchored
+                # subset so the item still counts, and report how many did.
+                capped += 1
+                others = [i for i in range(len(options)) if i != target]
+                keep = sorted([target] + others[: max_set - 1])
+                scored_options = [options[i] for i in keep]
+                base = _subset_probs(base, keep)
+                target = keep.index(target)
             item_shifts = shifts if q_type == "choice" else 1
             probs = readout.score_shifted(
                 item.state,
                 item.question.get("instructions", ""),
-                options,
+                scored_options,
                 shifts=item_shifts,
             ).reshape(-1)
             probs = torch.softmax(
@@ -178,6 +191,7 @@ def evaluate(
         "accuracy": correct / n if n else 0.0,
         "corrected": corrected / n if n else 0.0,
         "by_type": {t: sum(v) / len(v) for t, v in per_type.items() if v},
+        "capped_sets": capped,
     }
 
 
@@ -201,6 +215,13 @@ def main() -> int:
         type=int,
         default=2,
         help="Smallest gold-containing subset sampled during training",
+    )
+    parser.add_argument(
+        "--max-subset",
+        type=int,
+        default=20,
+        help="Largest option subset one sequence scores; also the eval "
+        "fallback for sets that do not fit max_length",
     )
     parser.add_argument(
         "--shuffle-score",
@@ -295,6 +316,7 @@ def main() -> int:
                 args.ce_weight,
                 args.min_subset,
                 args.shuffle_score,
+                args.max_subset,
             )
             kl_total += kl_value
             ce_total += ce_value
@@ -311,7 +333,12 @@ def main() -> int:
                     flush=True,
                 )
         metrics = evaluate(
-            readout, val_items, base_probs, alphas, args.eval_shifts
+            readout,
+            val_items,
+            base_probs,
+            alphas,
+            args.eval_shifts,
+            args.max_subset,
         )
         metrics["epoch"] = epoch
         metrics["train_loss"] = total / max(1, len(order))
@@ -353,6 +380,7 @@ def main() -> int:
                 "option_chunk_size": 1,
                 "option_max_tokens": args.option_max_tokens,
                 "min_subset": args.min_subset,
+                "max_subset": args.max_subset,
                 "shuffle_score": args.shuffle_score,
                 "eval_shifts": args.eval_shifts,
                 "eval_shifts_types": ["choice"],

@@ -112,6 +112,18 @@ class ListwiseMarkerReadout:
         )
         return hidden[0, marker_index]
 
+    # -- capacity -------------------------------------------------------
+    def suffix_length(self, option_texts: Sequence[str]) -> int:
+        """Tokens in the option suffix, markers included."""
+        return sum(
+            len(ids) + 1
+            for ids in self.model._tokenize_option_ids(list(option_texts))
+        )
+
+    def fits(self, option_texts: Sequence[str]) -> bool:
+        """Whether the whole set fits one sequence under ``max_length``."""
+        return self.suffix_length(option_texts) < self.model.max_length
+
     # -- scoring --------------------------------------------------------
     def score(
         self,
@@ -180,16 +192,19 @@ class ListwiseMarkerReadout:
         gold_index: int,
         rng: random.Random,
         min_size: int = 2,
+        max_size: int | None = None,
     ) -> list[int]:
         """A shuffled subset that contains the gold option.
 
-        Sizes run from ``min(min_size, n_options)`` to ``n_options``, so the
-        head also learns to rank a shortlist.  The gold is always present:
-        a set without it has no correct answer to train against.
+        Sizes run from ``min(min_size, n_options)`` to ``min(max_size,
+        n_options)``, so the head also learns to rank a shortlist.  The cap
+        keeps a large option set inside one sequence.  The gold is always
+        present: a set without it has no correct answer to train against.
         """
         if not 0 <= gold_index < n_options:
             raise ValueError("gold_index is outside the option set")
-        size = rng.randint(min(min_size, n_options), n_options)
+        largest = min(n_options, max_size or n_options)
+        size = rng.randint(min(min_size, largest), largest)
         others = [index for index in range(n_options) if index != gold_index]
         rng.shuffle(others)
         chosen = [gold_index] + others[: size - 1]
