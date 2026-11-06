@@ -22,7 +22,7 @@ yet (see Contamination and dedup).
 | long-context | 1,670 |
 | race-short | 144 |
 
-The component totals sum higher than 243,012 because ids are deduplicated:
+The table shows ids kept after dedup. Before dedup the components sum to 245,951:
 2,274 synthetic ids sampled into the 20K/30K keep their sampled copy, and 665
 typed-decisions ids already in the 20K/30K are dropped from the full
 typed-decisions copy. `race_short_passage_choice` collapses 498 rows to 144 ids.
