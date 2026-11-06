@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-11-06T21:34:07Z",
+ "generated_at": "2026-11-06T23:34:12Z",
  "canonical": "krino-canonical-243366.jsonl",
- "canonical_sha256": "07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53",
+ "canonical_sha256": "8eb3b2a490a04c600bd652ebeed738c02976bb77e731b337efa513805c62e4f6",
  "canonical_records": 243366,
  "taxonomy": [
   {
@@ -1048,10 +1048,10 @@
    "Structured Data Extraction": 0.027062
   },
   "notes": [
-   "The acceptance set is 85.7% Classification and the corpus is 61.9%; the metric measures the part of the corpus that overlaps with the set, not the corpus composition.",
-   "Scoring has 18 items. A binomial 95% interval at p=0.5 is about +/-23 points on 18 items, so a change confined to Scoring cannot move the 231-item total beyond noise by itself; a held-out split is needed to see a Scoring regression.",
-   "Ranking and ML Feature Extraction have zero items in the acceptance set as well as zero corpus records, so the metric cannot see those gaps by construction.",
-   "Verification is 13.4% of the corpus but 0.9% of the acceptance set, and its two JevBench items both miss; the corpus trains heavily on an ability the set barely measures."
+   "The acceptance set is 85.7% Classification and the corpus is 61.9%. The set is a separate public corpus, not a sample of the canonical corpus; the comparison is between ability mixes, so a JevBench score measures classification-shaped decisions, not the corpus composition.",
+   "Scoring has 18 items, 7.8% of the 231. The 95% binomial interval on the 18-item rate is about +/-23 points, so an ordinary change in Scoring is invisible in the total. Even a wipeout of all 18 moves the 231-item total by 7.8 points, against its own +/-6.0-point half-width, and a real regression is smaller than that; a held-out split is what sees it.",
+   "Ranking, ML Feature Extraction, Detection and Search have zero items in the acceptance set. Ranking and ML Feature Extraction also have zero corpus records, so the metric cannot see those gaps by construction. Detection (4,650 records, 1.9% of the corpus) and Search (479, 0.2%) have coverage the set never exercises.",
+   "Verification is 13.4% of the corpus but 0.9% of the acceptance set, and its two JevBench items both miss. Only 2,762 of its 32,532 records (8.5%, 1.1% of the corpus) are listwise-eligible, so the label count overstates what the trained head sees, and the set measures the ability with two items."
   ]
  },
  "eval": {

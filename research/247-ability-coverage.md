@@ -2,7 +2,7 @@
 
 Issue #247. The taxonomy is fixed in `data/abilities.py`; the labeler is `scripts/label_abilities.py`; the committed coverage report is `247-ability-coverage.json`.
 
-Input: `krino-canonical-243366.jsonl`, SHA-256 `07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53`, 243,366 records and 243,366 distinct ids (the artifact built after the RACE id correction). The canonical builder is on main since #249; running the reproduction command below on main's tree reproduces that hash. The labels are published as a sidecar beside the artifact, `krino-canonical-243366.ability.jsonl`, SHA-256 `5933f899a3660d529bdad39d7226a6bad1d7605e0fabfa872db7a8bc1c606670`, one row per record with `id`, `ability`, `label_method`, `ability_rule`. The sidecar id set equals the artifact id set; the labeler rejects duplicate ids.
+Input: `krino-canonical-243366.jsonl`, SHA-256 `8eb3b2a490a04c600bd652ebeed738c02976bb77e731b337efa513805c62e4f6`, 243,366 records and 243,366 distinct ids. This is the artifact built after the RACE id correction (#249) and the `label_kind` change (#260). Running the reproduction command below on main's tree, after #260, reproduces that hash: verified on the compute host at main `2ee4ded`. The pre-#260 artifact had SHA-256 `07600293...` and the same records; `label_kind` is the only difference. The labels are published as a sidecar beside the artifact, `krino-canonical-243366.ability.jsonl`, SHA-256 `5933f899a3660d529bdad39d7226a6bad1d7605e0fabfa872db7a8bc1c606670`, one row per record with `id`, `ability`, `label_method`, `ability_rule`. The sidecar hash is the same on both canonical builds, because the ids and questions did not change. The sidecar id set equals the artifact id set; the labeler rejects duplicate ids.
 
 ## Taxonomy
 
@@ -73,7 +73,7 @@ Two flags make the single-source cases explicit in the JSON. `single_source` mea
 
 ## Demand side
 
-The acceptance set is the 231 public JevBench items, classified by question form with the same heuristic. It is not the corpus, and what it can see bounds what any JevBench number means.
+The acceptance set is the 231 public JevBench items, classified by question form with the same heuristic. It is a separate public corpus, not a sample of the canonical corpus: the #235 audit finds no shared record, so the two columns compare ability mixes, not overlapping records.
 
 | ability | JevBench items | JevBench share | corpus share |
 |---|---:|---:|---:|
@@ -86,10 +86,10 @@ The acceptance set is the 231 public JevBench items, classified by question form
 
 Four consequences:
 
-- The acceptance set is 85.7% Classification while the corpus is 61.9%. A JevBench score measures the part of the corpus that overlaps with the set, not the corpus composition.
-- Scoring has 18 items. A binomial 95% interval at p=0.5 is about +/-23 points on 18 items, so a change confined to Scoring cannot move the 231-item total beyond noise by itself. A held-out split is what sees a Scoring regression.
-- Ranking and ML Feature Extraction have zero items in the acceptance set as well as zero corpus records. The metric cannot see those gaps by construction; the coverage table is the only place they show up.
-- Verification is the corpus-side mirror: it is 13.4% of the corpus but 0.9% of the acceptance set, and its two JevBench items both miss. Much of the corpus trains an ability the acceptance set barely measures, and where it does measure it the sample cannot tell us anything.
+- The acceptance set is 85.7% Classification while the corpus is 61.9%. A JevBench score measures how the model does on classification-shaped decisions, not the corpus composition.
+- Scoring has 18 items, 7.8% of the 231. A binomial 95% interval on the 18-item rate is about +/-23 points, so an ordinary change in Scoring is invisible in the total. Even a wipeout of all 18 moves the 231-item total by 7.8 points, against the total's own +/-6.0-point half-width at the observed rate, and a real regression is smaller than that. A held-out split is what sees a Scoring regression.
+- Four abilities have zero items in the acceptance set. Ranking and ML Feature Extraction also have zero corpus records, so the metric cannot see those gaps by construction. Detection (4,650 records, 1.9% of the corpus) and Search (479, 0.2%) have coverage the set never exercises. The coverage table is the only place these gaps show up.
+- Verification is the corpus-side mirror: it is 13.4% of the corpus but 0.9% of the acceptance set, and its two JevBench items both miss. Only 2,762 of its 32,532 records (8.5%, 1.1% of the corpus) are listwise-eligible, so the label count overstates what the trained head sees, and the set measures the ability with two items.
 
 The coverage JSON carries this as `demand`, with the per-ability counts, both share columns, and these four notes.
 
@@ -131,7 +131,7 @@ The labeler joins per-item predictions to these labels with `--jevbench-predicti
 
 The type totals reproduce the control report exactly: choice 139 at 68.3%, noul 74 at 67.6%, score 18 at 77.8%. Only Classification has enough items to read as a rate. Verification (2), Routing (1) and the four abilities with no items are cells, not measurements; SDE at 12 items is suggestive at best. The table is committed as `eval` in the coverage JSON with `n`, `accuracy`, `chance_corrected` and the chance-corrected count for every cell.
 
-The Scoring comparison is asymmetric and is the finding. On the split, chance-corrected accuracy is 0.3083 at n=474 (3,999 split items: noul 1,908, choice 1,617, score 474), a real measurement with a standard error of about 2.1 points. On JevBench it is 0.708 at n=18; 18 items carry a binomial 95% interval of roughly +/-23 points and are not a measurement of anything. The split says Scoring is the weakest of the three types; JevBench says it is the best. Same model, same head, opposite direction. The asymmetry is not symmetric: trust the split's magnitude, not JevBench's rank. A plausible partial explanation for the split number comes from the pilot: Jev score labels are broad (mean entropy 0.907 of a 1.609 ceiling; 44.9% argmax-versus-expected disagreement), which 18 JevBench items cannot show. This is the third worked example of why standard C needs both instruments.
+The Scoring comparison is asymmetric and is the finding. On the split, chance-corrected accuracy is 0.3083 at n=474 (3,999 split items: noul 1,908, choice 1,617, score 474). The 2.1-point figure often quoted for it is the standard error of a raw proportion, `sqrt(0.3083 * 0.6917 / 474)`; the chance-corrected quantity's error is that divided by (1 − chance), about 2.8–3.1 points at the rubric sizes in the split. Even at the wider bar it is a measurement with a real margin. On JevBench it is 0.708 at n=18; 18 items carry a binomial 95% interval of roughly +/-23 points and are not a measurement of anything. The split says Scoring is the weakest of the three types; JevBench says it is the best. Same model, same head, opposite direction. The asymmetry is not symmetric: trust the split's magnitude, not JevBench's rank. A plausible partial explanation for the split number comes from the pilot: Jev score labels are broad (mean entropy 0.907 of a 1.609 ceiling; 44.9% argmax-versus-expected disagreement), which 18 JevBench items cannot show. This is the third worked example of why standard C needs both instruments.
 
 The residual split numbers in the issue thread (noul 0.4874, choice 0.5991, score 0.3083) are a different, harder population and are never mixed into this table. A canonical-id `--predictions` join exists for split diagnostics.
 
