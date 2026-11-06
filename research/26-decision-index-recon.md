@@ -6,13 +6,14 @@ kit whose public half we can rebuild, run and score ourselves. The second is a p
 composite that Artificial Analysis runs on its own data; one quarter of the index is a
 private component with no harness.
 
-The community run is **not done**. Three things block it: the frozen suite is not
-downloadable prebuilt, the local rebuild hit a truncated source download, and scoring the
-v4 control needs a GPU. The exact blockers and the command sequence are below. No board
-number is copied anywhere in this note, and no home-made composite is proposed.
+The community run is **not done**. The blockers are: the frozen suite is not downloadable
+prebuilt; the HLE source requires an approved access request; and scoring the v4 control
+needs a GPU. The BPoMP truncation from the first rebuild attempt is resolved. The exact
+evidence and the command sequence are below. No board number is copied anywhere in this
+note, and no home-made composite is proposed.
 
-Scope: issue #236, Workstream A. Reconnaissance run 2026-11-06 on `oaklight`'s laptop
-(no GPU; `nvidia-smi` absent, `torch` absent from the base interpreter).
+Scope: issue #236, Workstream A. Reconnaissance run 2026-11-06. No GPU was available for
+the reconnaissance, and the base interpreter had no `torch`.
 
 ## The two things called "Decision Index"
 
@@ -97,10 +98,10 @@ $ hf download multimodalart/decision-index-suite-0.3 manifest.json --repo-type d
 Error: Repository not found. If the repo is private, make sure you are authenticated ...
 ```
 
-The second command ran as `oaklight`, not anonymously. So a run requires the local
-rebuild: about **7 GB of downloads** (the HoVer Wikipedia database alone is 2.2 GB) and
-**17 GB of working space**, with the HLE terms accepted on the Hub and a login. That is a
-CPU job; it does not need a GPU.
+The second command ran with our Hugging Face credentials, not anonymously. So a run
+requires the local rebuild: about **7 GB of downloads** (the HoVer Wikipedia database
+alone is 2.2 GB) and **17 GB of working space**, with the HLE terms accepted on the Hub
+and a login. That is a CPU job; it does not need a GPU.
 
 ### Rebuild attempt
 
@@ -112,21 +113,24 @@ succeeded, and the HLE gate is open: `hf download cais/hle README.md` returned t
 The Zenodo `BPoMP_datasets_p1_out_of_3.json` download was truncated at 11,846,880 bytes
 against a `Content-Length` of 11,867,336; the kit's hash check rejected it (actual
 `7e840b47...`, pinned `2500e828...`). `http_fetch` in `suite/build/acquire.py` does not
-check `Content-Length`, so a dropped connection surfaces as a hash mismatch. A second
-attempt was slower on the same source and was stopped. No suite was produced, so no
-score was run.
+check `Content-Length`, so a dropped connection surfaces as a hash mismatch.
 
-This is an operational failure in the rebuild, not a licence or code failure. On the GPU
-host, pre-fetch the flaky sources with a resumable downloader (`curl -C - --retry`) and
-verify the pinned hashes before rerunning `suite rebuild`; the completed sources are
-cached in the work directory.
+The retry on the compute host resolved it. `curl -L --retry 20 --retry-all-errors -C -`
+downloaded all three BPoMP parts complete, and each SHA-256 matches the kit's pin:
+p1 11,867,336 bytes `2500e828...`, p2 17,662,368 bytes `ee17bc0f...`, p3 17,655,733 bytes
+`cc0b7564...`. The earlier truncation was local, not a short object; no mirror was needed.
+The edition 0.3 rebuild was then started on the compute host. Source acquisition reached
+HLE and stopped: `cais/hle` returned `GatedRepoError: 403 ... Access to dataset cais/hle is
+restricted and you are not in the authorized list`. The gate is account-level, not
+host-specific; the README is public, but the test parquet is not. HLE is catalog 45,
+513 requests, in the Knowledge & Reasoning area. No suite hash is produced until the HLE
+access request is approved. The other sources are cached in the work directory.
 
 ### v4 control: identified, not scored
 
 The control is manifest row 78 of
-`model/experiments/residual/manifest.jsonl` in the `feat/v4-listwise-gate` worktree
-(`/home/pding/.cache/krino-v4-gate`), arm `v4_control_qwen35_4b_raw`. Row numbers are
-positional; use the arm name.
+`model/experiments/residual/manifest.jsonl` in the `feat/v4-listwise-gate` worktree, arm
+`v4_control_qwen35_4b_raw`. Row numbers are positional; use the arm name.
 
 | field | value |
 |---|---|
@@ -138,10 +142,9 @@ positional; use the arm name.
 | evidence | `results/gate/qwen35_shared/s2_qwen35_4b_instruct.json` |
 
 **Status: blocked (阻塞), not failed.** The full public suite is 140,178 scoreable
-requests. The kit's reference run uses one RTX PRO 6000 (96 GB). This machine has no GPU
-and no `torch` in the base interpreter; running Qwen3.5-4B over 140k requests on CPU is
-not a measurement we can take. The adapter is written and unit-tested; the run waits for
-a GPU allocation.
+requests. The kit's reference run uses one GPU. No GPU was available for this work;
+running Qwen3.5-4B over 140k requests on CPU is not a measurement we can take. The
+adapter is written and unit-tested; the run waits for a GPU allocation.
 
 One more incompatibility: the kit's stock `transformers` engine loads through
 `AutoModelForCausalLM`, and the Qwen3.5 4B config declares `model_type: qwen3_5` and
