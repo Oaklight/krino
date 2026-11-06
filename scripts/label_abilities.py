@@ -259,6 +259,9 @@ class Coverage:
                 "after_exclude_restrictive_and_unresolved": total
                 - self.excluded["exclude_restrictive_and_unresolved"][ability],
                 "gradient_eligible_listwise": self.gradient[ability],
+                "gradient_share": (
+                    round(self.gradient[ability] / total, 6) if total else 0.0
+                ),
                 "top_source": top_source,
                 "single_source": single_source,
                 "licence_single_point": licence_single_point,
