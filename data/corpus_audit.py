@@ -308,11 +308,11 @@ def iter_file_records(path: Path, source: str) -> Iterator[CorpusRecord]:
             )
 
 
-def iter_synthetic_records() -> Iterator[CorpusRecord]:
+def iter_synthetic_records(synth_dir: Path) -> Iterator[CorpusRecord]:
     from .pipeline import load_synthetic
 
     logging.getLogger("data.synthetic").setLevel(logging.ERROR)
-    for item in load_synthetic():
+    for item in load_synthetic(synth_dir=synth_dir):
         yield _record_from_item(item)
 
 
@@ -320,6 +320,7 @@ def iter_corpus(
     root: Path,
     include_synthetic: bool = True,
     include_typed_decisions: bool = True,
+    typed_decisions_from_hf: bool = False,
 ) -> tuple[Iterator[CorpusRecord], list[dict[str, Any]], list[str]]:
     """Return a record iterator plus coverage and missing-source lists.
 
@@ -363,7 +364,7 @@ def iter_corpus(
                     }
                 )
                 yield from iter_file_records(typed_path, "typed_decisions")
-            else:
+            elif typed_decisions_from_hf:
                 try:
                     from .pipeline import load_typed_decisions
 
@@ -381,6 +382,8 @@ def iter_corpus(
                 except Exception as exc:  # network or pyarrow unavailable
                     missing.append(TYPED_DECISIONS[1])
                     print(f"typed_decisions unavailable: {exc}", file=sys.stderr)
+            else:
+                missing.append(TYPED_DECISIONS[1])
 
         if include_synthetic:
             synthetic_dir = root / "synthetic"
@@ -396,7 +399,7 @@ def iter_corpus(
                             "bytes": path.stat().st_size,
                         }
                     )
-                yield from iter_synthetic_records()
+                yield from iter_synthetic_records(synthetic_dir)
             else:
                 missing.append("synthetic/")
 
@@ -600,15 +603,10 @@ def near_duplicate_report(
         if len(sources) > 1:
             cross_source_clusters += 1
         example_ids = [info.example_id for info in infos[:5]]
-        families = {
-            match.group(0)
-            for example in example_ids
-            if (match := re.match(r"^synthetic-(.+?)-\d{4}-", example))
-        }
         if (
             sources
             and all(source.startswith("synthetic/") for source in sources)
-            and len(families) == 1
+            and len(sources) == 1
         ):
             same_family_clusters += 1
         for source in sources:
@@ -646,7 +644,9 @@ def near_duplicate_report(
         "by_source": dict(sorted(by_source.items())),
         "cross_source_pairs": [
             {"sources": list(pair), "pairs": count}
-            for pair, count in pair_sources.most_common(200)
+            for pair, count in sorted(
+                pair_sources.items(), key=lambda item: (-item[1], item[0])
+            )[:200]
         ],
         "cluster_details": cluster_entries,
         "state_to_cluster": state_to_cluster,
@@ -685,9 +685,10 @@ def audit(
     jevbench_root: Path,
     include_synthetic: bool = True,
     include_typed_decisions: bool = True,
+    typed_decisions_from_hf: bool = False,
     skip_near_dup: bool = False,
     workers: int = 1,
-    max_clusters: int = 5000,
+    max_clusters: int = 10000,
     max_hits: int = 20000,
     canonical_dedup: bool = True,
     keep_same_source_id_reuse: bool = True,
@@ -698,7 +699,10 @@ def audit(
     contamination = ContaminationIndex(jevbench)
 
     records, files, missing = iter_corpus(
-        corpus_root, include_synthetic, include_typed_decisions
+        corpus_root,
+        include_synthetic,
+        include_typed_decisions,
+        typed_decisions_from_hf,
     )
     per_source: dict[str, SourceAccum] = collections.defaultdict(SourceAccum)
     raw_rows_by_source: collections.Counter[str] = collections.Counter()
@@ -911,7 +915,9 @@ def audit(
             "cross_source_ids_truncated": max(0, len(cross_source_ids) - 500),
             "cross_source_state_pairs": [
                 {"sources": list(pair), "states": count}
-                for pair, count in state_source_pairs.most_common(200)
+                for pair, count in sorted(
+                    state_source_pairs.items(), key=lambda item: (-item[1], item[0])
+                )[:200]
             ],
             "cross_source_states": cross_source_states[:500],
             "cross_source_states_truncated": max(0, len(cross_source_states) - 500),
@@ -1030,9 +1036,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--clusters-artifact", type=Path, default=None)
     parser.add_argument("--no-synthetic", action="store_true")
     parser.add_argument("--no-typed-decisions", action="store_true")
+    parser.add_argument("--typed-decisions-from-hf", action="store_true")
+    parser.add_argument("--allow-missing", action="store_true")
+    parser.add_argument("--min-records", type=int, default=None)
     parser.add_argument("--skip-near-dup", action="store_true")
     parser.add_argument("--workers", type=int, default=1)
-    parser.add_argument("--max-clusters", type=int, default=5000)
+    parser.add_argument("--max-clusters", type=int, default=10000)
     parser.add_argument("--max-hits", type=int, default=20000)
     parser.add_argument("--progress", action="store_true")
     parser.add_argument(
@@ -1048,7 +1057,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--check",
         action="store_true",
-        help="exit 1 when the contamination rule fires on any row",
+        help=(
+            "exit 1 on a contamination hit; exit 2 when a canonical source is "
+            "missing (unless --allow-missing) or --min-records is not reached"
+        ),
     )
     args = parser.parse_args(argv)
     if args.workers < 1:
@@ -1060,6 +1072,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         jevbench_root=jevbench_root,
         include_synthetic=not args.no_synthetic,
         include_typed_decisions=not args.no_typed_decisions,
+        typed_decisions_from_hf=args.typed_decisions_from_hf,
         skip_near_dup=args.skip_near_dup,
         workers=args.workers,
         max_clusters=args.max_clusters,
@@ -1076,8 +1089,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         write_cluster_artifact(report, args.clusters_artifact)
         print(f"wrote {args.clusters_artifact}")
     _print_summary(report)
-    if args.check and report["contamination"]["hit_rows"] > 0:
-        return 1
+    if args.check:
+        coverage = report["coverage"]
+        if report["contamination"]["hit_rows"] > 0:
+            return 1
+        if coverage["missing_sources"] and not args.allow_missing:
+            print(
+                "check failed: canonical sources missing: "
+                + ", ".join(coverage["missing_sources"]),
+                file=sys.stderr,
+            )
+            return 2
+        if (
+            args.min_records is not None
+            and coverage["canonical_records"] < args.min_records
+        ):
+            print(
+                f"check failed: {coverage['canonical_records']} canonical records "
+                f"is below the floor of {args.min_records}",
+                file=sys.stderr,
+            )
+            return 2
     return 0
 
 
