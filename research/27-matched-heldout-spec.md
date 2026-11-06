@@ -111,7 +111,10 @@ the graph below, built over the whole canonical corpus, including training rows.
 
 1. **Same source record.** All questions generated from one source row share a
    `record_group` edge. This covers multi-question records (`typed_decisions` workflows,
-   DROP passages, HotpotQA contexts, multi-label rows).
+   DROP passages, HotpotQA contexts, multi-label rows). The loader's item id carries the
+   row index for these sources (for example `drop-validation-00042-score-1`); the builder
+   uses the longest id prefix shared by the items emitted from one row. When the loader
+   emits one item per row, the item id is the record group.
 2. **Same native entity.** When the source has a real entity id, rows with the same id are
    merged: `table_id` (TabFact), `video-id` (SWAG), `set_unique_id` (Quality),
    `workflow` (typed-decisions), `para_idx` (MultiRC, prefixed by split).
