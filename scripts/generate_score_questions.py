@@ -47,6 +47,7 @@ from data.score_generation import (  # noqa: E402
     expected_level,
     iter_candidates,
     label_level,
+    level0_allowed,
     load_rubric_config,
     normalise_state,
     order_candidates,
@@ -182,6 +183,12 @@ def main() -> int:
     parser.add_argument("--cap", type=int, default=350)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--concurrency", type=int, default=8)
+    parser.add_argument(
+        "--level0-cap",
+        type=float,
+        default=0.5,
+        help="maximum share of a source's rows at level 0; 0 disables the cap",
+    )
     parser.add_argument("--model", default="jev-latest")
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--out", type=Path, default=None)
@@ -244,6 +251,9 @@ def main() -> int:
     rejected: list[dict[str, Any]] = []
     calls = 0
     source_stats: dict[str, Counter] = defaultdict(Counter)
+    source_accepted: Counter = Counter()
+    source_level0: Counter = Counter()
+    by_source_levels: dict[str, Counter] = defaultdict(Counter)
     level_counts: Counter = Counter()
     argmax_disagreements = 0
     abs_diffs: list[float] = []
@@ -275,9 +285,30 @@ def main() -> int:
                     continue
                 if len(accepted) >= args.target:
                     continue
+                label = label_level(result["probabilities"])
+                if label == 0.0 and not level0_allowed(
+                    args.level0_cap,
+                    source_accepted[candidate.source],
+                    source_level0[candidate.source],
+                ):
+                    source_stats[candidate.source]["reject:level0_cap"] += 1
+                    rejected.append(
+                        {
+                            "id": candidate.id,
+                            "source": candidate.source,
+                            "reason": "level0_cap",
+                            "error": "",
+                            "probabilities": result["probabilities"],
+                        }
+                    )
+                    continue
                 item = build_item(candidate, result["probabilities"])
                 accepted.append(item)
                 source_stats[candidate.source]["accepted"] += 1
+                source_accepted[candidate.source] += 1
+                if item["label"] == 0.0:
+                    source_level0[candidate.source] += 1
+                by_source_levels[candidate.source][str(int(item["label"]))] += 1
                 level_counts[str(int(item["label"]))] += 1
                 expected = result["expected"]
                 abs_diffs.append(abs(expected - item["label"]))
@@ -333,6 +364,11 @@ def main() -> int:
             for source, counter in sorted(source_stats.items())
         },
         "label_level_distribution": dict(sorted(level_counts.items())),
+        "level0_cap_fraction": args.level0_cap,
+        "by_source_levels": {
+            source: dict(sorted(counter.items()))
+            for source, counter in sorted(by_source_levels.items())
+        },
         "argmax_vs_expected": {
             "rows": len(accepted_meta),
             "disagree": argmax_disagreements,
