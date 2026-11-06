@@ -335,6 +335,14 @@ def main() -> int:
     train_items = [
         item for item in train_items if item.question["type"] in TRAINED_TYPES
     ]
+    valid_train = [item for item in train_items if _label_index(item) >= 0]
+    dropped_invalid = len(train_items) - len(valid_train)
+    if dropped_invalid:
+        print(
+            f"dropped {dropped_invalid} train items whose label is not among the options",
+            flush=True,
+        )
+    train_items = valid_train
     print(
         f"train {len(train_items)} val {len(val_items)} "
         f"types { {t: sum(1 for i in items if i.question['type'] == t) for t in TYPES} }",
@@ -410,6 +418,11 @@ def main() -> int:
                 args.max_subset,
                 args.lora_kl_weight,
             )
+            if not loss.requires_grad:
+                # Defensive: item_loss returns a constant zero for an item with
+                # no label among the options.  The filter above removes those,
+                # but a future data shape must not crash the run.
+                continue
             kl_total += kl_value
             ce_total += ce_value
             optimizer.zero_grad(set_to_none=True)
