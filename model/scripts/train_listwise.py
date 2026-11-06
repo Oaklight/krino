@@ -94,6 +94,19 @@ def _git_commit() -> str | None:
     return result.stdout.strip() or None
 
 
+def selection_sha256(items: list) -> str:
+    """Stable hash of a training selection: sorted ``(id, type, label)`` rows.
+
+    Two runs train on the same selection iff this matches.  The file hash is
+    not the same thing: a rebuild can add a field without changing a single
+    row this function sees.
+    """
+    rows = sorted(
+        f"{item.id}\t{item.question['type']}\t{item.label!r}" for item in items
+    )
+    return hashlib.sha256("\n".join(rows).encode()).hexdigest()
+
+
 def run_provenance(args) -> dict:
     """Pin the code and inputs before the first training step.
 
@@ -441,6 +454,38 @@ def main() -> int:
             "the trainer rounds them to the nearest level",
             flush=True,
         )
+    # The file hash alone cannot say the two arms train on the same rows: the
+    # corpus was rebuilt with an added field.  The selection hashes can.
+    provenance.update(
+        {
+            "corpus_note": (
+                "8eb3b2a4 and 07600293 differ only by the added label_kind "
+                "field; ids, states, labels and option sets are identical, "
+                "and the training selection is unchanged."
+            ),
+            "split_selection_sha256": selection_sha256(items),
+            "shared_train_selection_sha256": selection_sha256(
+                [
+                    item
+                    for item in train_items
+                    if item.question["type"] in ("choice", "score")
+                ]
+            ),
+            "trained_selection_sha256": selection_sha256(train_items),
+            "train_rows": len(train_items),
+            "train_rows_by_type": {
+                q_type: sum(
+                    1 for item in train_items if item.question["type"] == q_type
+                )
+                for q_type in TYPES
+            },
+            "val_rows": len(val_items),
+            "abstention_excluded_rows": len(abstention),
+        }
+    )
+    (args.output / "provenance.json").write_text(
+        json.dumps(provenance, indent=1) + "\n"
+    )
     print(
         f"train {len(train_items)} val {len(val_items)} "
         f"types { {t: sum(1 for i in items if i.question['type'] == t) for t in TYPES} }",

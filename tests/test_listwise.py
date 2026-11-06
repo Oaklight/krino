@@ -380,6 +380,15 @@ def test_provenance_records_overrides_and_hashes(tmp_path):
     assert "holdout_ids_sha256" not in provenance
 
 
+def test_selection_hash_is_order_independent_and_label_sensitive():
+    from model.scripts.train_listwise import selection_sha256
+
+    first = _noul_item()
+    second = _choice_item()
+    assert selection_sha256([first, second]) == selection_sha256([second, first])
+    assert selection_sha256([first]) != selection_sha256([_noul_item(label=False)])
+
+
 def test_suffix_length_counts_every_marker(readout):
     ids = readout.model._tokenize_option_ids(OPTIONS)
     expected = sum(len(option_ids) + 1 for option_ids in ids)
