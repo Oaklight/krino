@@ -92,7 +92,10 @@ A family is eligible for a larger run only when both hold:
 
 1. fewer than **35%** of its rows have argmax ≠ expected level;
 2. an accepted rate of at least **30%**, where the rate is accepted rows over
-   candidates drawn and labelled in this pilot.
+   candidates drawn **and labelled** — not over the whole candidate pool. The
+   pool denominator would measure sampling coverage and fails every family; the
+   labelled denominator measures whether the family produces usable rows at
+   scale, which is the question this rule asks.
 
 The rate replaces an absolute row floor: 25 accepted rows is a property of this
 pilot's draw, not of the family, and it means nothing at a different draw size.
@@ -136,44 +139,44 @@ On round two:
 
 Twenty-one families clear both conditions. The rate changes the earlier result:
 arc (50%) and 2wiki (92%) now pass, because they were rejected for a small draw,
-not for a low hit rate. codesearchnet also passes at 52% on 13 rows. If "drawn"
-meant the whole candidate pool rather than the labelled sample, no family would
-clear 30% (the largest, mmlu_pro, is 1.6%), so the rate here is accepted over
-labelled candidates.
+not for a low hit rate. codesearchnet also passes at 52% on 13 rows. **The
+eligibility set changed from 18 to 21 because the metric changed, not because the
+data changed.**
 
 The families that fail quality are logiqa 36, multirc 36, tabfact 38, apigen
 tool_argument 47, apigen tool_next_action 52, openjev 50, piqa 55, race 54,
 race_short 65, synthetic 80, and apigen tool_choice 68. The families that fail
 yield are commonsenseqa 9% and apigen tool_next_action 18%.
 
-## The constraint: documents, not puzzles
+## The constraint: state property, not solution property
 
-The quality failures are not spread evenly. Passing rubrics ask for a property
-of the state text: sentiment intensity, disclosure exposure, contract
-restrictiveness, support urgency, policy risk, question difficulty, passage
-relatedness, how constrained a continuation is. Failing rubrics ask for a
-property of the solution or the reasoning: whether an answer is right
-(logiqa), how strong the evidence for an answer is (multirc), how hard a puzzle
-is to solve (piqa, race), whether a table supports a claim (tabfact), or what the
-next agent action should be (apigen action/argument).
+The quality failures are not spread evenly. A score question works when the
+rubric asks for a property of the state text: sentiment intensity, disclosure
+exposure, contract restrictiveness, support urgency, policy risk, question
+difficulty, passage relatedness, how constrained a continuation is. It fails when
+the rubric asks for a property of the solution or the reasoning: whether an
+answer is right (logiqa), how strong the evidence for an answer is (multirc), how
+hard a puzzle is to solve (piqa, race), whether a table supports a claim
+(tabfact), or what the next agent action should be (apigen action/argument).
 
-The practical rule is **documents, not problems**. A score question works when
-the state is a document with an intrinsic quality dimension. It fails when the
-state is a puzzle or a reasoning trace, because there is no property of a puzzle
-other than whether it is solved, and that property is not in the state.
+The rule is **state property, not solution property**. "Documents rather than
+problems" is a shorthand for the common case, not the rule itself: a puzzle can
+carry a text property (arc's question difficulty), and a document can ask about
+its own solution (a clause question about who wins). What decides is whether the
+evidence for the level is in the state.
 
-Arc is the exception that sharpens the rule: its rubric asks how difficult the
-question text is, which is a property of the text, not of the solution, so it
-passes at 9% despite being a reasoning benchmark. The distinction is
-state-property versus solution-property, not benchmark genre. That is where the
-remaining score data can come from: document-shaped sources and text-property
-rubrics. It is not worth a week redesigning logiqa or race rubrics.
+Arc is the case that shows why the distinction is about the evidence, not the
+genre: its rubric asks how difficult the question text is, which is a property of
+the text, not of the solution, so it passes at 9% despite being a reasoning
+benchmark. That is where the remaining score data can come from: states with a
+text-property rubric. It is not worth a week redesigning logiqa or race rubrics.
 
 The synthetic rows in this pilot are 15 synthetic states re-scored with the
 default decision-clarity rubric, because the rubric map has no synthetic-domain
-entry; they are not the corpus's existing score rows, which use the per-domain
-severity/quality/difficulty templates. Their 80% is a rubric-assignment failure
-over puzzle-shaped states, not evidence about those existing rows.
+entry. Fifteen states scored under a default rubric that has no domain entry is
+a result about a missing entry in the rubric map, not a result about synthetic
+data. It says nothing about the corpus's existing score rows, which use the
+per-domain severity/quality/difficulty templates.
 
 ## What round two says
 
@@ -184,9 +187,9 @@ over puzzle-shaped states, not evidence about those existing rows.
    level-0 share falls from 48.6% to 32.1% at a cost of 515 rejected rows.
 3. **Still not training data, and the failures are structural.** The redesigned
    set is much better behaved, but the quality failures are the reasoning
-   families and the apigen action scales. That is the documents-not-problems
-   constraint, not a tuning problem. Scale only document-shaped families with a
-   state-property rubric; treat the rest as rubric evidence.
+   families and the apigen action scales. That is the state-property constraint,
+   not a tuning problem. Scale only families whose rubric asks about the state
+   text; treat the rest as rubric evidence.
 4. **Recommended next step:** scale the 21 families that clear both conditions,
    keep the cap, and judge the next run against the same two conditions. Residual
    concentration (contractnli 78% at level 2, longbench 96% at level 2) is a
