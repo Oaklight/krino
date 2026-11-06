@@ -172,6 +172,17 @@ class TestParserDefaults:
         args = _parser_defaults(train_listwise.build_parser(), ["--dry-run"])
         assert args.dry_run is True
 
+    def test_holdout_ids_is_off_by_default(self) -> None:
+        args = _parser_defaults(train_listwise.build_parser(), [])
+        assert args.holdout_ids is None
+
+    def test_holdout_ids_is_accepted(self) -> None:
+        args = _parser_defaults(
+            train_listwise.build_parser(),
+            ["--holdout-ids", "heldout.json"],
+        )
+        assert str(args.holdout_ids) == "heldout.json"
+
 
 class TestConfigRoundTrip:
     def test_a_frozen_config_adds_no_kwargs(self) -> None:
