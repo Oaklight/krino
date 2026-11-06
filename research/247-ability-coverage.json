@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-06T21:26:18Z",
+ "generated_at": "2026-11-06T21:34:07Z",
  "canonical": "krino-canonical-243366.jsonl",
  "canonical_sha256": "07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53",
  "canonical_records": 243366,
@@ -1050,7 +1050,8 @@
   "notes": [
    "The acceptance set is 85.7% Classification and the corpus is 61.9%; the metric measures the part of the corpus that overlaps with the set, not the corpus composition.",
    "Scoring has 18 items. A binomial 95% interval at p=0.5 is about +/-23 points on 18 items, so a change confined to Scoring cannot move the 231-item total beyond noise by itself; a held-out split is needed to see a Scoring regression.",
-   "Ranking and ML Feature Extraction have zero items in the acceptance set as well as zero corpus records, so the metric cannot see those gaps by construction."
+   "Ranking and ML Feature Extraction have zero items in the acceptance set as well as zero corpus records, so the metric cannot see those gaps by construction.",
+   "Verification is 13.4% of the corpus but 0.9% of the acceptance set, and its two JevBench items both miss; the corpus trains heavily on an ability the set barely measures."
   ]
  },
  "eval": {
