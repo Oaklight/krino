@@ -37,6 +37,14 @@ from model.src.gpu_config import GPUConfig
 TYPES = ("noul", "choice", "score")
 
 
+def parse_lora_targets(value: str) -> tuple[str, ...]:
+    """Parse a comma-separated LoRA target list from the CLI."""
+    targets = tuple(part.strip() for part in value.split(",") if part.strip())
+    if not targets:
+        raise argparse.ArgumentTypeError("expected at least one target name")
+    return targets
+
+
 def _options(question: dict) -> list[str]:
     q_type = question["type"]
     if q_type == "noul":

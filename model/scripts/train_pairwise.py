@@ -31,7 +31,13 @@ from pathlib import Path
 import torch
 
 from data.pipeline import load_jsonl
-from model.scripts.train_residual import TYPES, _label_index, _options, split_items
+from model.scripts.train_residual import (
+    TYPES,
+    _label_index,
+    _options,
+    parse_lora_targets,
+    split_items,
+)
 from model.src.backbone import load_causal_lm
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig
@@ -123,6 +129,28 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--alpha-lr", type=float, default=1e-2)
     parser.add_argument("--kl-weight", type=float, default=1.0)
     parser.add_argument("--ce-weight", type=float, default=0.2)
+    parser.add_argument(
+        "--lora-layers",
+        type=int,
+        default=None,
+        help="Inject LoRA into the last N blocks (negative = every block); "
+        "omitted leaves the backbone frozen",
+    )
+    parser.add_argument("--lora-rank", type=int, default=16)
+    parser.add_argument("--lora-alpha", type=int, default=32)
+    parser.add_argument(
+        "--lora-targets",
+        type=parse_lora_targets,
+        default=("q_proj", "v_proj"),
+        help="Comma-separated linear-layer suffixes that receive adapters",
+    )
+    parser.add_argument(
+        "--lora-kl-weight",
+        type=float,
+        default=0.0,
+        help="KL from the frozen base distribution to the pre-fusion readout; "
+        "0 leaves the loss unchanged",
+    )
     parser.add_argument("--val-fraction", type=float, default=0.2)
     parser.add_argument(
         "--split-seed",
@@ -183,6 +211,10 @@ def main() -> int:
         option_marker=True,
         option_chunk_size=1,
         option_max_tokens=args.option_max_tokens,
+        lora_layers=args.lora_layers,
+        lora_rank=args.lora_rank,
+        lora_alpha=args.lora_alpha,
+        lora_targets=args.lora_targets,
     )
     readout = PairwiseMarkerReadout(model)
     alphas = {t: torch.nn.Parameter(torch.zeros((), device=args.device)) for t in TYPES}
@@ -232,6 +264,7 @@ def main() -> int:
                 kl_weight=args.kl_weight,
                 ce_weight=args.ce_weight,
                 order_sensitive=_shortlist_alpha(q["type"]),
+                lora_kl_weight=args.lora_kl_weight,
             )
             kl_total += kl_value
             ce_total += ce_value
@@ -291,6 +324,15 @@ def main() -> int:
                 "option_chunk_size": 1,
                 "option_max_tokens": args.option_max_tokens,
                 "shortlist_m": args.shortlist_m,
+                "lr": args.lr,
+                "alpha_lr": args.alpha_lr,
+                "lora_layers": args.lora_layers,
+                "lora_rank": args.lora_rank if args.lora_layers is not None else None,
+                "lora_alpha": args.lora_alpha if args.lora_layers is not None else None,
+                "lora_targets": (
+                    list(args.lora_targets) if args.lora_layers is not None else None
+                ),
+                "lora_kl_weight": args.lora_kl_weight,
             },
             "history": history,
         },

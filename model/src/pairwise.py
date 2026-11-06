@@ -180,12 +180,18 @@ class PairwiseMarkerReadout:
         kl_weight: float,
         ce_weight: float,
         order_sensitive: bool,
+        lora_kl_weight: float = 0.0,
     ) -> tuple[torch.Tensor, float, float]:
         """Fused CE and KL on one gold/distractor pair.
 
         The pair is presented in the gold-first order half the time, so a
         choice head cannot learn a position shortcut; evaluation averages
         both orders instead.
+
+        ``lora_kl_weight`` anchors the pre-fusion readout to the frozen base
+        distribution.  The fused KL already constrains the output; this term
+        constrains the backbone readout the adapter changes, and it stays off
+        by default so a frozen run is unchanged.
         """
         pair = [gold_index, distractor_index]
         if order_sensitive and rng.random() < 0.5:
@@ -205,4 +211,9 @@ class PairwiseMarkerReadout:
         kl = torch.sum(picked * (torch.log(picked) - log_p))
         target = torch.tensor([pair.index(gold_index)], device=logits.device)
         ce = F.cross_entropy(logits.unsqueeze(0), target)
-        return kl_weight * kl + ce_weight * ce, float(kl.detach()), float(ce.detach())
+        loss = kl_weight * kl + ce_weight * ce
+        if lora_kl_weight:
+            # ``head`` is log q over the pair, so this is KL(base || q).
+            anchor = torch.sum(picked * (torch.log(picked) - head))
+            loss = loss + lora_kl_weight * anchor
+        return loss, float(kl.detach()), float(ce.detach())
