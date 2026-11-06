@@ -8,10 +8,13 @@ residual relearns the task and loses the base.
 An ``answerable=false`` row keeps its source label for provenance and must not
 drive the option CE or the KL anchor.  The mask is on the loss: the row stays
 in the batch and the option head still runs, so its gradient from that row is
-exactly zero.  Do not implement abstention by dropping rows: dropping changes
-the batch composition and the loss normalisation, so an arm trained that way
-is not comparable with a masked arm on the same data.  ``--exclude-ids`` is
-leakage control, not this mask.
+exactly zero.  Training is per row (one backward and one step per item), so
+the task gradients are identical whether such a row is masked or dropped.
+Only two things differ: a dropped row does not run the abstain-head update,
+and a masked row must leave the task-loss display denominator.  The two arms
+are therefore comparable on task metrics and not comparable on abstain
+metrics.  Do not implement abstention by dropping rows if the arm trains an
+answerable head.  ``--exclude-ids`` is leakage control, not this mask.
 
 Base probabilities come from `precompute_base_probs.py` so training never runs
 the 4B scorer.
@@ -27,6 +30,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import random
 import sys
@@ -119,17 +123,23 @@ def _stratum(item) -> tuple[str, int]:
     return (item.question["type"], min(n, 8))
 
 
-def answerable_target(item) -> bool:
-    """Label for the answerable head.
+def answerable_target(item) -> bool | None:
+    """Label for the answerable head; ``None`` means no target.
 
     An explicit ``answerable`` field wins.  Otherwise an item with a valid gold
-    label is answerable by construction; an item whose gold was removed must
-    set the field, which the abstention sets do.
+    label is answerable by construction.  Teacher-tier rows and rows whose
+    label fails validation get no target: a malformed label means the row
+    cannot be scored, not that the answer is absent, so it must not teach the
+    head to abstain.
     """
     value = getattr(item, "answerable", None)
     if value is not None:
         return bool(value)
-    return hard_label_eligible(item) and _label_index(item) >= 0
+    if getattr(item, "provenance", None) == "teacher":
+        return None
+    if not _hard_label_valid(item):
+        return None
+    return True
 
 
 def split_items(items: list, val_fraction: float, seed: int) -> tuple[list, list]:
@@ -148,16 +158,30 @@ def split_items(items: list, val_fraction: float, seed: int) -> tuple[list, list
     return train, val
 
 
-def dedup_by_id(items: list, seen: set[str] | None = None) -> tuple[list, int]:
-    """Keep the first row per id; return the kept list and the drop count."""
+def _question_digest(item) -> str:
+    """Stable digest of the question dict, for the (id, question) identity."""
+    payload = json.dumps(item.question, sort_keys=True, default=str)
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def dedup_by_id(
+    items: list, seen: set[tuple[str, str]] | None = None
+) -> tuple[list, int]:
+    """Keep the first row per ``(id, question)``; return the kept list and drops.
+
+    Id alone is not the identity: RACE carries 498 distinct questions over 144
+    passage ids, and the canonical builder keys them on ``(id, question)``.
+    Deduping by id alone silently deletes 354 of them.
+    """
     seen = set() if seen is None else seen
     kept = []
     dropped = 0
     for item in items:
-        if item.id in seen:
+        key = (item.id, _question_digest(item))
+        if key in seen:
             dropped += 1
             continue
-        seen.add(item.id)
+        seen.add(key)
         kept.append(item)
     return kept, dropped
 
@@ -249,18 +273,21 @@ def item_loss(
     head = head_logits(model, item).reshape(-1)
     base = base_probs.to(head.device)
     logits = fusion_logits(base, head, alphas[q_type])
-    log_p = F.log_softmax(logits, dim=-1)
-    kl = torch.sum(base * (torch.log(base.clamp_min(1e-6)) - log_p))
     answerable_false = getattr(item, "answerable", None) is False
     is_teacher = getattr(item, "provenance", None) == "teacher"
     if answerable_false:
         # An abstention row trains the abstain target only.  Its label is kept
         # for provenance, so the task terms are zeroed at the loss: the option
         # head still runs (mask on the loss, not on the input) and its
-        # gradient from this row is exactly zero.
+        # gradient from this row is exactly zero.  The KL graph is not built:
+        # it would be discarded, and the option forward is the expensive part.
         kl = torch.zeros((), device=logits.device)
         ce = torch.zeros((), device=logits.device)
     else:
+        log_p = F.log_softmax(logits, dim=-1)
+        kl = torch.sum(base * (torch.log(base.clamp_min(1e-6)) - log_p))
+        # CE is already zero for an answerable=false row through this rule.
+        # The KL zeroing above is the load-bearing guard for those rows.
         target = _label_index(item) if hard_label_eligible(item) else -1
         soft = soft_target(item, logits.numel())
         if soft is not None:
@@ -276,17 +303,17 @@ def item_loss(
         else:
             ce = torch.zeros((), device=logits.device)
     answerable_loss = torch.zeros((), device=logits.device)
+    ans_target = answerable_target(item)
     if (
         answerable_weight
         and not is_teacher
+        and ans_target is not None
         and getattr(model, "answerable_head", None) is not None
     ):
         logit = model.forward_answerable(
             item.state, item.question.get("instructions", "")
         ).reshape(())
-        ans_label = torch.tensor(
-            float(answerable_target(item)), device=logit.device
-        )
+        ans_label = torch.tensor(float(ans_target), device=logit.device)
         pos_weight = torch.tensor(
             answerable_pos_weight, device=logit.device, dtype=logit.dtype
         )
@@ -427,7 +454,11 @@ def main() -> int:
     items = load_jsonl(args.items)
     items, duplicate_rows = dedup_by_id(items)
     if duplicate_rows:
-        print(f"  dropped {duplicate_rows} duplicate id(s) from --items", flush=True)
+        print(
+            f"  dropped {duplicate_rows} duplicate (id, question) row(s) "
+            "from --items",
+            flush=True,
+        )
     base_records = [json.loads(line) for line in args.base_probs.read_text().splitlines() if line.strip()]
     base_probs = {
         rec["id"]: torch.tensor(rec["probs"], dtype=torch.float32) for rec in base_records
@@ -480,14 +511,15 @@ def main() -> int:
         train_items.extend(answerable_items)
     answerable_pos_weight = args.answerable_pos_weight
     if answerable_pos_weight is None:
-        # Teacher rows never enter the BCE, so they must not set its balance.
-        eligible = [
-            item
+        # Only rows that actually carry an answerable target set the balance:
+        # teacher rows and invalid-label rows never enter the BCE.
+        targets = [
+            answerable_target(item)
             for item in train_items
             if getattr(item, "provenance", None) != "teacher"
         ]
-        n_pos = sum(1 for item in eligible if answerable_target(item))
-        n_neg = len(eligible) - n_pos
+        n_pos = sum(1 for target in targets if target is True)
+        n_neg = sum(1 for target in targets if target is False)
         answerable_pos_weight = n_neg / max(n_pos, 1)
     print(
         f"train {len(train_items)} val {len(val_items)} "
@@ -548,6 +580,7 @@ def main() -> int:
         ce_total = 0.0
         task_rows = 0
         masked_rows = 0
+        task_loss_total = 0.0
         started = time.time()
         for index, item in enumerate(order, 1):
             loss, kl_value, ce_value = item_loss(
@@ -564,14 +597,21 @@ def main() -> int:
                 masked_rows += 1
             else:
                 # Keep the means comparable with runs before the mask: only
-                # rows that carry a task label enter the task-loss averages.
+                # rows that entered the task terms enter the averages.  The KL
+                # term is nonzero on teacher and invalid-label rows too, so
+                # they belong here even when their CE is zero.
                 task_rows += 1
                 kl_total += kl_value
                 ce_total += ce_value
+                task_loss_total += float(loss.detach())
             optimizer.zero_grad(set_to_none=True)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(head_params + list(alphas.values()), 1.0)
-            optimizer.step()
+            if loss.requires_grad:
+                # A masked row has no graph when the answerable head is off:
+                # the loss is exactly zero.  Skipping the backward is the same
+                # as a zero-gradient step, and AdamW would skip it anyway.
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(head_params + list(alphas.values()), 1.0)
+                optimizer.step()
             total += float(loss.detach())
             if index % 200 == 0:
                 rate = index / (time.time() - started)
@@ -583,6 +623,7 @@ def main() -> int:
         metrics = evaluate(model, val_items, base_probs, alphas)
         metrics["epoch"] = epoch
         metrics["train_loss"] = total / max(1, len(order))
+        metrics["train_loss_task"] = task_loss_total / max(1, task_rows)
         metrics["kl_mean"] = kl_total / max(1, task_rows)
         metrics["ce_mean"] = ce_total / max(1, task_rows)
         metrics["task_rows"] = task_rows

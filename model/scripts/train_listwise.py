@@ -85,6 +85,13 @@ def item_loss(
     output; this term constrains the backbone readout the adapter changes, and
     it stays off by default so a frozen run is unchanged.
     """
+    if getattr(item, "answerable", None) is False:
+        # No abstain head on this path, so an unanswerable row has nothing to
+        # teach.  It must not reach the CE: the paired corpus keeps the option
+        # set and the original label, so `gold >= 0` and the CE would train
+        # the head on a question with no answer.
+        zero = torch.zeros((), device=base.device)
+        return zero, 0.0, 0.0
     q = item.question
     options = _options(q)
     gold = _label_index(item)
@@ -357,8 +364,15 @@ def main() -> int:
         rng = random.Random(args.seed + epoch)
         rng.shuffle(order)
         total = kl_total = ce_total = 0.0
+        task_rows = 0
+        masked_rows = 0
         started = time.time()
         for index, item in enumerate(order, 1):
+            if getattr(item, "answerable", None) is False:
+                # No abstain head here, and item_loss returns a zero with no
+                # graph, so the row must not reach backward().
+                masked_rows += 1
+                continue
             loss, kl_value, ce_value = item_loss(
                 readout,
                 item,
@@ -372,6 +386,7 @@ def main() -> int:
                 args.max_subset,
                 args.lora_kl_weight,
             )
+            task_rows += 1
             kl_total += kl_value
             ce_total += ce_value
             optimizer.zero_grad(set_to_none=True)
@@ -382,7 +397,8 @@ def main() -> int:
             if index % 200 == 0:
                 rate = index / (time.time() - started)
                 print(
-                    f"  epoch {epoch} {index}/{len(order)} loss={total/index:.4f} "
+                    f"  epoch {epoch} {index}/{len(order)} "
+                    f"loss={total / max(1, task_rows):.4f} "
                     f"{rate:.2f} items/s",
                     flush=True,
                 )
@@ -395,9 +411,11 @@ def main() -> int:
             args.max_subset,
         )
         metrics["epoch"] = epoch
-        metrics["train_loss"] = total / max(1, len(order))
-        metrics["kl_mean"] = kl_total / max(1, len(order))
-        metrics["ce_mean"] = ce_total / max(1, len(order))
+        metrics["train_loss"] = total / max(1, task_rows)
+        metrics["kl_mean"] = kl_total / max(1, task_rows)
+        metrics["ce_mean"] = ce_total / max(1, task_rows)
+        metrics["task_rows"] = task_rows
+        metrics["masked_rows"] = masked_rows
         metrics["alpha"] = {t: float(a.detach()) for t, a in alphas.items()}
         history.append(metrics)
         print(f"  val {json.dumps(metrics)}", flush=True)

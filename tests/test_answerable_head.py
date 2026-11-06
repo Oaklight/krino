@@ -212,10 +212,19 @@ class TestAnswerableTarget:
         item = self._item("a", {"a": "", "b": ""}, answerable=False)
         assert answerable_target(item) is False
 
-    def test_a_removed_gold_is_not_answerable(self) -> None:
+    def test_an_invalid_unset_label_has_no_target(self) -> None:
         from model.scripts.train_residual import answerable_target
 
-        assert answerable_target(self._item("gone", {"a": "", "b": ""})) is False
+        # A malformed label means the row cannot be scored, not that the
+        # answer is absent; it must not teach the head to abstain.
+        assert answerable_target(self._item("gone", {"a": "", "b": ""})) is None
+
+    def test_a_teacher_row_has_no_target(self) -> None:
+        from model.scripts.train_residual import answerable_target
+
+        item = self._item("a", {"a": "", "b": ""})
+        item.provenance = "teacher"
+        assert answerable_target(item) is None
 
 
 class TestAnswerableLoss:
@@ -238,8 +247,11 @@ class TestAnswerableLoss:
 
         model = _model(answerable_head=True)
         base = torch.tensor([0.5, 0.5])
+        # At alpha=0 the fusion is the base distribution: KL is zero and the
+        # option head's gradient is zero whatever the loss does, so the
+        # assertions below could not tell a masked row from an unmasked one.
         alphas = {
-            name: torch.zeros((), requires_grad=True)
+            name: torch.ones((), requires_grad=True)
             for name in ("noul", "choice", "score")
         }
         loss, _, _ = item_loss(model, _Item(), base, alphas, 1.0, 0.2, 1.0, 0.5)
@@ -290,8 +302,11 @@ class TestTaskLossMask:
         # recomputed from a second forward; gradients are unchanged.
         model.eval()
         base = torch.tensor([0.5, 0.5])
+        # At alpha=0 the fusion is the base distribution: KL is zero and the
+        # option head's gradient is zero whatever the loss does, so the
+        # assertions below could not tell a masked row from an unmasked one.
         alphas = {
-            name: torch.zeros((), requires_grad=True)
+            name: torch.ones((), requires_grad=True)
             for name in ("noul", "choice", "score")
         }
         loss, kl, ce = item_loss(
@@ -347,8 +362,11 @@ class TestTaskLossMask:
         model = _model(answerable_head=True)
         model.eval()
         base = torch.tensor([0.5, 0.5])
+        # At alpha=0 the fusion is the base distribution: KL is zero and the
+        # option head's gradient is zero whatever the loss does, so the
+        # assertions below could not tell a masked row from an unmasked one.
         alphas = {
-            name: torch.zeros((), requires_grad=True)
+            name: torch.ones((), requires_grad=True)
             for name in ("noul", "choice", "score")
         }
         kl_total = ce_total = 0.0
@@ -365,6 +383,29 @@ class TestTaskLossMask:
             assert parameter.grad is None or torch.count_nonzero(parameter.grad) == 0
         assert alphas["noul"].grad is None or torch.count_nonzero(alphas["noul"].grad) == 0
         assert self._nonzero_grad(model.answerable_head.parameters())
+
+    def test_a_masked_row_has_no_graph_when_the_head_is_off(self):
+        """The A0 arm must skip backward() instead of calling it on a zero."""
+        from model.scripts.train_residual import item_loss
+
+        model = _model()  # no answerable head
+        alphas = {
+            name: torch.ones((), requires_grad=True)
+            for name in ("noul", "choice", "score")
+        }
+        loss, kl, ce = item_loss(
+            model,
+            self._noul(),
+            torch.tensor([0.5, 0.5]),
+            alphas,
+            1.0,
+            0.2,
+            1.0,
+            1.0,
+        )
+        assert kl == 0.0
+        assert ce == 0.0
+        assert not loss.requires_grad
 
     def test_the_option_head_still_runs_on_an_abstention_row(self):
         """Masking on the input would skip this forward; the logits prove it ran."""
@@ -386,8 +427,11 @@ class TestTaskLossMask:
         model = _model(answerable_head=True)
         model.eval()
         base = torch.tensor([0.5, 0.5])
+        # At alpha=0 the fusion is the base distribution: KL is zero and the
+        # option head's gradient is zero whatever the loss does, so the
+        # assertions below could not tell a masked row from an unmasked one.
         alphas = {
-            name: torch.zeros((), requires_grad=True)
+            name: torch.ones((), requires_grad=True)
             for name in ("noul", "choice", "score")
         }
         loss, kl, ce = item_loss(model, item, base, alphas, 0.0, 0.2, 1.0, 1.0)
@@ -427,9 +471,13 @@ class TestTaskLossMask:
             teacher_probs={"false": 0.25, "true": 0.75},
         )
         model = _model(answerable_head=True)
+        model.eval()
         base = torch.tensor([0.5, 0.5])
+        # At alpha=0 the fusion is the base distribution: KL is zero and the
+        # option head's gradient is zero whatever the loss does, so the
+        # assertions below could not tell a masked row from an unmasked one.
         alphas = {
-            name: torch.zeros((), requires_grad=True)
+            name: torch.ones((), requires_grad=True)
             for name in ("noul", "choice", "score")
         }
         from model.scripts.train_residual import item_loss
@@ -516,17 +564,58 @@ class TestHardLabelRule:
 
 
 class TestDedup:
-    def test_dedup_by_id_keeps_the_first_row_and_honours_seen(self):
+    def _item(self, item_id, criteria):
+        class _Item:
+            pass
+
+        item = _Item()
+        item.id = item_id
+        item.question = {"type": "choice", "criteria": criteria}
+        return item
+
+    def test_distinct_questions_with_the_same_id_survive(self):
+        """RACE: 498 distinct questions over 144 passage ids."""
         from model.scripts.train_residual import dedup_by_id
 
-        class _Item:
-            def __init__(self, item_id):
-                self.id = item_id
-
-        kept, dropped = dedup_by_id([_Item("a"), _Item("a"), _Item("b")])
-        assert [item.id for item in kept] == ["a", "b"]
+        rows = [
+            self._item("race-1", {"a": "x", "b": "y"}),
+            self._item("race-1", {"a": "x", "b": "z"}),
+            self._item("race-1", {"a": "x", "b": "y"}),  # true duplicate
+            self._item("other", {"a": "x", "b": "y"}),
+        ]
+        kept, dropped = dedup_by_id(rows)
+        assert len(kept) == 3
         assert dropped == 1
+        assert [item.question["criteria"]["b"] for item in kept] == ["y", "z", "y"]
 
-        kept, dropped = dedup_by_id([_Item("a"), _Item("b")], {"a"})
+    def test_a_pre_seeded_key_is_dropped(self):
+        from model.scripts.train_residual import _question_digest, dedup_by_id
+
+        first = self._item("a", {"a": "x", "b": "y"})
+        other = self._item("b", {"a": "x", "b": "y"})
+        seen = {(first.id, _question_digest(first))}
+        kept, dropped = dedup_by_id([first, other], seen)
         assert [item.id for item in kept] == ["b"]
         assert dropped == 1
+
+
+class TestListwiseGuard:
+    def test_the_listwise_loss_skips_an_abstention_row(self):
+        """The paired corpus keeps the label, so only this guard stops the CE."""
+        from model.scripts.train_listwise import item_loss as listwise_item_loss
+
+        item = TestTaskLossMask()._noul(answerable=False)
+        zero, kl, ce = listwise_item_loss(
+            None,
+            item,
+            torch.tensor([0.5, 0.5]),
+            torch.ones(()),
+            None,
+            1.0,
+            1.0,
+            2,
+            False,
+        )
+        assert zero.item() == 0.0
+        assert kl == 0.0
+        assert ce == 0.0
