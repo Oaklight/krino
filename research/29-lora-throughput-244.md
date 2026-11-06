@@ -75,6 +75,22 @@ over 64 items and pays the bucket loads; it is not the steady validation rate us
 Both are eval-only (no gradient, prefix cache retained); the difference is sample size,
 not the path.
 
+## Canonical confirmation arm (measured)
+
+The confirmation arm runs on the canonical corpus with the frozen held-out
+excluded, so its counts differ from the estimate above:
+
+- corpus 243,366; held-out 6,424 (928 whole `(source, group)` clusters) excluded;
+- 236,942 items remain; split seed 42, val 0.2;
+- train 99,595 trained-type (42.0% of the non-held-out corpus, 40.9% of the full corpus);
+- validation 47,389 items, all types;
+- 1,479 further train rows dropped because the label is not among the options.
+
+First measured rate on this mix: 9.1 to 9.6 trainable items/s, below the 12.5
+nominal of the 20K subset because the canonical states are longer. Training is
+99,595 / 9.5 = 10,484 s = 2.9 h on one device; the run started 15:53 and the
+estimate is about 18:50, before the gates look at the held-out and JevBench.
+
 ## What is not claimed
 
 - No per-arm validation number is used here; the ladder's gate decides adoption.
