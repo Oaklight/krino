@@ -373,11 +373,14 @@ questions. Keep all 498 and group them by passage id in splits.
 ## Licence position
 
 `research/30-canonical-source-licences.md` audits every source group with quoted
-terms and URLs. Of 243,366 items, 55,787 are in 8 restrictive groups (ANLI,
-ContractNLI, APIGen, RACE, AG News, MedNLI, Yelp, MultiRC), 32,057 are in 10
-unknown groups, and 155,522 are in permissive groups. Synthetic items inherit
-their seed dataset's terms; an ANLI-, ContractNLI- or MedNLI-seeded domain is as
-restricted as its seed. No exclusion is applied here; the owner decides the list.
+terms and URLs, and records the owner's 2026-11-06 decision to keep every group.
+Of 243,366 items, 55,787 are in 8 restrictive groups (ANLI, ContractNLI, APIGen,
+RACE, AG News, MedNLI, Yelp, MultiRC), 28,742 are in 8 unresolved groups, and
+158,837 are in permissive groups. Synthetic items inherit their seed dataset's
+terms; an ANLI-, ContractNLI- or MedNLI-seeded domain is as restricted as its
+seed. The corpus is research use only; `data/licence_manifest.json` and
+`scripts/build_canonical_corpus.py` exist as the contingency if the policy is
+revisited.
 
 ## Provenance
 

@@ -78,16 +78,16 @@ VERDICTS = {
     "mednli": ("restrictive", "https://physionet.org/content/mednli/1.0.0/"),
     "yelp": ("restrictive", "https://business.yelp.com/data/resources/open-dataset/"),
     "multirc": ("restrictive", "https://huggingface.co/datasets/aps/super_glue"),
-    "hellaswag": ("unknown", "https://huggingface.co/datasets/Rowan/hellaswag"),
-    "sst2": ("unknown", "https://huggingface.co/datasets/stanfordnlp/sst2"),
-    "sst5": ("unknown", "https://huggingface.co/datasets/SetFit/sst5"),
-    "swag": ("unknown", "https://huggingface.co/datasets/allenai/swag"),
-    "piqa": ("unknown", "https://huggingface.co/datasets/ybisk/piqa"),
-    "logiqa": ("unknown", "https://huggingface.co/datasets/lucasmccabe/logiqa"),
-    "codesearchnet": ("unknown", "https://huggingface.co/datasets/code-search-net/code_search_net"),
-    "quality": ("unknown", "https://github.com/emozilla/quality"),
-    "2wiki": ("unknown", "https://github.com/Alab-NLP/2WikiMultiHopQA"),
-    "stsb": ("unknown", "https://huggingface.co/datasets/mteb/stsbenchmark-sts"),
+    "hellaswag": ("unresolved", "https://huggingface.co/datasets/Rowan/hellaswag"),
+    "sst2": ("unresolved", "https://huggingface.co/datasets/stanfordnlp/sst2"),
+    "sst5": ("unresolved", "https://huggingface.co/datasets/SetFit/sst5"),
+    "swag": ("permissive", "https://github.com/rowanz/swagaf/blob/master/LICENSE"),
+    "piqa": ("permissive", "https://yonatanbisk.com/piqa/"),
+    "logiqa": ("unresolved", "https://huggingface.co/datasets/lucasmccabe/logiqa"),
+    "codesearchnet": ("unresolved", "https://huggingface.co/datasets/code-search-net/code_search_net"),
+    "quality": ("unresolved", "https://github.com/emozilla/quality"),
+    "2wiki": ("unresolved", "https://github.com/Alab-NLP/2WikiMultiHopQA"),
+    "stsb": ("unresolved", "https://huggingface.co/datasets/mteb/stsbenchmark-sts"),
     "mnli": ("permissive", "https://huggingface.co/datasets/nyu-mll/multi_nli"),
     "mmlu": ("permissive", "https://huggingface.co/datasets/cais/mmlu"),
     "mmlu_pro": ("permissive", "https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro"),
@@ -207,7 +207,7 @@ def main() -> int:
     def scenario(kinds: set[str]) -> dict[str, Any]:
         excluded = Counter()
         for group, counter in groups.items():
-            verdict = VERDICTS.get(group, ("unknown", ""))[0]
+            verdict = VERDICTS.get(group, ("unresolved", ""))[0]
             if verdict in kinds:
                 excluded.update(counter)
         return {
@@ -227,14 +227,14 @@ def main() -> int:
             group: {
                 "records": sum(counter.values()),
                 "by_type": dict(counter),
-                "verdict": VERDICTS.get(group, ("unknown", ""))[0],
-                "evidence": VERDICTS.get(group, ("unknown", ""))[1],
+                "verdict": VERDICTS.get(group, ("unresolved", ""))[0],
+                "evidence": VERDICTS.get(group, ("unresolved", ""))[1],
             }
             for group, counter in sorted(groups.items(), key=lambda kv: -sum(kv[1].values()))
         },
         "scenarios": {
-            "restrictive": scenario({"restrictive"}),
-            "restrictive_and_unknown": scenario({"restrictive", "unknown"}),
+            "exclude_restrictive": scenario({"restrictive"}),
+            "exclude_restrictive_and_unresolved": scenario({"restrictive", "unresolved"}),
         },
         "unclassified_groups": sorted(set(groups) - set(VERDICTS)),
     }
