@@ -541,12 +541,13 @@ def demand_report(
                 "composition."
             ),
             (
-                "Scoring has 18 items, 7.8% of the 231. The 95% binomial "
-                "interval on the 18-item rate is about +/-23 points, so an "
-                "ordinary change in Scoring is invisible in the total. Even "
-                "a wipeout of all 18 moves the 231-item total by 7.8 points, "
-                "against its own +/-6.0-point half-width, and a real regression "
-                "is smaller than that; a held-out split is what sees it."
+                "Scoring has 18 items, 7.8% of the 231, so each item is worth "
+                "0.433 points of the total. A 10-point Scoring gain moves the "
+                "total 0.78 points, inside the total's +/-6.0-point 95% "
+                "half-width; even a wipeout of all 18 moves it 7.8 points. The "
+                "held-out split's score quota is 1,300 items at a 4.5-point "
+                "minimum detectable effect, which is what sees a Scoring "
+                "regression."
             ),
             (
                 "Ranking, ML Feature Extraction, Detection and Search have zero "
