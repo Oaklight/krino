@@ -192,8 +192,9 @@ Fixed evaluation sets:
    this corpus. To build the abstention mix, take #236's held-out base ids,
    apply the same three transforms to those base items, and pair each variant
    with its original. Use the same split file for every arm. Until #236 is
-   frozen, `data/benchmarks/unanswerable_30k/split/` is a development split;
-   label its numbers as development and do not compare them across arms.
+   frozen, `data/benchmarks/unanswerable_30k/split/` is for training and
+   debugging only. It is never a reported number, and it is never substituted
+   for the #236 split in any comparison.
 2. The internal base eval set used by the rung.
 3. JevBench public (231 items), as the acceptance gate.
 
