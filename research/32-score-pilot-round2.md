@@ -91,21 +91,89 @@ policy in `research/30` covers all three.
 A family is eligible for a larger run only when both hold:
 
 1. fewer than **35%** of its rows have argmax ≠ expected level;
-2. at least **25 accepted rows** (the per-source selection floor).
+2. an accepted rate of at least **30%**, where the rate is accepted rows over
+   candidates drawn and labelled in this pilot.
 
-Condition 2 is not a formality. The level-0 cap removes most of what some
-families produce: commonsenseqa has 0% disagreement on 13 rows, which is not
-evidence of quality at volume. Applying both conditions to round two:
+The rate replaces an absolute row floor: 25 accepted rows is a property of this
+pilot's draw, not of the family, and it means nothing at a different draw size.
+On round two:
 
-| verdict | families |
-|---|---|
-| eligible (18) | agnews, anli, apigen policy_compliance, apigen tool_action, banking77, boolq, contractnli, fever, hellaswag, hotpotqa, longbench, mednli, mmlu, mmlu_pro, mnli, sst2, swag, winogrande |
-| quality fail (≥35%) | apigen tool_argument (47%), apigen tool_next_action (52%), logiqa (36%), multirc (36%), openjev (50%), piqa (55%), race (54%), race_short (65%), synthetic (80%), tabfact (38%) |
-| yield fail (<25 rows) | 2wiki (23), arc (22), codesearchnet (13), commonsenseqa (13), apigen tool_choice (19; also 68% disagreement) |
+| source | accepted | drawn | rate | argmax≠exp | eligible |
+|---|---:|---:|---:|---:|---|
+| agnews | 45 | 45 | 100% | 7% | yes |
+| anli | 46 | 51 | 90% | 28% | yes |
+| apigen_policy_compliance | 27 | 36 | 75% | 33% | yes |
+| apigen_tool_action | 53 | 53 | 100% | 30% | yes |
+| apigen_tool_argument | 53 | 150 | 35% | 47% | no |
+| apigen_tool_choice | 19 | 25 | 76% | 68% | no |
+| apigen_tool_next_action | 29 | 163 | 18% | 52% | no |
+| arc | 22 | 44 | 50% | 9% | yes |
+| banking77 | 112 | 125 | 90% | 21% | yes |
+| boolq | 54 | 57 | 95% | 24% | yes |
+| codesearchnet | 13 | 25 | 52% | 15% | yes |
+| commonsenseqa | 13 | 139 | 9% | 0% | no |
+| contractnli | 143 | 163 | 88% | 10% | yes |
+| fever | 68 | 73 | 93% | 16% | yes |
+| hellaswag | 108 | 108 | 100% | 24% | yes |
+| hotpotqa_long_choice | 40 | 41 | 98% | 30% | yes |
+| logiqa | 118 | 163 | 72% | 36% | no |
+| longbench_long_choice | 25 | 25 | 100% | 4% | yes |
+| mednli | 92 | 104 | 89% | 27% | yes |
+| mmlu | 70 | 90 | 78% | 29% | yes |
+| mmlu_pro_short_reasoning_choice | 158 | 163 | 97% | 10% | yes |
+| mnli | 80 | 81 | 99% | 20% | yes |
+| multirc | 154 | 162 | 95% | 36% | no |
+| openjev_authored144 | 22 | 25 | 88% | 50% | no |
+| piqa | 53 | 64 | 83% | 55% | no |
+| race | 57 | 84 | 68% | 54% | no |
+| race_short_passage_choice | 20 | 25 | 80% | 65% | no |
+| sst2 | 60 | 76 | 79% | 8% | yes |
+| swag | 57 | 79 | 72% | 4% | yes |
+| synthetic | 15 | 25 | 60% | 80% | no |
+| tabfact | 88 | 88 | 100% | 38% | no |
+| winogrande | 63 | 63 | 100% | 21% | yes |
+| 2wiki_long_choice | 23 | 25 | 92% | 22% | yes |
 
-arc and 2wiki clear the quality bar and miss the yield bar; neither is a winner.
-longbench is exactly at 25 rows and is eligible only by the letter of the
-threshold.
+Twenty-one families clear both conditions. The rate changes the earlier result:
+arc (50%) and 2wiki (92%) now pass, because they were rejected for a small draw,
+not for a low hit rate. codesearchnet also passes at 52% on 13 rows. If "drawn"
+meant the whole candidate pool rather than the labelled sample, no family would
+clear 30% (the largest, mmlu_pro, is 1.6%), so the rate here is accepted over
+labelled candidates.
+
+The families that fail quality are logiqa 36, multirc 36, tabfact 38, apigen
+tool_argument 47, apigen tool_next_action 52, openjev 50, piqa 55, race 54,
+race_short 65, synthetic 80, and apigen tool_choice 68. The families that fail
+yield are commonsenseqa 9% and apigen tool_next_action 18%.
+
+## The constraint: documents, not puzzles
+
+The quality failures are not spread evenly. Passing rubrics ask for a property
+of the state text: sentiment intensity, disclosure exposure, contract
+restrictiveness, support urgency, policy risk, question difficulty, passage
+relatedness, how constrained a continuation is. Failing rubrics ask for a
+property of the solution or the reasoning: whether an answer is right
+(logiqa), how strong the evidence for an answer is (multirc), how hard a puzzle
+is to solve (piqa, race), whether a table supports a claim (tabfact), or what the
+next agent action should be (apigen action/argument).
+
+The practical rule is **documents, not problems**. A score question works when
+the state is a document with an intrinsic quality dimension. It fails when the
+state is a puzzle or a reasoning trace, because there is no property of a puzzle
+other than whether it is solved, and that property is not in the state.
+
+Arc is the exception that sharpens the rule: its rubric asks how difficult the
+question text is, which is a property of the text, not of the solution, so it
+passes at 9% despite being a reasoning benchmark. The distinction is
+state-property versus solution-property, not benchmark genre. That is where the
+remaining score data can come from: document-shaped sources and text-property
+rubrics. It is not worth a week redesigning logiqa or race rubrics.
+
+The synthetic rows in this pilot are 15 synthetic states re-scored with the
+default decision-clarity rubric, because the rubric map has no synthetic-domain
+entry; they are not the corpus's existing score rows, which use the per-domain
+severity/quality/difficulty templates. Their 80% is a rubric-assignment failure
+over puzzle-shaped states, not evidence about those existing rows.
 
 ## What round two says
 
@@ -114,12 +182,13 @@ threshold.
    without changing the model or the prompt mechanics.
 2. **The cap works.** No source ends above 54% level 0, and the aggregate
    level-0 share falls from 48.6% to 32.1% at a cost of 515 rejected rows.
-3. **Still not training data.** The redesigned set is much better behaved, but
-   piqa remains at 55% disagreement and longbench/contractnli are concentrated.
-   Scale only the families that stay below a stated disagreement threshold, and
-   treat the rest as rubric evidence.
-4. **Recommended next step:** scale the 18 eligible families, keep the cap, and
-   judge the next run against the same two conditions. Residual concentration
-   (contractnli 78% at level 2, longbench 96% at level 2) is a separate balance
-   issue and should be capped or reweighted before training. The three pilot
-   runs so far cost about $0.17.
+3. **Still not training data, and the failures are structural.** The redesigned
+   set is much better behaved, but the quality failures are the reasoning
+   families and the apigen action scales. That is the documents-not-problems
+   constraint, not a tuning problem. Scale only document-shaped families with a
+   state-property rubric; treat the rest as rubric evidence.
+4. **Recommended next step:** scale the 21 families that clear both conditions,
+   keep the cap, and judge the next run against the same two conditions. Residual
+   concentration (contractnli 78% at level 2, longbench 96% at level 2) is a
+   separate balance issue and should be capped or reweighted before training. The
+   three pilot runs so far cost about $0.17.
