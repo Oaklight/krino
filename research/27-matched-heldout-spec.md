@@ -268,8 +268,10 @@ The manifest records:
 - the canonical corpus manifest hash from #234;
 - the SHA-256 of every input JSONL;
 - the git commit of the builder script;
+- the exact dependency lock and the Python version used to build;
 - the LSH parameters (shingle size 8, 128 permutations, 32 bands, threshold 0.7, seed 42);
-- the assignment seed and the list of selected group ids.
+- the assignment seed and the list of selected group ids;
+- the command that replays the build from a clean checkout.
 
 ### Outputs
 
@@ -293,6 +295,17 @@ After the first model has been scored on v1, v1 is immutable. A correction is v2
 manifest, a new hash, a new dataset path. Results are always reported with the version.
 Never regenerate v1 in place, and never "fix" a leaked item by rebuilding the same
 version.
+
+### Replay, not re-hash
+
+The freeze is reproducible only if the build replays. CI rebuilds `items.jsonl.gz` from
+the recorded tuple in a clean environment and compares `items_sha256`, the per-source
+counts and the per-group counts. A mismatch fails. The response is a version bump and an
+updated tuple, never a silent re-hash of the committed artifact.
+
+The interim split being carved before #234 is not this set, but it should be frozen with
+the same tuple: dependency lock, Python version, builder commit, and a replay check.
+Retrofitting a tuple after gate rows exist is more expensive than recording it at birth.
 
 ### Training exclusion
 

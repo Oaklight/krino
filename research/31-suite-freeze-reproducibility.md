@@ -79,13 +79,17 @@ that no longer described any code path in the repository — which is the state 
    - the Python version;
    - every upstream source revision;
    - the seed and the exact build command.
-2. **Rebuild from the tuple in CI.** Run it on every builder change and on a schedule.
-   Compare per-file hashes, not only the whole-suite hash, so a failure names the moved
-   benchmark. The SGD case was localized in one command because the kit published
-   per-file hashes.
+2. **Rebuild from the tuple in CI, per file.** Run it on every builder change and on a
+   schedule. CI compares the per-file hashes, not only the whole-suite hash, so a failure
+   names the moved benchmark. A mismatch fails the build. The response is a version bump
+   and an update to the recorded tuple, never a silent re-hash of the committed artifact.
+   The SGD case was localized in one command because the kit published per-file hashes.
+   Without the automated comparison this rule is a reminder, and reminders do not survive.
 3. **A builder change that alters row content bumps the suite version**, including a
-   correctness fix. Never regenerate rows under an existing version. The fix may make the
-   old hash unreproducible on purpose; that is a reason to version, not to revert.
+   correctness fix. The trigger is not the intent of the change; it is the per-file replay
+   in point 2 reporting a mismatch. Never regenerate rows under an existing version. The
+   fix may make the old hash unreproducible on purpose; that is a reason to version, not to
+   revert.
 4. **Never relax the verifier or restore a defect to match a pin.** A mismatch means the
    tuple is wrong or the builder changed. Decide which, and record the decision.
 5. **Treat a mismatch as a localization task first.** Compare the per-file manifest before
