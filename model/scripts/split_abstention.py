@@ -38,13 +38,18 @@ if str(ROOT) not in sys.path:
 from data.format import TypedQuestion  # noqa: E402
 from data.pipeline import load_jsonl, save_jsonl  # noqa: E402
 
-SUFFIX = "-abstain-"
+#: Derived-id suffixes written by the abstention builders.  ``-abstain-`` is
+#: build_abstention_sets.py; ``-unans-`` is build_unanswerable_pairs.py.
+SUFFIXES = ("-abstain-", "-unans-")
 
 
 def base_id(item: TypedQuestion) -> str:
     """Derived id -> the id of the item it was built from."""
-    head, sep, _tail = item.id.rpartition(SUFFIX)
-    return head if sep else item.id
+    for suffix in SUFFIXES:
+        head, sep, _tail = item.id.partition(suffix)
+        if sep:
+            return head
+    return item.id
 
 
 def split(
