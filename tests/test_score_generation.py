@@ -1,0 +1,150 @@
+"""Tests for score-question generation (#156)."""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+
+from data.score_generation import (
+    Candidate,
+    allocate_quotas,
+    build_item,
+    candidate_id,
+    expected_level,
+    iter_candidates,
+    label_level,
+    load_rubric_config,
+    normalise_state,
+    order_candidates,
+    select_candidates,
+    validate_distribution,
+)
+
+RUBRIC = {
+    "instructions": "How severe is this situation?",
+    "criteria": ["None", "Low", "Moderate", "High"],
+}
+
+
+def _item(item_id, state, source="fixture", q_type="noul", split="train"):
+    return {
+        "id": item_id,
+        "state": state,
+        "question": {"type": q_type, "instructions": "q", "criteria": ["a", "b"]},
+        "label": True,
+        "source": source,
+        "split": split,
+    }
+
+
+def _candidate(state, source="fixture"):
+    return Candidate(source=source, state=state, split="train", group=None, rubric=RUBRIC)
+
+
+def test_normalise_and_id_are_stable_and_distinct():
+    a = candidate_id("mednli", "Patient  has a fever.")
+    b = candidate_id("mednli", "patient has a fever .")
+    c = candidate_id("contractnli", "Patient  has a fever.")
+    assert a == b
+    assert a != c
+    assert a.startswith("scoregen-mednli-")
+    assert normalise_state("  Café  AU lait ") == "café au lait"
+
+
+def test_iter_candidates_skips_existing_score_states_and_duplicates():
+    items = [
+        _item("1", "State one.", source="a"),
+        _item("2", "State one.", source="a"),
+        _item("3", "State two.", source="b", q_type="score"),
+        _item("4", "State three.", source="b"),
+    ]
+    score_states = {normalise_state("State two.")}
+    candidates = list(iter_candidates(items, score_states, {}, RUBRIC))
+    assert [candidate.original_id for candidate in candidates] == ["1", "4"]
+    assert [candidate.source for candidate in candidates] == ["a", "b"]
+
+
+def test_allocate_quotas_sums_to_target_and_keeps_coverage():
+    pools = {"small": 10, "medium": 500, "large": 5000}
+    quota = allocate_quotas(pools, target=300, floor=50, cap=200)
+    assert sum(quota.values()) == 300
+    assert quota["small"] == 10
+    assert quota["large"] <= 200
+    assert all(value >= 0 for value in quota.values())
+
+
+def test_allocate_quotas_is_deterministic_and_caps_at_pool_size():
+    pools = {"a": 3, "b": 4}
+    assert allocate_quotas(pools, target=100, floor=5, cap=10) == {"a": 3, "b": 4}
+    first = allocate_quotas({"a": 10, "b": 90}, target=40, floor=5, cap=40)
+    second = allocate_quotas({"a": 10, "b": 90}, target=40, floor=5, cap=40)
+    assert first == second
+
+
+def test_select_candidates_respects_quotas_and_is_seeded():
+    candidates = [_candidate(f"state {source} {index}", source) for source in ("a", "b") for index in range(20)]
+    first = select_candidates(candidates, target=30, floor=5, cap=20, seed=7)
+    second = select_candidates(candidates, target=30, floor=5, cap=20, seed=7)
+    assert [candidate.state for candidate in first] == [candidate.state for candidate in second]
+    assert len(first) == 30
+    assert {candidate.source for candidate in first} == {"a", "b"}
+
+
+def test_order_candidates_interleaves_sources():
+    candidates = [_candidate(f"a{i}", "a") for i in range(3)] + [
+        _candidate(f"b{i}", "b") for i in range(2)
+    ]
+    ordered = order_candidates(candidates, ["a", "b"])
+    assert [candidate.source for candidate in ordered] == ["a", "b", "a", "b", "a"]
+
+
+@pytest.mark.parametrize(
+    ("probabilities", "reason"),
+    [
+        ({"0": 0.2, "1": 0.3, "2": 0.5}, None),
+        ({"0": 0.2, "1": 0.3}, "keys"),
+        ({"0": 0.2, "1": 0.3, "2": 0.5, "3": 0.0}, "keys"),
+        ({"0": 0.2, "1": 0.3, "2": -0.1}, "range"),
+        ({"0": 0.2, "1": 0.3, "2": 0.4}, "sum"),
+        ({"0": 0.995, "1": 0.005, "2": 0.0}, "degenerate"),
+        ({"0": 0.0, "1": 0.0, "2": 1.0}, "degenerate"),
+        ({"0": "x", "1": 0.3, "2": 0.7}, "nonnumeric"),
+    ],
+)
+def test_validate_distribution(probabilities, reason):
+    assert validate_distribution(probabilities, 3) == reason
+
+
+def test_label_is_argmax_and_expected_is_reported_separately():
+    probabilities = {"0": 0.1, "1": 0.55, "2": 0.35}
+    assert label_level(probabilities) == 1.0
+    assert expected_level(probabilities) == pytest.approx(1.25)
+
+
+def test_build_item_carries_teacher_provenance_and_distribution():
+    candidate = _candidate("A state.")
+    probabilities = {"0": 0.1, "1": 0.6, "2": 0.2, "3": 0.1}
+    item = build_item(candidate, probabilities)
+    assert item["label"] == 1.0
+    assert item["provenance"] == "teacher"
+    assert item["teacher_probs"] == {"jev": probabilities}
+    assert item["question"]["criteria"] == RUBRIC["criteria"]
+    assert item["id"] == candidate.id
+
+
+def test_load_rubric_config_resolves_templates(tmp_path):
+    path = tmp_path / "rubrics.json"
+    path.write_text(
+        json.dumps(
+            {
+                "sources": {"fixture": {"template": "fake"}},
+                "default": {"instructions": "Default?", "criteria": ["a", "b"]},
+            }
+        ),
+        encoding="utf-8",
+    )
+    templates = {"fake": {"score_template": {"instructions": "From template?", "criteria": ["x", "y"]}}}
+    rubrics, default = load_rubric_config(str(path), templates)
+    assert rubrics["fixture"]["instructions"] == "From template?"
+    assert default["instructions"] == "Default?"
