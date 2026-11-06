@@ -10,7 +10,7 @@ numbers come from `scripts/corpus_inventory.py`; the commands are at the end.
 Scope: `data/benchmarks/*.jsonl` on one host. `residual_train_20000.jsonl` and
 `data/benchmarks/synthetic/` were on another host and are not in this count.
 
-## Candidate training sets
+### Candidate training sets
 
 | file | rows | distinct ids | types (noul/choice/score) | teacher probs | hard label |
 |---|---|---|---|---|---|
@@ -24,7 +24,7 @@ Scope: `data/benchmarks/*.jsonl` on one host. `residual_train_20000.jsonl` and
 | abstention_train_20k / _30k | 3,000 / 3,000 | 3,000 / 3,000 | 2,000 noul / 1,000 choice | 0 | 3,000 |
 | race_short_passage_choice.jsonl | 498 | **144** | all choice | 0 | 498 |
 
-## Findings
+### Findings
 
 1. `residual_train_20000_jev` and `label_target_30k_jev` share **0** ids. They are
    two disjoint corpora, not two views of one. Total teacher-labelled material is
@@ -38,7 +38,7 @@ Scope: `data/benchmarks/*.jsonl` on one host. `residual_train_20000.jsonl` and
    (`random 54,214 + label_target 30k/38.9k + mmlu_pro + race`).
    The 8-word shingle near-duplicate check has not run yet.
 
-## Not covered here
+### Not covered here
 
 - `residual_train_20000.jsonl` (20,000) and `synthetic/` (230 files) are on another host.
 - Near-duplicate audit (>=3 shared 8-grams) against the 231 items.
@@ -119,6 +119,14 @@ Defects found:
    exclude them; the families are still on disk.
 4. `long_document` is the size outlier: 108 families / 2,374 items against ~200
    families / ~6,900 items in the other 22 domains.
+5. **The `jev` label sidecars contain 1,126 duplicate rows.** 154,092 rows cover
+   152,966 distinct ids; 931 ids repeat, in `education_assessment` (1,056 rows)
+   and `game_strategy` (70), across 160 families. `load_synthetic()` merges by
+   id, so the duplicate rows do not change a model input, but they inflate any
+   count taken over the label files. `research/09-score-data-sources.md` quotes
+   154,092 as "existing synthetic states"; that is the label-row count, not the
+   state count. The assembled item count is 154,091, and the 51 expansion drops
+   above are a separate quantity.
 
 Per-domain item counts:
 
