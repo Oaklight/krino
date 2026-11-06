@@ -103,3 +103,12 @@ def test_examples_are_bounded(tmp_path):
     rows = [_row(id=str(index)) for index in range(5)]
     result = _run(tmp_path, rows)
     assert len(result["answerable_false"]["examples"]) == 5
+
+
+def test_an_unset_row_with_an_invalid_label_is_counted(tmp_path):
+    result = _run(tmp_path, [_row(id="a", answerable=None, label="maybe", reason=None)])
+    assert result["answerable_unset"] == {
+        "count": 1,
+        "invalid_label": 1,
+        "invalid_by_type": {"noul": 1},
+    }

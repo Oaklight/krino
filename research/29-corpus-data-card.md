@@ -100,11 +100,14 @@ learns "false" on removed support. The other 2,000 are choice rows whose kept
 label is no longer in the options, including 224 Banking77 rows with the full
 79-intent label space.
 
-Training masks these rows in the loss; it does not drop them from the batch.
-Row-level id exclusion is for held-out leakage only. Dropping changes the
-batch composition and the loss normalisation, so a dropped-row arm is not
-comparable with a masked-row arm even on the same data. Census:
-`results/abstention/canonical_answerable_census.json`.
+Training masks these rows in the loss; the residual trainer does not drop them
+from the batch. Row-level id exclusion is for held-out leakage only. The
+listwise trainer has no abstain head, so it skips an `answerable=false` row at
+the top of its loss; that guard matters on the paired corpus, whose variants
+keep a valid label. Training is per row, so masking and dropping give the same
+task gradients; they differ on the abstain-head update and the display
+denominator, which leaves task metrics comparable and abstain metrics not.
+Census: `results/abstention/canonical_answerable_census.json`.
 
 ## Type mix
 

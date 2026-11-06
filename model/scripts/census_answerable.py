@@ -106,6 +106,8 @@ def main(argv: list[str] | None = None) -> int:
     teacher_probs_present = 0
     reason_without_false = 0
     false_without_reason = 0
+    unset_invalid = 0
+    unset_invalid_by_type: Counter = Counter()
     examples: list[dict[str, Any]] = []
     total = 0
 
@@ -122,6 +124,12 @@ def main(argv: list[str] | None = None) -> int:
             if value is not False:
                 if row.get("reason"):
                     reason_without_false += 1
+                if value is None and not _valid_label(question, label):
+                    # Unset means answerable; an unset row whose label fails
+                    # validation has no hard label and no explicit target, so
+                    # the trainer must give it no supervision at all.
+                    unset_invalid += 1
+                    unset_invalid_by_type[str(question.get("type"))] += 1
                 continue
 
             source = str(row.get("source"))
@@ -198,6 +206,11 @@ def main(argv: list[str] | None = None) -> int:
         },
         "reason_without_answerable_false": reason_without_false,
         "answerable_false_without_reason": false_without_reason,
+        "answerable_unset": {
+            "count": answerable_values["unset"],
+            "invalid_label": unset_invalid,
+            "invalid_by_type": dict(unset_invalid_by_type),
+        },
         "reading": (
             "dangerous_well_formed counts answerable=false rows that also carry "
             "at least two well-formed options and a valid label in those options. "
