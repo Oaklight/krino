@@ -369,7 +369,7 @@ def evaluate(
     }
 
 
-def main() -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--items", type=Path, required=True)
     parser.add_argument("--base-probs", type=Path, required=True)
@@ -446,10 +446,21 @@ def main() -> int:
         "the training batch and masked in the loss",
     )
     parser.add_argument("--val-fraction", type=float, default=0.2)
+    parser.add_argument(
+        "--split-seed",
+        type=int,
+        default=42,
+        help="Seed for the train/val split, separate from --seed so a "
+        "replication seed varies init and item order, not the held-out items",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int, default=None)
-    args = parser.parse_args()
+    return parser
+
+
+def main() -> int:
+    args = build_parser().parse_args()
 
     items = load_jsonl(args.items)
     items, duplicate_rows = dedup_by_id(items)
@@ -475,7 +486,10 @@ def main() -> int:
         items = [item for item in items if item.id not in exclude_ids]
     if args.limit:
         items = items[: args.limit]
-    train_items, val_items = split_items(items, args.val_fraction, args.seed)
+    # The split seed is separate from --seed: a replication seed varies init
+    # and item order, not which items are held out.  This matches the listwise
+    # and pairwise trainers; before this, --seed moved the split too.
+    train_items, val_items = split_items(items, args.val_fraction, args.split_seed)
     answerable_items = []
     for path in args.answerable_items or []:
         answerable_items.extend(load_jsonl(path))
@@ -664,6 +678,7 @@ def main() -> int:
                 "kl_weight": args.kl_weight,
                 "ce_weight": args.ce_weight,
                 "seed": args.seed,
+                "split_seed": args.split_seed,
                 "option_marker": args.option_marker,
                 "noul_marker": args.noul_marker,
                 "option_chunk_size": args.option_chunk_size if args.option_marker else None,

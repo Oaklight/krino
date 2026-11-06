@@ -304,9 +304,10 @@ def main() -> int:
     items = [item for item in items if item.id in base_probs]
     if args.limit:
         items = items[: args.limit]
-    # The same call as train_residual, so the val split matches D20K.  The
-    # split seed is separate from the training seed: a replication seed must
-    # vary init and item order, not which items are held out.
+    # The same call and the same split seed as train_residual, so the val split
+    # matches D20K.  The split seed is separate from the training seed in all
+    # three trainers: a replication seed varies init and item order, not which
+    # items are held out.
     train_items, val_items = split_items(items, args.val_fraction, args.split_seed)
     train_items = [
         item for item in train_items if item.question["type"] in TRAINED_TYPES
