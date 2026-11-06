@@ -2,8 +2,9 @@
 
 Status: 2026-11-06. The audit is advisory; the policy below is a decision.
 Nothing has been removed from the corpus. Counts are canonical records after id
-dedup (RACE keyed by id + question), with synthetic items attributed to the
-domain they were seeded from. Reproduce with `scripts/corpus_licence_audit.py`.
+dedup (RACE ids are suffixed; the passage id is the group), with synthetic items
+attributed to the domain they were seeded from. Reproduce with
+`scripts/corpus_licence_audit.py`.
 
 ## Policy decision: research use only
 
@@ -19,7 +20,7 @@ manifest below is what the narrower builds will use then.
 
 - Canonical assembly is the one in `research/25-corpus-inventory.md`: target 30K,
   residual 20K, typed-decisions, synthetic, then the remaining corpora, deduped by
-  item key (RACE uses id + question).
+  item id (RACE ids are suffixed before dedup).
 - A synthetic item is built from a state drawn from its domain's seed dataset.
   `data/synthetic.py:_load_seed_states` calls the seed loader, and
   `data/synthetic_templates.py` maps each seeded domain to that loader. Every
