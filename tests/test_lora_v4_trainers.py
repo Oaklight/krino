@@ -161,6 +161,14 @@ class TestParserDefaults:
         assert args.lora_targets == ("q_proj", "o_proj")
         assert args.lora_kl_weight == 0.5
 
+    def test_dry_run_is_off_by_default(self) -> None:
+        args = _parser_defaults(train_listwise.build_parser(), [])
+        assert args.dry_run is False
+
+    def test_dry_run_is_accepted(self) -> None:
+        args = _parser_defaults(train_listwise.build_parser(), ["--dry-run"])
+        assert args.dry_run is True
+
 
 class TestConfigRoundTrip:
     def test_a_frozen_config_adds_no_kwargs(self) -> None:
