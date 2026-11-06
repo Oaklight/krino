@@ -142,9 +142,17 @@ def main() -> int:
     def add(item: dict, corpus: str) -> None:
         nonlocal eligible_ce, abstain_target, ineligible_other
         item_id = item.get("id")
-        if not isinstance(item_id, str) or item_id in seen:
+        if not isinstance(item_id, str):
             return
-        seen.add(item_id)
+        # RACE reuses a passage id for several distinct questions.  The id is
+        # the split group; (id, question) is the item key.
+        if corpus == "race_short":
+            key: Any = (item_id, json.dumps(item.get("question") or {}, sort_keys=True))
+        else:
+            key = item_id
+        if key in seen:
+            return
+        seen.add(key)
         by_corpus[corpus] += 1
         provenance = classify(item, corpus)
         tier[provenance.tier] += 1
