@@ -119,7 +119,7 @@ In `item_loss` (`model/scripts/train_residual.py:167`), after the CE and KL are
 computed:
 
 ```python
-masked = item.answerable is False and bool(item.reason)
+masked = item.answerable is False
 if masked:
     ce = torch.zeros((), device=ce.device)
     kl = torch.zeros((), device=kl.device)
@@ -128,6 +128,16 @@ if masked:
 Keep the logged `kl_mean` and `ce_mean` over unmasked rows only, and log
 `n_masked` beside them, so the loss curves stay comparable with earlier runs.
 The answerable BCE is still computed for the masked row.
+
+The mask is on the loss, never applied by dropping rows. Row-level id
+exclusion (`--exclude-ids`) is leakage control for held-out eval base ids; it
+is not the abstention mask. Dropping changes the batch composition and the
+loss normalisation, so a dropped-row arm is not comparable with a masked-row
+arm even on the same data. Any trainer that reads `answerable` must mask in
+the loss; a trainer that does not read the field must not be given abstention
+rows. On the canonical corpus the mask covers 6,000 rows: 4,000 noul rows with
+a well-formed `false`/`true` option set and a valid `False` label, and 2,000
+choice rows whose kept label is no longer in the options.
 
 ### 2.3 Same forward pass or its own
 
