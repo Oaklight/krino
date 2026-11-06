@@ -93,10 +93,18 @@ genuine out-of-options label raises instead of disappearing.  It is an interim
 measure: dropping and masking are equivalent only in this per-item loop, and the
 answerable head (#254) should replace it.
 
-First measured rate on this mix: 9.1 to 9.6 trainable items/s, below the 12.5
-nominal of the 20K subset because the canonical states are longer. Training is
-99,595 / 9.5 = 10,484 s = 2.9 h on one device; the run started 15:53 and the
-estimate is about 18:50, before the gates look at the held-out and JevBench.
+First measured rate on this mix: 10.9 to 11.2 trainable items/s (steady state),
+below the 12.5 nominal of the 20K subset because the canonical states are longer.
+State the two phases separately: training is 99,595 / 11 = 9,054 s = 2.5 h, and
+the one full internal validation is 47,389 / 6.1 = 7,770 s = 2.2 h, so the
+checkpoint lands about 4.7 h after the 15:53 start, near 20:35.
+
+The internal validation is a diagnostic, not the standard C gate, and running it
+in full on all three seeds costs about 6.6 GPU-hours for a number that cannot
+promote or reject. The running arm keeps it for seed comparability; the next
+canonical run should subsample it (10,000 rows is enough for early stopping) or
+evaluate it once per configuration rather than once per seed. A validation pass
+is not free and must not be quoted inside the training rate.
 
 ## What is not claimed
 
