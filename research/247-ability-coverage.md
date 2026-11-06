@@ -47,12 +47,12 @@ No record is model-labelled. `model_share` is 0.0: the residue after rules and h
 | Detection | 1,782 | 2,868 | 0 | 4,650 | 1.9% | 3,592 | 1,058 | 4,554 | 3,684 | 2,868 | |
 | Scoring | 0 | 0 | 29,515 | 29,515 | 12.1% | 29,515 | 0 | 25,563 | 20,059 | 29,515 | |
 | Routing | 909 | 18,124 | 0 | 19,033 | 7.8% | 18,130 | 903 | 9,542 | 9,539 | 18,124 | |
-| Search | 0 | 479 | 0 | 479 | 0.2% | 479 | 0 | 479 | 0 | 479 | under_2000 |
+| Search | 0 | 479 | 0 | 479 | 0.2% | 479 | 0 | 479 | 0 | 479 | under_2000, single_source, licence_single_point |
 | Retrieval | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | unsupported |
 | Ranking | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | unsupported |
 | Verification | 29,770 | 2,762 | 0 | 32,532 | 13.4% | 22,617 | 9,915 | 15,730 | 14,871 | 2,762 | |
 | ML Feature Extraction | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | unsupported |
-| Structured Data Extraction | 8 | 6,578 | 0 | 6,586 | 2.7% | 6,575 | 11 | 11 | 9 | 6,578 | |
+| Structured Data Extraction | 8 | 6,578 | 0 | 6,586 | 2.7% | 6,575 | 11 | 11 | 9 | 6,578 | single_source, licence_single_point |
 | **total** | 113,594 | 100,257 | 29,515 | 243,366 | 100% | 125,915 | 117,451 | 187,579 | 158,837 | 129,772 | |
 
 The two exclusion columns use the builds in `data/licence_manifest.json`; their totals match the licence audit's 243,366 / 187,579 / 158,837.
@@ -62,11 +62,14 @@ Record counts by task form: 113,594 noul, 100,257 choice, 29,515 score. 6,000 re
 ## What the matrix says
 
 - **The corpus is a reading-comprehension corpus.** Classification is 61.9% of records, and 70% of classification is heuristic-labelled synthetic free-form questions. The next largest abilities are Verification (13.4%), Scoring (12.1%) and Routing (7.8%).
-- **Three abilities have no records: Retrieval, Ranking, ML Feature Extraction.** The corpus cannot currently support them at all. No source asks to fetch context, order candidates, or produce features for a downstream model.
-- **Search is a licence artifact.** All 479 records are CodeSearchNet, and CodeSearchNet is one of the unresolved licence groups, so Search falls to 0 under the full exclusion build. It is flagged `under_2000` even before that.
-- **Structured Data Extraction is effectively apigen-only.** 6,575 of 6,586 records are `apigen_tool_argument`, which is a restrictive group. The ability falls to 11 records after excluding restrictive sources. A mixture that relies on it must accept that licence position or generate new data.
+- **Ranking and ML Feature Extraction are real gaps.** Both have zero records, and the public cookbooks demonstrate both as the model's job: Re-ranking and Skill suggestion for Ranking, Autoresearch feature discovery for ML Feature Extraction. These two lines say the corpus cannot teach an ability the product asks for. They are the most important rows in the table.
+- **Retrieval is not a gap.** It has zero records, but the cookbooks keep retrieval in code — BM25 shortlists, RAG candidate fetch — and ask Jev only to score or rank the candidates. The use-case map lists the ability, so the row stays; zero corpus coverage is expected rather than missing capability.
+- **Search is a single point of failure.** All 479 records are CodeSearchNet, which is one unresolved licence group. One licence decision takes Search to zero, and it is already flagged `under_2000`.
+- **Structured Data Extraction is a single point of failure.** 6,575 of 6,586 records are `apigen_tool_argument`, a restrictive group. One licence decision takes the ability to 11 records. The row is not six thousand records of coverage; it is one generator plus one licence position.
 - **Detection is thin.** 4,650 records (1.9%), 3,592 of them source-ruled (the synthetic issue/error templates and three typed-decisions families). It clears the 2,000 threshold but not by much.
 - **Routing loses half under exclusion.** 18,124 choice rows, mostly apigen tool choice/next action; 9,542 remain after excluding restrictive groups.
+
+Two flags make the single-source cases explicit in the JSON. `single_source` means one source supplies at least 90% of the ability. `licence_single_point` means that source's group is not permissive, so one licence decision can zero the ability.
 
 ## Gradient eligibility, and why noul coverage is misleading
 
@@ -75,6 +78,19 @@ The listwise and pairwise trainers filter the training set with `TRAINED_TYPES =
 The per-option residual trainer does train noul with its fixed two-option `["no", "yes"]` set, and all 243,366 records are eligible there. The caveat for any future head that builds noul options from `criteria`: a question with a single criterion has a one-element softmax, whose log is identically zero, and that row would contribute no gradient. No such question exists in this corpus today, but a coverage report that counts rows without this check would miss it.
 
 A row count for noul therefore says nothing about what the current listwise arm learns. The matrix separates the two columns for that reason.
+
+## Accuracy join
+
+The labeler joins per-item predictions to these labels with `--predictions`. Each row needs `id`, `q_type`, `correct` (or `gold`/`pred`) and `n_options`; the report then carries `eval.by_ability` with n, accuracy and chance-corrected accuracy next to the coverage counts.
+
+The ability-level table is not in this commit because the per-item file behind the type-level numbers quoted in the issue thread (noul 0.4874, choice 0.5991, score 0.3083) is not in the repository. Those type-level numbers cannot be recomputed from the committed JevBench reports, which use JevBench items rather than canonical ids. Once the prediction file is supplied, the join is:
+
+    python scripts/label_abilities.py \
+        --canonical research/krino-canonical-243366.jsonl \
+        --predictions predictions.jsonl \
+        --coverage research/247-ability-coverage.json
+
+The join reports `matched` and `unmatched` so a prediction set that does not use canonical ids fails visibly instead of producing a partial table. No other section of this note depends on it.
 
 ## Hand-check
 
@@ -111,4 +127,4 @@ Build: about 21 s; label: about 22 s; peak working set 15 MB for the label pass.
 
 ## Out of scope
 
-The mixture weights and augmentation targets in workstream D are a separate decision and are not proposed here. This note and its artifacts are the classification fact the decision needs.
+The mixture weights and augmentation targets in workstream D are a separate decision and are not proposed here. They still need two inputs: the ability-level accuracy join (once the prediction file is supplied) and a demand-side count of what the acceptance set asks for, ability by ability. This classification does not block either; it is the coverage half of the decision.

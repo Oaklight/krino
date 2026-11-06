@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-06T21:02:18Z",
+ "generated_at": "2026-11-06T21:11:34Z",
  "canonical": "krino-canonical-243366.jsonl",
  "canonical_sha256": "07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53",
  "canonical_records": 243366,
@@ -110,6 +110,7 @@
  "abilities": {
   "Classification": {
    "definition": "One known category should win.",
+   "cookbook": "demonstrated (Hierarchical classification)",
    "total": 150571,
    "share": 0.618702,
    "by_type": {
@@ -131,10 +132,20 @@
    "after_exclude_restrictive": 131700,
    "after_exclude_restrictive_and_unresolved": 110675,
    "gradient_eligible_listwise": 69446,
+   "top_source": {
+    "name": "synthetic",
+    "records": 110222,
+    "share": 0.732027,
+    "licence_group": "project",
+    "licence_verdict": "permissive"
+   },
+   "single_source": false,
+   "licence_single_point": false,
    "flags": []
   },
   "Detection": {
    "definition": "A probability that one property is present.",
+   "cookbook": "demonstrated (Twitch chat filter; Guardrails for LLMs)",
    "total": 4650,
    "share": 0.019107,
    "by_type": {
@@ -156,10 +167,20 @@
    "after_exclude_restrictive": 4554,
    "after_exclude_restrictive_and_unresolved": 3684,
    "gradient_eligible_listwise": 2868,
+   "top_source": {
+    "name": "synthetic",
+    "records": 3438,
+    "share": 0.739355,
+    "licence_group": "project",
+    "licence_verdict": "permissive"
+   },
+   "single_source": false,
+   "licence_single_point": false,
    "flags": []
   },
   "Scoring": {
    "definition": "The answer belongs on an ordered rubric.",
+   "cookbook": "demonstrated (Re-ranking; Intelliprompter; entity alignment)",
    "total": 29515,
    "share": 0.121278,
    "by_type": {
@@ -181,10 +202,20 @@
    "after_exclude_restrictive": 25563,
    "after_exclude_restrictive_and_unresolved": 20059,
    "gradient_eligible_listwise": 29515,
+   "top_source": {
+    "name": "synthetic",
+    "records": 22074,
+    "share": 0.747891,
+    "licence_group": "project",
+    "licence_verdict": "permissive"
+   },
+   "single_source": false,
+   "licence_single_point": false,
    "flags": []
   },
   "Routing": {
    "definition": "A category selects the next code path.",
+   "cookbook": "demonstrated (Function calling; Skill suggestion)",
    "total": 19033,
    "share": 0.078207,
    "by_type": {
@@ -206,10 +237,20 @@
    "after_exclude_restrictive": 9542,
    "after_exclude_restrictive_and_unresolved": 9539,
    "gradient_eligible_listwise": 18124,
+   "top_source": {
+    "name": "synthetic",
+    "records": 7907,
+    "share": 0.415436,
+    "licence_group": "apigen",
+    "licence_verdict": "restrictive"
+   },
+   "single_source": false,
+   "licence_single_point": false,
    "flags": []
   },
   "Search": {
    "definition": "Find items that match a natural-language query.",
+   "cookbook": "demonstrated (Line-by-line search)",
    "total": 479,
    "share": 0.001968,
    "by_type": {
@@ -229,12 +270,24 @@
    "after_exclude_restrictive": 479,
    "after_exclude_restrictive_and_unresolved": 0,
    "gradient_eligible_listwise": 479,
+   "top_source": {
+    "name": "codesearchnet",
+    "records": 479,
+    "share": 1.0,
+    "licence_group": "codesearchnet",
+    "licence_verdict": "unresolved"
+   },
+   "single_source": true,
+   "licence_single_point": true,
    "flags": [
-    "under_2000"
+    "under_2000",
+    "single_source",
+    "licence_single_point"
    ]
   },
   "Retrieval": {
    "definition": "Fetch the most relevant context or records for a workflow.",
+   "cookbook": "not demonstrated as the model's job; cookbooks retrieve in code (BM25 shortlists) and ask Jev to score or rank the candidates",
    "total": 0,
    "share": 0.0,
    "by_type": {
@@ -252,12 +305,16 @@
    "after_exclude_restrictive": 0,
    "after_exclude_restrictive_and_unresolved": 0,
    "gradient_eligible_listwise": 0,
+   "top_source": null,
+   "single_source": false,
+   "licence_single_point": false,
    "flags": [
     "unsupported"
    ]
   },
   "Ranking": {
    "definition": "Order items by semantic relevance or quality.",
+   "cookbook": "demonstrated (Re-ranking; Skill suggestion top-3 rerank)",
    "total": 0,
    "share": 0.0,
    "by_type": {
@@ -275,12 +332,16 @@
    "after_exclude_restrictive": 0,
    "after_exclude_restrictive_and_unresolved": 0,
    "gradient_eligible_listwise": 0,
+   "top_source": null,
+   "single_source": false,
+   "licence_single_point": false,
    "flags": [
     "unsupported"
    ]
   },
   "Verification": {
    "definition": "Check an artifact for specific failure modes.",
+   "cookbook": "demonstrated (Double-checking citations; SDE cascade field checks)",
    "total": 32532,
    "share": 0.133675,
    "by_type": {
@@ -302,10 +363,20 @@
    "after_exclude_restrictive": 15730,
    "after_exclude_restrictive_and_unresolved": 14871,
    "gradient_eligible_listwise": 2762,
+   "top_source": {
+    "name": "synthetic",
+    "records": 10717,
+    "share": 0.329429,
+    "licence_group": "multirc",
+    "licence_verdict": "restrictive"
+   },
+   "single_source": false,
+   "licence_single_point": false,
    "flags": []
   },
   "ML Feature Extraction": {
    "definition": "Extract probabilistic signals for a downstream classical model.",
+   "cookbook": "demonstrated (Autoresearch feature discovery: free text to numeric features for a CatBoost regressor)",
    "total": 0,
    "share": 0.0,
    "by_type": {
@@ -323,12 +394,16 @@
    "after_exclude_restrictive": 0,
    "after_exclude_restrictive_and_unresolved": 0,
    "gradient_eligible_listwise": 0,
+   "top_source": null,
+   "single_source": false,
+   "licence_single_point": false,
    "flags": [
     "unsupported"
    ]
   },
   "Structured Data Extraction": {
    "definition": "Recover known fields from unstructured input.",
+   "cookbook": "demonstrated (SDE cascade; Date extraction; Pre-parsed value extraction; Shopping cart)",
    "total": 6586,
    "share": 0.027062,
    "by_type": {
@@ -350,7 +425,19 @@
    "after_exclude_restrictive": 11,
    "after_exclude_restrictive_and_unresolved": 9,
    "gradient_eligible_listwise": 6578,
-   "flags": []
+   "top_source": {
+    "name": "apigen_tool_argument",
+    "records": 6575,
+    "share": 0.99833,
+    "licence_group": "apigen",
+    "licence_verdict": "restrictive"
+   },
+   "single_source": true,
+   "licence_single_point": true,
+   "flags": [
+    "single_source",
+    "licence_single_point"
+   ]
   }
  },
  "label_methods": {

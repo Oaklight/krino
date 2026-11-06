@@ -10,7 +10,12 @@ script adds three fields to each record and writes the labelled corpus:
 
 It also writes a coverage report: the ability x question-form matrix, each
 ability's count, share, licence-exclusion counts, label-method split, and the
-flags the issue asks for (under 2,000 records, model-only, unsupported).
+flags the issue asks for (under 2,000 records, model-only, unsupported).  Two
+more flags mark single-source abilities (at least 90% of records from one
+source) and licence single points (that source is not permissive), so a
+6,000-record ability that is one licence decision from zero is not read as
+6,000 records of coverage.  ``--predictions`` joins a per-item prediction file
+to the labels and adds accuracy and chance-corrected accuracy by ability.
 
 Gradient eligibility is reported separately because the listwise and pairwise
 trainers filter ``TRAINED_TYPES = ("choice", "score")`` and therefore take no
@@ -53,6 +58,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from data.abilities import (
     ABILITIES,
+    ABILITY_COOKBOOK,
     ABILITY_DEFINITIONS,
     LABEL_METHODS,
     MODEL,
@@ -62,6 +68,7 @@ from data.abilities import (
 from scripts.build_canonical_corpus import licence_group
 
 MIN_RECORDS_FLAG = 2000
+SINGLE_SOURCE_SHARE = 0.9
 EXCLUSION_BUILDS = ("exclude_restrictive", "exclude_restrictive_and_unresolved")
 
 
@@ -136,6 +143,12 @@ class Coverage:
         self.methods: collections.Counter[str] = collections.Counter()
         self.rules: collections.Counter[str] = collections.Counter()
         self.sources: dict[str, dict[str, Any]] = {}
+        self.ability_sources: dict[str, collections.Counter[str]] = {
+            ability: collections.Counter() for ability in ABILITIES
+        }
+        self.ability_groups: dict[str, collections.Counter[str]] = {
+            ability: collections.Counter() for ability in ABILITIES
+        }
         self.verdicts: collections.Counter[str] = collections.Counter()
         self.types: collections.Counter[str] = collections.Counter()
         self.small_option_items: collections.Counter[str] = collections.Counter()
@@ -158,6 +171,8 @@ class Coverage:
         self.matrix[ability]["total"] += 1
         self.by_method[ability][method] += 1
         self.by_verdict[ability][verdict] += 1
+        self.ability_sources[ability][source] += 1
+        self.ability_groups[ability][group] += 1
         if selective:
             self.selective_prediction[ability] += 1
         for build in EXCLUSION_BUILDS:
@@ -199,8 +214,30 @@ class Coverage:
                 flags.append("model_only")
             if total > 0 and self.gradient[ability] == 0:
                 flags.append("no_listwise_gradient")
+            top_source = None
+            single_source = False
+            licence_single_point = False
+            if total:
+                source, source_records = self.ability_sources[ability].most_common(1)[0]
+                share = source_records / total
+                single_source = share >= SINGLE_SOURCE_SHARE
+                group, _ = self.ability_groups[ability].most_common(1)[0]
+                verdict = str(self.groups[group].get("verdict") or "unknown")
+                licence_single_point = single_source and verdict != "permissive"
+                top_source = {
+                    "name": source,
+                    "records": source_records,
+                    "share": round(share, 6),
+                    "licence_group": group,
+                    "licence_verdict": verdict,
+                }
+                if single_source:
+                    flags.append("single_source")
+                if licence_single_point:
+                    flags.append("licence_single_point")
             abilities[ability] = {
                 "definition": ABILITY_DEFINITIONS[ability],
+                "cookbook": ABILITY_COOKBOOK[ability],
                 "total": total,
                 "share": round(total / self.total, 6) if self.total else 0.0,
                 "by_type": {
@@ -220,6 +257,9 @@ class Coverage:
                 "after_exclude_restrictive_and_unresolved": total
                 - self.excluded["exclude_restrictive_and_unresolved"][ability],
                 "gradient_eligible_listwise": self.gradient[ability],
+                "top_source": top_source,
+                "single_source": single_source,
+                "licence_single_point": licence_single_point,
                 "flags": flags,
             }
 
@@ -380,6 +420,77 @@ def score_handcheck(path: Path, out: Path | None) -> dict[str, Any]:
     return report
 
 
+def score_predictions(path: Path, id_to_ability: dict[str, str]) -> dict[str, Any]:
+    """Join per-item predictions to abilities and report accuracy.
+
+    Each prediction row needs ``id`` and either ``correct`` or a matching
+    ``gold``/``pred`` pair.  ``n_options`` is used for the chance correction;
+    a noul defaults to two options and a score item with no ``n_options`` is
+    counted in accuracy but not in the chance-corrected mean.
+    """
+    by_ability: dict[str, dict[str, Any]] = {}
+    by_type: dict[str, dict[str, Any]] = {}
+    matched = 0
+    unmatched = 0
+    for row in read_jsonl(path):
+        record_id = str(row.get("id") or "")
+        ability = id_to_ability.get(record_id)
+        if ability is None:
+            unmatched += 1
+            continue
+        matched += 1
+        q_type = str(row.get("q_type") or "unknown")
+        correct = row.get("correct")
+        if correct is None:
+            correct = row.get("gold") == row.get("pred")
+        correct = bool(correct)
+        n_options = row.get("n_options")
+        if n_options is None and q_type == "noul":
+            n_options = 2
+        chance = 1.0 / n_options if n_options and n_options >= 2 else None
+        corrected = (
+            ((1.0 if correct else 0.0) - chance) / (1.0 - chance)
+            if chance is not None
+            else None
+        )
+        for bucket in (
+            by_ability.setdefault(ability, {"n": 0, "correct": 0, "chance": []}),
+            by_type.setdefault(q_type, {"n": 0, "correct": 0, "chance": []}),
+        ):
+            bucket["n"] += 1
+            bucket["correct"] += 1 if correct else 0
+            if corrected is not None:
+                bucket["chance"].append(corrected)
+
+    def summarise(bucket: dict[str, Any]) -> dict[str, Any]:
+        n = bucket["n"]
+        chance = bucket["chance"]
+        return {
+            "n": n,
+            "accuracy": round(bucket["correct"] / n, 6) if n else 0.0,
+            "chance_corrected": (
+                round(sum(chance) / len(chance), 6) if chance else None
+            ),
+            "chance_corrected_n": len(chance),
+        }
+
+    return {
+        "path": str(path),
+        "matched": matched,
+        "unmatched": unmatched,
+        "metric": (
+            "chance_corrected = mean((correct - 1/K) / (1 - 1/K)); "
+            "noul K=2 unless n_options is given"
+        ),
+        "by_ability": {
+            ability: summarise(bucket) for ability, bucket in sorted(by_ability.items())
+        },
+        "by_type": {
+            q_type: summarise(bucket) for q_type, bucket in sorted(by_type.items())
+        },
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--canonical", type=Path, default=None)
@@ -394,6 +505,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, default=247)
     parser.add_argument("--handcheck", type=Path, default=None)
     parser.add_argument("--handcheck-out", type=Path, default=None)
+    parser.add_argument("--predictions", type=Path, default=None)
     args = parser.parse_args(argv)
 
     if args.handcheck is not None:
@@ -416,6 +528,7 @@ def main(argv: list[str] | None = None) -> int:
         None if args.map_out is None else args.map_out.open("w", encoding="utf-8")
     )
     seen_ids: set[str] = set()
+    id_to_ability: dict[str, str] = {}
     duplicate_ids: set[str] = set()
     unknown: collections.Counter[str] = collections.Counter()
     try:
@@ -434,6 +547,7 @@ def main(argv: list[str] | None = None) -> int:
             item["ability"] = ability
             item["label_method"] = method
             item["ability_rule"] = rule
+            id_to_ability[item_id] = ability
             coverage.add(item, ability, method, rule)
             if handle is not None:
                 handle.write(json.dumps(item, ensure_ascii=False) + "\n")
@@ -470,6 +584,8 @@ def main(argv: list[str] | None = None) -> int:
 
     report = coverage.report(args.canonical, canonical_sha256)
     report["unknown_sources"] = []
+    if args.predictions is not None:
+        report["eval"] = score_predictions(args.predictions, id_to_ability)
     if args.map_out is not None:
         map_sha256 = _file_sha256(args.map_out)
         args.map_out.with_name(args.map_out.name + ".sha256").write_text(

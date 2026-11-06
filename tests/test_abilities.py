@@ -28,6 +28,7 @@ from scripts.label_abilities import (
     main,
     option_count,
     score_handcheck,
+    score_predictions,
 )
 
 
@@ -256,6 +257,12 @@ def test_coverage_counts_exclusions_and_gradient():
     assert report["matrix"][CLASSIFICATION]["total"] == 1
     assert report["abilities"][CLASSIFICATION]["after_exclude_restrictive"] == 1
     assert report["abilities"][VERIFICATION]["after_exclude_restrictive"] == 0
+    assert report["abilities"][CLASSIFICATION]["single_source"] is True
+    assert report["abilities"][CLASSIFICATION]["licence_single_point"] is False
+    assert report["abilities"][VERIFICATION]["licence_single_point"] is True
+    assert "single_source" in report["abilities"][VERIFICATION]["flags"]
+    assert "licence_single_point" in report["abilities"][VERIFICATION]["flags"]
+    assert report["abilities"][CLASSIFICATION]["cookbook"].startswith("demonstrated")
     assert report["abilities"][VERIFICATION]["gradient_eligible_listwise"] == 0
     assert "under_2000" in report["abilities"][CLASSIFICATION]["flags"]
     assert "no_listwise_gradient" in report["abilities"][VERIFICATION]["flags"]
@@ -328,6 +335,29 @@ def test_labeler_end_to_end(tmp_path: Path):
     )
     assert report["sidecar"]["records"] == 2
     assert report["label_methods"] == {"source_rule": 2, "heuristic": 0, "model": 0}
+
+
+def test_score_predictions_joins_by_id(tmp_path: Path):
+    predictions = tmp_path / "predictions.jsonl"
+    rows = [
+        {"id": "b-1", "q_type": "choice", "n_options": 4, "correct": True},
+        {"id": "b-1", "q_type": "choice", "n_options": 4, "correct": False},
+        {"id": "a-1", "q_type": "noul", "correct": True},
+        {"id": "not-in-corpus", "q_type": "noul", "correct": True},
+    ]
+    predictions.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8"
+    )
+    report = score_predictions(
+        predictions, {"b-1": CLASSIFICATION, "a-1": VERIFICATION}
+    )
+    assert report["matched"] == 3
+    assert report["unmatched"] == 1
+    assert report["by_ability"][CLASSIFICATION]["accuracy"] == 0.5
+    assert report["by_ability"][CLASSIFICATION]["chance_corrected"] == pytest.approx(
+        ((1 - 0.25) / 0.75 + (0 - 0.25) / 0.75) / 2, abs=1e-6
+    )
+    assert report["by_ability"][VERIFICATION]["chance_corrected"] == 1.0
 
 
 def test_labeler_rejects_duplicate_ids(tmp_path: Path):

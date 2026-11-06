@@ -55,6 +55,34 @@ ABILITY_DEFINITIONS: dict[str, str] = {
     STRUCTURED_DATA_EXTRACTION: ("Recover known fields from unstructured input."),
 }
 
+# Whether the public cookbooks demonstrate the ability as the model's job.
+# This decides how to read a zero row: a demonstrated ability is a real gap,
+# an ability the cookbooks leave to code is not.  Checked against
+# https://docs.typesafe.ai/cookbooks on 2026-11-06.
+ABILITY_COOKBOOK: dict[str, str] = {
+    CLASSIFICATION: "demonstrated (Hierarchical classification)",
+    DETECTION: "demonstrated (Twitch chat filter; Guardrails for LLMs)",
+    SCORING: "demonstrated (Re-ranking; Intelliprompter; entity alignment)",
+    ROUTING: "demonstrated (Function calling; Skill suggestion)",
+    SEARCH: "demonstrated (Line-by-line search)",
+    RETRIEVAL: (
+        "not demonstrated as the model's job; cookbooks retrieve in code "
+        "(BM25 shortlists) and ask Jev to score or rank the candidates"
+    ),
+    RANKING: "demonstrated (Re-ranking; Skill suggestion top-3 rerank)",
+    VERIFICATION: (
+        "demonstrated (Double-checking citations; SDE cascade field checks)"
+    ),
+    ML_FEATURE_EXTRACTION: (
+        "demonstrated (Autoresearch feature discovery: free text to numeric "
+        "features for a CatBoost regressor)"
+    ),
+    STRUCTURED_DATA_EXTRACTION: (
+        "demonstrated (SDE cascade; Date extraction; Pre-parsed value "
+        "extraction; Shopping cart)"
+    ),
+}
+
 SOURCE_RULE = "source_rule"
 HEURISTIC = "heuristic"
 MODEL = "model"
