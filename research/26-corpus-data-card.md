@@ -149,8 +149,9 @@ until it lands, paraphrase and near-duplicate pairs may cross the canonical set.
 
 ## Terms and licences
 
-**ANLI is CC BY-NC 4.0 (non-commercial).** The canonical corpus contains at least
-1,239 ANLI-derived records:
+**ANLI is CC BY-NC 4.0 (non-commercial).** It is the only source in this corpus
+with a verified non-permissive term. The canonical corpus contains at least 1,239
+ANLI-derived records:
 
 - 473 in target 30K (`source: anli`);
 - 568 in residual 20K (`source: anli`);
@@ -162,7 +163,21 @@ source, so an ANLI state can also appear on a record whose `source` is not
 non-commercial use unless separately cleared, and must be removed or cleared
 before any commercial use.
 
-The other benchmark conversions have not had a licence audit in this workstream.
+Everything else is **not audited**, not cleared. Absence of a term in this table
+does not mean a permissive licence.
+
+| source group | canonical records | status |
+|---|---:|---|
+| `anli` | >= 1,239 | CC BY-NC 4.0, non-commercial |
+| `apigen` (APIGen-MT-5k) | 16,081 | not audited |
+| `typed_decisions` | 7,335 | not audited |
+| `openjev_authored144` | 37 | not audited |
+| synthetic | 151,817 | project-generated; the seeded domains draw states from MedNLI, ContractNLI, TabFact, ARC, CodeSearchNet and FEVER, whose terms are not audited |
+| `mmlu_pro` | 9,965 | not audited |
+| long-context (`hotpotqa`, `musique`, `longbench`, `2wiki`) | 1,670 | not audited |
+| `race_short` | 144 | not audited |
+| remaining conversions: `multirc`, `contractnli`, `mednli`, `mnli`, `commonsenseqa`, `sst5`, `stsb`, `logiqa`, `banking77`, `agnews`, `race`, `hellaswag`, `swag`, `fever`, `mmlu`, `winogrande`, `piqa`, `sst2`, `tabfact`, `boolq`, `yelp`, `arc`, `codesearchnet` | not counted separately | not audited |
+
 `research/28-decision-index-suite-licences.md` (#239) records the decision-index
 suite's terms and is the closest existing reference; it does not cover every
 corpus here. Treat this section as the constraint that is known, not as a
