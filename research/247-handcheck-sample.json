@@ -1,0 +1,718 @@
+{
+ "seed": 247,
+ "per_ability": 10,
+ "abilities": [
+  "Classification",
+  "Detection",
+  "Scoring",
+  "Routing",
+  "Search",
+  "Retrieval",
+  "Ranking",
+  "Verification",
+  "ML Feature Extraction",
+  "Structured Data Extraction"
+ ],
+ "records": [
+  {
+   "id": "synthetic-passage_decision-0056-para-state-choice-2",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "What best describes the texture of the scallop meat as mentioned in the passage?",
+   "classifier_ability": "Classification",
+   "label_method": "heuristic",
+   "rule": "type_default:choice:passage_decision",
+   "human_ability": "Classification"
+  },
+  {
+   "id": "synthetic-scientific_reasoning-0116-neg-noul-temporal",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Does the production of glucose during photosynthesis not occur before oxygen is released as a byproduct in the light-dependent reactions?",
+   "classifier_ability": "Classification",
+   "label_method": "heuristic",
+   "rule": "type_default:noul:scientific_reasoning",
+   "human_ability": "Classification"
+  },
+  {
+   "id": "synthetic-resource_management-0017-para-q-noul-safety",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Would delaying Beta\u2019s fabrication start beyond one week expose the company to significant monetary penalties?",
+   "classifier_ability": "Classification",
+   "label_method": "heuristic",
+   "rule": "type_default:noul:resource_management",
+   "human_ability": "Classification"
+  },
+  {
+   "id": "swag-train-42281",
+   "source": "swag",
+   "question_type": "choice",
+   "instructions": "Which ending most naturally completes the sentence?",
+   "classifier_ability": "Classification",
+   "label_method": "source_rule",
+   "rule": "upstream_source:swag",
+   "human_ability": "Classification"
+  },
+  {
+   "id": "synthetic-legal_judgment-0036-para-state-noul-classification",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Does information that was publicly available before the Company disclosed it to the Contractor qualify as 'Confidential Information' under this Agreement?",
+   "classifier_ability": "Classification",
+   "label_method": "heuristic",
+   "rule": "type_default:noul:legal_judgment",
+   "human_ability": "Classification"
+  },
+  {
+   "id": "logiqa-train-06042-abstain-none_of_these",
+   "source": "logiqa",
+   "question_type": "choice",
+   "instructions": "Which answer is correct based on logical reasoning?",
+   "classifier_ability": "Classification",
+   "label_method": "source_rule",
+   "rule": "upstream_source:logiqa",
+   "human_ability": "Classification"
+  },
+  {
+   "id": "synthetic-resource_management-0003-para-state-noul-possibility",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Is it feasible to run Project Alpha and Project Delta simultaneously from the start of the current sprint without violating the stated crane equipment dependency constraint?",
+   "classifier_ability": "Classification",
+   "label_method": "heuristic",
+   "rule": "type_default:noul:resource_management",
+   "human_ability": "Classification"
+  },
+  {
+   "id": "synthetic-content_analysis-0010-para-state-noul-causal",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Does the evidence suggest that Rob Lowe's less prominent film roles directly caused him to transition to high-profile television roles?",
+   "classifier_ability": "Classification",
+   "label_method": "heuristic",
+   "rule": "type_default:noul:content_analysis",
+   "human_ability": "Verification"
+  },
+  {
+   "id": "synthetic-safety_moderation-0125-para-q-noul-classification",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Is this post directed as a personal criticism toward a specific, named private person rather than aimed at a company or someone in the public eye?",
+   "classifier_ability": "Classification",
+   "label_method": "heuristic",
+   "rule": "type_default:noul:safety_moderation",
+   "human_ability": "Classification"
+  },
+  {
+   "id": "hellaswag-train-28926-abstain-none_of_these",
+   "source": "hellaswag",
+   "question_type": "choice",
+   "instructions": "Which ending most naturally completes the context?",
+   "classifier_ability": "Classification",
+   "label_method": "source_rule",
+   "rule": "upstream_source:hellaswag",
+   "human_ability": "Classification"
+  },
+  {
+   "id": "synthetic-code_review-0156-cf-choice-0",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "What type of issue, if any, is present in this code?",
+   "classifier_ability": "Detection",
+   "label_method": "source_rule",
+   "rule": "synthetic_template",
+   "human_ability": "Detection"
+  },
+  {
+   "id": "synthetic-academic_reasoning-0178-cf-choice-0",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "What type of reasoning error, if any, is present in this question's common wrong answers?",
+   "classifier_ability": "Detection",
+   "label_method": "source_rule",
+   "rule": "synthetic_template",
+   "human_ability": "Detection"
+  },
+  {
+   "id": "typed_decisions-train-00925-credential_compromise",
+   "source": "typed_decisions",
+   "question_type": "noul",
+   "instructions": "The evidence indicates a credential or account has been compromised.",
+   "classifier_ability": "Detection",
+   "label_method": "source_rule",
+   "rule": "typed_instruction",
+   "human_ability": "Detection"
+  },
+  {
+   "id": "synthetic-academic_reasoning-0142-para-state-choice-0",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "What type of reasoning error, if any, is present in this question's common wrong answers?",
+   "classifier_ability": "Detection",
+   "label_method": "source_rule",
+   "rule": "synthetic_template",
+   "human_ability": "Detection"
+  },
+  {
+   "id": "synthetic-education_assessment-0137-choice-0",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "What is the primary issue with this student's response?",
+   "classifier_ability": "Detection",
+   "label_method": "source_rule",
+   "rule": "synthetic_template",
+   "human_ability": "Detection"
+  },
+  {
+   "id": "synthetic-academic_reasoning-0049-choice-0",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "What type of reasoning error, if any, is present in this question's common wrong answers?",
+   "classifier_ability": "Detection",
+   "label_method": "source_rule",
+   "rule": "synthetic_template",
+   "human_ability": "Detection"
+  },
+  {
+   "id": "synthetic-code_review-0124-cf-choice-0",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "What type of issue, if any, is present in this code?",
+   "classifier_ability": "Detection",
+   "label_method": "source_rule",
+   "rule": "synthetic_template",
+   "human_ability": "Detection"
+  },
+  {
+   "id": "synthetic-academic_reasoning-0026-choice-0",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "What type of reasoning error, if any, is present in this question's common wrong answers?",
+   "classifier_ability": "Detection",
+   "label_method": "source_rule",
+   "rule": "synthetic_template",
+   "human_ability": "Detection"
+  },
+  {
+   "id": "typed_decisions-train-00888-duplicate",
+   "source": "typed_decisions",
+   "question_type": "noul",
+   "instructions": "This invoice appears to duplicate an invoice already submitted.",
+   "classifier_ability": "Detection",
+   "label_method": "source_rule",
+   "rule": "typed_instruction",
+   "human_ability": "Detection"
+  },
+  {
+   "id": "synthetic-safety_moderation-0060-para-state-choice-1",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "What is the primary type of policy concern present in this content?",
+   "classifier_ability": "Detection",
+   "label_method": "heuristic",
+   "rule": "pattern:detection:safety_moderation",
+   "human_ability": "Detection"
+  },
+  {
+   "id": "synthetic-financial_analysis-0049-score-1",
+   "source": "synthetic",
+   "question_type": "score",
+   "instructions": "Rate the consistency of fan attendance revenue across the six games of the 1953 season.",
+   "classifier_ability": "Scoring",
+   "label_method": "source_rule",
+   "rule": "question_type:score",
+   "human_ability": "Scoring"
+  },
+  {
+   "id": "synthetic-medical_triage-0037-score-0",
+   "source": "synthetic",
+   "question_type": "score",
+   "instructions": "Rate the clinical urgency of this presentation.",
+   "classifier_ability": "Scoring",
+   "label_method": "source_rule",
+   "rule": "question_type:score",
+   "human_ability": "Scoring"
+  },
+  {
+   "id": "synthetic-content_analysis-0126-cf-score-0",
+   "source": "synthetic",
+   "question_type": "score",
+   "instructions": "Rate the expected audience engagement level of this content.",
+   "classifier_ability": "Scoring",
+   "label_method": "source_rule",
+   "rule": "question_type:score",
+   "human_ability": "Scoring"
+  },
+  {
+   "id": "synthetic-logical_inference-0073-score-0",
+   "source": "synthetic",
+   "question_type": "score",
+   "instructions": "Rate the strength of the argument.",
+   "classifier_ability": "Scoring",
+   "label_method": "source_rule",
+   "rule": "question_type:score",
+   "human_ability": "Scoring"
+  },
+  {
+   "id": "synthetic-multi_agent_coordination-0198-cf-score-0",
+   "source": "synthetic",
+   "question_type": "score",
+   "instructions": "Rate the team's overall coordination effectiveness.",
+   "classifier_ability": "Scoring",
+   "label_method": "source_rule",
+   "rule": "question_type:score",
+   "human_ability": "Scoring"
+  },
+  {
+   "id": "synthetic-numerical_reasoning-0008-para-state-score-0",
+   "source": "synthetic",
+   "question_type": "score",
+   "instructions": "Rate the computational complexity of the numerical reasoning.",
+   "classifier_ability": "Scoring",
+   "label_method": "source_rule",
+   "rule": "question_type:score",
+   "human_ability": "Scoring"
+  },
+  {
+   "id": "synthetic-academic_reasoning-0172-score-1",
+   "source": "synthetic",
+   "question_type": "score",
+   "instructions": "Rate the emotional complexity conveyed in the passage.",
+   "classifier_ability": "Scoring",
+   "label_method": "source_rule",
+   "rule": "question_type:score",
+   "human_ability": "Scoring"
+  },
+  {
+   "id": "stsb-train-03812",
+   "source": "stsb",
+   "question_type": "score",
+   "instructions": "How semantically similar are these two sentences?",
+   "classifier_ability": "Scoring",
+   "label_method": "source_rule",
+   "rule": "question_type:score",
+   "human_ability": "Scoring"
+  },
+  {
+   "id": "synthetic-game_strategy-0035-cf-score-0",
+   "source": "synthetic",
+   "question_type": "score",
+   "instructions": "Rate the current player's winning probability given the game state.",
+   "classifier_ability": "Scoring",
+   "label_method": "source_rule",
+   "rule": "question_type:score",
+   "human_ability": "Scoring"
+  },
+  {
+   "id": "sst5-train-05849",
+   "source": "sst5",
+   "question_type": "score",
+   "instructions": "What is the sentiment of this sentence?",
+   "classifier_ability": "Scoring",
+   "label_method": "source_rule",
+   "rule": "question_type:score",
+   "human_ability": "Scoring"
+  },
+  {
+   "id": "typed_decisions-train-00234-needs_review",
+   "source": "typed_decisions",
+   "question_type": "noul",
+   "instructions": "This trace requires human review.",
+   "classifier_ability": "Routing",
+   "label_method": "source_rule",
+   "rule": "typed_instruction",
+   "human_ability": "Routing"
+  },
+  {
+   "id": "synthetic-navigation_planning-0135-para-state-choice-0",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "Which navigation strategy should be used next?",
+   "classifier_ability": "Routing",
+   "label_method": "source_rule",
+   "rule": "synthetic_template",
+   "human_ability": "Routing"
+  },
+  {
+   "id": "apigen-next-01042",
+   "source": "apigen_tool_next_action",
+   "question_type": "choice",
+   "instructions": "What should the agent do next? Choose exactly one action. Calling a tool, answering directly, asking for missing information, and refusing or escalating are different judgments.",
+   "classifier_ability": "Routing",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_next_action",
+   "human_ability": "Routing"
+  },
+  {
+   "id": "synthetic-spatial_reasoning-0165-shuffle-choice-1",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "A visitor standing at 'The Titan' wants to face the 'Ancient Coins' display case directly. Which direction must they turn to face it?",
+   "classifier_ability": "Routing",
+   "label_method": "heuristic",
+   "rule": "pattern:routing:spatial_reasoning",
+   "human_ability": "Routing"
+  },
+  {
+   "id": "apigen-next-04295",
+   "source": "apigen_tool_next_action",
+   "question_type": "choice",
+   "instructions": "What should the agent do next? Choose exactly one action. Calling a tool, answering directly, asking for missing information, and refusing or escalating are different judgments.",
+   "classifier_ability": "Routing",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_next_action",
+   "human_ability": "Routing"
+  },
+  {
+   "id": "synthetic-financial_analysis-0073-cf-choice-0",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "What investment action is most appropriate given this analysis?",
+   "classifier_ability": "Routing",
+   "label_method": "source_rule",
+   "rule": "synthetic_template",
+   "human_ability": "Routing"
+  },
+  {
+   "id": "synthetic-sequential_action-0097-choice-0",
+   "source": "synthetic",
+   "question_type": "choice",
+   "instructions": "What should the next action be?",
+   "classifier_ability": "Routing",
+   "label_method": "source_rule",
+   "rule": "synthetic_template",
+   "human_ability": "Routing"
+  },
+  {
+   "id": "apigen-next-03911",
+   "source": "apigen_tool_next_action",
+   "question_type": "choice",
+   "instructions": "What should the agent do next? Choose exactly one action. Calling a tool, answering directly, asking for missing information, and refusing or escalating are different judgments.",
+   "classifier_ability": "Routing",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_next_action",
+   "human_ability": "Routing"
+  },
+  {
+   "id": "apigen-action-00057",
+   "source": "apigen_tool_action",
+   "question_type": "choice",
+   "instructions": "What should the agent do next? Choose exactly one action. Calling a tool, answering directly, asking for missing information, and refusing or escalating are different judgments.",
+   "classifier_ability": "Routing",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_action",
+   "human_ability": "Routing"
+  },
+  {
+   "id": "apigen-next-04035",
+   "source": "apigen_tool_next_action",
+   "question_type": "choice",
+   "instructions": "What should the agent do next? Choose exactly one action. Calling a tool, answering directly, asking for missing information, and refusing or escalating are different judgments.",
+   "classifier_ability": "Routing",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_next_action",
+   "human_ability": "Routing"
+  },
+  {
+   "id": "codesearchnet-java-train-02994-abstain-none_of_these",
+   "source": "codesearchnet",
+   "question_type": "choice",
+   "instructions": "Which java code snippet correctly implements the described functionality?",
+   "classifier_ability": "Search",
+   "label_method": "source_rule",
+   "rule": "upstream_source:codesearchnet",
+   "human_ability": "Search"
+  },
+  {
+   "id": "codesearchnet-python-train-01167",
+   "source": "codesearchnet",
+   "question_type": "choice",
+   "instructions": "Which python code snippet correctly implements the described functionality?",
+   "classifier_ability": "Search",
+   "label_method": "source_rule",
+   "rule": "upstream_source:codesearchnet",
+   "human_ability": "Search"
+  },
+  {
+   "id": "codesearchnet-javascript-train-00273",
+   "source": "codesearchnet",
+   "question_type": "choice",
+   "instructions": "Which javascript code snippet correctly implements the described functionality?",
+   "classifier_ability": "Search",
+   "label_method": "source_rule",
+   "rule": "upstream_source:codesearchnet",
+   "human_ability": "Search"
+  },
+  {
+   "id": "codesearchnet-python-train-00064",
+   "source": "codesearchnet",
+   "question_type": "choice",
+   "instructions": "Which python code snippet correctly implements the described functionality?",
+   "classifier_ability": "Search",
+   "label_method": "source_rule",
+   "rule": "upstream_source:codesearchnet",
+   "human_ability": "Search"
+  },
+  {
+   "id": "codesearchnet-java-train-00976",
+   "source": "codesearchnet",
+   "question_type": "choice",
+   "instructions": "Which java code snippet correctly implements the described functionality?",
+   "classifier_ability": "Search",
+   "label_method": "source_rule",
+   "rule": "upstream_source:codesearchnet",
+   "human_ability": "Search"
+  },
+  {
+   "id": "codesearchnet-python-train-02994-abstain-none_of_these",
+   "source": "codesearchnet",
+   "question_type": "choice",
+   "instructions": "Which python code snippet correctly implements the described functionality?",
+   "classifier_ability": "Search",
+   "label_method": "source_rule",
+   "rule": "upstream_source:codesearchnet",
+   "human_ability": "Search"
+  },
+  {
+   "id": "codesearchnet-javascript-train-00500",
+   "source": "codesearchnet",
+   "question_type": "choice",
+   "instructions": "Which javascript code snippet correctly implements the described functionality?",
+   "classifier_ability": "Search",
+   "label_method": "source_rule",
+   "rule": "upstream_source:codesearchnet",
+   "human_ability": "Search"
+  },
+  {
+   "id": "codesearchnet-javascript-train-01672",
+   "source": "codesearchnet",
+   "question_type": "choice",
+   "instructions": "Which javascript code snippet correctly implements the described functionality?",
+   "classifier_ability": "Search",
+   "label_method": "source_rule",
+   "rule": "upstream_source:codesearchnet",
+   "human_ability": "Search"
+  },
+  {
+   "id": "codesearchnet-python-train-01873",
+   "source": "codesearchnet",
+   "question_type": "choice",
+   "instructions": "Which python code snippet correctly implements the described functionality?",
+   "classifier_ability": "Search",
+   "label_method": "source_rule",
+   "rule": "upstream_source:codesearchnet",
+   "human_ability": "Search"
+  },
+  {
+   "id": "codesearchnet-java-train-00274",
+   "source": "codesearchnet",
+   "question_type": "choice",
+   "instructions": "Which java code snippet correctly implements the described functionality?",
+   "classifier_ability": "Search",
+   "label_method": "source_rule",
+   "rule": "upstream_source:codesearchnet",
+   "human_ability": "Search"
+  },
+  {
+   "id": "synthetic-resource_management-0065-noul-entailment",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Does the project history support the claim that a balanced equal-split allocation strategy is effective for this team?",
+   "classifier_ability": "Verification",
+   "label_method": "heuristic",
+   "rule": "pattern:verification:resource_management",
+   "human_ability": "Verification"
+  },
+  {
+   "id": "mnli-train-308273",
+   "source": "mnli",
+   "question_type": "noul",
+   "instructions": "Does the premise entail the hypothesis?",
+   "classifier_ability": "Verification",
+   "label_method": "source_rule",
+   "rule": "upstream_source:mnli",
+   "human_ability": "Verification"
+  },
+  {
+   "id": "mednli-train-09578",
+   "source": "mednli",
+   "question_type": "noul",
+   "instructions": "Does the premise entail the hypothesis?",
+   "classifier_ability": "Verification",
+   "label_method": "source_rule",
+   "rule": "upstream_source:mednli",
+   "human_ability": "Verification"
+  },
+  {
+   "id": "mnli-train-267852",
+   "source": "mnli",
+   "question_type": "noul",
+   "instructions": "Does the premise entail the hypothesis?",
+   "classifier_ability": "Verification",
+   "label_method": "source_rule",
+   "rule": "upstream_source:mnli",
+   "human_ability": "Verification"
+  },
+  {
+   "id": "synthetic-logical_inference-0130-cf-noul-sufficiency",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Is the information provided sufficient to conclude that the majority of people with senior technical titles are women?",
+   "classifier_ability": "Verification",
+   "label_method": "heuristic",
+   "rule": "pattern:evidence_sufficiency:logical_inference",
+   "human_ability": "Verification"
+  },
+  {
+   "id": "synthetic-commonsense_decision-0060-neg-noul-sufficiency",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Is the information that tiny shampoo bottles are found away from home insufficient to conclude they are typically provided by hotels?",
+   "classifier_ability": "Verification",
+   "label_method": "heuristic",
+   "rule": "pattern:evidence_sufficiency:commonsense_decision",
+   "human_ability": "Verification"
+  },
+  {
+   "id": "synthetic-numerical_reasoning-0091-para-state-noul-sufficiency",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Is there enough information in the state to determine the exact dollar value of Bangkok's contribution to Thailand's overall GDP?",
+   "classifier_ability": "Verification",
+   "label_method": "heuristic",
+   "rule": "pattern:evidence_sufficiency:numerical_reasoning",
+   "human_ability": "Verification"
+  },
+  {
+   "id": "synthetic-spatial_reasoning-0071-neg-noul-entailment",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Does the described layout support the claim that the Artifacts case is not closer to the main entrance than the Monolith is?",
+   "classifier_ability": "Verification",
+   "label_method": "heuristic",
+   "rule": "pattern:verification:spatial_reasoning",
+   "human_ability": "Verification"
+  },
+  {
+   "id": "multirc-train-18721",
+   "source": "multirc",
+   "question_type": "noul",
+   "instructions": "Is this answer correct for the given question and passage?",
+   "classifier_ability": "Verification",
+   "label_method": "source_rule",
+   "rule": "upstream_source:multirc",
+   "human_ability": "Verification"
+  },
+  {
+   "id": "synthetic-passage_decision-0176-para-state-noul-entailment",
+   "source": "synthetic",
+   "question_type": "noul",
+   "instructions": "Does the passage support the claim that juvenile executions in the United States began before the nation declared independence?",
+   "classifier_ability": "Verification",
+   "label_method": "heuristic",
+   "rule": "pattern:verification:passage_decision",
+   "human_ability": "Verification"
+  },
+  {
+   "id": "apigen-arg-01643-last_name",
+   "source": "apigen_tool_argument",
+   "question_type": "choice",
+   "instructions": "What value should the agent pass for the 'last_name' argument of the 'find_user_id_by_name_zip' tool? Choose exactly one value.",
+   "classifier_ability": "Structured Data Extraction",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_argument",
+   "human_ability": "Structured Data Extraction"
+  },
+  {
+   "id": "apigen-arg-04255-first_name",
+   "source": "apigen_tool_argument",
+   "question_type": "choice",
+   "instructions": "What value should the agent pass for the 'first_name' argument of the 'find_user_id_by_name_zip' tool? Choose exactly one value.",
+   "classifier_ability": "Structured Data Extraction",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_argument",
+   "human_ability": "Structured Data Extraction"
+  },
+  {
+   "id": "apigen-arg-01204-reservation_id",
+   "source": "apigen_tool_argument",
+   "question_type": "choice",
+   "instructions": "What value should the agent pass for the 'reservation_id' argument of the 'get_reservation_details' tool? Choose exactly one value.",
+   "classifier_ability": "Structured Data Extraction",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_argument",
+   "human_ability": "Structured Data Extraction"
+  },
+  {
+   "id": "apigen-arg-00466-reservation_id",
+   "source": "apigen_tool_argument",
+   "question_type": "choice",
+   "instructions": "What value should the agent pass for the 'reservation_id' argument of the 'get_reservation_details' tool? Choose exactly one value.",
+   "classifier_ability": "Structured Data Extraction",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_argument",
+   "human_ability": "Structured Data Extraction"
+  },
+  {
+   "id": "apigen-arg-03160-email",
+   "source": "apigen_tool_argument",
+   "question_type": "choice",
+   "instructions": "What value should the agent pass for the 'email' argument of the 'find_user_id_by_email' tool? Choose exactly one value.",
+   "classifier_ability": "Structured Data Extraction",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_argument",
+   "human_ability": "Structured Data Extraction"
+  },
+  {
+   "id": "apigen-arg-03361-email",
+   "source": "apigen_tool_argument",
+   "question_type": "choice",
+   "instructions": "What value should the agent pass for the 'email' argument of the 'find_user_id_by_email' tool? Choose exactly one value.",
+   "classifier_ability": "Structured Data Extraction",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_argument",
+   "human_ability": "Structured Data Extraction"
+  },
+  {
+   "id": "apigen-arg-04287-last_name",
+   "source": "apigen_tool_argument",
+   "question_type": "choice",
+   "instructions": "What value should the agent pass for the 'last_name' argument of the 'find_user_id_by_name_zip' tool? Choose exactly one value.",
+   "classifier_ability": "Structured Data Extraction",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_argument",
+   "human_ability": "Structured Data Extraction"
+  },
+  {
+   "id": "apigen-arg-03940-first_name",
+   "source": "apigen_tool_argument",
+   "question_type": "choice",
+   "instructions": "What value should the agent pass for the 'first_name' argument of the 'find_user_id_by_name_zip' tool? Choose exactly one value.",
+   "classifier_ability": "Structured Data Extraction",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_argument",
+   "human_ability": "Structured Data Extraction"
+  },
+  {
+   "id": "apigen-arg-02214-email",
+   "source": "apigen_tool_argument",
+   "question_type": "choice",
+   "instructions": "What value should the agent pass for the 'email' argument of the 'find_user_id_by_email' tool? Choose exactly one value.",
+   "classifier_ability": "Structured Data Extraction",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_argument",
+   "human_ability": "Structured Data Extraction"
+  },
+  {
+   "id": "apigen-arg-01117-reservation_id",
+   "source": "apigen_tool_argument",
+   "question_type": "choice",
+   "instructions": "What value should the agent pass for the 'reservation_id' argument of the 'get_reservation_details' tool? Choose exactly one value.",
+   "classifier_ability": "Structured Data Extraction",
+   "label_method": "source_rule",
+   "rule": "apigen_file:apigen_tool_argument",
+   "human_ability": "Structured Data Extraction"
+  }
+ ]
+}

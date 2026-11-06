@@ -1,0 +1,919 @@
+{
+ "generated_at": "2026-11-06T21:02:18Z",
+ "canonical": "krino-canonical-243366.jsonl",
+ "canonical_sha256": "07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53",
+ "canonical_records": 243366,
+ "taxonomy": [
+  {
+   "name": "Classification",
+   "definition": "One known category should win."
+  },
+  {
+   "name": "Detection",
+   "definition": "A probability that one property is present."
+  },
+  {
+   "name": "Scoring",
+   "definition": "The answer belongs on an ordered rubric."
+  },
+  {
+   "name": "Routing",
+   "definition": "A category selects the next code path."
+  },
+  {
+   "name": "Search",
+   "definition": "Find items that match a natural-language query."
+  },
+  {
+   "name": "Retrieval",
+   "definition": "Fetch the most relevant context or records for a workflow."
+  },
+  {
+   "name": "Ranking",
+   "definition": "Order items by semantic relevance or quality."
+  },
+  {
+   "name": "Verification",
+   "definition": "Check an artifact for specific failure modes."
+  },
+  {
+   "name": "ML Feature Extraction",
+   "definition": "Extract probabilistic signals for a downstream classical model."
+  },
+  {
+   "name": "Structured Data Extraction",
+   "definition": "Recover known fields from unstructured input."
+  }
+ ],
+ "matrix": {
+  "Classification": {
+   "noul": 81125,
+   "choice": 69446,
+   "score": 0,
+   "total": 150571
+  },
+  "Detection": {
+   "noul": 1782,
+   "choice": 2868,
+   "score": 0,
+   "total": 4650
+  },
+  "Scoring": {
+   "noul": 0,
+   "choice": 0,
+   "score": 29515,
+   "total": 29515
+  },
+  "Routing": {
+   "noul": 909,
+   "choice": 18124,
+   "score": 0,
+   "total": 19033
+  },
+  "Search": {
+   "noul": 0,
+   "choice": 479,
+   "score": 0,
+   "total": 479
+  },
+  "Retrieval": {
+   "noul": 0,
+   "choice": 0,
+   "score": 0,
+   "total": 0
+  },
+  "Ranking": {
+   "noul": 0,
+   "choice": 0,
+   "score": 0,
+   "total": 0
+  },
+  "Verification": {
+   "noul": 29770,
+   "choice": 2762,
+   "score": 0,
+   "total": 32532
+  },
+  "ML Feature Extraction": {
+   "noul": 0,
+   "choice": 0,
+   "score": 0,
+   "total": 0
+  },
+  "Structured Data Extraction": {
+   "noul": 8,
+   "choice": 6578,
+   "score": 0,
+   "total": 6586
+  }
+ },
+ "abilities": {
+  "Classification": {
+   "definition": "One known category should win.",
+   "total": 150571,
+   "share": 0.618702,
+   "by_type": {
+    "noul": 81125,
+    "choice": 69446,
+    "score": 0
+   },
+   "by_method": {
+    "source_rule": 45007,
+    "heuristic": 105564,
+    "model": 0
+   },
+   "by_licence_verdict": {
+    "permissive": 110675,
+    "restrictive": 18871,
+    "unresolved": 21025
+   },
+   "selective_prediction": 2519,
+   "after_exclude_restrictive": 131700,
+   "after_exclude_restrictive_and_unresolved": 110675,
+   "gradient_eligible_listwise": 69446,
+   "flags": []
+  },
+  "Detection": {
+   "definition": "A probability that one property is present.",
+   "total": 4650,
+   "share": 0.019107,
+   "by_type": {
+    "noul": 1782,
+    "choice": 2868,
+    "score": 0
+   },
+   "by_method": {
+    "source_rule": 3592,
+    "heuristic": 1058,
+    "model": 0
+   },
+   "by_licence_verdict": {
+    "permissive": 3684,
+    "restrictive": 96,
+    "unresolved": 870
+   },
+   "selective_prediction": 17,
+   "after_exclude_restrictive": 4554,
+   "after_exclude_restrictive_and_unresolved": 3684,
+   "gradient_eligible_listwise": 2868,
+   "flags": []
+  },
+  "Scoring": {
+   "definition": "The answer belongs on an ordered rubric.",
+   "total": 29515,
+   "share": 0.121278,
+   "by_type": {
+    "noul": 0,
+    "choice": 0,
+    "score": 29515
+   },
+   "by_method": {
+    "source_rule": 29515,
+    "heuristic": 0,
+    "model": 0
+   },
+   "by_licence_verdict": {
+    "permissive": 20059,
+    "restrictive": 3952,
+    "unresolved": 5504
+   },
+   "selective_prediction": 0,
+   "after_exclude_restrictive": 25563,
+   "after_exclude_restrictive_and_unresolved": 20059,
+   "gradient_eligible_listwise": 29515,
+   "flags": []
+  },
+  "Routing": {
+   "definition": "A category selects the next code path.",
+   "total": 19033,
+   "share": 0.078207,
+   "by_type": {
+    "noul": 909,
+    "choice": 18124,
+    "score": 0
+   },
+   "by_method": {
+    "source_rule": 18130,
+    "heuristic": 903,
+    "model": 0
+   },
+   "by_licence_verdict": {
+    "permissive": 9539,
+    "restrictive": 9491,
+    "unresolved": 3
+   },
+   "selective_prediction": 44,
+   "after_exclude_restrictive": 9542,
+   "after_exclude_restrictive_and_unresolved": 9539,
+   "gradient_eligible_listwise": 18124,
+   "flags": []
+  },
+  "Search": {
+   "definition": "Find items that match a natural-language query.",
+   "total": 479,
+   "share": 0.001968,
+   "by_type": {
+    "noul": 0,
+    "choice": 479,
+    "score": 0
+   },
+   "by_method": {
+    "source_rule": 479,
+    "heuristic": 0,
+    "model": 0
+   },
+   "by_licence_verdict": {
+    "unresolved": 479
+   },
+   "selective_prediction": 67,
+   "after_exclude_restrictive": 479,
+   "after_exclude_restrictive_and_unresolved": 0,
+   "gradient_eligible_listwise": 479,
+   "flags": [
+    "under_2000"
+   ]
+  },
+  "Retrieval": {
+   "definition": "Fetch the most relevant context or records for a workflow.",
+   "total": 0,
+   "share": 0.0,
+   "by_type": {
+    "noul": 0,
+    "choice": 0,
+    "score": 0
+   },
+   "by_method": {
+    "source_rule": 0,
+    "heuristic": 0,
+    "model": 0
+   },
+   "by_licence_verdict": {},
+   "selective_prediction": 0,
+   "after_exclude_restrictive": 0,
+   "after_exclude_restrictive_and_unresolved": 0,
+   "gradient_eligible_listwise": 0,
+   "flags": [
+    "unsupported"
+   ]
+  },
+  "Ranking": {
+   "definition": "Order items by semantic relevance or quality.",
+   "total": 0,
+   "share": 0.0,
+   "by_type": {
+    "noul": 0,
+    "choice": 0,
+    "score": 0
+   },
+   "by_method": {
+    "source_rule": 0,
+    "heuristic": 0,
+    "model": 0
+   },
+   "by_licence_verdict": {},
+   "selective_prediction": 0,
+   "after_exclude_restrictive": 0,
+   "after_exclude_restrictive_and_unresolved": 0,
+   "gradient_eligible_listwise": 0,
+   "flags": [
+    "unsupported"
+   ]
+  },
+  "Verification": {
+   "definition": "Check an artifact for specific failure modes.",
+   "total": 32532,
+   "share": 0.133675,
+   "by_type": {
+    "noul": 29770,
+    "choice": 2762,
+    "score": 0
+   },
+   "by_method": {
+    "source_rule": 22617,
+    "heuristic": 9915,
+    "model": 0
+   },
+   "by_licence_verdict": {
+    "permissive": 14871,
+    "restrictive": 16802,
+    "unresolved": 859
+   },
+   "selective_prediction": 3353,
+   "after_exclude_restrictive": 15730,
+   "after_exclude_restrictive_and_unresolved": 14871,
+   "gradient_eligible_listwise": 2762,
+   "flags": []
+  },
+  "ML Feature Extraction": {
+   "definition": "Extract probabilistic signals for a downstream classical model.",
+   "total": 0,
+   "share": 0.0,
+   "by_type": {
+    "noul": 0,
+    "choice": 0,
+    "score": 0
+   },
+   "by_method": {
+    "source_rule": 0,
+    "heuristic": 0,
+    "model": 0
+   },
+   "by_licence_verdict": {},
+   "selective_prediction": 0,
+   "after_exclude_restrictive": 0,
+   "after_exclude_restrictive_and_unresolved": 0,
+   "gradient_eligible_listwise": 0,
+   "flags": [
+    "unsupported"
+   ]
+  },
+  "Structured Data Extraction": {
+   "definition": "Recover known fields from unstructured input.",
+   "total": 6586,
+   "share": 0.027062,
+   "by_type": {
+    "noul": 8,
+    "choice": 6578,
+    "score": 0
+   },
+   "by_method": {
+    "source_rule": 6575,
+    "heuristic": 11,
+    "model": 0
+   },
+   "by_licence_verdict": {
+    "permissive": 9,
+    "restrictive": 6575,
+    "unresolved": 2
+   },
+   "selective_prediction": 0,
+   "after_exclude_restrictive": 11,
+   "after_exclude_restrictive_and_unresolved": 9,
+   "gradient_eligible_listwise": 6578,
+   "flags": []
+  }
+ },
+ "label_methods": {
+  "source_rule": 125915,
+  "heuristic": 117451,
+  "model": 0
+ },
+ "model_share": 0.0,
+ "types": {
+  "noul": {
+   "records": 113594,
+   "gradient_eligible_listwise": 0
+  },
+  "choice": {
+   "records": 100257,
+   "gradient_eligible_listwise": 100257
+  },
+  "score": {
+   "records": 29515,
+   "gradient_eligible_listwise": 29515
+  }
+ },
+ "selective_prediction_records": 6000,
+ "rule_hits": {
+  "apigen_file:apigen_policy_compliance": 803,
+  "apigen_file:apigen_tool_action": 1980,
+  "apigen_file:apigen_tool_argument": 6575,
+  "apigen_file:apigen_tool_choice": 1937,
+  "apigen_file:apigen_tool_next_action": 4786,
+  "pattern:detection:academic_reasoning": 11,
+  "pattern:detection:adversarial_inference": 8,
+  "pattern:detection:code_review": 31,
+  "pattern:detection:commonsense_decision": 50,
+  "pattern:detection:content_analysis": 14,
+  "pattern:detection:education_assessment": 8,
+  "pattern:detection:financial_analysis": 5,
+  "pattern:detection:game_strategy": 44,
+  "pattern:detection:legal_judgment": 38,
+  "pattern:detection:logical_inference": 35,
+  "pattern:detection:long_document": 6,
+  "pattern:detection:medical_triage": 50,
+  "pattern:detection:multi_agent_coordination": 216,
+  "pattern:detection:multi_hop_reasoning": 2,
+  "pattern:detection:navigation_planning": 90,
+  "pattern:detection:numerical_reasoning": 10,
+  "pattern:detection:passage_decision": 5,
+  "pattern:detection:product_categorization": 51,
+  "pattern:detection:resource_management": 32,
+  "pattern:detection:safety_moderation": 287,
+  "pattern:detection:scientific_reasoning": 2,
+  "pattern:detection:sequential_action": 59,
+  "pattern:detection:spatial_reasoning": 4,
+  "pattern:evidence_sufficiency:academic_reasoning": 238,
+  "pattern:evidence_sufficiency:adversarial_inference": 320,
+  "pattern:evidence_sufficiency:code_review": 154,
+  "pattern:evidence_sufficiency:commonsense_decision": 218,
+  "pattern:evidence_sufficiency:content_analysis": 233,
+  "pattern:evidence_sufficiency:education_assessment": 153,
+  "pattern:evidence_sufficiency:financial_analysis": 329,
+  "pattern:evidence_sufficiency:game_strategy": 191,
+  "pattern:evidence_sufficiency:legal_judgment": 182,
+  "pattern:evidence_sufficiency:logical_inference": 264,
+  "pattern:evidence_sufficiency:long_document": 67,
+  "pattern:evidence_sufficiency:medical_triage": 229,
+  "pattern:evidence_sufficiency:multi_agent_coordination": 169,
+  "pattern:evidence_sufficiency:multi_hop_reasoning": 249,
+  "pattern:evidence_sufficiency:navigation_planning": 228,
+  "pattern:evidence_sufficiency:numerical_reasoning": 270,
+  "pattern:evidence_sufficiency:passage_decision": 319,
+  "pattern:evidence_sufficiency:product_categorization": 258,
+  "pattern:evidence_sufficiency:resource_management": 101,
+  "pattern:evidence_sufficiency:safety_moderation": 253,
+  "pattern:evidence_sufficiency:scientific_reasoning": 184,
+  "pattern:evidence_sufficiency:sequential_action": 214,
+  "pattern:evidence_sufficiency:spatial_reasoning": 234,
+  "pattern:routing:academic_reasoning": 1,
+  "pattern:routing:commonsense_decision": 6,
+  "pattern:routing:game_strategy": 107,
+  "pattern:routing:logical_inference": 3,
+  "pattern:routing:multi_agent_coordination": 75,
+  "pattern:routing:navigation_planning": 392,
+  "pattern:routing:resource_management": 21,
+  "pattern:routing:safety_moderation": 44,
+  "pattern:routing:scientific_reasoning": 5,
+  "pattern:routing:sequential_action": 114,
+  "pattern:routing:spatial_reasoning": 135,
+  "pattern:structured_value:code_review": 2,
+  "pattern:structured_value:multi_agent_coordination": 6,
+  "pattern:structured_value:scientific_reasoning": 3,
+  "pattern:verification:academic_reasoning": 247,
+  "pattern:verification:adversarial_inference": 181,
+  "pattern:verification:code_review": 79,
+  "pattern:verification:commonsense_decision": 189,
+  "pattern:verification:content_analysis": 438,
+  "pattern:verification:education_assessment": 222,
+  "pattern:verification:financial_analysis": 292,
+  "pattern:verification:game_strategy": 239,
+  "pattern:verification:legal_judgment": 156,
+  "pattern:verification:logical_inference": 205,
+  "pattern:verification:long_document": 90,
+  "pattern:verification:medical_triage": 167,
+  "pattern:verification:multi_agent_coordination": 238,
+  "pattern:verification:multi_hop_reasoning": 219,
+  "pattern:verification:navigation_planning": 194,
+  "pattern:verification:numerical_reasoning": 227,
+  "pattern:verification:passage_decision": 290,
+  "pattern:verification:product_categorization": 200,
+  "pattern:verification:resource_management": 241,
+  "pattern:verification:safety_moderation": 155,
+  "pattern:verification:scientific_reasoning": 206,
+  "pattern:verification:sequential_action": 189,
+  "pattern:verification:spatial_reasoning": 194,
+  "question_type:score": 29515,
+  "synthetic_template": 14844,
+  "type_default:choice:academic_reasoning": 1172,
+  "type_default:choice:adversarial_inference": 1176,
+  "type_default:choice:code_review": 1175,
+  "type_default:choice:commonsense_decision": 1168,
+  "type_default:choice:content_analysis": 1062,
+  "type_default:choice:education_assessment": 1146,
+  "type_default:choice:financial_analysis": 1169,
+  "type_default:choice:game_strategy": 1015,
+  "type_default:choice:legal_judgment": 1120,
+  "type_default:choice:logical_inference": 1964,
+  "type_default:choice:long_document": 529,
+  "type_default:choice:medical_triage": 1158,
+  "type_default:choice:multi_agent_coordination": 923,
+  "type_default:choice:multi_hop_reasoning": 1376,
+  "type_default:choice:navigation_planning": 709,
+  "type_default:choice:numerical_reasoning": 1219,
+  "type_default:choice:passage_decision": 1981,
+  "type_default:choice:product_categorization": 1989,
+  "type_default:choice:resource_management": 1150,
+  "type_default:choice:safety_moderation": 1113,
+  "type_default:choice:scientific_reasoning": 1183,
+  "type_default:choice:sequential_action": 1094,
+  "type_default:choice:spatial_reasoning": 1128,
+  "type_default:noul:academic_reasoning": 3476,
+  "type_default:noul:adversarial_inference": 3480,
+  "type_default:noul:code_review": 3750,
+  "type_default:noul:commonsense_decision": 3567,
+  "type_default:noul:content_analysis": 3445,
+  "type_default:noul:education_assessment": 3605,
+  "type_default:noul:financial_analysis": 3311,
+  "type_default:noul:game_strategy": 3411,
+  "type_default:noul:legal_judgment": 3275,
+  "type_default:noul:logical_inference": 3472,
+  "type_default:noul:long_document": 1050,
+  "type_default:noul:medical_triage": 3498,
+  "type_default:noul:multi_agent_coordination": 3565,
+  "type_default:noul:multi_hop_reasoning": 3358,
+  "type_default:noul:navigation_planning": 3576,
+  "type_default:noul:numerical_reasoning": 3403,
+  "type_default:noul:passage_decision": 3398,
+  "type_default:noul:product_categorization": 3497,
+  "type_default:noul:resource_management": 3656,
+  "type_default:noul:safety_moderation": 3346,
+  "type_default:noul:scientific_reasoning": 3609,
+  "type_default:noul:sequential_action": 3523,
+  "type_default:noul:spatial_reasoning": 3574,
+  "typed_instruction": 4837,
+  "upstream_source:2wiki_long_choice": 345,
+  "upstream_source:agnews": 1118,
+  "upstream_source:anli": 1239,
+  "upstream_source:arc": 1120,
+  "upstream_source:banking77": 2979,
+  "upstream_source:boolq": 1404,
+  "upstream_source:codesearchnet": 479,
+  "upstream_source:commonsenseqa": 3408,
+  "upstream_source:contractnli": 4789,
+  "upstream_source:fever": 1750,
+  "upstream_source:hellaswag": 2571,
+  "upstream_source:hotpotqa_long_choice": 899,
+  "upstream_source:logiqa": 3998,
+  "upstream_source:longbench_long_choice": 426,
+  "upstream_source:mednli": 2552,
+  "upstream_source:mmlu": 2184,
+  "upstream_source:mmlu_pro_short_reasoning_choice": 9965,
+  "upstream_source:mnli": 1955,
+  "upstream_source:multirc": 6184,
+  "upstream_source:openjev_authored144": 41,
+  "upstream_source:piqa": 1425,
+  "upstream_source:race": 2048,
+  "upstream_source:race_short_passage_choice": 498,
+  "upstream_source:sst2": 1876,
+  "upstream_source:swag": 1890,
+  "upstream_source:tabfact": 2102,
+  "upstream_source:winogrande": 1393
+ },
+ "licence_verdicts": {
+  "permissive": 158837,
+  "restrictive": 55787,
+  "unresolved": 28742
+ },
+ "sources": {
+  "2wiki_long_choice": {
+   "records": 345,
+   "abilities": {
+    "Classification": 345
+   },
+   "methods": {
+    "source_rule": 345
+   }
+  },
+  "agnews": {
+   "records": 1118,
+   "abilities": {
+    "Classification": 1118
+   },
+   "methods": {
+    "source_rule": 1118
+   }
+  },
+  "anli": {
+   "records": 1239,
+   "abilities": {
+    "Verification": 1239
+   },
+   "methods": {
+    "source_rule": 1239
+   }
+  },
+  "apigen_policy_compliance": {
+   "records": 803,
+   "abilities": {
+    "Verification": 803
+   },
+   "methods": {
+    "source_rule": 803
+   }
+  },
+  "apigen_tool_action": {
+   "records": 1980,
+   "abilities": {
+    "Routing": 1980
+   },
+   "methods": {
+    "source_rule": 1980
+   }
+  },
+  "apigen_tool_argument": {
+   "records": 6575,
+   "abilities": {
+    "Structured Data Extraction": 6575
+   },
+   "methods": {
+    "source_rule": 6575
+   }
+  },
+  "apigen_tool_choice": {
+   "records": 1937,
+   "abilities": {
+    "Routing": 1937
+   },
+   "methods": {
+    "source_rule": 1937
+   }
+  },
+  "apigen_tool_next_action": {
+   "records": 4786,
+   "abilities": {
+    "Routing": 4786
+   },
+   "methods": {
+    "source_rule": 4786
+   }
+  },
+  "arc": {
+   "records": 1120,
+   "abilities": {
+    "Classification": 1120
+   },
+   "methods": {
+    "source_rule": 1120
+   }
+  },
+  "banking77": {
+   "records": 2979,
+   "abilities": {
+    "Classification": 2979
+   },
+   "methods": {
+    "source_rule": 2979
+   }
+  },
+  "boolq": {
+   "records": 1404,
+   "abilities": {
+    "Classification": 1404
+   },
+   "methods": {
+    "source_rule": 1404
+   }
+  },
+  "codesearchnet": {
+   "records": 479,
+   "abilities": {
+    "Search": 479
+   },
+   "methods": {
+    "source_rule": 479
+   }
+  },
+  "commonsenseqa": {
+   "records": 3408,
+   "abilities": {
+    "Classification": 3408
+   },
+   "methods": {
+    "source_rule": 3408
+   }
+  },
+  "contractnli": {
+   "records": 4789,
+   "abilities": {
+    "Verification": 4789
+   },
+   "methods": {
+    "source_rule": 4789
+   }
+  },
+  "fever": {
+   "records": 1750,
+   "abilities": {
+    "Verification": 1750
+   },
+   "methods": {
+    "source_rule": 1750
+   }
+  },
+  "hellaswag": {
+   "records": 2571,
+   "abilities": {
+    "Classification": 2571
+   },
+   "methods": {
+    "source_rule": 2571
+   }
+  },
+  "hotpotqa_long_choice": {
+   "records": 899,
+   "abilities": {
+    "Classification": 899
+   },
+   "methods": {
+    "source_rule": 899
+   }
+  },
+  "logiqa": {
+   "records": 3998,
+   "abilities": {
+    "Classification": 3998
+   },
+   "methods": {
+    "source_rule": 3998
+   }
+  },
+  "longbench_long_choice": {
+   "records": 426,
+   "abilities": {
+    "Classification": 426
+   },
+   "methods": {
+    "source_rule": 426
+   }
+  },
+  "mednli": {
+   "records": 2552,
+   "abilities": {
+    "Verification": 2552
+   },
+   "methods": {
+    "source_rule": 2552
+   }
+  },
+  "mmlu": {
+   "records": 2184,
+   "abilities": {
+    "Classification": 2184
+   },
+   "methods": {
+    "source_rule": 2184
+   }
+  },
+  "mmlu_pro_short_reasoning_choice": {
+   "records": 9965,
+   "abilities": {
+    "Classification": 9965
+   },
+   "methods": {
+    "source_rule": 9965
+   }
+  },
+  "mnli": {
+   "records": 1955,
+   "abilities": {
+    "Verification": 1955
+   },
+   "methods": {
+    "source_rule": 1955
+   }
+  },
+  "multirc": {
+   "records": 6184,
+   "abilities": {
+    "Verification": 6184
+   },
+   "methods": {
+    "source_rule": 6184
+   }
+  },
+  "openjev_authored144": {
+   "records": 41,
+   "abilities": {
+    "Verification": 41
+   },
+   "methods": {
+    "source_rule": 41
+   }
+  },
+  "piqa": {
+   "records": 1425,
+   "abilities": {
+    "Classification": 1425
+   },
+   "methods": {
+    "source_rule": 1425
+   }
+  },
+  "race": {
+   "records": 2048,
+   "abilities": {
+    "Classification": 2048
+   },
+   "methods": {
+    "source_rule": 2048
+   }
+  },
+  "race_short_passage_choice": {
+   "records": 498,
+   "abilities": {
+    "Classification": 498
+   },
+   "methods": {
+    "source_rule": 498
+   }
+  },
+  "sst2": {
+   "records": 1876,
+   "abilities": {
+    "Classification": 1876
+   },
+   "methods": {
+    "source_rule": 1876
+   }
+  },
+  "sst5": {
+   "records": 1741,
+   "abilities": {
+    "Scoring": 1741
+   },
+   "methods": {
+    "source_rule": 1741
+   }
+  },
+  "stsb": {
+   "records": 1430,
+   "abilities": {
+    "Scoring": 1430
+   },
+   "methods": {
+    "source_rule": 1430
+   }
+  },
+  "swag": {
+   "records": 1890,
+   "abilities": {
+    "Classification": 1890
+   },
+   "methods": {
+    "source_rule": 1890
+   }
+  },
+  "synthetic": {
+   "records": 154369,
+   "abilities": {
+    "Classification": 110222,
+    "Scoring": 22074,
+    "Verification": 10717,
+    "Routing": 7907,
+    "Detection": 3438,
+    "Structured Data Extraction": 11
+   },
+   "methods": {
+    "heuristic": 117451,
+    "source_rule": 36918
+   }
+  },
+  "tabfact": {
+   "records": 2102,
+   "abilities": {
+    "Verification": 2102
+   },
+   "methods": {
+    "source_rule": 2102
+   }
+  },
+  "typed_decisions": {
+   "records": 8037,
+   "abilities": {
+    "Scoring": 3200,
+    "Routing": 2423,
+    "Detection": 1212,
+    "Classification": 802,
+    "Verification": 400
+   },
+   "methods": {
+    "source_rule": 8037
+   }
+  },
+  "winogrande": {
+   "records": 1393,
+   "abilities": {
+    "Classification": 1393
+   },
+   "methods": {
+    "source_rule": 1393
+   }
+  },
+  "yelp": {
+   "records": 1070,
+   "abilities": {
+    "Scoring": 1070
+   },
+   "methods": {
+    "source_rule": 1070
+   }
+  }
+ },
+ "small_option_items": {},
+ "trainers": {
+  "listwise_pairwise": {
+   "trained_types": [
+    "choice",
+    "score"
+   ],
+   "note": "noul rows are filtered out before training; they are labelled here but take no gradient",
+   "eligible_rows": 129772
+  },
+  "residual": {
+   "trained_types": [
+    "noul",
+    "choice",
+    "score"
+   ],
+   "note": "noul uses the fixed two-option no/yes set; a single-option question would have zero gradient",
+   "eligible_rows": 243366
+  }
+ },
+ "unknown_sources": [],
+ "sidecar": {
+  "path": "krino-canonical-243366.ability.jsonl",
+  "records": 243366,
+  "sha256": "5933f899a3660d529bdad39d7226a6bad1d7605e0fabfa872db7a8bc1c606670"
+ }
+}
