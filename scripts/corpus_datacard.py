@@ -178,16 +178,18 @@ def main() -> int:
             continue
         for item in read_jsonl(path):
             add(item, corpus)
+        # Synthetic is last among the corpora that can share ids, matching the
+        # precedence recorded in research/25-corpus-inventory.md.
+        if corpus == "typed_decisions":
+            for item in synthetic_items(synth_dir, family_to_typed_questions):
+                add(item, "synthetic")
 
     if missing_files:
         raise SystemExit("canonical files missing:\n  " + "\n  ".join(missing_files))
 
-    for item in synthetic_items(synth_dir, family_to_typed_questions):
-        add(item, "synthetic")
-
     lengths.sort()
     k_hist = {str(k): v for k, v in sorted(choice_k.items())}
-    k_buckets: Counter = Counter()
+    k_buckets: Counter = Counter({label: 0 for _, _, label in K_BUCKETS})
     for k, count in choice_k.items():
         k_buckets[bucket(k, K_BUCKETS)] += count
     k_sorted = sorted(choice_k.elements())
