@@ -22,7 +22,7 @@ Scope: `data/benchmarks/*.jsonl` on one host. `residual_train_20000.jsonl` and
 | mmlu_pro_short_reasoning_choice.jsonl | 9,965 | 9,965 | all choice | 0 | 9,965 |
 | long-context (hotpotqa/musique/longbench/twowiki) | 1,670 | 1,670 | all choice | 0 | 1,670 |
 | abstention_train_20k / _30k | 3,000 / 3,000 | 3,000 / 3,000 | 2,000 noul / 1,000 choice | 0 | 3,000 |
-| race_short_passage_choice.jsonl | 498 | **144** | all choice | 0 | 498 |
+| race_short_passage_choice.jsonl | 498 | 144 passage ids | all choice | 0 | 498 |
 
 ### Findings
 
@@ -31,8 +31,9 @@ Scope: `data/benchmarks/*.jsonl` on one host. `residual_train_20000.jsonl` and
    therefore 50,000 items, not 30,000.
 2. The six `label_target_30k_*` files are variants of one 30,000-item corpus;
    `_noul_agree` is a strict 28,013-id subset. Only one should be the primary set.
-3. `race_short_passage_choice` has 498 rows over **144** distinct ids: 3.5x
-   duplication. Needs dedup before use.
+3. `race_short_passage_choice` has 498 distinct questions over **144 passage
+   ids** (2-5 questions per passage). The `id` is a passage id, not an item id.
+   No questions are duplicates: keep all 498 and key the item by (id, question).
 4. Exact contamination against the 231 public JevBench items (id and normalised
    state): **0 hits** in 97,355 rows checked
    (`random 54,214 + label_target 30k/38.9k + mmlu_pro + race`).
@@ -77,6 +78,11 @@ The CPU mirror holds the dataset plus `residual_train_20000.jsonl`, so its row
 count is host A's count plus 20,000 and its distinct-id count is unchanged (the
 file repeats the `residual_train_20000_jev` ids). Wall time and resource use are
 recorded in the PR, not here.
+
+These are id-level counts. RACE's 144 passage ids carry 498 questions, so
+the item count is 354 higher than the id count on host A and on the CPU
+mirror; the training host has no RACE short file, so its id count is
+unchanged. The canonical item total is 243,366.
 
 The four files present on both machines (`label_target_30k_jev.jsonl`,
 `residual_train_20000_jev.jsonl`, and the two `noul_union_*` variants) have
@@ -178,7 +184,7 @@ section.
 | `longbench_long_choice.jsonl` | host A | typed | 426 | 426 | 0 | 426 | 0 | 0 | gold | primary long-context |
 | `mmlu_pro_short_reasoning_choice.jsonl` | host A | typed | 9,965 | 9,965 | 0 | 9,965 | 0 | 0 | gold | primary mmlu-pro |
 | `musique_long_choice.jsonl` | host A | typed | 476 | 476 | 0 | 476 | 0 | 0 | gold | primary long-context |
-| `race_short_passage_choice.jsonl` | host A | typed | 498 | 144 | 0 | 498 | 0 | 0 | gold | primary after id dedup (144 ids) |
+| `race_short_passage_choice.jsonl` | host A | typed | 498 | 498 (144 passage ids) | 0 | 498 | 0 | 0 | gold | primary, keyed by id + question (144 split groups) |
 | `residual_train_20000_jev.jsonl` | both | typed | 20,000 | 20,000 | 9,542 | 8,085 | 2,373 | 19,995 | gold | primary residual-20K |
 | `twowiki_long_choice.jsonl` | host A | typed | 345 | 345 | 0 | 345 | 0 | 0 | gold | primary long-context |
 | `typed_decisions.jsonl` | host B | typed | 8,000 | 8,000 | 2,400 | 2,400 | 3,200 | 0 | gold | primary typed-decisions |
@@ -280,7 +286,7 @@ section.
 | synthetic ∩ `residual_train_20000_jev` | 1,141 |
 | `typed_decisions` ∩ `label_target_30k_jev` | 415 |
 | `typed_decisions` ∩ `residual_train_20000_jev` | 250 |
-| `race_short_passage_choice` rows / ids | 498 / 144 |
+| `race_short_passage_choice` rows / ids | 498 rows, 498 items / 144 passage ids |
 | `abstention_train_20k` ∩ `abstention_train_30k` | 0 |
 | `corpus_full` ∪ `residual` ∪ `label_target` ∪ `typed_decisions` ∪ synthetic | 209,152 |
 
@@ -312,14 +318,17 @@ evaluation data.
 | abstention | `abstention_train_20k.jsonl`, `abstention_train_30k.jsonl` | 6,000 | execution |
 | mmlu-pro | `mmlu_pro_short_reasoning_choice.jsonl` | 9,965 | gold |
 | long-context | `hotpotqa_long_choice.jsonl`, `musique_long_choice.jsonl`, `longbench_long_choice.jsonl`, `twowiki_long_choice.jsonl` | 1,670 | gold |
-| race-short | `race_short_passage_choice.jsonl` | 144 (498 rows) | gold |
+| race-short | `race_short_passage_choice.jsonl` | 498 (144 passage ids) | gold |
 | typed-decisions | `typed_decisions.jsonl` | 8,000 | gold |
 
-Canonical union after id dedup: **243,012 distinct ids**. Dedup order is
+Canonical union after item dedup: **243,366 items**. Dedup order is
 target-30K, residual-20K, typed-decisions, synthetic, then the remaining
 corpora. The 2,274 synthetic ids that already sit in the 20K/30K keep their
 sampled copy; the 665 typed-decisions ids that already sit there are dropped from
-the full `typed_decisions.jsonl` copy. The `abstention_*` choice rows whose gold
+the full `typed_decisions.jsonl` copy. RACE is keyed by (id, question): all 498
+questions are kept, and the 144 passage ids are the split groups. The pre-dedup
+component sum is 246,305 (245,951 before the RACE correction); after the
+2,939 drops the total is 243,366. The `abstention_*` choice rows whose gold
 option is withheld are kept for the abstain target, not for option CE (see below).
 
 `abstention_train_20k` and `abstention_train_30k` are disjoint 3,000-item
@@ -327,8 +336,9 @@ constructions. Both are primary; `_30k` matches the primary 30K corpus if only o
 is wanted. Their states are borrowed from the donor corpora, so id dedup does not
 remove state-level duplication; the #235 near-duplicate audit covers that.
 
-`race_short_passage_choice` must be deduplicated by id before use: 498 rows map
-to 144 ids, so raw iteration weights 144 items 3.5 times.
+`race_short_passage_choice` must be deduplicated by (id, question), not by id:
+498 questions map to 144 passage ids. Keying by id alone drops 354 distinct
+questions. Keep all 498 and group them by passage id in splits.
 
 ### Variants and ablations
 
@@ -360,6 +370,18 @@ to 144 ids, so raw iteration weights 144 items 3.5 times.
 - `openjev/` — evaluation and authored-provenance pool; 37 of its ids appear in
   the 20K/30K as `openjev_authored144`.
 
+## Licence position
+
+`research/30-canonical-source-licences.md` audits every source group with quoted
+terms and URLs, and records the owner's 2026-11-06 decision to keep every group.
+Of 243,366 items, 55,787 are in 8 restrictive groups (ANLI, ContractNLI, APIGen,
+RACE, AG News, MedNLI, Yelp, MultiRC), 28,742 are in 8 unresolved groups, and
+158,837 are in permissive groups. Synthetic items inherit their seed dataset's
+terms; an ANLI-, ContractNLI- or MedNLI-seeded domain is as restricted as its
+seed. The corpus is research use only; `data/licence_manifest.json` and
+`scripts/build_canonical_corpus.py` exist as the contingency if the policy is
+revisited.
+
 ## Provenance
 
 The field is per record: `provenance ∈ {gold, execution, teacher}`, assigned by
@@ -378,8 +400,8 @@ name, the `-abstain-` id suffix, and `answerable`/`reason`.
 | `execution` | `abstention_*` | Labels are constructed by `model/scripts/build_abstention_sets.py`: the gold option is withheld (`none_of_these`), a foreign state is attached (`out_of_scope`, label False), or evidence is cut (`insufficient`, label False). |
 | `teacher` | none today | No hard label in either corpus comes from a Jev prediction. `label_target_*_mix50` mixes gold into the **soft** target only; `label` is unchanged. |
 
-Tier mix of the canonical union: **220,931 gold, 22,081 execution, 0 teacher**
-(243,012 ids before the label-usability exclusions below). Read the split
+Tier mix of the canonical union: **221,285 gold, 22,081 execution, 0 teacher**
+(243,366 items before the label-usability exclusions below). Read the split
 precisely:
 
 - **No canonical record's hard label is a Jev prediction.** `teacher_probs` is
@@ -387,7 +409,7 @@ precisely:
   record is teacher-tier, so nothing was folded into another tier.
 - **`gold` does not mean human-verified.** 154,091 gold records are
   model-authored synthetic labels (151,817 in the synthetic corpus and 2,274
-  sampled into the 20K/30K). The other 66,840 are upstream dataset labels or
+  sampled into the 20K/30K). The other 67,194 are upstream dataset labels or
   community-authored labels; they were not re-annotated here.
 - **Two thousand execution records cannot drive option CE.** The `none_of_these`
   choice rows (1,000 per abstention file) have a provenance-only label and
@@ -419,8 +441,8 @@ A record may drive a hard-label loss (CE / BCE / ordinal) only when all hold:
    choice rows per file must not drive option CE. The 2,000 noul rows
    (`out_of_scope`, `insufficient`) are constructed negatives and may drive the
    answerable target; they are not evidence that the proposition is false.
-4. Duplicate rows are removed by id before the loss is computed.
-   `race_short_passage_choice` otherwise contributes 498 rows over 144 ids.
+4. Items are deduplicated by id, except RACE where the key is (id, question).
+   All 498 RACE questions are kept; the 144 passage ids are the split groups.
 
 Records that fail (2) are excluded from hard-label loss but may still supply a
 soft target. Recommend fixing the `typed_decisions` conversion to emit `bool` and

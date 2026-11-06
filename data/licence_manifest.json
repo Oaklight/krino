@@ -1,0 +1,227 @@
+{
+  "version": 1,
+  "policy": {
+    "decision": "research use only; keep every group",
+    "date": "2026-11-06",
+    "document": "research/30-canonical-source-licences.md",
+    "applied": false
+  },
+  "note": "Licence manifest for the canonical corpus. Verdicts and evidence are documented in research/30-canonical-source-licences.md. The current policy keeps every group; this manifest is the contingency for a narrower build if that decision is revisited. included_in names every build that may use the group; a group absent from a build is excluded. The owner flips these flags; the build script never edits them.",
+  "builds": [
+    "full",
+    "exclude_restrictive",
+    "exclude_restrictive_and_unresolved"
+  ],
+  "groups": {
+    "anli": {
+      "verdict": "restrictive",
+      "evidence": "https://huggingface.co/datasets/facebook/anli",
+      "note": "CC BY-NC 4.0; LICENSE 'cc-4 Attribution-NonCommercial'",
+      "included_in": ["full"]
+    },
+    "contractnli": {
+      "verdict": "restrictive",
+      "evidence": "https://huggingface.co/datasets/kiddothe2b/contract-nli",
+      "note": "CC BY-NC-SA 4.0",
+      "included_in": ["full"]
+    },
+    "apigen": {
+      "verdict": "restrictive",
+      "evidence": "https://huggingface.co/datasets/Salesforce/APIGen-MT-5k",
+      "note": "CC BY-NC 4.0; 'This release is for research purposes only'",
+      "included_in": ["full"]
+    },
+    "race": {
+      "verdict": "restrictive",
+      "evidence": "https://huggingface.co/datasets/ehovy/race",
+      "note": "'available for non-commercial research purpose only'",
+      "included_in": ["full"]
+    },
+    "agnews": {
+      "verdict": "restrictive",
+      "evidence": "https://huggingface.co/datasets/fancyzhx/ag_news",
+      "note": "'any other non-commercial activity'",
+      "included_in": ["full"]
+    },
+    "mednli": {
+      "verdict": "restrictive",
+      "evidence": "https://physionet.org/content/mednli/1.0.0/",
+      "note": "PhysioNet Credentialed Health Data License 1.5.0; DUA; CITI training",
+      "included_in": ["full"]
+    },
+    "yelp": {
+      "verdict": "restrictive",
+      "evidence": "https://business.yelp.com/data/resources/open-dataset/",
+      "note": "'intended for educational use'; HF tag other, license_details yelp-licence",
+      "included_in": ["full"]
+    },
+    "multirc": {
+      "verdict": "restrictive",
+      "evidence": "https://huggingface.co/datasets/aps/super_glue",
+      "note": "SuperGLUE: 'our understanding that these licenses allow for their use and redistribution in a research context'",
+      "included_in": ["full"]
+    },
+    "hellaswag": {
+      "verdict": "unresolved",
+      "evidence": "https://huggingface.co/datasets/Rowan/hellaswag",
+      "note": "HF card claims MIT, but the GitHub repository is blocked under a wikiHow DMCA notice dated 2026-09-14; the MIT claim cannot be verified from the blocked repository and the data includes wikiHow text",
+      "included_in": ["full", "exclude_restrictive"]
+    },
+    "sst2": {
+      "verdict": "unresolved",
+      "evidence": "https://huggingface.co/datasets/stanfordnlp/sst2",
+      "note": "HF card states license: unknown; stanfordnlp/sentiment-treebank has no LICENSE file; the Stanford SST site was unreachable",
+      "included_in": ["full", "exclude_restrictive"]
+    },
+    "sst5": {
+      "verdict": "unresolved",
+      "evidence": "https://huggingface.co/datasets/SetFit/sst5",
+      "note": "no licence field; derived from the Stanford Sentiment Treebank, whose licence is unresolved",
+      "included_in": ["full", "exclude_restrictive"]
+    },
+    "logiqa": {
+      "verdict": "unresolved",
+      "evidence": "https://huggingface.co/datasets/lucasmccabe/logiqa",
+      "note": "no licence in the HF card or the official lgw863/LogiQA-dataset repository; LogiQA 2.0 is CC BY-NC-SA 4.0 but is a different dataset",
+      "included_in": ["full", "exclude_restrictive"]
+    },
+    "codesearchnet": {
+      "verdict": "unresolved",
+      "evidence": "https://huggingface.co/datasets/code-search-net/code_search_net",
+      "note": "each example comes from a GitHub repository with its own licence; per-example licences are not recorded",
+      "included_in": ["full", "exclude_restrictive"]
+    },
+    "quality": {
+      "verdict": "unresolved",
+      "evidence": "https://github.com/emozilla/quality",
+      "note": "no LICENSE file in the repository",
+      "included_in": ["full", "exclude_restrictive"]
+    },
+    "2wiki": {
+      "verdict": "unresolved",
+      "evidence": "https://github.com/Alab-NLP/2WikiMultiHopQA",
+      "note": "no LICENSE in the official repository; the xanhho/2WikiMultihopQA HF mirror states Apache-2.0, but the source actually converted is not recorded",
+      "included_in": ["full", "exclude_restrictive"]
+    },
+    "stsb": {
+      "verdict": "unresolved",
+      "evidence": "https://huggingface.co/datasets/nyu-mll/glue",
+      "note": "GLUE refers to the original licences; the STS-B mirror states unknown",
+      "included_in": ["full", "exclude_restrictive"]
+    },
+    "mnli": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/nyu-mll/multi_nli",
+      "note": "MIT",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "mmlu": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/cais/mmlu",
+      "note": "MIT",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "mmlu_pro": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro",
+      "note": "MIT",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "commonsenseqa": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/tau/commonsense_qa",
+      "note": "MIT",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "boolq": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/google/boolq",
+      "note": "CC BY-SA 3.0; share-alike",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "fever": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/copenlu/fever_gold_evidence",
+      "note": "CC BY-SA 3.0; GPL-3.0 (code)",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "tabfact": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/wenhu/tab_fact",
+      "note": "CC BY 4.0",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "banking77": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/legacy-datasets/banking77",
+      "note": "CC BY 4.0",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "arc": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/allenai/ai2_arc",
+      "note": "CC BY-SA 4.0; share-alike",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "hotpotqa": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/hotpotqa/hotpot_qa",
+      "note": "CC BY-SA 4.0; share-alike",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "musique": {
+      "verdict": "permissive",
+      "evidence": "https://github.com/StonyBrookNLP/musique/blob/main/LICENSE",
+      "note": "CC BY 4.0",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "longbench": {
+      "verdict": "permissive",
+      "evidence": "https://github.com/THUDM/LongBench/blob/main/LICENSE",
+      "note": "MIT",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "drop": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/ucinlp/drop",
+      "note": "CC BY-SA 4.0; share-alike",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "winogrande": {
+      "verdict": "permissive",
+      "evidence": "https://github.com/allenai/winogrande/blob/master/LICENSE",
+      "note": "Apache-2.0",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "typed_decisions": {
+      "verdict": "permissive",
+      "evidence": "https://huggingface.co/datasets/LocalLLaMA/typed-decisions",
+      "note": "Apache-2.0",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "openjev_authored144": {
+      "verdict": "permissive",
+      "evidence": "scripts/build_authored_holdout.py",
+      "note": "project-authored; repository MIT; no third-party terms found",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "project": {
+      "verdict": "permissive",
+      "evidence": "data/synthetic.py",
+      "note": "project-generated pure-generation domains; repository MIT; generation-provider terms not audited",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "piqa": {
+      "verdict": "permissive",
+      "evidence": "https://yonatanbisk.com/piqa/",
+      "note": "Academic Free License (AFL) v. 3.0",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    },
+    "swag": {
+      "verdict": "permissive",
+      "evidence": "https://github.com/rowanz/swagaf/blob/master/LICENSE",
+      "note": "MIT; the release repository contains the data/ directory. The HF card still says unknown",
+      "included_in": ["full", "exclude_restrictive", "exclude_restrictive_and_unresolved"]
+    }
+  }
+}
