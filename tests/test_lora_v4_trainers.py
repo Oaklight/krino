@@ -253,6 +253,83 @@ class TestZeroInitialisedAdapter:
         assert not torch.equal(off, on)
 
 
+class TestGradEnabledHybridCache:
+    """A grad-enabled GDN backbone must not share its prefix cache.
+
+    The hybrid suffix forward overwrites the fork's conv/recurrent states in
+    place.  That bumps the version of tensors the prefix graph saved for
+    backward, and fla's chunked delta-rule backward raises.  The fix is to
+    re-encode the context, so no call carries ``past_key_values``.
+    """
+
+    def _spy(self, model):
+        calls = []
+        real = model._backbone_forward
+
+        def spy(inputs, **kwargs):
+            calls.append("past_key_values" in inputs)
+            return real(inputs, **kwargs)
+
+        model._backbone_forward = spy
+        model.is_hybrid = True
+        model.backbone_requires_grad = True
+        return calls
+
+    def test_listwise_reencodes_the_context(self) -> None:
+        model = _tiny_decision_model(lora_layers=-1)
+        calls = self._spy(model)
+        logits = ListwiseMarkerReadout(model).score(STATE, INSTRUCTIONS, OPTIONS)
+        assert torch.isfinite(logits).all()
+        # One prefix call (to obtain a cache) plus one combined call.  The
+        # combined call must not reuse the cache.
+        assert len(calls) == 2
+        assert not any(calls)
+
+    def test_the_marker_path_reencodes_the_context(self) -> None:
+        model = _tiny_decision_model(lora_layers=-1)
+        calls = self._spy(model)
+        logits = model.forward_choice(STATE, INSTRUCTIONS, OPTIONS)
+        assert torch.isfinite(logits).all()
+        assert calls and not any(calls)
+
+    def test_the_reencoded_context_has_no_fully_masked_rows(self) -> None:
+        model = _tiny_decision_model(lora_layers=-1)
+        seen = []
+        real = model._backbone_forward
+
+        def spy(inputs, **kwargs):
+            seen.append(inputs)
+            return real(inputs, **kwargs)
+
+        model._backbone_forward = spy
+        model.is_hybrid = True
+        model.backbone_requires_grad = True
+        ListwiseMarkerReadout(model).score(STATE, INSTRUCTIONS, OPTIONS)
+
+        combined = seen[-1]
+        # A left-padded position 0 is fully masked under a causal mask, and
+        # cuDNN's SDPA backward returns NaN for that row.  The combined
+        # sequence must carry no pad columns at all.
+        assert int(combined["attention_mask"].min()) == 1
+        assert int(combined["input_ids"][0, 0]) != model.tokenizer.pad_token_id
+
+    def test_the_marker_path_has_no_fully_masked_rows(self) -> None:
+        model = _tiny_decision_model(lora_layers=-1)
+        seen = []
+        real = model._backbone_forward
+
+        def spy(inputs, **kwargs):
+            seen.append(inputs)
+            return real(inputs, **kwargs)
+
+        model._backbone_forward = spy
+        model.is_hybrid = True
+        model.backbone_requires_grad = True
+        model.forward_choice(STATE, INSTRUCTIONS, OPTIONS)
+
+        assert int(seen[-1]["attention_mask"].min()) == 1
+
+
 class TestCheckpointReload:
     """An eval rebuild must restore the adapter, not just the heads."""
 

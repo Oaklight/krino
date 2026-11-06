@@ -1014,12 +1014,23 @@ class DecisionModel(nn.Module):
             )
             self._warned_no_cache = True
         context_len = prefix_inputs["input_ids"].shape[1]
+        prefix_ids = prefix_inputs["input_ids"]
+        prefix_mask = prefix_inputs["attention_mask"]
+        # Strip leading pad columns.  A left-padded query at position 0 has
+        # every key masked, and cuDNN's SDPA backward returns NaN for that row
+        # under autocast.  Real tokens keep their positions because HF derives
+        # them from the mask.
+        if prefix_mask.numel() and int(prefix_mask[0, 0]) == 0:
+            first = int(prefix_mask[0].nonzero(as_tuple=False)[0])
+            prefix_ids = prefix_ids[:, first:]
+            prefix_mask = prefix_mask[:, first:]
+            context_len = prefix_ids.shape[1]
         all_logits: list[torch.Tensor] = []
         for chunk in chunks:
             suffix_ids, positions = self._build_marker_suffix(chunk)
-            input_ids = torch.cat([prefix_inputs["input_ids"], suffix_ids], dim=1)
+            input_ids = torch.cat([prefix_ids, suffix_ids], dim=1)
             attention_mask = torch.cat(
-                [prefix_inputs["attention_mask"], torch.ones_like(suffix_ids)], dim=1
+                [prefix_mask, torch.ones_like(suffix_ids)], dim=1
             )
             outputs = self._backbone_forward(
                 {"input_ids": input_ids, "attention_mask": attention_mask}
@@ -1112,6 +1123,11 @@ class DecisionModel(nn.Module):
             use_cache=True,
         )
         cache = getattr(prefix_outputs, "past_key_values", None)
+        # A grad-enabled GDN cache is unsafe to fork: the suffix forward
+        # overwrites the recurrent/conv states in place and invalidates the
+        # prefix graph autograd saved for backward.  Recompute per chunk.
+        if self.is_hybrid and self.backbone_requires_grad:
+            cache = None
         if cache is None or (
             not self.is_hybrid and not hasattr(cache, "batch_repeat_interleave")
         ):
@@ -1228,6 +1244,11 @@ class DecisionModel(nn.Module):
             use_cache=True,
         )
         cache = getattr(prefix_outputs, "past_key_values", None)
+        # A grad-enabled GDN cache is unsafe to fork: the suffix forward
+        # overwrites the recurrent/conv states in place and invalidates the
+        # prefix graph autograd saved for backward.  Recompute per chunk.
+        if self.is_hybrid and self.backbone_requires_grad:
+            cache = None
         if cache is None or (not self.is_hybrid and not hasattr(cache, "crop")):
             return self._forward_options_no_cache(prefix_inputs, chunks)
         # GDN state is overwritten in place and cannot be cropped, so each
