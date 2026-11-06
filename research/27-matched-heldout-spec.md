@@ -249,8 +249,8 @@ followed by a newline. `items_sha256` is the SHA-256 of the uncompressed bytes o
 file, so a gzip header change does not change the identity.
 
 Do **not** commit the data. Store it in the private Hugging Face dataset
-`oaklight/krino-heldout-v1` (or on rbh101) and record the path in the manifest. Commit the
-manifest and the builder script.
+`oaklight/krino-heldout-v1`, or on the compute host, and record the path in the manifest.
+Commit the manifest and the builder script.
 
 ### Freeze rule
 
