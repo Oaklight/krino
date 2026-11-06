@@ -26,7 +26,7 @@ and its last row is its current status.
 Verdicts are the pre-registered gate outcomes. A promote or confirm here means
 the arm cleared its line; every gain below is smaller than one cc standard
 error, and the 1.45 pp spread of the three frozen seeds is the same size as the
-B2 gain they confirmed.
+B2 gain they confirmed. That 1.45 pp spread is over seeds 42/43/44; at the time `train_residual` passed `--seed` to the split, so 43 and 44 also moved the validation split (804 of 3,999 items shared with split 42; at the canonical scale 9,863 of 48,672). The spread includes split variance and overstates init+order noise; see the split note in `research/11`.
 
 | arm | change against its control | cc | hard | gate verdict |
 |---|---|---:|---:|---|
