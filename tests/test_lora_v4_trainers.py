@@ -140,6 +140,7 @@ class TestParserDefaults:
         assert args.lora_rank == 16
         assert args.lora_alpha == 32
         assert args.lora_targets == ("q_proj", "v_proj")
+        assert args.torch_seed is None
 
     @pytest.mark.parametrize(
         "module", [train_listwise, train_pairwise], ids=["listwise", "pairwise"]
@@ -153,6 +154,7 @@ class TestParserDefaults:
                 "--lora-alpha", "8",
                 "--lora-targets", "q_proj, o_proj",
                 "--lora-kl-weight", "0.5",
+                "--torch-seed", "7",
             ],
         )
         assert args.lora_layers == 1
@@ -160,6 +162,7 @@ class TestParserDefaults:
         assert args.lora_alpha == 8
         assert args.lora_targets == ("q_proj", "o_proj")
         assert args.lora_kl_weight == 0.5
+        assert args.torch_seed == 7
 
 
 class TestConfigRoundTrip:
@@ -280,9 +283,9 @@ class TestGradEnabledHybridCache:
         calls = self._spy(model)
         logits = ListwiseMarkerReadout(model).score(STATE, INSTRUCTIONS, OPTIONS)
         assert torch.isfinite(logits).all()
-        # One prefix call (to obtain a cache) plus one combined call.  The
-        # combined call must not reuse the cache.
-        assert len(calls) == 2
+        # The combined call re-encodes the prefix, so the cache-only prefix
+        # forward is skipped: one backbone call, and it carries no cache.
+        assert len(calls) == 1
         assert not any(calls)
 
     def test_the_marker_path_reencodes_the_context(self) -> None:
@@ -290,7 +293,9 @@ class TestGradEnabledHybridCache:
         calls = self._spy(model)
         logits = model.forward_choice(STATE, INSTRUCTIONS, OPTIONS)
         assert torch.isfinite(logits).all()
-        assert calls and not any(calls)
+        # chunk_size=1 re-encodes once per option; none of them carries a cache.
+        assert len(calls) == len(OPTIONS)
+        assert not any(calls)
 
     def test_the_reencoded_context_has_no_fully_masked_rows(self) -> None:
         model = _tiny_decision_model(lora_layers=-1)
@@ -307,10 +312,12 @@ class TestGradEnabledHybridCache:
         ListwiseMarkerReadout(model).score(STATE, INSTRUCTIONS, OPTIONS)
 
         combined = seen[-1]
-        # A left-padded position 0 is fully masked under a causal mask, and
-        # cuDNN's SDPA backward returns NaN for that row.  The combined
-        # sequence must carry no pad columns at all.
-        assert int(combined["attention_mask"].min()) == 1
+        mask = combined["attention_mask"]
+        # Right padding: position 0 is a real token (a left-padded position 0
+        # is fully masked under a causal mask, and cuDNN's SDPA backward
+        # returns NaN for that row).  The mask is a run of ones then zeros.
+        assert int(mask[0, 0]) == 1
+        assert torch.all(mask[:, :-1] >= mask[:, 1:])
         assert int(combined["input_ids"][0, 0]) != model.tokenizer.pad_token_id
 
     def test_the_marker_path_has_no_fully_masked_rows(self) -> None:
@@ -328,6 +335,24 @@ class TestGradEnabledHybridCache:
         model.forward_choice(STATE, INSTRUCTIONS, OPTIONS)
 
         assert int(seen[-1]["attention_mask"].min()) == 1
+
+    def test_eval_keeps_the_cache(self) -> None:
+        """No grad means the fork cannot break autograd, so reuse the prefix."""
+        model = _tiny_decision_model(lora_layers=-1)
+        calls = self._spy(model)
+        with torch.no_grad():
+            logits = ListwiseMarkerReadout(model).score(
+                STATE, INSTRUCTIONS, OPTIONS
+            )
+        assert torch.isfinite(logits).all()
+        assert calls == [False, True]
+
+    def test_eval_marker_path_keeps_the_cache(self) -> None:
+        model = _tiny_decision_model(lora_layers=-1)
+        calls = self._spy(model)
+        with torch.no_grad():
+            model.forward_choice(STATE, INSTRUCTIONS, OPTIONS)
+        assert calls[-1] is True
 
 
 class TestCheckpointReload:
