@@ -27,6 +27,16 @@ The table shows ids kept after dedup. Before dedup the components sum to 245,951
 typed-decisions ids already in the 20K/30K are dropped from the full
 typed-decisions copy. `race_short_passage_choice` collapses 498 rows to 144 ids.
 
+Two synthetic numbers that must not be conflated:
+
+- the `*_jev_labels.jsonl` sidecars hold **154,092 rows** over 152,966 distinct
+  ids; 931 ids repeat across 1,126 duplicate rows (`education_assessment` 1,056,
+  `game_strategy` 70);
+- the assembled family + variant item set is **154,091 items**.
+
+The two counts differ by one by coincidence, not by construction. Use 154,091 for
+corpus size; use 154,092 only when counting label-file rows.
+
 ## Provenance tiers
 
 | tier | ids | share |
