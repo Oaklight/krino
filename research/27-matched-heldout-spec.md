@@ -205,8 +205,9 @@ Deterministic, seed `heldout-v1`, no random module state:
    can contain more than one type (a synthetic family with noul and choice items); it is
    kept whole.
 2. Coverage pass: for each type, take one group from each source that has an eligible
-   group of that type, in the same hash order, when it fits. This guarantees a source
-   with a single eligible group is not crowded out by a large one.
+   group of that type, in the same hash order, when it fits and is not already selected.
+   This guarantees a source with a single eligible group is not crowded out by a large
+   one.
 3. Keep a remaining quota per type (2,200 / 2,900 / 1,300). Walk the sorted list and
    accept a group when, for every type it contains, the group's count of that type is at
    most the remaining quota. Otherwise skip it. A group is never split, and no type's
