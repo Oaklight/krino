@@ -16,6 +16,9 @@ are therefore comparable on task metrics and not comparable on abstain
 metrics.  Do not implement abstention by dropping rows if the arm trains an
 answerable head.  ``--exclude-ids`` is leakage control, not this mask.
 
+``KRINO_DISABLE_ANSWERABLE_MASK`` turns the mask off for the mutation test in
+``tests/conftest.py``; it is not a production option.
+
 Base probabilities come from `precompute_base_probs.py` so training never runs
 the 4B scorer.
 
@@ -44,9 +47,11 @@ import torch.nn.functional as F
 from data.pipeline import load_jsonl
 from model.src.backbone import load_causal_lm
 from model.src.decision_model import DecisionModel
+from model.src.feature_flags import feature_disabled
 from model.src.gpu_config import GPUConfig
 
 TYPES = ("noul", "choice", "score")
+ANSWERABLE_MASK_SWITCH = "KRINO_DISABLE_ANSWERABLE_MASK"
 
 
 def parse_lora_targets(value: str) -> tuple[str, ...]:
@@ -112,7 +117,9 @@ def hard_label_eligible(item) -> bool:
     the answerable head; it just contributes no hard CE.
     """
     if getattr(item, "answerable", None) is False:
-        return False
+        # The kill switch exists for the mutation test; production never sets it.
+        if not feature_disabled(ANSWERABLE_MASK_SWITCH):
+            return False
     if getattr(item, "provenance", None) == "teacher":
         return False
     return _hard_label_valid(item)
@@ -273,7 +280,8 @@ def item_loss(
     head = head_logits(model, item).reshape(-1)
     base = base_probs.to(head.device)
     logits = fusion_logits(base, head, alphas[q_type])
-    answerable_false = getattr(item, "answerable", None) is False
+    mask_on = not feature_disabled(ANSWERABLE_MASK_SWITCH)
+    answerable_false = getattr(item, "answerable", None) is False and mask_on
     is_teacher = getattr(item, "provenance", None) == "teacher"
     if answerable_false:
         # An abstention row trains the abstain target only.  Its label is kept
