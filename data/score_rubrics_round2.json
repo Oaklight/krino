@@ -1,0 +1,176 @@
+{
+  "_comment": "Round-two rubric set for #156. Keeps the peaked round-one families and replaces the flat ones with dimensions the state actually carries, per the rubric rule in research/31. Three levels, so Jev cannot hide a malformed question in a five-way spread.",
+  "sources": {
+    "mednli": {"template": "medical_triage"},
+    "codesearchnet": {"template": "code_review"},
+    "mmlu": {"template": "academic_reasoning"},
+    "mmlu_pro_short_reasoning_choice": {"template": "academic_reasoning"},
+    "arc": {"template": "academic_reasoning"},
+    "race": {"template": "academic_reasoning"},
+    "race_short_passage_choice": {"template": "academic_reasoning"},
+    "logiqa": {"template": "logical_inference"},
+    "anli": {"template": "adversarial_inference"},
+    "mnli": {"template": "adversarial_inference"},
+    "fever": {"template": "adversarial_inference"},
+    "multirc": {"template": "passage_decision"},
+    "boolq": {"template": "passage_decision"},
+    "tabfact": {"template": "numerical_reasoning"},
+    "agnews": {"template": "content_analysis"},
+    "hellaswag": {
+      "instructions": "How constrained is the next step by the context?",
+      "criteria": [
+        "Open: many continuations fit",
+        "Narrowed: a few continuations fit",
+        "Determined: the context points to one continuation"
+      ]
+    },
+    "piqa": {
+      "instructions": "How constrained is the next step by the context?",
+      "criteria": [
+        "Open: many continuations fit",
+        "Narrowed: a few continuations fit",
+        "Determined: the context points to one continuation"
+      ]
+    },
+    "swag": {
+      "instructions": "How constrained is the next step by the context?",
+      "criteria": [
+        "Open: many continuations fit",
+        "Narrowed: a few continuations fit",
+        "Determined: the context points to one continuation"
+      ]
+    },
+    "winogrande": {
+      "instructions": "How constrained is the next step by the context?",
+      "criteria": [
+        "Open: many continuations fit",
+        "Narrowed: a few continuations fit",
+        "Determined: the context points to one continuation"
+      ]
+    },
+    "commonsenseqa": {
+      "instructions": "How much background knowledge is needed to answer this question?",
+      "criteria": [
+        "Everyday knowledge",
+        "Some domain knowledge",
+        "Specialist knowledge"
+      ]
+    },
+    "hotpotqa_long_choice": {
+      "instructions": "How closely related are the passages in this state?",
+      "criteria": [
+        "Unrelated: different topics",
+        "Related: same broad topic",
+        "Interlinked: the passages share entities or events"
+      ]
+    },
+    "2wiki_long_choice": {
+      "instructions": "How closely related are the passages in this state?",
+      "criteria": [
+        "Unrelated: different topics",
+        "Related: same broad topic",
+        "Interlinked: the passages share entities or events"
+      ]
+    },
+    "longbench_long_choice": {
+      "instructions": "How closely related are the passages in this state?",
+      "criteria": [
+        "Unrelated: different topics",
+        "Related: same broad topic",
+        "Interlinked: the passages share entities or events"
+      ]
+    },
+    "contractnli": {
+      "instructions": "How restrictive is this contract clause?",
+      "criteria": [
+        "Permissive: grants or preserves a right",
+        "Balanced: mutual obligations",
+        "Restrictive: limits a party's rights"
+      ]
+    },
+    "banking77": {
+      "instructions": "How urgently does this customer request need attention?",
+      "criteria": [
+        "Routine: informational, no time pressure",
+        "Low: answer when convenient",
+        "Moderate: same-day response needed",
+        "High: time-sensitive, customer blocked",
+        "Critical: immediate action or financial/safety risk"
+      ]
+    },
+    "apigen_policy_compliance": {
+      "instructions": "How high is the risk of a policy violation in this agent situation?",
+      "criteria": [
+        "None: fully within policy and low impact",
+        "Low: minor ambiguity, reversible",
+        "Moderate: needs verification before acting",
+        "High: likely policy breach or data exposure",
+        "Critical: irreversible financial, privacy, or safety harm"
+      ]
+    },
+    "apigen_tool_action": {
+      "instructions": "How high is the risk of a policy violation in this agent situation?",
+      "criteria": [
+        "None: fully within policy and low impact",
+        "Low: minor ambiguity, reversible",
+        "Moderate: needs verification before acting",
+        "High: likely policy breach or data exposure",
+        "Critical: irreversible financial, privacy, or safety harm"
+      ]
+    },
+    "apigen_tool_argument": {
+      "instructions": "How high is the risk of a policy violation in this agent situation?",
+      "criteria": [
+        "None: fully within policy and low impact",
+        "Low: minor ambiguity, reversible",
+        "Moderate: needs verification before acting",
+        "High: likely policy breach or data exposure",
+        "Critical: irreversible financial, privacy, or safety harm"
+      ]
+    },
+    "apigen_tool_choice": {
+      "instructions": "How high is the risk of a policy violation in this agent situation?",
+      "criteria": [
+        "None: fully within policy and low impact",
+        "Low: minor ambiguity, reversible",
+        "Moderate: needs verification before acting",
+        "High: likely policy breach or data exposure",
+        "Critical: irreversible financial, privacy, or safety harm"
+      ]
+    },
+    "apigen_tool_next_action": {
+      "instructions": "How high is the risk of a policy violation in this agent situation?",
+      "criteria": [
+        "None: fully within policy and low impact",
+        "Low: minor ambiguity, reversible",
+        "Moderate: needs verification before acting",
+        "High: likely policy breach or data exposure",
+        "Critical: irreversible financial, privacy, or safety harm"
+      ]
+    },
+    "openjev_authored144": {
+      "instructions": "How clear is the correct decision from this scenario?",
+      "criteria": [
+        "Ambiguous: evidence conflicts",
+        "Weak: one option is slightly favored",
+        "Moderate: a reasonable decision exists with some doubt",
+        "Clear: the decision is well supported",
+        "Unambiguous: only one decision is defensible"
+      ]
+    },
+    "sst2": {
+      "instructions": "What is the sentiment of this text?",
+      "criteria": ["Negative", "Neutral", "Positive"]
+    }
+  },
+  "default": {
+    "instructions": "How clear is the correct decision from this scenario?",
+    "criteria": [
+      "Ambiguous: evidence conflicts",
+      "Weak: one option is slightly favored",
+      "Moderate: a reasonable decision exists with some doubt",
+      "Clear: the decision is well supported",
+      "Unambiguous: only one decision is defensible"
+    ]
+  }
+}

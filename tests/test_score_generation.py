@@ -14,6 +14,7 @@ from data.score_generation import (
     expected_level,
     iter_candidates,
     label_level,
+    level0_allowed,
     load_rubric_config,
     normalise_state,
     order_candidates,
@@ -80,6 +81,14 @@ def test_allocate_quotas_is_deterministic_and_caps_at_pool_size():
     first = allocate_quotas({"a": 10, "b": 90}, target=40, floor=5, cap=40)
     second = allocate_quotas({"a": 10, "b": 90}, target=40, floor=5, cap=40)
     assert first == second
+
+
+def test_level0_allowed_bounds_the_running_share():
+    assert level0_allowed(0.5, 0, 0) is True
+    assert level0_allowed(0.5, 1, 1) is False
+    assert level0_allowed(0.5, 2, 1) is True
+    assert level0_allowed(0.5, 3, 2) is False
+    assert level0_allowed(0.0, 10, 10) is True
 
 
 def test_select_candidates_respects_quotas_and_is_seeded():
