@@ -138,6 +138,18 @@ def inject_lora(
             if (idx := _layer_index(name)) is not None and idx >= cutoff
         ]
 
+    # A target that matches nothing would otherwise train a smaller adapter
+    # silently.  That is a trap: the run succeeds and the loss looks normal
+    # until the numbers are compared.  Fail on the named target instead.
+    matched = {name.rsplit(".", 1)[-1] for name, _ in matches}
+    missing = [target for target in targets if target not in matched]
+    if missing:
+        scope = "" if last_n_layers is None else " after last_n_layers filtering"
+        raise ValueError(
+            f"No linear layers match LoRA target(s) {sorted(set(missing))}{scope}; "
+            "every named target must adapt at least one layer"
+        )
+
     for name, module in matches:
         _set_submodule(model, name, LoRALinear(module, rank, alpha, dropout))
     return len(matches)
