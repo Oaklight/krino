@@ -68,22 +68,45 @@ tests/            — pytest test suite
 - All tests must pass before committing
 - Synthetic pipeline tests run offline (no API calls)
 
+### Machines
+
+Three hosts. Each kind of work has one home.
+
+| Host | Runs | Do not run here |
+|---|---|---|
+| laptop | code editing and session coordination | training, synthesis, or any job that loops over ~100k records |
+| `gpu-host-a` | every training and GPU evaluation | dataset-wide CPU work |
+| `cpu-host-a` | inventory, dedup, shingling, synthesis, any CPU-heavy dataset job | training |
+
+- `gpu-host-a`: 8x<accelerator>. Environment `jev-fla`. Data at `~/projects/krino-v3/data/benchmarks`.
+- `cpu-host-a`: 48 cores, 251 GB RAM, Python 3.10.12, numpy, pyarrow. Data at `~/krino-cpu/data/benchmarks`. Home is a shared NFS with limited free space; keep one working copy per task and clean up.
+- `cpu-host-a` is an obsolete name. Use `cpu-host-a`.
+
+The two compute hosts reach each other directly on the internal network with key-based auth. Bulk data does not go through the laptop.
+
+```bash
+# gpu-host-a -> cpu-host-a
+ssh gpu-host-a 'rsync -a ~/path/ cpu-host-a:~/dest/'
+
+# cpu-host-a -> gpu-host-a (use the FQDN: the short name does not resolve from cpu-host-a)
+ssh cpu-host-a 'rsync -a ~/path/ gpu-host-a:~/dest/'
+```
+
 ### Environment
 
 - Python projects use conda environments (check `conda info -e`)
 - LLM access via rosetta gateway: `LLM_BASE_URL` in `.env`
 - Jev API access: `TYPESAFE_API_KEY` in `.env`
-- Seeded domains require pyarrow (available on cpu-host-a, not laptop)
+- Seeded domains require pyarrow: present on `cpu-host-a` and in the `jev-fla` env on `gpu-host-a`, not on the laptop
 
 ### HuggingFace Data Sync
 
 ```bash
 # Push synthetic data to HF
 python -m data.synthetic --push-to-hf oaklight/krino-data
-
-# Or via CLI
-hf upload oaklight/krino-data data/benchmarks/synthetic/ . --repo-type dataset
 ```
+
+`huggingface_hub` is installed on both compute hosts; the `hf` CLI is not. Use the Python API there, or run the CLI from a machine that has it.
 
 ## Before Committing
 
