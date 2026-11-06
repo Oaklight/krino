@@ -84,7 +84,14 @@ excluded, so its counts differ from the estimate above:
 - 236,942 items remain; split seed 42, val 0.2;
 - train 99,595 trained-type (42.0% of the non-held-out corpus, 40.9% of the full corpus);
 - validation 47,389 items, all types;
-- 1,479 further train rows dropped because the label is not among the options.
+- 1,479 train rows excluded as abstention rows (`answerable = False`, gold removed
+  from the option set by design); 1,521 train score rows carry a fractional label
+  that `_label_index` rounds to the nearest level.
+
+The abstention exclusion is keyed on the flag, not on `_label_index < 0`, so a
+genuine out-of-options label raises instead of disappearing.  It is an interim
+measure: dropping and masking are equivalent only in this per-item loop, and the
+answerable head (#254) should replace it.
 
 First measured rate on this mix: 9.1 to 9.6 trainable items/s, below the 12.5
 nominal of the 20K subset because the canonical states are longer. Training is
