@@ -88,6 +88,25 @@ and must not drive option CE. Zero items fail eligibility after label
 normalisation; 124/70 noul labels and 85/108 score labels in the two sampled
 corpora are strings that require coercion.
 
+### `answerable` is binary with an implicit default
+
+The artifact has 6,000 explicit `false`, 237,366 unset, and zero explicit
+`true`. Unset means answerable; only an explicit `false` marks abstention.
+A filter written `answerable == True` returns nothing and still looks like a
+successful filter.
+
+Of the 6,000, 4,000 are noul rows that carry the implicit `false`/`true`
+options and a valid `False` label. A hard-label trainer must mask them or it
+learns "false" on removed support. The other 2,000 are choice rows whose kept
+label is no longer in the options, including 224 Banking77 rows with the full
+79-intent label space.
+
+Training masks these rows in the loss; it does not drop them from the batch.
+Row-level id exclusion is for held-out leakage only. Dropping changes the
+batch composition and the loss normalisation, so a dropped-row arm is not
+comparable with a masked-row arm even on the same data. Census:
+`results/abstention/canonical_answerable_census.json`.
+
 ## Type mix
 
 | type | items | share |

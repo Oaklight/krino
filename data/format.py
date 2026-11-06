@@ -49,9 +49,12 @@ class TypedQuestion:
     group: str | None = None
     teacher_probs: dict[str, float] | None = None
     teacher_name: str | None = None
-    # ``answerable=None`` means not annotated, not True.  The training loader
-    # treats an item with a gold label as answerable=True unless this is
-    # explicitly False; abstention sets must set False and a reason.
+    # ``answerable=None`` means answerable, not "unknown".  The canonical
+    # artifact has 6,000 explicit False and 237,366 unset, and zero explicit
+    # True, so a filter written as ``answerable == True`` silently returns
+    # nothing.  Only an explicit False marks abstention, and abstention rows
+    # set a reason.  The training loader treats an item with a gold label as
+    # answerable unless this is explicitly False.
     answerable: bool | None = None
     reason: str | None = None
     # ``gold`` / ``execution`` / ``teacher``; see data/provenance.py.  None
