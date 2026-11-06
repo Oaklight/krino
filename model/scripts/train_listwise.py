@@ -288,6 +288,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Load the items and print the post-filter split, then exit before "
+        "loading the backbone; used to check corpus/base-prob coverage",
+    )
     return parser
 
 
@@ -316,6 +322,13 @@ def main() -> int:
         f"types { {t: sum(1 for i in items if i.question['type'] == t) for t in TYPES} }",
         flush=True,
     )
+    if args.dry_run:
+        print(
+            f"dry run: {len(items)} items after the base-probs filter "
+            f"(train {len(train_items)} trained-type, val {len(val_items)})",
+            flush=True,
+        )
+        return 0
 
     backbone, tokenizer = load_causal_lm(
         args.model, device=args.device, freeze=True, flash_attention=False
