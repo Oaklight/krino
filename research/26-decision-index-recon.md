@@ -6,10 +6,10 @@ kit whose public half we can rebuild, run and score ourselves. The second is a p
 composite that Artificial Analysis runs on its own data; one quarter of the index is a
 private component with no harness.
 
-The community run is **not done**. Two things are missing on this machine: the frozen
-suite is not downloadable prebuilt, and scoring the v4 control needs a GPU. The exact
-blockers and the command sequence are below. No board number is copied anywhere in this
-note, and no home-made composite is proposed.
+The community run is **not done**. Three things block it: the frozen suite is not
+downloadable prebuilt, the local rebuild hit a truncated source download, and scoring the
+v4 control needs a GPU. The exact blockers and the command sequence are below. No board
+number is copied anywhere in this note, and no home-made composite is proposed.
 
 Scope: issue #236, Workstream A. Reconnaissance run 2026-11-06 on `oaklight`'s laptop
 (no GPU; `nvidia-smi` absent, `torch` absent from the base interpreter).
@@ -101,6 +101,25 @@ The second command ran as `oaklight`, not anonymously. So a run requires the loc
 rebuild: about **7 GB of downloads** (the HoVer Wikipedia database alone is 2.2 GB) and
 **17 GB of working space**, with the HLE terms accepted on the Hub and a login. That is a
 CPU job; it does not need a GPU.
+
+### Rebuild attempt
+
+On 2026-11-06 the kit was installed in a Python 3.12 virtual environment (`uv venv
+--python 3.12`; `pip install -e ".[transformers,rebuild]"`). Dependency resolution
+succeeded, and the HLE gate is open: `hf download cais/hle README.md` returned the file.
+
+`suite rebuild --edition 0.3` then failed in source acquisition, not in the scoring code.
+The Zenodo `BPoMP_datasets_p1_out_of_3.json` download was truncated at 11,846,880 bytes
+against a `Content-Length` of 11,867,336; the kit's hash check rejected it (actual
+`7e840b47...`, pinned `2500e828...`). `http_fetch` in `suite/build/acquire.py` does not
+check `Content-Length`, so a dropped connection surfaces as a hash mismatch. A second
+attempt was slower on the same source and was stopped. No suite was produced, so no
+score was run.
+
+This is an operational failure in the rebuild, not a licence or code failure. On the GPU
+host, pre-fetch the flaky sources with a resumable downloader (`curl -C - --retry`) and
+verify the pinned hashes before rerunning `suite rebuild`; the completed sources are
+cached in the work directory.
 
 ### v4 control: identified, not scored
 
