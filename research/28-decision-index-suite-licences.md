@@ -9,9 +9,9 @@ The rebuild is a local evaluation job. The suite stays in a private work directo
 compute host; it is not committed, not uploaded, and not used for training. The code is
 MIT; the data is not.
 
-Edition 0.3 fetches 43 catalog entries: 37 counted benchmarks and 6 shown-but-not-counted
-(MMLU, ARC-Easy, ARC-Challenge, SimpleBench, RouterBench, SGD). The generated Home
-appliance benchmark needs no download.
+The rebuild fetches 44 upstream entries: the 37 of edition 0.1 (including ForecastBench,
+which 0.3 retires at read time) and the seven added in 0.2. The generated Home appliance
+benchmark needs no download.
 
 | # | Benchmark | Upstream source | Licence position |
 |---:|---|---|---|
