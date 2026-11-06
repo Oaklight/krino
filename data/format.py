@@ -57,6 +57,10 @@ class TypedQuestion:
     # ``gold`` / ``execution`` / ``teacher``; see data/provenance.py.  None
     # means not tagged yet, which the hard-label rule treats as ineligible.
     provenance: str | None = None
+    # ``option`` / ``withheld_gold`` for choice, ``level`` / ``fractional`` for
+    # score; see data/labels.py.  None on noul rows and on artifacts built
+    # before the field existed; consumers must not infer meaning from absence.
+    label_kind: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {k: v for k, v in asdict(self).items() if v is not None}
