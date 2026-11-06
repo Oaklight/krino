@@ -448,6 +448,26 @@ A record may drive a hard-label loss (CE / BCE / ordinal) only when all hold:
    ids before dedup; the original passage id is the group, so all 498 stay in
    one split per passage.
 
+### Label kinds
+
+Every choice and score row carries `label_kind`; the field is never absent, so a
+consumer does not have to infer meaning from the value.
+
+- Choice `option`: the label is a `criteria` key.
+- Choice `withheld_gold`: the label is the removed gold of a constructed
+  abstention row; `answerable` is False. Consumers must branch on `answerable`,
+  not on the label-outside-criteria symptom. 2,000 rows.
+- Score `level`: an integer level index.
+- Score `fractional`: a float expected level between two levels. 1,905 of the
+  29,515 score rows (6.5%), covering 944 authored questions, all synthetic. The
+  format permits this and training interpolates it; do not round it to an
+  integer level. Integer accuracy is undefined on these rows: report RPS or MAE,
+  or exclude them from integer accuracy and say which was done.
+
+The builder fails on a choice label outside `criteria` unless `answerable` is
+False, and on a non-numeric or out-of-range score label; the message names the
+row and the criterion.
+
 Records that fail (2) are excluded from hard-label loss but may still supply a
 soft target. Recommend fixing the `typed_decisions` conversion to emit `bool` and
 `float` labels rather than strings.

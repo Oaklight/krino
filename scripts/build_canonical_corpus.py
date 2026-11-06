@@ -31,6 +31,12 @@ by id.  When a corpus reuses an id, every record in that corpus gets
 split still groups the records the original id grouped.  The rule is generic;
 today only the RACE short-passage corpus has this shape.
 
+Every choice and score row is annotated with ``label_kind``: ``option`` or
+``withheld_gold`` for a choice, ``level`` or ``fractional`` for a score.  The
+builder fails on a choice label outside ``criteria`` unless ``answerable`` is
+False, and on a score label that is non-numeric or outside the level range; the
+failure names the row and the criterion.  Noul rows have no label kind.
+
 Usage:
     python scripts/build_canonical_corpus.py \
         --manifest data/licence_manifest.json --build full \
@@ -150,6 +156,7 @@ def main() -> int:
     repo_root = args.repo_root.resolve()
     if str(repo_root) not in sys.path:
         sys.path.insert(0, str(repo_root))
+    from data.labels import LabelError, annotate
     from data.provenance import tag
     from data.synthetic import family_to_typed_questions
 
@@ -243,16 +250,27 @@ def main() -> int:
             dropped[group] += 1
             return
         provenance = tag(item, corpus)
+        annotate(item)
         kept[q_type] += 1
         kept[f"group:{group}"] += 1
         kept[f"tier:{provenance.tier}"] += 1
+        kind = item.get("label_kind")
+        if kind is not None:
+            kept[f"kind:{kind}"] += 1
         kept_ids.add(item_id)
         if out_handle is not None:
             out_handle.write(json.dumps(item, ensure_ascii=False) + "\n")
 
     # Pass 2: emit in canonical order.
-    for corpus, item in iter_records():
-        emit(item, corpus)
+    try:
+        for corpus, item in iter_records():
+            emit(item, corpus)
+    except LabelError as exc:
+        if out_handle is not None:
+            out_handle.close()
+        if args.out is not None:
+            args.out.unlink(missing_ok=True)
+        raise SystemExit(f"label contract violation: {exc}") from exc
     if out_handle is not None:
         out_handle.close()
     if unknown_groups:
@@ -286,6 +304,11 @@ def main() -> int:
         "distinct_ids": len(kept_ids),
         "by_type": by_type,
         "by_provenance": by_provenance,
+        "by_label_kind": {
+            key.split(":", 1)[1]: value
+            for key, value in sorted(kept.items())
+            if key.startswith("kind:")
+        },
         "id_collisions_fixed": collisions,
         "by_group": {
             key.split(":", 1)[1]: value
