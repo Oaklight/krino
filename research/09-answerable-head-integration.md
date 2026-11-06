@@ -55,6 +55,47 @@ concatenated base corpus as `--corpus`. It writes the held-out mix and
 held-out base item appears in training in answerable form. The corpus is two
 source files, so concatenate them (dedup by id) into one training file first.
 
+### Shipped corpus at a glance
+
+- 34,011 variants from 50,000 source items: `support_removed` 10,984,
+  `out_of_scope` 15,243, `entity_corrupted` 7,784. 17,444 paired originals.
+  Type-matched entity donors cost 21 rows against shape-only matching
+  (34,032), so the match is free at this scale.
+- Held-out split (15% of base ids): 2,617 base ids, 5,152 eval negatives
+  (1,695 / 2,279 / 1,178 by reason), 2,617 eval positives, 0 base-id overlap.
+- Training negatives after the split: 28,859 (9,289 / 12,964 / 6,606).
+- Length delta per variant: `support_removed` mean -170 characters,
+  `out_of_scope` -28, `entity_corrupted` -20. `out_of_scope` evidence is
+  bounded to 0.5x-2x the original evidence length.
+
+Stats: `results/abstention/unanswerable_30k.stats.json` and
+`results/abstention/unanswerable_30k.split.json`.
+
+### Surface-cue check
+
+`model/scripts/abstention_surface_baseline.py` fits a ridge classifier over
+surface features only (length, token count, sentence count, mean token length,
+digit/uppercase/punctuation fractions, source, question type, option count) and
+asks whether it can tell a variant from its paired original. Pairs are split by
+base id; the null band is 200 label permutations.
+
+Pair-discrimination AUC, with the permutation 5th-95th percentile in brackets:
+
+| transform | AUC | null band |
+| --- | ---: | --- |
+| `entity_corrupted` | 0.526 | 0.487-0.511 |
+| `out_of_scope` | 0.511 | 0.493-0.506 |
+| `support_removed` | 0.553 | 0.491-0.508 |
+| overall | 0.519 | 0.495-0.506 |
+
+The negative-vs-positive experiment gives the same picture (overall 0.520).
+The effect is small: at most 5 pp for `support_removed`, where removal shortens
+the state by construction. Entity type matching does not change these numbers
+(shape-only overall 0.519), so it costs nothing in surface separability. The
+residual `support_removed` length cue is a follow-up check, not a blocker: if
+the trained head's recall for `support_removed` is far above the other two
+reasons, add a length-matched distractor-removed control.
+
 ## 2. Loss
 
 ### 2.1 Formulation
@@ -66,8 +107,8 @@ L = w_kl * KL(base || fused) + w_ce * CE + lambda(t) * w_ans * BCEWithLogits(a, 
 - `y = answerable_target(item)`: the explicit `answerable` field wins; a
   gold-carrying item defaults to `true`.
 - `pos_weight = n_neg / max(n_pos, 1)`, computed over `train_items` after the
-  negatives are appended. At the shipped mix this is about 34k negatives over
-  about 50k positives, so `pos_weight` is about 0.68. Do not resample; the
+  negatives are appended. At the shipped mix this is about 29k negatives over
+  about 47k positives, so `pos_weight` is about 0.61. Do not resample; the
   weight handles the class imbalance.
 - `w_ans = 1.0` to start. `w_kl` and `w_ce` come from the run config; the
   answerable term does not change them.
@@ -213,10 +254,15 @@ not evidence of a better main output.
   out-of-distribution detection, not logical unanswerability; the head may
   learn "evidence does not belong to this question" rather than "no answer
   exists". Report it as such.
-- Entity donors are same-source and same token shape, but not type-matched.
-  `minecraft` can be replaced by a person name. If `entity_corrupted` recall is
-  much higher than the other two, the head may be detecting the type clash.
-  Build a type-matched donor pass before claiming the capability.
+- Entity donors are matched on token shape and a coarse surface type derived
+  from the corpus (proper name, common term, acronym, organisation, digit
+  string), not on a named-entity label. The surface-cue check (section 1)
+  measures how far length and shape alone separate a variant from its original;
+  the measured AUC is at most 0.553, so the shortcut is small. Report the AUC
+  beside the per-reason abstention recall, and treat a much higher recall for
+  `support_removed` as the trigger for a length-matched control. Files:
+  `results/abstention/unanswerable_30k.surface.json` and
+  `unanswerable_30k.shape-match.surface.json`.
 - Support removal on a long contract clause leaves a long, still-readable
   clause; the removed sentence may not be the only support. Per-reason recall
   is the diagnostic.

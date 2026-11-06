@@ -1,0 +1,110 @@
+{
+ "answerable_originals": 17442,
+ "by_transform": {
+  "entity_corrupted": {
+   "by_source": {
+    "anli": 542,
+    "contractnli": 3365,
+    "fever": 375,
+    "mednli": 124,
+    "mnli": 453,
+    "multirc": 2946
+   },
+   "by_type": {
+    "choice": 375,
+    "noul": 7430
+   },
+   "entity_types": {
+    "acronym": 192,
+    "common": 6421,
+    "digit": 5,
+    "mixed": 346,
+    "org": 6,
+    "proper": 835
+   },
+   "length_delta": {
+    "count": 7805,
+    "max_delta": 558,
+    "mean_delta": -20.106470211402947,
+    "median_delta": -2,
+    "min_delta": -567
+   },
+   "reason": "entity_corrupted",
+   "variants": 7805
+  },
+  "out_of_scope": {
+   "by_source": {
+    "anli": 1028,
+    "boolq": 1134,
+    "contractnli": 817,
+    "fever": 1604,
+    "mednli": 2127,
+    "mnli": 1640,
+    "multirc": 5185,
+    "tabfact": 1708
+   },
+   "by_type": {
+    "choice": 1604,
+    "noul": 13639
+   },
+   "length_delta": {
+    "count": 15243,
+    "max_delta": 2509,
+    "mean_delta": -29.045922718624944,
+    "median_delta": 1,
+    "min_delta": -2699
+   },
+   "reason": "out_of_scope",
+   "variants": 15243
+  },
+  "support_removed": {
+   "by_source": {
+    "anli": 866,
+    "boolq": 1300,
+    "contractnli": 3972,
+    "fever": 157,
+    "mednli": 28,
+    "mnli": 13,
+    "multirc": 4648
+   },
+   "by_type": {
+    "choice": 157,
+    "noul": 10827
+   },
+   "length_delta": {
+    "count": 10984,
+    "max_delta": -4,
+    "mean_delta": -170.09122359796066,
+    "median_delta": -130.0,
+    "min_delta": -2429
+   },
+   "reason": "support_removed",
+   "variants": 10984
+  }
+ },
+ "duplicate_ids_dropped": 0,
+ "entity_donor_match": "shape",
+ "input_items": 50000,
+ "inputs": [
+  "data/benchmarks/label_target_30k_jev.jsonl",
+  "data/benchmarks/residual_train_20000_jev.jsonl"
+ ],
+ "negatives_out": "data/benchmarks/unanswerable_30k_shape/negatives.jsonl",
+ "originals_by_type": {
+  "choice": 1604,
+  "noul": 15838
+ },
+ "out": "data/benchmarks/unanswerable_30k_shape/pairs.jsonl",
+ "pair_checks": {
+  "failed": 0,
+  "passed": 34032
+ },
+ "per_item_limit": 2,
+ "seed": 42,
+ "transforms": [
+  "support_removed",
+  "out_of_scope",
+  "entity_corrupted"
+ ],
+ "variants": 34032
+}
