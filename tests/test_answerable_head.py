@@ -329,6 +329,7 @@ class TestTaskLossMask:
             for parameter in parameters
         )
 
+    @pytest.mark.feature_guard("KRINO_DISABLE_ANSWERABLE_MASK")
     def test_abstention_row_zeroes_the_task_terms_and_option_gradient(self):
         model, alphas, loss, kl, ce = self._run(self._noul())
         assert kl == 0.0
@@ -349,6 +350,7 @@ class TestTaskLossMask:
         assert alphas["noul"].grad is None or torch.count_nonzero(alphas["noul"].grad) == 0
         assert self._nonzero_grad(model.answerable_head.parameters())
 
+    @pytest.mark.feature_guard("KRINO_DISABLE_ANSWERABLE_MASK")
     def test_a_batch_of_abstention_rows_stays_zero_on_the_option_path(self):
         from model.scripts.train_residual import answerable_target, item_loss
 
@@ -384,6 +386,7 @@ class TestTaskLossMask:
         assert alphas["noul"].grad is None or torch.count_nonzero(alphas["noul"].grad) == 0
         assert self._nonzero_grad(model.answerable_head.parameters())
 
+    @pytest.mark.feature_guard("KRINO_DISABLE_ANSWERABLE_MASK")
     def test_a_masked_row_has_no_graph_when_the_head_is_off(self):
         """The A0 arm must skip backward() instead of calling it on a zero."""
         from model.scripts.train_residual import item_loss
