@@ -163,16 +163,19 @@ near-duplicate pairs may cross the canonical set.
 
 ## Terms and licences
 
-Full evidence and quotes: `research/30-canonical-source-licences.md`. No
-exclusion has been applied; the owner decides the list.
+Full evidence, quotes, and the policy decision:
+`research/30-canonical-source-licences.md`. The owner decided on 2026-11-06 to
+keep every source group: the corpus is research use only, and any release of
+weights or data must carry that restriction and point at `research/30`. No
+exclusion has been applied.
 
 Of 243,366 items:
 
 | verdict | groups | items | share |
 |---|---:|---:|---:|
 | restrictive | 8 | 55,787 | 22.9% |
-| unknown | 10 | 32,057 | 13.2% |
-| permissive | 17 | 155,522 | 63.9% |
+| unresolved | 8 | 28,742 | 11.8% |
+| permissive | 19 | 158,837 | 65.3% |
 
 Restrictive groups: `anli` (CC BY-NC 4.0), `contractnli` (CC BY-NC-SA 4.0),
 `apigen` (CC BY-NC 4.0, research only), `race` ("non-commercial research purpose
@@ -180,8 +183,8 @@ only"), `agnews` ("any other non-commercial activity"), `mednli` (PhysioNet
 credentialed DUA), `yelp` ("intended for educational use"), `multirc`
 (SuperGLUE's research-context statement).
 
-Unknown groups: `hellaswag` (MIT claim, DMCA-blocked repository), `sst2`, `sst5`,
-`swag`, `piqa`, `logiqa`, `codesearchnet` (per-repository licences not recorded),
+Unresolved groups: `hellaswag` (MIT claim, DMCA-blocked repository), `sst2`,
+`sst5`, `logiqa`, `codesearchnet` (per-repository licences not recorded),
 `quality`, `2wiki`, `stsb`.
 
 Synthetic items inherit their seed dataset's terms. The ANLI-, ContractNLI- and
@@ -189,12 +192,14 @@ MedNLI-seeded domains contribute 6,853 + 6,287 + 6,744 synthetic items to the
 restrictive count above, on top of the sampled rows in the 20K/30K. The 9
 pure-generation domains are project-generated.
 
-Exclusion scenarios:
+Contingency only: `data/licence_manifest.json` and
+`scripts/build_canonical_corpus.py` can produce narrower corpora if the policy is
+revisited. Nothing is excluded today.
 
 | scenario | excluded | remaining | noul | choice | score |
 |---|---:|---:|---:|---:|---:|
 | restrictive only | 55,787 | 187,579 | 86,476 | 75,540 | 25,563 |
-| restrictive + unknown | 87,844 | 155,522 | 75,413 | 60,050 | 20,059 |
+| restrictive + unresolved | 84,529 | 158,837 | 75,413 | 63,365 | 20,059 |
 
 The abstention set is rebuilt from the remaining corpora after any exclusion, so
 its post-exclusion size will differ from a simple subtraction.
