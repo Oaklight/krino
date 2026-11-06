@@ -41,6 +41,8 @@ No record is model-labelled. `model_share` is 0.0: the residue after rules and h
 
 ## Coverage
 
+Read every percentage in this table as records labelled, not records trained: the listwise and pairwise arms take no gradient from any of the 113,594 noul records, and the Gradient eligibility section below gives the per-ability difference.
+
 | ability | noul | choice | score | total | share | source_rule | heuristic | after exclude_restrictive | after exclude_restrictive_and_unresolved | listwise gradient | JevBench acc (n) | flags |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | Classification | 81,125 | 69,446 | 0 | 150,571 | 61.9% | 45,007 | 105,564 | 131,700 | 110,675 | 69,446 | 67.2% (198) | |
@@ -87,7 +89,7 @@ The acceptance set is the 231 public JevBench items, classified by question form
 Four consequences:
 
 - The acceptance set is 85.7% Classification while the corpus is 61.9%. A JevBench score measures how the model does on classification-shaped decisions, not the corpus composition.
-- Scoring has 18 items, 7.8% of the 231. A binomial 95% interval on the 18-item rate is about +/-23 points, so an ordinary change in Scoring is invisible in the total. Even a wipeout of all 18 moves the 231-item total by 7.8 points, against the total's own +/-6.0-point half-width at the observed rate, and a real regression is smaller than that. A held-out split is what sees a Scoring regression.
+- Scoring has 18 items, 7.8% of the 231. Each item is worth 0.433 points of the total, so a 10-point Scoring gain (1.8 items) moves the total 0.78 points, inside the total's own 95% half-width of 6.0 points at the observed rate. Even a wipeout of all 18 moves the total 7.8 points, barely past that half-width, and a real regression is smaller. The held-out split sees what the total cannot: its score quota is 1,300 items with a 4.5-point minimum detectable effect (`27-matched-heldout-spec.md`), against 18 items at +/-23 points here.
 - Four abilities have zero items in the acceptance set. Ranking and ML Feature Extraction also have zero corpus records, so the metric cannot see those gaps by construction. Detection (4,650 records, 1.9% of the corpus) and Search (479, 0.2%) have coverage the set never exercises. The coverage table is the only place these gaps show up.
 - Verification is the corpus-side mirror: it is 13.4% of the corpus but 0.9% of the acceptance set, and its two JevBench items both miss. Only 2,762 of its 32,532 records (8.5%, 1.1% of the corpus) are listwise-eligible, so the label count overstates what the trained head sees, and the set measures the ability with two items.
 
