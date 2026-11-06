@@ -167,3 +167,13 @@ metric while agreeing to 0.13 pp on accuracy.
   which the prediction dump does not carry.
 * **The numbers here are one split.** The 0.0020 pass-to-pass floor and the
   0.0282-0.0865 interval are quoted where they bear on a claim.
+
+## Label ambiguity in the score corpus
+
+`research/31-score-question-pilot.md` measures what Jev returns on 2,000 newly
+generated ordinal questions: the argmax and the expected level disagree on
+44.9% of rows and mean entropy is 0.907 nats against a 1.609 ceiling. A hard
+score label is therefore a lossy summary of the teacher's distribution by
+construction. That is a plausible part of the gap between score and choice
+accuracy (0.3083 against 0.5991 corrected in the current gate): some of the
+score gap is label ambiguity, not model failure.

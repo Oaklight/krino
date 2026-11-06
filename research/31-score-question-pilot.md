@@ -30,6 +30,15 @@ and the source mix; it does not authorise scaling.
   three shared 8-word shingles) ran over every accepted row before it was
   written.
 
+## Rubric rule
+
+A rubric may be assigned to a source family only when someone states which field
+of the state carries the evidence for it. If the evidence is not in the state —
+confidence in an answer whose options are absent, a hop count when the passages
+being asked about are not the ones present — the rubric is malformed, not hard.
+The model can then only return a flat or collapsed distribution, and a flat
+number is evidence about the rubric, not about the model.
+
 ## Yield
 
 | quantity | value |
@@ -105,6 +114,49 @@ Per source (accepted rows; level-0 share; argmax≠expected; mean entropy):
 | arc | 41 | 73% | 5% | 0.541 | permissive |
 | sst2 | 59 | 12% | 8% | 0.511 | unresolved |
 
+Per-source level shares (0..4):
+
+| source | rows | l0 | l1 | l2 | l3 | l4 |
+|---|---:|---:|---:|---:|---:|---:|
+| 2wiki_long_choice | 25 | 0% | 0% | 0% | 0% | 100% |
+| agnews | 45 | 2% | 29% | 51% | 18% | 0% |
+| anli | 46 | 20% | 13% | 9% | 22% | 37% |
+| apigen_policy_compliance | 36 | 61% | 0% | 36% | 3% | 0% |
+| apigen_tool_action | 53 | 8% | 0% | 92% | 0% | 0% |
+| apigen_tool_argument | 87 | 87% | 0% | 13% | 0% | 0% |
+| apigen_tool_choice | 25 | 60% | 0% | 40% | 0% | 0% |
+| apigen_tool_next_action | 87 | 92% | 0% | 6% | 2% | 0% |
+| arc | 41 | 71% | 29% | 0% | 0% | 0% |
+| banking77 | 78 | 41% | 8% | 35% | 13% | 4% |
+| boolq | 54 | 9% | 0% | 11% | 20% | 59% |
+| codesearchnet | 25 | 72% | 28% | 0% | 0% | 0% |
+| commonsenseqa | 87 | 56% | 0% | 2% | 36% | 6% |
+| contractnli | 87 | 82% | 2% | 14% | 2% | 0% |
+| fever | 68 | 38% | 16% | 3% | 10% | 32% |
+| hellaswag | 87 | 69% | 0% | 0% | 1% | 30% |
+| hotpotqa_long_choice | 41 | 0% | 0% | 0% | 0% | 100% |
+| logiqa | 87 | 69% | 11% | 18% | 0% | 1% |
+| longbench_long_choice | 25 | 0% | 0% | 0% | 8% | 92% |
+| mednli | 76 | 33% | 4% | 30% | 25% | 8% |
+| mmlu | 82 | 56% | 27% | 17% | 0% | 0% |
+| mmlu_pro_short_reasoning_choice | 83 | 30% | 33% | 36% | 1% | 0% |
+| mnli | 80 | 14% | 22% | 10% | 26% | 28% |
+| multirc | 86 | 50% | 1% | 5% | 16% | 28% |
+| openjev_authored144 | 24 | 38% | 0% | 0% | 8% | 54% |
+| piqa | 64 | 73% | 0% | 0% | 19% | 8% |
+| race | 84 | 65% | 8% | 26% | 0% | 0% |
+| race_short_passage_choice | 25 | 60% | 12% | 28% | 0% | 0% |
+| sst2 | 59 | 12% | 32% | 56% | 0% | 0% |
+| swag | 79 | 99% | 0% | 0% | 0% | 1% |
+| synthetic | 25 | 76% | 0% | 4% | 12% | 8% |
+| tabfact | 86 | 34% | 1% | 58% | 7% | 0% |
+| winogrande | 63 | 10% | 0% | 2% | 67% | 22% |
+
+The multi-hop families collapse at level 4 ("Unanswerable"), not level 0: 2wiki
+and hotpotqa are 100% level 4 and longbench 92%. That is the same malformed-
+rubric failure as the level-0 collapse, and the next round must fix the
+dimension rather than the counts.
+
 Licence totals: 737 restrictive, 258 unresolved, 1,005 permissive. Each row
 inherits the licence of the source state; the generated question text adds no
 new third-party terms. No exclusion was applied in the pilot, and the owner's
@@ -115,9 +167,13 @@ groups.
 
 1. **The generating loop works.** Yield is 1.03, the API is fast, and the
    contamination rule comes back clean. Volume is not the risk.
-2. **The hard label is weak.** On 45% of rows the argmax and the expected level
-   disagree, and the mean entropy is 56% of the maximum. Store the distribution
-   and train on it; do not present `label` as gold.
+2. **The hard label is weak, and this is bigger than #156.** On 45% of rows the
+   argmax and the expected level disagree, and the mean entropy is 0.907 nats
+   against a 1.609 ceiling. A hard score label is a lossy summary of the
+   teacher's distribution by construction. This is a plausible part of why the
+   score head sits at 0.3083 corrected against 0.5991 for choice in the current
+   gate: some of that gap is label ambiguity, not model failure. The score-head
+   discussion in `research/12-score-calibration-ceiling.md` links here.
 3. **Rubric families split cleanly.** The peaked, well-posed scales are sst2,
    arc, fever, banking77, mmlu_pro, mmlu, mednli, and the apigen action/argument
    scales. The flat scales are hellaswag, winogrande, piqa, commonsenseqa,
@@ -127,8 +183,9 @@ groups.
    spreads probability across the whole scale.
 4. **Level 0 dominates.** 48.6% of accepted rows sit at level 0, driven by the
    apigen policy-risk scale (87-92% level 0) and contractnli (83%). Some of that
-   is real, but a corpus dominated by one level needs per-source caps or
-   rebalancing.
+   is real, but a head trained on a corpus that is half level 0 will learn the
+   base rate. The next round caps the level-0 share per source and reports the
+   level distribution per source, so the cap's effect is visible.
 5. **Recommended next step, if the owner wants to scale:** keep the peaked
    families, replace the flat rubrics with coarser 3-level scales or with a
    dimension the state actually carries, and cap the level-0 share per source.
