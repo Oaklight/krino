@@ -11,6 +11,10 @@ initialisation and training begins from the pretrained backbone's behaviour.
 
 Reference: Hu et al., "LoRA: Low-Rank Adaptation of Large Language Models",
 arXiv:2106.09685.
+
+The target-matching guard in :func:`inject_lora` has a kill switch,
+``KRINO_DISABLE_LORA_TARGET_GUARD``, so the mutation test can prove the guard
+tests fail when the guard is off.  It is not a production option.
 """
 
 from __future__ import annotations
@@ -21,10 +25,13 @@ from typing import Any
 import torch
 import torch.nn as nn
 
+from model.src.feature_flags import feature_disabled
+
 # Module-name segments that introduce a transformer block index, e.g.
 # "model.layers.12.self_attn.q_proj" (Qwen, Llama) or
 # "encoder.layer.5.attention.self.query" (BERT-style encoders).
 _BLOCK_SEGMENTS = frozenset({"layers", "layer", "h", "blocks"})
+LORA_TARGET_GUARD_SWITCH = "KRINO_DISABLE_LORA_TARGET_GUARD"
 
 
 class LoRALinear(nn.Module):
@@ -122,28 +129,32 @@ def inject_lora(
         for name, module in model.named_modules()
         if isinstance(module, nn.Linear) and name.rsplit(".", 1)[-1] in targets
     ]
+    guard = not feature_disabled(LORA_TARGET_GUARD_SWITCH)
     if not matches:
-        raise ValueError(f"No linear layers match LoRA targets {targets}")
+        if guard:
+            raise ValueError(f"No linear layers match LoRA targets {targets}")
+        return 0
 
     if last_n_layers is not None:
         indices = [i for i in (_layer_index(name) for name, _ in matches) if i is not None]
-        if not indices:
+        if not indices and guard:
             raise ValueError(
                 "last_n_layers was set but no matched module name carries a block index"
             )
-        cutoff = max(indices) - last_n_layers + 1
-        matches = [
-            (name, module)
-            for name, module in matches
-            if (idx := _layer_index(name)) is not None and idx >= cutoff
-        ]
+        if indices:
+            cutoff = max(indices) - last_n_layers + 1
+            matches = [
+                (name, module)
+                for name, module in matches
+                if (idx := _layer_index(name)) is not None and idx >= cutoff
+            ]
 
     # A target that matches nothing would otherwise train a smaller adapter
     # silently.  That is a trap: the run succeeds and the loss looks normal
     # until the numbers are compared.  Fail on the named target instead.
     matched = {name.rsplit(".", 1)[-1] for name, _ in matches}
     missing = [target for target in targets if target not in matched]
-    if missing:
+    if missing and guard:
         scope = "" if last_n_layers is None else " after last_n_layers filtering"
         raise ValueError(
             f"No linear layers match LoRA target(s) {sorted(set(missing))}{scope}; "

@@ -15,6 +15,10 @@ the same head can rank a stage-1 shortlist.  At evaluation, choice items
 average four cyclic shifts of the option order; score items keep the natural
 order because rubric levels are ordered.
 
+``KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION`` turns the unanswerable-row
+exclusion off for the mutation test in ``tests/conftest.py``; it is not a
+production option.
+
 Usage:
     python model/scripts/train_listwise.py \
         --items data/benchmarks/residual_train_20000_jev.jsonl \
@@ -46,10 +50,28 @@ from model.scripts.train_residual import (
 )
 from model.src.backbone import load_causal_lm
 from model.src.decision_model import DecisionModel
+from model.src.feature_flags import feature_disabled
 from model.src.gpu_config import GPUConfig
 from model.src.listwise import ListwiseMarkerReadout
 
 TRAINED_TYPES = ("choice", "score")
+LISTWISE_ANSWERABLE_SWITCH = "KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION"
+
+
+def unanswerable_excluded(item) -> bool:
+    """Whether an unanswerable row is excluded from the listwise loss.
+
+    The path has no abstain head, so an ``answerable=false`` row has nothing
+    to teach.  It must not reach the CE: the paired corpus keeps the option set
+    and the original label, so ``gold >= 0`` and the CE would train the head on
+    a question with no answer.
+
+    ``KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION`` turns the exclusion off for
+    the mutation test.
+    """
+    return getattr(item, "answerable", None) is False and not feature_disabled(
+        LISTWISE_ANSWERABLE_SWITCH
+    )
 
 
 def _subset_probs(base: torch.Tensor, subset: list[int]) -> torch.Tensor:
@@ -85,11 +107,7 @@ def item_loss(
     output; this term constrains the backbone readout the adapter changes, and
     it stays off by default so a frozen run is unchanged.
     """
-    if getattr(item, "answerable", None) is False:
-        # No abstain head on this path, so an unanswerable row has nothing to
-        # teach.  It must not reach the CE: the paired corpus keeps the option
-        # set and the original label, so `gold >= 0` and the CE would train
-        # the head on a question with no answer.
+    if unanswerable_excluded(item):
         zero = torch.zeros((), device=base.device)
         return zero, 0.0, 0.0
     q = item.question
@@ -368,7 +386,7 @@ def main() -> int:
         masked_rows = 0
         started = time.time()
         for index, item in enumerate(order, 1):
-            if getattr(item, "answerable", None) is False:
+            if unanswerable_excluded(item):
                 # No abstain head here, and item_loss returns a zero with no
                 # graph, so the row must not reach backward().
                 masked_rows += 1

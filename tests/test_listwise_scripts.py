@@ -20,12 +20,21 @@ from model.scripts.train_listwise import (  # noqa: E402
     _subset_probs,
     build_parser,
     fused_logits,
+    item_loss,
     split_items,
+    unanswerable_excluded,
 )
 
 
 class _Item:
-    def __init__(self, q_type="choice", criteria=None, state="s", instructions="q"):
+    def __init__(
+        self,
+        q_type="choice",
+        criteria=None,
+        state="s",
+        instructions="q",
+        answerable=None,
+    ):
         self.state = state
         self.question = {
             "type": q_type,
@@ -33,6 +42,7 @@ class _Item:
             "criteria": criteria or {"a": "alpha", "b": "beta", "c": "gamma"},
         }
         self.label = "b"
+        self.answerable = answerable
 
 
 class _StubReadout:
@@ -46,6 +56,13 @@ class _StubReadout:
         self.calls.append((list(options), shifts))
         probs = torch.tensor([self.probs[len(options)]], dtype=torch.float32)
         return probs
+
+
+class _LossReadout:
+    """A readout with a flat score, for the loss-shape checks."""
+
+    def score(self, state, instructions, options):
+        return torch.zeros(len(options))
 
 
 def test_subset_probs_renormalises_the_picked_options():
@@ -149,3 +166,29 @@ def test_the_split_seed_is_separate_from_the_training_seed():
     )
     assert rerun.seed == 43
     assert rerun.split_seed == 42
+
+
+@pytest.mark.feature_guard("KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION")
+def test_an_unanswerable_row_is_excluded():
+    assert unanswerable_excluded(_Item(answerable=False)) is True
+
+
+@pytest.mark.feature_guard("KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION")
+def test_item_loss_is_a_graphless_zero_for_an_unanswerable_row():
+    """The row must not reach backward() with no graph."""
+    item = _Item(answerable=False)
+    loss, kl, ce = item_loss(
+        _LossReadout(),
+        item,
+        torch.tensor([0.2, 0.3, 0.5]),
+        torch.zeros((), requires_grad=True),
+        random.Random(0),
+        1.0,
+        0.2,
+        2,
+        False,
+    )
+    assert kl == 0.0
+    assert ce == 0.0
+    assert loss.item() == 0.0
+    assert not loss.requires_grad

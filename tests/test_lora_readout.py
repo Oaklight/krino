@@ -77,12 +77,14 @@ class TestInjectLora:
         assert isinstance(backbone.layers[2].q_proj, LoRALinear)
         assert isinstance(backbone.layers[3].q_proj, LoRALinear)
 
+    @pytest.mark.feature_guard("KRINO_DISABLE_LORA_TARGET_GUARD")
     def test_unmatched_targets_raise(self) -> None:
         # Silently adapting nothing would look like a working run that
         # trains no backbone parameters at all.
         with pytest.raises(ValueError, match="No linear layers match"):
             inject_lora(_Backbone(), targets=("nonexistent",))
 
+    @pytest.mark.feature_guard("KRINO_DISABLE_LORA_TARGET_GUARD")
     def test_one_valid_target_does_not_hide_an_invalid_one(self) -> None:
         # A partial match is the dangerous case: the run succeeds, the adapter
         # is smaller than configured, and the numbers are quietly wrong.
