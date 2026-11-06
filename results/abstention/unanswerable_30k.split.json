@@ -1,0 +1,20 @@
+{
+ "abstention": "data/benchmarks/unanswerable_30k/negatives.jsonl",
+ "base_id_overlap": 0,
+ "eval_base_ids": 2616,
+ "eval_bases_without_positive": [],
+ "eval_mix": 7737,
+ "eval_negatives": 5121,
+ "eval_negatives_by_reason": {
+  "entity_corrupted": 1164,
+  "out_of_scope": 2271,
+  "support_removed": 1686
+ },
+ "eval_positives": 2616,
+ "train": 28911,
+ "train_by_reason": {
+  "entity_corrupted": 6641,
+  "out_of_scope": 12972,
+  "support_removed": 9298
+ }
+}

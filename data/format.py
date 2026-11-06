@@ -32,6 +32,9 @@ ABSTENTION_REASONS = (
     "out_of_scope",
     "none_of_these",
     "no_applicable_tool",
+    # Paired unanswerable synthesis; see build_unanswerable_pairs.py.
+    "support_removed",
+    "entity_corrupted",
 )
 
 
