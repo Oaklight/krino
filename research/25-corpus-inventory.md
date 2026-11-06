@@ -150,7 +150,9 @@ Per-domain item counts:
 
 One row per flat JSONL file on either machine, plus the synthetic corpus as one
 row below. `rows` is physical rows; for synthetic files the training unit is the
-assembled item. Provenance is defined in the next section.
+assembled item. `both` means laptop and rbh101; the lambda10 mirror holds a copy
+of the laptop set plus `residual_train_20000.jsonl`. Provenance is defined in the
+next section.
 
 | file | machines | kind | rows | distinct ids | noul | choice | score | teacher | provenance | disposition |
 |---|---|---|---:|---:|---:|---:|---:|---:|---|---|
