@@ -90,6 +90,24 @@ def test_tag_sets_field_once():
     assert tag(item).tier == GOLD
 
 
+def test_tag_passes_corpus_to_classify():
+    item = _noul(source="arc", id="arc-train-1")
+    tag(item, "abstention_train_20k.jsonl")
+    assert item.provenance == EXECUTION
+    assert classify(item).tier == EXECUTION
+
+
+def test_tag_stamps_dict_with_corpus():
+    item = {
+        "id": "arc-train-2",
+        "source": "arc",
+        "question": {"type": "noul", "instructions": "q"},
+        "label": False,
+    }
+    tag(item, "abstention_train_20k.jsonl")
+    assert item["provenance"] == EXECUTION
+
+
 def test_normalise_label_coerces_strings():
     assert normalise_label(_noul(label="true")) is True
     assert normalise_label(_noul(label="false")) is False
