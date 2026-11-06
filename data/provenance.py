@@ -139,9 +139,14 @@ def classify(item: Any, corpus: str | None = None) -> Provenance:
     raise ValueError(f"cannot assign provenance to source={source!r} corpus={corpus!r}")
 
 
-def tag(item: Any) -> Provenance:
-    """Classify and write ``item.provenance`` in place when the item is mutable."""
-    provenance = classify(item)
+def tag(item: Any, corpus: str | None = None) -> Provenance:
+    """Classify and write ``item.provenance`` in place when the item is mutable.
+
+    Pass ``corpus`` whenever the record came from a constructed corpus.  Without
+    it, a record whose ``source`` names a donor dataset (the abstention files)
+    classifies by the dataset and the wrong tier is stamped permanently.
+    """
+    provenance = classify(item, corpus)
     if isinstance(item, dict):
         item.setdefault("provenance", provenance.tier)
     elif hasattr(item, "provenance"):
