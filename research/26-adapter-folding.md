@@ -39,6 +39,8 @@ No module blocks folding. The only `Conv1d` in the stack is
   RNG; without seeding, two runs get different adapters and the parity flips
   measure the draw, not folding. `bench_adapter_fold.py` seeds before
   injection, and a repeated q/v run gives identical flips and differences.
+  Every fold benchmark run made before this fix measured a different adapter,
+  so no earlier fold number is comparable to these.
 
 ## Module survey
 
@@ -52,8 +54,10 @@ The text tower has 248 `nn.Linear` layers:
 
 Each GDN layer also has one `linear_attn.conv1d` (`nn.Conv1d`, 24 in total).
 `inject_lora` matches only `nn.Linear`, so the convolution is never adapted and
-never needs folding. A future adapter that targets `conv1d` would be silently
-ignored by `inject_lora`; that is a gap to close before targeting it.
+never needs folding. `inject_lora` now raises when any named target matches
+zero layers, including after `last_n_layers` filtering. A future `conv1d`
+target therefore fails loudly instead of training a smaller adapter silently;
+close that gap before targeting it.
 
 ## Folding
 
@@ -114,11 +118,15 @@ the wrapper and pay +3.2% (q/v) or +27.3% (all GDN).
    the weights that produced it.
 2. Re-run this check on the trained adapter after #233. The flip count scales
    with the adapter norm; the synthetic 6.5% norm is a stand-in, not a
-   prediction of the trained one.
+   prediction of the trained one. This is a standing gate requirement recorded
+   on #230, not an optional follow-up: bf16 merge rounding changes with the
+   weights.
 3. Treat a future `conv1d` target separately: the current wrapper cannot adapt
-   it, and the per-option fallback is 1.25 s per item.
+   it, and the per-option fallback is 1.25 s per item. The new loud failure in
+   `inject_lora` makes the attempt visible instead of silently adapting less.
 4. Re-run the latency gate on the merged path after the ladder changes the
-   model, so the 100 ms claim is measured on the model that ships.
+   model, so the 100 ms claim is measured on the model that ships, and record
+   the result on #230.
 
 ## Reproduce
 
