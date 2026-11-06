@@ -107,9 +107,11 @@ Defects found:
 2. **Two augmented label sets never join.** `*_jev_augmented_llm_labels.jsonl`
    (17,904 rows, 17,772 ids) and `*_gpt_5_6_luna_augmented_llm_labels.jsonl`
    (17,885 rows, 17,753 ids) end their ids with `-<n>-llm`. Assembled item ids do
-   not contain that suffix, so `load_synthetic()` cannot find them. These rows are
-   currently unused. The `*_llm_confounders.jsonl` files (17,904 rows) use a third
-   id namespace (`<domain>-<family>-<question>`) and are sidecars, not labels.
+   not contain that suffix, so `load_synthetic()` cannot find them. These 35,789
+   rows are dead weight: no loader reads them, they add no coverage, and they
+   should be regenerated with the joined id or deleted. The
+   `*_llm_confounders.jsonl` files (17,904 rows) use a third id namespace
+   (`<domain>-<family>-<question>`) and are sidecars, not labels.
 3. **51 family sub-questions are dropped at expansion time.** The family expander
    logs and skips them: counterfactual choice labels not in the base criteria
    (mainly `game_strategy` and `multi_agent_coordination`), a score label out of
@@ -309,7 +311,8 @@ option is withheld are kept for the abstain target, not for option CE (see below
 
 `abstention_train_20k` and `abstention_train_30k` are disjoint 3,000-item
 constructions. Both are primary; `_30k` matches the primary 30K corpus if only one
-is wanted.
+is wanted. Their states are borrowed from the donor corpora, so id dedup does not
+remove state-level duplication; the #235 near-duplicate audit covers that.
 
 `race_short_passage_choice` must be deduplicated by id before use: 498 rows map
 to 144 ids, so raw iteration weights 144 items 3.5 times.
@@ -363,7 +366,19 @@ name, the `-abstain-` id suffix, and `answerable`/`reason`.
 | `teacher` | none today | No hard label in either corpus comes from a Jev prediction. `label_target_*_mix50` mixes gold into the **soft** target only; `label` is unchanged. |
 
 Tier mix of the canonical union: **220,931 gold, 22,081 execution, 0 teacher**
-(243,012 ids before the label-usability exclusions below).
+(243,012 ids before the label-usability exclusions below). Read the split
+precisely:
+
+- **No canonical record's hard label is a Jev prediction.** `teacher_probs` is
+  always an additional soft target attached to a gold or execution label. No
+  record is teacher-tier, so nothing was folded into another tier.
+- **`gold` does not mean human-verified.** 154,091 gold records are
+  model-authored synthetic labels (151,817 in the synthetic corpus and 2,274
+  sampled into the 20K/30K). The other 66,840 are upstream dataset labels or
+  community-authored labels; they were not re-annotated here.
+- **Two thousand execution records cannot drive option CE.** The `none_of_these`
+  choice rows (1,000 per abstention file) have a provenance-only label and
+  belong to the abstain target; the other 20,081 execution records are usable.
 
 Synthetic labels are `gold` in the epic's sense (a dataset label, not a Jev
 prediction), but they are model-authored rather than human-annotated. This tier
