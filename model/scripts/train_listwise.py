@@ -341,7 +341,7 @@ def main() -> int:
     )
     if args.dry_run:
         print(
-            f"dry run: {len(items)} items after the base-probs filter "
+            f"dry run: {len(items)} items after the base-probs and held-out filters "
             f"(train {len(train_items)} trained-type, val {len(val_items)})",
             flush=True,
         )
