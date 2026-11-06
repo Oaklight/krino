@@ -126,6 +126,11 @@ host-specific; the README is public, but the test parquet is not. HLE is catalog
 513 requests, in the Knowledge & Reasoning area. No suite hash is produced until the HLE
 access request is approved. The other sources are cached in the work directory.
 
+The kit declares `requires-python >= 3.10`, but `adapters_scored.chessbench` calls
+`hashlib.file_digest`, which exists only from Python 3.11. On 3.10 the rebuild dies at
+ChessBench with `AttributeError: module 'hashlib' has no attribute 'file_digest'`. Use
+3.11 or newer; the edition 0.3 rerun uses 3.12.
+
 ### v4 control: identified, not scored
 
 The control is manifest row 78 of
