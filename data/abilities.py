@@ -333,3 +333,14 @@ def is_known_source(source: str) -> bool:
         or source in APIGEN_ABILITY
         or source in ("typed_decisions", "synthetic")
     )
+
+
+def classify_question(question: dict[str, Any]) -> tuple[str, str, str]:
+    """Classify a question that has no corpus source rule (JevBench items).
+
+    The question form is the only signal available, so this always uses the
+    heuristic path and reports ``heuristic`` as the method.
+    """
+    return _heuristic(
+        _instruction(question), str(question.get("type") or ""), "external"
+    )
