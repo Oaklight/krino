@@ -332,14 +332,44 @@ def main() -> int:
     train_items = [
         item for item in train_items if item.question["type"] in TRAINED_TYPES
     ]
-    valid_train = [item for item in train_items if _label_index(item) >= 0]
-    dropped_invalid = len(train_items) - len(valid_train)
-    if dropped_invalid:
+    # The abstention rows are annotated ``answerable = False`` with the gold
+    # removed from the option set, so their label has no index by design.  Key
+    # the exclusion on the flag, not on ``_label_index < 0``: keyed on the
+    # index, an ordinary question whose label sits outside the option keys
+    # would vanish silently instead of surfacing.  Dropping and masking are
+    # equivalent in this per-item loop, but not once a batch normalises over
+    # items; the answerable head (#254) should replace this filter.
+    abstention = [
+        item for item in train_items
+        if getattr(item, "answerable", None) is False
+    ]
+    train_items = [
+        item for item in train_items
+        if getattr(item, "answerable", None) is not False
+    ]
+    if abstention:
         print(
-            f"dropped {dropped_invalid} train items whose label is not among the options",
+            f"excluded {len(abstention)} abstention rows (answerable=False)",
             flush=True,
         )
-    train_items = valid_train
+    unlabeled = [item for item in train_items if _label_index(item) < 0]
+    if unlabeled:
+        shown = ", ".join(item.id for item in unlabeled[:10])
+        raise RuntimeError(
+            f"{len(unlabeled)} answerable train items have no label among the "
+            f"options: {shown}"
+        )
+    fractional = [
+        item for item in train_items
+        if item.question["type"] == "score"
+        and float(item.label) != int(round(float(item.label)))
+    ]
+    if fractional:
+        print(
+            f"{len(fractional)} score train items have a fractional label; "
+            "the trainer rounds them to the nearest level",
+            flush=True,
+        )
     print(
         f"train {len(train_items)} val {len(val_items)} "
         f"types { {t: sum(1 for i in items if i.question['type'] == t) for t in TYPES} }",
@@ -424,10 +454,12 @@ def main() -> int:
             )
             task_rows += 1
             if not loss.requires_grad:
-                # Defensive: item_loss returns a constant zero for an item with
-                # no label among the options.  The filter above removes those,
-                # but a future data shape must not crash the run.
-                continue
+                # item_loss returns a constant zero only for a label with no
+                # index.  The filter above leaves no such answerable item, so
+                # this is a data or code error and must not pass silently.
+                raise RuntimeError(
+                    f"item {item.id} produced a loss with no gradient"
+                )
             kl_total += kl_value
             ce_total += ce_value
             optimizer.zero_grad(set_to_none=True)
