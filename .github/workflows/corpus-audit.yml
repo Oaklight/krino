@@ -1,0 +1,54 @@
+name: Corpus audit
+
+on:
+  pull_request:
+    paths:
+      - "data/hf.lock"
+      - "data/corpus_audit.py"
+      - "data/benchmarks/jevbench/**"
+      - "tests/test_corpus_audit.py"
+      - ".github/workflows/corpus-audit.yml"
+  push:
+    branches: [main]
+    paths:
+      - "data/hf.lock"
+      - "data/corpus_audit.py"
+      - "data/benchmarks/jevbench/**"
+  workflow_dispatch:
+
+jobs:
+  contamination:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache HuggingFace downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-${{ hashFiles('data/hf.lock') }}
+
+      - name: Install
+        run: |
+          pip install --no-deps -e .
+          pip install pytest huggingface_hub pyarrow
+
+      - name: Restore the pinned corpus
+        run: python -m data.hf_sync
+
+      - name: Unit tests for the rule
+        run: pytest tests/test_corpus_audit.py -q
+
+      - name: Contamination gate
+        run: python -m data.corpus_audit --check --skip-near-dup --artifact corpus-audit.json
+
+      - name: Upload the audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-audit
+          path: corpus-audit.json
