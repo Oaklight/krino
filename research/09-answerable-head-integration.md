@@ -187,23 +187,41 @@ the result.
 
 Fixed evaluation sets:
 
-1. Held-out abstention mix from `split_abstention.py` (15% of base ids).
+1. The frozen matched held-out set specified by #236. Headline abstention
+   numbers are computed on that set, not on the development split shipped with
+   this corpus. To build the abstention mix, take #236's held-out base ids,
+   apply the same three transforms to those base items, and pair each variant
+   with its original. Use the same split file for every arm. Until #236 is
+   frozen, `data/benchmarks/unanswerable_30k/split/` is a development split;
+   label its numbers as development and do not compare them across arms.
 2. The internal base eval set used by the rung.
 3. JevBench public (231 items), as the acceptance gate.
 
 ### Metrics
 
-Risk-coverage on the held-out mix, model `p_answerable` against the `max_prob`
-baseline:
+Risk-coverage on the #236 held-out mix, model `p_answerable` against the
+`max_prob` baseline:
 
 - AURC (lower is better), per seed.
 - Risk at 90% coverage: answered accuracy, abstain-zero accuracy, and the
   fraction of abstained rows that carry a reason.
 - The full curve at 50/70/90/100% coverage.
-- Abstention recall by reason at 90% coverage: separate numbers for
-  `support_removed`, `out_of_scope`, `entity_corrupted`.
 - Answerable-head-only accuracy at threshold 0.5, with per-class recall. This
   is a classification number, not a risk-coverage number.
+
+Report the surface-baseline AUC and the per-reason abstention recall side by
+side, in one table, per arm and seed. Neither is a footnote to the other:
+
+| reason | surface AUC (corpus) | recall @ 90% (A0) | recall @ 90% (A1) |
+| --- | ---: | ---: | ---: |
+| `support_removed` | 0.553 | | |
+| `out_of_scope` | 0.511 | | |
+| `entity_corrupted` | 0.526 | | |
+
+The surface AUC is a property of the corpus, not of the arm; it is the same
+number in every seed. Recall is per arm and seed. A recall far above the AUC's
+implied separability, especially for `support_removed`, is the trigger for the
+length-matched distractor-removed control.
 
 Main output with the head on:
 
