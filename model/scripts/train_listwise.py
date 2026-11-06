@@ -494,6 +494,8 @@ def main() -> int:
                     list(args.lora_targets) if args.lora_layers is not None else None
                 ),
                 "lora_kl_weight": args.lora_kl_weight,
+                "holdout_ids": str(args.holdout_ids) if args.holdout_ids else None,
+                "torch_seed": args.torch_seed,
             },
             "history": history,
         },
