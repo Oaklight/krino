@@ -83,6 +83,12 @@ class TestInjectLora:
         with pytest.raises(ValueError, match="No linear layers match"):
             inject_lora(_Backbone(), targets=("nonexistent",))
 
+    def test_one_valid_target_does_not_hide_an_invalid_one(self) -> None:
+        # A partial match is the dangerous case: the run succeeds, the adapter
+        # is smaller than configured, and the numbers are quietly wrong.
+        with pytest.raises(ValueError, match="nonexistent"):
+            inject_lora(_Backbone(), targets=("q_proj", "nonexistent"))
+
     def test_lora_parameters_lists_only_adapters(self) -> None:
         backbone = _Backbone(n_layers=2)
         inject_lora(backbone, targets=("q_proj",))

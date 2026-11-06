@@ -1,0 +1,101 @@
+{
+ "adapter": {
+  "alpha": 32,
+  "by_suffix": {
+   "in_proj_a": 24,
+   "in_proj_b": 24,
+   "in_proj_qkv": 24,
+   "in_proj_z": 24,
+   "out_proj": 24,
+   "q_proj": 8,
+   "v_proj": 8
+  },
+  "by_type": {
+   "Linear": 136
+  },
+  "count": 136,
+  "rank": 16,
+  "relative_delta_norm_max": 0.09712491929531097,
+  "relative_delta_norm_mean": 0.06473010493551984,
+  "scale": 0.01,
+  "seed": 42,
+  "targets": [
+   "q_proj",
+   "v_proj",
+   "in_proj_qkv",
+   "in_proj_z",
+   "in_proj_a",
+   "in_proj_b",
+   "out_proj"
+  ]
+ },
+ "device": "cuda",
+ "folding": {
+  "blockers": [],
+  "expected_modules": 136,
+  "foldable": true,
+  "merge_seconds": 0.019977711839601398,
+  "merged_modules": 136,
+  "remaining_lora_modules": 0
+ },
+ "items": 231,
+ "latency": {
+  "adapter_merged": {
+   "items": 231,
+   "mean_s": 0.08884174292430035,
+   "median_s": 0.07768684206530452,
+   "p95_s": 0.13954270700924098,
+   "repeats": 3,
+   "samples": 693
+  },
+  "adapter_wrapper": {
+   "items": 231,
+   "mean_s": 0.11331211455189186,
+   "median_s": 0.10068156104534864,
+   "p95_s": 0.17075278400443494,
+   "repeats": 3,
+   "samples": 693
+  },
+  "fallback_per_option": {
+   "items": 8,
+   "mean_s": 1.7635726585285738,
+   "median_s": 1.2506986100925133,
+   "repeats": 1
+  },
+  "frozen": {
+   "items": 231,
+   "mean_s": 0.08904361804983542,
+   "median_s": 0.07788465498015285,
+   "p95_s": 0.13947082683444023,
+   "repeats": 3,
+   "samples": 693
+  }
+ },
+ "model": "Qwen/Qwen3.5-4B",
+ "numerics": {
+  "frozen_vs_wrapper": {
+   "flipped_top2_margin_max": 0.607456136135417,
+   "flipped_top2_margin_median": 0.1916522385131615,
+   "items": 231,
+   "label_flip_fraction": 0.0735930735930736,
+   "label_flips": 17,
+   "max_abs_logit_gap_diff": 2.3583374907447365,
+   "max_abs_prob_diff": 0.5055277496576309,
+   "mean_abs_logit_gap_diff": 0.5380606639172565,
+   "scored_options": 849
+  },
+  "note": "logit gap is log(p/(1-p)) for each option's yes probability, clamped at 1e-6; a label flip is an argmax change over options",
+  "wrapper_vs_merged": {
+   "flipped_top2_margin_max": 0.01751316193518493,
+   "flipped_top2_margin_median": 0.01228817884401237,
+   "items": 231,
+   "label_flip_fraction": 0.017316017316017316,
+   "label_flips": 4,
+   "max_abs_logit_gap_diff": 0.3131886482751809,
+   "max_abs_prob_diff": 0.05645519495010376,
+   "mean_abs_logit_gap_diff": 0.055473371521465614,
+   "scored_options": 849
+  }
+ },
+ "torch": "2.11.0+cu128"
+}
