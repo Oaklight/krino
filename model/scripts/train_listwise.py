@@ -294,6 +294,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Load the items and print the post-filter split, then exit before "
         "loading the backbone; used to check corpus/base-prob coverage",
     )
+    parser.add_argument(
+        "--holdout-ids",
+        type=Path,
+        default=None,
+        help="JSON id list (or {'ids': [...]}) excluded before the internal "
+        "split; the frozen held-out gate evaluates these ids separately",
+    )
     return parser
 
 
@@ -308,6 +315,14 @@ def main() -> int:
         rec["id"]: torch.tensor(rec["probs"], dtype=torch.float32) for rec in base_records
     }
     items = [item for item in items if item.id in base_probs]
+    if args.holdout_ids:
+        payload = json.loads(args.holdout_ids.read_text())
+        holdout_ids = set(payload["ids"] if isinstance(payload, dict) else payload)
+        items = [item for item in items if item.id not in holdout_ids]
+        print(
+            f"excluded {len(holdout_ids)} held-out ids; {len(items)} items remain",
+            flush=True,
+        )
     if args.limit:
         items = items[: args.limit]
     # The same call as train_residual, so the val split matches D20K.  The
