@@ -53,8 +53,9 @@ class TypedQuestion:
     # artifact has 6,000 explicit False and 237,366 unset, and zero explicit
     # True, so a filter written as ``answerable == True`` silently returns
     # nothing.  Only an explicit False marks abstention, and abstention rows
-    # set a reason.  The training loader treats an item with a gold label as
-    # answerable unless this is explicitly False.
+    # set a reason.  With the field unset, the trainer treats an item as
+    # answerable when it carries a valid hard label and is not teacher-tier;
+    # see hard_label_eligible in model/scripts/train_residual.py.
     answerable: bool | None = None
     reason: str | None = None
     # ``gold`` / ``execution`` / ``teacher``; see data/provenance.py.  None
