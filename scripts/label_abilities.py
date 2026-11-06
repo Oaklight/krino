@@ -534,25 +534,35 @@ def demand_report(
         "notes": [
             (
                 f"The acceptance set is {accept_classification:.1%} Classification "
-                f"and the corpus is {corpus_classification:.1%}; the metric "
-                "measures the part of the corpus that overlaps with the set, not "
-                "the corpus composition."
+                f"and the corpus is {corpus_classification:.1%}. The set is a "
+                "separate public corpus, not a sample of the canonical corpus; "
+                "the comparison is between ability mixes, so a JevBench score "
+                "measures classification-shaped decisions, not the corpus "
+                "composition."
             ),
             (
-                "Scoring has 18 items. A binomial 95% interval at p=0.5 is "
-                "about +/-23 points on 18 items, so a change confined to "
-                "Scoring cannot move the 231-item total beyond noise by itself; "
-                "a held-out split is needed to see a Scoring regression."
+                "Scoring has 18 items, 7.8% of the 231. The 95% binomial "
+                "interval on the 18-item rate is about +/-23 points, so an "
+                "ordinary change in Scoring is invisible in the total. Even "
+                "a wipeout of all 18 moves the 231-item total by 7.8 points, "
+                "against its own +/-6.0-point half-width, and a real regression "
+                "is smaller than that; a held-out split is what sees it."
             ),
             (
-                "Ranking and ML Feature Extraction have zero items in the "
-                "acceptance set as well as zero corpus records, so the metric "
-                "cannot see those gaps by construction."
+                "Ranking, ML Feature Extraction, Detection and Search have zero "
+                "items in the acceptance set. Ranking and ML Feature Extraction "
+                "also have zero corpus records, so the metric cannot see those "
+                "gaps by construction. Detection (4,650 records, 1.9% of the "
+                "corpus) and Search (479, 0.2%) have coverage the set never "
+                "exercises."
             ),
             (
                 "Verification is 13.4% of the corpus but 0.9% of the acceptance "
-                "set, and its two JevBench items both miss; the corpus trains "
-                "heavily on an ability the set barely measures."
+                "set, and its two JevBench items both miss. Only 2,762 of its "
+                "32,532 records (8.5%, 1.1% of the corpus) are "
+                "listwise-eligible, so the label count overstates what the "
+                "trained head sees, and the set measures the ability with two "
+                "items."
             ),
         ],
     }
