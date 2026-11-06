@@ -34,6 +34,17 @@ def test_dataset_source_is_gold():
     assert (c.tier, c.origin) == (GOLD, "dataset")
 
 
+def test_long_context_and_task_sources_are_gold():
+    for source in (
+        "hotpotqa_long_choice",
+        "longbench_long_choice",
+        "2wiki_long_choice",
+        "mmlu_pro_short_reasoning_choice",
+        "race_short_passage_choice",
+    ):
+        assert classify(_noul(source=source)).tier == GOLD
+
+
 def test_community_authored_is_gold():
     assert classify(_noul(source="typed_decisions")).origin == "community_authored"
     assert classify(_noul(source="openjev_authored144")).origin == "community_authored"
