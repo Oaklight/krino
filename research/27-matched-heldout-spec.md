@@ -13,9 +13,10 @@ it is matched to the training distribution by construction rather than by sampli
 different benchmark. It is never trained on, never used for model selection, and never
 rebuilt after the first model sees it.
 
-The set is not a replacement for JevBench public. JevBench remains the acceptance metric.
-This set is the tie-breaker for effects below the 2 pp the 231 public items cannot
-resolve.
+JevBench public is a hard non-regression constraint, not the promotion target. The public
+set is too small to resolve the effects we act on: two checkpoints disagree on about a
+third of its 231 items. This set is the promotion signal; JevBench can only veto, by
+showing a regression on the public items.
 
 ## Size and power
 
@@ -37,6 +38,13 @@ models disagree more has more power, and one on which they agree more has less. 
 the realized discordance after the first two runs and recompute the detectable effect.
 Do not rebuild the set to chase a number.
 
+**Instrument limit.** 2.0 pp at 6,400 items is the same size as the project's effect
+floor. The set detects that floor at 80% power and nothing smaller at the planning
+discordance; a smaller true effect will usually not reach significance here. That is a
+property of the instrument (6,400 paired items at 32.4% discordance), not of any result.
+Keep the set fixed and recompute the detectable effect at the realized discordance after
+the first two runs.
+
 Per-type power at the quotas below, at the same 32.4% discordance:
 
 | type | items | smallest detectable at 80% |
@@ -47,6 +55,33 @@ Per-type power at the quotas below, at the same 32.4% discordance:
 
 The overall 2 pp is powered. A per-type 2 pp is not: it would need about 6,357 items of
 each type, or roughly 19,000 in total. State per-type effects at their own resolution.
+
+### Paired standard error and what 6,400 resolves
+
+For a paired binary comparison on a fixed item set, let `b` be the items the arm gets
+right and the control wrong, `c` the reverse, and `pi = (b + c) / n` the realized
+discordance. The accuracy difference is `d = (b - c) / n`; its standard error is
+`sqrt((pi - d^2) / n)`. Under the null (`b = c`), `SE0 = sqrt(pi / n)`. At the planning
+discordance 0.324 and n = 6,400, `SE0 = 0.0071`, or **0.71 pp**. The exact two-sided
+McNemar test reaches 80% power at a true difference of **2.0 pp**
+(`power(6400, 0.324, 0.02) = 0.792`); the normal approximation gives
+`(1.96 + 0.84) * 0.71 = 2.0 pp`.
+
+| realized discordance | SE0 at 6,400 | MDE at 80% power |
+|---:|---:|---:|
+| 0.20 | 0.56 pp | 1.60 pp |
+| 0.30 | 0.68 pp | 1.90 pp |
+| 0.324 | 0.71 pp | 2.00 pp |
+| 0.40 | 0.79 pp | 2.20 pp |
+| 0.50 | 0.88 pp | 2.50 pp |
+
+Per-type SE0 at the quotas is 1.21 pp (noul, 2,200), 1.06 pp (choice, 2,900) and 1.58 pp
+(score, 1,300), which gives the MDEs in the table above.
+
+The SE is a planning value, not a result. After the first control and arm run, compute
+`b`, `c` and the realized `pi`, report `SE(d)` and the exact McNemar p, and recompute the
+MDE at the realized discordance. If the realized `pi` is much below 0.324, the set may
+not resolve 2 pp; record that before promoting. Do not rebuild the set to chase power.
 
 Reproduce:
 
@@ -308,5 +343,6 @@ a subset is labelled interim and does not count as confirmation.
 
 - Building the set before #234 lands.
 - Training on it, using it for model selection, or tuning a threshold to make it "clean".
-- Replacing JevBench public as the acceptance metric.
+- Treating JevBench public as the promotion target; under the dual standard it can only
+  veto a regression.
 - A single composite score.
