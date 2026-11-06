@@ -25,7 +25,7 @@ transformers = pytest.importorskip("transformers")
 llama = pytest.importorskip("transformers.models.llama.modeling_llama")
 
 from data.format import TypedQuestion  # noqa: E402
-from model.scripts import train_listwise, train_pairwise  # noqa: E402
+from model.scripts import train_listwise, train_pairwise, train_residual  # noqa: E402
 from model.src.decision_model import DecisionModel  # noqa: E402
 from model.src.gpu_config import GPUConfig  # noqa: E402
 from model.src.listwise import ListwiseMarkerReadout  # noqa: E402
@@ -160,6 +160,35 @@ class TestParserDefaults:
         assert args.lora_alpha == 8
         assert args.lora_targets == ("q_proj", "o_proj")
         assert args.lora_kl_weight == 0.5
+
+
+class TestSplitSeeding:
+    """The split seed must not move when the training seed does."""
+
+    def test_split_seed_defaults_match_across_trainers(self) -> None:
+        residual = _parser_defaults(train_residual.build_parser(), [])
+        listwise = _parser_defaults(train_listwise.build_parser(), [])
+        pairwise = _parser_defaults(train_pairwise.build_parser(), [])
+        assert residual.split_seed == 42
+        assert listwise.split_seed == 42
+        assert pairwise.split_seed == 42
+
+    @pytest.mark.parametrize(
+        "module",
+        [train_residual, train_listwise, train_pairwise],
+        ids=["residual", "listwise", "pairwise"],
+    )
+    def test_changing_the_training_seed_does_not_move_the_split(self, module) -> None:
+        base = _parser_defaults(module.build_parser(), ["--seed", "42"])
+        other = _parser_defaults(module.build_parser(), ["--seed", "43"])
+        assert base.seed != other.seed
+        assert base.split_seed == other.split_seed == 42
+
+    def test_residual_split_seed_is_accepted(self) -> None:
+        args = _parser_defaults(
+            train_residual.build_parser(), ["--split-seed", "7"]
+        )
+        assert args.split_seed == 7
 
 
 class TestConfigRoundTrip:
