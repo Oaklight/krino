@@ -1117,17 +1117,25 @@ class DecisionModel(nn.Module):
             ),
         }
 
-        prefix_outputs = self._backbone_forward(
-            prefix_inputs,
-            output_hidden_states=False,
-            use_cache=True,
-        )
-        cache = getattr(prefix_outputs, "past_key_values", None)
         # A grad-enabled GDN cache is unsafe to fork: the suffix forward
         # overwrites the recurrent/conv states in place and invalidates the
-        # prefix graph autograd saved for backward.  Recompute per chunk.
-        if self.is_hybrid and self.backbone_requires_grad:
-            cache = None
+        # prefix graph autograd saved for backward.  The no-cache path below
+        # re-encodes the prefix, so skip the cache-only forward entirely when
+        # it will be discarded.  Evaluation runs under ``no_grad`` and keeps
+        # the cache.
+        reencode = (
+            self.is_hybrid
+            and self.backbone_requires_grad
+            and torch.is_grad_enabled()
+        )
+        cache = None
+        if not reencode:
+            prefix_outputs = self._backbone_forward(
+                prefix_inputs,
+                output_hidden_states=False,
+                use_cache=True,
+            )
+            cache = getattr(prefix_outputs, "past_key_values", None)
         if cache is None or (
             not self.is_hybrid and not hasattr(cache, "batch_repeat_interleave")
         ):
@@ -1238,17 +1246,25 @@ class DecisionModel(nn.Module):
             # Encoders have no KV cache; re-encoding the prefix per chunk is
             # the expected path, not a fallback worth warning about.
             return self._forward_options_no_cache(prefix_inputs, chunks, warn=False)
-        prefix_outputs = self._backbone_forward(
-            prefix_inputs,
-            output_hidden_states=False,
-            use_cache=True,
-        )
-        cache = getattr(prefix_outputs, "past_key_values", None)
         # A grad-enabled GDN cache is unsafe to fork: the suffix forward
         # overwrites the recurrent/conv states in place and invalidates the
-        # prefix graph autograd saved for backward.  Recompute per chunk.
-        if self.is_hybrid and self.backbone_requires_grad:
-            cache = None
+        # prefix graph autograd saved for backward.  The no-cache path below
+        # re-encodes the prefix, so skip the cache-only forward entirely when
+        # it will be discarded.  Evaluation runs under ``no_grad`` and keeps
+        # the cache.
+        reencode = (
+            self.is_hybrid
+            and self.backbone_requires_grad
+            and torch.is_grad_enabled()
+        )
+        cache = None
+        if not reencode:
+            prefix_outputs = self._backbone_forward(
+                prefix_inputs,
+                output_hidden_states=False,
+                use_cache=True,
+            )
+            cache = getattr(prefix_outputs, "past_key_values", None)
         if cache is None or (not self.is_hybrid and not hasattr(cache, "crop")):
             return self._forward_options_no_cache(prefix_inputs, chunks)
         # GDN state is overwritten in place and cannot be cropped, so each
