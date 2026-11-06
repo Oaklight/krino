@@ -1,0 +1,91 @@
+{
+ "adapter": {
+  "alpha": 32,
+  "by_suffix": {
+   "q_proj": 8,
+   "v_proj": 8
+  },
+  "by_type": {
+   "Linear": 16
+  },
+  "count": 16,
+  "rank": 16,
+  "relative_delta_norm_max": 0.07625871151685715,
+  "relative_delta_norm_mean": 0.06682086829096079,
+  "scale": 0.01,
+  "seed": 42,
+  "targets": [
+   "q_proj",
+   "v_proj"
+  ]
+ },
+ "device": "cuda",
+ "folding": {
+  "blockers": [],
+  "expected_modules": 16,
+  "foldable": true,
+  "merge_seconds": 0.0034026240464299917,
+  "merged_modules": 16,
+  "remaining_lora_modules": 0
+ },
+ "items": 231,
+ "latency": {
+  "adapter_merged": {
+   "items": 231,
+   "mean_s": 0.08914182637112611,
+   "median_s": 0.07797752995975316,
+   "p95_s": 0.13978960714302957,
+   "repeats": 3,
+   "samples": 693
+  },
+  "adapter_wrapper": {
+   "items": 231,
+   "mean_s": 0.09233001004071291,
+   "median_s": 0.08093851595185697,
+   "p95_s": 0.14415272581391037,
+   "repeats": 3,
+   "samples": 693
+  },
+  "fallback_per_option": {
+   "items": 8,
+   "mean_s": 1.8194041240785737,
+   "median_s": 1.4139231544686481,
+   "repeats": 1
+  },
+  "frozen": {
+   "items": 231,
+   "mean_s": 0.08946785373709999,
+   "median_s": 0.07827411498874426,
+   "p95_s": 0.14013934298418462,
+   "repeats": 3,
+   "samples": 693
+  }
+ },
+ "model": "Qwen/Qwen3.5-4B",
+ "numerics": {
+  "frozen_vs_wrapper": {
+   "flipped_top2_margin_max": 0.2223854859045824,
+   "flipped_top2_margin_median": 0.1339456805911482,
+   "items": 231,
+   "label_flip_fraction": 0.03896103896103896,
+   "label_flips": 9,
+   "max_abs_logit_gap_diff": 1.4540996612140207,
+   "max_abs_prob_diff": 0.31112439930438995,
+   "mean_abs_logit_gap_diff": 0.18962302366999959,
+   "scored_options": 849
+  },
+  "note": "logit gap is log(p/(1-p)) for each option's yes probability, clamped at 1e-6; a label flip is an argmax change over options",
+  "wrapper_vs_merged": {
+   "flipped_top2_margin_max": 0.0004255152136159457,
+   "flipped_top2_margin_median": 0.0004255152136159457,
+   "items": 231,
+   "label_flip_fraction": 0.004329004329004329,
+   "label_flips": 1,
+   "max_abs_logit_gap_diff": 0.2343828564045079,
+   "max_abs_prob_diff": 0.05748188495635986,
+   "mean_abs_logit_gap_diff": 0.05069183862772788,
+   "scored_options": 849
+  }
+ },
+ "torch": "2.11.0+cu128"
+}
