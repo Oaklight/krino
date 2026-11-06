@@ -167,6 +167,16 @@ Two seeds (43, 44), 20 epochs, patience 1, same cache and recipe as B2.
 Gate: confirmed if both seeds reach cc >= 0.4459; rejected if either falls
 below 0.4395; otherwise inconclusive.
 
+**Split note (2026-11-06).** At the time of these runs, `train_residual.py`
+passed `--seed` to `split_items`, so seeds 43 and 44 moved the validation split
+as well as init and order. Split 42 and split 43 select the same counts (3,999;
+choice 1,617 / noul 1,908 / score 474) but share only 804 items; 3,195 differ
+each way. At the canonical scale (243,366 rows, val 0.2) splits 42/43 share 9,863 of 48,672 validation rows and 42/44 share 9,660; about 80 percent moves when --seed changes. The s43/s44 runs are therefore replications plus a different
+validation set, and their spread includes split variance on top of init+order
+variance. The JevBench gates are unaffected (same 231 items). The trainer now
+has a separate `--split-seed` (default 42); these historical numbers stand as
+recorded with this caveat.
+
 §7's confirm stage also lists a LoRA arm. `train_residual.py` has no LoRA path
 yet, and the marker readout disables gradient checkpointing by design, so a
 LoRA confirmation needs a memory check first. It is not started.
