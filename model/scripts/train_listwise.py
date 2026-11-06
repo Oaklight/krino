@@ -40,6 +40,7 @@ from model.scripts.train_residual import (
     TYPES,
     _label_index,
     _options,
+    parse_lora_targets,
     split_items,
     soft_target,
 )
@@ -75,8 +76,15 @@ def item_loss(
     min_subset: int,
     shuffle_score: bool,
     max_subset: int | None = None,
+    lora_kl_weight: float = 0.0,
 ) -> tuple[torch.Tensor, float, float]:
-    """Listwise loss on one item over a sampled subset."""
+    """Listwise loss on one item over a sampled subset.
+
+    ``lora_kl_weight`` anchors the readout distribution (before fusion) to the
+    frozen base distribution.  The fused KL above already constrains the
+    output; this term constrains the backbone readout the adapter changes, and
+    it stays off by default so a frozen run is unchanged.
+    """
     q = item.question
     options = _options(q)
     gold = _label_index(item)
@@ -119,7 +127,12 @@ def item_loss(
             logits.unsqueeze(0),
             torch.tensor([target], device=logits.device),
         )
-    return kl_weight * kl + ce_weight * ce, float(kl.detach()), float(ce.detach())
+    loss = kl_weight * kl + ce_weight * ce
+    if lora_kl_weight:
+        # ``head`` is log q over the same subset, so this is KL(base || q).
+        anchor = torch.sum(subset_base * (torch.log(subset_base) - head))
+        loss = loss + lora_kl_weight * anchor
+    return loss, float(kl.detach()), float(ce.detach())
 
 
 @torch.no_grad()
@@ -211,6 +224,28 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--kl-weight", type=float, default=1.0)
     parser.add_argument("--ce-weight", type=float, default=0.2)
     parser.add_argument(
+        "--lora-layers",
+        type=int,
+        default=None,
+        help="Inject LoRA into the last N blocks (negative = every block); "
+        "omitted leaves the backbone frozen",
+    )
+    parser.add_argument("--lora-rank", type=int, default=16)
+    parser.add_argument("--lora-alpha", type=int, default=32)
+    parser.add_argument(
+        "--lora-targets",
+        type=parse_lora_targets,
+        default=("q_proj", "v_proj"),
+        help="Comma-separated linear-layer suffixes that receive adapters",
+    )
+    parser.add_argument(
+        "--lora-kl-weight",
+        type=float,
+        default=0.0,
+        help="KL from the frozen base distribution to the pre-fusion readout; "
+        "0 leaves the loss unchanged",
+    )
+    parser.add_argument(
     "--min-subset",
     type=int,
     default=2,
@@ -294,6 +329,10 @@ def main() -> int:
         option_marker=True,
         option_chunk_size=1,
         option_max_tokens=args.option_max_tokens,
+        lora_layers=args.lora_layers,
+        lora_rank=args.lora_rank,
+        lora_alpha=args.lora_alpha,
+        lora_targets=args.lora_targets,
     )
     readout = ListwiseMarkerReadout(model)
     alphas = {t: torch.nn.Parameter(torch.zeros((), device=args.device)) for t in TYPES}
@@ -331,6 +370,7 @@ def main() -> int:
                 args.min_subset,
                 args.shuffle_score,
                 args.max_subset,
+                args.lora_kl_weight,
             )
             kl_total += kl_value
             ce_total += ce_value
@@ -399,6 +439,15 @@ def main() -> int:
                 "shuffle_score": args.shuffle_score,
                 "eval_shifts": args.eval_shifts,
                 "eval_shifts_types": ["choice"],
+                "lr": args.lr,
+                "alpha_lr": args.alpha_lr,
+                "lora_layers": args.lora_layers,
+                "lora_rank": args.lora_rank if args.lora_layers is not None else None,
+                "lora_alpha": args.lora_alpha if args.lora_layers is not None else None,
+                "lora_targets": (
+                    list(args.lora_targets) if args.lora_layers is not None else None
+                ),
+                "lora_kl_weight": args.lora_kl_weight,
             },
             "history": history,
         },

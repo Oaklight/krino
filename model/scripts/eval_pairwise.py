@@ -34,6 +34,7 @@ from model.scripts.train_residual import _label_index, _options
 from model.src.backbone import load_causal_lm
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig
+from model.src.lora import lora_kwargs_from_config
 from model.src.pairwise import PairwiseMarkerReadout
 
 
@@ -98,6 +99,7 @@ def main() -> int:
         option_marker=True,
         option_chunk_size=1,
         option_max_tokens=int(config.get("option_max_tokens", 64)),
+        **lora_kwargs_from_config(config),
     )
     heads = checkpoint["heads"]
     missing, unexpected = model.load_state_dict(heads, strict=False)

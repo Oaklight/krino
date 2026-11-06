@@ -15,6 +15,9 @@ arXiv:2106.09685.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 import torch
 import torch.nn as nn
 
@@ -186,3 +189,35 @@ def merge_lora(model: nn.Module) -> int:
         parent = model.get_submodule(parent_name) if parent_name else model
         setattr(parent, child, module.base)
     return len(targets)
+
+
+def lora_kwargs_from_config(config: Mapping[str, Any]) -> dict[str, Any]:
+    """Rebuild the :class:`~model.src.decision_model.DecisionModel` LoRA kwargs.
+
+    Trainers record the adapter scope and shape in the checkpoint config.
+    Evaluation must construct the same graph before loading the state dict:
+    without the adapters, every ``backbone.*.lora_*`` tensor is an unexpected
+    key and the adapted model silently scores its frozen base instead.
+
+    Args:
+        config: A training checkpoint's ``config`` mapping.
+
+    Returns:
+        Keyword arguments for ``DecisionModel``.  Empty when the checkpoint
+        was trained without adapters, so the frozen path is unchanged.
+    """
+    layers = config.get("lora_layers")
+    if layers is None:
+        return {}
+    kwargs: dict[str, Any] = {"lora_layers": int(layers)}
+    for key in ("lora_rank", "lora_alpha"):
+        value = config.get(key)
+        if value is not None:
+            kwargs[key] = int(value)
+    dropout = config.get("lora_dropout")
+    if dropout is not None:
+        kwargs["lora_dropout"] = float(dropout)
+    targets = config.get("lora_targets")
+    if targets:
+        kwargs["lora_targets"] = tuple(str(target) for target in targets)
+    return kwargs
