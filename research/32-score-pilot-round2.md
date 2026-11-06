@@ -16,6 +16,9 @@ This is still a diagnostic set, not training data.
 - **Running level-0 cap.** A source may add a level-0 row only while the running
   share stays at or below 50% (`--level0-cap 0.5`). The check is running, not a
   fixed quota, so a source that stops early cannot end far above the cap.
+  The first attempt applied the cap to the selection quota instead; commonsenseqa
+  still reached 96% level 0 because a source that stops early never spends its
+  quota. A cap on the selection quota does not control the accepted rows.
 - Everything else is unchanged: same candidate rule, same 3,000-candidate
   stratified selection, same contamination rule, same row shape (`label` =
   argmax, distribution under `teacher_probs.jev`, `provenance = teacher`).
@@ -83,6 +86,27 @@ Every row inherits the source state's terms. Round-two totals: 738 restrictive,
 322 unresolved, 940 permissive. No exclusion was applied; the research-use
 policy in `research/30` covers all three.
 
+## Scaling threshold
+
+A family is eligible for a larger run only when both hold:
+
+1. fewer than **35%** of its rows have argmax ≠ expected level;
+2. at least **25 accepted rows** (the per-source selection floor).
+
+Condition 2 is not a formality. The level-0 cap removes most of what some
+families produce: commonsenseqa has 0% disagreement on 13 rows, which is not
+evidence of quality at volume. Applying both conditions to round two:
+
+| verdict | families |
+|---|---|
+| eligible (18) | agnews, anli, apigen policy_compliance, apigen tool_action, banking77, boolq, contractnli, fever, hellaswag, hotpotqa, longbench, mednli, mmlu, mmlu_pro, mnli, sst2, swag, winogrande |
+| quality fail (≥35%) | apigen tool_argument (47%), apigen tool_next_action (52%), logiqa (36%), multirc (36%), openjev (50%), piqa (55%), race (54%), race_short (65%), synthetic (80%), tabfact (38%) |
+| yield fail (<25 rows) | 2wiki (23), arc (22), codesearchnet (13), commonsenseqa (13), apigen tool_choice (19; also 68% disagreement) |
+
+arc and 2wiki clear the quality bar and miss the yield bar; neither is a winner.
+longbench is exactly at 25 rows and is eligible only by the letter of the
+threshold.
+
 ## What round two says
 
 1. **The rubric rule works.** Changing the dimension to one the state carries
@@ -94,6 +118,8 @@ policy in `research/30` covers all three.
    piqa remains at 55% disagreement and longbench/contractnli are concentrated.
    Scale only the families that stay below a stated disagreement threshold, and
    treat the rest as rubric evidence.
-4. **Recommended next step:** fix a disagreement threshold before scaling (for
-   example 35% argmax/expected), keep the cap, and re-run the surviving families
-   at larger volume. The three pilot runs so far cost about $0.17.
+4. **Recommended next step:** scale the 18 eligible families, keep the cap, and
+   judge the next run against the same two conditions. Residual concentration
+   (contractnli 78% at level 2, longbench 96% at level 2) is a separate balance
+   issue and should be capped or reweighted before training. The three pilot
+   runs so far cost about $0.17.
