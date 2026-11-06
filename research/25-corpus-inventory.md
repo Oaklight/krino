@@ -1,13 +1,14 @@
 # Corpus inventory — 2026-11-06
 
-Scope: every candidate training file in `data/benchmarks/` on the laptop and on
-gpu-host-a, plus the synthetic corpus assembled from `synthetic/`. The machine-readable
+Scope: every candidate training file in `data/benchmarks/` across the compute
+hosts, plus the synthetic corpus assembled from `synthetic/`. Host identities and
+paths are deliberately not recorded in this repository. The machine-readable
 numbers come from `scripts/corpus_inventory.py`; the commands are at the end.
 
-## First pass, laptop only (earlier on 2026-11-06)
+## First pass, one host only (earlier on 2026-11-06)
 
-Scope: `data/benchmarks/*.jsonl` on the laptop. `residual_train_20000.jsonl` and
-`data/benchmarks/synthetic/` live on gpu-host-a and are not in this count.
+Scope: `data/benchmarks/*.jsonl` on one host. `residual_train_20000.jsonl` and
+`data/benchmarks/synthetic/` were on another host and are not in this count.
 
 ## Candidate training sets
 
@@ -39,7 +40,7 @@ Scope: `data/benchmarks/*.jsonl` on the laptop. `residual_train_20000.jsonl` and
 
 ## Not covered here
 
-- `residual_train_20000.jsonl` (20,000) and `synthetic/` (230 files) are on gpu-host-a.
+- `residual_train_20000.jsonl` (20,000) and `synthetic/` (230 files) are on another host.
 - Near-duplicate audit (>=3 shared 8-grams) against the 231 items.
 - Provenance split by source dataset (`gold` vs `teacher`).
 
@@ -47,7 +48,7 @@ Scope: `data/benchmarks/*.jsonl` on the laptop. `residual_train_20000.jsonl` and
 
 # Second pass: both machines
 
-The first-pass numbers reproduce. This pass adds gpu-host-a, expands the synthetic
+The first-pass numbers reproduce. This pass adds the other host, expands the synthetic
 corpus the way `load_synthetic()` reads it, and fixes the first-pass omissions.
 
 ## Method
@@ -67,16 +68,15 @@ corpus the way `load_synthetic()` reads it, and fixes the first-pass omissions.
 
 | machine | flat `*.jsonl` | synthetic files | physical rows | distinct ids |
 |---|---:|---:|---:|---:|
-| laptop | 20 | 230 | 803,053 | 235,677 |
-| gpu-host-a | 78 | 230 | 3,830,546 | 1,969,395 |
-| cpu-host-a mirror | 21 | 230 | 823,053 | 235,677 |
+| host A | 20 | 230 | 803,053 | 235,677 |
+| host B | 78 | 230 | 3,830,546 | 1,969,395 |
+| CPU mirror | 21 | 230 | 823,053 | 235,677 |
 | union | 94 | 230 | — | — |
 
-The cpu-host-a mirror is the designated dataset-wide CPU host; it holds the laptop
-corpus plus `residual_train_20000.jsonl`, so its row count is the laptop count
-plus 20,000 and its distinct-id count is unchanged (the file repeats the
-`residual_train_20000_jev` ids). Run: 34.8 s wall, 99% of one core, 223 MB peak
-RSS.
+The CPU mirror holds the dataset plus `residual_train_20000.jsonl`, so its row
+count is host A's count plus 20,000 and its distinct-id count is unchanged (the
+file repeats the `residual_train_20000_jev` ids). Wall time and resource use are
+recorded in the PR, not here.
 
 The four files present on both machines (`label_target_30k_jev.jsonl`,
 `residual_train_20000_jev.jsonl`, and the two `noul_union_*` variants) have
@@ -152,106 +152,106 @@ Per-domain item counts:
 
 One row per flat JSONL file on either machine, plus the synthetic corpus as one
 row below. `rows` is physical rows; for synthetic files the training unit is the
-assembled item. `both` means laptop and gpu-host-a; the cpu-host-a mirror holds a copy
-of the laptop set plus `residual_train_20000.jsonl`. Provenance is defined in the
-next section.
+assembled item. `both` means the two source hosts; the CPU mirror holds a copy of
+host A's set plus `residual_train_20000.jsonl`. Provenance is defined in the next
+section.
 
 | file | machines | kind | rows | distinct ids | noul | choice | score | teacher | provenance | disposition |
 |---|---|---|---:|---:|---:|---:|---:|---:|---|---|
-| `abstention_train_20k.jsonl` | laptop | typed | 3,000 | 3,000 | 2,000 | 1,000 | 0 | 0 | execution | primary abstention |
-| `abstention_train_30k.jsonl` | laptop | typed | 3,000 | 3,000 | 2,000 | 1,000 | 0 | 0 | execution | primary abstention |
-| `apigen_policy_compliance.jsonl` | laptop | typed | 803 | 803 | 803 | 0 | 0 | 0 | execution | primary tool-call |
-| `apigen_tool_action.jsonl` | laptop | typed | 1,980 | 1,980 | 0 | 1,980 | 0 | 0 | execution | primary tool-call |
-| `apigen_tool_argument.jsonl` | laptop | typed | 6,575 | 6,575 | 0 | 6,575 | 0 | 0 | execution | primary tool-call |
-| `apigen_tool_choice.jsonl` | laptop | typed | 1,937 | 1,937 | 0 | 1,937 | 0 | 0 | execution | primary tool-call |
-| `apigen_tool_next_action.jsonl` | laptop | typed | 4,786 | 4,786 | 0 | 4,786 | 0 | 0 | execution | primary tool-call |
-| `hotpotqa_long_choice.jsonl` | laptop | typed | 423 | 423 | 0 | 423 | 0 | 0 | gold | primary long-context |
+| `abstention_train_20k.jsonl` | host A | typed | 3,000 | 3,000 | 2,000 | 1,000 | 0 | 0 | execution | primary abstention |
+| `abstention_train_30k.jsonl` | host A | typed | 3,000 | 3,000 | 2,000 | 1,000 | 0 | 0 | execution | primary abstention |
+| `apigen_policy_compliance.jsonl` | host A | typed | 803 | 803 | 803 | 0 | 0 | 0 | execution | primary tool-call |
+| `apigen_tool_action.jsonl` | host A | typed | 1,980 | 1,980 | 0 | 1,980 | 0 | 0 | execution | primary tool-call |
+| `apigen_tool_argument.jsonl` | host A | typed | 6,575 | 6,575 | 0 | 6,575 | 0 | 0 | execution | primary tool-call |
+| `apigen_tool_choice.jsonl` | host A | typed | 1,937 | 1,937 | 0 | 1,937 | 0 | 0 | execution | primary tool-call |
+| `apigen_tool_next_action.jsonl` | host A | typed | 4,786 | 4,786 | 0 | 4,786 | 0 | 0 | execution | primary tool-call |
+| `hotpotqa_long_choice.jsonl` | host A | typed | 423 | 423 | 0 | 423 | 0 | 0 | gold | primary long-context |
 | `label_target_30k_jev.jsonl` | both | typed | 30,000 | 30,000 | 9,600 | 18,000 | 2,400 | 30,000 | gold | primary target-30K |
-| `longbench_long_choice.jsonl` | laptop | typed | 426 | 426 | 0 | 426 | 0 | 0 | gold | primary long-context |
-| `mmlu_pro_short_reasoning_choice.jsonl` | laptop | typed | 9,965 | 9,965 | 0 | 9,965 | 0 | 0 | gold | primary mmlu-pro |
-| `musique_long_choice.jsonl` | laptop | typed | 476 | 476 | 0 | 476 | 0 | 0 | gold | primary long-context |
-| `race_short_passage_choice.jsonl` | laptop | typed | 498 | 144 | 0 | 498 | 0 | 0 | gold | primary after id dedup (144 ids) |
+| `longbench_long_choice.jsonl` | host A | typed | 426 | 426 | 0 | 426 | 0 | 0 | gold | primary long-context |
+| `mmlu_pro_short_reasoning_choice.jsonl` | host A | typed | 9,965 | 9,965 | 0 | 9,965 | 0 | 0 | gold | primary mmlu-pro |
+| `musique_long_choice.jsonl` | host A | typed | 476 | 476 | 0 | 476 | 0 | 0 | gold | primary long-context |
+| `race_short_passage_choice.jsonl` | host A | typed | 498 | 144 | 0 | 498 | 0 | 0 | gold | primary after id dedup (144 ids) |
 | `residual_train_20000_jev.jsonl` | both | typed | 20,000 | 20,000 | 9,542 | 8,085 | 2,373 | 19,995 | gold | primary residual-20K |
-| `twowiki_long_choice.jsonl` | laptop | typed | 345 | 345 | 0 | 345 | 0 | 0 | gold | primary long-context |
-| `typed_decisions.jsonl` | gpu-host-a | typed | 8,000 | 8,000 | 2,400 | 2,400 | 3,200 | 0 | gold | primary typed-decisions |
-| `label_target_30k.jsonl` | gpu-host-a | typed | 30,000 | 30,000 | 9,600 | 18,000 | 2,400 | 1,128 | gold | variant: unlabelled base |
-| `label_target_30k_jev_noul_agree.jsonl` | laptop | typed | 28,013 | 28,013 | 7,613 | 18,000 | 2,400 | 28,013 | gold | ablation: drop disagreeing noul |
-| `label_target_30k_jev_noul_agree_mix50.jsonl` | laptop | typed | 28,013 | 28,013 | 7,613 | 18,000 | 2,400 | 28,013 | gold | ablation: agree + gold-mixed soft target |
-| `label_target_30k_jev_noul_mix50.jsonl` | laptop | typed | 30,000 | 30,000 | 9,600 | 18,000 | 2,400 | 30,000 | gold | ablation: gold-mixed soft target |
+| `twowiki_long_choice.jsonl` | host A | typed | 345 | 345 | 0 | 345 | 0 | 0 | gold | primary long-context |
+| `typed_decisions.jsonl` | host B | typed | 8,000 | 8,000 | 2,400 | 2,400 | 3,200 | 0 | gold | primary typed-decisions |
+| `label_target_30k.jsonl` | host B | typed | 30,000 | 30,000 | 9,600 | 18,000 | 2,400 | 1,128 | gold | variant: unlabelled base |
+| `label_target_30k_jev_noul_agree.jsonl` | host A | typed | 28,013 | 28,013 | 7,613 | 18,000 | 2,400 | 28,013 | gold | ablation: drop disagreeing noul |
+| `label_target_30k_jev_noul_agree_mix50.jsonl` | host A | typed | 28,013 | 28,013 | 7,613 | 18,000 | 2,400 | 28,013 | gold | ablation: agree + gold-mixed soft target |
+| `label_target_30k_jev_noul_mix50.jsonl` | host A | typed | 30,000 | 30,000 | 9,600 | 18,000 | 2,400 | 30,000 | gold | ablation: gold-mixed soft target |
 | `label_target_30k_jev_noul_union_agree_mix50.jsonl` | both | typed | 36,014 | 36,014 | 15,614 | 18,000 | 2,400 | 36,014 | gold | ablation: union + agree + mix50 |
 | `label_target_30k_jev_noul_union_mix50.jsonl` | both | typed | 38,892 | 38,892 | 18,492 | 18,000 | 2,400 | 38,892 | gold | ablation: union + mix50 |
-| `residual_band20k_thr050.jsonl` | gpu-host-a | typed | 4,374 | 4,374 | 0 | 3,010 | 1,364 | 287 | gold | variant: band-selected subset |
-| `residual_long.jsonl` | gpu-host-a | typed | 3,000 | 3,000 | 2,977 | 19 | 4 | 45 | gold | variant: long-context noul subset |
-| `residual_train_15000_extra.jsonl` | gpu-host-a | typed | 15,000 | 15,000 | 7,152 | 6,062 | 1,786 | 847 | gold | variant: 15K subset |
-| `residual_train_20000.jsonl` | gpu-host-a | typed | 20,000 | 20,000 | 9,542 | 8,085 | 2,373 | 1,133 | gold | variant: unlabelled base |
-| `residual_train_5000.jsonl` | gpu-host-a | typed | 5,000 | 5,000 | 2,390 | 2,023 | 587 | 286 | gold | variant: 5K subset |
-| `agnews.jsonl` | gpu-host-a | typed | 127,600 | 127,600 | 0 | 127,600 | 0 | 0 | gold | excluded: raw source conversion |
-| `anli.jsonl` | gpu-host-a | typed | 166,065 | 166,065 | 166,065 | 0 | 0 | 0 | gold | excluded: raw source conversion |
-| `arc.jsonl` | gpu-host-a | typed | 7,787 | 7,787 | 0 | 7,787 | 0 | 0 | gold | excluded: raw source conversion |
-| `banking77.jsonl` | gpu-host-a | typed | 13,083 | 13,083 | 0 | 13,083 | 0 | 0 | gold | excluded: raw source conversion |
-| `boolq.jsonl` | gpu-host-a | typed | 12,697 | 12,697 | 12,697 | 0 | 0 | 0 | gold | excluded: raw source conversion |
-| `codesearchnet.jsonl` | gpu-host-a | typed | 55,688 | 55,688 | 0 | 55,688 | 0 | 0 | gold | excluded: raw source conversion |
-| `commonsenseqa.jsonl` | gpu-host-a | typed | 10,962 | 10,962 | 0 | 10,962 | 0 | 0 | gold | excluded: raw source conversion |
-| `contractnli.jsonl` | gpu-host-a | typed | 20,107 | 20,107 | 20,107 | 0 | 0 | 0 | gold | excluded: raw source conversion |
-| `corpus_full.jsonl` | gpu-host-a | typed | 195,706 | 195,706 | 93,479 | 78,839 | 23,388 | 10,916 | gold | excluded: unlabelled source pool |
-| `fever.jsonl` | gpu-host-a | typed | 244,212 | 244,212 | 0 | 244,212 | 0 | 0 | gold | excluded: raw source conversion |
-| `hellaswag.jsonl` | gpu-host-a | typed | 49,947 | 49,947 | 0 | 49,947 | 0 | 0 | gold | excluded: raw source conversion |
-| `logiqa.jsonl` | gpu-host-a | typed | 8,678 | 8,678 | 0 | 8,678 | 0 | 0 | gold | excluded: raw source conversion |
-| `mednli.jsonl` | gpu-host-a | typed | 14,049 | 14,049 | 14,049 | 0 | 0 | 0 | gold | excluded: raw source conversion |
-| `mmlu.jsonl` | gpu-host-a | typed | 115,415 | 115,415 | 0 | 115,415 | 0 | 0 | gold | excluded: raw source conversion |
-| `mnli.jsonl` | gpu-host-a | typed | 402,517 | 402,517 | 402,517 | 0 | 0 | 0 | gold | excluded: raw source conversion |
-| `multirc.jsonl` | gpu-host-a | typed | 32,088 | 32,088 | 32,088 | 0 | 0 | 0 | gold | excluded: raw source conversion |
-| `piqa.jsonl` | gpu-host-a | typed | 17,951 | 17,951 | 0 | 17,951 | 0 | 0 | gold | excluded: raw source conversion |
-| `race.jsonl` | gpu-host-a | typed | 97,687 | 97,687 | 0 | 97,687 | 0 | 0 | gold | excluded: raw source conversion |
-| `sst2.jsonl` | gpu-host-a | typed | 68,221 | 68,221 | 68,221 | 0 | 0 | 0 | gold | excluded: raw source conversion |
-| `sst5.jsonl` | gpu-host-a | typed | 11,855 | 11,855 | 0 | 0 | 11,855 | 0 | gold | excluded: raw source conversion |
-| `stsb.jsonl` | gpu-host-a | typed | 7,249 | 7,249 | 0 | 0 | 7,249 | 0 | gold | excluded: raw source conversion |
-| `swag.jsonl` | gpu-host-a | typed | 93,552 | 93,552 | 0 | 93,552 | 0 | 0 | gold | excluded: raw source conversion |
-| `tabfact.jsonl` | gpu-host-a | typed | 117,854 | 117,854 | 117,854 | 0 | 0 | 0 | gold | excluded: raw source conversion |
-| `winogrande.jsonl` | gpu-host-a | typed | 41,665 | 41,665 | 0 | 41,665 | 0 | 0 | gold | excluded: raw source conversion |
-| `yelp.jsonl` | gpu-host-a | typed | 70,000 | 70,000 | 0 | 0 | 70,000 | 0 | gold | excluded: raw source conversion |
-| `band_full_u50.jsonl` | gpu-host-a | typed | 88,215 | 88,215 | 26,985 | 42,670 | 18,560 | 6,195 | — | excluded: residual selection band |
-| `band_lo0.0.jsonl` | gpu-host-a | typed | 16,074 | 16,074 | 7,448 | 6,386 | 2,240 | 1,012 | — | excluded: residual selection band |
-| `band_lo0.01.jsonl` | gpu-host-a | typed | 15,789 | 15,789 | 7,448 | 6,108 | 2,233 | 1,007 | — | excluded: residual selection band |
-| `band_lo0.05.jsonl` | gpu-host-a | typed | 15,322 | 15,322 | 7,438 | 5,799 | 2,085 | 974 | — | excluded: residual selection band |
-| `band_up0.5.jsonl` | gpu-host-a | typed | 8,968 | 8,968 | 2,750 | 4,340 | 1,878 | 651 | — | excluded: residual selection band |
-| `band_up0.5_jev_pilot.jsonl` | gpu-host-a | typed | 8,968 | 8,968 | 2,750 | 4,340 | 1,878 | 921 | — | excluded: residual selection band |
-| `band_up0.6.jsonl` | gpu-host-a | typed | 12,081 | 12,081 | 4,716 | 5,370 | 1,995 | 780 | — | excluded: residual selection band |
-| `base_probs_20000.jsonl` | gpu-host-a | aux | 20,000 | 20,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen35_4b.jsonl` | gpu-host-a | aux | 20,000 | 20,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen35_4b_shard0.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen35_4b_shard1.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen35_4b_shard2.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen35_4b_shard3.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen3_4b_base.jsonl` | gpu-host-a | aux | 20,000 | 20,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen3_4b_base_shard0.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen3_4b_base_shard1.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen3_4b_base_shard2.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen3_4b_base_shard3.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen3_4b_instruct.jsonl` | gpu-host-a | aux | 20,000 | 20,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen3_4b_instruct_shard0.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen3_4b_instruct_shard1.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen3_4b_instruct_shard2.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_20000_qwen3_4b_instruct_shard3.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_5000.jsonl` | gpu-host-a | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_extra_shard0.jsonl` | gpu-host-a | aux | 3,750 | 3,750 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_extra_shard1.jsonl` | gpu-host-a | aux | 3,750 | 3,750 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_extra_shard2.jsonl` | gpu-host-a | aux | 3,750 | 3,750 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_extra_shard3.jsonl` | gpu-host-a | aux | 3,750 | 3,750 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_full.jsonl` | gpu-host-a | aux | 195,706 | 195,706 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_full5_shard0.jsonl` | gpu-host-a | aux | 39,279 | 39,279 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_full5_shard1.jsonl` | gpu-host-a | aux | 39,254 | 39,254 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_full5_shard2.jsonl` | gpu-host-a | aux | 39,261 | 39,261 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_full5_shard3.jsonl` | gpu-host-a | aux | 39,241 | 39,241 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_full5_shard4.jsonl` | gpu-host-a | aux | 39,270 | 39,270 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_full_shard0.jsonl` | gpu-host-a | aux | 48,086 | 48,086 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_full_shard1.jsonl` | gpu-host-a | aux | 48,063 | 48,063 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_full_shard2.jsonl` | gpu-host-a | aux | 48,044 | 48,044 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_jevbench_qwen35_4b.jsonl` | gpu-host-a | aux | 231 | 231 | — | — | — | — | — | excluded: base-model probabilities |
-| `base_probs_union30k20k.jsonl` | gpu-host-a | aux | 196,410 | 196,410 | — | — | — | — | — | excluded: base-model probabilities |
-| `internal_eval_1000.jsonl` | gpu-host-a | typed | 1,000 | 1,000 | 385 | 472 | 143 | 74 | — | excluded: internal eval |
-| `jevbench.jsonl` | gpu-host-a | typed | 231 | 231 | 74 | 139 | 18 | 0 | — | excluded: JevBench eval |
-| `jevbench_231_typed.jsonl` | gpu-host-a | typed | 231 | 231 | 74 | 139 | 18 | 0 | — | excluded: JevBench eval |
+| `residual_band20k_thr050.jsonl` | host B | typed | 4,374 | 4,374 | 0 | 3,010 | 1,364 | 287 | gold | variant: band-selected subset |
+| `residual_long.jsonl` | host B | typed | 3,000 | 3,000 | 2,977 | 19 | 4 | 45 | gold | variant: long-context noul subset |
+| `residual_train_15000_extra.jsonl` | host B | typed | 15,000 | 15,000 | 7,152 | 6,062 | 1,786 | 847 | gold | variant: 15K subset |
+| `residual_train_20000.jsonl` | host B | typed | 20,000 | 20,000 | 9,542 | 8,085 | 2,373 | 1,133 | gold | variant: unlabelled base |
+| `residual_train_5000.jsonl` | host B | typed | 5,000 | 5,000 | 2,390 | 2,023 | 587 | 286 | gold | variant: 5K subset |
+| `agnews.jsonl` | host B | typed | 127,600 | 127,600 | 0 | 127,600 | 0 | 0 | gold | excluded: raw source conversion |
+| `anli.jsonl` | host B | typed | 166,065 | 166,065 | 166,065 | 0 | 0 | 0 | gold | excluded: raw source conversion |
+| `arc.jsonl` | host B | typed | 7,787 | 7,787 | 0 | 7,787 | 0 | 0 | gold | excluded: raw source conversion |
+| `banking77.jsonl` | host B | typed | 13,083 | 13,083 | 0 | 13,083 | 0 | 0 | gold | excluded: raw source conversion |
+| `boolq.jsonl` | host B | typed | 12,697 | 12,697 | 12,697 | 0 | 0 | 0 | gold | excluded: raw source conversion |
+| `codesearchnet.jsonl` | host B | typed | 55,688 | 55,688 | 0 | 55,688 | 0 | 0 | gold | excluded: raw source conversion |
+| `commonsenseqa.jsonl` | host B | typed | 10,962 | 10,962 | 0 | 10,962 | 0 | 0 | gold | excluded: raw source conversion |
+| `contractnli.jsonl` | host B | typed | 20,107 | 20,107 | 20,107 | 0 | 0 | 0 | gold | excluded: raw source conversion |
+| `corpus_full.jsonl` | host B | typed | 195,706 | 195,706 | 93,479 | 78,839 | 23,388 | 10,916 | gold | excluded: unlabelled source pool |
+| `fever.jsonl` | host B | typed | 244,212 | 244,212 | 0 | 244,212 | 0 | 0 | gold | excluded: raw source conversion |
+| `hellaswag.jsonl` | host B | typed | 49,947 | 49,947 | 0 | 49,947 | 0 | 0 | gold | excluded: raw source conversion |
+| `logiqa.jsonl` | host B | typed | 8,678 | 8,678 | 0 | 8,678 | 0 | 0 | gold | excluded: raw source conversion |
+| `mednli.jsonl` | host B | typed | 14,049 | 14,049 | 14,049 | 0 | 0 | 0 | gold | excluded: raw source conversion |
+| `mmlu.jsonl` | host B | typed | 115,415 | 115,415 | 0 | 115,415 | 0 | 0 | gold | excluded: raw source conversion |
+| `mnli.jsonl` | host B | typed | 402,517 | 402,517 | 402,517 | 0 | 0 | 0 | gold | excluded: raw source conversion |
+| `multirc.jsonl` | host B | typed | 32,088 | 32,088 | 32,088 | 0 | 0 | 0 | gold | excluded: raw source conversion |
+| `piqa.jsonl` | host B | typed | 17,951 | 17,951 | 0 | 17,951 | 0 | 0 | gold | excluded: raw source conversion |
+| `race.jsonl` | host B | typed | 97,687 | 97,687 | 0 | 97,687 | 0 | 0 | gold | excluded: raw source conversion |
+| `sst2.jsonl` | host B | typed | 68,221 | 68,221 | 68,221 | 0 | 0 | 0 | gold | excluded: raw source conversion |
+| `sst5.jsonl` | host B | typed | 11,855 | 11,855 | 0 | 0 | 11,855 | 0 | gold | excluded: raw source conversion |
+| `stsb.jsonl` | host B | typed | 7,249 | 7,249 | 0 | 0 | 7,249 | 0 | gold | excluded: raw source conversion |
+| `swag.jsonl` | host B | typed | 93,552 | 93,552 | 0 | 93,552 | 0 | 0 | gold | excluded: raw source conversion |
+| `tabfact.jsonl` | host B | typed | 117,854 | 117,854 | 117,854 | 0 | 0 | 0 | gold | excluded: raw source conversion |
+| `winogrande.jsonl` | host B | typed | 41,665 | 41,665 | 0 | 41,665 | 0 | 0 | gold | excluded: raw source conversion |
+| `yelp.jsonl` | host B | typed | 70,000 | 70,000 | 0 | 0 | 70,000 | 0 | gold | excluded: raw source conversion |
+| `band_full_u50.jsonl` | host B | typed | 88,215 | 88,215 | 26,985 | 42,670 | 18,560 | 6,195 | — | excluded: residual selection band |
+| `band_lo0.0.jsonl` | host B | typed | 16,074 | 16,074 | 7,448 | 6,386 | 2,240 | 1,012 | — | excluded: residual selection band |
+| `band_lo0.01.jsonl` | host B | typed | 15,789 | 15,789 | 7,448 | 6,108 | 2,233 | 1,007 | — | excluded: residual selection band |
+| `band_lo0.05.jsonl` | host B | typed | 15,322 | 15,322 | 7,438 | 5,799 | 2,085 | 974 | — | excluded: residual selection band |
+| `band_up0.5.jsonl` | host B | typed | 8,968 | 8,968 | 2,750 | 4,340 | 1,878 | 651 | — | excluded: residual selection band |
+| `band_up0.5_jev_pilot.jsonl` | host B | typed | 8,968 | 8,968 | 2,750 | 4,340 | 1,878 | 921 | — | excluded: residual selection band |
+| `band_up0.6.jsonl` | host B | typed | 12,081 | 12,081 | 4,716 | 5,370 | 1,995 | 780 | — | excluded: residual selection band |
+| `base_probs_20000.jsonl` | host B | aux | 20,000 | 20,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen35_4b.jsonl` | host B | aux | 20,000 | 20,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen35_4b_shard0.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen35_4b_shard1.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen35_4b_shard2.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen35_4b_shard3.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen3_4b_base.jsonl` | host B | aux | 20,000 | 20,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen3_4b_base_shard0.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen3_4b_base_shard1.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen3_4b_base_shard2.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen3_4b_base_shard3.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen3_4b_instruct.jsonl` | host B | aux | 20,000 | 20,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen3_4b_instruct_shard0.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen3_4b_instruct_shard1.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen3_4b_instruct_shard2.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_20000_qwen3_4b_instruct_shard3.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_5000.jsonl` | host B | aux | 5,000 | 5,000 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_extra_shard0.jsonl` | host B | aux | 3,750 | 3,750 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_extra_shard1.jsonl` | host B | aux | 3,750 | 3,750 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_extra_shard2.jsonl` | host B | aux | 3,750 | 3,750 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_extra_shard3.jsonl` | host B | aux | 3,750 | 3,750 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_full.jsonl` | host B | aux | 195,706 | 195,706 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_full5_shard0.jsonl` | host B | aux | 39,279 | 39,279 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_full5_shard1.jsonl` | host B | aux | 39,254 | 39,254 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_full5_shard2.jsonl` | host B | aux | 39,261 | 39,261 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_full5_shard3.jsonl` | host B | aux | 39,241 | 39,241 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_full5_shard4.jsonl` | host B | aux | 39,270 | 39,270 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_full_shard0.jsonl` | host B | aux | 48,086 | 48,086 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_full_shard1.jsonl` | host B | aux | 48,063 | 48,063 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_full_shard2.jsonl` | host B | aux | 48,044 | 48,044 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_jevbench_qwen35_4b.jsonl` | host B | aux | 231 | 231 | — | — | — | — | — | excluded: base-model probabilities |
+| `base_probs_union30k20k.jsonl` | host B | aux | 196,410 | 196,410 | — | — | — | — | — | excluded: base-model probabilities |
+| `internal_eval_1000.jsonl` | host B | typed | 1,000 | 1,000 | 385 | 472 | 143 | 74 | — | excluded: internal eval |
+| `jevbench.jsonl` | host B | typed | 231 | 231 | 74 | 139 | 18 | 0 | — | excluded: JevBench eval |
+| `jevbench_231_typed.jsonl` | host B | typed | 231 | 231 | 74 | 139 | 18 | 0 | — | excluded: JevBench eval |
 
 
 ## Synthetic corpus row
@@ -303,7 +303,7 @@ evaluation data.
 | typed-decisions | `typed_decisions.jsonl` | 8,000 | gold |
 
 Canonical union after id dedup: **243,012 distinct ids**. Dedup order is
-target-30K, residual-20K, typed-decisions, synthetic, then the laptop-only
+target-30K, residual-20K, typed-decisions, synthetic, then the remaining
 corpora. The 2,274 synthetic ids that already sit in the 20K/30K keep their
 sampled copy; the 665 typed-decisions ids that already sit there are dropped from
 the full `typed_decisions.jsonl` copy. The `abstention_*` choice rows whose gold
@@ -448,16 +448,16 @@ Rejected alternatives:
 ## Reproduction
 
 ```bash
-# cpu-host-a (dataset-wide CPU host), from a code checkout
+# On the CPU host, from a code checkout
 python scripts/corpus_inventory.py \
-  --root ~/krino-cpu/data/benchmarks --repo-root . \
+  --root data/benchmarks --repo-root . \
   --json /tmp/corpus-inventory.json \
   --deltas research/corpus-234-label-target-deltas.json
 
-# gpu-host-a, read-only: stream the script over stdin, write nothing remotely
-ssh gpu-host-a 'cd <HOME>/projects/krino-v3 && python3 - \
+# On the training host, read-only: stream the script over stdin
+ssh <training-host> 'cd <repo> && python3 - \
   --root data/benchmarks --repo-root .' < scripts/corpus_inventory.py \
-  > /tmp/corpus-inventory-gpu-host-a.json
+  > /tmp/corpus-inventory-training-host.json
 ```
 
 The script is single-process and stdlib-only apart from
