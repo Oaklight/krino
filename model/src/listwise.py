@@ -79,7 +79,6 @@ class ListwiseMarkerReadout:
             state, instructions, model.max_length - width
         )
         real_prefix_ids = prefix_inputs["input_ids"]
-        real_prefix_mask = prefix_inputs["attention_mask"]
         real_prefix_len = real_prefix_ids.shape[1]
         prefix_bucket = bucket_length(
             real_prefix_len, PREFIX_BUCKETS, limit=model.max_length - width
@@ -134,18 +133,22 @@ class ListwiseMarkerReadout:
             [prefix_inputs["attention_mask"], suffix_mask], dim=1
         )
 
-        prefix_outputs = model._backbone_forward(
-            prefix_inputs, output_hidden_states=False, use_cache=True
+        # A grad-enabled GDN backbone cannot share a prefix cache: the suffix
+        # forward overwrites the fork's conv/recurrent states in place, which
+        # bumps the version of tensors the prefix graph saved for backward
+        # (``RuntimeError: one of the variables needed for gradient
+        # computation has been modified by an inplace operation`` in fla's
+        # chunked delta-rule backward).  The combined forward below re-encodes
+        # the prefix, so do not run the cache-only prefix forward at all: it
+        # would be a second, discarded pass.  Evaluation runs under
+        # ``no_grad``, where the fork cannot break autograd, so it keeps the
+        # cache and pays the prefix once.
+        reencode = (
+            model.is_hybrid
+            and model.backbone_requires_grad
+            and torch.is_grad_enabled()
         )
-        cache = getattr(prefix_outputs, "past_key_values", None)
-        if cache is not None and model.is_hybrid and model.backbone_requires_grad:
-            # A grad-enabled GDN backbone cannot share a prefix cache: the
-            # suffix forward overwrites the fork's conv/recurrent states in
-            # place, which bumps the version of tensors the prefix graph saved
-            # for backward (``RuntimeError: one of the variables needed for
-            # gradient computation has been modified by an inplace operation``
-            # in fla's chunked delta-rule backward).  Re-encode the context so
-            # one autograd graph covers prefix and suffix.
+        if reencode:
             if not getattr(model, "_warned_lora_hybrid_cache", False):
                 print(
                     "  LoRA + hybrid backbone: re-encoding the context instead "
@@ -154,17 +157,32 @@ class ListwiseMarkerReadout:
                 )
                 model._warned_lora_hybrid_cache = True
             cache = None
+        else:
+            prefix_outputs = model._backbone_forward(
+                prefix_inputs, output_hidden_states=False, use_cache=True
+            )
+            cache = getattr(prefix_outputs, "past_key_values", None)
         if cache is None:
             # No KV cache (checkpointing, encoder, adapted hybrid): pay the
-            # context again.  Use the unpadded prefix: a left-padded query at
-            # position 0 has every key masked, and cuDNN's SDPA backward
-            # returns NaN for that row under autocast.
-            input_ids = torch.cat(
-                [real_prefix_ids, suffix[:, :suffix_len]], dim=1
+            # context again.  Right-pad to the bucket shape.  A left-padded
+            # position 0 is fully masked under the causal mask, and cuDNN's
+            # SDPA backward returns NaN for that row under autocast.  Right
+            # padding keeps one shape per (prefix bucket, suffix bucket), so
+            # the kernels stay warm; a variable length costs a kernel load per
+            # item, which dominates the step.
+            total_width = prefix_bucket + width
+            input_ids = torch.full(
+                (1, total_width), pad_id, dtype=torch.long, device=model.device
             )
-            attention_mask = torch.cat(
-                [real_prefix_mask, suffix_mask[:, :suffix_len]], dim=1
+            attention_mask = torch.zeros(
+                (1, total_width), dtype=torch.long, device=model.device
             )
+            input_ids[0, :real_prefix_len] = real_prefix_ids[0]
+            attention_mask[0, :real_prefix_len] = 1
+            input_ids[0, real_prefix_len : real_prefix_len + suffix_len] = (
+                suffix[0, :suffix_len]
+            )
+            attention_mask[0, real_prefix_len : real_prefix_len + suffix_len] = 1
             outputs = model._backbone_forward(
                 {"input_ids": input_ids, "attention_mask": attention_mask}
             )
