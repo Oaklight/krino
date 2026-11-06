@@ -41,19 +41,19 @@ No record is model-labelled. `model_share` is 0.0: the residue after rules and h
 
 ## Coverage
 
-| ability | noul | choice | score | total | share | source_rule | heuristic | after exclude_restrictive | after exclude_restrictive_and_unresolved | listwise gradient | flags |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| Classification | 81,125 | 69,446 | 0 | 150,571 | 61.9% | 45,007 | 105,564 | 131,700 | 110,675 | 69,446 | |
-| Detection | 1,782 | 2,868 | 0 | 4,650 | 1.9% | 3,592 | 1,058 | 4,554 | 3,684 | 2,868 | |
-| Scoring | 0 | 0 | 29,515 | 29,515 | 12.1% | 29,515 | 0 | 25,563 | 20,059 | 29,515 | |
-| Routing | 909 | 18,124 | 0 | 19,033 | 7.8% | 18,130 | 903 | 9,542 | 9,539 | 18,124 | |
-| Search | 0 | 479 | 0 | 479 | 0.2% | 479 | 0 | 479 | 0 | 479 | under_2000, single_source, licence_single_point |
-| Retrieval | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | unsupported |
-| Ranking | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | unsupported |
-| Verification | 29,770 | 2,762 | 0 | 32,532 | 13.4% | 22,617 | 9,915 | 15,730 | 14,871 | 2,762 | |
-| ML Feature Extraction | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | unsupported |
-| Structured Data Extraction | 8 | 6,578 | 0 | 6,586 | 2.7% | 6,575 | 11 | 11 | 9 | 6,578 | single_source, licence_single_point |
-| **total** | 113,594 | 100,257 | 29,515 | 243,366 | 100% | 125,915 | 117,451 | 187,579 | 158,837 | 129,772 | |
+| ability | noul | choice | score | total | share | source_rule | heuristic | after exclude_restrictive | after exclude_restrictive_and_unresolved | listwise gradient | JevBench acc (n) | flags |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Classification | 81,125 | 69,446 | 0 | 150,571 | 61.9% | 45,007 | 105,564 | 131,700 | 110,675 | 69,446 | 67.2% (198) | |
+| Detection | 1,782 | 2,868 | 0 | 4,650 | 1.9% | 3,592 | 1,058 | 4,554 | 3,684 | 2,868 | — (0) | |
+| Scoring | 0 | 0 | 29,515 | 29,515 | 12.1% | 29,515 | 0 | 25,563 | 20,059 | 29,515 | 77.8% (18) | |
+| Routing | 909 | 18,124 | 0 | 19,033 | 7.8% | 18,130 | 903 | 9,542 | 9,539 | 18,124 | 100% (1) | |
+| Search | 0 | 479 | 0 | 479 | 0.2% | 479 | 0 | 479 | 0 | 479 | — (0) | under_2000, single_source, licence_single_point |
+| Retrieval | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | — (0) | unsupported |
+| Ranking | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | — (0) | unsupported |
+| Verification | 29,770 | 2,762 | 0 | 32,532 | 13.4% | 22,617 | 9,915 | 15,730 | 14,871 | 2,762 | 0% (2) | |
+| ML Feature Extraction | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | — (0) | unsupported |
+| Structured Data Extraction | 8 | 6,578 | 0 | 6,586 | 2.7% | 6,575 | 11 | 11 | 9 | 6,578 | 91.7% (12) | single_source, licence_single_point |
+| **total** | 113,594 | 100,257 | 29,515 | 243,366 | 100% | 125,915 | 117,451 | 187,579 | 158,837 | 129,772 | 68.8% (231) | |
 
 The two exclusion columns use the builds in `data/licence_manifest.json`; their totals match the licence audit's 243,366 / 187,579 / 158,837.
 
@@ -94,28 +94,45 @@ The coverage JSON carries this as `demand`, with the per-ability counts, both sh
 
 ## Gradient eligibility, and why noul coverage is misleading
 
-The listwise and pairwise trainers filter the training set with `TRAINED_TYPES = ("choice", "score")` (`model/scripts/train_listwise.py:305`, `model/scripts/train_pairwise.py:187`). Every noul row is dropped before the first step, so the listwise arm takes **zero gradient from 113,594 noul records**, 46.7% of the corpus. The coverage matrix reports that directly: `types.noul.gradient_eligible_listwise = 0`, while 129,772 choice and score records are eligible.
+The listwise and pairwise trainers filter the training set with `TRAINED_TYPES = ("choice", "score")` (`model/scripts/train_listwise.py:305`, `model/scripts/train_pairwise.py:187`). Every noul row is dropped before the first step. This is an exclusion, not a measured zero gradient: the trainer never sees the row, so the row cannot contribute. The ablation's null result is separate evidence that the exclusion matters.
 
-The per-option residual trainer does train noul with its fixed two-option `["no", "yes"]` set, and all 243,366 records are eligible there. The caveat for any future head that builds noul options from `criteria`: a question with a single criterion has a one-element softmax, whose log is identically zero, and that row would contribute no gradient. No such question exists in this corpus today, but a coverage report that counts rows without this check would miss it.
+The size is 113,594 noul records, 46.7% of the corpus, and the coverage matrix reports it directly: `types.noul.gradient_eligible_listwise = 0`, while 129,772 choice and score records are eligible. Every percentage in the coverage table is therefore "records labelled", not "records trained".
 
-A row count for noul therefore says nothing about what the current listwise arm learns. The matrix separates the two columns for that reason.
+The ability that loses most is Verification: 32,532 records (13.4% of the corpus), but only 2,762 listwise-eligible rows, 8.5% of its own records and 1.1% of the corpus, because 29,770 of its records are noul. The per-ability `gradient_share` in the JSON makes the difference explicit:
+
+| ability | records | listwise-eligible | share |
+|---|---:|---:|---:|
+| Verification | 32,532 | 2,762 | 8.5% |
+| Classification | 150,571 | 69,446 | 46.1% |
+| Detection | 4,650 | 2,868 | 61.7% |
+| Routing | 19,033 | 18,124 | 95.2% |
+| Structured Data Extraction | 6,586 | 6,578 | 99.9% |
+| Scoring | 29,515 | 29,515 | 100% |
+| Search | 479 | 479 | 100% |
+
+The per-option residual trainer does train noul with its fixed two-option `["no", "yes"]` set, and all 243,366 records are eligible there. The caveat for any future head that builds noul options from `criteria`: a question with a single criterion has a one-element softmax, whose log is identically zero, and that row would contribute no gradient. No such question exists in this corpus today, which is why `small_option_items` is empty.
 
 ## Accuracy join
 
-The labeler joins per-item predictions to these labels with `--predictions`. Each row needs `id`, `q_type`, `correct` (or `gold`/`pred`) and `n_options`; the report then carries `eval.by_ability` with n, accuracy and chance-corrected accuracy next to the coverage counts.
+The labeler joins per-item predictions to these labels with `--jevbench-predictions`, which classifies the 231 public JevBench items by question form and groups the predictions by ability. The input is `control_pred_231.jsonl`, SHA-256 `e55ae4dc919ccb906d99308129ae9702c9bed373f168d85f4875a153ff118661`, 231 rows, 0 unmatched.
 
-The join uses the 231 public JevBench items, the acceptance set, not the residual split. The type-level accuracies in the issue thread (noul 0.4874, choice 0.5991, score 0.3083) are from the 3,999-item residual split and are a different, harder population. The JevBench control report has noul 0.6757 (n=74), choice 0.6835 (n=139), score 0.7778 (n=18). The two populations are never mixed in one row; the split column is a separate diagnostic if it is available.
+| ability | corpus records | JevBench n | accuracy | chance-corrected |
+|---|---:|---:|---:|---:|
+| Classification | 150,571 | 198 | 67.2% | 0.492 |
+| Verification | 32,532 | 2 | 0% | -1.000 |
+| Scoring | 29,515 | 18 | 77.8% | 0.708 |
+| Routing | 19,033 | 1 | 100% | 1.000 |
+| Structured Data Extraction | 6,586 | 12 | 91.7% | 0.889 |
+| Detection | 4,650 | 0 | — | — |
+| Search | 479 | 0 | — | — |
+| Retrieval, Ranking, ML Feature Extraction | 0 | 0 | — | — |
+| **total** | **243,366** | **231** | **68.8%** | — |
 
-Classified by question form, the 231 JevBench items are Classification 198, Scoring 18, Structured Data Extraction 12, Verification 2 and Routing 1, with none in Detection, Search, Retrieval, Ranking or ML Feature Extraction. An ability-level accuracy table on JevBench therefore has one large row and four cells too small to read as rates. That is itself a demand-side fact: the acceptance set asks almost entirely for Classification, while the corpus's real gaps (Ranking, ML Feature Extraction) are abilities JevBench does not test.
+The type totals reproduce the control report exactly: choice 139 at 68.3%, noul 74 at 67.6%, score 18 at 77.8%. Only Classification has enough items to read as a rate. Verification (2), Routing (1) and the four abilities with no items are cells, not measurements; SDE at 12 items is suggestive at best. The table is committed as `eval` in the coverage JSON with `n`, `accuracy`, `chance_corrected` and the chance-corrected count for every cell.
 
-The per-item file is not in the repository: the committed control report carries aggregates only, and `eval_gate.py --predictions-out` is the generator. Until that file is supplied, the ability table has no accuracy column. When it arrives, the join is:
+The Scoring comparison is the one to keep: 0.3083 chance-corrected on the 3,999-item residual split against 0.708 on 18 JevBench items. The acceptance set does not see the weakness the split sees, because 18 items carry a binomial 95% interval of roughly ±23 points. That is the same limit the demand section states, now with the measurement attached.
 
-    python scripts/label_abilities.py \
-        --canonical research/krino-canonical-243366.jsonl \
-        --jevbench-predictions predictions.jsonl \
-        --coverage research/247-ability-coverage.json
-
-The join reports `matched` and `unmatched` so a prediction set whose ids do not match the selected population fails visibly instead of producing a partial table. It also reports each ability's `n`; with 231 JevBench items spread over the abilities, some cells will be too small to read as rates. No other section of this note depends on it.
+The residual split numbers in the issue thread (noul 0.4874, choice 0.5991, score 0.3083) are a different, harder population and are never mixed into this table. A canonical-id `--predictions` join exists for split diagnostics.
 
 ## Hand-check
 

@@ -270,6 +270,8 @@ def test_coverage_counts_exclusions_and_gradient():
     assert "licence_single_point" in report["abilities"][VERIFICATION]["flags"]
     assert report["abilities"][CLASSIFICATION]["cookbook"].startswith("demonstrated")
     assert report["abilities"][VERIFICATION]["gradient_eligible_listwise"] == 0
+    assert report["abilities"][VERIFICATION]["gradient_share"] == 0.0
+    assert report["abilities"][CLASSIFICATION]["gradient_share"] == 1.0
     assert "under_2000" in report["abilities"][CLASSIFICATION]["flags"]
     assert "no_listwise_gradient" in report["abilities"][VERIFICATION]["flags"]
     assert report["types"]["noul"]["gradient_eligible_listwise"] == 0

@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-06T21:21:46Z",
+ "generated_at": "2026-11-06T21:26:18Z",
  "canonical": "krino-canonical-243366.jsonl",
  "canonical_sha256": "07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53",
  "canonical_records": 243366,
@@ -132,6 +132,7 @@
    "after_exclude_restrictive": 131700,
    "after_exclude_restrictive_and_unresolved": 110675,
    "gradient_eligible_listwise": 69446,
+   "gradient_share": 0.461218,
    "top_source": {
     "name": "synthetic",
     "records": 110222,
@@ -167,6 +168,7 @@
    "after_exclude_restrictive": 4554,
    "after_exclude_restrictive_and_unresolved": 3684,
    "gradient_eligible_listwise": 2868,
+   "gradient_share": 0.616774,
    "top_source": {
     "name": "synthetic",
     "records": 3438,
@@ -202,6 +204,7 @@
    "after_exclude_restrictive": 25563,
    "after_exclude_restrictive_and_unresolved": 20059,
    "gradient_eligible_listwise": 29515,
+   "gradient_share": 1.0,
    "top_source": {
     "name": "synthetic",
     "records": 22074,
@@ -237,6 +240,7 @@
    "after_exclude_restrictive": 9542,
    "after_exclude_restrictive_and_unresolved": 9539,
    "gradient_eligible_listwise": 18124,
+   "gradient_share": 0.952241,
    "top_source": {
     "name": "synthetic",
     "records": 7907,
@@ -270,6 +274,7 @@
    "after_exclude_restrictive": 479,
    "after_exclude_restrictive_and_unresolved": 0,
    "gradient_eligible_listwise": 479,
+   "gradient_share": 1.0,
    "top_source": {
     "name": "codesearchnet",
     "records": 479,
@@ -305,6 +310,7 @@
    "after_exclude_restrictive": 0,
    "after_exclude_restrictive_and_unresolved": 0,
    "gradient_eligible_listwise": 0,
+   "gradient_share": 0.0,
    "top_source": null,
    "single_source": false,
    "licence_single_point": false,
@@ -332,6 +338,7 @@
    "after_exclude_restrictive": 0,
    "after_exclude_restrictive_and_unresolved": 0,
    "gradient_eligible_listwise": 0,
+   "gradient_share": 0.0,
    "top_source": null,
    "single_source": false,
    "licence_single_point": false,
@@ -363,6 +370,7 @@
    "after_exclude_restrictive": 15730,
    "after_exclude_restrictive_and_unresolved": 14871,
    "gradient_eligible_listwise": 2762,
+   "gradient_share": 0.084901,
    "top_source": {
     "name": "synthetic",
     "records": 10717,
@@ -394,6 +402,7 @@
    "after_exclude_restrictive": 0,
    "after_exclude_restrictive_and_unresolved": 0,
    "gradient_eligible_listwise": 0,
+   "gradient_share": 0.0,
    "top_source": null,
    "single_source": false,
    "licence_single_point": false,
@@ -425,6 +434,7 @@
    "after_exclude_restrictive": 11,
    "after_exclude_restrictive_and_unresolved": 9,
    "gradient_eligible_listwise": 6578,
+   "gradient_share": 0.998785,
    "top_source": {
     "name": "apigen_tool_argument",
     "records": 6575,
@@ -1042,6 +1052,66 @@
    "Scoring has 18 items. A binomial 95% interval at p=0.5 is about +/-23 points on 18 items, so a change confined to Scoring cannot move the 231-item total beyond noise by itself; a held-out split is needed to see a Scoring regression.",
    "Ranking and ML Feature Extraction have zero items in the acceptance set as well as zero corpus records, so the metric cannot see those gaps by construction."
   ]
+ },
+ "eval": {
+  "path": "research/control_pred_231.jsonl",
+  "matched": 231,
+  "unmatched": 0,
+  "metric": "chance_corrected = mean((correct - 1/K) / (1 - 1/K)); noul K=2 unless n_options is given",
+  "by_ability": {
+   "Classification": {
+    "n": 198,
+    "accuracy": 0.671717,
+    "chance_corrected": 0.491919,
+    "chance_corrected_n": 198
+   },
+   "Routing": {
+    "n": 1,
+    "accuracy": 1.0,
+    "chance_corrected": 1.0,
+    "chance_corrected_n": 1
+   },
+   "Scoring": {
+    "n": 18,
+    "accuracy": 0.777778,
+    "chance_corrected": 0.708333,
+    "chance_corrected_n": 18
+   },
+   "Structured Data Extraction": {
+    "n": 12,
+    "accuracy": 0.916667,
+    "chance_corrected": 0.888889,
+    "chance_corrected_n": 12
+   },
+   "Verification": {
+    "n": 2,
+    "accuracy": 0.0,
+    "chance_corrected": -1.0,
+    "chance_corrected_n": 2
+   }
+  },
+  "by_type": {
+   "choice": {
+    "n": 139,
+    "accuracy": 0.683453,
+    "chance_corrected": 0.583213,
+    "chance_corrected_n": 139
+   },
+   "noul": {
+    "n": 74,
+    "accuracy": 0.675676,
+    "chance_corrected": 0.351351,
+    "chance_corrected_n": 74
+   },
+   "score": {
+    "n": 18,
+    "accuracy": 0.777778,
+    "chance_corrected": 0.708333,
+    "chance_corrected_n": 18
+   }
+  },
+  "population": "jevbench",
+  "ability_source": "classify_question: question form only, no source rule"
  },
  "sidecar": {
   "path": "krino-canonical-243366.ability.jsonl",
