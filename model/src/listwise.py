@@ -77,7 +77,9 @@ class ListwiseMarkerReadout:
         prefix_inputs = model._tokenize_context(
             state, instructions, model.max_length - width
         )
-        real_prefix_len = prefix_inputs["input_ids"].shape[1]
+        real_prefix_ids = prefix_inputs["input_ids"]
+        real_prefix_mask = prefix_inputs["attention_mask"]
+        real_prefix_len = real_prefix_ids.shape[1]
         prefix_bucket = bucket_length(
             real_prefix_len, PREFIX_BUCKETS, limit=model.max_length - width
         )
@@ -135,13 +137,37 @@ class ListwiseMarkerReadout:
             prefix_inputs, output_hidden_states=False, use_cache=True
         )
         cache = getattr(prefix_outputs, "past_key_values", None)
+        if cache is not None and model.is_hybrid and model.backbone_requires_grad:
+            # A grad-enabled GDN backbone cannot share a prefix cache: the
+            # suffix forward overwrites the fork's conv/recurrent states in
+            # place, which bumps the version of tensors the prefix graph saved
+            # for backward (``RuntimeError: one of the variables needed for
+            # gradient computation has been modified by an inplace operation``
+            # in fla's chunked delta-rule backward).  Re-encode the context so
+            # one autograd graph covers prefix and suffix.
+            if not getattr(model, "_warned_lora_hybrid_cache", False):
+                print(
+                    "  LoRA + hybrid backbone: re-encoding the context instead "
+                    "of reusing the GDN cache",
+                    flush=True,
+                )
+                model._warned_lora_hybrid_cache = True
+            cache = None
         if cache is None:
-            # No KV cache (checkpointing, encoder): pay the context again.
-            input_ids = torch.cat([prefix_inputs["input_ids"], suffix], dim=1)
+            # No KV cache (checkpointing, encoder, adapted hybrid): pay the
+            # context again.  Use the unpadded prefix: a left-padded query at
+            # position 0 has every key masked, and cuDNN's SDPA backward
+            # returns NaN for that row under autocast.
+            input_ids = torch.cat(
+                [real_prefix_ids, suffix[:, :suffix_len]], dim=1
+            )
+            attention_mask = torch.cat(
+                [real_prefix_mask, suffix_mask[:, :suffix_len]], dim=1
+            )
             outputs = model._backbone_forward(
                 {"input_ids": input_ids, "attention_mask": attention_mask}
             )
-            marker_index = marker_index + prefix_bucket
+            marker_index = marker_index + real_prefix_len
         else:
             position_ids = torch.full(
                 (1, width), real_prefix_len, dtype=torch.long, device=model.device
