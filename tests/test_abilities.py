@@ -21,15 +21,19 @@ from data.abilities import (
     STRUCTURED_DATA_EXTRACTION,
     VERIFICATION,
     classify,
+    classify_question,
 )
 from scripts.label_abilities import (
     Coverage,
     gradient_eligible,
+    jevbench_ability_map,
     main,
     option_count,
     score_handcheck,
     score_predictions,
 )
+
+JEVBENCH_DIR = Path(__file__).resolve().parents[1] / "data" / "benchmarks" / "jevbench"
 
 
 def _question(q_type: str, instructions: str, criteria=None) -> dict:
@@ -335,6 +339,21 @@ def test_labeler_end_to_end(tmp_path: Path):
     )
     assert report["sidecar"]["records"] == 2
     assert report["label_methods"] == {"source_rule": 2, "heuristic": 0, "model": 0}
+
+
+def test_classify_question_uses_the_question_form_only():
+    ability, method, rule = classify_question(
+        _question("choice", "What should the agent do next?", {"A": "a", "B": "b"})
+    )
+    assert (ability, method) == (ROUTING, HEURISTIC)
+    assert rule.startswith("pattern:routing")
+
+
+def test_jevbench_items_have_an_ability_by_question_form():
+    mapping = jevbench_ability_map(JEVBENCH_DIR)
+    assert len(mapping) == 231
+    assert set(mapping.values()) <= set(ABILITIES)
+    assert mapping["easy-intent-00"] == CLASSIFICATION
 
 
 def test_score_predictions_joins_by_id(tmp_path: Path):

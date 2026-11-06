@@ -83,14 +83,18 @@ A row count for noul therefore says nothing about what the current listwise arm 
 
 The labeler joins per-item predictions to these labels with `--predictions`. Each row needs `id`, `q_type`, `correct` (or `gold`/`pred`) and `n_options`; the report then carries `eval.by_ability` with n, accuracy and chance-corrected accuracy next to the coverage counts.
 
-The ability-level table is not in this commit because the per-item file behind the type-level numbers quoted in the issue thread (noul 0.4874, choice 0.5991, score 0.3083) is not in the repository. Those type-level numbers cannot be recomputed from the committed JevBench reports, which use JevBench items rather than canonical ids. Once the prediction file is supplied, the join is:
+The join uses the 231 public JevBench items, the acceptance set, not the residual split. The type-level accuracies in the issue thread (noul 0.4874, choice 0.5991, score 0.3083) are from the 3,999-item residual split and are a different, harder population. The JevBench control report has noul 0.6757 (n=74), choice 0.6835 (n=139), score 0.7778 (n=18). The two populations are never mixed in one row; the split column is a separate diagnostic if it is available.
+
+Classified by question form, the 231 JevBench items are Classification 198, Scoring 18, Structured Data Extraction 12, Verification 2 and Routing 1, with none in Detection, Search, Retrieval, Ranking or ML Feature Extraction. An ability-level accuracy table on JevBench therefore has one large row and four cells too small to read as rates. That is itself a demand-side fact: the acceptance set asks almost entirely for Classification, while the corpus's real gaps (Ranking, ML Feature Extraction) are abilities JevBench does not test.
+
+The per-item file is not in the repository: the committed control report carries aggregates only, and `eval_gate.py --predictions-out` is the generator. Until that file is supplied, the ability table has no accuracy column. When it arrives, the join is:
 
     python scripts/label_abilities.py \
         --canonical research/krino-canonical-243366.jsonl \
-        --predictions predictions.jsonl \
+        --jevbench-predictions predictions.jsonl \
         --coverage research/247-ability-coverage.json
 
-The join reports `matched` and `unmatched` so a prediction set that does not use canonical ids fails visibly instead of producing a partial table. No other section of this note depends on it.
+The join reports `matched` and `unmatched` so a prediction set whose ids do not match the selected population fails visibly instead of producing a partial table. It also reports each ability's `n`; with 231 JevBench items spread over the abilities, some cells will be too small to read as rates. No other section of this note depends on it.
 
 ## Hand-check
 

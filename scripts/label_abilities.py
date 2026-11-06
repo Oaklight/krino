@@ -63,6 +63,7 @@ from data.abilities import (
     LABEL_METHODS,
     MODEL,
     classify,
+    classify_question,
     is_known_source,
 )
 from scripts.build_canonical_corpus import licence_group
@@ -491,6 +492,16 @@ def score_predictions(path: Path, id_to_ability: dict[str, str]) -> dict[str, An
     }
 
 
+def jevbench_ability_map(root: Path) -> dict[str, str]:
+    """Map every public JevBench id to an ability from its question form."""
+    mapping: dict[str, str] = {}
+    for tier in ("easy", "hard", "original"):
+        for row in read_jsonl(root / f"{tier}.jsonl"):
+            ability, _, _ = classify_question(row.get("question") or {})
+            mapping[str(row["id"])] = ability
+    return mapping
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--canonical", type=Path, default=None)
@@ -506,7 +517,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--handcheck", type=Path, default=None)
     parser.add_argument("--handcheck-out", type=Path, default=None)
     parser.add_argument("--predictions", type=Path, default=None)
+    parser.add_argument("--jevbench-predictions", type=Path, default=None)
+    parser.add_argument(
+        "--jevbench-root", type=Path, default=Path("data/benchmarks/jevbench")
+    )
     args = parser.parse_args(argv)
+    if args.predictions is not None and args.jevbench_predictions is not None:
+        parser.error("pass --predictions or --jevbench-predictions, not both")
 
     if args.handcheck is not None:
         report = score_handcheck(args.handcheck, args.handcheck_out)
@@ -586,6 +603,14 @@ def main(argv: list[str] | None = None) -> int:
     report["unknown_sources"] = []
     if args.predictions is not None:
         report["eval"] = score_predictions(args.predictions, id_to_ability)
+    if args.jevbench_predictions is not None:
+        report["eval"] = score_predictions(
+            args.jevbench_predictions, jevbench_ability_map(args.jevbench_root)
+        )
+        report["eval"]["population"] = "jevbench"
+        report["eval"]["ability_source"] = (
+            "classify_question: question form only, no source rule"
+        )
     if args.map_out is not None:
         map_sha256 = _file_sha256(args.map_out)
         args.map_out.with_name(args.map_out.name + ".sha256").write_text(
