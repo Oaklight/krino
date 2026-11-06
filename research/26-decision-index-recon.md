@@ -131,6 +131,31 @@ The kit declares `requires-python >= 3.10`, but `adapters_scored.chessbench` cal
 ChessBench with `AttributeError: module 'hashlib' has no attribute 'file_digest'`. Use
 3.11 or newer; the edition 0.3 rerun uses 3.12.
 
+### Edition 0.3 rebuild result
+
+HLE access was cleared on the account, and the rebuild ran to completion on the compute
+host under Python 3.12. The 0.1 base is **not byte-identical** to the pinned suite:
+
+| file | rebuilt | pinned | result |
+|---|---|---|---|
+| release-v1 `selected-rows.jsonl` | 132,422 requests, 117,764 cases, 775,202 fields; sha256 `7068220a...` | sha256 `288d3720...` | **mismatch** |
+| `added-rows.jsonl` | 30,419 requests; sha256 `7429f3c9...` | sha256 `7429f3c9...` | match |
+
+The kit skipped the v2/v3 cut (`release-v1 rows are not byte-identical, so the v2 cut
+would not be either`) and the GSM8K rows. No edition 0.3 suite hash was produced. The 0.3
+counts would be 140,620 requests / 140,178 scoreable, but that suite was not assembled.
+
+No source is gated. The v1 counts match the 0.1 edition exactly, so selection is stable
+and the difference is row content or order. The only unpinned upstream source is ARC
+(`revision=None`, "latest"); the kit also leaves `pandas`, `pyarrow` and `numpy`
+unbounded, so a fresh install can normalize differently. The kit ships no per-row
+reference, so the moved benchmark cannot be named from local artifacts alone.
+
+Do not force the v2 cut. A non-byte-identical suite is not the pinned benchmark and its
+scores are not comparable to the board. To resolve: pin the build dependencies to the
+lab's versions and rerun, or fetch a published board run's `results.jsonl` and compare
+`payload_sha256` per `run_id` to bisect the moved rows.
+
 ### v4 control: identified, not scored
 
 The control is manifest row 78 of
