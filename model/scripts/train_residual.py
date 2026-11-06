@@ -5,6 +5,14 @@ initialised to 0, so step 0 reproduces the base distribution exactly.  The
 loss is a KL anchor to `p_base` plus a small CE term; if CE dominates, the
 residual relearns the task and loses the base.
 
+An ``answerable=false`` row keeps its source label for provenance and must not
+drive the option CE or the KL anchor.  The mask is on the loss: the row stays
+in the batch and the option head still runs, so its gradient from that row is
+exactly zero.  Do not implement abstention by dropping rows: dropping changes
+the batch composition and the loss normalisation, so an arm trained that way
+is not comparable with a masked arm on the same data.  ``--exclude-ids`` is
+leakage control, not this mask.
+
 Base probabilities come from `precompute_base_probs.py` so training never runs
 the 4B scorer.
 
@@ -405,8 +413,10 @@ def main() -> int:
         "--exclude-ids",
         type=Path,
         default=None,
-        help="Text file of ids to drop from the main items and answerable items "
-        "(abstention eval base ids, so the eval never appears in training)",
+        help="Leakage control, not the abstention mask: ids to drop from the "
+        "main items and answerable items (abstention eval base ids, so the "
+        "eval never appears in training).  answerable=false rows are kept in "
+        "the training batch and masked in the loss",
     )
     parser.add_argument("--val-fraction", type=float, default=0.2)
     parser.add_argument("--seed", type=int, default=42)
