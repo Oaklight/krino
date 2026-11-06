@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-06T19:56:04Z",
+ "generated_at": "2026-11-06T20:21:33Z",
  "rule": {
   "normalization": "Unicode NFC, casefold, non-word runs -> space, strip",
   "word_shingle": 8,
@@ -4894,15 +4894,15 @@
    },
    {
     "sources": [
-     "residual_train_20000_jev",
-     "synthetic/scientific_reasoning"
+     "label_target_30k_jev",
+     "synthetic/passage_decision"
     ],
     "states": 973
    },
    {
     "sources": [
-     "label_target_30k_jev",
-     "synthetic/passage_decision"
+     "residual_train_20000_jev",
+     "synthetic/scientific_reasoning"
     ],
     "states": 973
    },
@@ -4971,14 +4971,14 @@
    },
    {
     "sources": [
-     "apigen_tool_action",
+     "apigen_policy_compliance",
      "apigen_tool_argument"
     ],
     "states": 816
    },
    {
     "sources": [
-     "apigen_policy_compliance",
+     "apigen_tool_action",
      "apigen_tool_argument"
     ],
     "states": 816
@@ -5048,13 +5048,6 @@
    },
    {
     "sources": [
-     "apigen_tool_action",
-     "apigen_tool_choice"
-    ],
-    "states": 711
-   },
-   {
-    "sources": [
      "apigen_policy_compliance",
      "apigen_tool_choice"
     ],
@@ -5062,15 +5055,22 @@
    },
    {
     "sources": [
-     "residual_train_20000_jev",
-     "synthetic/logical_inference"
+     "apigen_tool_action",
+     "apigen_tool_choice"
     ],
-    "states": 690
+    "states": 711
    },
    {
     "sources": [
      "label_target_30k_jev",
      "synthetic/multi_hop_reasoning"
+    ],
+    "states": 690
+   },
+   {
+    "sources": [
+     "residual_train_20000_jev",
+     "synthetic/logical_inference"
     ],
     "states": 690
    },
@@ -5343,14 +5343,14 @@
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/medical_triage"
+     "synthetic/commonsense_decision"
     ],
     "states": 7
    },
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/commonsense_decision"
+     "synthetic/medical_triage"
     ],
     "states": 7
    },
@@ -5364,7 +5364,7 @@
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/scientific_reasoning"
+     "synthetic/logical_inference"
     ],
     "states": 6
    },
@@ -5378,14 +5378,14 @@
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/logical_inference"
+     "synthetic/product_categorization"
     ],
     "states": 6
    },
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/product_categorization"
+     "synthetic/scientific_reasoning"
     ],
     "states": 6
    },
@@ -5406,14 +5406,14 @@
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/content_analysis"
+     "synthetic/code_review"
     ],
     "states": 5
    },
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/code_review"
+     "synthetic/content_analysis"
     ],
     "states": 5
    },
@@ -5434,21 +5434,14 @@
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/numerical_reasoning"
+     "synthetic/adversarial_inference"
     ],
     "states": 4
    },
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/spatial_reasoning"
-    ],
-    "states": 4
-   },
-   {
-    "sources": [
-     "abstention_train_20k",
-     "synthetic/passage_decision"
+     "synthetic/education_assessment"
     ],
     "states": 4
    },
@@ -5462,21 +5455,42 @@
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/education_assessment"
-    ],
-    "states": 4
-   },
-   {
-    "sources": [
-     "abstention_train_20k",
-     "synthetic/adversarial_inference"
-    ],
-    "states": 4
-   },
-   {
-    "sources": [
-     "abstention_train_20k",
      "synthetic/multi_agent_coordination"
+    ],
+    "states": 4
+   },
+   {
+    "sources": [
+     "abstention_train_20k",
+     "synthetic/numerical_reasoning"
+    ],
+    "states": 4
+   },
+   {
+    "sources": [
+     "abstention_train_20k",
+     "synthetic/passage_decision"
+    ],
+    "states": 4
+   },
+   {
+    "sources": [
+     "abstention_train_20k",
+     "synthetic/spatial_reasoning"
+    ],
+    "states": 4
+   },
+   {
+    "sources": [
+     "abstention_train_30k",
+     "mmlu_pro_short_reasoning_choice"
+    ],
+    "states": 4
+   },
+   {
+    "sources": [
+     "abstention_train_30k",
+     "synthetic/education_assessment"
     ],
     "states": 4
    },
@@ -5490,7 +5504,7 @@
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/spatial_reasoning"
+     "synthetic/numerical_reasoning"
     ],
     "states": 4
    },
@@ -5504,35 +5518,21 @@
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/education_assessment"
-    ],
-    "states": 4
-   },
-   {
-    "sources": [
-     "abstention_train_30k",
-     "synthetic/numerical_reasoning"
-    ],
-    "states": 4
-   },
-   {
-    "sources": [
-     "abstention_train_30k",
-     "mmlu_pro_short_reasoning_choice"
+     "synthetic/spatial_reasoning"
     ],
     "states": 4
    },
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/resource_management"
+     "synthetic/academic_reasoning"
     ],
     "states": 3
    },
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/academic_reasoning"
+     "synthetic/resource_management"
     ],
     "states": 3
    },
@@ -5588,21 +5588,7 @@
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/code_review"
-    ],
-    "states": 2
-   },
-   {
-    "sources": [
-     "abstention_train_30k",
      "synthetic/academic_reasoning"
-    ],
-    "states": 2
-   },
-   {
-    "sources": [
-     "abstention_train_30k",
-     "synthetic/resource_management"
     ],
     "states": 2
    },
@@ -5616,14 +5602,28 @@
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/safety_moderation"
+     "synthetic/code_review"
+    ],
+    "states": 2
+   },
+   {
+    "sources": [
+     "abstention_train_30k",
+     "synthetic/resource_management"
+    ],
+    "states": 2
+   },
+   {
+    "sources": [
+     "abstention_train_30k",
+     "synthetic/content_analysis"
     ],
     "states": 1
    },
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/content_analysis"
+     "synthetic/safety_moderation"
     ],
     "states": 1
    }
@@ -10590,7 +10590,7 @@
   "synthetic/spatial_reasoning_qwen3_8_27b_labels.jsonl": "a304a43b0db001119990197f0b7f8a54123e28beababbdc740fe5b9f1fc736f8",
   "synthetic/spatial_reasoning_variants.jsonl": "67422ee332af2834acb19af04af7ef47da2747e16c87e8805311b065f1eb85e9"
  },
- "elapsed_seconds": 385.0,
+ "elapsed_seconds": 407.2,
  "near_duplicates": {
   "threshold": 0.7,
   "num_perm": 128,
@@ -10601,7 +10601,7 @@
   "merging_pairs": 22917,
   "clusters": 5734,
   "cross_source_clusters": 3040,
-  "same_synthetic_family_clusters": 1918,
+  "same_synthetic_family_clusters": 1940,
   "states_in_clusters": 28651,
   "rows_in_clusters": 118162,
   "largest_cluster": 6307,
@@ -11010,15 +11010,15 @@
    },
    {
     "sources": [
-     "residual_train_20000_jev",
-     "synthetic/spatial_reasoning"
+     "label_target_30k_jev",
+     "synthetic/navigation_planning"
     ],
     "pairs": 40
    },
    {
     "sources": [
-     "label_target_30k_jev",
-     "synthetic/navigation_planning"
+     "residual_train_20000_jev",
+     "synthetic/spatial_reasoning"
     ],
     "pairs": 40
    },
@@ -11067,14 +11067,14 @@
    {
     "sources": [
      "residual_train_20000_jev",
-     "synthetic/navigation_planning"
+     "synthetic/multi_agent_coordination"
     ],
     "pairs": 34
    },
    {
     "sources": [
      "residual_train_20000_jev",
-     "synthetic/multi_agent_coordination"
+     "synthetic/navigation_planning"
     ],
     "pairs": 34
    },
@@ -11088,28 +11088,28 @@
    {
     "sources": [
      "residual_train_20000_jev",
-     "synthetic/resource_management"
-    ],
-    "pairs": 33
-   },
-   {
-    "sources": [
-     "residual_train_20000_jev",
      "synthetic/product_categorization"
     ],
     "pairs": 33
    },
    {
     "sources": [
-     "label_target_30k_jev",
+     "residual_train_20000_jev",
      "synthetic/resource_management"
+    ],
+    "pairs": 33
+   },
+   {
+    "sources": [
+     "label_target_30k_jev",
+     "synthetic/education_assessment"
     ],
     "pairs": 32
    },
    {
     "sources": [
      "label_target_30k_jev",
-     "synthetic/education_assessment"
+     "synthetic/resource_management"
     ],
     "pairs": 32
    },
@@ -11136,15 +11136,15 @@
    },
    {
     "sources": [
-     "residual_train_20000_jev",
-     "synthetic/game_strategy"
+     "apigen_tool_action",
+     "apigen_tool_next_action"
     ],
     "pairs": 28
    },
    {
     "sources": [
-     "apigen_tool_action",
-     "apigen_tool_next_action"
+     "residual_train_20000_jev",
+     "synthetic/game_strategy"
     ],
     "pairs": 28
    },
@@ -11200,28 +11200,28 @@
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/logical_inference"
-    ],
-    "pairs": 13
-   },
-   {
-    "sources": [
-     "abstention_train_30k",
      "synthetic/legal_judgment"
     ],
     "pairs": 13
    },
    {
     "sources": [
+     "abstention_train_30k",
+     "synthetic/logical_inference"
+    ],
+    "pairs": 13
+   },
+   {
+    "sources": [
      "abstention_train_20k",
-     "synthetic/safety_moderation"
+     "synthetic/logical_inference"
     ],
     "pairs": 12
    },
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/logical_inference"
+     "synthetic/safety_moderation"
     ],
     "pairs": 12
    },
@@ -11262,6 +11262,13 @@
    },
    {
     "sources": [
+     "abstention_train_20k",
+     "synthetic/content_analysis"
+    ],
+    "pairs": 8
+   },
+   {
+    "sources": [
      "abstention_train_30k",
      "typed_decisions"
     ],
@@ -11277,13 +11284,6 @@
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/content_analysis"
-    ],
-    "pairs": 8
-   },
-   {
-    "sources": [
-     "abstention_train_20k",
      "synthetic/education_assessment"
     ],
     "pairs": 7
@@ -11291,14 +11291,14 @@
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/multi_hop_reasoning"
+     "synthetic/academic_reasoning"
     ],
     "pairs": 7
    },
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/academic_reasoning"
+     "synthetic/multi_hop_reasoning"
     ],
     "pairs": 7
    },
@@ -11312,14 +11312,14 @@
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/multi_hop_reasoning"
+     "synthetic/medical_triage"
     ],
     "pairs": 6
    },
    {
     "sources": [
      "abstention_train_20k",
-     "synthetic/medical_triage"
+     "synthetic/multi_hop_reasoning"
     ],
     "pairs": 6
    },
@@ -11339,22 +11339,8 @@
    },
    {
     "sources": [
-     "label_target_30k_jev",
-     "synthetic/product_categorization"
-    ],
-    "pairs": 5
-   },
-   {
-    "sources": [
      "abstention_train_20k",
      "synthetic/adversarial_inference"
-    ],
-    "pairs": 5
-   },
-   {
-    "sources": [
-     "abstention_train_20k",
-     "synthetic/numerical_reasoning"
     ],
     "pairs": 5
    },
@@ -11367,15 +11353,22 @@
    },
    {
     "sources": [
-     "abstention_train_30k",
-     "synthetic/spatial_reasoning"
+     "abstention_train_20k",
+     "synthetic/numerical_reasoning"
     ],
-    "pairs": 4
+    "pairs": 5
    },
    {
     "sources": [
-     "abstention_train_30k",
-     "synthetic/numerical_reasoning"
+     "label_target_30k_jev",
+     "synthetic/product_categorization"
+    ],
+    "pairs": 5
+   },
+   {
+    "sources": [
+     "abstention_train_20k",
+     "synthetic/navigation_planning"
     ],
     "pairs": 4
    },
@@ -11388,13 +11381,6 @@
    },
    {
     "sources": [
-     "residual_train_20000_jev",
-     "synthetic/long_document"
-    ],
-    "pairs": 4
-   },
-   {
-    "sources": [
      "abstention_train_30k",
      "synthetic/long_document"
     ],
@@ -11402,8 +11388,15 @@
    },
    {
     "sources": [
-     "abstention_train_20k",
-     "synthetic/navigation_planning"
+     "abstention_train_30k",
+     "synthetic/numerical_reasoning"
+    ],
+    "pairs": 4
+   },
+   {
+    "sources": [
+     "abstention_train_30k",
+     "synthetic/spatial_reasoning"
     ],
     "pairs": 4
    },
@@ -11416,24 +11409,10 @@
    },
    {
     "sources": [
-     "abstention_train_20k",
-     "synthetic/financial_analysis"
+     "residual_train_20000_jev",
+     "synthetic/long_document"
     ],
-    "pairs": 3
-   },
-   {
-    "sources": [
-     "abstention_train_30k",
-     "synthetic/financial_analysis"
-    ],
-    "pairs": 3
-   },
-   {
-    "sources": [
-     "abstention_train_30k",
-     "synthetic/passage_decision"
-    ],
-    "pairs": 3
+    "pairs": 4
    },
    {
     "sources": [
@@ -11446,6 +11425,13 @@
     "sources": [
      "abstention_train_20k",
      "synthetic/commonsense_decision"
+    ],
+    "pairs": 3
+   },
+   {
+    "sources": [
+     "abstention_train_20k",
+     "synthetic/financial_analysis"
     ],
     "pairs": 3
    },
@@ -11466,7 +11452,21 @@
    {
     "sources": [
      "abstention_train_30k",
+     "synthetic/financial_analysis"
+    ],
+    "pairs": 3
+   },
+   {
+    "sources": [
+     "abstention_train_30k",
      "synthetic/multi_agent_coordination"
+    ],
+    "pairs": 3
+   },
+   {
+    "sources": [
+     "abstention_train_30k",
+     "synthetic/passage_decision"
     ],
     "pairs": 3
    },
@@ -11474,20 +11474,6 @@
     "sources": [
      "abstention_train_20k",
      "synthetic/multi_agent_coordination"
-    ],
-    "pairs": 2
-   },
-   {
-    "sources": [
-     "abstention_train_30k",
-     "synthetic/medical_triage"
-    ],
-    "pairs": 2
-   },
-   {
-    "sources": [
-     "abstention_train_30k",
-     "synthetic/scientific_reasoning"
     ],
     "pairs": 2
    },
@@ -11515,9 +11501,16 @@
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/commonsense_decision"
+     "synthetic/medical_triage"
     ],
-    "pairs": 1
+    "pairs": 2
+   },
+   {
+    "sources": [
+     "abstention_train_30k",
+     "synthetic/scientific_reasoning"
+    ],
+    "pairs": 2
    },
    {
     "sources": [
@@ -11529,7 +11522,7 @@
    {
     "sources": [
      "abstention_train_30k",
-     "synthetic/content_analysis"
+     "race_short_passage_choice"
     ],
     "pairs": 1
    },
@@ -11537,6 +11530,20 @@
     "sources": [
      "abstention_train_30k",
      "synthetic/adversarial_inference"
+    ],
+    "pairs": 1
+   },
+   {
+    "sources": [
+     "abstention_train_30k",
+     "synthetic/commonsense_decision"
+    ],
+    "pairs": 1
+   },
+   {
+    "sources": [
+     "abstention_train_30k",
+     "synthetic/content_analysis"
     ],
     "pairs": 1
    },
@@ -11563,15 +11570,15 @@
    },
    {
     "sources": [
-     "mmlu_pro_short_reasoning_choice",
-     "synthetic/scientific_reasoning"
+     "label_target_30k_jev",
+     "race_short_passage_choice"
     ],
     "pairs": 1
    },
    {
     "sources": [
-     "race_short_passage_choice",
-     "synthetic/academic_reasoning"
+     "mmlu_pro_short_reasoning_choice",
+     "synthetic/scientific_reasoning"
     ],
     "pairs": 1
    },
@@ -11584,15 +11591,8 @@
    },
    {
     "sources": [
-     "abstention_train_30k",
-     "race_short_passage_choice"
-    ],
-    "pairs": 1
-   },
-   {
-    "sources": [
-     "label_target_30k_jev",
-     "race_short_passage_choice"
+     "race_short_passage_choice",
+     "synthetic/academic_reasoning"
     ],
     "pairs": 1
    }
@@ -155908,6 +155908,6 @@
   },
   "unclustered_states": 55981,
   "truncated_clusters": 0,
-  "elapsed_seconds": 264.0
+  "elapsed_seconds": 280.8
  }
 }
