@@ -295,6 +295,11 @@ def main() -> int:
         "dropped_groups": dict(sorted(dropped.items())),
         "output": None if args.dry_run else str(args.out),
         "sha256": output_sha256,
+        "notes": [
+            "The per-source near-duplicate cluster view belongs to the source-corpus "
+            "audit. This artifact carries dataset-level source, not the corpus file, "
+            "so it supports the cluster totals only."
+        ],
         "note": "abstention is filtered by its own source; a full rebuild from the "
         "surviving corpora is a separate step because out_of_scope borrows donor states",
     }
