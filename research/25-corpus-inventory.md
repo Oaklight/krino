@@ -281,6 +281,11 @@ ids; the first is the unlabelled base, the second adds teacher probabilities.
 `residual_train_20000.jsonl` and `residual_train_20000_jev.jsonl` are the same
 20,000 ids. `residual_train_15000_extra` is a strict subset of the residual 20K.
 
+One source-field defect: every row in `musique_long_choice.jsonl` (476) carries
+`source: hotpotqa_long_choice`. The filename is the only reliable attribution.
+Provenance is unaffected (both are gold), but a report grouped by `source` will
+fold musique into hotpotqa.
+
 ## Canonical corpus definition
 
 A **primary** file is the single canonical representation of its source and may

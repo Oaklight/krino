@@ -25,6 +25,7 @@ TIERS = (GOLD, EXECUTION, TEACHER)
 # Benchmark conversions whose labels come from the source dataset.
 DATASET_SOURCES = frozenset(
     {
+        "2wiki_long_choice",
         "agnews",
         "anli",
         "arc",
@@ -36,19 +37,24 @@ DATASET_SOURCES = frozenset(
         "fever",
         "hellaswag",
         "logiqa",
+        "longbench_long_choice",
         "mednli",
         "mmlu",
+        "mmlu_pro_short_reasoning_choice",
         "mnli",
         "multirc",
         "piqa",
         "race",
+        "race_short_passage_choice",
         "sst2",
         "sst5",
         "stsb",
         "swag",
         "tabfact",
+        "twowiki_long_choice",
         "winogrande",
         "yelp",
+        "hotpotqa_long_choice",
     }
 )
 
