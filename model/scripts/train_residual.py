@@ -58,11 +58,52 @@ def _options(question: dict) -> list[str]:
 def _label_index(item) -> int:
     q = item.question
     if q["type"] == "noul":
+        # String labels from JSON are truthy, so "false" would become 1.
+        if isinstance(item.label, str):
+            return 1 if item.label.strip().lower() == "true" else 0
         return 1 if bool(item.label) else 0
     if q["type"] == "choice":
         keys = list(q["criteria"])
         return keys.index(item.label) if item.label in keys else -1
     return int(round(float(item.label)))
+
+
+def _hard_label_valid(item) -> bool:
+    """Whether ``item.label`` is well formed for its question type."""
+    q = item.question
+    label = item.label
+    if q["type"] == "noul":
+        if isinstance(label, bool):
+            return True
+        return isinstance(label, str) and label.strip().lower() in {"true", "false"}
+    if q["type"] == "choice":
+        criteria = q.get("criteria") or {}
+        return isinstance(label, str) and label in criteria
+    if q["type"] == "score":
+        if isinstance(label, bool):
+            return False
+        try:
+            value = float(label)
+        except (TypeError, ValueError):
+            return False
+        levels = len(q.get("criteria") or [])
+        return 0.0 <= value <= levels - 1
+    return False
+
+
+def hard_label_eligible(item) -> bool:
+    """Whether the gold label may drive a hard-label loss.
+
+    The canonical hard-label rule: abstention rows and teacher-tier rows are
+    excluded, and the label must validate as encoded.  An invalid label still
+    has an id and a state, so it stays in the batch for any soft target and for
+    the answerable head; it just contributes no hard CE.
+    """
+    if getattr(item, "answerable", None) is False:
+        return False
+    if getattr(item, "provenance", None) == "teacher":
+        return False
+    return _hard_label_valid(item)
 
 
 def _stratum(item) -> tuple[str, int]:
@@ -73,14 +114,14 @@ def _stratum(item) -> tuple[str, int]:
 def answerable_target(item) -> bool:
     """Label for the answerable head.
 
-    An explicit ``answerable`` field wins.  Otherwise a gold-carrying item is
-    answerable by construction; an item whose gold was removed must set the
-    field, which the abstention sets do.
+    An explicit ``answerable`` field wins.  Otherwise an item with a valid gold
+    label is answerable by construction; an item whose gold was removed must
+    set the field, which the abstention sets do.
     """
     value = getattr(item, "answerable", None)
     if value is not None:
         return bool(value)
-    return _label_index(item) >= 0
+    return hard_label_eligible(item) and _label_index(item) >= 0
 
 
 def split_items(items: list, val_fraction: float, seed: int) -> tuple[list, list]:
@@ -97,6 +138,20 @@ def split_items(items: list, val_fraction: float, seed: int) -> tuple[list, list
         val.extend(group[:n_val])
         train.extend(group[n_val:])
     return train, val
+
+
+def dedup_by_id(items: list, seen: set[str] | None = None) -> tuple[list, int]:
+    """Keep the first row per id; return the kept list and the drop count."""
+    seen = set() if seen is None else seen
+    kept = []
+    dropped = 0
+    for item in items:
+        if item.id in seen:
+            dropped += 1
+            continue
+        seen.add(item.id)
+        kept.append(item)
+    return kept, dropped
 
 
 def head_logits(
@@ -188,21 +243,36 @@ def item_loss(
     logits = fusion_logits(base, head, alphas[q_type])
     log_p = F.log_softmax(logits, dim=-1)
     kl = torch.sum(base * (torch.log(base.clamp_min(1e-6)) - log_p))
-    target = _label_index(item)
-    soft = soft_target(item, logits.numel())
-    if soft is not None:
-        # Teacher targets keep the label domain; the hard label only reports.
-        ce = torch.sum(
-            soft.to(logits.device) * (torch.log(soft.clamp_min(1e-6).to(logits.device)) - log_p)
-        )
-    elif target >= 0:
-        ce = F.cross_entropy(
-            logits.unsqueeze(0), torch.tensor([target], device=logits.device)
-        )
-    else:
+    answerable_false = getattr(item, "answerable", None) is False
+    is_teacher = getattr(item, "provenance", None) == "teacher"
+    if answerable_false:
+        # An abstention row trains the abstain target only.  Its label is kept
+        # for provenance, so the task terms are zeroed at the loss: the option
+        # head still runs (mask on the loss, not on the input) and its
+        # gradient from this row is exactly zero.
+        kl = torch.zeros((), device=logits.device)
         ce = torch.zeros((), device=logits.device)
+    else:
+        target = _label_index(item) if hard_label_eligible(item) else -1
+        soft = soft_target(item, logits.numel())
+        if soft is not None:
+            # Teacher targets keep the label domain; the hard label only reports.
+            ce = torch.sum(
+                soft.to(logits.device)
+                * (torch.log(soft.clamp_min(1e-6).to(logits.device)) - log_p)
+            )
+        elif target >= 0:
+            ce = F.cross_entropy(
+                logits.unsqueeze(0), torch.tensor([target], device=logits.device)
+            )
+        else:
+            ce = torch.zeros((), device=logits.device)
     answerable_loss = torch.zeros((), device=logits.device)
-    if answerable_weight and getattr(model, "answerable_head", None) is not None:
+    if (
+        answerable_weight
+        and not is_teacher
+        and getattr(model, "answerable_head", None) is not None
+    ):
         logit = model.forward_answerable(
             item.state, item.question.get("instructions", "")
         ).reshape(())
@@ -241,6 +311,10 @@ def evaluate(
         head = head_logits(model, item).reshape(-1)
         logits = fusion_logits(base.to(head.device), head, alphas[item.question["type"]])
         pred = int(torch.argmax(logits).item())
+        if getattr(item, "answerable", None) is False or not _hard_label_valid(item):
+            # Abstention rows keep a provenance label, not a gold answer, and
+            # an invalid label has no target to score against.
+            continue
         target = _label_index(item)
         if target < 0:
             continue
@@ -341,6 +415,9 @@ def main() -> int:
     args = parser.parse_args()
 
     items = load_jsonl(args.items)
+    items, duplicate_rows = dedup_by_id(items)
+    if duplicate_rows:
+        print(f"  dropped {duplicate_rows} duplicate id(s) from --items", flush=True)
     base_records = [json.loads(line) for line in args.base_probs.read_text().splitlines() if line.strip()]
     base_probs = {
         rec["id"]: torch.tensor(rec["probs"], dtype=torch.float32) for rec in base_records
@@ -368,6 +445,20 @@ def main() -> int:
         and item.id not in exclude_ids
         and getattr(item, "answerable", None) is not None
     ]
+    # An original that is already in the base corpus must not be counted twice
+    # (and must not leak from val into train); dedup the negatives by id too.
+    base_ids = {item.id for item in items}
+    n_before = len(answerable_items)
+    answerable_items = dedup_by_id(
+        [item for item in answerable_items if item.id not in base_ids]
+    )[0]
+    duplicate_originals = n_before - len(answerable_items)
+    if duplicate_originals:
+        print(
+            f"  dropped {duplicate_originals} answerable id(s) already in the base "
+            "corpus or repeated",
+            flush=True,
+        )
     if args.answerable_head and not answerable_items:
         print(
             "  WARNING: --answerable-head is on but --answerable-items added no "
@@ -379,8 +470,14 @@ def main() -> int:
         train_items.extend(answerable_items)
     answerable_pos_weight = args.answerable_pos_weight
     if answerable_pos_weight is None:
-        n_pos = sum(1 for item in train_items if answerable_target(item))
-        n_neg = len(train_items) - n_pos
+        # Teacher rows never enter the BCE, so they must not set its balance.
+        eligible = [
+            item
+            for item in train_items
+            if getattr(item, "provenance", None) != "teacher"
+        ]
+        n_pos = sum(1 for item in eligible if answerable_target(item))
+        n_neg = len(eligible) - n_pos
         answerable_pos_weight = n_neg / max(n_pos, 1)
     print(
         f"train {len(train_items)} val {len(val_items)} "
@@ -439,6 +536,8 @@ def main() -> int:
         total = 0.0
         kl_total = 0.0
         ce_total = 0.0
+        task_rows = 0
+        masked_rows = 0
         started = time.time()
         for index, item in enumerate(order, 1):
             loss, kl_value, ce_value = item_loss(
@@ -451,8 +550,14 @@ def main() -> int:
                 args.answerable_weight,
                 answerable_pos_weight,
             )
-            kl_total += kl_value
-            ce_total += ce_value
+            if getattr(item, "answerable", None) is False:
+                masked_rows += 1
+            else:
+                # Keep the means comparable with runs before the mask: only
+                # rows that carry a task label enter the task-loss averages.
+                task_rows += 1
+                kl_total += kl_value
+                ce_total += ce_value
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(head_params + list(alphas.values()), 1.0)
@@ -468,8 +573,10 @@ def main() -> int:
         metrics = evaluate(model, val_items, base_probs, alphas)
         metrics["epoch"] = epoch
         metrics["train_loss"] = total / max(1, len(order))
-        metrics["kl_mean"] = kl_total / max(1, len(order))
-        metrics["ce_mean"] = ce_total / max(1, len(order))
+        metrics["kl_mean"] = kl_total / max(1, task_rows)
+        metrics["ce_mean"] = ce_total / max(1, task_rows)
+        metrics["task_rows"] = task_rows
+        metrics["masked_rows"] = masked_rows
         metrics["kl_ce_ratio"] = (
             metrics["kl_mean"] / metrics["ce_mean"] if metrics["ce_mean"] else 0.0
         )
