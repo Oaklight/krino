@@ -1,0 +1,132 @@
+{
+ "features": [
+  "log_chars",
+  "log_tokens",
+  "log_sentences",
+  "mean_token_len",
+  "digit_fraction",
+  "upper_fraction",
+  "punctuation_fraction",
+  "n_options",
+  "source=anli",
+  "source=boolq",
+  "source=contractnli",
+  "source=fever",
+  "source=mednli",
+  "source=mnli",
+  "source=multirc",
+  "source=tabfact",
+  "type=choice",
+  "type=noul"
+ ],
+ "negative_vs_positive": {
+  "by_reason": {
+   "entity_corrupted": {
+    "auc": 0.5248219407667954,
+    "null_p05": 0.48841207482967336,
+    "null_p50": 0.4998036275479739,
+    "null_p95": 0.5102081938091634,
+    "null_sd": 0.0065468640043579406,
+    "pairs": 5456,
+    "rows": 15568,
+    "test_rows": 7778,
+    "train_rows": 7790,
+    "z": 3.7914245278766514
+   },
+   "out_of_scope": {
+    "auc": 0.5052418195904482,
+    "null_p05": 0.492553888203269,
+    "null_p50": 0.500061019660917,
+    "null_p95": 0.5073009834892058,
+    "null_sd": 0.004676626003725689,
+    "pairs": 15243,
+    "rows": 30486,
+    "test_rows": 15242,
+    "train_rows": 15244,
+    "z": 1.1208549895313993
+   },
+   "support_removed": {
+    "auc": 0.5535704992399256,
+    "null_p05": 0.49171856060117014,
+    "null_p50": 0.5001433998914693,
+    "null_p95": 0.508442175719921,
+    "null_sd": 0.005514100328417307,
+    "pairs": 5854,
+    "rows": 21968,
+    "test_rows": 10964,
+    "train_rows": 11004,
+    "z": 9.715183991819346
+   }
+  },
+  "overall": {
+   "auc": 0.5196333901904545,
+   "null_p05": 0.4955236896724604,
+   "null_p50": 0.5005299138351204,
+   "null_p95": 0.5057027808819122,
+   "null_sd": 0.0031376341900263703,
+   "pairs": 17444,
+   "rows": 68022,
+   "test_rows": 33860,
+   "train_rows": 34162,
+   "z": 6.257386617236442
+  }
+ },
+ "pair_discrimination": {
+  "by_reason": {
+   "entity_corrupted": {
+    "auc": 0.5256518658004553,
+    "null_p05": 0.4873727705588676,
+    "null_p50": 0.5001492528249426,
+    "null_p95": 0.5114031760921066,
+    "null_sd": 0.0065620696439579115,
+    "pairs": 5456,
+    "rows": 15568,
+    "test_rows": 7742,
+    "train_rows": 7826,
+    "z": 3.9091120930230465
+   },
+   "out_of_scope": {
+    "auc": 0.5106757546934562,
+    "null_p05": 0.49347719797372713,
+    "null_p50": 0.49958182420583486,
+    "null_p95": 0.5064874109672958,
+    "null_sd": 0.004676626003725689,
+    "pairs": 15243,
+    "rows": 30486,
+    "test_rows": 15242,
+    "train_rows": 15244,
+    "z": 2.2827899184051064
+   },
+   "support_removed": {
+    "auc": 0.5532251544950179,
+    "null_p05": 0.49118241373119437,
+    "null_p50": 0.5000294983289957,
+    "null_p95": 0.5084290317659634,
+    "null_sd": 0.005505569613564232,
+    "pairs": 5854,
+    "rows": 21968,
+    "test_rows": 10998,
+    "train_rows": 10970,
+    "z": 9.667510944532514
+   }
+  },
+  "overall": {
+   "auc": 0.5190359936128741,
+   "null_p05": 0.4951683085598314,
+   "null_p50": 0.5001103937681732,
+   "null_p95": 0.505792360136804,
+   "null_sd": 0.0031284082763665794,
+   "pairs": 17444,
+   "rows": 68022,
+   "test_rows": 34060,
+   "train_rows": 33962,
+   "z": 6.084881489631861
+  }
+ },
+ "pairs": "data/benchmarks/unanswerable_30k/pairs.jsonl",
+ "permutations": 200,
+ "reading": "AUC near 0.5 and inside the permutation band means surface form does not separate the pair.  An AUC above the band is a cue the answerable head could learn instead of the evidence.",
+ "ridge": 1.0,
+ "seed": 42,
+ "train_fraction": 0.5
+}

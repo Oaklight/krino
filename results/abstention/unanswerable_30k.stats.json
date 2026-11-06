@@ -1,10 +1,10 @@
 {
- "answerable_originals": 17442,
+ "answerable_originals": 17444,
  "by_transform": {
   "entity_corrupted": {
    "by_source": {
-    "anli": 542,
-    "contractnli": 3365,
+    "anli": 540,
+    "contractnli": 3346,
     "fever": 375,
     "mednli": 124,
     "mnli": 453,
@@ -12,17 +12,25 @@
    },
    "by_type": {
     "choice": 375,
-    "noul": 7430
+    "noul": 7409
+   },
+   "entity_types": {
+    "acronym": 192,
+    "common": 6402,
+    "digit": 5,
+    "mixed": 346,
+    "org": 6,
+    "proper": 833
    },
    "length_delta": {
-    "count": 7805,
-    "max_delta": 558,
-    "mean_delta": -20.106470211402947,
-    "median_delta": -2,
-    "min_delta": -567
+    "count": 7784,
+    "max_delta": 594,
+    "mean_delta": -20.090056526207604,
+    "median_delta": -1.0,
+    "min_delta": -486
    },
    "reason": "entity_corrupted",
-   "variants": 7805
+   "variants": 7784
   },
   "out_of_scope": {
    "by_source": {
@@ -41,10 +49,10 @@
    },
    "length_delta": {
     "count": 15243,
-    "max_delta": 2509,
-    "mean_delta": -29.045922718624944,
-    "median_delta": 1,
-    "min_delta": -2699
+    "max_delta": 2663,
+    "mean_delta": -27.534081217608083,
+    "median_delta": 2,
+    "min_delta": -2702
    },
    "reason": "out_of_scope",
    "variants": 15243
@@ -75,6 +83,7 @@
   }
  },
  "duplicate_ids_dropped": 0,
+ "entity_donor_match": "type",
  "input_items": 50000,
  "inputs": [
   "data/benchmarks/label_target_30k_jev.jsonl",
@@ -83,12 +92,12 @@
  "negatives_out": "data/benchmarks/unanswerable_30k/negatives.jsonl",
  "originals_by_type": {
   "choice": 1604,
-  "noul": 15838
+  "noul": 15840
  },
  "out": "data/benchmarks/unanswerable_30k/pairs.jsonl",
  "pair_checks": {
   "failed": 0,
-  "passed": 34032
+  "passed": 34011
  },
  "per_item_limit": 2,
  "seed": 42,
@@ -97,5 +106,5 @@
   "out_of_scope",
   "entity_corrupted"
  ],
- "variants": 34032
+ "variants": 34011
 }

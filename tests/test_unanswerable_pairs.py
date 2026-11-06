@@ -181,8 +181,11 @@ def test_key_entities_ignore_sentence_initial_grammar():
 def test_corrupt_entities_replaces_every_mention():
     split = split_state(_boolq("b1", "g1"))
     assert split is not None
-    donors = {(1, False): {"g2": ["Beta"]}}
-    results = corrupt_entities(split, "g1", donors, __import__("random").Random(0), 2)
+    common_words = {"makes", "widgets", "ships", "worldwide"}
+    donors = {(1, False, "proper"): {"g2": ["Beta"]}}
+    results = corrupt_entities(
+        split, "g1", donors, __import__("random").Random(0), 2, common_words
+    )
     assert len(results) == 1
     new_support, entity, donor = results[0]
     assert entity == "Acme" and donor == "Beta"
@@ -193,8 +196,50 @@ def test_corrupt_entities_replaces_every_mention():
 def test_corrupt_entities_skips_when_donor_is_in_the_same_group():
     split = split_state(_boolq("b1", "g1"))
     assert split is not None
-    donors = {(1, False): {"g1": ["Beta"]}}
-    assert corrupt_entities(split, "g1", donors, __import__("random").Random(0), 2) == []
+    common_words = {"makes", "widgets", "ships", "worldwide"}
+    donors = {(1, False, "proper"): {"g1": ["Beta"]}}
+    assert corrupt_entities(
+        split, "g1", donors, __import__("random").Random(0), 2, common_words
+    ) == []
+
+
+def test_entity_type_separates_terms_from_names():
+    from model.scripts.build_unanswerable_pairs import entity_type
+
+    common = {"confidential", "information", "receiving", "party"}
+    assert entity_type("Confidential Information", common) == "common"
+    assert entity_type("Jackie Evancho", common) == "proper"
+    assert entity_type("NBA", common) == "acronym"
+    assert entity_type("2024", common) == "digit"
+    assert entity_type("Acme Inc", common) == "org"
+
+
+def test_type_matched_donor_rejects_a_different_type():
+    split = split_state(_boolq("b1", "g1"))
+    assert split is not None
+    common_words = {"makes", "widgets", "ships", "worldwide"}
+    donors = {
+        (1, False, "common"): {"g2": ["Confidential"]},
+        (1, False, "proper"): {},
+    }
+    assert corrupt_entities(
+        split, "g1", donors, __import__("random").Random(0), 2, common_words
+    ) == []
+
+
+def test_common_word_vocabulary_comes_from_lowercase_text():
+    from model.scripts.build_unanswerable_pairs import common_word_vocabulary
+
+    items = [
+        _noul(
+            "b1",
+            "Passage: Acme makes Widgets.\n\nQuestion: Did Acme make widgets?",
+            "g1",
+        )
+    ]
+    vocabulary = common_word_vocabulary(items)
+    assert "widgets" in vocabulary
+    assert "acme" not in vocabulary
 
 
 # ---------------------------------------------------------------------------
@@ -332,7 +377,9 @@ def test_main_writes_pairs_negatives_and_stats(tmp_path: Path):
     assert stats["variants"] == len(negatives_rows)
     assert stats["answerable_originals"] == 2
     assert stats["pair_checks"] == {"passed": len(negatives_rows), "failed": 0}
+    assert stats["entity_donor_match"] == "type"
     assert set(stats["by_transform"]) == {"support_removed", "out_of_scope", "entity_corrupted"}
+    assert "entity_types" in stats["by_transform"]["entity_corrupted"]
     for detail in stats["by_transform"].values():
         assert detail["length_delta"]["count"] == detail["variants"]
 

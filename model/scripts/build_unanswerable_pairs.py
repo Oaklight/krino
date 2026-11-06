@@ -16,7 +16,13 @@ Three transforms are produced:
     same source.  The question stays, the evidence no longer belongs to it.
 ``entity_corrupted``
     Replace every mention of an entity shared by the question and the evidence
-    with a same-shape entity drawn from another group of the same source.
+    with an entity from another group of the same source that has the same
+    token shape and the same coarse type (proper name, common term, acronym,
+    organisation, or digit string).  Type matching keeps the substitution
+    wrong in meaning but plausible in kind, so a surface classifier cannot
+    learn "a person name in a contract means unanswerable".  The
+    ``--entity-donor-match shape`` option drops the type match to measure what
+    it costs in rows.
 
 Every variant keeps the original ``label`` as provenance, sets
 ``answerable=False`` and a closed-set ``reason``, and strips ``teacher_probs``
@@ -124,6 +130,8 @@ SOURCE_FORMAT = {
 NO_SENTENCE_TRANSFORMS = {"tabfact"}
 
 WORD = re.compile(r"[a-z0-9][a-z0-9'\-]*")
+#: Tokens that are already lowercase in the original text.
+LOWERCASE_WORD = re.compile(r"[a-z][a-z'\-]*")
 STOPWORDS = set(
     "the a an and or but if then of to in on at for with by from as is are was "
     "were be been being this that these those it its their his her our your my "
@@ -156,6 +164,12 @@ NON_ENTITIES = set(
 
 ENTITY = re.compile(r"\b[A-Z][\w'’\-]*(?:\s+(?:[A-Z][\w'’\-]*|[A-Z]{2,}))*\b")
 ENTITY_TOKEN = re.compile(r"[A-Za-z0-9][\w'’\-]*")
+
+#: Corporate suffixes that mark an entity as an organisation.
+ORG_SUFFIXES = {
+    "inc", "ltd", "llc", "plc", "corp", "corporation", "company", "co", "group",
+    "gmbh", "ag", "sa", "bv", "llp", "lp", "holdings", "partners",
+}
 
 SENTENCE_BOUNDARY = re.compile(r"[.!?]\s+")
 TRAILING_WORD = re.compile(r"([A-Za-z][A-Za-z'’\-]*)$")
@@ -268,6 +282,24 @@ def content_tokens(text: str) -> list[str]:
     ]
 
 
+def common_word_vocabulary(items: Iterable[TypedQuestion]) -> set[str]:
+    """Words that occur in lowercase anywhere in the corpus.
+
+    A capitalised span whose tokens all occur lowercase elsewhere is a
+    common-noun term (``Confidential Information``); a span whose tokens never
+    do is a proper name (``Jackie Evancho``).  This is a cheap stand-in for a
+    named-entity type, derived from the corpus itself.
+    """
+    vocabulary: set[str] = set()
+    for item in items:
+        vocabulary.update(
+            token
+            for token in LOWERCASE_WORD.findall(item.state)
+            if len(token) >= 3 and token not in STOPWORDS
+        )
+    return vocabulary
+
+
 def _is_true_label(label: object) -> bool:
     return label is True or (isinstance(label, str) and label.lower() == "true")
 
@@ -349,26 +381,67 @@ def key_entities(split: SplitState) -> list[str]:
     return entities
 
 
-def entity_shape(entity: str) -> tuple[int, bool]:
-    """Shape used to pick a plausible replacement: token count and digits."""
-    return (len(entity.split()), any(character.isdigit() for character in entity))
+def entity_type(entity: str, common_words: set[str]) -> str:
+    """Coarse entity type from surface form and a corpus common-word set.
+
+    The types are deliberately coarse: digit strings, acronyms, organisations,
+    common-noun terms (``Confidential Information``), proper names (``Jackie
+    Evancho``), and mixtures.  A type-matched donor keeps the substitution
+    wrong in meaning but plausible in kind, so a surface classifier cannot
+    learn "a person name in a contract means unanswerable".
+    """
+    tokens = ENTITY_TOKEN.findall(entity)
+    if any(character.isdigit() for character in entity):
+        return "digit"
+    if any(token.isupper() and len(token) >= 2 for token in tokens):
+        return "acronym"
+    if any(token.lower() in ORG_SUFFIXES for token in tokens):
+        return "org"
+    if not tokens:
+        return "other"
+    common = sum(1 for token in tokens if token.lower() in common_words)
+    if common == len(tokens):
+        return "common"
+    if common == 0:
+        return "proper"
+    return "mixed"
+
+
+def entity_shape(
+    entity: str, common_words: set[str], match: str = "type"
+) -> tuple[int, bool, str]:
+    """Shape used to pick a plausible replacement.
+
+    ``match="type"`` requires the same token count, digit presence, and coarse
+    entity type.  ``match="shape"`` drops the type, the pre-type-match
+    behaviour, and is kept to measure what the type match costs in rows.
+    """
+    type_label = entity_type(entity, common_words) if match == "type" else "any"
+    return (
+        len(entity.split()),
+        any(character.isdigit() for character in entity),
+        type_label,
+    )
 
 
 def corrupt_entities(
     split: SplitState,
     own_group: str,
-    donors: dict[tuple[int, bool], dict[str, list[str]]],
+    donors: dict[tuple[int, bool, str], dict[str, list[str]]],
     rng: random.Random,
     limit: int,
+    common_words: set[str],
+    match: str = "type",
 ) -> list[tuple[str, str, str]]:
     """Return up to ``limit`` ``(new_support, original_entity, donor_entity)``.
 
-    Every mention of a key entity in the evidence is replaced with a same-shape
-    entity from another group of the same source.
+    Every mention of a key entity in the evidence is replaced with an entity
+    from another group of the same source that has the same shape (and, by
+    default, the same coarse type).
     """
     results: list[tuple[str, str, str]] = []
     for entity in key_entities(split):
-        by_group = donors.get(entity_shape(entity)) or {}
+        by_group = donors.get(entity_shape(entity, common_words, match)) or {}
         groups = [group for group in by_group if group and group != own_group]
         rng.shuffle(groups)
         donor = None
@@ -455,6 +528,7 @@ def build_pairs(
     transforms: Iterable[str] = TRANSFORMS,
     per_item_limit: int = 2,
     seed: int = 42,
+    entity_match: str = "type",
 ) -> tuple[list[TypedQuestion], Counter, Counter, dict]:
     """Build verified pairs, each original immediately followed by its variants.
 
@@ -463,12 +537,16 @@ def build_pairs(
         transforms: Subset of :data:`TRANSFORMS` to apply.
         per_item_limit: Maximum variants per transform per item.
         seed: Seed for donor selection, so a run is reproducible.
+        entity_match: ``"type"`` requires the same entity type and token shape;
+            ``"shape"`` keeps only the token shape.
 
     Returns:
         ``(rows, variant_counts, original_counts, diagnostics)``.  The counters
         are keyed by transform.  ``diagnostics`` holds per-transform metadata
         for the stats file and a ``pair_failures`` list.
     """
+    if entity_match not in ("type", "shape"):
+        raise ValueError(f"entity_match={entity_match!r} is not 'type' or 'shape'")
     enabled = [transform for transform in TRANSFORMS if transform in set(transforms)]
     rng = random.Random(seed)
 
@@ -492,11 +570,12 @@ def build_pairs(
     }
 
     # Donor indexes, keyed by source so the replacement stays in-distribution.
+    common_words = common_word_vocabulary(items)
     evidence_by_group: dict[str, dict[str, list[tuple[TypedQuestion, str]]]] = (
         defaultdict(lambda: defaultdict(list))
     )
     entity_donors: dict[
-        str, dict[tuple[int, bool], dict[str, list[str]]]
+        str, dict[tuple[int, bool, str], dict[str, list[str]]]
     ] = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for item in items:
         split = parsed.get(item.id)
@@ -507,7 +586,8 @@ def build_pairs(
         for entity in entity_spans(split.query):
             if len(entity.split()) > 4:
                 continue
-            bucket = entity_donors[item.source][entity_shape(entity)][group]
+            shape = entity_shape(entity, common_words, entity_match)
+            bucket = entity_donors[item.source][shape][group]
             if entity not in bucket:
                 bucket.append(entity)
 
@@ -530,6 +610,8 @@ def build_pairs(
         }
         for transform in enabled
     }
+    if "entity_corrupted" in diagnostics:
+        diagnostics["entity_corrupted"]["entity_types"] = Counter()
     failures: list[str] = []
 
     def make_variant(
@@ -603,13 +685,18 @@ def build_pairs(
                     entity_donors.get(item.source, {}),
                     rng,
                     per_item_limit,
+                    common_words,
+                    entity_match,
                 )
-                for index, (new_support, _entity, _donor) in enumerate(candidates, 1):
+                for index, (new_support, entity, _donor) in enumerate(candidates, 1):
                     variant = make_variant(
                         item, "entity_corrupted", index, new_support, split
                     )
                     if variant is not None:
                         item_variants.append(variant)
+                        diagnostics["entity_corrupted"]["entity_types"][
+                            entity_type(entity, common_words)
+                        ] += 1
 
         if item_variants:
             rows.append(replace(item, answerable=True))
@@ -676,6 +763,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--limit", type=int, default=None, help="Debug: cap inputs")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--entity-donor-match",
+        choices=("type", "shape"),
+        default="type",
+        help="Entity donor match: same type and token shape, or token shape only",
+    )
     args = parser.parse_args(argv)
 
     transforms = [part.strip() for part in args.transforms.split(",") if part.strip()]
@@ -693,6 +786,7 @@ def main(argv: list[str] | None = None) -> int:
         transforms=transforms,
         per_item_limit=args.per_item_limit,
         seed=args.seed,
+        entity_match=args.entity_donor_match,
     )
     failures = diagnostics.pop("pair_failures")
     if failures:
@@ -708,19 +802,23 @@ def main(argv: list[str] | None = None) -> int:
     by_transform: dict[str, dict] = {}
     for transform in transforms:
         detail = diagnostics[transform]
-        by_transform[transform] = {
+        block = {
             "variants": variant_counts[transform],
             "reason": REASON_BY_TRANSFORM[transform],
             "by_source": dict(detail["sources"].most_common()),
             "by_type": dict(detail["types"]),
             "length_delta": _length_summary(detail["length_delta"]),
         }
+        if "entity_types" in detail:
+            block["entity_types"] = dict(detail["entity_types"].most_common())
+        by_transform[transform] = block
     stats = {
         "inputs": [str(path) for path in args.items],
         "out": str(args.out),
         "negatives_out": str(negatives_path),
         "seed": args.seed,
         "per_item_limit": args.per_item_limit,
+        "entity_donor_match": args.entity_donor_match,
         "transforms": transforms,
         "input_items": len(items),
         "duplicate_ids_dropped": duplicates,
