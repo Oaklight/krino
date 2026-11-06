@@ -2,7 +2,7 @@
 
 Issue #247. The taxonomy is fixed in `data/abilities.py`; the labeler is `scripts/label_abilities.py`; the committed coverage report is `247-ability-coverage.json`.
 
-Input: `krino-canonical-243366.jsonl`, SHA-256 `07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53`, 243,366 records and 243,366 distinct ids (the artifact built after the RACE id correction). That file is the output of the canonical builder in #249; this branch is based on main, so the reproduction below uses #249's builder once it lands. The labels are published as a sidecar beside the artifact, `krino-canonical-243366.ability.jsonl`, SHA-256 `5933f899a3660d529bdad39d7226a6bad1d7605e0fabfa872db7a8bc1c606670`, one row per record with `id`, `ability`, `label_method`, `ability_rule`. The sidecar id set equals the artifact id set; the labeler rejects duplicate ids.
+Input: `krino-canonical-243366.jsonl`, SHA-256 `07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53`, 243,366 records and 243,366 distinct ids (the artifact built after the RACE id correction). The canonical builder is on main since #249; running the reproduction command below on main's tree reproduces that hash. The labels are published as a sidecar beside the artifact, `krino-canonical-243366.ability.jsonl`, SHA-256 `5933f899a3660d529bdad39d7226a6bad1d7605e0fabfa872db7a8bc1c606670`, one row per record with `id`, `ability`, `label_method`, `ability_rule`. The sidecar id set equals the artifact id set; the labeler rejects duplicate ids.
 
 ## Taxonomy
 
