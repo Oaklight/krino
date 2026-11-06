@@ -549,6 +549,11 @@ def demand_report(
                 "acceptance set as well as zero corpus records, so the metric "
                 "cannot see those gaps by construction."
             ),
+            (
+                "Verification is 13.4% of the corpus but 0.9% of the acceptance "
+                "set, and its two JevBench items both miss; the corpus trains "
+                "heavily on an ability the set barely measures."
+            ),
         ],
     }
 

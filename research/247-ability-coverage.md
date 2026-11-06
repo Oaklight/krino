@@ -84,13 +84,14 @@ The acceptance set is the 231 public JevBench items, classified by question form
 | Routing | 1 | 0.4% | 7.8% |
 | Detection, Search, Retrieval, Ranking, ML Feature Extraction | 0 | 0% | 1.9% / 0.2% / 0 / 0 / 0 |
 
-Three consequences:
+Four consequences:
 
 - The acceptance set is 85.7% Classification while the corpus is 61.9%. A JevBench score measures the part of the corpus that overlaps with the set, not the corpus composition.
 - Scoring has 18 items. A binomial 95% interval at p=0.5 is about +/-23 points on 18 items, so a change confined to Scoring cannot move the 231-item total beyond noise by itself. A held-out split is what sees a Scoring regression.
 - Ranking and ML Feature Extraction have zero items in the acceptance set as well as zero corpus records. The metric cannot see those gaps by construction; the coverage table is the only place they show up.
+- Verification is the corpus-side mirror: it is 13.4% of the corpus but 0.9% of the acceptance set, and its two JevBench items both miss. Much of the corpus trains an ability the acceptance set barely measures, and where it does measure it the sample cannot tell us anything.
 
-The coverage JSON carries this as `demand`, with the per-ability counts, both share columns, and these three notes.
+The coverage JSON carries this as `demand`, with the per-ability counts, both share columns, and these four notes.
 
 ## Gradient eligibility, and why noul coverage is misleading
 
@@ -130,7 +131,7 @@ The labeler joins per-item predictions to these labels with `--jevbench-predicti
 
 The type totals reproduce the control report exactly: choice 139 at 68.3%, noul 74 at 67.6%, score 18 at 77.8%. Only Classification has enough items to read as a rate. Verification (2), Routing (1) and the four abilities with no items are cells, not measurements; SDE at 12 items is suggestive at best. The table is committed as `eval` in the coverage JSON with `n`, `accuracy`, `chance_corrected` and the chance-corrected count for every cell.
 
-The Scoring comparison is the one to keep: 0.3083 chance-corrected on the 3,999-item residual split against 0.708 on 18 JevBench items. The acceptance set does not see the weakness the split sees, because 18 items carry a binomial 95% interval of roughly ±23 points. That is the same limit the demand section states, now with the measurement attached.
+The Scoring comparison is asymmetric and is the finding. On the split, chance-corrected accuracy is 0.3083 at n=474 (3,999 split items: noul 1,908, choice 1,617, score 474), a real measurement with a standard error of about 2.1 points. On JevBench it is 0.708 at n=18; 18 items carry a binomial 95% interval of roughly +/-23 points and are not a measurement of anything. The split says Scoring is the weakest of the three types; JevBench says it is the best. Same model, same head, opposite direction. The asymmetry is not symmetric: trust the split's magnitude, not JevBench's rank. A plausible partial explanation for the split number comes from the pilot: Jev score labels are broad (mean entropy 0.907 of a 1.609 ceiling; 44.9% argmax-versus-expected disagreement), which 18 JevBench items cannot show. This is the third worked example of why standard C needs both instruments.
 
 The residual split numbers in the issue thread (noul 0.4874, choice 0.5991, score 0.3083) are a different, harder population and are never mixed into this table. A canonical-id `--predictions` join exists for split diagnostics.
 

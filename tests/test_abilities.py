@@ -370,7 +370,7 @@ def test_demand_report_matches_the_jevbench_mix():
     assert report["by_ability"][SCORING] == 18
     assert report["by_ability"][DETECTION] == 0
     assert report["share"][CLASSIFICATION] == pytest.approx(198 / 231, abs=1e-6)
-    assert len(report["notes"]) == 3
+    assert len(report["notes"]) == 4
 
 
 def test_score_predictions_joins_by_id(tmp_path: Path):
