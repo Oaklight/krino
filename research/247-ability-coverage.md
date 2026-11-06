@@ -71,6 +71,27 @@ Record counts by task form: 113,594 noul, 100,257 choice, 29,515 score. 6,000 re
 
 Two flags make the single-source cases explicit in the JSON. `single_source` means one source supplies at least 90% of the ability. `licence_single_point` means that source's group is not permissive, so one licence decision can zero the ability.
 
+## Demand side
+
+The acceptance set is the 231 public JevBench items, classified by question form with the same heuristic. It is not the corpus, and what it can see bounds what any JevBench number means.
+
+| ability | JevBench items | JevBench share | corpus share |
+|---|---:|---:|---:|
+| Classification | 198 | 85.7% | 61.9% |
+| Scoring | 18 | 7.8% | 12.1% |
+| Structured Data Extraction | 12 | 5.2% | 2.7% |
+| Verification | 2 | 0.9% | 13.4% |
+| Routing | 1 | 0.4% | 7.8% |
+| Detection, Search, Retrieval, Ranking, ML Feature Extraction | 0 | 0% | 1.9% / 0.2% / 0 / 0 / 0 |
+
+Three consequences:
+
+- The acceptance set is 85.7% Classification while the corpus is 61.9%. A JevBench score measures the part of the corpus that overlaps with the set, not the corpus composition.
+- Scoring has 18 items. A binomial 95% interval at p=0.5 is about +/-23 points on 18 items, so a change confined to Scoring cannot move the 231-item total beyond noise by itself. A held-out split is what sees a Scoring regression.
+- Ranking and ML Feature Extraction have zero items in the acceptance set as well as zero corpus records. The metric cannot see those gaps by construction; the coverage table is the only place they show up.
+
+The coverage JSON carries this as `demand`, with the per-ability counts, both share columns, and these three notes.
+
 ## Gradient eligibility, and why noul coverage is misleading
 
 The listwise and pairwise trainers filter the training set with `TRAINED_TYPES = ("choice", "score")` (`model/scripts/train_listwise.py:305`, `model/scripts/train_pairwise.py:187`). Every noul row is dropped before the first step, so the listwise arm takes **zero gradient from 113,594 noul records**, 46.7% of the corpus. The coverage matrix reports that directly: `types.noul.gradient_eligible_listwise = 0`, while 129,772 choice and score records are eligible.
