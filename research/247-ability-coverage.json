@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-06T21:11:34Z",
+ "generated_at": "2026-11-06T21:21:46Z",
  "canonical": "krino-canonical-243366.jsonl",
  "canonical_sha256": "07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53",
  "canonical_records": 243366,
@@ -998,6 +998,51 @@
   }
  },
  "unknown_sources": [],
+ "demand": {
+  "population": "JevBench public, 231 items",
+  "source": "classified by question form (classify_question)",
+  "by_ability": {
+   "Classification": 198,
+   "Detection": 0,
+   "Scoring": 18,
+   "Routing": 1,
+   "Search": 0,
+   "Retrieval": 0,
+   "Ranking": 0,
+   "Verification": 2,
+   "ML Feature Extraction": 0,
+   "Structured Data Extraction": 12
+  },
+  "share": {
+   "Classification": 0.857143,
+   "Detection": 0.0,
+   "Scoring": 0.077922,
+   "Routing": 0.004329,
+   "Search": 0.0,
+   "Retrieval": 0.0,
+   "Ranking": 0.0,
+   "Verification": 0.008658,
+   "ML Feature Extraction": 0.0,
+   "Structured Data Extraction": 0.051948
+  },
+  "corpus_share": {
+   "Classification": 0.618702,
+   "Detection": 0.019107,
+   "Scoring": 0.121278,
+   "Routing": 0.078207,
+   "Search": 0.001968,
+   "Retrieval": 0.0,
+   "Ranking": 0.0,
+   "Verification": 0.133675,
+   "ML Feature Extraction": 0.0,
+   "Structured Data Extraction": 0.027062
+  },
+  "notes": [
+   "The acceptance set is 85.7% Classification and the corpus is 61.9%; the metric measures the part of the corpus that overlaps with the set, not the corpus composition.",
+   "Scoring has 18 items. A binomial 95% interval at p=0.5 is about +/-23 points on 18 items, so a change confined to Scoring cannot move the 231-item total beyond noise by itself; a held-out split is needed to see a Scoring regression.",
+   "Ranking and ML Feature Extraction have zero items in the acceptance set as well as zero corpus records, so the metric cannot see those gaps by construction."
+  ]
+ },
  "sidecar": {
   "path": "krino-canonical-243366.ability.jsonl",
   "records": 243366,

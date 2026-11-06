@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import collections
 import hashlib
 import json
 from pathlib import Path
@@ -25,6 +26,7 @@ from data.abilities import (
 )
 from scripts.label_abilities import (
     Coverage,
+    demand_report,
     gradient_eligible,
     jevbench_ability_map,
     main,
@@ -354,6 +356,19 @@ def test_jevbench_items_have_an_ability_by_question_form():
     assert len(mapping) == 231
     assert set(mapping.values()) <= set(ABILITIES)
     assert mapping["easy-intent-00"] == CLASSIFICATION
+
+
+def test_demand_report_matches_the_jevbench_mix():
+    mapping = jevbench_ability_map(JEVBENCH_DIR)
+    totals = collections.Counter({ability: 0 for ability in ABILITIES})
+    totals[CLASSIFICATION] = 150_571
+    totals[SCORING] = 29_515
+    report = demand_report(mapping, totals)
+    assert report["by_ability"][CLASSIFICATION] == 198
+    assert report["by_ability"][SCORING] == 18
+    assert report["by_ability"][DETECTION] == 0
+    assert report["share"][CLASSIFICATION] == pytest.approx(198 / 231, abs=1e-6)
+    assert len(report["notes"]) == 3
 
 
 def test_score_predictions_joins_by_id(tmp_path: Path):

@@ -60,6 +60,7 @@ from data.abilities import (
     ABILITIES,
     ABILITY_COOKBOOK,
     ABILITY_DEFINITIONS,
+    CLASSIFICATION,
     LABEL_METHODS,
     MODEL,
     classify,
@@ -502,6 +503,53 @@ def jevbench_ability_map(root: Path) -> dict[str, str]:
     return mapping
 
 
+def demand_report(
+    jevbench_map: dict[str, str], corpus_totals: collections.Counter[str]
+) -> dict[str, Any]:
+    """Describe what the acceptance set can see, ability by ability."""
+    counts = collections.Counter(jevbench_map.values())
+    total = len(jevbench_map)
+    corpus_total = sum(corpus_totals.values())
+    accept_classification = counts[CLASSIFICATION] / total if total else 0.0
+    corpus_classification = (
+        corpus_totals[CLASSIFICATION] / corpus_total if corpus_total else 0.0
+    )
+    return {
+        "population": f"JevBench public, {total} items",
+        "source": "classified by question form (classify_question)",
+        "by_ability": {ability: counts[ability] for ability in ABILITIES},
+        "share": {
+            ability: round(counts[ability] / total, 6) if total else 0.0
+            for ability in ABILITIES
+        },
+        "corpus_share": {
+            ability: (
+                round(corpus_totals[ability] / corpus_total, 6) if corpus_total else 0.0
+            )
+            for ability in ABILITIES
+        },
+        "notes": [
+            (
+                f"The acceptance set is {accept_classification:.1%} Classification "
+                f"and the corpus is {corpus_classification:.1%}; the metric "
+                "measures the part of the corpus that overlaps with the set, not "
+                "the corpus composition."
+            ),
+            (
+                "Scoring has 18 items. A binomial 95% interval at p=0.5 is "
+                "about +/-23 points on 18 items, so a change confined to "
+                "Scoring cannot move the 231-item total beyond noise by itself; "
+                "a held-out split is needed to see a Scoring regression."
+            ),
+            (
+                "Ranking and ML Feature Extraction have zero items in the "
+                "acceptance set as well as zero corpus records, so the metric "
+                "cannot see those gaps by construction."
+            ),
+        ],
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--canonical", type=Path, default=None)
@@ -601,6 +649,15 @@ def main(argv: list[str] | None = None) -> int:
 
     report = coverage.report(args.canonical, canonical_sha256)
     report["unknown_sources"] = []
+    totals = collections.Counter(
+        {ability: coverage.matrix[ability]["total"] for ability in ABILITIES}
+    )
+    try:
+        report["demand"] = demand_report(
+            jevbench_ability_map(args.jevbench_root), totals
+        )
+    except FileNotFoundError:
+        report["demand"] = {"available": False}
     if args.predictions is not None:
         report["eval"] = score_predictions(args.predictions, id_to_ability)
     if args.jevbench_predictions is not None:
