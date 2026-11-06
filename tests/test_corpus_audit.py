@@ -112,6 +112,14 @@ def test_contamination_rule_fires_on_id_state_and_three_shingles():
     assert index.check_state(normalize_state(unrelated), word_shingles(unrelated)) == []
 
 
+def test_two_shared_shingles_do_not_fire():
+    state = "one two three four five six seven eight nine ten"
+    index = ContaminationIndex([_jev_item("jev-short", state)])
+    variant = "one two three four five six seven eight nine eleven"
+    assert len(word_shingles(state) & word_shingles(variant)) == 2
+    assert index.check_state(normalize_state(variant), word_shingles(variant)) == []
+
+
 def test_jevbench_loader_reads_the_231_public_items():
     items = load_jevbench(JEVBENCH_DIR)
     assert len(items) == 231
@@ -238,10 +246,49 @@ def test_check_exit_code_is_zero_on_clean_corpus(tmp_path: Path):
             "--no-synthetic",
             "--no-typed-decisions",
             "--skip-near-dup",
+            "--allow-missing",
             "--check",
         ]
     )
     assert code == 0
+
+
+def test_check_fails_when_a_canonical_source_is_missing(tmp_path: Path):
+    _write_jsonl(
+        tmp_path / "race_short_passage_choice.jsonl",
+        [_record("clean-1", "An unrelated state about migratory birds.", "Which bird?")],
+    )
+    args = [
+        "--corpus-root",
+        str(tmp_path),
+        "--jevbench-root",
+        str(JEVBENCH_DIR),
+        "--no-synthetic",
+        "--no-typed-decisions",
+        "--skip-near-dup",
+    ]
+    assert main([*args, "--check"]) == 2
+    assert main([*args, "--check", "--allow-missing"]) == 0
+
+
+def test_check_fails_below_the_record_floor(tmp_path: Path):
+    _write_jsonl(
+        tmp_path / "race_short_passage_choice.jsonl",
+        [_record("clean-1", "An unrelated state about migratory birds.", "Which bird?")],
+    )
+    args = [
+        "--corpus-root",
+        str(tmp_path),
+        "--jevbench-root",
+        str(JEVBENCH_DIR),
+        "--no-synthetic",
+        "--no-typed-decisions",
+        "--skip-near-dup",
+        "--check",
+        "--allow-missing",
+    ]
+    assert main([*args, "--min-records", "2"]) == 2
+    assert main([*args, "--min-records", "1"]) == 0
 
 
 def test_near_duplicate_report_clusters_a_paraphrase():

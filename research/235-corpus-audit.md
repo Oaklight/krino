@@ -16,6 +16,8 @@ A record is contaminated when any of these holds:
 
 The comparison text is the state. Instructions and criteria are task scaffolding shared across sources; including them would flag records that never saw the JevBench content.
 
+The shingle branch needs at least three 8-word shingles. 48 of the 231 JevBench states have fewer than 10 words, so they cannot produce three shingles and that branch cannot fire against them; 14 of those have fewer than 8 words and produce no shingle at all. Those states can still match by id or by exact normalised state.
+
 Near-duplicate threshold: MinHash over character 5-grams of the normalised state, 128 permutations, 32 bands, confirmed at a MinHash Jaccard estimate of at least 0.7. The threshold is the one `data/synthetic_dedup` already uses for state text; it was fixed before the counts were seen.
 
 ## Coverage
@@ -60,18 +62,56 @@ No audited source contains an exact duplicate record. Counts by source:
 
 5,734 clusters at the stated threshold. They cover 28,651 of 84,632 distinct states and 118,162 of 243,366 canonical records. 3,040 clusters span more than one source. The largest cluster has 6,307 states.
 
-The full cluster list, a `cluster_id` for every cluster, and a state-to-cluster map are published in `235-near-duplicate-clusters.json` for downstream group-closing work.
+Of the 118,162 rows inside clusters there are 28,651 distinct normalised states, 33.9% of the corpus's 84,632 distinct states. Those states collapse to 22,917 near-duplicate groups, so clustered rows hold 37.1% of the corpus's 61,715 state groups while making up 48.6% of its records. The other 55,981 states are singletons.
+
+The clusters split by where their states come from:
+
+| cluster kind | clusters | rows | states |
+|---|---:|---:|---:|
+| apigen, across files | 2 | 16,081 | 10,277 |
+| synthetic only, one domain | 1,940 | 50,498 | 3,910 |
+| cross-source, not apigen | 3,038 | 49,812 | 12,781 |
+| one non-synthetic source | 754 | 1,771 | 1,683 |
+| total | 5,734 | 118,162 | 28,651 |
+
+The full cluster list, a `cluster_id` for every cluster, and a state-to-cluster map keyed by blake2b-128 of the normalised state are published in `235-near-duplicate-clusters.json` for downstream group-closing work.
 
 The clusters are groups of near-identical states, not duplicate records. Exact duplicate records are still 0. Three patterns explain almost all of the coverage.
 
 - Tool-call (apigen): two clusters cover all 16,081 rows and 10,277 states. The five files reuse one scenario template, so the state text is near-identical while the question and label differ. The effective state diversity of that corpus is far below its row count.
-- Typed-decisions: one workflow state carries several questions. Clusters of 170, 113, 44 and 40 states cover the shared context across task types. They overlap target-30K, residual-20K and abstention because those corpora contain the same donor states.
-- Synthetic: 1,918 clusters stay inside one synthetic family, which is the paraphrase and counterfactual design. Other clusters connect seeded synthetic domains to their donor corpora (target-30K and residual-20K) and to each other.
+- Typed-decisions: 32 clusters touch it. The four largest have 170, 113, 44 and 40 states and connect it to target-30K, residual-20K and the abstention corpora, because those sources contain the same donor states under other questions.
+- Synthetic: 1,940 clusters stay inside one synthetic domain, which is the paraphrase and counterfactual design. Other clusters connect seeded synthetic domains to their donor corpora (target-30K and residual-20K) and to each other.
 
 The near-duplicate pass is separate from the contamination rule. No canonical record matched a JevBench id, normalised state, or three 8-word shingles.
 
+## Deviations from the #235 checklist
+
+Two checklist items are implemented differently from the first wording in the issue. Both deviations are visible in the output, and neither changes the hit count, which is 0.
+
+- Exact dedup by id. Id-only dedup drops 354 RACE questions that share a passage id with another question. The canonical item is the question, so a repeated id with a different question is kept. #242 records the same correction.
+- State-level dedup. The checklist asked for dedup by normalised state. 8,498 normalised states appear in more than one source, mostly a donor passage reused under a different question: abstention rows, typed-decisions across task types, and the seeded synthetic domains. Deleting a record because another source reuses its state would delete distinct questions. The audit reports state reuse and does not delete it. Exact duplicate records are 0.
+
+## Supersession
+
+`research/25-corpus-inventory.md` records the contamination status as "exact-match audit only; near-duplicate audit pending #235" and the canonical count as 243,012 ids. #242 corrects the count to 243,366 and the RACE treatment; this note replaces the contamination status. Nothing about the near-duplicate audit is pending after this run.
+
+## Reproducibility
+
+    python -m data.corpus_audit \
+        --artifact research/235-corpus-audit.json \
+        --clusters-artifact research/235-near-duplicate-clusters.json \
+        --workers <n> --progress
+
+The run took 407 s wall on the compute host, 280.8 s of it in the near-duplicate pass, with a peak working set of 1.4 GB. The corpus files are not in the repository; the audit reads them under `data/benchmarks/`. `--workers 1` gives the same output and is slower.
+
 ## CI
 
-`.github/workflows/corpus-audit.yml` restores the pinned data lock, runs the rule tests, then `python -m data.corpus_audit --check --skip-near-dup`. The job fails on any contamination hit. The near-duplicate pass is a one-off audit: the pure-Python MinHash over 84,632 states is too slow for a pull-request gate.
+`.github/workflows/corpus-audit.yml` restores the pinned data lock, runs the rule tests, then:
 
-The workflow can only restore files that are in the pinned data lock. The two host-local corpora (`label_target_30k_jev.jsonl`, `residual_train_20000_jev.jsonl`) are not in the lock, so CI reports them as missing and audits the remaining canonical sources. The full 243,366-record result above comes from the complete corpus.
+    python -m data.corpus_audit --check --skip-near-dup \
+        --typed-decisions-from-hf --allow-missing --min-records 190000 \
+        --artifact corpus-audit.json
+
+The job exits 1 on any contamination hit and 2 when a canonical source is missing or fewer than 190,000 records are audited. `--allow-missing` exists because two host-local corpora (`label_target_30k_jev.jsonl`, `residual_train_20000_jev.jsonl`) are not in the pinned lock; the floor is what fails the job if a source that should be there is empty or absent from a directory glob. The gate covers 195,404 of 243,366 records (80.3%) and 195,050 of 243,012 passage ids. The 243,366-record result above comes from the complete corpus.
+
+The near-duplicate pass is a one-off audit: the pure-Python MinHash over 84,632 states is too slow for a pull-request gate.

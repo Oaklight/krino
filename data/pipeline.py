@@ -1514,15 +1514,21 @@ def _synthetic_family_split(
     return split_from_key(f"{domain}-{family_idx}", eval_ratio)
 
 
-def load_synthetic(teacher: str | None = None) -> Iterator[TypedQuestion]:
+def load_synthetic(
+    teacher: str | None = None, synth_dir: Path | None = None
+) -> Iterator[TypedQuestion]:
     """Load synthetic data by assembling from families + variants + labels.
 
     ``teacher`` pins one teacher key (``jev``, ``gpt_5_6_luna``,
     ``qwen3_8_27b``; aliases ``luna`` and ``qwen``). When set, an item without
     that teacher's labels is left without ``teacher_probs`` rather than falling
     back to another teacher.
+
+    ``synth_dir`` overrides the directory the corpus is assembled from. The
+    audit passes its ``--corpus-root`` synthetic directory so the coverage
+    table and the records describe the same files.
     """
-    synth_dir = DATA_DIR / "synthetic"
+    synth_dir = synth_dir or DATA_DIR / "synthetic"
     if not synth_dir.exists():
         return
 
