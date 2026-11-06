@@ -144,6 +144,8 @@ python scripts/corpus_datacard.py \
   --root data/benchmarks --repo-root . --json /tmp/datacard.json
 ```
 
-The script is single-process, stdlib-only apart from `data.provenance` and
-`data.synthetic.family_to_typed_questions`. It exits if a primary file is
-missing, so a partial mirror cannot silently produce a smaller card.
+If `typed_decisions.jsonl` sits outside `--root`, pass
+`--typed-decisions <path>`. The script is single-process, stdlib-only apart from
+`data.provenance` and `data.synthetic.family_to_typed_questions`. It exits if a
+primary file is missing, so a partial mirror cannot silently produce a smaller
+card.
