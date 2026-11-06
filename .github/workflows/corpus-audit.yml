@@ -44,7 +44,12 @@ jobs:
         run: pytest tests/test_corpus_audit.py -q
 
       - name: Contamination gate
-        run: python -m data.corpus_audit --check --skip-near-dup --artifact corpus-audit.json
+        run: |
+          python -m data.corpus_audit --check --skip-near-dup \
+            --typed-decisions-from-hf \
+            --allow-missing \
+            --min-records 190000 \
+            --artifact corpus-audit.json
 
       - name: Upload the audit artifact
         if: always()
