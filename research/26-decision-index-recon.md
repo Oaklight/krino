@@ -23,7 +23,7 @@ Scope: issue #236, Workstream A. Reconnaissance run 2026-11-06 on `oaklight`'s l
 | What it scores | a fixed weighted composite of four evaluations | 37 public benchmarks in five areas, chance-corrected, plus private parts the maintainers run |
 | Public code | none | MIT, `decision_index/` package, engines and scorers |
 | Public data | HLE, When2Call, WildGuardTest; AA-Omniscience is private | the recipe; the suite is rebuilt from pinned upstream sources |
-| Runnable locally | **no** | **yes**, after a local rebuild |
+| Runnable locally | **no** | **yes**, after a local rebuild; the 2026-11-06 attempt was stopped by a truncated source download |
 
 `research/08-clef-analysis.md` uses "Jev Decision Index" for the classification and
 reasoning rankings (BANKING77, CLINC150, API-Bank, BBH, MMLU-Pro, GPQA Diamond). Those
