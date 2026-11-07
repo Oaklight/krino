@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "issue": 244,
+  "pr": 248,
+  "recorded_utc": "2026-11-07T18:05:00Z",
+  "note": "Companion to the PR #248 description. Every value here is also stated in the PR text; this file exists so the numbers are machine-readable and citable from a commit instead of from a description that can be edited. Paths are placeholders: the concrete locations are in the private run record, not in the public repo.",
+  "configuration": {
+    "model": "Qwen/Qwen3.5-4B",
+    "lora": {
+      "layers": "last 8 blocks",
+      "rank": 16,
+      "alpha": 32,
+      "targets": [
+        "q_proj",
+        "v_proj",
+        "in_proj_qkv",
+        "in_proj_z",
+        "in_proj_b",
+        "in_proj_a",
+        "out_proj"
+      ]
+    },
+    "batch": "8 listwise items per step",
+    "devices": 1,
+    "device_class": "<accelerator>",
+    "data": "20K listwise subset (residual_train_20000) for the component profile; canonical 185,321-row selection for the steady-state arms"
+  },
+  "components_ms_per_item": {
+    "basis": "same 8 listwise items, same split, one device",
+    "rows": [
+      {"component": "prefix forward", "frozen": 145, "lora_before": 242, "lora_after": 0},
+      {"component": "combined / cached suffix forward", "frozen": 343, "lora_before": 1287, "lora_after": 675},
+      {"component": "head + loss", "frozen": 4, "lora_before": 4, "lora_after": 3},
+      {"component": "backward", "frozen": 2, "lora_before": 571, "lora_after": 309},
+      {"component": "optimizer", "frozen": 1, "lora_before": 7, "lora_after": 7},
+      {"component": "total", "frozen": 493, "lora_before": 2111, "lora_after": 994}
+    ],
+    "caveat": "Means include cold-bucket items. The frozen mean contains one 1.66 s cold-bucket item; the fast-item floor is about 101 ms. The LoRA-before and LoRA-after means likewise include cold-bucket items; the LoRA-after fast-item floor is about 55 ms. The frozen backward is 2 ms because the backbone is frozen, which is the structural half of the gap.",
+    "reading": "A component decomposition, not a throughput headline. The like-for-like per-item change is 2111 to 994 ms (2.1x)."
+  },
+  "throughput_points": [
+    {
+      "name": "lora_before_baseline",
+      "items_per_s": 0.72,
+      "population": "20K subset",
+      "source": "#244 LoRA-before measurement",
+      "use": "denominator of the 17x recovery only"
+    },
+    {
+      "name": "controlled_ab_without_fix_window_1000_1200",
+      "items_per_s": 1.55,
+      "population": "canonical 185,321-row selection, items 1,000 to 1,200",
+      "source": "run of the tree that predates 7bcff68",
+      "caveat": "Not arranged as a throughput measurement; stopped for unrelated reasons."
+    },
+    {
+      "name": "controlled_ab_with_fix_window_1000_1200",
+      "items_per_s": 10.2,
+      "population": "canonical 185,321-row selection, items 1,000 to 1,200",
+      "source": "run of the tree at 7bcff68",
+      "caveat": "Same window, same host, same corpus, same selection and seed as the point above."
+    },
+    {
+      "name": "ladder_steady_state_nominal",
+      "items_per_s": 12.5,
+      "range": [12.4, 12.9],
+      "population": "canonical selection, six ladder arms, trained-type rows",
+      "source": "six LoRA arms of the #233 ladder",
+      "use": "denominator of the per-epoch estimate"
+    }
+  ],
+  "controlled_ab_ratio": 6.6,
+  "recovery_ratio": 17,
+  "peak_memory_gib": 10.0,
+  "validation_rate": {
+    "measured_utc": "2026-11-07",
+    "purpose": "sources the validation term of the per-epoch estimate, which was previously stated at 4.9 items/s with no measurement behind it",
+    "code": {
+      "branch": "feat/throughput-244",
+      "commit": "a8c7f4bb3c2e6af0bc24fc8d9f702b265226a2e4",
+      "script": "model/scripts/eval_listwise.py",
+      "script_sha256": "bd12410da54ec56cbe262034797a9fddb935216c509aafe9d1f9d1f1738c35dd",
+      "listwise_sha256": "de33c19520c4d2d43d66008c2a885ab9f0ce0be893435164023feb5a5d9436e3",
+      "heads_sha256": "17afdc872df2400a1466b27ebc7c9ad71d7372a99f35ff499fe3a8b3e3b376ad",
+      "tree_note": "Exported with git archive from the branch tip, so the three hashes above are the branch's own files, not a working copy."
+    },
+    "inputs": {
+      "items": "held-out shard 0 of 3, 2,142 rows",
+      "items_sha256": "60625929beb045990266267357f0d442626b48c5757ab1fc714cd94dfa133633",
+      "base_probs_sha256": "76521f4606b53359da1b2f5b8b8c3aa533c27595c5b9b4ee922e43324c53f068",
+      "checkpoint": "listwise arm, seed 0",
+      "checkpoint_sha256": "f0986292ccc44ee5b7704f56e0fe405aafc13178a3e4ad4d443ee5ca849d623f",
+      "checkpoint_config": {"shifts": 4, "base_conditioned": false, "head_only": false}
+    },
+    "method": "Two timed runs of the same command on the same device: --limit 100 and --limit 2100. The 100-item run pays the model load; the difference between the two wall times is the steady-state cost of exactly items 101 to 2100. A repeat of the 2100 run gives the spread.",
+    "runs": [
+      {"limit": 100, "wall_s": 50.31},
+      {"limit": 2100, "wall_s": 444.43},
+      {"limit": 2100, "wall_s": 446.19, "repeat": true}
+    ],
+    "window": {
+      "rows": 2000,
+      "by_type": {"noul": 950, "choice": 805, "score": 245},
+      "model_scored_rows": 1050,
+      "note": "Noul rows take the base distribution and never enter the model, so an all-rows rate hides the real cost driver. Choice uses 4 shifts, score 1."
+    },
+    "derived": {
+      "model_load_s_approx": 30.6,
+      "all_rows_per_s": [5.05, 5.07],
+      "model_scored_rows_per_s": [2.65, 2.66]
+    },
+    "per_epoch_projection": {
+      "validation_rows": 47389,
+      "assumed_noul_share": 0.463,
+      "assumed_model_scored_rows": 25445,
+      "seconds_at_2_65_per_s": 9602,
+      "hours": 2.67,
+      "caveat": "The noul share is taken from the training mix (85,726 of 185,321 rows) and the rate is measured on the held-out shards, not on the internal split. Both are stated assumptions, not measurements of the internal split."
+    },
+    "what_this_replaces": "The 4.9 items/s figure in the per-epoch section had no measurement behind it; no file on the compute host or in the repo contained it. The measured value is 5.05 to 5.07 all-rows/s, or 2.65 to 2.66 per model-scored row. The resulting one-device epoch is about 2.7 h of validation, so the 5.0 h estimate is unchanged in substance; the rate and its denominator are now sourced."
+  }
+}
