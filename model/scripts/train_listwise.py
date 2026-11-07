@@ -313,6 +313,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
+    if args.torch_seed is not None:
+        # Seed the global RNG before any model or data object is built.  The
+        # flag is recorded in the checkpoint config, so a run that accepted it
+        # without applying it would describe an initialisation it did not use.
+        torch.manual_seed(args.torch_seed)
 
     items = load_jsonl(args.items)
     base_records = [
