@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   test:
@@ -45,7 +44,13 @@ jobs:
           pip install pytest pytest-asyncio transformers
 
       - name: Run the torch-dependent tests
-        run: pytest $(grep -rl 'importorskip("torch")' tests/) -v
+        run: pytest $(grep -rl 'importorskip("torch")' tests/) -v -m "not feature_guard"
+
+      # Each marked test is re-run with the kill switch for the feature it
+      # guards set, and must fail.  The marked subset is small, so this costs
+      # seconds rather than another full suite.
+      - name: Mutation-check guarded masks and exclusions
+        run: pytest tests/ -m feature_guard -v
 
   build-web:
     runs-on: ubuntu-latest

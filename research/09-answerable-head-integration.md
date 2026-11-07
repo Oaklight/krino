@@ -119,7 +119,7 @@ In `item_loss` (`model/scripts/train_residual.py:167`), after the CE and KL are
 computed:
 
 ```python
-masked = item.answerable is False and bool(item.reason)
+masked = item.answerable is False
 if masked:
     ce = torch.zeros((), device=ce.device)
     kl = torch.zeros((), device=kl.device)
@@ -128,6 +128,28 @@ if masked:
 Keep the logged `kl_mean` and `ce_mean` over unmasked rows only, and log
 `n_masked` beside them, so the loss curves stay comparable with earlier runs.
 The answerable BCE is still computed for the masked row.
+
+The mask is on the loss, never applied by dropping rows. Row-level id
+exclusion (`--exclude-ids`) is leakage control for held-out eval base ids; it
+is not the abstention mask.
+
+Every trainer that reads the field masks in the loss. `train_residual.py`
+masks all 6,000. `train_listwise.py` has no abstain head, so it skips an
+`answerable is False` row at the top of `item_loss`. On the canonical artifact
+that guard is redundant (the 4,000 noul rows are outside `TRAINED_TYPES` and
+the 2,000 choice rows have a label outside their options), but on the paired
+corpus it is not: `support_removed` and `entity_corrupted` keep the question
+and the label, so `gold >= 0` and the CE would train. A trainer that does not
+read the field must not be given abstention rows.
+
+Training is one backward and one step per row, so the task gradients are
+identical whether a row is masked or dropped. The two differ only in the
+abstain-head update (a masked row still carries the BCE) and in the loss
+display denominator. A masked arm and a dropped-row arm are therefore
+comparable on task metrics and not comparable on abstain metrics. On the
+canonical corpus the mask covers 6,000 rows: 4,000 noul rows with a
+well-formed `false`/`true` option set and a valid `False` label, and 2,000
+choice rows whose kept label is no longer in the options.
 
 ### 2.3 Same forward pass or its own
 

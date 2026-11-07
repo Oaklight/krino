@@ -1,0 +1,525 @@
+{
+ "abstention_recall_by_reason": {
+  "100": {
+   "entity_corrupted": 0.0,
+   "insufficient": 0.0,
+   "none_of_these": 0.0,
+   "out_of_scope": 0.0,
+   "support_removed": 0.0
+  },
+  "50": {
+   "entity_corrupted": 0.5884615384615385,
+   "insufficient": 0.3804849884526559,
+   "none_of_these": 0.7825136612021858,
+   "out_of_scope": 0.4481159420289855,
+   "support_removed": 0.5098814229249012
+  },
+  "70": {
+   "entity_corrupted": 0.3,
+   "insufficient": 0.10219399538106236,
+   "none_of_these": 0.659016393442623,
+   "out_of_scope": 0.1617391304347826,
+   "support_removed": 0.18972332015810275
+  },
+  "90": {
+   "entity_corrupted": 0.015384615384615385,
+   "insufficient": 0.0,
+   "none_of_these": 0.22131147540983606,
+   "out_of_scope": 0.0,
+   "support_removed": 0.003952569169960474
+  }
+ },
+ "baseline": {
+  "aurc": 0.5447405477390609,
+  "auroc": 0.5285445365471786,
+  "coverage": [
+   {
+    "abstain_zero_accuracy": 0.23983306695080803,
+    "abstained_negative_fraction": 0.558692949742497,
+    "answered": 5631,
+    "answered_accuracy": 0.47966613390161605,
+    "coverage": 50
+   },
+   {
+    "abstain_zero_accuracy": 0.30083466524595986,
+    "abstained_negative_fraction": 0.5293072824156305,
+    "answered": 7884,
+    "answered_accuracy": 0.42973110096397765,
+    "coverage": 70
+   },
+   {
+    "abstain_zero_accuracy": 0.34736281299946725,
+    "abstained_negative_fraction": 0.3641207815275311,
+    "answered": 10136,
+    "answered_accuracy": 0.38595106550907654,
+    "coverage": 90
+   },
+   {
+    "abstain_zero_accuracy": 0.3704492985260167,
+    "abstained_negative_fraction": null,
+    "answered": 11262,
+    "answered_accuracy": 0.3704492985260167,
+    "coverage": 100
+   }
+  ],
+  "n": 11262,
+  "score_field": "max_prob",
+  "threshold": {
+   "accuracy": 0.32472029834842836,
+   "answer_rate": 0.8054519623512697,
+   "answered": 9071,
+   "threshold": 0.5
+  }
+ },
+ "by_reason": {
+  "None": {
+   "aurc": null,
+   "auroc": null,
+   "coverage": [
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 50
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 70
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 90
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 100
+    }
+   ],
+   "n": 5462,
+   "score_field": "p_answerable",
+   "threshold": {
+    "accuracy": null,
+    "answer_rate": null,
+    "answered": 0,
+    "threshold": 0.5
+   }
+  },
+  "entity_corrupted": {
+   "aurc": null,
+   "auroc": null,
+   "coverage": [
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 50
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 70
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 90
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 100
+    }
+   ],
+   "n": 260,
+   "score_field": "p_answerable",
+   "threshold": {
+    "accuracy": null,
+    "answer_rate": null,
+    "answered": 0,
+    "threshold": 0.5
+   }
+  },
+  "insufficient": {
+   "aurc": null,
+   "auroc": null,
+   "coverage": [
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 50
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 70
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 90
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 100
+    }
+   ],
+   "n": 1732,
+   "score_field": "p_answerable",
+   "threshold": {
+    "accuracy": null,
+    "answer_rate": null,
+    "answered": 0,
+    "threshold": 0.5
+   }
+  },
+  "none_of_these": {
+   "aurc": null,
+   "auroc": null,
+   "coverage": [
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 50
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 70
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 90
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 100
+    }
+   ],
+   "n": 1830,
+   "score_field": "p_answerable",
+   "threshold": {
+    "accuracy": null,
+    "answer_rate": null,
+    "answered": 0,
+    "threshold": 0.5
+   }
+  },
+  "out_of_scope": {
+   "aurc": null,
+   "auroc": null,
+   "coverage": [
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 50
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 70
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 90
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 100
+    }
+   ],
+   "n": 1725,
+   "score_field": "p_answerable",
+   "threshold": {
+    "accuracy": null,
+    "answer_rate": null,
+    "answered": 0,
+    "threshold": 0.5
+   }
+  },
+  "support_removed": {
+   "aurc": null,
+   "auroc": null,
+   "coverage": [
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 50
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 70
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 90
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 100
+    }
+   ],
+   "n": 253,
+   "score_field": "p_answerable",
+   "threshold": {
+    "accuracy": null,
+    "answer_rate": null,
+    "answered": 0,
+    "threshold": 0.5
+   }
+  }
+ },
+ "by_type": {
+  "choice": {
+   "aurc": null,
+   "auroc": null,
+   "coverage": [
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 50
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 70
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 90
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 100
+    }
+   ],
+   "n": 3944,
+   "score_field": "p_answerable",
+   "threshold": {
+    "accuracy": null,
+    "answer_rate": null,
+    "answered": 0,
+    "threshold": 0.5
+   }
+  },
+  "noul": {
+   "aurc": null,
+   "auroc": null,
+   "coverage": [
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 50
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 70
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 90
+    },
+    {
+     "abstain_zero_accuracy": null,
+     "abstained_negative_fraction": null,
+     "answered": 0,
+     "answered_accuracy": null,
+     "coverage": 100
+    }
+   ],
+   "n": 7318,
+   "score_field": "p_answerable",
+   "threshold": {
+    "accuracy": null,
+    "answer_rate": null,
+    "answered": 0,
+    "threshold": 0.5
+   }
+  }
+ },
+ "counting": "abstention",
+ "instrument": {
+  "distinct_donors": 5462,
+  "ids_sha256": "d3158efb28c04ebcda932270b78aebaac3f8274d98c87ab027692632f7b3b3e7",
+  "pairs": 5800,
+  "rows": 11262,
+  "selection": "237-abstention-eval-selection.json"
+ },
+ "model": {
+  "aurc": 0.5447405477390609,
+  "auroc": 0.5285445365471786,
+  "coverage": [
+   {
+    "abstain_zero_accuracy": 0.23983306695080803,
+    "abstained_negative_fraction": 0.558692949742497,
+    "answered": 5631,
+    "answered_accuracy": 0.47966613390161605,
+    "coverage": 50
+   },
+   {
+    "abstain_zero_accuracy": 0.30083466524595986,
+    "abstained_negative_fraction": 0.5293072824156305,
+    "answered": 7884,
+    "answered_accuracy": 0.42973110096397765,
+    "coverage": 70
+   },
+   {
+    "abstain_zero_accuracy": 0.34736281299946725,
+    "abstained_negative_fraction": 0.3641207815275311,
+    "answered": 10136,
+    "answered_accuracy": 0.38595106550907654,
+    "coverage": 90
+   },
+   {
+    "abstain_zero_accuracy": 0.3704492985260167,
+    "abstained_negative_fraction": null,
+    "answered": 11262,
+    "answered_accuracy": 0.3704492985260167,
+    "coverage": 100
+   }
+  ],
+  "n": 11262,
+  "score_field": "max_prob",
+  "threshold": {
+   "accuracy": 0.32472029834842836,
+   "answer_rate": 0.8054519623512697,
+   "answered": 9071,
+   "threshold": 0.5
+  }
+ },
+ "predictions": "abstention-eval-11262-base.pred.jsonl",
+ "predictions_sha256": "61f81eb9cfec7910973d880a4b2c2a96632a966d2c31b7a2ea6b7793b4f6244c",
+ "signal_subset": {
+  "aurc": 0.4726495896938033,
+  "auroc": 0.45803059286649134,
+  "capture_at_90": 0.003778337531486146,
+  "excluded": "none_of_these",
+  "n": 9432
+ },
+ "tie_check": {
+  "by_reason": {
+   "entity_corrupted": {
+    "at_or_above_cutoff": 256,
+    "median_donor": 0.642375,
+    "median_variant": 0.610382,
+    "n": 260,
+    "variant_above_donor": 87,
+    "variant_below_donor": 173
+   },
+   "insufficient": {
+    "at_or_above_cutoff": 1732,
+    "median_donor": 0.687535,
+    "median_variant": 0.658896,
+    "n": 1732,
+    "variant_above_donor": 779,
+    "variant_below_donor": 953
+   },
+   "none_of_these": {
+    "at_or_above_cutoff": 1425,
+    "median_donor": 0.42864,
+    "median_variant": 0.48432,
+    "n": 1830,
+    "variant_above_donor": 1361,
+    "variant_below_donor": 469
+   },
+   "out_of_scope": {
+    "at_or_above_cutoff": 1725,
+    "median_donor": 0.674828,
+    "median_variant": 0.642829,
+    "n": 1725,
+    "variant_above_donor": 699,
+    "variant_below_donor": 1026
+   },
+   "support_removed": {
+    "at_or_above_cutoff": 252,
+    "median_donor": 0.646816,
+    "median_variant": 0.625455,
+    "n": 253,
+    "variant_above_donor": 95,
+    "variant_below_donor": 158
+   }
+  },
+  "cutoff_90": 0.3798033657735949,
+  "distinct_scores": 11038,
+  "rows_exactly_at_cutoff": 1
+ },
+ "unscorable_rows": {
+  "n": 1830,
+  "reason": "none_of_these",
+  "why": "the construction removed the gold option, so no accuracy label exists; these rows are kept in the AURC, AUROC and threshold blocks, which use max_prob and the reason field rather than a task label"
+ }
+}

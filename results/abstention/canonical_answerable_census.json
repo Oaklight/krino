@@ -1,0 +1,475 @@
+{
+ "answerable_false": {
+  "by_provenance": {
+   "execution": 6000
+  },
+  "by_reason": {
+   "insufficient": 2000,
+   "none_of_these": 2000,
+   "out_of_scope": 2000
+  },
+  "by_source": {
+   "agnews": 127,
+   "anli": 198,
+   "arc": 82,
+   "banking77": 224,
+   "boolq": 270,
+   "codesearchnet": 67,
+   "commonsenseqa": 271,
+   "contractnli": 859,
+   "fever": 141,
+   "hellaswag": 182,
+   "logiqa": 308,
+   "mednli": 425,
+   "mmlu": 189,
+   "mnli": 314,
+   "multirc": 999,
+   "openjev_authored144": 4,
+   "race": 140,
+   "sst2": 347,
+   "swag": 144,
+   "synthetic": 278,
+   "tabfact": 394,
+   "typed_decisions": 37
+  },
+  "by_type": {
+   "choice": 2000,
+   "noul": 4000
+  },
+  "count": 6000,
+  "dangerous_by_reason": {
+   "insufficient": 2000,
+   "out_of_scope": 2000
+  },
+  "dangerous_by_source": {
+   "anli": 198,
+   "boolq": 270,
+   "contractnli": 859,
+   "mednli": 425,
+   "mnli": 314,
+   "multirc": 999,
+   "sst2": 347,
+   "synthetic": 175,
+   "tabfact": 394,
+   "typed_decisions": 19
+  },
+  "dangerous_by_type": {
+   "noul": 4000
+  },
+  "dangerous_well_formed": 4000,
+  "examples": [
+   {
+    "id": "multirc-train-04640-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "multirc",
+    "state_prefix": "Technical barriers are when importing countries implement trade import controls, by enacting laws, decrees, regulations,",
+    "type": "noul"
+   },
+   {
+    "id": "boolq-train-02794-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "boolq",
+    "state_prefix": "Contract clause: www.kissthismakeup.com \u2013 jennamarie@kissthismakeup.com\nNON DISCLOSURE AGREEMENT\nThis Non Disclosure Agr",
+    "type": "noul"
+   },
+   {
+    "id": "multirc-train-14603-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "multirc",
+    "state_prefix": "How to cut off the base of an aluminum can for a craft",
+    "type": "noul"
+   },
+   {
+    "id": "synthetic-logical_inference-0066-noul-sufficiency-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "synthetic",
+    "state_prefix": "liking ",
+    "type": "noul"
+   },
+   {
+    "id": "tabfact-train-84425-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "tabfact",
+    "state_prefix": "They are chatting with friends about old memories, it won't be long before somebody what?",
+    "type": "noul"
+   },
+   {
+    "id": "anli-r3-train-03782-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "anli",
+    "state_prefix": "Contract clause: [European Space Agency]\nand\n[Contractor]\nNon-Disclosure Agreement\nESA Contract No. [ ]\nNon-Disclosure A",
+    "type": "noul"
+   },
+   {
+    "id": "multirc-train-01331-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "multirc",
+    "state_prefix": "Contract clause: a. Non-Public Information shall include any and all information Data Recipient receives from WECC, incl",
+    "type": "noul"
+   },
+   {
+    "id": "mnli-train-132929-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "mnli",
+    "state_prefix": "Table: 1954 vfl season\nhome team#home team score#away team#away team score#venue#crowd#date\nmelbourne#14.13 (97)#st kild",
+    "type": "noul"
+   },
+   {
+    "id": "contractnli-contractnli_b-train-02697-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "contractnli",
+    "state_prefix": "Long jump: A man gets pumped up to do a long jump then does it. others",
+    "type": "noul"
+   },
+   {
+    "id": "multirc-train-14842-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "multirc",
+    "state_prefix": "Earl put the tool box in the bed instead of in the cab because the _ was full..",
+    "type": "noul"
+   },
+   {
+    "id": "multirc-train-03828-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "multirc",
+    "state_prefix": "The structures found in a living cell can be compared to the parts of a factory that produces cars. Which part of the fa",
+    "type": "noul"
+   },
+   {
+    "id": "mnli-train-13719-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "mnli",
+    "state_prefix": "Passage: Alien Planet starts out with an interstellar spacecraft named Von Braun , leaving Earth's orbit .  Traveling at",
+    "type": "noul"
+   },
+   {
+    "id": "contractnli-contractnli_a-train-01199-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "contractnli",
+    "state_prefix": "tie together beautifully ",
+    "type": "noul"
+   },
+   {
+    "id": "synthetic-commonsense_decision-0015-neg-noul-causal-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "synthetic",
+    "state_prefix": "the script boasts some tart tv-insider humor , but the film has not a trace of humanity or empathy .",
+    "type": "noul"
+   },
+   {
+    "id": "multirc-train-00462-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "multirc",
+    "state_prefix": "Contract clause: NON-DISCLOSURE AND CONFIDENTIALITY AGREEMENT\nDated:\nParties:\n1. COAST2COAST (2007) LIMITED trading as R",
+    "type": "noul"
+   },
+   {
+    "id": "multirc-train-16960-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "multirc",
+    "state_prefix": "just send it to cranky .",
+    "type": "noul"
+   },
+   {
+    "id": "tabfact-train-30331-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "tabfact",
+    "state_prefix": "Premise: The patient had complained of polyuria and polydipsia for weeks.\nHypothesis:  The patient has diabetes. ",
+    "type": "noul"
+   },
+   {
+    "id": "mnli-train-247621-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "mnli",
+    "state_prefix": "Developing marketing campaigns came easy for Emily but not Carrie because _ had extensive experience.",
+    "type": "noul"
+   },
+   {
+    "id": "anli-r3-train-81861-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "anli",
+    "state_prefix": "Because Rebecca did not wear a cowboy hat while Megan did, _ was protected from sun in their eyes.",
+    "type": "noul"
+   },
+   {
+    "id": "mnli-train-299090-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "mnli",
+    "state_prefix": "Contract clause: UNIVERSITY DEFENCE RESEARCH CENTRE FOR SIGNAL PROCESSING\nNON-DISCLOSURE AGREEMENT\nTHIS AGREEMENT is mad",
+    "type": "noul"
+   },
+   {
+    "id": "contractnli-contractnli_b-train-00544-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "contractnli",
+    "state_prefix": "in love with myth ",
+    "type": "noul"
+   },
+   {
+    "id": "boolq-train-00292-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "boolq",
+    "state_prefix": "Passage: When he was at Oxford he had been well known for concealing under a slightly rowdy exterior the highest spirits",
+    "type": "noul"
+   },
+   {
+    "id": "boolq-train-08961-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "boolq",
+    "state_prefix": "Contract clause: All documents, memoranda, notes and other writings whatsoever prepared by the receiving party or its Re",
+    "type": "noul"
+   },
+   {
+    "id": "mednli-train-10899-abstain-out_of_scope",
+    "label": false,
+    "label_shape": "bool",
+    "n_options": 2,
+    "option_keys": [
+     "false",
+     "true"
+    ],
+    "provenance": "execution",
+    "reason": "out_of_scope",
+    "source": "mednli",
+    "state_prefix": "Which of the following best shows the basic three-step energy transformation for a battery-operated radio?",
+    "type": "noul"
+   }
+  ],
+  "label_in_options": 4000,
+  "label_shapes": {
+   "bool": 4000,
+   "string": 2000
+  },
+  "label_valid": 4000,
+  "label_values": {
+   "'0'": 54,
+   "'1'": 40,
+   "'2'": 44,
+   "'3'": 46,
+   "'A'": 276,
+   "'B'": 279,
+   "'C'": 317,
+   "'D'": 273,
+   "'E'": 53,
+   "'business'": 29,
+   "'nei'": 68,
+   "'refutes'": 16,
+   "'science_technology'": 47,
+   "'sports'": 26,
+   "'supports'": 57,
+   "'top_up_limits'": 6,
+   "'transaction_charged_twice'": 8,
+   "'verify_top_up'": 6,
+   "'world'": 25,
+   "False": 4000
+  },
+  "option_counts": {
+   "2": 4145,
+   "3": 1319,
+   "4": 312,
+   "79": 224
+  },
+  "rows_with_at_least_two_options": 6000,
+  "teacher_probs_present": 0,
+  "well_formed_options": 6000
+ },
+ "answerable_false_without_reason": 0,
+ "answerable_unset": {
+  "count": 237366,
+  "invalid_by_type": {},
+  "invalid_label": 0
+ },
+ "answerable_values": {
+  "false": 6000,
+  "unset": 237366
+ },
+ "items": "krino-canonical-243366.jsonl",
+ "reading": "dangerous_well_formed counts answerable=false rows that also carry at least two well-formed options and a valid label in those options. The loss mask hides them; a split builder would not.",
+ "reason_without_answerable_false": 0,
+ "sha256": "07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53",
+ "total": 243366
+}
