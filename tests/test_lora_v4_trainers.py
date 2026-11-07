@@ -164,6 +164,25 @@ class TestParserDefaults:
         assert args.lora_kl_weight == 0.5
         assert args.torch_seed == 7
 
+    def test_dry_run_is_off_by_default(self) -> None:
+        args = _parser_defaults(train_listwise.build_parser(), [])
+        assert args.dry_run is False
+
+    def test_dry_run_is_accepted(self) -> None:
+        args = _parser_defaults(train_listwise.build_parser(), ["--dry-run"])
+        assert args.dry_run is True
+
+    def test_holdout_ids_is_off_by_default(self) -> None:
+        args = _parser_defaults(train_listwise.build_parser(), [])
+        assert args.holdout_ids is None
+
+    def test_holdout_ids_is_accepted(self) -> None:
+        args = _parser_defaults(
+            train_listwise.build_parser(),
+            ["--holdout-ids", "heldout.json"],
+        )
+        assert str(args.holdout_ids) == "heldout.json"
+
 
 class TestConfigRoundTrip:
     def test_a_frozen_config_adds_no_kwargs(self) -> None:
@@ -390,3 +409,65 @@ class TestCheckpointReload:
             got = ListwiseMarkerReadout(reloaded).score(STATE, INSTRUCTIONS, OPTIONS)
 
         assert torch.equal(expected, got)
+
+
+def test_torch_seed_moves_the_global_rng(tmp_path, monkeypatch):
+    """The flag must seed torch, not only be written into the config.
+
+    A run that accepts ``--torch-seed`` without applying it records an
+    initialisation it did not use.  The dry run returns before the backbone is
+    loaded, so this exercises the real entry point cheaply.
+    """
+    import json
+    import sys
+
+    ids = [f"fixture-{index}" for index in range(5)]
+    corpus = tmp_path / "corpus.jsonl"
+    corpus.write_text(
+        "\n".join(
+            json.dumps(
+                {
+                    "id": item_id,
+                    "state": STATE,
+                    "question": {
+                        "type": "choice",
+                        "instructions": INSTRUCTIONS,
+                        "criteria": {"alpha": "alpha", "beta": "beta"},
+                    },
+                    "label": "alpha",
+                    "source": "fixture",
+                    "split": "train",
+                }
+            )
+            for item_id in ids
+        )
+        + "\n"
+    )
+    base_probs = tmp_path / "base.jsonl"
+    base_probs.write_text(
+        "\n".join(json.dumps({"id": item_id, "probs": [0.5, 0.5]}) for item_id in ids)
+        + "\n"
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "train_listwise",
+            "--items",
+            str(corpus),
+            "--base-probs",
+            str(base_probs),
+            "--output",
+            str(tmp_path / "out"),
+            "--dry-run",
+            "--limit",
+            str(len(ids)),
+            "--torch-seed",
+            "12345",
+        ],
+    )
+
+    torch.manual_seed(7)
+    assert torch.initial_seed() == 7
+    assert train_listwise.main() == 0
+    assert torch.initial_seed() == 12345
