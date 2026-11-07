@@ -1,4 +1,4 @@
-% Krino v3 -- B2 marker-residual decision model
+% Krino v4 -- listwise marker model on Qwen3.5-4B
 % Build: make build   (uses oaklight/texlive:science-cn)
 \documentclass[tikz,border=10pt]{standalone}
 \usepackage{amsmath}
@@ -19,12 +19,15 @@
 \definecolor{markerfill}{HTML}{FEF2F2}
 \definecolor{markerdraw}{HTML}{DC2626}
 \definecolor{notefill}{HTML}{FAFAF9}
+\definecolor{loraFill}{HTML}{FEF3C7}
+\definecolor{loraDraw}{HTML}{B45309}
 
 \tikzset{
   box/.style={rounded corners=3pt, draw, line width=0.6pt, align=center,
               inner sep=5pt, font=\sffamily\small},
   frozen/.style={box, fill=frozenfill, draw=frozendraw},
   trainable/.style={box, fill=trainfill, draw=trainraw},
+  lora/.style={box, fill=loraFill, draw=loraDraw},
   data/.style={box, fill=datafill, draw=datadraw},
   fusebox/.style={box, fill=fusefill, draw=fusedraw},
   lossbox/.style={box, fill=lossfill, draw=lossdraw},
@@ -45,163 +48,163 @@
 \begin{tikzpicture}[font=\sffamily]
 
 % ================================================================ title
-\node[font=\sffamily\Large\bfseries] at (10.6,16.35)
-  {\textsf{Krino v3 --- B2 marker-residual decision model}};
-\node[font=\sffamily\small, text=black!65] at (10.6,15.88)
-  {\textsf{Frozen Qwen3-Reranker-4B with per-type zero-gated residual heads}};
+\node[font=\sffamily\Large\bfseries] at (10.6,16.45)
+  {\textsf{Krino v4 --- listwise marker model on Qwen3.5-4B}};
+\node[font=\sffamily\small, text=black!65] at (10.6,15.98)
+  {\textsf{Hybrid GDN backbone with LoRA; whole-set marker readout; base-anchored per-type gates}};
 
 % ================================================================ inputs
-\node[data, minimum width=2.0cm] (instate) at (2.1,15.0) {evidence \texttt{state}};
-\node[data, minimum width=2.3cm] (ininstr) at (4.9,15.0) {instructions};
-\node[data, minimum width=2.6cm] (inopts)  at (7.9,15.0) {options $x_1,\dots,x_K$};
+\node[data, minimum width=2.0cm] (instate) at (2.1,15.1) {evidence \texttt{state}};
+\node[data, minimum width=2.3cm] (ininstr) at (4.9,15.1) {instructions};
+\node[data, minimum width=2.6cm] (inopts)  at (7.9,15.1) {options $x_1,\dots,x_K$};
 \foreach \n in {instate,ininstr,inopts}
-  \draw[arrow] (\n.south) -- (\n.south |- 0,14.4);
+  \draw[arrow] (\n.south) -- (\n.south |- 0,14.5);
 
 % ================================================================ backbone
 \draw[frozenfill, draw=frozendraw, line width=0.6pt, rounded corners=4pt]
-  (0.4,9.6) rectangle (14.6,14.4);
+  (0.4,9.7) rectangle (14.6,14.5);
 \node[anchor=north west, font=\sffamily\small\bfseries, text=frozendraw]
-  at (0.7,14.2) {Frozen Qwen3-Reranker-4B \;(4B decoder, no gradients)};
+  at (0.7,14.3) {Qwen3.5-4B --- hybrid GDN decoder, base weights frozen};
 
-% token strip: shared prefix | option + marker
-\node[token, minimum width=2.0cm] (tstate) at (2.1,13.15) {state};
-\node[token, minimum width=2.6cm] (tinstr) at (4.55,13.15) {instructions};
-\node[token, minimum width=0.8cm] (topt)   at (6.75,13.15) {$x_i$};
-\node[marker, minimum width=0.7cm] (tmark) at (7.60,13.15) {$M$};
+% token strip: shared prefix | listwise suffix
+\node[token, minimum width=1.9cm] (tstate) at (1.95,13.25) {state};
+\node[token, minimum width=2.4cm] (tinstr) at (4.25,13.25) {instructions};
+\node[token, minimum width=0.62cm] (txa) at (5.90,13.25) {$x_1$};
+\node[marker, minimum width=0.52cm] (tma) at (6.62,13.25) {$M$};
+\node[token, minimum width=0.62cm] (txb) at (7.34,13.25) {$x_2$};
+\node[marker, minimum width=0.52cm] (tmb) at (8.06,13.25) {$M$};
+\node[font=\sffamily\scriptsize, text=black!60] at (8.62,13.25) {$\cdots$};
+\node[token, minimum width=0.62cm] (txk) at (9.18,13.25) {$x_K$};
+\node[marker, minimum width=0.52cm] (tmk) at (9.90,13.25) {$M$};
 
 \draw[decorate, decoration={brace, amplitude=3.5pt, raise=2pt, mirror}, draw=frozendraw]
-  (1.05,12.88) -- (5.85,12.88)
+  (1.00,12.98) -- (5.45,12.98)
   node[midway, below=5pt, font=\sffamily\scriptsize, text=black!65]
   {shared prefix, cached once};
 \draw[decorate, decoration={brace, amplitude=3.5pt, raise=2pt, mirror}, draw=markerdraw]
-  (6.30,12.88) -- (8.00,12.88)
+  (5.55,12.98) -- (10.20,12.98)
   node[midway, below=5pt, font=\sffamily\scriptsize, text=black!65]
-  {one option + $M$};
+  {\textbf{one suffix carries every option} --- scores read at each $M$};
 
 \node[anchor=west, font=\sffamily\scriptsize, text=black!65, align=flush left,
-      text width=4.6cm] at (9.25,13.35)
-  {A marker token $M$ (EOS) follows each option; the score is read at $M$.};
+      text width=4.1cm] at (10.55,13.45)
+  {Listwise: option $j$ attends to the context and to options $<j$.\\[3pt]
+   GDN state cannot be cropped, so a forked prefix is re-encoded; shape
+   bucketing keeps the kernels warm.};
 
-% transformer blocks
-\node[frozen, minimum width=13.2cm, minimum height=1.0cm] (blocks) at (7.5,10.9)
-  {Transformer blocks (frozen)};
-\draw[arrow] (7.60,12.86) -- (7.60,12.68) -- (10.60,12.68) -- (10.60,11.42);
-\node[alabel, anchor=west] at (10.70,12.10) {encode};
+% LoRA strip inside the backbone box
+\node[lora, text width=5.4cm, minimum height=0.72cm] (lora) at (6.20,11.45)
+  {\textbf{LoRA} (trainable)\\[1pt]
+   {\scriptsize last 8 blocks, $r=16$, $\alpha=32$, $\approx$3.27M}};
+\node[frozen, minimum width=2.9cm, minimum height=0.72cm] (blocks) at (12.90,11.45)
+  {base weights frozen};
+
+\draw[arrow] (7.60,12.70) -- (7.60,11.83);
+\node[alabel, anchor=west] at (7.70,12.25) {encode};
+
+\node[anchor=west, font=\sffamily\scriptsize, text=black!65, align=flush left,
+      text width=9.4cm] at (3.10,10.35)
+  {LoRA targets \texttt{q\_proj, v\_proj, in\_proj\_qkv, in\_proj\_z,
+   in\_proj\_b, in\_proj\_a, out\_proj}.};
 
 % ================================================================ head row
-\node[frozen, text width=3.6cm, minimum height=2.0cm] (base) at (2.70,7.20)
+\node[frozen, text width=3.3cm, minimum height=1.9cm] (base) at (2.30,7.45)
   {\textbf{Base scorer} (frozen)\\[3pt]
    $p^{base}=\operatorname{softmax}(s)$\\[3pt]
-   {\scriptsize cached yes/no logits}};
-\draw[arrow] (2.70,9.6) -- (2.70,8.22);
-\node[alabel, anchor=west] at (2.80,8.90) {frozen reranker};
+   {\scriptsize precomputed, cached}};
+\draw[arrow] (2.30,9.7) -- (2.30,8.42);
+\node[alabel, anchor=west] at (2.40,9.05) {no adapter};
 
-\node[trainable, text width=3.8cm, minimum height=2.0cm] (noulhead) at (7.30,7.20)
-  {\textbf{NoulHead} (trainable)\\[3pt]
-   {\footnotesize Linear $2560\!\to\!32\to$ GELU\\[2pt]
-   $\to$ Linear $32\!\to\!1$}};
-\draw[arrow] (7.30,9.6) -- (7.30,8.22);
-\node[alabel, anchor=west] at (7.40,8.90) {pooled context};
-
-\node[trainable, text width=4.3cm, minimum height=2.0cm] (markerhead) at (12.15,7.20)
+\node[trainable, text width=4.4cm, minimum height=1.9cm] (markerhead) at (7.35,7.45)
   {\textbf{OptionMarkerHead}\\[1pt]
    {\scriptsize trainable, $\approx$251K}\\[3pt]
    {\footnotesize LayerNorm $\to$ Linear $2560\!\to\!96$\\[2pt]
    GELU $\to$ Linear $96\!\to\!1$}\\[2pt]
-   {\scriptsize shared by choice and score}};
-\draw[arrow] (12.15,9.6) -- (12.15,8.22);
-\node[alabel, anchor=east] at (12.05,8.90) {$h_i$ at marker (2560-d)};
+   {\scriptsize shared by noul, choice and score}};
+\draw[arrow] (7.12,10.85) -- (7.12,8.42);
+\node[alabel, anchor=west] at (7.25,9.60) {$h_j$ at marker (2560-d)};
+
+\node[box, draw=black!30, fill=white, dashed, text width=3.5cm, minimum height=1.9cm]
+  (anshead) at (12.20,7.45)
+  {\textbf{AnswerableHead}\\[1pt]
+   {\scriptsize implemented, \textbf{not used}}\\[3pt]
+   {\scriptsize AUROC $0.458$ on the rows it is meant to triage --- below
+    chance, so the head is wired off}};
+\draw[dasharrow] (12.20,10.85) -- (12.20,8.42);
 
 % ================================================================ p_base cache
 \node[cylinder, draw=frozendraw, fill=frozenfill, line width=0.5pt,
       shape border rotate=90, aspect=0.22,
-      minimum width=1.4cm, minimum height=1.2cm,
-      font=\sffamily\scriptsize, align=center] (cache) at (2.70,4.40)
+      minimum width=1.3cm, minimum height=1.1cm,
+      font=\sffamily\scriptsize, align=center] (cache) at (2.30,4.95)
   {$p^{base}$\\cache};
-\draw[arrow] (2.70,6.20) -- (2.70,5.02);
+\draw[arrow] (2.30,6.50) -- (2.30,5.52);
 
 % ================================================================ fusion
 \draw[fusefill, draw=fusedraw, line width=0.6pt, rounded corners=3pt]
-  (3.70,3.60) rectangle (14.40,5.20);
-\node[anchor=north west, font=\sffamily\small] at (3.95,5.05)
+  (3.55,4.15) rectangle (14.40,5.75);
+\node[anchor=north west, font=\sffamily\small] at (3.80,5.60)
   {$\displaystyle z=\log p^{base}+\alpha_t\,u$};
 \node[anchor=north west, font=\sffamily\scriptsize, text=black!70,
-      text width=6.9cm, align=flush left] at (3.95,4.38)
+      text width=6.6cm, align=flush left] at (3.80,4.95)
   {$t\in\{\text{noul},\text{choice},\text{score}\}$;\quad
-   $\alpha_t=0$ at init $\Rightarrow$ step 0 reproduces B0.};
-\node[anchor=north east, font=\sffamily\footnotesize, align=right] at (14.15,5.10)
-  {{\scriptsize\color{fusedraw}per-type gates}\\[2pt]
-   $\alpha_{\text{noul}}=0$\\[1pt]$\alpha_{\text{choice}}=0$\\[1pt]$\alpha_{\text{score}}=0$};
+   $\alpha_t$ learned per type, one scalar for all items.};
+\node[anchor=north east, font=\sffamily\scriptsize, align=right] at (14.15,5.62)
+  {{\scriptsize\color{fusedraw}\textbf{measured} $\alpha_t$, 3 seeds}\\[2pt]
+   $\alpha_{\text{noul}}=0.00$ (untrained)\\
+   $\alpha_{\text{choice}}=0.09$--$0.13$\\[1pt]
+   $\alpha_{\text{score}}=0.14$--$0.19$};
 
-\draw[arrow] (3.42,4.40) -- (3.68,4.40);
-\draw[arrow] (7.30,6.20) -- (7.30,5.20);
-\node[alabel, anchor=west] at (7.40,5.70) {$u^{no}$};
-\draw[arrow] (12.15,6.20) -- (12.15,5.20);
-\node[alabel, anchor=west] at (12.25,5.70) {$u_i$};
+\draw[arrow] (2.95,4.95) -- (3.53,4.95);
+\draw[arrow] (7.35,6.50) -- (7.35,5.77);
+\node[alabel, anchor=west] at (7.45,6.10) {$u$ over $K$};
 
 % ================================================================ outputs
-\node[box, draw=black!35, fill=white, text width=3.4cm, minimum height=1.2cm]
-  (outnoul) at (2.75,2.20)
+\node[box, draw=black!35, fill=white, text width=3.3cm, minimum height=1.15cm]
+  (outnoul) at (2.55,2.75)
   {\textbf{noul}\\[2pt] $\sigma(z)\to P(\text{yes})$};
-\node[box, draw=black!35, fill=white, text width=3.6cm, minimum height=1.2cm]
-  (outchoice) at (7.50,2.20)
-  {\textbf{choice}\\[2pt] $\operatorname{softmax}_k(z)\to P(x_i)$};
-\node[box, draw=black!35, fill=white, text width=3.6cm, minimum height=1.2cm]
-  (outscore) at (12.30,2.20)
+\node[box, draw=black!35, fill=white, text width=3.5cm, minimum height=1.15cm]
+  (outchoice) at (7.35,2.75)
+  {\textbf{choice}\\[2pt] $\operatorname{softmax}_k(z)\to P(x_j)$};
+\node[box, draw=black!35, fill=white, text width=3.5cm, minimum height=1.15cm]
+  (outscore) at (12.20,2.75)
   {\textbf{score}\\[2pt] $\operatorname{softmax}_\ell(z)$\\ $\to$ level distribution};
 
-\draw[arrow] (3.70,3.60) -- (2.75,2.82);
-\draw[arrow] (7.50,3.60) -- (7.50,2.82);
-\draw[arrow] (12.15,3.60) -- (12.15,2.82);
+\draw[arrow] (3.55,4.15) -- (2.55,3.35);
+\draw[arrow] (7.35,4.15) -- (7.35,3.35);
+\draw[arrow] (12.20,4.15) -- (12.20,3.35);
 
-% ================================================================ metric note
+% ================================================================ right column
 \node[anchor=north west, font=\sffamily\scriptsize, text=black!65,
-      text width=4.9cm, align=flush left] at (15.3,6.18)
-  {\textbf{cc} = chance-corrected accuracy on the 231-item JevBench public
-   proxy. Not the official Intelligence board metric.};
+      text width=4.9cm, align=flush left] at (15.25,14.55)
+  {\textbf{Metric.} \texttt{cc} = chance-corrected accuracy,
+   $(\text{acc}-1/K)/(1-1/K)$, reported per type. Promotion reads the frozen
+   held-out (6{,}254 scored of 6{,}424 rows); the 231-item JevBench public set
+   is a hard veto.};
 
-% ================================================================ loss
-\node[lossbox, anchor=north west, text width=4.7cm] (loss) at (15.3,4.75)
+\node[lossbox, anchor=north west, text width=4.9cm] (loss) at (15.25,12.45)
   {\textbf{Loss}\\[3pt]
    $\mathcal{L}=1.0\cdot\mathrm{KL}\!\left(p^{base}\,\|\,p\right)$\\[1pt]
-   $\quad+0.2\cdot\mathrm{CE}(z,y)$\\[4pt]
-   {\scriptsize CE target: teacher soft label when present,
-    otherwise the hard label.}};
-\draw[arrow] (14.40,3.95) -- (15.28,3.95);
+   $\quad+1.0\cdot\mathrm{CE}(z,y)$\\[4pt]
+   {\scriptsize The KL anchor is on by default in v4 ($w=1.0$).}};
 
-% ================================================================ status
-\node[note, anchor=north west, text width=4.9cm] (status) at (15.3,14.4)
-  {\textbf{Status} {\scriptsize(2026-11-03)}\\[5pt]
-   \textcolor{green!45!black}{\rule[0.25ex]{0.75ex}{0.75ex}}
-   \textbf{B2 + confirm} --- validated baseline\\
-   \hspace*{1.1em}{\scriptsize JevBench proxy cc 0.4613, 3 seeds}\\[5pt]
-   \textcolor{black!55}{\rule[0.25ex]{0.75ex}{0.75ex}}
-   \textbf{Sweep} --- closed\\
-   \hspace*{1.1em}{\scriptsize D20K, LoRA, band, KL 0.5}\\
-   \hspace*{1.1em}{\scriptsize KL 0.5 confirm cc: 0.4538 / 0.4545}\\[5pt]
-   \textcolor{blue!70!black}{\rule[0.25ex]{0.75ex}{0.75ex}}
-   \textbf{Teacher-CE} --- running\\
-   \hspace*{1.1em}{\scriptsize data arm, not architecture}};
+\node[note, anchor=north west, text width=4.9cm] (infer) at (15.25,9.95)
+  {\textbf{Inference.} LoRA folds into the base weights, so the shared-prefix
+   cache stays valid and one decision costs \textbf{133\,ms} (1.29\,s
+   unfolded).};
 
-% ================================================================ readout note
-\node[note, anchor=north west, text width=4.9cm] (readout) at (15.3,9.30)
-  {\textbf{Readout semantics}\\[5pt]
-   {\scriptsize
-   \textbullet\ \texttt{chunk=1}: an option sees only the shared
-   prefix and itself.\\[4pt]
-   \textbullet\ \texttt{option\_batch=16} expands the prefix KV cache
-   across the batch dimension: same semantics, $2.44\times$ faster.\\[4pt]
-   \textbullet\ The softmax over marker scores is the option
-   distribution.}};
+\node[note, anchor=north west, text width=4.9cm] (results) at (15.25,8.15)
+  {\textbf{Measured (canonical arm, 3 seeds)}\\[4pt]
+   choice $\;+1.83$ to $+2.61$\,pp \;(3/3 significant)\\
+   score $\;\;\;+2.89$ to $+3.05$\,pp \;(2/3 significant)\\
+   noul $\quad\pm0.00$\,pp \;(untrained in this arm)\\[4pt]
+   JevBench \texttt{cc} $0.5187$, equal to the control.};
 
-% ================================================================ proposed strip
-\draw[dashed, draw=black!45, line width=0.6pt, rounded corners=3pt]
-  (0.4,0.30) rectangle (14.6,1.30);
-\node[anchor=west, font=\sffamily\scriptsize, text=black!70,
-      text width=13.8cm, align=flush left] at (0.65,0.80)
-  {\textbf{Proposed, not in B2:} per-epoch band re-scoring with the current head;
-   4096 long-context arm (blocked on data); full-corpus base-probability cache
-   (96k/195k items, in progress).};
+\node[note, anchor=north west, text width=4.9cm] (data) at (15.25,4.60)
+  {\textbf{Canonical corpus} \;243{,}366 rows, 35 sources\\
+   noul 113{,}594 \quad choice 100{,}257 \quad score 29{,}515\\
+   {\scriptsize label kind: option 98{,}257 / level 27{,}610 /
+    fractional 1{,}905 / withheld 2{,}000}};
 
 \end{tikzpicture}
 \end{document}
