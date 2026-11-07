@@ -110,7 +110,9 @@ measurement behind it and is replaced.
 After #264, `TRAINED_TYPES` includes noul, and the same recipe trains 185,321
 rows. The recorded all-type arms finish at 13.45-13.65 trainable items/s:
 training is 3.77-3.83 h, and with the measured validation the single-device epoch
-is about 6.4-6.5 h. The working-day target still holds.
+is about 6.4-6.5 h. Sharded across eight devices the training term is 0.47-0.48 h,
+so the eight-GPU epoch is 0.80-0.81 h with sharded validation or 3.14-3.15 h with
+one gate GPU on full validation. The working-day target still holds.
 
 The internal validation is a diagnostic, not the standard C gate, and running it
 in full on all three seeds costs about 6.6 GPU-hours for a number that cannot
