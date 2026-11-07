@@ -189,12 +189,13 @@ def item_loss(
     # base conditioning the head also sees the frozen base distribution for
     # the same subset; without it the call is the pre-change one.
     subset_base = _subset_probs(base, subset)
+    extra = {"base_probs": subset_base} if base_conditioned else {}
     head = torch.log_softmax(
         readout.score(
             item.state,
             q.get("instructions", ""),
             [options[index] for index in subset],
-            base_probs=subset_base if base_conditioned else None,
+            **extra,
         ).reshape(-1),
         dim=-1,
     )
@@ -267,12 +268,13 @@ def evaluate(
                 base = _subset_probs(base, keep)
                 target = keep.index(target)
             item_shifts = shifts if q_type == "choice" else 1
+            extra = {"base_probs": base} if base_conditioned else {}
             probs = readout.score_shifted(
                 item.state,
                 item.question.get("instructions", ""),
                 scored_options,
                 shifts=item_shifts,
-                base_probs=base if base_conditioned else None,
+                **extra,
             ).reshape(-1)
             probs = torch.softmax(
                 fused_logits(base.to(probs.device), torch.log(probs), alphas[q_type]),

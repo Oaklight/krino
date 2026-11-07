@@ -63,12 +63,13 @@ def score_item(
     if base is not None:
         picked = base[torch.tensor(subset, device=base.device)].clamp_min(1e-6)
         picked = picked / picked.sum()
+    extra = {"base_probs": picked} if base_conditioned else {}
     probs = readout.score_shifted(
         item.state,
         q.get("instructions", ""),
         [options[index] for index in subset],
         shifts=item_shifts,
-        base_probs=picked if base_conditioned else None,
+        **extra,
     ).reshape(-1)
     if picked is not None and not head_only:
         alpha = alphas.get(q_type, 0.0)

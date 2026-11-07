@@ -49,7 +49,8 @@
   },
   "eval_identity": {
     "eval_script": "model/scripts/eval_listwise.py",
-    "eval_script_sha256": "83f02e1cb7bafc0cc3b247f873ec4c09d8ac5ef4469da156ad1cd7ee2a567d13",
+    "eval_script_sha256": "ff8c0348ae55c2850b86ed81c41ace73d28ffd409c0505a70c715e9b09449ee5",
+    "hash_note": "updated before any run, after an implementation fix: the conditioning argument is now passed only when the flag is set, so a call without the flag is byte-identical to the pre-change call. The question, metric and success rule are unchanged.",
     "command": "cd <RUN_ROOT>/exp2 && CUDA_VISIBLE_DEVICES=<gpu> PYTHONPATH=<RUN_ROOT>/exp2 python -m model.scripts.eval_listwise --checkpoint basecond/seed<k>/listwise.pt --items <DATA_ROOT>/canonical/heldout_6400_part<p>.jsonl --base-probs <DATA_ROOT>/canonical/precompute-243366/base_probs_canonical_243366_qwen35_4b.jsonl --base-conditioned --head-only --output basecond/seed<k>/heldout_head_only_part<p>.pred.jsonl --device cuda",
     "mixed_command": "same, without --head-only, written to a separate output"
   },
