@@ -10,7 +10,9 @@
     "base_arm": "noul_listwise (#264) on feat/canonical-support, the arm that trained noul through the listwise path",
     "recipe": "the same canonical recipe as the noul arm, plus --base-conditioned; no other change",
     "flag": "model/scripts/train_listwise.py --base-conditioned",
-    "code_commit": "19ba9a4"
+    "code_commit": "19ba9a4",
+    "code_commit_rewritten": "1f3ccf9a",
+    "code_commit_note": "19ba9a4 was recorded before the 2026-11-07 history rewrite; 1f3ccf9a is the same commit in the rewritten history"
   },
   "test_set": {
     "definition": "the frozen 6,400-id held-out, noul rows, the same basis as the canonical gate",
@@ -49,6 +51,16 @@
     "score": "held-out accuracy is reported to see whether conditioning damages it; not a gate",
     "jevbench": "not used; the 231 public items have no base probabilities, so a base-conditioned head cannot be scored there without a pre-gate rule change that is not authorised here"
   },
+  "run_amendments": [
+    {
+      "at_utc": "2026-11-07T17:11:45Z",
+      "what": "seed 0 was stopped after 1,200 training items and relaunched on the same recipe from a tree that adds commit 7bcff68 (feat/throughput-244: skip the discarded cache-only prefix pass; right-pad the combined sequence to the existing bucket shapes)",
+      "why": "the first launch ran the prefix forward twice per item and rebuilt a new sequence shape per item; its windowed rate was 1.55 items/s over items 1000-1200 against 10.3 for the comparison arm. The relaunched run is 10.2 items/s on the same window.",
+      "invalidated": "the first attempt produced no checkpoint and no held-out prediction, so no accuracy number existed when the tree changed. This was a throughput defect found and fixed before any result, not a re-run after seeing one.",
+      "criterion": "unchanged. The question, primary metric, success rule, failure rule and seed plan are the ones recorded above.",
+      "tree_identity": "the relaunched run's provenance cites 979b7c7, which the 2026-11-07 history rewrite renamed to 8549066c; the run tree is 8549066c plus 7bcff68, committed on exp/run-base-conditioned as ebf0133"
+    }
+  ],
   "eval_identity": {
     "eval_script": "model/scripts/eval_listwise.py",
     "eval_script_sha256": "ff8c0348ae55c2850b86ed81c41ace73d28ffd409c0505a70c715e9b09449ee5",
