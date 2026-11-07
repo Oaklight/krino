@@ -350,7 +350,7 @@ def test_classify_question_uses_the_question_form_only():
         _question("choice", "What should the agent do next?", {"A": "a", "B": "b"})
     )
     assert (ability, method) == (ROUTING, HEURISTIC)
-    assert rule.startswith("pattern:routing")
+    assert rule.startswith("pattern:")
 
 
 def test_jevbench_items_have_an_ability_by_question_form():
@@ -366,10 +366,12 @@ def test_demand_report_matches_the_jevbench_mix():
     totals[CLASSIFICATION] = 150_571
     totals[SCORING] = 29_515
     report = demand_report(mapping, totals)
-    assert report["by_ability"][CLASSIFICATION] == 198
+    assert report["by_ability"][CLASSIFICATION] == 108
     assert report["by_ability"][SCORING] == 18
+    assert report["by_ability"][ROUTING] == 37
+    assert report["by_ability"][VERIFICATION] == 44
     assert report["by_ability"][DETECTION] == 0
-    assert report["share"][CLASSIFICATION] == pytest.approx(198 / 231, abs=1e-6)
+    assert report["share"][CLASSIFICATION] == pytest.approx(108 / 231, abs=1e-6)
     assert len(report["notes"]) == 4
 
 

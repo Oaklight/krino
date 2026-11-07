@@ -253,6 +253,47 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str], str], ...] = (
     ),
 )
 
+# JevBench asks terse questions over supplied records.  Several families use a
+# decision shape the corpus heuristic does not see, because the wording is
+# shorter than the synthetic templates ("which single tool", "does the
+# response satisfy").  These patterns apply only to :func:`classify_question`,
+# so the corpus labels are unchanged; the 231-item audit that produced them is
+# ``research/247-jevbench-ability-audit.json``.
+_QUESTION_PATTERNS: tuple[tuple[str, re.Pattern[str], str], ...] = (
+    (
+        "external_extraction",
+        re.compile(
+            r"\b(?:which (?:payment method|priority|shirt size|order id) does\b"
+            r"|which day does the (?:customer|user|person|applicant) propose\b"
+            r"|which .{0,40} does the (?:customer|user|ticket|person|applicant) "
+            r"(?:name|state|ask for|propose))\b",
+            re.IGNORECASE,
+        ),
+        STRUCTURED_DATA_EXTRACTION,
+    ),
+    (
+        "external_routing",
+        re.compile(
+            r"\b(?:which single tool|specialist needed|primary handler|"
+            r"who must be paged|what should the agent do|what must the agent do|"
+            r"single action .{0,60} must take|how must .{0,60} handle|"
+            r"record action|review route)\b",
+            re.IGNORECASE,
+        ),
+        ROUTING,
+    ),
+    (
+        "external_verification",
+        re.compile(
+            r"\b(?:does the response .{0,80}satisfy|"
+            r"does the trusted evidence establish|"
+            r"is the requested action permitted)\b",
+            re.IGNORECASE,
+        ),
+        VERIFICATION,
+    ),
+)
+
 TYPE_DEFAULT: dict[str, str] = {
     # A generic yes/no question is a two-way category choice, not a detection
     # of a named property.  Detection is reserved for the explicit patterns.
@@ -339,8 +380,11 @@ def classify_question(question: dict[str, Any]) -> tuple[str, str, str]:
     """Classify a question that has no corpus source rule (JevBench items).
 
     The question form is the only signal available, so this always uses the
-    heuristic path and reports ``heuristic`` as the method.
+    heuristic path and reports ``heuristic`` as the method.  The JevBench
+    patterns run first; the corpus patterns are the fallback.
     """
-    return _heuristic(
-        _instruction(question), str(question.get("type") or ""), "external"
-    )
+    instruction = _instruction(question)
+    for name, pattern, ability in _QUESTION_PATTERNS:
+        if pattern.search(instruction):
+            return ability, HEURISTIC, f"pattern:{name}:external"
+    return _heuristic(instruction, str(question.get("type") or ""), "external")

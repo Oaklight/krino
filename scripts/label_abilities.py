@@ -63,6 +63,7 @@ from data.abilities import (
     CLASSIFICATION,
     LABEL_METHODS,
     MODEL,
+    VERIFICATION,
     classify,
     classify_question,
     is_known_source,
@@ -537,8 +538,7 @@ def demand_report(
                 f"and the corpus is {corpus_classification:.1%}. The set is a "
                 "separate public corpus, not a sample of the canonical corpus; "
                 "the comparison is between ability mixes, so a JevBench score "
-                "measures classification-shaped decisions, not the corpus "
-                "composition."
+                "is weighted by the set's mix, not by the corpus composition."
             ),
             (
                 "Scoring has 18 items, 7.8% of the 231, so each item is worth "
@@ -558,12 +558,11 @@ def demand_report(
                 "exercises."
             ),
             (
-                "Verification is 13.4% of the corpus but 0.9% of the acceptance "
-                "set, and its two JevBench items both miss. Only 2,762 of its "
-                "32,532 records (8.5%, 1.1% of the corpus) are "
-                "listwise-eligible, so the label count overstates what the "
-                "trained head sees, and the set measures the ability with two "
-                "items."
+                f"Verification is {counts[VERIFICATION]} of {total} acceptance "
+                f"items ({counts[VERIFICATION] / total:.1%}) and 13.4% of the "
+                "corpus, but only 2,762 of its 32,532 corpus records (1.1% of "
+                "the corpus) are listwise-eligible, so the corpus contributes "
+                "little gradient to an ability the set measures at this size."
             ),
         ],
     }

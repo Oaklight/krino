@@ -45,16 +45,16 @@ Read every percentage in this table as records labelled, not records trained: th
 
 | ability | noul | choice | score | total | share | source_rule | heuristic | after exclude_restrictive | after exclude_restrictive_and_unresolved | listwise gradient | JevBench acc (n) | flags |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| Classification | 81,125 | 69,446 | 0 | 150,571 | 61.9% | 45,007 | 105,564 | 131,700 | 110,675 | 69,446 | 67.2% (198) | |
+| Classification | 81,125 | 69,446 | 0 | 150,571 | 61.9% | 45,007 | 105,564 | 131,700 | 110,675 | 69,446 | 65.7% (108) | |
 | Detection | 1,782 | 2,868 | 0 | 4,650 | 1.9% | 3,592 | 1,058 | 4,554 | 3,684 | 2,868 | — (0) | |
 | Scoring | 0 | 0 | 29,515 | 29,515 | 12.1% | 29,515 | 0 | 25,563 | 20,059 | 29,515 | 77.8% (18) | |
-| Routing | 909 | 18,124 | 0 | 19,033 | 7.8% | 18,130 | 903 | 9,542 | 9,539 | 18,124 | 100% (1) | |
+| Routing | 909 | 18,124 | 0 | 19,033 | 7.8% | 18,130 | 903 | 9,542 | 9,539 | 18,124 | 67.6% (37) | |
 | Search | 0 | 479 | 0 | 479 | 0.2% | 479 | 0 | 479 | 0 | 479 | — (0) | under_2000, single_source, licence_single_point |
 | Retrieval | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | — (0) | unsupported |
 | Ranking | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | — (0) | unsupported |
-| Verification | 29,770 | 2,762 | 0 | 32,532 | 13.4% | 22,617 | 9,915 | 15,730 | 14,871 | 2,762 | 0% (2) | |
+| Verification | 29,770 | 2,762 | 0 | 32,532 | 13.4% | 22,617 | 9,915 | 15,730 | 14,871 | 2,762 | 59.1% (44) | |
 | ML Feature Extraction | 0 | 0 | 0 | 0 | 0% | 0 | 0 | 0 | 0 | 0 | — (0) | unsupported |
-| Structured Data Extraction | 8 | 6,578 | 0 | 6,586 | 2.7% | 6,575 | 11 | 11 | 9 | 6,578 | 91.7% (12) | single_source, licence_single_point |
+| Structured Data Extraction | 8 | 6,578 | 0 | 6,586 | 2.7% | 6,575 | 11 | 11 | 9 | 6,578 | 95.8% (24) | single_source, licence_single_point |
 | **total** | 113,594 | 100,257 | 29,515 | 243,366 | 100% | 125,915 | 117,451 | 187,579 | 158,837 | 129,772 | 68.8% (231) | |
 
 The two exclusion columns use the builds in `data/licence_manifest.json`; their totals match the licence audit's 243,366 / 187,579 / 158,837.
@@ -73,25 +73,41 @@ Record counts by task form: 113,594 noul, 100,257 choice, 29,515 score. 6,000 re
 
 Two flags make the single-source cases explicit in the JSON. `single_source` means one source supplies at least 90% of the ability. `licence_single_point` means that source's group is not permissive, so one licence decision can zero the ability.
 
+## Audit of the 231 JevBench labels
+
+The demand table is only as good as the ability assigned to each item, so all 231 were reviewed by question form and option set. 90 labels changed, every one from Classification: 36 to Routing, 12 to Structured Data Extraction, 42 to Verification. 141 kept their label.
+
+| ability | before | after |
+|---|---:|---:|
+| Classification | 198 | 108 |
+| Verification | 2 | 44 |
+| Routing | 1 | 37 |
+| Structured Data Extraction | 12 | 24 |
+| Scoring | 18 | 18 |
+
+The review rule: Routing is a category that selects the next code path, so the options are tools, handlers, people to page, or the action an agent takes next. SDE recovers a field the text states ("which payment method does the customer name"). Verification checks an artifact or claim against requirements ("does the response fully satisfy the request"). Classification keeps outcomes, statuses and intent labels.
+
+The earlier mapping was not wrong about the items it scored; it applied the corpus heuristic to terse JevBench wording and fell back to Classification. `classify_question` now runs a JevBench-only pattern set (`_QUESTION_PATTERNS` in `data/abilities.py`) before the corpus patterns, so the corpus labels are unchanged and the sidecar hash is still `5933f899...`. Every item, its before label, reviewed label and reason, is committed as `247-jevbench-ability-audit.json`.
+
 ## Demand side
 
-The acceptance set is the 231 public JevBench items, classified by question form with the same heuristic. It is a separate public corpus, not a sample of the canonical corpus: the #235 audit finds no shared record, so the two columns compare ability mixes, not overlapping records.
+The acceptance set is the 231 public JevBench items, classified by question form. It is a separate public corpus, not a sample of the canonical corpus: the #235 audit finds no shared record, so the two columns compare ability mixes, not overlapping records.
 
 | ability | JevBench items | JevBench share | corpus share |
 |---|---:|---:|---:|
-| Classification | 198 | 85.7% | 61.9% |
+| Classification | 108 | 46.8% | 61.9% |
+| Verification | 44 | 19.0% | 13.4% |
+| Routing | 37 | 16.0% | 7.8% |
+| Structured Data Extraction | 24 | 10.4% | 2.7% |
 | Scoring | 18 | 7.8% | 12.1% |
-| Structured Data Extraction | 12 | 5.2% | 2.7% |
-| Verification | 2 | 0.9% | 13.4% |
-| Routing | 1 | 0.4% | 7.8% |
 | Detection, Search, Retrieval, Ranking, ML Feature Extraction | 0 | 0% | 1.9% / 0.2% / 0 / 0 / 0 |
 
 Four consequences:
 
-- The acceptance set is 85.7% Classification while the corpus is 61.9%. A JevBench score measures how the model does on classification-shaped decisions, not the corpus composition.
+- The acceptance set is 46.8% Classification while the corpus is 61.9%, and it over-weights Verification (19.0% against 13.4%) and Routing (16.0% against 7.8%). It is not a miniature corpus; the mix is its own, so a JevBench total is weighted by this set, not by the corpus composition.
 - Scoring has 18 items, 7.8% of the 231. Each item is worth 0.433 points of the total, so a 10-point Scoring gain (1.8 items) moves the total 0.78 points, inside the total's own 95% half-width of 6.0 points at the observed rate. Even a wipeout of all 18 moves the total 7.8 points, barely past that half-width, and a real regression is smaller. The held-out split sees what the total cannot: its score quota is 1,300 items with a 4.5-point minimum detectable effect (`27-matched-heldout-spec.md`), against 18 items at +/-23 points here.
 - Four abilities have zero items in the acceptance set. Ranking and ML Feature Extraction also have zero corpus records, so the metric cannot see those gaps by construction. Detection (4,650 records, 1.9% of the corpus) and Search (479, 0.2%) have coverage the set never exercises. The coverage table is the only place these gaps show up.
-- Verification is the corpus-side mirror: it is 13.4% of the corpus but 0.9% of the acceptance set, and its two JevBench items both miss. Only 2,762 of its 32,532 records (8.5%, 1.1% of the corpus) are listwise-eligible, so the label count overstates what the trained head sees, and the set measures the ability with two items.
+- Verification is the corpus-side mirror: 13.4% of the corpus but 19.0% of the acceptance set, and only 2,762 of its 32,532 corpus records (8.5%, 1.1% of the corpus) are listwise-eligible. The set now measures the ability at a size that can carry a rate, while the corpus contributes little gradient to it.
 
 The coverage JSON carries this as `demand`, with the per-ability counts, both share columns, and these four notes.
 
@@ -117,21 +133,21 @@ The per-option residual trainer does train noul with its fixed two-option `["no"
 
 ## Accuracy join
 
-The labeler joins per-item predictions to these labels with `--jevbench-predictions`, which classifies the 231 public JevBench items by question form and groups the predictions by ability. The input is `control_pred_231.jsonl`, SHA-256 `e55ae4dc919ccb906d99308129ae9702c9bed373f168d85f4875a153ff118661`, 231 rows, 0 unmatched.
+The labeler joins per-item predictions to these labels with `--jevbench-predictions`, which classifies the 231 public JevBench items by question form and groups the predictions by ability. The input is the committed `results/gate/qwen35_raw/paired/p_qwen35_4b_instruct.pred.jsonl`, SHA-256 `b12f5c0d48890337fdda02746aa63e9219af4e3ba0bfb2d4377a4c9795889756`, 231 rows, 0 unmatched. It reproduces the control run item for item; the earlier draft's `control_pred_231.jsonl` has the same predictions and no longer needs to be cited.
 
 | ability | corpus records | JevBench n | accuracy | chance-corrected |
 |---|---:|---:|---:|---:|
-| Classification | 150,571 | 198 | 67.2% | 0.492 |
-| Verification | 32,532 | 2 | 0% | -1.000 |
+| Classification | 150,571 | 108 | 65.7% | 0.502 |
+| Verification | 32,532 | 44 | 59.1% | 0.182 |
+| Routing | 19,033 | 37 | 67.6% | 0.599 |
+| Structured Data Extraction | 6,586 | 24 | 95.8% | 0.944 |
 | Scoring | 29,515 | 18 | 77.8% | 0.708 |
-| Routing | 19,033 | 1 | 100% | 1.000 |
-| Structured Data Extraction | 6,586 | 12 | 91.7% | 0.889 |
 | Detection | 4,650 | 0 | — | — |
 | Search | 479 | 0 | — | — |
 | Retrieval, Ranking, ML Feature Extraction | 0 | 0 | — | — |
 | **total** | **243,366** | **231** | **68.8%** | — |
 
-The type totals reproduce the control report exactly: choice 139 at 68.3%, noul 74 at 67.6%, score 18 at 77.8%. Only Classification has enough items to read as a rate. Verification (2), Routing (1) and the four abilities with no items are cells, not measurements; SDE at 12 items is suggestive at best. The table is committed as `eval` in the coverage JSON with `n`, `accuracy`, `chance_corrected` and the chance-corrected count for every cell.
+The type totals reproduce the control report exactly: choice 139 at 68.3%, noul 74 at 67.6%, score 18 at 77.8%. Classification, Verification, Routing and Structured Data Extraction each have at least 24 items and read as rates; Scoring at 18 and the four empty abilities are cells. The weakest measured ability is Verification at 59.1% (chance-corrected 0.182), on the largest non-classification block; Structured Data Extraction is close to saturated at 95.8% (0.944). The table is committed as `eval` in the coverage JSON with `n`, `accuracy`, `chance_corrected` and the chance-corrected count for every cell.
 
 The Scoring comparison is asymmetric and is the finding. On the split, chance-corrected accuracy is 0.3083 at n=474 (raw accuracy 0.4430; 3,999 split items: noul 1,908, choice 1,617, score 474). The raw proportion's standard error is 2.3 points; the chance-corrected quantity's is 2.84 points, computed per item over the rubric sizes. The numbers are committed as `247-split-summary.json`, summarised from the 3,999-row val prediction file whose SHA-256 the artifact records. On JevBench it is 0.708 at n=18; 18 items carry a binomial 95% interval of roughly +/-23 points and are not a measurement of anything. The split says Scoring is the weakest of the three types; JevBench says it is the best. Same model, same head, opposite direction. The asymmetry is not symmetric: trust the split's magnitude, not JevBench's rank. A plausible partial explanation for the split number comes from the pilot: Jev score labels are broad (mean entropy 0.907 of a 1.609 ceiling; 44.9% argmax-versus-expected disagreement), which 18 JevBench items cannot show. This is the third worked example of why standard C needs both instruments.
 
@@ -160,7 +176,10 @@ The filled sample is committed as `247-handcheck-sample.json` and the scored rep
         --manifest data/licence_manifest.json \
         --out research/canonical_labeled.jsonl \
         --map-out research/krino-canonical-243366.ability.jsonl \
-        --coverage research/247-ability-coverage.json
+        --coverage research/247-ability-coverage.json \
+        --jevbench-predictions \
+            results/gate/qwen35_raw/paired/p_qwen35_4b_instruct.pred.jsonl \
+        --jevbench-root data/benchmarks/jevbench
 
     python scripts/label_abilities.py --canonical research/krino-canonical-243366.jsonl \
         --sample-out research/247-handcheck-sample.json --sample-size 10 --seed 247
