@@ -356,6 +356,24 @@ def test_training_set_includes_noul_and_excludes_abstention():
     assert len(excluded) == 1 and excluded[0].answerable is False
 
 
+def test_training_set_honours_the_answerable_switch(monkeypatch):
+    """The env kill switch must govern the set filter, not only the loss.
+
+    A raw ``getattr`` here would leave the filter on while the per-item guard
+    was disabled, so the mutation test could pass without the mechanism
+    mattering.
+    """
+    from model.scripts.train_listwise import LISTWISE_ANSWERABLE_SWITCH
+
+    items = [_noul_item(), _noul_item(label=False, answerable=False)]
+    kept, excluded = training_set(items)
+    assert len(kept) == 1 and len(excluded) == 1
+
+    monkeypatch.setenv(LISTWISE_ANSWERABLE_SWITCH, "1")
+    kept, excluded = training_set(items)
+    assert len(kept) == 2 and len(excluded) == 0
+
+
 def test_provenance_records_overrides_and_hashes(tmp_path):
     import argparse
     import hashlib

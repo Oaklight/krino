@@ -15,6 +15,10 @@ the same head can rank a stage-1 shortlist.  At evaluation, choice items
 average four cyclic shifts of the option order; score items keep the natural
 order because rubric levels are ordered.
 
+``KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION`` turns the unanswerable-row
+exclusion off for the mutation test in ``tests/conftest.py``; it is not a
+production option.
+
 Usage:
     python model/scripts/train_listwise.py \
         --items data/benchmarks/residual_train_20000_jev.jsonl \
@@ -48,10 +52,28 @@ from model.scripts.train_residual import (
 )
 from model.src.backbone import load_causal_lm
 from model.src.decision_model import DecisionModel
+from model.src.feature_flags import feature_disabled
 from model.src.gpu_config import GPUConfig
 from model.src.listwise import ListwiseMarkerReadout
 
 TRAINED_TYPES = ("noul", "choice", "score")
+LISTWISE_ANSWERABLE_SWITCH = "KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION"
+
+
+def unanswerable_excluded(item) -> bool:
+    """Whether an unanswerable row is excluded from the listwise loss.
+
+    The path has no abstain head, so an ``answerable=false`` row has nothing
+    to teach.  It must not reach the CE: the paired corpus keeps the option set
+    and the original label, so ``gold >= 0`` and the CE would train the head on
+    a question with no answer.
+
+    ``KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION`` turns the exclusion off for
+    the mutation test.
+    """
+    return getattr(item, "answerable", None) is False and not feature_disabled(
+        LISTWISE_ANSWERABLE_SWITCH
+    )
 
 
 def training_set(items: list) -> tuple[list, list]:
@@ -60,15 +82,13 @@ def training_set(items: list) -> tuple[list, list]:
     Trained rows are the ``TRAINED_TYPES`` rows whose ``answerable`` is not
     explicitly False.  Key on the flag, not on ``_label_index < 0``: an
     ordinary item whose label sits outside the option keys must surface as an
-    error, not vanish as if it were an abstention row.
+    error, not vanish as if it were an abstention row.  The filter uses
+    :func:`unanswerable_excluded`, so the env switch that disables the
+    per-item guard also disables this one and the mutation test still bites.
     """
     typed = [item for item in items if item.question["type"] in TRAINED_TYPES]
-    abstention = [
-        item for item in typed if getattr(item, "answerable", None) is False
-    ]
-    kept = [
-        item for item in typed if getattr(item, "answerable", None) is not False
-    ]
+    abstention = [item for item in typed if unanswerable_excluded(item)]
+    kept = [item for item in typed if not unanswerable_excluded(item)]
     return kept, abstention
 
 
@@ -159,11 +179,7 @@ def item_loss(
     output; this term constrains the backbone readout the adapter changes, and
     it stays off by default so a frozen run is unchanged.
     """
-    if getattr(item, "answerable", None) is False:
-        # No abstain head on this path, so an unanswerable row has nothing to
-        # teach.  It must not reach the CE: the paired corpus keeps the option
-        # set and the original label, so `gold >= 0` and the CE would train
-        # the head on a question with no answer.
+    if unanswerable_excluded(item):
         zero = torch.zeros((), device=base.device)
         return zero, 0.0, 0.0
     q = item.question
@@ -400,6 +416,9 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     if args.torch_seed is not None:
+        # Seed the global RNG before any model or data object is built.  The
+        # flag is recorded in the checkpoint config, so a run that accepted it
+        # without applying it would describe an initialisation it did not use.
         torch.manual_seed(args.torch_seed)
     args.output.mkdir(parents=True, exist_ok=True)
     provenance = run_provenance(args)
@@ -560,7 +579,7 @@ def main() -> int:
         masked_rows = 0
         started = time.time()
         for index, item in enumerate(order, 1):
-            if getattr(item, "answerable", None) is False:
+            if unanswerable_excluded(item):
                 # No abstain head here, and item_loss returns a zero with no
                 # graph, so the row must not reach backward().
                 masked_rows += 1

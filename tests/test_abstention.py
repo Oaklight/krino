@@ -13,7 +13,13 @@ from model.scripts.build_abstention_sets import (
     _out_of_scope,
     main as build_main,
 )
-from model.scripts.eval_abstention import _at_coverage, _aurc, _summary
+from model.scripts.eval_abstention import (
+    _at_coverage,
+    _aurc,
+    _auroc,
+    _summary,
+    _threshold_accuracy,
+)
 
 
 def _choice(item_id: str = "c1", n_criteria: int = 4, **changes) -> TypedQuestion:
@@ -216,6 +222,38 @@ def test_aurc_reverse_ordering():
 def test_aurc_missing_scores_are_skipped():
     records = [_pred("1", True, 0.9, 0.9), _pred("2", False, None, 0.2)]
     assert abs(_aurc(records, "p_answerable") - 0.0) < 1e-9
+
+
+def test_auroc_orders_answerable_above_unanswerable():
+    positives = [_pred("p1", True, 0.9, 0.9), _pred("p2", True, 0.8, 0.9)]
+    negatives = [
+        _pred("n1", False, 0.2, 0.9, reason="insufficient"),
+        _pred("n2", False, 0.1, 0.9, reason="insufficient"),
+    ]
+    assert _auroc(negatives + positives, "p_answerable") == 1.0
+    assert _auroc(positives + negatives, "p_answerable") == 1.0
+    assert _auroc(positives, "p_answerable") is None
+
+
+def test_auroc_counts_ties_one_half():
+    records = [
+        _pred("p1", True, 0.5, 0.9),
+        _pred("n1", False, 0.5, 0.9, reason="out_of_scope"),
+    ]
+    assert _auroc(records, "p_answerable") == 0.5
+
+
+def test_threshold_accuracy_scores_abstention_as_wrong():
+    records = [
+        _pred("p1", True, 0.9, 0.9),
+        _pred("n1", False, 0.7, 0.9, reason="insufficient"),
+        _pred("p2", False, 0.4, 0.9),
+        _pred("n2", False, 0.2, 0.9, reason="insufficient"),
+    ]
+    result = _threshold_accuracy(records, "p_answerable")
+    assert result["answered"] == 2
+    assert result["accuracy"] == 0.25
+    assert result["answer_rate"] == 0.5
 
 
 def test_at_coverage_reports_answered_and_abstain_zero_accuracy():
