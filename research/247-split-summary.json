@@ -1,0 +1,34 @@
+{
+ "name": "canonical-split-summary",
+ "predictions": "val_split_3999_base.pred.jsonl",
+ "predictions_sha256": "9b6e0fa05df1d3f4228ddbf92d10a044fc8cd91ee104aadc532af7c72005dc4f",
+ "split": "split_items(items, val_fraction=0.2, split_seed=42) over residual_train_20000_jev.jsonl",
+ "population": "frozen Qwen3.5-4B base, argmax of the precomputed 20K base distribution",
+ "metric": "chance_corrected = mean((correct - 1/K) / (1 - 1/K)); K from n_options, noul K=2",
+ "n": 3999,
+ "accuracy": 0.689922,
+ "accuracy_se": 0.007314,
+ "by_type": {
+  "choice": {
+   "n": 1617,
+   "accuracy": 0.698825,
+   "accuracy_se": 0.011409,
+   "chance_corrected": 0.599095,
+   "chance_corrected_se": 0.015547
+  },
+  "noul": {
+   "n": 1908,
+   "accuracy": 0.743711,
+   "accuracy_se": 0.009995,
+   "chance_corrected": 0.487421,
+   "chance_corrected_se": 0.019995
+  },
+  "score": {
+   "n": 474,
+   "accuracy": 0.443038,
+   "accuracy_se": 0.022816,
+   "chance_corrected": 0.308263,
+   "chance_corrected_se": 0.028391
+  }
+ }
+}
