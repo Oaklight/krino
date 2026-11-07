@@ -1,0 +1,45 @@
+{
+ "created_utc": "2026-11-07T06:21:02Z",
+ "arm": "noul_listwise",
+ "code_commit": "18ae46ea5f0569180a6170b83f450cd47361e471",
+ "code_commit_note": "the SHA was recorded before the 2026-11-07 history rewrite and no longer resolves; the branch tip carrying the same tree is now c5b55a2, reached by a rebase to a2b8853 before the rewrite; the measured tree is unchanged",
+ "written_before": "any held-out prediction was produced; the eval processes were on part0 with no output file yet",
+ "verdict_item_set": {
+  "definition": "the frozen held-out, all rows, the same basis as the canonical gate",
+  "rows": 6254,
+  "abstention_excluded_variant": "secondary diagnostic only, never the verdict"
+ },
+ "metric": "chance-corrected accuracy (cc) by type; the noul column is the test, the aggregate is diluted by choice and score",
+ "resolution": {
+  "noul_column_rows": 2995,
+  "mde_80pct_pp": 3.0,
+  "noul_signal_rows_excluding_abstention": 2282,
+  "mde_80pct_pp_excluding_abstention": 3.4,
+  "basis": "paired_power.detectable_delta(n, discordance=0.324, power=0.80); the 0.324 is the JevBench planning discordance and will be recomputed at the realized value as a statement beside the result, never as a revised bar"
+ },
+ "prediction": {
+  "direction": "noul cc rises; choice and score may move slightly down as the adapter spends capacity on a third task; a meaningful fall in both is a trade, not a win",
+  "alpha_noul": {"seed0": 0.1447758972644806, "seed1": -0.006451738532632589, "seed2": 0.07132993638515472},
+  "flag": "seed1's noul head is effectively off; if it does little, the 3/3-positive rule fails on the noul column regardless of seeds 0 and 2. No rerun and no tuning."
+ },
+ "eval_identity": {
+  "eval_script": "model/scripts/eval_listwise.py",
+  "eval_script_sha256": "bd12410da54ec56cbe262034797a9fddb935216c509aafe9d1f9d1f1738c35dd",
+  "holdout_ids_file_sha256": "b2cde7f4012fa02e0fb186a761f6863b76f4b60ebfba8137b064049efd812628",
+  "holdout_ids_sha256": "492ee0afd47bfe819dee690127b8cfc2fab8c39fe10c4ebd6293754a53dcf87b",
+  "holdout_ids_note": "the committed file is model/experiments/canonical/heldout_6400.json; holdout_ids_file_sha256 is the file, holdout_ids_sha256 is sha256 over the sorted ids joined by newlines",
+  "heldout_shards_sha256": {
+   "part0": "60625929beb045990266267357f0d442626b48c5757ab1fc714cd94dfa133633",
+   "part1": "f46592debb360ff6c97490964ed828c31a5ea5c463e9397bf12c5d1c60566ad9",
+   "part2": "faeaed78e96c005a654000f4e09e56ad26b1a38d3e0ce2ae73095c29b5bca20d"
+  },
+  "command": "python -m model.scripts.eval_listwise --checkpoint <run-dir>/seed<k>/listwise.pt --items <held-out-shard-p> --base-probs <base-probs-jsonl> --output <run-dir>/seed<k>/heldout_part<p>.pred.jsonl --device cuda",
+  "paths": "<run-dir>, <held-out-shard-p> and <base-probs-jsonl> are supplied by the run script; none is a repository path. The held-out rows are the frozen set in model/experiments/canonical/heldout_6400.json, split into three shards whose sha256 are listed above. The base probs are the frozen Qwen3.5-4B distribution over the canonical corpus."
+ },
+ "comparison_arm": {
+  "arm": "canonical listwise, choice+score only, seeds 0/1/2",
+  "heldout_cc_by_type": {"noul": 0.25275459098497494, "choice": 0.4947657120042937, "score": 0.32620865139949107},
+  "n": {"noul": 2995, "choice": 2473, "score": 786}
+ },
+ "primary_comparison": "noul cc on the 2,995-row column, noul arm minus canonical arm, per seed and pooled; resolution 3.0 pp, a smaller movement is 'did not resolve'"
+}
