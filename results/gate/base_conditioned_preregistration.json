@@ -15,7 +15,9 @@
   "test_set": {
     "definition": "the frozen 6,400-id held-out, noul rows, the same basis as the canonical gate",
     "noul_rows": 2995,
-    "heldout_ids_sha256": "b2cde7f4012fa02e0fb186a761f6863b76f4b60ebfba8137b064049efd812628",
+    "holdout_ids_file_sha256": "b2cde7f4012fa02e0fb186a761f6863b76f4b60ebfba8137b064049efd812628",
+    "holdout_ids_sha256": "492ee0afd47bfe819dee690127b8cfc2fab8c39fe10c4ebd6293754a53dcf87b",
+    "holdout_ids_note": "the committed file is model/experiments/canonical/heldout_6400.json; holdout_ids_file_sha256 is the file, holdout_ids_sha256 is sha256 over the sorted ids joined by newlines",
     "heldout_shards_sha256": {
       "part0": "60625929beb045990266267357f0d442626b48c5757ab1fc714cd94dfa133633",
       "part1": "f46592debb360ff6c97490964ed828c31a5ea5c463e9397bf12c5d1c60566ad9",
@@ -51,8 +53,9 @@
     "eval_script": "model/scripts/eval_listwise.py",
     "eval_script_sha256": "ff8c0348ae55c2850b86ed81c41ace73d28ffd409c0505a70c715e9b09449ee5",
     "hash_note": "updated before any run, after an implementation fix: the conditioning argument is now passed only when the flag is set, so a call without the flag is byte-identical to the pre-change call. The question, metric and success rule are unchanged.",
-    "command": "cd <RUN_ROOT>/exp2 && CUDA_VISIBLE_DEVICES=<gpu> PYTHONPATH=<RUN_ROOT>/exp2 python -m model.scripts.eval_listwise --checkpoint basecond/seed<k>/listwise.pt --items <DATA_ROOT>/canonical/heldout_6400_part<p>.jsonl --base-probs <DATA_ROOT>/canonical/precompute-243366/base_probs_canonical_243366_qwen35_4b.jsonl --base-conditioned --head-only --output basecond/seed<k>/heldout_head_only_part<p>.pred.jsonl --device cuda",
-    "mixed_command": "same, without --head-only, written to a separate output"
+    "command": "python -m model.scripts.eval_listwise --checkpoint <run-dir>/seed<k>/listwise.pt --items <held-out-shard-p> --base-probs <base-probs-jsonl> --base-conditioned --head-only --output <run-dir>/seed<k>/heldout_head_only_part<p>.pred.jsonl --device cuda",
+    "mixed_command": "same, without --head-only, written to <run-dir>/seed<k>/heldout_mixed_part<p>.pred.jsonl",
+    "paths": "<run-dir>, <held-out-shard-p> and <base-probs-jsonl> are supplied by the run script; none is a repository path. The held-out rows are the frozen set in model/experiments/canonical/heldout_6400.json, split into three shards whose sha256 are listed above. The base probs are the frozen Qwen3.5-4B distribution over the canonical corpus."
   },
   "comparison_arm": {
     "arm": "noul_listwise #264, seeds 0/1/2, the same frozen held-out and eval script",
