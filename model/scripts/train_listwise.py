@@ -29,8 +29,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import random
+import subprocess
 import sys
 import time
 from collections import defaultdict
@@ -54,7 +56,7 @@ from model.src.feature_flags import feature_disabled
 from model.src.gpu_config import GPUConfig
 from model.src.listwise import ListwiseMarkerReadout
 
-TRAINED_TYPES = ("choice", "score")
+TRAINED_TYPES = ("noul", "choice", "score")
 LISTWISE_ANSWERABLE_SWITCH = "KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION"
 
 
@@ -72,6 +74,76 @@ def unanswerable_excluded(item) -> bool:
     return getattr(item, "answerable", None) is False and not feature_disabled(
         LISTWISE_ANSWERABLE_SWITCH
     )
+
+
+def training_set(items: list) -> tuple[list, list]:
+    """Split items into ``(trained, abstention-excluded)``.
+
+    Trained rows are the ``TRAINED_TYPES`` rows whose ``answerable`` is not
+    explicitly False.  Key on the flag, not on ``_label_index < 0``: an
+    ordinary item whose label sits outside the option keys must surface as an
+    error, not vanish as if it were an abstention row.  The filter uses
+    :func:`unanswerable_excluded`, so the env switch that disables the
+    per-item guard also disables this one and the mutation test still bites.
+    """
+    typed = [item for item in items if item.question["type"] in TRAINED_TYPES]
+    abstention = [item for item in typed if unanswerable_excluded(item)]
+    kept = [item for item in typed if not unanswerable_excluded(item)]
+    return kept, abstention
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _git_commit() -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=Path(__file__).resolve().parents[2],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return result.stdout.strip() or None
+
+
+def selection_sha256(items: list) -> str:
+    """Stable hash of a training selection: sorted ``(id, type, label)`` rows.
+
+    Two runs train on the same selection iff this matches.  The file hash is
+    not the same thing: a rebuild can add a field without changing a single
+    row this function sees.
+    """
+    rows = sorted(
+        f"{item.id}\t{item.question['type']}\t{item.label!r}" for item in items
+    )
+    return hashlib.sha256("\n".join(rows).encode()).hexdigest()
+
+
+def run_provenance(args) -> dict:
+    """Pin the code and inputs before the first training step.
+
+    The branch name is not identity: it is rebased after the run.  Pass
+    ``--code-commit`` on a host without git; the script, corpus, base-probs
+    and held-out list are hashed from the files actually used.
+    """
+    provenance = {
+        "code_commit": args.code_commit or _git_commit(),
+        "script_sha256": _file_sha256(Path(__file__)),
+        "corpus_sha256": args.corpus_sha256 or _file_sha256(args.items),
+        "base_probs_sha256": _file_sha256(args.base_probs),
+    }
+    holdout = getattr(args, "holdout_ids", None)
+    if holdout:
+        provenance["holdout_ids_sha256"] = _file_sha256(holdout)
+    return provenance
 
 
 def _subset_probs(base: torch.Tensor, subset: list[int]) -> torch.Tensor:
@@ -341,6 +413,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="JSON id list (or {'ids': [...]}) excluded before the internal "
         "split; the frozen held-out gate evaluates these ids separately",
     )
+    parser.add_argument(
+        "--code-commit",
+        default=None,
+        help="Commit SHA recorded in provenance.json; inferred from git when "
+        "omitted, and required on a host without git",
+    )
+    parser.add_argument(
+        "--corpus-sha256",
+        default=None,
+        help="Override the corpus hash when the items file is not readable "
+        "from the training host",
+    )
     return parser
 
 
@@ -351,6 +435,12 @@ def main() -> int:
         # flag is recorded in the checkpoint config, so a run that accepted it
         # without applying it would describe an initialisation it did not use.
         torch.manual_seed(args.torch_seed)
+    args.output.mkdir(parents=True, exist_ok=True)
+    provenance = run_provenance(args)
+    (args.output / "provenance.json").write_text(
+        json.dumps(provenance, indent=1) + "\n"
+    )
+    print(f"provenance {json.dumps(provenance)}", flush=True)
 
     items = load_jsonl(args.items)
     base_records = [
@@ -374,24 +464,7 @@ def main() -> int:
     # split seed is separate from the training seed: a replication seed must
     # vary init and item order, not which items are held out.
     train_items, val_items = split_items(items, args.val_fraction, args.split_seed)
-    train_items = [
-        item for item in train_items if item.question["type"] in TRAINED_TYPES
-    ]
-    # The abstention rows are annotated ``answerable = False`` with the gold
-    # removed from the option set, so their label has no index by design.  Key
-    # the exclusion on the flag, not on ``_label_index < 0``: keyed on the
-    # index, an ordinary question whose label sits outside the option keys
-    # would vanish silently instead of surfacing.  Dropping and masking are
-    # equivalent in this per-item loop, but not once a batch normalises over
-    # items; the answerable head (#254) should replace this filter.
-    abstention = [
-        item for item in train_items
-        if getattr(item, "answerable", None) is False
-    ]
-    train_items = [
-        item for item in train_items
-        if getattr(item, "answerable", None) is not False
-    ]
+    train_items, abstention = training_set(train_items)
     if abstention:
         print(
             f"excluded {len(abstention)} abstention rows (answerable=False)",
@@ -415,6 +488,38 @@ def main() -> int:
             "the trainer rounds them to the nearest level",
             flush=True,
         )
+    # The file hash alone cannot say the two arms train on the same rows: the
+    # corpus was rebuilt with an added field.  The selection hashes can.
+    provenance.update(
+        {
+            "corpus_note": (
+                "8eb3b2a4 and 07600293 differ only by the added label_kind "
+                "field; ids, states, labels and option sets are identical, "
+                "and the training selection is unchanged."
+            ),
+            "split_selection_sha256": selection_sha256(items),
+            "shared_train_selection_sha256": selection_sha256(
+                [
+                    item
+                    for item in train_items
+                    if item.question["type"] in ("choice", "score")
+                ]
+            ),
+            "trained_selection_sha256": selection_sha256(train_items),
+            "train_rows": len(train_items),
+            "train_rows_by_type": {
+                q_type: sum(
+                    1 for item in train_items if item.question["type"] == q_type
+                )
+                for q_type in TYPES
+            },
+            "val_rows": len(val_items),
+            "abstention_excluded_rows": len(abstention),
+        }
+    )
+    (args.output / "provenance.json").write_text(
+        json.dumps(provenance, indent=1) + "\n"
+    )
     print(
         f"train {len(train_items)} val {len(val_items)} "
         f"types { {t: sum(1 for i in items if i.question['type'] == t) for t in TYPES} }",
@@ -431,6 +536,16 @@ def main() -> int:
     backbone, tokenizer = load_causal_lm(
         args.model, device=args.device, freeze=True, flash_attention=False
     )
+    # Record the model that actually loaded, not only the requested name: a
+    # default or a wrapper can substitute a different checkpoint.
+    provenance["backbone_loaded"] = (
+        getattr(getattr(backbone, "config", None), "_name_or_path", None)
+        or args.model
+    )
+    (args.output / "provenance.json").write_text(
+        json.dumps(provenance, indent=1) + "\n"
+    )
+    print(f"backbone loaded {provenance['backbone_loaded']}", flush=True)
     gpu = GPUConfig(
         flash_attention=False,
         bf16_compute=True,
@@ -589,6 +704,7 @@ def main() -> int:
                 "base_conditioned": args.base_conditioned,
                 "holdout_ids": str(args.holdout_ids) if args.holdout_ids else None,
                 "torch_seed": args.torch_seed,
+                "provenance": provenance,
             },
             "history": history,
         },
