@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-06T23:38:29Z",
+ "generated_at": "2026-11-07T00:16:46Z",
  "canonical": "krino-canonical-243366.jsonl",
  "canonical_sha256": "8eb3b2a490a04c600bd652ebeed738c02976bb77e731b337efa513805c62e4f6",
  "canonical_records": 243366,
@@ -1012,28 +1012,28 @@
   "population": "JevBench public, 231 items",
   "source": "classified by question form (classify_question)",
   "by_ability": {
-   "Classification": 198,
+   "Classification": 108,
    "Detection": 0,
    "Scoring": 18,
-   "Routing": 1,
+   "Routing": 37,
    "Search": 0,
    "Retrieval": 0,
    "Ranking": 0,
-   "Verification": 2,
+   "Verification": 44,
    "ML Feature Extraction": 0,
-   "Structured Data Extraction": 12
+   "Structured Data Extraction": 24
   },
   "share": {
-   "Classification": 0.857143,
+   "Classification": 0.467532,
    "Detection": 0.0,
    "Scoring": 0.077922,
-   "Routing": 0.004329,
+   "Routing": 0.160173,
    "Search": 0.0,
    "Retrieval": 0.0,
    "Ranking": 0.0,
-   "Verification": 0.008658,
+   "Verification": 0.190476,
    "ML Feature Extraction": 0.0,
-   "Structured Data Extraction": 0.051948
+   "Structured Data Extraction": 0.103896
   },
   "corpus_share": {
    "Classification": 0.618702,
@@ -1048,29 +1048,29 @@
    "Structured Data Extraction": 0.027062
   },
   "notes": [
-   "The acceptance set is 85.7% Classification and the corpus is 61.9%. The set is a separate public corpus, not a sample of the canonical corpus; the comparison is between ability mixes, so a JevBench score measures classification-shaped decisions, not the corpus composition.",
+   "The acceptance set is 46.8% Classification and the corpus is 61.9%. The set is a separate public corpus, not a sample of the canonical corpus; the comparison is between ability mixes, so a JevBench score is weighted by the set's mix, not by the corpus composition.",
    "Scoring has 18 items, 7.8% of the 231, so each item is worth 0.433 points of the total. A 10-point Scoring gain moves the total 0.78 points, inside the total's +/-6.0-point 95% half-width; even a wipeout of all 18 moves it 7.8 points. The held-out split's score quota is 1,300 items at a 4.5-point minimum detectable effect, which is what sees a Scoring regression.",
    "Ranking, ML Feature Extraction, Detection and Search have zero items in the acceptance set. Ranking and ML Feature Extraction also have zero corpus records, so the metric cannot see those gaps by construction. Detection (4,650 records, 1.9% of the corpus) and Search (479, 0.2%) have coverage the set never exercises.",
-   "Verification is 13.4% of the corpus but 0.9% of the acceptance set, and its two JevBench items both miss. Only 2,762 of its 32,532 records (8.5%, 1.1% of the corpus) are listwise-eligible, so the label count overstates what the trained head sees, and the set measures the ability with two items."
+   "Verification is 44 of 231 acceptance items (19.0%) and 13.4% of the corpus, but only 2,762 of its 32,532 corpus records (1.1% of the corpus) are listwise-eligible, so the corpus contributes little gradient to an ability the set measures at this size."
   ]
  },
  "eval": {
-  "path": "research/control_pred_231.jsonl",
+  "path": "results/gate/qwen35_raw/paired/p_qwen35_4b_instruct.pred.jsonl",
   "matched": 231,
   "unmatched": 0,
   "metric": "chance_corrected = mean((correct - 1/K) / (1 - 1/K)); noul K=2 unless n_options is given",
   "by_ability": {
    "Classification": {
-    "n": 198,
-    "accuracy": 0.671717,
-    "chance_corrected": 0.491919,
-    "chance_corrected_n": 198
+    "n": 108,
+    "accuracy": 0.657407,
+    "chance_corrected": 0.50216,
+    "chance_corrected_n": 108
    },
    "Routing": {
-    "n": 1,
-    "accuracy": 1.0,
-    "chance_corrected": 1.0,
-    "chance_corrected_n": 1
+    "n": 37,
+    "accuracy": 0.675676,
+    "chance_corrected": 0.599099,
+    "chance_corrected_n": 37
    },
    "Scoring": {
     "n": 18,
@@ -1079,16 +1079,16 @@
     "chance_corrected_n": 18
    },
    "Structured Data Extraction": {
-    "n": 12,
-    "accuracy": 0.916667,
-    "chance_corrected": 0.888889,
-    "chance_corrected_n": 12
+    "n": 24,
+    "accuracy": 0.958333,
+    "chance_corrected": 0.944444,
+    "chance_corrected_n": 24
    },
    "Verification": {
-    "n": 2,
-    "accuracy": 0.0,
-    "chance_corrected": -1.0,
-    "chance_corrected_n": 2
+    "n": 44,
+    "accuracy": 0.590909,
+    "chance_corrected": 0.181818,
+    "chance_corrected_n": 44
    }
   },
   "by_type": {
