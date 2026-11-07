@@ -35,13 +35,18 @@ generated files stay user-owned. The image is `oaklight/texlive:science-cn`
 - **Heads**: a frozen base scorer that yields `p_base` (precomputed and
   cached), and one trainable `OptionMarkerHead` (about 251K parameters) shared
   by noul, choice and score.
-- **AnswerableHead**: implemented and drawn dashed. It is wired off: on the
-  rows it is meant to triage its AUROC is 0.458, below chance.
+- **AnswerableHead**: implemented and drawn dashed, and wired off. No
+  committed measurement shows it clears the base-error floor on the rows it is
+  meant to triage.
 - **Fusion**: `z = log p_base + alpha_t * u`, one learned scalar per type.
-  Measured values on the canonical arm are `alpha_noul = 0.00` (the type was
-  not trained there), `alpha_choice = 0.09`, `alpha_score = 0.19`.
-- **Loss**: `1.0 * KL(p_base || p) + 1.0 * CE(z, y)`. The KL anchor is on by
-  default in v4; v3 used a weight of 0.2.
+  Measured on the canonical arm over three seeds: `alpha_noul = 0.00` (the
+  type was not trained there), `alpha_choice` 0.0928 / 0.1335 / 0.0929 and
+  `alpha_score` 0.1908 / 0.1408 / 0.1906 — that is 0.09–0.13 and 0.14–0.19.
+- **Loss**: `1.0 * KL(p_base || p) + 0.2 * CE(z, y) + 1.0 * KL(p_base || q)`,
+  where `q` is the readout distribution before fusion. The weights are the
+  ones recorded in the canonical seed-0 checkpoint. In code `--kl-weight` is
+  1.0 and `--ce-weight` is 0.2; `--lora-kl-weight`, the third term, defaults
+  to 0 and was set to 1.0 for the canonical arm.
 - **Inference**: LoRA folds into the base weights, so the shared-prefix cache
   stays valid and a decision costs 133 ms instead of 1.29 s.
 
@@ -49,15 +54,28 @@ generated files stay user-owned. The image is `oaklight/texlive:science-cn`
 
 Frozen held-out, 6,254 scored rows of 6,424, three seeds:
 
-| type | delta vs frozen base | significant seeds |
-| --- | ---: | ---: |
-| choice | +1.83 to +2.61 pp | 3/3 |
-| score | +2.89 to +3.05 pp | 2/3 |
-| noul | +-0.00 pp | untrained in this arm |
+| type | delta vs frozen base |
+| --- | ---: |
+| choice | +1.83 to +2.61 pp |
+| score | +2.89 to +3.05 pp |
+| noul | +-0.00 pp (untrained in this arm) |
 
-JevBench public, 231 items: `cc` 0.5187, equal to the control. The canonical
-arm did not pass the standard C gate; the admissibility clause was written
-above the control value and is not attainable by construction (#263).
+The deltas are ranges over the three seeds. The paired McNemar test is run on
+the pooled held-out, not per type, so no per-type significance count is
+reported.
+
+JevBench public, 231 items, against a control `cc` of 0.5187:
+
+| seed | `cc` | paired McNemar |
+| --- | ---: | --- |
+| 0 | 0.5187 | 1 win / 1 loss, p = 1.0 |
+| 1 | 0.5129 | 1 win / 2 losses, p = 1.0 |
+| 2 | 0.5187 | 0 wins / 0 losses, p = 1.0 |
+
+The canonical arm did not pass the standard C gate: seed 1 misses the
+admissibility floor by 0.58 pp, so JevBench is not unanimous. The exact
+control value is 0.5186868686868686 and the admissibility clause is written
+above it, so it is not attainable by construction (#263).
 
 ## Metric
 

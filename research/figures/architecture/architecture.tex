@@ -133,8 +133,8 @@
   (anshead) at (12.20,7.45)
   {\textbf{AnswerableHead}\\[1pt]
    {\scriptsize implemented, \textbf{not used}}\\[3pt]
-   {\scriptsize AUROC $0.458$ on the rows it is meant to triage --- below
-    chance, so the head is wired off}};
+   {\scriptsize Wired off: no committed measurement yet shows it clears the
+    base-error floor}};
 \draw[dasharrow] (12.20,9.7) -- (anshead.north);
 
 % ================================================================ p_base cache
@@ -190,22 +190,27 @@
 \node[lossbox, anchor=north west, text width=4.9cm] (loss) at (15.25,12.45)
   {\textbf{Loss}\\[3pt]
    $\mathcal{L}=1.0\cdot\mathrm{KL}\!\left(p^{base}\,\|\,p\right)$\\[1pt]
-   $\quad+1.0\cdot\mathrm{CE}(z,y)$\\[4pt]
-   {\scriptsize The KL anchor is on by default in v4 ($w=1.0$).}};
+   $\quad+0.2\cdot\mathrm{CE}(z,y)$\\[1pt]
+   $\quad+1.0\cdot\mathrm{KL}\!\left(p^{base}\,\|\,q\right)$\\[4pt]
+   {\scriptsize $q$ is the readout before fusion. Weights as recorded in the
+    canonical seed-0 checkpoint; the anchor weight defaults to $0$ in code.}};
 
-\node[note, anchor=north west, text width=4.9cm] (infer) at (15.25,9.95)
+\node[note, anchor=north west, text width=4.9cm] (infer) at ([yshift=-7pt]loss.south west)
   {\textbf{Inference.} LoRA folds into the base weights, so the shared-prefix
    cache stays valid and one decision costs \textbf{133\,ms} (1.29\,s
    unfolded).};
 
-\node[note, anchor=north west, text width=4.9cm] (results) at (15.25,8.15)
+\node[note, anchor=north west, text width=4.9cm] (results) at ([yshift=-7pt]infer.south west)
   {\textbf{Measured (canonical arm, 3 seeds)}\\[4pt]
-   choice $\;+1.83$ to $+2.61$\,pp \;(3/3 significant)\\
-   score $\;\;\;+2.89$ to $+3.05$\,pp \;(2/3 significant)\\
-   noul $\quad\pm0.00$\,pp \;(untrained in this arm)\\[4pt]
-   JevBench \texttt{cc} $0.5187$, equal to the control.};
+   choice $\;+1.83$ to $+2.61$\,pp\\
+   score $\;\;\;+2.89$ to $+3.05$\,pp\\
+   noul $\quad\pm0.00$\,pp (untrained here)\\[3pt]
+   {\scriptsize ranges over seeds; the paired McNemar test is run on the
+    pooled held-out, not per type}\\[4pt]
+   \textbf{Not promoted.} JevBench \texttt{cc} $0.5187$ / $0.5129$ / $0.5187$
+   against the $0.5187$ control; seed 1 misses by $0.58$\,pp.};
 
-\node[note, anchor=north west, text width=4.9cm] (data) at (15.25,4.60)
+\node[note, anchor=north west, text width=4.9cm] (data) at ([yshift=-7pt]results.south west)
   {\textbf{Canonical corpus} \;243{,}366 rows, 35 sources\\
    noul 113{,}594 \quad choice 100{,}257 \quad score 29{,}515\\
    {\scriptsize label kind: option 98{,}257 / level 27{,}610 /
