@@ -347,6 +347,70 @@ class AttentionHead(nn.Module):
         return opt + gate * rival_ctx
 
 
+def base_features(probs: torch.Tensor) -> torch.Tensor:
+    """Per-option features of a base distribution: ``[log p, is_argmax]``.
+
+    ``probs`` is ``[..., K]`` over the same options the head scores.  The
+    argmax column uses a single one-hot index, matching ``torch.argmax`` on a
+    tie, so the feature is deterministic.
+    """
+    probs = probs.clamp_min(1e-6)
+    index = probs.argmax(dim=-1, keepdim=True)
+    one_hot = torch.zeros_like(probs).scatter_(-1, index, 1.0)
+    return torch.stack([torch.log(probs), one_hot], dim=-1)
+
+
+class _BaseFeatureLinear(nn.Linear):
+    """First scorer layer with two extra input columns for base features.
+
+    The layer is built at the pre-change width so its initial weights and RNG
+    draw match the head without base conditioning, then widened with zero
+    columns.  A checkpoint saved before this change has the narrower weight;
+    :meth:`_load_from_state_dict` pads it with zeros so the old checkpoint
+    loads and scores exactly as it did.
+    """
+
+    def __init__(self, in_features: int, out_features: int, base_features: int) -> None:
+        super().__init__(in_features, out_features)
+        self.base_features = base_features
+        with torch.no_grad():
+            self.weight = nn.Parameter(
+                torch.cat(
+                    [self.weight, self.weight.new_zeros(out_features, base_features)],
+                    dim=1,
+                )
+            )
+        self.in_features = in_features + base_features
+
+    def _load_from_state_dict(
+        self,
+        state_dict,
+        prefix,
+        local_metadata,
+        strict,
+        missing_keys,
+        unexpected_keys,
+        error_msgs,
+    ) -> None:
+        key = prefix + "weight"
+        weight = state_dict.get(key)
+        if weight is not None and weight.shape[-1] == self.in_features - self.base_features:
+            state_dict = dict(state_dict)
+            state_dict[key] = torch.cat(
+                [weight, weight.new_zeros(weight.shape[0], self.base_features)],
+                dim=1,
+            )
+        super()._load_from_state_dict(
+            state_dict,
+            prefix,
+            local_metadata,
+            strict,
+            missing_keys,
+            unexpected_keys,
+            error_msgs,
+        )
+
+
 class OptionMarkerHead(nn.Module):
     """Score options at their own marker positions.
 
@@ -369,6 +433,8 @@ class OptionMarkerHead(nn.Module):
         rank: Nominal width, matching the attention head's rank.
         dropout: Dropout probability.
         expansion: Multiplier from ``rank`` to the scorer's hidden width.
+        base_features: Width of the optional per-option base-distribution
+            feature.  Two columns: ``log p_base`` and the base argmax flag.
     """
 
     def __init__(
@@ -377,13 +443,17 @@ class OptionMarkerHead(nn.Module):
         rank: int = 64,
         dropout: float = 0.1,
         expansion: int = 3,
+        base_features: int = 2,
     ) -> None:
         super().__init__()
         hidden = max(1, rank * expansion)
+        self.hidden_size = hidden_size
+        self.base_features = base_features
         self.layer_norm = nn.LayerNorm(hidden_size)
+        # The first scorer layer carries the two base-distribution columns.
         self.scorer = nn.Sequential(
             nn.Dropout(dropout),
-            nn.Linear(hidden_size, hidden),
+            _BaseFeatureLinear(hidden_size, hidden, base_features),
             nn.GELU(),
             nn.Dropout(dropout),
             nn.Linear(hidden, 1),
@@ -393,6 +463,7 @@ class OptionMarkerHead(nn.Module):
         self,
         marker_hidden: torch.Tensor,
         option_mask: torch.Tensor | None = None,
+        base_feat: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Score option markers.
 
@@ -400,11 +471,24 @@ class OptionMarkerHead(nn.Module):
             marker_hidden: [batch, n_options, hidden_size] — backbone hidden
                 state at each option's marker token.
             option_mask: [batch, n_options] — True for valid options.
+            base_feat: [batch, n_options, 2] — optional ``[log p_base,
+                is_base_argmax]`` for each option.  ``None`` appends zeros, so
+                the head scores exactly as it did before base conditioning.
 
         Returns:
             logits: [batch, n_options] — one score per option (pre-softmax).
         """
-        logits = self.scorer(self.layer_norm(marker_hidden)).squeeze(-1)
+        hidden = self.layer_norm(marker_hidden)
+        if base_feat is None:
+            base_feat = hidden.new_zeros(*hidden.shape[:-1], self.base_features)
+        else:
+            if base_feat.shape[-1] != self.base_features:
+                raise ValueError(
+                    f"base_feat needs {self.base_features} columns, "
+                    f"got {base_feat.shape[-1]}"
+                )
+            base_feat = base_feat.to(hidden.dtype)
+        logits = self.scorer(torch.cat([hidden, base_feat], dim=-1)).squeeze(-1)
         if option_mask is not None:
             logits = logits.masked_fill(~option_mask, float("-inf"))
         return logits
