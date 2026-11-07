@@ -304,13 +304,38 @@ def build_parser() -> argparse.ArgumentParser:
     "replications of one recipe.",
     )
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--torch-seed",
+        type=int,
+        default=None,
+        help="Seed torch's global RNG for reproducible model initialisation; "
+        "omitted leaves the ambient RNG state",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Load the items and print the post-filter split, then exit before "
+        "loading the backbone; used to check corpus/base-prob coverage",
+    )
+    parser.add_argument(
+        "--holdout-ids",
+        type=Path,
+        default=None,
+        help="JSON id list (or {'ids': [...]}) excluded before the internal "
+        "split; the frozen held-out gate evaluates these ids separately",
+    )
     return parser
 
 
 def main() -> int:
     args = build_parser().parse_args()
+    if args.torch_seed is not None:
+        # Seed the global RNG before any model or data object is built.  The
+        # flag is recorded in the checkpoint config, so a run that accepted it
+        # without applying it would describe an initialisation it did not use.
+        torch.manual_seed(args.torch_seed)
 
     items = load_jsonl(args.items)
     base_records = [
@@ -320,6 +345,14 @@ def main() -> int:
         rec["id"]: torch.tensor(rec["probs"], dtype=torch.float32) for rec in base_records
     }
     items = [item for item in items if item.id in base_probs]
+    if args.holdout_ids:
+        payload = json.loads(args.holdout_ids.read_text())
+        holdout_ids = set(payload["ids"] if isinstance(payload, dict) else payload)
+        items = [item for item in items if item.id not in holdout_ids]
+        print(
+            f"excluded {len(holdout_ids)} held-out ids; {len(items)} items remain",
+            flush=True,
+        )
     if args.limit:
         items = items[: args.limit]
     # The same call as train_residual, so the val split matches D20K.  The
@@ -329,11 +362,56 @@ def main() -> int:
     train_items = [
         item for item in train_items if item.question["type"] in TRAINED_TYPES
     ]
+    # The abstention rows are annotated ``answerable = False`` with the gold
+    # removed from the option set, so their label has no index by design.  Key
+    # the exclusion on the flag, not on ``_label_index < 0``: keyed on the
+    # index, an ordinary question whose label sits outside the option keys
+    # would vanish silently instead of surfacing.  Dropping and masking are
+    # equivalent in this per-item loop, but not once a batch normalises over
+    # items; the answerable head (#254) should replace this filter.
+    abstention = [
+        item for item in train_items
+        if getattr(item, "answerable", None) is False
+    ]
+    train_items = [
+        item for item in train_items
+        if getattr(item, "answerable", None) is not False
+    ]
+    if abstention:
+        print(
+            f"excluded {len(abstention)} abstention rows (answerable=False)",
+            flush=True,
+        )
+    unlabeled = [item for item in train_items if _label_index(item) < 0]
+    if unlabeled:
+        shown = ", ".join(item.id for item in unlabeled[:10])
+        raise RuntimeError(
+            f"{len(unlabeled)} answerable train items have no label among the "
+            f"options: {shown}"
+        )
+    fractional = [
+        item for item in train_items
+        if item.question["type"] == "score"
+        and float(item.label) != int(round(float(item.label)))
+    ]
+    if fractional:
+        print(
+            f"{len(fractional)} score train items have a fractional label; "
+            "the trainer rounds them to the nearest level",
+            flush=True,
+        )
     print(
         f"train {len(train_items)} val {len(val_items)} "
         f"types { {t: sum(1 for i in items if i.question['type'] == t) for t in TYPES} }",
         flush=True,
     )
+    if args.dry_run:
+        print(
+            f"dry run: {len(items)} items after the base-probs and held-out filters "
+            f"(train {len(train_items)} trained-type, val {len(val_items)})",
+            flush=True,
+        )
+        return 0
 
     backbone, tokenizer = load_causal_lm(
         args.model, device=args.device, freeze=True, flash_attention=False
@@ -405,6 +483,13 @@ def main() -> int:
                 args.lora_kl_weight,
             )
             task_rows += 1
+            if not loss.requires_grad:
+                # item_loss returns a constant zero only for a label with no
+                # index.  The filter above leaves no such answerable item, so
+                # this is a data or code error and must not pass silently.
+                raise RuntimeError(
+                    f"item {item.id} produced a loss with no gradient"
+                )
             kl_total += kl_value
             ce_total += ce_value
             optimizer.zero_grad(set_to_none=True)
@@ -484,6 +569,8 @@ def main() -> int:
                     list(args.lora_targets) if args.lora_layers is not None else None
                 ),
                 "lora_kl_weight": args.lora_kl_weight,
+                "holdout_ids": str(args.holdout_ids) if args.holdout_ids else None,
+                "torch_seed": args.torch_seed,
             },
             "history": history,
         },
