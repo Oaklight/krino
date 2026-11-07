@@ -286,6 +286,13 @@ def build_parser() -> argparse.ArgumentParser:
     "replications of one recipe.",
     )
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--torch-seed",
+        type=int,
+        default=None,
+        help="Seed torch's global RNG for reproducible model initialisation; "
+        "omitted leaves the ambient RNG state",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument(
