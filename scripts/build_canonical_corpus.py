@@ -37,6 +37,13 @@ builder fails on a choice label outside ``criteria`` unless ``answerable`` is
 False, and on a score label that is non-numeric or outside the level range; the
 failure names the row and the criterion.  Noul rows have no label kind.
 
+Kill switches exist for the mutation test in ``tests/conftest.py``; production
+never sets them:
+
+    KRINO_DISABLE_CANONICAL_DEDUP                keep repeated ids
+    KRINO_DISABLE_CANONICAL_LICENCE_EXCLUSION    keep groups outside the build
+    KRINO_DISABLE_CANONICAL_UNKNOWN_GROUP_GUARD  keep groups absent from the manifest
+
 Usage:
     python scripts/build_canonical_corpus.py \
         --manifest data/licence_manifest.json --build full \
@@ -103,6 +110,10 @@ PURE_GENERATION = {
     "game_strategy",
 }
 
+DEDUP_SWITCH = "KRINO_DISABLE_CANONICAL_DEDUP"
+LICENCE_EXCLUSION_SWITCH = "KRINO_DISABLE_CANONICAL_LICENCE_EXCLUSION"
+UNKNOWN_GROUP_GUARD_SWITCH = "KRINO_DISABLE_CANONICAL_UNKNOWN_GROUP_GUARD"
+
 
 def read_jsonl(path: Path) -> Iterable[dict]:
     with path.open(encoding="utf-8") as handle:
@@ -159,6 +170,7 @@ def main() -> int:
     from data.labels import LabelError, annotate
     from data.provenance import tag
     from data.synthetic import family_to_typed_questions
+    from model.src.feature_flags import feature_disabled
 
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     groups = manifest["groups"]
@@ -167,6 +179,9 @@ def main() -> int:
         for group, entry in groups.items()
         if args.build in entry.get("included_in", [])
     }
+    dedup_enabled = not feature_disabled(DEDUP_SWITCH)
+    licence_exclusion_enabled = not feature_disabled(LICENCE_EXCLUSION_SWITCH)
+    unknown_group_guard = not feature_disabled(UNKNOWN_GROUP_GUARD_SWITCH)
 
     root = args.root.resolve()
     synth_dir = args.synthetic_dir.resolve() if args.synthetic_dir else root / "synthetic"
@@ -231,22 +246,24 @@ def main() -> int:
         item_id = item.get("id")
         if not isinstance(item_id, str):
             return
-        if corpus in suffix_corpora:
+        if dedup_enabled and corpus in suffix_corpora:
             ordinal = ordinals.get((corpus, item_id), 0)
             ordinals[(corpus, item_id)] = ordinal + 1
             item = dict(item)
             item["id"] = f"{item_id}-q{ordinal + 1}"
             item["group"] = item_id
             item_id = item["id"]
-        if item_id in seen:
-            return
-        seen.add(item_id)
+        if dedup_enabled:
+            if item_id in seen:
+                return
+            seen.add(item_id)
         group = licence_group(item)
         q_type = str((item.get("question") or {}).get("type") or "missing")
         if group not in groups:
-            unknown_groups[group] += 1
-            return
-        if group not in included:
+            if unknown_group_guard:
+                unknown_groups[group] += 1
+                return
+        elif group not in included and licence_exclusion_enabled:
             dropped[group] += 1
             return
         provenance = tag(item, corpus)
