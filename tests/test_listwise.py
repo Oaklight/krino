@@ -410,3 +410,80 @@ def test_sampling_respects_the_capacity_cap(readout):
         )
         assert 2 <= len(subset) <= 5
         assert 7 in subset
+
+
+def test_base_probs_are_inert_until_the_feature_columns_move():
+    readout = _readout()
+    base = torch.tensor([0.1, 0.2, 0.3, 0.4])
+    with torch.no_grad():
+        assert torch.allclose(
+            readout.score(STATE, INSTRUCTIONS, OPTIONS, base_probs=base),
+            readout.score(STATE, INSTRUCTIONS, OPTIONS),
+            atol=1e-6,
+        )
+        head = readout.model.marker_head
+        head.scorer[1].weight[:, head.hidden_size:] = 0.5
+        assert not torch.allclose(
+            readout.score(STATE, INSTRUCTIONS, OPTIONS, base_probs=base),
+            readout.score(STATE, INSTRUCTIONS, OPTIONS),
+            atol=1e-6,
+        )
+
+
+def test_shifted_base_probs_rotate_with_the_options():
+    readout = _readout()
+    head = readout.model.marker_head
+    with torch.no_grad():
+        head.scorer[1].weight[:, head.hidden_size:] = 0.5
+    base = torch.tensor([0.1, 0.2, 0.3, 0.4])
+    shifts = 3
+    with torch.no_grad():
+        shifted = readout.score_shifted(
+            STATE, INSTRUCTIONS, OPTIONS, shifts=shifts, base_probs=base
+        )
+        manual = None
+        for shift in range(shifts):
+            order = [index % len(OPTIONS) for index in range(shift, shift + len(OPTIONS))]
+            rotated = [OPTIONS[index] for index in order]
+            rotated_base = base[torch.tensor(order)]
+            probs = readout.probabilities(
+                STATE, INSTRUCTIONS, rotated, base_probs=rotated_base
+            )
+            unrotated = torch.empty_like(probs)
+            for position, source in enumerate(order):
+                unrotated[0, source] = probs[0, position]
+            manual = unrotated if manual is None else manual + unrotated
+        manual = manual / shifts
+    assert torch.allclose(shifted, manual, atol=1e-6)
+
+
+def test_item_loss_conditions_the_head_only_when_asked():
+    readout = _readout()
+    item = _choice_item()
+    base = torch.tensor([0.1, 0.2, 0.3, 0.4])
+    for conditioned in (False, True):
+        readout.model.zero_grad(set_to_none=True)
+        loss, _kl, _ce = item_loss(
+            readout,
+            item,
+            base,
+            torch.nn.Parameter(torch.tensor(1.0)),
+            random.Random(0),
+            1.0,
+            0.2,
+            2,
+            False,
+            None,
+            0.0,
+            conditioned,
+        )
+        loss.backward()
+        grad = readout.model.marker_head.scorer[1].weight.grad
+        assert grad is not None
+        feature_grad = grad[:, readout.model.marker_head.hidden_size :].abs().sum()
+        if conditioned:
+            assert feature_grad.item() > 0
+        else:
+            # No base features reach the head, so the new columns get no
+            # gradient at all.
+            assert feature_grad.item() == 0.0

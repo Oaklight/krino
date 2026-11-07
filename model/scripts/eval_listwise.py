@@ -51,21 +51,26 @@ def score_item(
     base: torch.Tensor | None,
     alphas: dict[str, float],
     shifts: int,
+    base_conditioned: bool = False,
+    head_only: bool = False,
 ) -> tuple[int, list[float]]:
     """Predicted option index and per-option probabilities over ``subset``."""
     q = item.question
     options = _options(q)
     q_type = q["type"]
     item_shifts = shifts if q_type == "choice" else 1
+    picked = None
+    if base is not None:
+        picked = base[torch.tensor(subset, device=base.device)].clamp_min(1e-6)
+        picked = picked / picked.sum()
     probs = readout.score_shifted(
         item.state,
         q.get("instructions", ""),
         [options[index] for index in subset],
         shifts=item_shifts,
+        base_probs=picked if base_conditioned else None,
     ).reshape(-1)
-    if base is not None:
-        picked = base[torch.tensor(subset, device=base.device)].clamp_min(1e-6)
-        picked = picked / picked.sum()
+    if picked is not None and not head_only:
         alpha = alphas.get(q_type, 0.0)
         probs = torch.softmax(
             torch.log(picked.to(probs.device)) + alpha * torch.log(probs), dim=-1
@@ -91,6 +96,18 @@ def main() -> int:
         default=None,
         help="JSON {item_id: [option indices]}; omitted means the full set",
     )
+    parser.add_argument(
+        "--base-conditioned",
+        action="store_true",
+        help="Pass the base distribution to the head as its two per-option "
+        "features; must match the checkpoint",
+    )
+    parser.add_argument(
+        "--head-only",
+        action="store_true",
+        help="Keep the base features but skip the alpha fusion, so the score "
+        "is the head's alone",
+    )
     parser.add_argument("--shifts", type=int, default=None)
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--device", default="cuda")
@@ -106,6 +123,14 @@ def main() -> int:
         )
     alphas = checkpoint["alpha"]
     shifts = args.shifts if args.shifts is not None else int(config.get("eval_shifts", 4))
+    trained_conditioned = bool(config.get("base_conditioned", False))
+    if args.base_conditioned != trained_conditioned:
+        raise SystemExit(
+            f"--base-conditioned={args.base_conditioned} does not match the "
+            f"checkpoint (trained with base_conditioned={trained_conditioned})"
+        )
+    if args.base_conditioned and args.base_probs is None:
+        raise SystemExit("--base-conditioned needs --base-probs")
 
     backbone, tokenizer = load_causal_lm(
         config["backbone"], device=args.device, freeze=True, flash_attention=False
@@ -167,7 +192,14 @@ def main() -> int:
         base = base_probs.get(item.id)
         with torch.no_grad():
             pred, probs = score_item(
-                readout, item, subset, base, alphas, shifts
+                readout,
+                item,
+                subset,
+                base,
+                alphas,
+                shifts,
+                args.base_conditioned,
+                args.head_only,
             )
         gold = _label_index(item)
         hit = gold >= 0 and pred == gold
@@ -198,6 +230,8 @@ def main() -> int:
                 "accuracy": accuracy,
                 "corrected": cc,
                 "shifts": shifts,
+                "base_conditioned": args.base_conditioned,
+                "head_only": args.head_only,
                 "subset_source": str(args.subsets) if args.subsets else "full",
             },
             indent=1,

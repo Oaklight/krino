@@ -25,6 +25,7 @@ import torch
 import torch.nn.functional as F
 
 from .decision_model import DecisionModel
+from .heads import base_features
 from .hybrid_cache import fork_prefix_cache
 from .shape_buckets import PREFIX_BUCKETS, SUFFIX_BUCKETS, bucket_length, left_pad
 
@@ -209,26 +210,51 @@ class ListwiseMarkerReadout:
         return self.suffix_length(option_texts) < self.model.max_length
 
     # -- scoring --------------------------------------------------------
+    @staticmethod
+    def _base_feat(
+        base_probs: torch.Tensor | None, n_options: int
+    ) -> torch.Tensor | None:
+        """``[1, K, 2]`` base features, or ``None`` when unconditioned."""
+        if base_probs is None:
+            return None
+        probs = base_probs.reshape(-1)
+        if probs.numel() != n_options:
+            raise ValueError(
+                f"base_probs has {probs.numel()} entries for {n_options} options"
+            )
+        return base_features(probs).unsqueeze(0)
+
     def score(
         self,
         state: str,
         instructions: str,
         option_texts: Sequence[str],
+        base_probs: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """Marker logits [1, K] for ``option_texts``, in the given order."""
+        """Marker logits [1, K] for ``option_texts``, in the given order.
+
+        ``base_probs`` is the frozen base distribution over the same options,
+        in the same order.  ``None`` scores without base conditioning.
+        """
         if not option_texts:
             raise ValueError("listwise readout needs at least one option")
         hidden = self._marker_hidden(state, instructions, option_texts)
-        return self.model.marker_head(hidden.unsqueeze(0))
+        feat = self._base_feat(base_probs, len(option_texts))
+        if feat is not None:
+            feat = feat.to(hidden.device)
+        return self.model.marker_head(hidden.unsqueeze(0), base_feat=feat)
 
     def probabilities(
         self,
         state: str,
         instructions: str,
         option_texts: Sequence[str],
+        base_probs: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Softmax over the set, [1, K]."""
-        return torch.softmax(self.score(state, instructions, option_texts), dim=-1)
+        return torch.softmax(
+            self.score(state, instructions, option_texts, base_probs), dim=-1
+        )
 
     def score_shifted(
         self,
@@ -236,12 +262,14 @@ class ListwiseMarkerReadout:
         instructions: str,
         option_texts: Sequence[str],
         shifts: int = 4,
+        base_probs: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Average the set distribution over cyclic shifts of the order.
 
         The head is trained on shuffled orders, so averaging a few shifts
         removes part of the order variance.  ``shifts`` is clamped to the
-        option count, and for K <= 4 every shift is used.
+        option count, and for K <= 4 every shift is used.  ``base_probs`` is
+        rotated with the options so option ``i`` keeps its own feature.
         """
         n_options = len(option_texts)
         shifts = max(1, min(shifts, n_options))
@@ -249,7 +277,13 @@ class ListwiseMarkerReadout:
         for shift in range(shifts):
             order = [index % n_options for index in range(shift, shift + n_options)]
             rotated = [option_texts[index] for index in order]
-            probs = self.probabilities(state, instructions, rotated)
+            rotated_base = None
+            if base_probs is not None:
+                index = torch.tensor(order, device=base_probs.device)
+                rotated_base = base_probs.reshape(-1)[index]
+            probs = self.probabilities(
+                state, instructions, rotated, base_probs=rotated_base
+            )
             unrotated = torch.empty_like(probs)
             for position, source in enumerate(order):
                 unrotated[0, source] = probs[0, position]
