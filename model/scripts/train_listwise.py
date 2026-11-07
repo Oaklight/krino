@@ -502,6 +502,16 @@ def main() -> int:
     backbone, tokenizer = load_causal_lm(
         args.model, device=args.device, freeze=True, flash_attention=False
     )
+    # Record the model that actually loaded, not only the requested name: a
+    # default or a wrapper can substitute a different checkpoint.
+    provenance["backbone_loaded"] = (
+        getattr(getattr(backbone, "config", None), "_name_or_path", None)
+        or args.model
+    )
+    (args.output / "provenance.json").write_text(
+        json.dumps(provenance, indent=1) + "\n"
+    )
+    print(f"backbone loaded {provenance['backbone_loaded']}", flush=True)
     gpu = GPUConfig(
         flash_attention=False,
         bf16_compute=True,
