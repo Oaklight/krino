@@ -1,0 +1,62 @@
+{
+  "created_utc": "2026-11-07T16:18:11Z",
+  "experiment": "base_conditioned_head",
+  "written_before": "any base-conditioned training run or held-out prediction. The implementation and its tests are committed; no checkpoint exists yet.",
+  "question": "Does a listwise head that is shown the frozen base distribution beat the frozen base on the noul column?",
+  "motivation": "On the 2,995-row noul held-out, a logistic base-error detector reaches AUROC 0.6715 / 0.6081 / 0.6155 across three folds, but gated accuracy is 0.6260 / 0.6257 / 0.6287 against base 0.6264. The gate is not the bottleneck: on the rows it would hand the head, the head's answer is not better. Alpha therefore collapses to zero. This run tests whether giving the head the base distribution removes that failure.",
+  "change": "OptionMarkerHead gains two per-option input features, log p_base(option) and the base argmax flag. With --base-conditioned the trainer and eval_listwise pass the frozen base distribution for the same option subset; without the flag the head appends zeros and scores exactly as the pre-change head. Checkpoints saved before the change load through a zero-padding hook.",
+  "training": {
+    "arm": "base_conditioned_noul",
+    "base_arm": "noul_listwise (#264) on feat/canonical-support, the arm that trained noul through the listwise path",
+    "recipe": "the same canonical recipe as the noul arm, plus --base-conditioned; no other change",
+    "flag": "model/scripts/train_listwise.py --base-conditioned",
+    "code_commit": "19ba9a4"
+  },
+  "test_set": {
+    "definition": "the frozen 6,400-id held-out, noul rows, the same basis as the canonical gate",
+    "noul_rows": 2995,
+    "heldout_ids_sha256": "b2cde7f4012fa02e0fb186a761f6863b76f4b60ebfba8137b064049efd812628",
+    "heldout_shards_sha256": {
+      "part0": "60625929beb045990266267357f0d442626b48c5757ab1fc714cd94dfa133633",
+      "part1": "f46592debb360ff6c97490964ed828c31a5ea5c463e9397bf12c5d1c60566ad9",
+      "part2": "faeaed78e96c005a654000f4e09e56ad26b1a38d3e0ce2ae73095c29b5bca20d"
+    }
+  },
+  "metric": {
+    "primary": "raw (unmixed) accuracy of the head alone on the noul held-out rows",
+    "head_alone": "eval_listwise --base-conditioned --head-only, which keeps the base features but skips the alpha fusion",
+    "comparison": "frozen base accuracy 0.6264 on the same 2,995 rows (chance-corrected 0.252755; for a two-option row cc = 2 * accuracy - 1, so 0.6264 accuracy is exactly that cc)",
+    "note_on_resolution": "3.0 pp is the noul-column MDE at n=2,995, discordance 0.324 and 80% power. That MDE was stated in chance-corrected units, where the paired difference is twice the accuracy difference; a 3.0 pp bar on raw accuracy is therefore a stricter bar than the cc MDE, not a looser one. The success rule below uses the instructed raw-accuracy bar and will not be restated after the result."
+  },
+  "success": {
+    "rule": "head-alone accuracy exceeds 0.6264 by more than 3.0 pp on at least two of three seeds",
+    "mixed_variant": "the alpha-mixed score is reported for every seed but is not the criterion; the point of the change is to make the mix unnecessary",
+    "per_seed": "report accuracy, delta in pp, and the paired discordant counts on the noul column for every seed"
+  },
+  "failure": {
+    "rule": "if the success rule is not met, the branch closes",
+    "meaning": "a head that is shown the base distribution and still cannot beat it is evidence that the listwise head is not the mechanism for noul. The next decision is about the objective or the type, not about more conditioning. No tuning, no rerun, no extra seeds to look for a positive."
+  },
+  "seed_plan": {
+    "first": "one seed (seed 0) for direction, reported back before any other seed starts",
+    "then": "the other two seeds only if the first-seed direction is positive; the verdict uses the stated two-of-three rule",
+    "no_sweep": "no hyperparameter sweep and no seed-only reruns"
+  },
+  "reported_but_not_gated": {
+    "choice": "held-out accuracy is reported to see whether conditioning damages it; not a gate",
+    "score": "held-out accuracy is reported to see whether conditioning damages it; not a gate",
+    "jevbench": "not used; the 231 public items have no base probabilities, so a base-conditioned head cannot be scored there without a pre-gate rule change that is not authorised here"
+  },
+  "eval_identity": {
+    "eval_script": "model/scripts/eval_listwise.py",
+    "eval_script_sha256": "83f02e1cb7bafc0cc3b247f873ec4c09d8ac5ef4469da156ad1cd7ee2a567d13",
+    "command": "cd <RUN_ROOT>/exp2 && CUDA_VISIBLE_DEVICES=<gpu> PYTHONPATH=<RUN_ROOT>/exp2 python -m model.scripts.eval_listwise --checkpoint basecond/seed<k>/listwise.pt --items <DATA_ROOT>/canonical/heldout_6400_part<p>.jsonl --base-probs <DATA_ROOT>/canonical/precompute-243366/base_probs_canonical_243366_qwen35_4b.jsonl --base-conditioned --head-only --output basecond/seed<k>/heldout_head_only_part<p>.pred.jsonl --device cuda",
+    "mixed_command": "same, without --head-only, written to a separate output"
+  },
+  "comparison_arm": {
+    "arm": "noul_listwise #264, seeds 0/1/2, the same frozen held-out and eval script",
+    "noul_base_accuracy": 0.6264,
+    "noul_base_cc": 0.252755,
+    "noul_rows": 2995
+  }
+}
