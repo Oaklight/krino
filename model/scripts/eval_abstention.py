@@ -29,6 +29,7 @@ import argparse
 import json
 import math
 import sys
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from pathlib import Path
 
@@ -64,6 +65,64 @@ def _aurc(records: list[dict], score_field: str, strict_abstention: bool = True)
     return total_risk / len(scored)
 
 
+def _auroc(records: list[dict], score_field: str) -> float | None:
+    """Probability an answerable item scores above an unanswerable one.
+
+    Ties count one half.  ``None`` unless both classes are present.
+    """
+    positives = [
+        float(record[score_field])
+        for record in records
+        if record.get(score_field) is not None and not record.get("reason")
+    ]
+    negatives = sorted(
+        float(record[score_field])
+        for record in records
+        if record.get(score_field) is not None and record.get("reason")
+    )
+    if not positives or not negatives:
+        return None
+    wins = 0.0
+    for value in positives:
+        low = bisect_left(negatives, value)
+        high = bisect_right(negatives, value)
+        wins += low + 0.5 * (high - low)
+    return wins / (len(positives) * len(negatives))
+
+
+def _threshold_accuracy(
+    records: list[dict], score_field: str, threshold: float = 0.5
+) -> dict:
+    """Answer when the score is at least ``threshold``; abstain otherwise.
+
+    An abstained answerable item and an answered unanswerable item are both
+    wrong.  The task answer must also be correct on an answered answerable
+    item.  Accuracy is over all scored rows, so abstaining earns no credit.
+    """
+    scored = [record for record in records if record.get(score_field) is not None]
+    if not scored:
+        return {
+            "threshold": threshold,
+            "answered": 0,
+            "answer_rate": None,
+            "accuracy": None,
+        }
+    answered = [
+        record for record in scored if float(record[score_field]) >= threshold
+    ]
+    correct = sum(
+        1
+        for record in answered
+        if not record.get("reason") and _correct(record, True)
+    )
+    return {
+        "threshold": threshold,
+        "answered": len(answered),
+        "answer_rate": len(answered) / len(scored),
+        "accuracy": correct / len(scored),
+    }
+
+
 def _at_coverage(records: list[dict], score_field: str, coverage: float,
                  strict_abstention: bool = True) -> dict:
     scored = [record for record in records if record.get(score_field) is not None]
@@ -92,6 +151,8 @@ def _summary(records: list[dict], score_field: str, strict_abstention: bool = Tr
         "score_field": score_field,
         "n": len(records),
         "aurc": _aurc(records, score_field, strict_abstention),
+        "auroc": _auroc(records, score_field),
+        "threshold": _threshold_accuracy(records, score_field),
         "coverage": [
             _at_coverage(records, score_field, coverage, strict_abstention)
             for coverage in (50, 70, 90, 100)
