@@ -286,6 +286,13 @@ def build_parser() -> argparse.ArgumentParser:
     "replications of one recipe.",
     )
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--torch-seed",
+        type=int,
+        default=None,
+        help="Seed torch's global RNG for reproducible model initialisation; "
+        "omitted leaves the ambient RNG state",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int, default=None)
     return parser
@@ -293,6 +300,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
+    if args.torch_seed is not None:
+        torch.manual_seed(args.torch_seed)
 
     items = load_jsonl(args.items)
     base_records = [
@@ -466,6 +475,7 @@ def main() -> int:
                     list(args.lora_targets) if args.lora_layers is not None else None
                 ),
                 "lora_kl_weight": args.lora_kl_weight,
+                "torch_seed": args.torch_seed,
             },
             "history": history,
         },
