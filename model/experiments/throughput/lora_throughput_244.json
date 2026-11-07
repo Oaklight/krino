@@ -3,7 +3,7 @@
   "issue": 244,
   "pr": 248,
   "recorded_utc": "2026-11-07T18:05:00Z",
-  "note": "Companion to the PR #248 description. Every value here is also stated in the PR text; this file exists so the numbers are machine-readable and citable from a commit instead of from a description that can be edited. Paths are placeholders: the concrete locations are in the private run record, not in the public repo.",
+  "note": "Companion to research/29-lora-throughput-244.md. Every value here is also stated in the PR text; this file exists so the numbers are machine-readable and citable from a commit instead of from a description that can be edited. Paths are placeholders: the concrete locations are in the private run record, not in the public repo.",
   "configuration": {
     "model": "Qwen/Qwen3.5-4B",
     "lora": {
@@ -72,6 +72,12 @@
   "controlled_ab_ratio": 6.6,
   "recovery_ratio": 17,
   "peak_memory_gib": 10.0,
+  "training_rate": {
+    "source": "last cumulative line of each canonical arm log (the trainer prints index/elapsed, so only the final line is a steady-state reading)",
+    "trained_type_arms": {"rows": 99595, "items_per_s": [12.71, 13.15, 13.02], "hours": [2.10, 2.18]},
+    "all_type_arms_after_264": {"rows": 185321, "items_per_s": [13.47, 13.45, 13.65], "hours": [3.77, 3.83]},
+    "caveat": "An earlier note quoted 10.9 to 11.2 items/s as steady state; that was a mid-run cumulative reading and it is corrected to the final values here."
+  },
   "validation_rate": {
     "measured_utc": "2026-11-07",
     "purpose": "sources the validation term of the per-epoch estimate, which was previously stated at 4.9 items/s with no measurement behind it",

@@ -62,13 +62,14 @@ The 80/20 split is over all 243,366 items, one denominator:
 At 12.5 trainable items/s:
 
 - training: 101,824 / 12.5 = 8,146 s = 2.26 h;
-- validation at 4.9 items/s: 48,673 / 4.9 = 9,933 s = 2.76 h;
-- one device: **5.02 h**;
-- eight GPUs, training and validation sharded: 0.28 + 0.34 = 0.63 h (**38 min**);
-- eight GPUs, one gate GPU on full validation: 0.28 + 2.76 = 3.04 h (**3.0 h**).
+- validation at 2.65-2.66 model-scored rows/s (measured; see the canonical section):
+  about 2.67 h;
+- one device: **4.93 h**;
+- eight GPUs, training and validation sharded: 0.28 + 0.33 = 0.61 h (**37 min**);
+- eight GPUs, one gate GPU on full validation: 0.28 + 2.67 = 2.95 h (**3.0 h**).
 
 At the low end of the arm range (12.4 items/s), training is 2.28 h and one device is
-5.04 h; the eight-GPU range is 38 min to 3.0 h. The working-day target is met.
+about 5.0 h; the eight-GPU range is 37 min to 3.0 h. The working-day target is met.
 
 The 64-item listwise eval (67.3 s to 36.4 s) is 1.76 items/s. That is a cold-start mean
 over 64 items and pays the bucket loads; it is not the steady validation rate used above.
@@ -93,11 +94,23 @@ genuine out-of-options label raises instead of disappearing.  It is an interim
 measure: dropping and masking are equivalent only in this per-item loop, and the
 answerable head (#254) should replace it.
 
-First measured rate on this mix: 10.9 to 11.2 trainable items/s (steady state),
-below the 12.5 nominal of the 20K subset because the canonical states are longer.
-State the two phases separately: training is 99,595 / 11 = 9,054 s = 2.5 h, and
-the one full internal validation is 47,389 / 6.1 = 7,770 s = 2.2 h, so the
-checkpoint lands about 4.7 h after the 15:53 start, near 20:35.
+Measured rate on this mix, at the end of each run: the three seeds finish the
+99,595 trained-type rows at 12.71, 13.15 and 13.02 trainable items/s. The trainer
+prints a cumulative `index/elapsed`, so a mid-run reading sits below the final
+rate; an earlier version of this note quoted 10.9 to 11.2 as steady state, which
+was an early cumulative reading and is corrected here.
+
+State the two phases separately: training is 99,595 / 12.71-13.15 = 7,574-7,836 s
+= 2.10-2.18 h. The full internal validation is 47,389 items; at the measured
+2.65-2.66 model-scored rows/s and the 46.3% noul share that is about 25,445
+scored rows, 9,602 s = 2.67 h, so the checkpoint lands about 4.8-4.9 h after the
+15:53 start. The 6.1 items/s validation figure quoted here previously had no
+measurement behind it and is replaced.
+
+After #264, `TRAINED_TYPES` includes noul, and the same recipe trains 185,321
+rows. The recorded all-type arms finish at 13.45-13.65 trainable items/s:
+training is 3.77-3.83 h, and with the measured validation the single-device epoch
+is about 6.4-6.5 h. The working-day target still holds.
 
 The internal validation is a diagnostic, not the standard C gate, and running it
 in full on all three seeds costs about 6.6 GPU-hours for a number that cannot
