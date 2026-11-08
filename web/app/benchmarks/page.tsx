@@ -17,7 +17,9 @@ export default function BenchmarksPage() {
             accuracy. Every row names the readout that produced it: trained heads,
             option-text continuation, per-option judgement and native reranker scores are
             separate instruments and are not directly comparable. Hover a row for the
-            recorded readout and model id.
+            recorded readout and model id. Trained-head rows also carry the project
+            generation: v1 heads predate the v4 line, so a v1 head on a Qwen3.5-4B
+            backbone is not a v4 result.
           </p>
           <ErrorBoundary>
             <JevBenchTable runs={data.jevbench_runs} />

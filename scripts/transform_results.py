@@ -357,6 +357,16 @@ def derive_readout(filepath: Path, raw: dict) -> str | None:
     return None
 
 
+def add_head_version(display_name: str, head_version: str) -> str:
+    """Render a generation beside a trained-head display name.
+
+    ``Ettin-150m (trained)`` becomes ``Ettin-150m (trained, v1)``.
+    """
+    if display_name.endswith(")"):
+        return f"{display_name[:-1]}, {head_version})"
+    return f"{display_name} ({head_version})"
+
+
 def build_jevbench_run(filepath: Path) -> dict | None:
     """Build one dashboard row from one committed JevBench result file."""
     stem = filepath.stem
@@ -377,6 +387,11 @@ def build_jevbench_run(filepath: Path) -> dict | None:
     latency = raw.get("latency", {})
 
     model_id = provenance.get("model_id") or raw.get("model")
+    head_version = raw.get("head_version")
+    file_run_id = raw.get("run_id")
+    backbone_model_id = (raw.get("backbone") or {}).get("model_id")
+    code_commit = raw.get("code_commit")
+
     meta = JEVBENCH_META.get(stem)
     if meta:
         display_name, params, model_type = meta
@@ -390,10 +405,16 @@ def build_jevbench_run(filepath: Path) -> dict | None:
         print(f"  WARNING: no model id for jevbench/{stem}, skipping")
         return None
 
+    if head_version:
+        display_name = add_head_version(display_name, head_version)
+
     return {
-        "run_id": f"jevbench-{stem}",
+        "run_id": file_run_id or f"jevbench-{stem}",
         "model": {"name": display_name, "params": params, "type": model_type},
         "model_id": model_id,
+        "head_version": head_version,
+        "backbone_model_id": backbone_model_id,
+        "code_commit": code_commit,
         "method": "trained-heads" if readout == "trained-heads" else "zero-shot",
         "readout": readout,
         "readout_detail": provenance.get("readout"),

@@ -73,6 +73,9 @@ export interface JevBenchRun {
     type: "causal" | "encoder" | "reranker" | "moe" | "api" | "unknown";
   };
   model_id: string | null;
+  head_version: string | null;
+  backbone_model_id: string | null;
+  code_commit: string | null;
   method: string;
   readout: string;
   readout_detail: string | null;
