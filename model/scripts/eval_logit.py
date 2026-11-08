@@ -131,6 +131,10 @@ def build_provenance(
     max_items: int | None,
     dataset_paths: list[str],
     license_name: str | None,
+    variant: str | None = None,
+    readout: str | None = None,
+    tokenizer_id: str | None = None,
+    tokenizer_revision: str | None = None,
 ) -> dict:
     """The record a reader needs to re-run this file and get these numbers.
 
@@ -157,6 +161,10 @@ def build_provenance(
         "model_id": model_id,
         "revision": revision,
         "revision_is_commit": bool(revision and len(revision) == 40),
+        "variant": variant,
+        "readout": readout or strategy,
+        "tokenizer_id": tokenizer_id,
+        "tokenizer_revision": tokenizer_revision,
         "snapshot_path": snapshot,
         "license": license_name,
         "dtype": dtype,
@@ -206,6 +214,17 @@ def main() -> int:
         "--license",
         default=None,
         help="Licence identifier recorded in the provenance block",
+    )
+    parser.add_argument(
+        "--variant",
+        default=None,
+        choices=["base", "instruct", "reranker", "unrecorded"],
+        help="Checkpoint flavour, recorded so Base and Instruct rows are not pooled",
+    )
+    parser.add_argument(
+        "--readout",
+        default=None,
+        help="Readout name recorded in provenance; defaults to the strategy",
     )
     args = parser.parse_args()
 
@@ -288,6 +307,12 @@ def main() -> int:
             max_items=args.max_items,
             dataset_paths=[str(Path(p)) for p in dataset_paths],
             license_name=args.license,
+            variant=args.variant,
+            readout=args.readout,
+            tokenizer_id=getattr(tokenizer, "name_or_path", None),
+            tokenizer_revision=(getattr(tokenizer, "init_kwargs", None) or {}).get(
+                "_commit_hash"
+            ),
         )
         provenance["benchmarks_scored"] = len(all_results)
         provenance["items_per_benchmark"] = {

@@ -49,6 +49,10 @@ def test_the_block_carries_every_field_277_asks_for(tmp_path):
         "strategy",
         "norm",
         "datasets",
+        "variant",
+        "readout",
+        "tokenizer_id",
+        "tokenizer_revision",
     ):
         assert key in block, key
     assert block["model_id"] == "Qwen/Qwen2.5-3B"
@@ -57,6 +61,20 @@ def test_the_block_carries_every_field_277_asks_for(tmp_path):
     assert block["license"] == "qwen-research"
     assert block["strategy"] == "description"
     assert block["norm"] == "mean"
+
+
+def test_the_variant_is_recorded_so_base_and_instruct_do_not_pool(tmp_path):
+    base = _build(tmp_path, variant="base")
+    instruct = _build(tmp_path, variant="instruct")
+    assert base["variant"] == "base"
+    assert instruct["variant"] == "instruct"
+
+
+def test_the_readout_defaults_to_the_strategy_and_can_be_named(tmp_path):
+    assert _build(tmp_path)["readout"] == "description"
+    assert _build(tmp_path, readout="description-continuation")["readout"] == (
+        "description-continuation"
+    )
 
 
 def test_the_snapshot_path_is_cache_relative(tmp_path):
