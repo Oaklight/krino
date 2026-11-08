@@ -1,13 +1,15 @@
 # Zero-shot logit baselines with embedded provenance
 
-Nine result files from one run, covering #277 (19 benchmarks) and #278 (JevBench
-public). Every file carries a `_provenance` block: model id, resolved revision,
-dtype, device, code commit, readout, library versions and the command.
+Twenty-six result files from two batches: nine from one run at `33506b8`,
+covering #277 (19 benchmarks) and #278 (JevBench public), and seventeen from
+#292/#293 (fourteen at `2819b6f`, three at `57c33df`). Every file carries a
+`_provenance` block: model id, resolved revision, dtype, device, code commit,
+readout, library versions and the command.
 
 The September Phase A files carry none of that, which is why their numbers have
 never been auditable. These do.
 
-## One run, one commit
+## Batch one: `33506b8` (#277/#278)
 
 | field | value |
 |---|---|
@@ -33,6 +35,82 @@ thing that can is the process record taken while the runs were live:
 | Qwen2.5-1.5B | 201996 | the detached worktree | `33506b86990f0eaa3fdcdf5c0ef3075905edd80f` |
 
 The tree was not touched between launch and the last write.
+
+## Batch two: `2819b6f` and `57c33df` (#292/#293)
+
+Seventeen files. Sixteen score JevBench public's 231 items; the seventeenth,
+`logit_Qwen_Qwen3-Reranker-4B.json`, is the 19-benchmark reranker row. Fourteen
+files record `2819b6f` (seven as the short form passed on the command line,
+seven as the full `2819b6f67f7f3c9b7cf4d7dbaa08a3671a6cfaa0`); three record
+`57c33df4279cc65ff0ee4aa347c52034cd34c7fa`.
+
+| field | value |
+|---|---|
+| `code_commit` | `2819b6f` for fourteen files; `57c33df4279cc65ff0ee4aa347c52034cd34c7fa` for the three reranker-template files |
+| interpreter | python 3.12.16 |
+| torch | 2.11.0+cu128 |
+| transformers | 5.21.0 |
+| dtype | bfloat16 |
+| device | `NVIDIA H100 NVL`, `cuda:0` |
+| readouts | per-option judgement (11), `score_options_native` (4), option-text continuation (2) |
+| items | 231 on the sixteen JevBench files, `failed = 0`; 19 benchmarks on the reranker 19-benchmark file |
+
+The three `57c33df` files ran before the `predicted_idx` change and do not depend
+on it — their readout scores each option independently and never reads that
+field, so they were not rerun:
+
+- `jevbench_reranker_native_Qwen_Qwen3-Reranker-4B.json`
+- `jevbench_reranker_prompt_Qwen_Qwen3-4B-Base.json`
+- `jevbench_reranker_prompt_microsoft_Phi-4-mini-instruct.json`
+
+### Judgement files
+
+Per-option judgement: the state and question are stated once, each option is
+presented alone, and the score is `log P(" yes") − log P(" no")` at `"Answer:"`.
+The options are ranked independently and the values do not sum to one. The
+template is recorded in `_provenance.prompt_template`, the option texts in
+`_provenance.option_texts`. The accuracy rule comes from
+`model/evaluation/jevbench.py`, so these rows join `research/13` rather than
+starting a second table. `research/35-jevbench-readout-matrix.md` interprets
+them against the continuation rows in `research/34`.
+
+| file | model | variant | correct | items |
+|---|---|---|---:|---:|
+| `jevbench_judgement_Qwen_Qwen3-4B-Base.json` | `Qwen/Qwen3-4B-Base` | base | 124/231 | 231 |
+| `jevbench_judgement_Qwen_Qwen3-4B.json` | `Qwen/Qwen3-4B` | instruct | 143/231 | 231 |
+| `jevbench_judgement_Qwen_Qwen3-Reranker-4B.json` | `Qwen/Qwen3-Reranker-4B` | null | 150/231 | 231 |
+| `jevbench_judgement_microsoft_Phi-4-mini-instruct.json` | `microsoft/Phi-4-mini-instruct` | instruct | 150/231 | 231 |
+| `jevbench_judgement_Qwen_Qwen2.5-3B.json` | `Qwen/Qwen2.5-3B` | base | 132/231 | 231 |
+| `jevbench_judgement_Qwen_Qwen2.5-1.5B.json` | `Qwen/Qwen2.5-1.5B` | base | 110/231 | 231 |
+| `jevbench_judgement_Qwen_Qwen3-1.7B-Base.json` | `Qwen/Qwen3-1.7B-Base` | base | 108/231 | 231 |
+| `jevbench_judgement_Qwen_Qwen3-1.7B.json` | `Qwen/Qwen3-1.7B` | instruct | 95/231 | 231 |
+| `jevbench_judgement_openbmb_MiniCPM5-2B-Base.json` | `openbmb/MiniCPM5-2B-Base` | base | 109/231 | 231 |
+| `jevbench_judgement_mistralai_Ministral-3-3B-Base-2512.json` | `mistralai/Ministral-3-3B-Base-2512` | base | 129/231 | 231 |
+| `jevbench_judgement_openbmb_MiniCPM3-4B.json` | `openbmb/MiniCPM3-4B` | instruct | 78/231 | 231 |
+
+`Qwen/Qwen3-Reranker-4B` carries `variant: null` on purpose: no `--variant` was
+passed and the checkpoint is neither a base nor an instruct release.
+
+### The recorded commit is a branch tip
+
+`2819b6f` is the tip of `feat/jevbench-judgement-readout`, preserved at
+`refs/heads/feat/jevbench-judgement-readout`. #293 was **squash**-merged as
+`0e95891`, so `2819b6f` and `b1ffdea` are **not** ancestors of `main` and must
+not be looked for there: `git merge-base --is-ancestor 2819b6f origin/main`
+exits 1. The same holds for `57c33df`. The #293 body and the squash commit
+message say otherwise; this section supersedes them.
+
+`build_run_provenance` reads `code_commit` when the file is written, not when
+the process starts (#282), so the field cannot prove its own claim. The batch-one
+process records above are the evidence there. For batch two, the launch driver
+log for the runs started here records the tree and an empty working tree at each
+checkpoint — `57c33df4279cc65ff0ee4aa347c52034cd34c7fa` for the two launches and
+`2819b6f67f7f3c9b7cf4d7dbaa08a3671a6cfaa0` for the rerun — but no live process
+records were taken. Two launches produced the three `57c33df` files: the first
+wrote the base reranker-prompt cell at 05:43:34Z and the reranker-native cell at
+05:43:40Z, the second wrote the Phi-4-mini cell at 05:50:12Z. The seven files
+that record the short `2819b6f` were produced in other sessions; their evidence
+is the command and commit each file records, not this log.
 
 ## Architecture eligibility
 
