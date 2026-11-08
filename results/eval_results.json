@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-08T21:22:43.026226+00:00",
+  "generated_at": "2026-11-08T21:44:34.271346+00:00",
   "eval_runs": [
     {
       "run_id": "cross-encoder-bert",
@@ -4095,13 +4095,16 @@
   ],
   "jevbench_runs": [
     {
-      "run_id": "jevbench-krino-ettin-150m-heads",
+      "run_id": "oaklight/krino-ettin-150m-heads",
       "model": {
-        "name": "Ettin-150m (trained)",
+        "name": "Ettin-150m (trained, v1)",
         "params": "150M",
         "type": "reranker"
       },
       "model_id": null,
+      "head_version": "v1",
+      "backbone_model_id": "cross-encoder/ettin-reranker-150m-v1",
+      "code_commit": null,
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
@@ -4148,13 +4151,16 @@
       "latency_ms": 278.3
     },
     {
-      "run_id": "jevbench-krino-modernbert-base-heads",
+      "run_id": "oaklight/krino-modernbert-base-heads",
       "model": {
-        "name": "ModernBERT-base (trained)",
+        "name": "ModernBERT-base (trained, v1)",
         "params": "149M",
         "type": "encoder"
       },
       "model_id": null,
+      "head_version": "v1",
+      "backbone_model_id": "answerdotai/ModernBERT-base",
+      "code_commit": null,
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
@@ -4201,13 +4207,16 @@
       "latency_ms": 282.7
     },
     {
-      "run_id": "jevbench-krino-qwen3-0.6b-heads",
+      "run_id": "oaklight/krino-qwen3-0.6b-heads",
       "model": {
-        "name": "Qwen3-0.6B (trained)",
+        "name": "Qwen3-0.6B (trained, v1)",
         "params": "0.6B",
         "type": "causal"
       },
       "model_id": null,
+      "head_version": "v1",
+      "backbone_model_id": "Qwen/Qwen3-0.6B",
+      "code_commit": null,
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
@@ -4254,13 +4263,16 @@
       "latency_ms": 1315.1
     },
     {
-      "run_id": "jevbench-krino-qwen3-reranker-0.6b-heads",
+      "run_id": "oaklight/krino-qwen3-reranker-0.6b-heads",
       "model": {
-        "name": "Qwen3-reranker-0.6B (trained)",
+        "name": "Qwen3-reranker-0.6B (trained, v1)",
         "params": "0.6B",
         "type": "reranker"
       },
       "model_id": null,
+      "head_version": "v1",
+      "backbone_model_id": "Qwen/Qwen3-Reranker-0.6B",
+      "code_commit": null,
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
@@ -4307,13 +4319,16 @@
       "latency_ms": 1326.7
     },
     {
-      "run_id": "jevbench-krino-qwen3-reranker-4b-heads",
+      "run_id": "oaklight/krino-qwen3-reranker-4b-heads",
       "model": {
-        "name": "Qwen3-reranker-4B (trained)",
+        "name": "Qwen3-reranker-4B (trained, v1)",
         "params": "4B",
         "type": "reranker"
       },
       "model_id": null,
+      "head_version": "v1",
+      "backbone_model_id": "Qwen/Qwen3-Reranker-4B",
+      "code_commit": null,
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
@@ -4360,13 +4375,16 @@
       "latency_ms": 8593.6
     },
     {
-      "run_id": "jevbench-krino-qwen3.5-4b-heads",
+      "run_id": "oaklight/krino-qwen3.5-4b-heads",
       "model": {
-        "name": "Qwen3.5-4B (trained)",
+        "name": "Qwen3.5-4B (trained, v1)",
         "params": "4B",
         "type": "causal"
       },
       "model_id": null,
+      "head_version": "v1",
+      "backbone_model_id": "Qwen/Qwen3.5-4B-Base",
+      "code_commit": null,
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
@@ -4420,6 +4438,9 @@
         "type": "unknown"
       },
       "model_id": "mistralai/Ministral-3-3B-Base-2512",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
@@ -4473,6 +4494,9 @@
         "type": "unknown"
       },
       "model_id": "openbmb/MiniCPM3-4B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
@@ -4526,6 +4550,9 @@
         "type": "unknown"
       },
       "model_id": "openbmb/MiniCPM5-2B-Base",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
@@ -4579,6 +4606,9 @@
         "type": "reranker"
       },
       "model_id": "Qwen/Qwen3-Reranker-4B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "native-reranker",
       "readout_detail": null,
@@ -4632,6 +4662,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen2.5-1.5B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -4685,6 +4718,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen2.5-3B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -4738,6 +4774,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-1.7B-Base",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -4791,6 +4830,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-1.7B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -4844,6 +4886,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-4B-Base",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -4897,6 +4942,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -4950,6 +4998,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-4B-Thinking-2507",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -5003,6 +5054,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-4B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -5056,6 +5110,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-Reranker-4B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -5109,6 +5166,9 @@
         "type": "unknown"
       },
       "model_id": "microsoft/Phi-4-mini-instruct",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -5162,6 +5222,9 @@
         "type": "unknown"
       },
       "model_id": "mistralai/Ministral-3-3B-Base-2512",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -5215,6 +5278,9 @@
         "type": "unknown"
       },
       "model_id": "openbmb/MiniCPM3-4B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -5268,6 +5334,9 @@
         "type": "unknown"
       },
       "model_id": "openbmb/MiniCPM5-2B-Base",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -5321,6 +5390,9 @@
         "type": "unknown"
       },
       "model_id": "zeroentropy/zerank-2-reranker",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
@@ -5374,6 +5446,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen2.5-1.5B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
@@ -5427,6 +5502,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen2.5-3B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
@@ -5480,6 +5558,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-4B-Base",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
@@ -5533,6 +5614,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
@@ -5586,6 +5670,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-4B-Thinking-2507",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
@@ -5639,6 +5726,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-4B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
@@ -5692,6 +5782,9 @@
         "type": "unknown"
       },
       "model_id": "Qwen/Qwen3-Reranker-4B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
@@ -5745,6 +5838,9 @@
         "type": "unknown"
       },
       "model_id": "microsoft/Phi-4-mini-instruct",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
@@ -5798,6 +5894,9 @@
         "type": "unknown"
       },
       "model_id": "zeroentropy/zerank-2-reranker",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
