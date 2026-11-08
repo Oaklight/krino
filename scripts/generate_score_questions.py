@@ -47,6 +47,7 @@ from data.score_generation import (  # noqa: E402
     expected_level,
     iter_candidates,
     label_level,
+    level0_allowed,
     load_rubric_config,
     normalise_state,
     order_candidates,
@@ -171,6 +172,124 @@ def label_one(
     return {"candidate": candidate, "reason": "api_error", "error": last_error}
 
 
+def accept_candidates(
+    ordered: Sequence[Candidate],
+    label_fn: Callable[[Candidate], dict[str, Any]],
+    *,
+    target: int,
+    level0_cap: float,
+    concurrency: int,
+) -> dict[str, Any]:
+    """Label candidates in concurrent chunks and apply the acceptance rules.
+
+    The level-0 cap is applied here, to a row about to be accepted, not to the
+    selection quota.  The loop is separated from the client so a test can drive
+    it with a stub labeler; a cap moved back to ``select_candidates`` then fails
+    that test.
+    """
+    accepted: list[dict[str, Any]] = []
+    accepted_meta: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
+    calls = 0
+    post_target = 0
+    source_stats: dict[str, Counter] = defaultdict(Counter)
+    source_accepted: Counter = Counter()
+    source_level0: Counter = Counter()
+    by_source_levels: dict[str, Counter] = defaultdict(Counter)
+    level_counts: Counter = Counter()
+    argmax_disagreements = 0
+    abs_diffs: list[float] = []
+    estimated_tokens = 0
+
+    with ThreadPoolExecutor(max_workers=concurrency) as pool:
+        for start in range(0, len(ordered), concurrency):
+            if len(accepted) >= target:
+                break
+            chunk = ordered[start : start + concurrency]
+            results = list(pool.map(label_fn, chunk))
+            calls += len(chunk)
+            for result in results:
+                candidate = result["candidate"]
+                source_stats[candidate.source]["calls"] += 1
+                question_text = json.dumps(candidate.rubric)
+                estimated_tokens += math.ceil(
+                    (len(candidate.state) + len(question_text)) / 4
+                )
+                if result["reason"] is not None:
+                    source_stats[candidate.source][f"reject:{result['reason']}"] += 1
+                    rejected.append(
+                        {
+                            "id": candidate.id,
+                            "source": candidate.source,
+                            "reason": result["reason"],
+                            "error": result.get("error", ""),
+                            "probabilities": result.get("probabilities"),
+                        }
+                    )
+                    continue
+                if len(accepted) >= target:
+                    # A concurrent chunk can return a valid row after the target
+                    # was reached.  It is counted as a call; here it is also
+                    # counted as a post-target skip, so calls = accepted +
+                    # rejected + post_target has no unexplained remainder.
+                    post_target += 1
+                    source_stats[candidate.source]["post_target"] += 1
+                    continue
+                label = label_level(result["probabilities"])
+                if label == 0.0 and not level0_allowed(
+                    level0_cap,
+                    source_accepted[candidate.source],
+                    source_level0[candidate.source],
+                ):
+                    source_stats[candidate.source]["reject:level0_cap"] += 1
+                    rejected.append(
+                        {
+                            "id": candidate.id,
+                            "source": candidate.source,
+                            "reason": "level0_cap",
+                            "error": "",
+                            "probabilities": result["probabilities"],
+                        }
+                    )
+                    continue
+                item = build_item(candidate, result["probabilities"])
+                accepted.append(item)
+                source_stats[candidate.source]["accepted"] += 1
+                source_accepted[candidate.source] += 1
+                if item["label"] == 0.0:
+                    source_level0[candidate.source] += 1
+                by_source_levels[candidate.source][str(int(item["label"]))] += 1
+                level_counts[str(int(item["label"]))] += 1
+                expected = result["expected"]
+                abs_diffs.append(abs(expected - item["label"]))
+                if int(round(expected)) != int(item["label"]):
+                    argmax_disagreements += 1
+                accepted_meta.append(
+                    {
+                        "id": item["id"],
+                        "source": candidate.source,
+                        "label": item["label"],
+                        "expected": expected,
+                        "api_score": result.get("api_score"),
+                        "n_levels": len(item["question"]["criteria"]),
+                    }
+                )
+
+    return {
+        "accepted": accepted,
+        "accepted_meta": accepted_meta,
+        "rejected": rejected,
+        "calls": calls,
+        "post_target": post_target,
+        "source_stats": source_stats,
+        "by_source_levels": by_source_levels,
+        "level_counts": level_counts,
+        "argmax_disagreements": argmax_disagreements,
+        "abs_diffs": abs_diffs,
+        "estimated_tokens": estimated_tokens,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--corpus", type=Path, required=True)
@@ -182,6 +301,12 @@ def main() -> int:
     parser.add_argument("--cap", type=int, default=350)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--concurrency", type=int, default=8)
+    parser.add_argument(
+        "--level0-cap",
+        type=float,
+        default=0.5,
+        help="maximum share of a source's rows at level 0; 0 disables the cap",
+    )
     parser.add_argument("--model", default="jev-latest")
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--out", type=Path, default=None)
@@ -241,60 +366,24 @@ def main() -> int:
 
     client = JevClient(timeout=args.timeout)
 
-    accepted: list[dict[str, Any]] = []
-    accepted_meta: list[dict[str, Any]] = []
-    rejected: list[dict[str, Any]] = []
-    calls = 0
-    source_stats: dict[str, Counter] = defaultdict(Counter)
-    level_counts: Counter = Counter()
-    argmax_disagreements = 0
-    abs_diffs: list[float] = []
-    estimated_tokens = 0
-
-    with ThreadPoolExecutor(max_workers=args.concurrency) as pool:
-        for start in range(0, len(ordered), args.concurrency):
-            if len(accepted) >= args.target:
-                break
-            chunk = ordered[start : start + args.concurrency]
-            results = list(pool.map(lambda candidate: label_one(client, candidate, args.model), chunk))
-            calls += len(chunk)
-            for result in results:
-                candidate = result["candidate"]
-                source_stats[candidate.source]["calls"] += 1
-                question_text = json.dumps(candidate.rubric)
-                estimated_tokens += math.ceil((len(candidate.state) + len(question_text)) / 4)
-                if result["reason"] is not None:
-                    source_stats[candidate.source][f"reject:{result['reason']}"] += 1
-                    rejected.append(
-                        {
-                            "id": candidate.id,
-                            "source": candidate.source,
-                            "reason": result["reason"],
-                            "error": result.get("error", ""),
-                            "probabilities": result.get("probabilities"),
-                        }
-                    )
-                    continue
-                if len(accepted) >= args.target:
-                    continue
-                item = build_item(candidate, result["probabilities"])
-                accepted.append(item)
-                source_stats[candidate.source]["accepted"] += 1
-                level_counts[str(int(item["label"]))] += 1
-                expected = result["expected"]
-                abs_diffs.append(abs(expected - item["label"]))
-                if int(round(expected)) != int(item["label"]):
-                    argmax_disagreements += 1
-                accepted_meta.append(
-                    {
-                        "id": item["id"],
-                        "source": candidate.source,
-                        "label": item["label"],
-                        "expected": expected,
-                        "api_score": result.get("api_score"),
-                        "n_levels": len(item["question"]["criteria"]),
-                    }
-                )
+    result = accept_candidates(
+        ordered,
+        lambda candidate: label_one(client, candidate, args.model),
+        target=args.target,
+        level0_cap=args.level0_cap,
+        concurrency=args.concurrency,
+    )
+    accepted = result["accepted"]
+    accepted_meta = result["accepted_meta"]
+    rejected = result["rejected"]
+    calls = result["calls"]
+    post_target = result["post_target"]
+    source_stats = result["source_stats"]
+    by_source_levels = result["by_source_levels"]
+    level_counts = result["level_counts"]
+    argmax_disagreements = result["argmax_disagreements"]
+    abs_diffs = result["abs_diffs"]
+    estimated_tokens = result["estimated_tokens"]
 
     contamination = contamination_check(accepted, args.jevbench_root)
     drop_ids = set(contamination["hit_ids"])
@@ -325,6 +414,7 @@ def main() -> int:
         "selected_candidates": len(ordered),
         "skipped_missing_evidence": dict(sorted(skipped_evidence.items())),
         "calls": calls,
+        "post_target_skips": post_target,
         "accepted": len(accepted),
         "rejected": len(rejected),
         "rejection_reasons": dict(
@@ -336,6 +426,11 @@ def main() -> int:
             for source, counter in sorted(source_stats.items())
         },
         "label_level_distribution": dict(sorted(level_counts.items())),
+        "level0_cap_fraction": args.level0_cap,
+        "by_source_levels": {
+            source: dict(sorted(counter.items()))
+            for source, counter in sorted(by_source_levels.items())
+        },
         "argmax_vs_expected": {
             "rows": len(accepted_meta),
             "disagree": argmax_disagreements,

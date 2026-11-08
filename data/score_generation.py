@@ -35,6 +35,7 @@ __all__ = [
     "expected_level",
     "iter_candidates",
     "label_level",
+    "level0_allowed",
     "load_rubric_config",
     "normalise_state",
     "order_candidates",
@@ -313,6 +314,17 @@ def build_item(candidate: Candidate, probabilities: Mapping[str, Any]) -> dict[s
     if candidate.group is not None:
         item["group"] = candidate.group
     return item
+
+
+def level0_allowed(fraction: float, accepted: int, level0: int) -> bool:
+    """Whether one more level-0 row keeps the running share under ``fraction``.
+
+    The check is running rather than a fixed quota, so a source that stops early
+    cannot end far above the cap.  ``fraction <= 0`` disables the cap.
+    """
+    if fraction <= 0:
+        return True
+    return level0 + 1 <= math.ceil(fraction * (accepted + 1))
 
 
 def load_rubric_config(path: str | Path, templates: Mapping[str, Any]) -> dict[str, Any]:
