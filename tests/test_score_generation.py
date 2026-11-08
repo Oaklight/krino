@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 
 import pytest
 
@@ -11,6 +12,7 @@ from data.score_generation import (
     allocate_quotas,
     build_item,
     candidate_id,
+    evidence_problem,
     expected_level,
     iter_candidates,
     label_level,
@@ -60,9 +62,42 @@ def test_iter_candidates_skips_existing_score_states_and_duplicates():
         _item("4", "State three.", source="b"),
     ]
     score_states = {normalise_state("State two.")}
-    candidates = list(iter_candidates(items, score_states, {}, RUBRIC))
+    rubrics = {
+        "a": {**RUBRIC, "evidence": "state text"},
+        "b": {**RUBRIC, "evidence": "state text"},
+    }
+    candidates = list(iter_candidates(items, score_states, rubrics))
     assert [candidate.original_id for candidate in candidates] == ["1", "4"]
     assert [candidate.source for candidate in candidates] == ["a", "b"]
+
+
+def test_iter_candidates_errors_on_a_source_with_no_rubric():
+    items = [_item("1", "State one.", source="undeclared")]
+    with pytest.raises(ValueError, match="undeclared"):
+        list(iter_candidates(items, set(), {}))
+
+
+def test_iter_candidates_skips_states_without_the_declared_evidence():
+    items = [
+        _item("1", "Contract clause: the supplier is liable.\n\nProposition: yes.", source="c"),
+        _item("2", "Proposition: no clause is given.", source="c"),
+        _item("3", "", source="c"),
+    ]
+    rubrics = {"c": {**RUBRIC, "evidence": "Contract clause"}}
+    skipped = Counter()
+    candidates = list(iter_candidates(items, set(), rubrics, skipped))
+    assert [candidate.original_id for candidate in candidates] == ["1"]
+    assert skipped["evidence:c"] == 1
+
+
+def test_evidence_problem_reads_sections_json_keys_and_whole_state():
+    assert evidence_problem("Contract clause: x\n\nProposition: y", "Contract clause") is None
+    assert evidence_problem("Proposition: y", "Contract clause") is not None
+    assert evidence_problem("Contract clause:   \n\nProposition: y", "Contract clause") is not None
+    assert evidence_problem('{"System": "policy text"}', "System") is None
+    assert evidence_problem('{"System": ""}', "System") is not None
+    assert evidence_problem("anything", "state text") is None
+    assert evidence_problem("   ", "state text") is not None
 
 
 def test_allocate_quotas_sums_to_target_and_keeps_coverage():
@@ -133,18 +168,53 @@ def test_build_item_carries_teacher_provenance_and_distribution():
     assert item["id"] == candidate.id
 
 
-def test_load_rubric_config_resolves_templates(tmp_path):
+def test_load_rubric_config_resolves_templates_and_carries_evidence(tmp_path):
     path = tmp_path / "rubrics.json"
     path.write_text(
         json.dumps(
             {
-                "sources": {"fixture": {"template": "fake"}},
+                "sources": {
+                    "fixture": {"template": "fake", "evidence": "state text"},
+                    "inline": {
+                        "instructions": "Inline?",
+                        "criteria": ["a", "b"],
+                        "evidence": "Docstring",
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    templates = {"fake": {"score_template": {"instructions": "From template?", "criteria": ["x", "y"]}}}
+    rubrics = load_rubric_config(str(path), templates)
+    assert rubrics["fixture"]["instructions"] == "From template?"
+    assert rubrics["fixture"]["evidence"] == "state text"
+    assert rubrics["inline"]["instructions"] == "Inline?"
+    assert rubrics["inline"]["evidence"] == "Docstring"
+
+
+def test_load_rubric_config_requires_evidence_on_every_source(tmp_path):
+    path = tmp_path / "rubrics.json"
+    path.write_text(
+        json.dumps({"sources": {"fixture": {"template": "fake"}}}),
+        encoding="utf-8",
+    )
+    templates = {"fake": {"score_template": {"instructions": "From template?", "criteria": ["x", "y"]}}}
+    with pytest.raises(ValueError, match="evidence"):
+        load_rubric_config(str(path), templates)
+
+
+def test_load_rubric_config_rejects_a_default_rubric(tmp_path):
+    path = tmp_path / "rubrics.json"
+    path.write_text(
+        json.dumps(
+            {
+                "sources": {"fixture": {"template": "fake", "evidence": "state text"}},
                 "default": {"instructions": "Default?", "criteria": ["a", "b"]},
             }
         ),
         encoding="utf-8",
     )
     templates = {"fake": {"score_template": {"instructions": "From template?", "criteria": ["x", "y"]}}}
-    rubrics, default = load_rubric_config(str(path), templates)
-    assert rubrics["fixture"]["instructions"] == "From template?"
-    assert default["instructions"] == "Default?"
+    with pytest.raises(ValueError, match="default"):
+        load_rubric_config(str(path), templates)

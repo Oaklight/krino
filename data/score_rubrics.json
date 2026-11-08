@@ -1,30 +1,102 @@
 {
-  "_comment": "Rubric per source for generated score questions (#156). 'template' names a score_template in data/synthetic_templates.py; an inline entry carries its own instructions and criteria. The derived question adds text but does not change the licence of the source state.",
+  "_comment": "Rubric per source for generated score questions (#156). 'template' names a score_template in data/synthetic_templates.py; an inline entry carries its own instructions and criteria. Every source must also carry 'evidence', naming where in the state the rubric's evidence lives: 'state text' means the state itself, a literal such as 'Contract clause' or 'Docstring' means that labelled section, and 'System' means the system-policy block of a rendered tool-call state. A source with no entry is an error, not a default. The derived question adds text but does not change the licence of the source state.",
   "sources": {
-    "mednli": {"template": "medical_triage"},
-    "contractnli": {"template": "legal_judgment"},
-    "codesearchnet": {"template": "code_review"},
-    "mmlu": {"template": "academic_reasoning"},
-    "mmlu_pro_short_reasoning_choice": {"template": "academic_reasoning"},
-    "arc": {"template": "academic_reasoning"},
-    "race": {"template": "academic_reasoning"},
-    "race_short_passage_choice": {"template": "academic_reasoning"},
-    "logiqa": {"template": "logical_inference"},
-    "commonsenseqa": {"template": "commonsense_decision"},
-    "hellaswag": {"template": "commonsense_decision"},
-    "piqa": {"template": "commonsense_decision"},
-    "swag": {"template": "commonsense_decision"},
-    "winogrande": {"template": "commonsense_decision"},
-    "anli": {"template": "adversarial_inference"},
-    "mnli": {"template": "adversarial_inference"},
-    "fever": {"template": "adversarial_inference"},
-    "multirc": {"template": "passage_decision"},
-    "boolq": {"template": "passage_decision"},
-    "hotpotqa_long_choice": {"template": "multi_hop_reasoning"},
-    "2wiki_long_choice": {"template": "multi_hop_reasoning"},
-    "longbench_long_choice": {"template": "multi_hop_reasoning"},
-    "tabfact": {"template": "numerical_reasoning"},
-    "agnews": {"template": "content_analysis"},
+    "mednli": {
+      "template": "medical_triage",
+      "evidence": "state text"
+    },
+    "contractnli": {
+      "template": "legal_judgment",
+      "evidence": "Contract clause"
+    },
+    "codesearchnet": {
+      "template": "code_review",
+      "evidence": "Docstring"
+    },
+    "mmlu": {
+      "template": "academic_reasoning",
+      "evidence": "state text"
+    },
+    "mmlu_pro_short_reasoning_choice": {
+      "template": "academic_reasoning",
+      "evidence": "state text"
+    },
+    "arc": {
+      "template": "academic_reasoning",
+      "evidence": "state text"
+    },
+    "race": {
+      "template": "academic_reasoning",
+      "evidence": "state text"
+    },
+    "race_short_passage_choice": {
+      "template": "academic_reasoning",
+      "evidence": "state text"
+    },
+    "logiqa": {
+      "template": "logical_inference",
+      "evidence": "state text"
+    },
+    "commonsenseqa": {
+      "template": "commonsense_decision",
+      "evidence": "state text"
+    },
+    "hellaswag": {
+      "template": "commonsense_decision",
+      "evidence": "state text"
+    },
+    "piqa": {
+      "template": "commonsense_decision",
+      "evidence": "state text"
+    },
+    "swag": {
+      "template": "commonsense_decision",
+      "evidence": "state text"
+    },
+    "winogrande": {
+      "template": "commonsense_decision",
+      "evidence": "state text"
+    },
+    "anli": {
+      "template": "adversarial_inference",
+      "evidence": "state text"
+    },
+    "mnli": {
+      "template": "adversarial_inference",
+      "evidence": "state text"
+    },
+    "fever": {
+      "template": "adversarial_inference",
+      "evidence": "state text"
+    },
+    "multirc": {
+      "template": "passage_decision",
+      "evidence": "state text"
+    },
+    "boolq": {
+      "template": "passage_decision",
+      "evidence": "state text"
+    },
+    "hotpotqa_long_choice": {
+      "template": "multi_hop_reasoning",
+      "evidence": "state text"
+    },
+    "2wiki_long_choice": {
+      "template": "multi_hop_reasoning",
+      "evidence": "state text"
+    },
+    "longbench_long_choice": {
+      "template": "multi_hop_reasoning",
+      "evidence": "state text"
+    },
+    "tabfact": {
+      "template": "numerical_reasoning",
+      "evidence": "state text"
+    },
+    "agnews": {
+      "template": "content_analysis",
+      "evidence": "state text"
+    },
     "banking77": {
       "instructions": "How urgently does this customer request need attention?",
       "criteria": [
@@ -33,7 +105,8 @@
         "Moderate: same-day response needed",
         "High: time-sensitive, customer blocked",
         "Critical: immediate action or financial/safety risk"
-      ]
+      ],
+      "evidence": "state text"
     },
     "apigen_policy_compliance": {
       "instructions": "How high is the risk of a policy violation in this agent situation?",
@@ -43,7 +116,8 @@
         "Moderate: needs verification before acting",
         "High: likely policy breach or data exposure",
         "Critical: irreversible financial, privacy, or safety harm"
-      ]
+      ],
+      "evidence": "System"
     },
     "apigen_tool_action": {
       "instructions": "How high is the risk of a policy violation in this agent situation?",
@@ -53,7 +127,8 @@
         "Moderate: needs verification before acting",
         "High: likely policy breach or data exposure",
         "Critical: irreversible financial, privacy, or safety harm"
-      ]
+      ],
+      "evidence": "System"
     },
     "apigen_tool_argument": {
       "instructions": "How high is the risk of a policy violation in this agent situation?",
@@ -63,7 +138,8 @@
         "Moderate: needs verification before acting",
         "High: likely policy breach or data exposure",
         "Critical: irreversible financial, privacy, or safety harm"
-      ]
+      ],
+      "evidence": "System"
     },
     "apigen_tool_choice": {
       "instructions": "How high is the risk of a policy violation in this agent situation?",
@@ -73,7 +149,8 @@
         "Moderate: needs verification before acting",
         "High: likely policy breach or data exposure",
         "Critical: irreversible financial, privacy, or safety harm"
-      ]
+      ],
+      "evidence": "System"
     },
     "apigen_tool_next_action": {
       "instructions": "How high is the risk of a policy violation in this agent situation?",
@@ -83,7 +160,8 @@
         "Moderate: needs verification before acting",
         "High: likely policy breach or data exposure",
         "Critical: irreversible financial, privacy, or safety harm"
-      ]
+      ],
+      "evidence": "System"
     },
     "openjev_authored144": {
       "instructions": "How clear is the correct decision from this scenario?",
@@ -93,21 +171,28 @@
         "Moderate: a reasonable decision exists with some doubt",
         "Clear: the decision is well supported",
         "Unambiguous: only one decision is defensible"
-      ]
+      ],
+      "evidence": "state text"
     },
     "sst2": {
       "instructions": "What is the sentiment of this text?",
-      "criteria": ["Negative", "Neutral", "Positive"]
+      "criteria": [
+        "Negative",
+        "Neutral",
+        "Positive"
+      ],
+      "evidence": "state text"
+    },
+    "synthetic": {
+      "instructions": "How clear is the correct decision from this scenario?",
+      "criteria": [
+        "Ambiguous: evidence conflicts",
+        "Weak: one option is slightly favored",
+        "Moderate: a reasonable decision exists with some doubt",
+        "Clear: the decision is well supported",
+        "Unambiguous: only one decision is defensible"
+      ],
+      "evidence": "state text"
     }
-  },
-  "default": {
-    "instructions": "How clear is the correct decision from this scenario?",
-    "criteria": [
-      "Ambiguous: evidence conflicts",
-      "Weak: one option is slightly favored",
-      "Moderate: a reasonable decision exists with some doubt",
-      "Clear: the decision is well supported",
-      "Unambiguous: only one decision is defensible"
-    ]
   }
 }
