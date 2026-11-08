@@ -118,9 +118,12 @@ def test_allocate_quotas_is_deterministic_and_caps_at_pool_size():
     assert first == second
 
 
-def test_level0_allowed_bounds_the_running_share():
+def test_level0_allowed_enforces_the_ceiling_invariant():
     assert level0_allowed(0.5, 0, 0) is True
     assert level0_allowed(0.5, 1, 1) is False
+    # n=3: ceil(0.5 * 3) = 2, so a second level-0 row is allowed and the share
+    # that results is 66.7%, above the nominal 50%. The invariant is the
+    # ceiling, not a flat share.
     assert level0_allowed(0.5, 2, 1) is True
     assert level0_allowed(0.5, 3, 2) is False
     assert level0_allowed(0.0, 10, 10) is True

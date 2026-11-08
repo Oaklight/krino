@@ -13,9 +13,12 @@ This is still a diagnostic set, not training data.
   this question?"; hotpotqa, 2wiki, longbench — "How closely related are the
   passages in this state?"; contractnli — "How restrictive is this contract
   clause?". The peaked families from round one keep their rubrics.
-- **Running level-0 cap.** A source may add a level-0 row only while the running
-  share stays at or below 50% (`--level0-cap 0.5`). The check is running, not a
-  fixed quota, so a source that stops early cannot end far above the cap.
+- **Running level-0 cap.** A source may add a level-0 row only while the result
+  keeps `level0 <= ceil(0.5 * n)` over its accepted rows (`--level0-cap 0.5`).
+  The check is running, not a fixed quota, so a source that stops early cannot
+  end far above the cap. At small n the ceiling itself is above 50% - 66.7% at
+  n=3 and 53.8% at n=13 - so 50% is the share the rule drives towards, not a
+  bound it enforces at every n.
   The first attempt applied the cap to the selection quota instead; commonsenseqa
   still reached 96% level 0 because a source that stops early never spends its
   quota. A cap on the selection quota does not control the accepted rows.
@@ -183,8 +186,24 @@ per-domain severity/quality/difficulty templates.
 1. **The rubric rule works.** Changing the dimension to one the state carries
    cut argmax/expected disagreement roughly in half for every redesigned family,
    without changing the model or the prompt mechanics.
-2. **The cap works.** No source ends above 54% level 0, and the aggregate
-   level-0 share falls from 48.6% to 32.1% at a cost of 515 rejected rows.
+
+   The rubric and the cap are confounded in this run, and this note does not
+   claim otherwise. The cap rejects a row because of its label, so it lowers the
+   disagreement statistic mechanically by removing level-0 rows from the sample;
+   the two changes cannot be separated from this run alone. The control that can
+   be recomputed from the published per-family rates: the 24 families whose
+   rubric did not change moved from 30.0% to 28.8% weighted disagreement (1,442
+   to 1,475 accepted rows), while the nine redesigned families moved from 84.3%
+   to 19.6% (479 to 525 rows; `swag` has no round-one row).
+   `apigen_tool_next_action` lost 134 of its 163 candidates to the cap and still
+   sits at 52%. The recomputation uses the rounded per-family percentages, so it
+   carries about a point of error; a two-family run with the redesigned rubric at
+   `--level0-cap 0` would settle it outright.
+2. **The cap works.** Every accepted row satisfies the running ceiling
+   `level0 <= ceil(0.5 * n)` for its source; in this run the smallest source is
+   large enough that no source ends above 54%, but that maximum is a fact about
+   these sample sizes, not a property of the rule. The aggregate level-0 share
+   falls from 48.6% to 32.1% at a cost of 515 rejected rows.
 3. **Still not training data, and the failures are structural.** The redesigned
    set is much better behaved, but the quality failures are the reasoning
    families and the apigen action scales. That is the state-property constraint,
