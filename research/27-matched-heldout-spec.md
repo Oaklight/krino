@@ -33,17 +33,20 @@ between comparable checkpoints (32.4%):
 
 The rounding is why 6,400 is the target and not 6,357. The calculation assumes paired
 comparisons on the same items, two-sided alpha 0.05, and a discordance rate that
-transfers from JevBench to this set. The last assumption is the weak one: a set on which
-models disagree more has more power, and one on which they agree more has less. Record
-the realized discordance after the first two runs and recompute the detectable effect.
-Do not rebuild the set to chase a number.
+transfers from JevBench to this set. The last assumption is the weak one: the detectable
+effect grows with discordance, so a set on which the models disagree more has less power,
+and one on which they agree more has more. Record the realized discordance after the
+first two runs and recompute the detectable effect. Do not rebuild the set to chase a
+number.
 
 **Instrument limit.** 2.0 pp at 6,400 items is the same size as the project's effect
-floor. The set detects that floor at 80% power and nothing smaller at the planning
-discordance; a smaller true effect will usually not reach significance here. That is a
-property of the instrument (6,400 paired items at 32.4% discordance), not of any result.
-Keep the set fixed and recompute the detectable effect at the realized discordance after
-the first two runs.
+floor. The set resolves that floor at 79% power, not 80%: the exact two-sided McNemar
+power at 32.4% discordance is 0.792, while 6,357 is the count the normal approximation
+returns for 0.80. The gap is exact-test discreteness, so a true 2.0 pp effect is missed
+about one run in five. Nothing smaller is resolvable at the planning discordance. That is
+a property of the instrument (6,400 paired items at 32.4% discordance), not of any
+result. Keep the set fixed and recompute the detectable effect at the realized
+discordance after the first two runs.
 
 Per-type power at the quotas below, at the same 32.4% discordance:
 
@@ -63,7 +66,7 @@ right and the control wrong, `c` the reverse, and `pi = (b + c) / n` the realize
 discordance. The accuracy difference is `d = (b - c) / n`; its standard error is
 `sqrt((pi - d^2) / n)`. Under the null (`b = c`), `SE0 = sqrt(pi / n)`. At the planning
 discordance 0.324 and n = 6,400, `SE0 = 0.0071`, or **0.71 pp**. The exact two-sided
-McNemar test reaches 80% power at a true difference of **2.0 pp**
+McNemar test reaches 79% power at a true difference of **2.0 pp**
 (`power(6400, 0.324, 0.02) = 0.792`); the normal approximation gives
 `(1.96 + 0.84) * 0.71 = 2.0 pp`.
 
@@ -80,8 +83,12 @@ Per-type SE0 at the quotas is 1.21 pp (noul, 2,200), 1.06 pp (choice, 2,900) and
 
 The SE is a planning value, not a result. After the first control and arm run, compute
 `b`, `c` and the realized `pi`, report `SE(d)` and the exact McNemar p, and recompute the
-MDE at the realized discordance. If the realized `pi` is much below 0.324, the set may
-not resolve 2 pp; record that before promoting. Do not rebuild the set to chase power.
+MDE at the realized discordance. Because `SE0 = sqrt(pi / n)`, the detectable effect
+grows with the realized discordance: 1.60 pp at 0.20, 2.00 pp at 0.324, 2.50 pp at 0.50.
+The set can speak to the 2.0 pp floor only when the realized `pi` is at or below the
+planning value. Above about 0.32-0.33 the MDE exceeds the floor, and a null result is
+then uninformative rather than evidence of no effect; record that reading before
+promoting. Do not rebuild the set to chase power.
 
 Reproduce:
 
@@ -300,11 +307,14 @@ version.
 
 The freeze is reproducible only if the build replays. CI rebuilds `items.jsonl.gz` from
 the recorded tuple in a clean environment and compares `items_sha256`, the per-source
-counts and the per-group counts. A mismatch fails. The response is a version bump and an
-updated tuple, never a silent re-hash of the committed artifact.
+counts and the per-group counts. A mismatch fails the build and is localized first; the
+decision that follows — the tuple is wrong, or the builder changed the content — is
+recorded before anything moves. A silent re-hash of the committed artifact is never the
+answer.
 
 The interim split being carved before #234 is not this set, but it should be frozen with
-the same tuple: dependency lock, Python version, builder commit, and a replay check.
+the same tuple: dependency lock, Python version, `PYTHONHASHSEED`, builder commit, the
+number of independent rebuilds compared, and a replay check.
 Retrofitting a tuple after gate rows exist is more expensive than recording it at birth.
 
 ### Training exclusion

@@ -175,8 +175,13 @@ The corrected suite is assembled and recorded as `di-0.3-krino-1`:
 | `suite_sha256` | `f725070c14046bb86baf1e3911b1af209ae898e9a0ab29dee5a2548555f7c3bf` |
 
 `suite_sha256` is the SHA-256 of the canonical JSON object
-`{suite_version, rows_sha256, added_sha256, gsm8k_sha256}`. The counts equal the pinned
-edition; the content differs only in the SGD rows.
+`{suite_version, rows_sha256, added_sha256, gsm8k_sha256}`. The counts above are the
+edition-0.3 cut: 110,201 base requests plus 30,419 added requests. They are not
+comparable to the release-v1 `selected-rows` cut in the table above (132,422 requests,
+117,764 cases), which includes benchmarks this suite shows but does not count; the
+difference between the two pairs is a difference of cuts, not of editions. Identity
+against the pin is carried by `added_sha256` and `gsm8k_sha256`, both of which match;
+the content differs only in the SGD rows.
 
 ### Suite identity and gate-row provenance
 

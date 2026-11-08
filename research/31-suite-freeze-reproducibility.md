@@ -76,22 +76,27 @@ that no longer described any code path in the repository — which is the state 
    - suite version and the output hashes (whole file and per source file);
    - the builder commit;
    - an exact dependency lock (versions, not lower bounds);
-   - the Python version;
+   - the Python version and `PYTHONHASHSEED`, because an iteration order that reaches
+     the output makes two otherwise identical rebuilds disagree;
+   - the number of independent rebuilds compared, and whether they were byte-identical;
    - every upstream source revision;
    - the seed and the exact build command.
 2. **Rebuild from the tuple in CI, per file.** Run it on every builder change and on a
    schedule. CI compares the per-file hashes, not only the whole-suite hash, so a failure
-   names the moved benchmark. A mismatch fails the build. The response is a version bump
-   and an update to the recorded tuple, never a silent re-hash of the committed artifact.
+   names the moved benchmark. A mismatch stops the pipeline and is localized (point 5);
+   it is never answered by a silent re-hash of the committed artifact. What to do about it
+   is decided under point 4 and recorded before anything changes.
    The SGD case was localized in one command because the kit published per-file hashes.
    Without the automated comparison this rule is a reminder, and reminders do not survive.
 3. **A builder change that alters row content bumps the suite version**, including a
    correctness fix. The trigger is not the intent of the change; it is the per-file replay
-   in point 2 reporting a mismatch. Never regenerate rows under an existing version. The
-   fix may make the old hash unreproducible on purpose; that is a reason to version, not to
-   revert.
+   in point 2 reporting a mismatch, and the decision under point 4 attributing it to the
+   builder. Never regenerate rows under an existing version. The fix may make the old hash
+   unreproducible on purpose; that is a reason to version, not to revert.
 4. **Never relax the verifier or restore a defect to match a pin.** A mismatch means the
-   tuple is wrong or the builder changed. Decide which, and record the decision.
+   tuple is wrong or the builder changed. Decide which first and record the decision
+   before acting: if the tuple is wrong, correct the tuple; if the builder changed the
+   content, bump the suite version under point 3 and update the tuple.
 5. **Treat a mismatch as a localization task first.** Compare the per-file manifest before
    hypothesizing dependency or source drift. In this case the whole-suite hash pointed at
    132k rows; the per-file check pointed at one file in one command.
@@ -104,9 +109,10 @@ that no longer described any code path in the repository — which is the state 
 
 The matched held-out spec already records the corpus manifest hash, the input file hashes,
 the builder commit, the LSH parameters and the assignment seed. It should add the
-dependency lock, the Python version and per-file output hashes, and the CI guard should
-rebuild from the tuple, not only re-hash the committed file. The same tuple belongs in
-every future benchmark freeze, including JevBench.
+dependency lock, the Python version, `PYTHONHASHSEED`, the count of independent rebuilds
+compared, and per-file output hashes, and the CI guard should rebuild from the tuple, not
+only re-hash the committed file. The same tuple belongs in every future benchmark freeze,
+including JevBench.
 
 ## Consequence for Decision Index
 
