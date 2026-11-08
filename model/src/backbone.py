@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 import torch
+import transformers
 from transformers import AutoConfig, AutoModel, AutoModelForCausalLM, AutoTokenizer
 
 try:  # transformers >= 4.45 exposes the image-text auto class
@@ -79,13 +80,27 @@ def load_causal_lm(
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    config = AutoConfig.from_pretrained(model_name)
+    # Multimodal checkpoints that still expose a text decoder (for example
+    # Mistral3) are not in AutoModelForCausalLM's mapping.  They accept
+    # text-only inputs and return ``.logits``, so the declared architecture is
+    # loaded directly when the name says ConditionalGeneration.
+    loader = AutoModelForCausalLM
+    arch = (config.architectures or [None])[0]
+    if arch and arch.endswith("ForConditionalGeneration"):
+        loader = getattr(transformers, arch, AutoModelForCausalLM)
+    tok_kwargs = {}
+    if config.model_type in ("mistral3", "pixtral"):
+        # The released Mistral tokenizers carry a regex this transformers
+        # version reads incorrectly; the flag selects the corrected pattern.
+        tok_kwargs["fix_mistral_regex"] = True
+    tokenizer = AutoTokenizer.from_pretrained(model_name, **tok_kwargs)
     kwargs = {
         "dtype": dtype,
         "device_map": device if device == "auto" else None,
         **_flash_attention_kwargs(flash_attention),
     }
-    model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
+    model = loader.from_pretrained(model_name, **kwargs)
     if device != "auto":
         model = model.to(device)
     model.eval()

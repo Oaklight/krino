@@ -47,6 +47,20 @@ def resolve_snapshot_revision(snapshot_path: str | Path) -> str:
     return Path(snapshot_path).name
 
 
+def readout_label(strategy: str, norm: str) -> str:
+    """Name the readout in the words the JevBench and logit tables use.
+
+    ``description`` scores the full option text as a continuation, ``label``
+    scores the single letter or digit that names the option.  The two differ by
+    up to five points at high option counts, so a row must say which it is.
+    """
+    if strategy == "description":
+        return f"option-text continuation, {norm}-normalised log-prob"
+    if strategy == "label":
+        return f"one-token label code, {norm}-normalised log-prob"
+    return f"strategy={strategy}, {norm}-normalised log-prob"
+
+
 def build_run_provenance(
     *,
     model_id: str,
@@ -76,6 +90,7 @@ def build_run_provenance(
         "device": device,
         "code_commit": resolve_code_commit(root, code_commit),
         "date_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "readout": readout_label(strategy, norm),
         "strategy": strategy,
         "norm": norm,
         "command": " ".join(command if command is not None else sys.argv),

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from model.evaluation.run_provenance import (
     build_run_provenance,
+    readout_label,
     resolve_code_commit,
     resolve_snapshot_revision,
 )
@@ -16,6 +17,12 @@ SNAPSHOT = "/cache/huggingface/hub/models--openbmb--MiniCPM5-2B/snapshots/f97400
 
 def test_revision_comes_from_the_snapshot_path():
     assert resolve_snapshot_revision(SNAPSHOT) == "f97400052a43d642bbc6e9975e2397e3ae6a6b52"
+
+
+def test_readout_names_the_two_strategies_differently():
+    assert readout_label("description", "mean").startswith("option-text continuation")
+    assert readout_label("label", "mean").startswith("one-token label code")
+    assert readout_label("description", "mean") != readout_label("label", "mean")
 
 
 def test_code_commit_is_unresolved_outside_a_git_tree(tmp_path):
