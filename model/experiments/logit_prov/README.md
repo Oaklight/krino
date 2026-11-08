@@ -151,9 +151,9 @@ over **36 distinct questions**, so the tier's effective n is 36, and the whole
 set is 231 predictions over **195 distinct questions** (48 + 111 + 36). A reader
 comparing the `original` 72 against another benchmark's 72 is comparing nothing,
 and any statistic that treats all 231 rows as independent is slightly
-anti-conservative because 36 of them form correlated paraphrase pairs. The
-per-subtask counts are 12 predictions over 6 questions for each of the six
-original subtasks.
+anti-conservative because 72 of them — the whole `original` tier — form 36
+correlated paraphrase pairs. The per-subtask counts are 12 predictions over 6
+questions for each of the six original subtasks.
 
 All five rows below use the continuation readout, one named instrument each.
 
