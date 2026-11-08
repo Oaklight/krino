@@ -7,7 +7,7 @@
     "device": "cuda:0",
     "code_commit": "2819b6f67f7f3c9b7cf4d7dbaa08a3671a6cfaa0",
     "date_utc": "2026-11-08T05:59:06Z",
-    "readout": "per-option judgement, log P(\" yes\") against log P(\" no\") at \"Answer:\"",
+    "readout": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; log P(\" no\") recorded but not ranked; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record",
     "strategy": "judgement",
     "norm": "mean",
     "command": "model/scripts/eval_jevbench_judgement.py --model Qwen/Qwen3-4B --variant instruct --output <host>/tmp/krino-277-out/exp/F_Qwen3-4B_posttained_judgement.json",
