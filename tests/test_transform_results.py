@@ -361,3 +361,40 @@ class TestTrainedHeadRows:
         for run in transform.transform_jevbench():
             if run["readout"] != "trained-heads":
                 assert run["head_version"] is None
+
+
+class TestLanding:
+    OUTPUT = REPO_ROOT / "web" / "public" / "results" / "eval_results.json"
+
+    def _data(self) -> dict:
+        if not self.OUTPUT.exists():
+            pytest.skip("eval_results.json not generated")
+        return json.loads(self.OUTPUT.read_text())
+
+    def test_block_recomputes_from_the_rows(self):
+        data = self._data()
+        expected = transform.build_landing(
+            data["jevbench_runs"], data["eval_runs"], data["training_runs"]
+        )
+        assert data["landing"] == expected
+
+    def test_key_figures(self):
+        landing = self._data()["landing"]
+
+        assert landing["judgement_vs_continuation"]["measured"] == 14
+        assert landing["judgement_vs_continuation"]["wins"] == 13
+        assert landing["judgement_vs_continuation"]["above_10_count"] == 9
+        assert landing["judgement_vs_continuation"]["above_10_min_pp"] == 10.4
+        assert landing["judgement_vs_continuation"]["above_10_max_pp"] == 18.6
+
+        assert landing["post_trained_4b"]["base_pp"] == 53.7
+        assert landing["post_trained_4b"]["min_pp"] == 61.9
+        assert landing["post_trained_4b"]["max_pp"] == 64.9
+
+        assert landing["resolution"]["jevbench_pp"] == 9.3
+        assert landing["resolution"]["dev_card_min_pp"] == 5
+        assert landing["resolution"]["dev_card_max_pp"] == 6
+
+        assert landing["instrumented_rows"] == 37
+        assert landing["banking77"]["trained_pp"] == 95.2
+        assert landing["banking77"]["jev_pp"] == 75.0

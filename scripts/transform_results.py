@@ -6,12 +6,19 @@ Reads model/experiments/*.json and writes web/public/results/eval_results.json.
 
 import json
 import statistics
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 EXPERIMENTS_DIR = REPO_ROOT / "model" / "experiments"
 OUTPUT_PATH = REPO_ROOT / "web" / "public" / "results" / "eval_results.json"
+
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from model.evaluation.paired_power import detectable_delta  # noqa: E402
+from model.scripts.paired_mcnemar import mcnemar  # noqa: E402
 
 
 def source_file_label(filepath: Path) -> str:
@@ -272,6 +279,7 @@ def transform_training_file(filepath: Path) -> dict | None:
         "params": params,
         "benchmark": benchmark,
         "info": extra,
+        "source_file": source_file_label(filepath),
         "best_accuracy": best_epoch["eval_accuracy"] if best_epoch else None,
         "best_loss": best_epoch["eval_loss"] if best_epoch else None,
         "n_epochs": len(epochs),
@@ -467,6 +475,217 @@ def transform_jevbench() -> list[dict]:
     return runs
 
 
+LANDING_BAND = (
+    "Qwen/Qwen3-4B",
+    "Qwen/Qwen3-Reranker-4B",
+    "microsoft/Phi-4-mini-instruct",
+)
+DEV_RESOLUTION_MODELS = (
+    "Qwen/Qwen3-Reranker-0.6B",
+    "Qwen/Qwen3-Reranker-4B",
+    "Qwen/Qwen3-Reranker-8B",
+    "zeroentropy/zerank-2-reranker",
+)
+RESOLUTION_INPUTS_PATH = EXPERIMENTS_DIR / "resolution_inputs.json"
+DEV_MANIFEST_PATH = REPO_ROOT / "data" / "benchmarks" / "dev" / "dev_800.json"
+
+
+def _prediction_map(filepath: Path) -> dict[str, bool]:
+    raw = json.loads(filepath.read_text())
+    return {row["id"]: bool(row["correct"]) for row in raw["predictions"]}
+
+
+def _logit_prov_path(prefix: str, model_id: str) -> Path:
+    return LOGIT_PROV_DIR / f"{prefix}_{model_id.replace('/', '_')}.json"
+
+
+def _discordance(first: dict[str, bool], second: dict[str, bool]) -> tuple[float, int]:
+    shared = sorted(set(first) & set(second))
+    if not shared:
+        return 0.0, 0
+    return sum(1 for item in shared if first[item] != second[item]) / len(shared), len(shared)
+
+
+def _mde_pp(n_items: int, discordance: float) -> float:
+    return round(detectable_delta(n_items, discordance) * 100, 1)
+
+
+def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_runs: list[dict]) -> dict:
+    """Summarise the landing-page claims from rows that are already traceable."""
+    cells: dict[str, dict[str, dict]] = {}
+    for run in jevbench_runs:
+        model_id = run.get("model_id")
+        if model_id:
+            cells.setdefault(model_id, {})[run["readout"]] = run
+
+    pairs: list[dict] = []
+    tier_gaps: dict[str, list[float]] = {"easy": [], "hard": [], "original": []}
+    for model_id, by_readout in cells.items():
+        judgement = by_readout.get("judgement")
+        continuation = by_readout.get("continuation")
+        if not (judgement and continuation):
+            continue
+        pairs.append({
+            "model_id": model_id,
+            "name": judgement["model"]["name"],
+            "judgement_pp": round(judgement["accuracy"] * 100, 1),
+            "continuation_pp": round(continuation["accuracy"] * 100, 1),
+            "gap_pp": round((judgement["accuracy"] - continuation["accuracy"]) * 100, 1),
+        })
+        for tier in tier_gaps:
+            j = judgement["by_tier"].get(tier)
+            c = continuation["by_tier"].get(tier)
+            if j and c:
+                tier_gaps[tier].append((j["accuracy"] - c["accuracy"]) * 100)
+
+    wins = [pair for pair in pairs if pair["gap_pp"] > 0]
+    losses = [pair for pair in pairs if pair["gap_pp"] <= 0]
+    above = [pair for pair in pairs if pair["gap_pp"] > 10.0]
+    largest_tier = max(
+        tier_gaps,
+        key=lambda tier: statistics.mean(tier_gaps[tier]) if tier_gaps[tier] else float("-inf"),
+    )
+
+    band = []
+    for model_id in LANDING_BAND:
+        judgement = cells.get(model_id, {}).get("judgement")
+        if judgement:
+            band.append({
+                "model_id": model_id,
+                "name": judgement["model"]["name"],
+                "pp": round(judgement["accuracy"] * 100, 1),
+            })
+    base = cells.get("Qwen/Qwen3-4B-Base", {}).get("judgement")
+
+    inputs = json.loads(RESOLUTION_INPUTS_PATH.read_text())
+    jev_first, jev_second = inputs["jevbench"]["pair"]
+    jev_discordance, jev_n = _discordance(
+        _prediction_map(_logit_prov_path("jevbench_judgement", jev_first)),
+        _prediction_map(_logit_prov_path("jevbench_judgement", jev_second)),
+    )
+    jev_mde = _mde_pp(jev_n, jev_discordance)
+
+    dev_first, dev_second = inputs["dev"]["pair"]
+    dev_first_preds = _prediction_map(_logit_prov_path("dev_judgement", dev_first))
+    dev_second_preds = _prediction_map(_logit_prov_path("dev_judgement", dev_second))
+    dev_shared = sorted(set(dev_first_preds) & set(dev_second_preds))
+    dev_first_only, dev_second_only, dev_p = mcnemar(dev_first_preds, dev_second_preds, dev_shared)
+
+    dev_discordances = []
+    for model_id in DEV_RESOLUTION_MODELS:
+        rate, _ = _discordance(
+            _prediction_map(_logit_prov_path("dev_judgement", model_id)),
+            _prediction_map(_logit_prov_path("dev_logit", model_id)),
+        )
+        dev_discordances.append(rate)
+    dev_n = len(dev_first_preds)
+    manifest = json.loads(DEV_MANIFEST_PATH.read_text())
+    mean_cluster = dev_n / len(manifest["cluster_sizes"])
+    rho_low, rho_high = inputs["dev"]["rho"]
+    n_eff_low = dev_n / (1 + (mean_cluster - 1) * rho_high)
+    n_eff_high = dev_n / (1 + (mean_cluster - 1) * rho_low)
+    dev_mdes = [
+        _mde_pp(n_eff, rate)
+        for n_eff in (n_eff_low, n_eff_high)
+        for rate in (min(dev_discordances), max(dev_discordances))
+    ]
+    dev_mde_low, dev_mde_high = min(dev_mdes), max(dev_mdes)
+
+    judgement_runs = sorted(
+        (run for run in jevbench_runs if run["readout"] == "judgement"),
+        key=lambda run: -run["accuracy"],
+    )
+    top_four = [
+        {"model_id": run["model_id"], "name": run["model"]["name"], "pp": round(run["accuracy"] * 100, 1)}
+        for run in judgement_runs[:4]
+    ]
+
+    jev_pair_rows = [cells[model_id]["judgement"] for model_id in (dev_first, dev_second) if model_id in cells]
+    jev_item_diff = (
+        abs(jev_pair_rows[0]["correct"] - jev_pair_rows[1]["correct"])
+        if len(jev_pair_rows) == 2 else None
+    )
+
+    trained = max(
+        (run for run in training_runs if run["benchmark"] == "banking77" and run.get("best_accuracy") is not None),
+        key=lambda run: run["best_accuracy"],
+        default=None,
+    )
+    jev_run = next((run for run in eval_runs if run["method"] == "jev_api"), None)
+    jev_banking = None
+    if jev_run:
+        jev_banking = jev_run["results"]["by_source"].get("banking77", {}).get("accuracy")
+
+    pair_sources = sorted({
+        by_readout[readout]["source_file"]
+        for by_readout in cells.values()
+        if by_readout.get("judgement") and by_readout.get("continuation")
+        for readout in ("judgement", "continuation")
+    })
+    band_sources = sorted({cells[entry["model_id"]]["judgement"]["source_file"] for entry in band})
+
+    return {
+        "judgement_vs_continuation": {
+            "measured": len(pairs),
+            "wins": len(wins),
+            "losses": [
+                {"model_id": pair["model_id"], "name": pair["name"], "gap_pp": pair["gap_pp"]}
+                for pair in losses
+            ],
+            "above_10_count": len(above),
+            "above_10_min_pp": min((pair["gap_pp"] for pair in above), default=None),
+            "above_10_max_pp": max((pair["gap_pp"] for pair in above), default=None),
+            "largest_tier": largest_tier,
+            "source_files": pair_sources,
+        },
+        "post_trained_4b": {
+            "base_pp": round(base["accuracy"] * 100, 1) if base else None,
+            "min_pp": min((entry["pp"] for entry in band), default=None),
+            "max_pp": max((entry["pp"] for entry in band), default=None),
+            "checkpoints": band,
+            "source_files": band_sources,
+        },
+        "resolution": {
+            "jevbench_pp": jev_mde,
+            "jevbench_pair": [jev_first, jev_second],
+            "dev_min_pp": dev_mde_low,
+            "dev_max_pp": dev_mde_high,
+            "dev_card_min_pp": round(dev_mde_low),
+            "dev_card_max_pp": round(dev_mde_high),
+            "dev_pair": [dev_first, dev_second],
+            "dev_pair_diff_pp": round((dev_first_only - dev_second_only) / len(dev_shared) * 100, 2),
+            "dev_pair_p": round(dev_p, 4),
+            "jevbench_pair_item_diff": jev_item_diff,
+            "top_four": top_four,
+            "top_four_spread_pp": round(
+                (top_four[0]["pp"] - top_four[-1]["pp"]) if len(top_four) == 4 else 0.0, 1
+            ),
+            "source_files": sorted({
+                source_file_label(RESOLUTION_INPUTS_PATH),
+                "model/evaluation/paired_power.py",
+                source_file_label(DEV_MANIFEST_PATH),
+                source_file_label(_logit_prov_path("jevbench_judgement", jev_first)),
+                source_file_label(_logit_prov_path("jevbench_judgement", jev_second)),
+                *(
+                    source_file_label(_logit_prov_path(prefix, model_id))
+                    for model_id in DEV_RESOLUTION_MODELS
+                    for prefix in ("dev_judgement", "dev_logit")
+                ),
+                source_file_label(_logit_prov_path("dev_judgement", dev_first)),
+                source_file_label(_logit_prov_path("dev_judgement", dev_second)),
+            }),
+        },
+        "instrumented_rows": len(jevbench_runs),
+        "banking77": {
+            "trained_pp": round(trained["best_accuracy"] * 100, 1) if trained else None,
+            "trained_model": trained["model"] if trained else None,
+            "trained_source_file": trained["source_file"] if trained else None,
+            "jev_pp": round(jev_banking * 100, 1) if jev_banking is not None else None,
+            "jev_source_file": jev_run["source_file"] if jev_run else None,
+        },
+    }
+
+
 def main() -> None:
     eval_runs = []
     training_runs = []
@@ -493,6 +712,7 @@ def main() -> None:
     jevbench_runs = transform_jevbench()
 
     jev_comparison = build_jev_comparison(eval_runs)
+    landing = build_landing(jevbench_runs, eval_runs, training_runs)
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -500,6 +720,7 @@ def main() -> None:
         "training_runs": training_runs,
         "jevbench_runs": jevbench_runs,
         "jev_comparison": jev_comparison,
+        "landing": landing,
         "benchmarks": dict(sorted(BENCHMARK_TYPES.items())),
     }
 

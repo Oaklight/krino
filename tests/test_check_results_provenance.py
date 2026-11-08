@@ -125,3 +125,23 @@ class TestTrainedHeadGuard:
         row = self._row_without(tmp_path, monkeypatch, "run_id")
         errors = guard.check_results({"jevbench_runs": [row]}, {TRAINED_SOURCE})
         assert any("has no run_id" in error for error in errors)
+
+
+class TestLandingGuard:
+    OUTPUT = REPO_ROOT / "web" / "public" / "results" / "eval_results.json"
+
+    def _data(self) -> dict:
+        return json.loads(self.OUTPUT.read_text())
+
+    def test_committed_landing_passes(self):
+        assert guard.check_landing(self._data(), guard.committed_files()) == []
+
+    def test_tampered_block_fails(self):
+        data = self._data()
+        data["landing"]["instrumented_rows"] = 0
+        errors = guard.check_landing(data, set())
+        assert any("block does not match" in error for error in errors)
+
+    def test_untracked_landing_source_fails(self):
+        errors = guard.check_landing(self._data(), set())
+        assert any("not a committed file" in error for error in errors)

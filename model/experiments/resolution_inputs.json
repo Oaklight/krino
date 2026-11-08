@@ -1,0 +1,12 @@
+{
+  "source": "issue #308; the dev rho range is from #298. Recorded here so the landing page can recompute its resolution figures from committed files.",
+  "jevbench": {
+    "pair": ["Qwen/Qwen3-4B", "Qwen/Qwen3-Reranker-4B"]
+  },
+  "dev": {
+    "pair": ["Qwen/Qwen3-Reranker-4B", "Qwen/Qwen3-Reranker-8B"],
+    "rho": [0.042, 0.129]
+  },
+  "target_power": 0.8,
+  "alpha": 0.05
+}
