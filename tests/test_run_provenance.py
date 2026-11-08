@@ -40,6 +40,16 @@ def test_environment_records_versions_and_a_device_name():
     assert info["python_version"].count(".") >= 1
 
 
+def test_environment_records_the_gdn_kernel_path():
+    """A GDN row is only reproducible if it says fused or reference."""
+    info = environment_info()
+    for key in ("fla", "causal_conv1d"):
+        assert info[key] in ("available", "absent")
+    assert info["gdn_kernel_path"] in ("fused", "reference")
+    expected = "fused" if info["fla"] == info["causal_conv1d"] == "available" else "reference"
+    assert info["gdn_kernel_path"] == expected
+
+
 def test_environment_says_unavailable_without_torch():
     import importlib.util
 

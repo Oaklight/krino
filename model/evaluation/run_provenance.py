@@ -10,6 +10,7 @@ model stack installed.
 
 from __future__ import annotations
 
+import importlib
 import platform
 import subprocess
 import sys
@@ -18,13 +19,32 @@ from pathlib import Path
 from typing import Any
 
 
+def _importable(name: str) -> bool:
+    try:
+        importlib.import_module(name)
+    except Exception:  # a broken or partially built package must not fail the run
+        return False
+    return True
+
+
 def environment_info() -> dict[str, str]:
-    """Record the interpreter and the two libraries the numbers depend on.
+    """Record the interpreter and the libraries the numbers depend on.
 
     ``device`` is ``cuda:0`` on every machine and every card, so it cannot say
     which environment produced a file.  Versions can, and torch is imported
     here rather than at module scope so this module stays importable - and
     testable - without the model stack installed.
+
+    ``gdn_kernel_path`` records whether the GDN kernels ran fused or by
+    reference.  It is derived from package availability, not from what the
+    model did: a dense run in an environment that has the packages writes
+    ``fused`` and never touches a GDN kernel, which is why the field is named
+    for the kernel family rather than for the run.
+
+    Qwen3.5's linear-attention layers use ``flash-linear-attention`` and
+    ``causal_conv1d`` when both are importable and fall back to PyTorch
+    otherwise; the two paths compute the same quantity, but a bf16 reduction
+    can differ in the last bits, so a row has to say which one produced it.
     """
     info: dict[str, str] = {"python_version": platform.python_version()}
     try:
@@ -51,6 +71,13 @@ def environment_info() -> dict[str, str]:
         info["transformers_version"] = "unavailable"
     else:
         info["transformers_version"] = str(transformers.__version__)
+    fused_kernels = {
+        "fla": _importable("fla"),
+        "causal_conv1d": _importable("causal_conv1d"),
+    }
+    for name, present in fused_kernels.items():
+        info[name] = "available" if present else "absent"
+    info["gdn_kernel_path"] = "fused" if all(fused_kernels.values()) else "reference"
     return info
 
 
