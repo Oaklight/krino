@@ -162,6 +162,24 @@ That gap is the instrument, not the model: the pair is here so a reader who
 sees only one of them cannot conclude the reranker lost 15 points, or that the
 continuation rows are comparable to the anchor without saying so.
 
+**The `original` column is not wholly a measurement.** Two of the three subtasks
+in that tier are answered with the same option index by every checkpoint anyone
+has scored here: `original/intent` (12 items) at index 2 and `original/routing`
+(12 items) at index 3, constant in 8 of 8 models across the two sweeps (#288).
+In the five files committed here the same two cells are constant at the same
+indices, 5 of 5, and `original/adequacy` is constant at index 0 in 5 of 5 as
+well (7 of 8 overall); `original/policy` is constant in 4 of 8. No `easy` or
+`hard` subtask is constant in any model.
+
+So 24 of the 231 items carry no information from this readout, for every model
+tested, and a further 12 are near-constant. The `original` percentage is partly a
+property of where each model's constant answer falls against the gold
+distribution of those subtasks, which differs by item. It does not reorder the
+rows — every model pays the same cells — but the absolute value in that column
+should not be read as accuracy on those subtasks. Scoring them through
+`score_options_native` is the follow-up that would settle it, and it is recorded
+on #288 rather than guessed at here.
+
 ## Determinism check
 
 `Qwen/Qwen2.5-3B` was scored a second time from a separate checkout of the same
@@ -173,6 +191,28 @@ latency blocks, which are wall-clock and are not part of any row.
 This is a determinism check, not a second measurement. The row of record is
 `logit_Qwen_Qwen2.5-3B.json`; the rerun is not committed as a result, and no
 number in the table above comes from it.
+
+## What these numbers do not decide
+
+The top two rows are 65.48 and 64.68 — 0.80 pp apart. The only two checkpoints
+in this sweep that have been run twice on different stacks give the size of that
+drift directly: Phi-4-mini 64.38 at Phase A → 64.68 here (+0.30 pp) and
+Qwen2.5-1.5B 58.36 → 58.34 (−0.02 pp). Same data, same readout, different code
+commit and a different GPU generation; 0.30 pp is not 0.80, so this is not an
+argument that the gap is inside the noise band on the internal suite alone.
+
+The second instrument does not break the tie either: on JevBench public
+Phi-4-mini is 1.74 pp ahead (50.22 against 48.48), the opposite order to the
+internal suite. Two instruments, opposite rankings, margins of 0.8 and 1.7 pp.
+**These numbers do not order `Qwen3-4B-Base` against `Phi-4-mini-instruct`**, and
+choosing between them has to rest on grounds this sweep does not supply.
+
+A base checkpoint sitting slightly behind an instruct checkpoint of the same size
+is also the expected direction, not a failure. More to the point, neither column
+says which is the better *starting point* for training, which is the only
+question this screen exists to answer. A zero-shot readout measures what a
+checkpoint can do under someone else's prompt format before a head has seen it;
+it does not measure how much of that survives or improves under training.
 
 ## Data identity
 
@@ -263,7 +303,12 @@ above are computed under the ruled denominator and are not comparable to the
 documented column without that difference in view.
 
 The two checkpoints that appear in both places also differ slightly from the
-Phase A files: Phi-4-mini 64.7% here against 64.4% recomputed there, Qwen2.5-1.5B
-58.3% against 58.4%. Same data and same readout, different code commit and a
+Phase A files: Phi-4-mini 64.68 here against 64.38 recomputed there, Qwen2.5-1.5B
+58.34 against 58.36. Same data and same readout, different code commit and a
 different GPU generation, and bf16 reduction order is not guaranteed across
-kernels. The gap is 0.1 to 0.3 pp; it is not evidence of a change in the model.
+kernels. The gap is 0.02 to 0.30 pp; it is not evidence of a change in the model.
+
+`Qwen3-4B-Base` is **not** a rerun of the September `logit_Qwen_Qwen3-4B.json`.
+That file is the instruct checkpoint and scores 66.30 under the same rule; the
+0.82 pp between 66.30 and 65.48 is a different checkpoint on different weights,
+not drift between runs, and must not be used as an estimate of run-to-run noise.
