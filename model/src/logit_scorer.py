@@ -18,6 +18,8 @@ import torch
 from transformers import DynamicCache, PreTrainedModel, PreTrainedTokenizerBase
 
 from model.evaluation.prompt_options import noul_option_texts
+from model.src.backbone import is_hybrid_model
+from model.src.hybrid_cache import fork_prefix_cache
 
 
 class LogitScorer:
@@ -45,6 +47,21 @@ class LogitScorer:
         self.norm = norm
         self.strategy = strategy
         self.batch_size = batch_size
+        self.is_hybrid = is_hybrid_model(getattr(model, "config", None))
+
+    def _new_cache(self) -> DynamicCache:
+        """Return an empty cache sized for this model's layers.
+
+        A GDN hybrid (Qwen3.5) allocates one linear-attention entry per layer,
+        and it reads that entry on the first forward; a config-less
+        ``DynamicCache`` allocates none and the forward raises ``IndexError``
+        in ``get_conv_state``.  Dense models keep the config-less cache they
+        have always used, so their path does not change.
+        """
+        config = getattr(self.model, "config", None)
+        if self.is_hybrid and config is not None:
+            return DynamicCache(config=config)
+        return DynamicCache()
 
     def _score_options(
         self, context: str, options: list[str], batch_size: int | None = None
@@ -58,7 +75,7 @@ class LogitScorer:
             batch_size = self.batch_size
         ctx_ids = self.tokenizer(context, return_tensors="pt").input_ids.to(self.device)
 
-        cache = DynamicCache()
+        cache = self._new_cache()
         with torch.no_grad():
             ctx_out = self.model(ctx_ids, past_key_values=cache, use_cache=True)
             last_logit = ctx_out.logits[0, -1]
@@ -115,8 +132,15 @@ class LogitScorer:
 
         cache_pos = torch.arange(prefix_len, prefix_len + max_len, device=self.device)
 
-        batch_cache = copy.deepcopy(prefix_cache) if copy_cache else prefix_cache
-        batch_cache.batch_repeat_interleave(n)
+        if self.is_hybrid:
+            # A GDN cache has no ``batch_repeat_interleave``: its conv and
+            # recurrent states are overwritten in place by every forward and
+            # cannot be shared or cropped.  Each option group starts from a
+            # fresh copy of the one-row prefix state instead.
+            batch_cache = fork_prefix_cache(prefix_cache, n)
+        else:
+            batch_cache = copy.deepcopy(prefix_cache) if copy_cache else prefix_cache
+            batch_cache.batch_repeat_interleave(n)
 
         with torch.no_grad():
             out = self.model(
