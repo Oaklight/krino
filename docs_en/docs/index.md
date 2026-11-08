@@ -22,13 +22,15 @@ Probing, analysis, and open replication of [TypeSafe.ai](https://typesafe.ai)'s 
 | ModernBERT-base r64 | 149M + 301K | 89.0% |
 | Jev (reference) | unknown | 75.0% |
 
-### Zero-training baselines (average across 19 benchmarks)
+### Zero-training baselines (average across the 16 choice+noul benchmarks)
 
 | Backbone | Params | Avg Accuracy |
 |----------|--------|-------------|
-| Qwen2.5-7B-Instruct | 7B | 68.5% |
-| Ettin-400m | 400M | 59.4% |
-| Qwen2.5-1.5B | 1.5B | 59.2% |
+| Qwen2.5-7B-Instruct | 7B | 67.1% |
+| Ettin-400m | 400M | 59.0% |
+| Qwen2.5-1.5B | 1.5B | 58.4% |
+
+The average is the unweighted mean over the 16 `choice` and `noul` benchmarks, computed by `scripts/transform_results.py::get_accuracy_for_aggregate` from the committed `model/experiments/phaseA_*.json` files. The three `score` benchmarks are reported as MAE and are not folded into this column. The values previously quoted here (68.5 / 59.4 / 59.2) were not reproducible from any committed file.
 
 ## What is Jev?
 

@@ -8,13 +8,16 @@ export default function BenchmarksPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* JevBench — Krino trained models */}
+      {/* JevBench — trained heads and zero-shot readouts */}
       {data.jevbench_runs.length > 0 && (
         <div className="mb-12">
           <h1 className="text-2xl font-bold mb-2">JevBench Results</h1>
           <p className="text-sm text-text-dim mb-6">
-            Krino trained models evaluated on JevBench (231 curated items across 3 difficulty
-            tiers). Sorted by overall accuracy.
+            JevBench (231 curated items across 3 difficulty tiers), sorted by overall
+            accuracy. Every row names the readout that produced it: trained heads,
+            option-text continuation, per-option judgement and native reranker scores are
+            separate instruments and are not directly comparable. Hover a row for the
+            recorded readout and model id.
           </p>
           <ErrorBoundary>
             <JevBenchTable runs={data.jevbench_runs} />

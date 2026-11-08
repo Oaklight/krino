@@ -4,13 +4,21 @@ import { useMemo, useState } from "react";
 import type { JevBenchRun } from "@/lib/types";
 import { pct } from "@/lib/format";
 
-type SortKey = "model" | "params" | "accuracy" | "choice" | "noul" | "score" | "easy" | "hard" | "original" | "latency";
+type SortKey = "model" | "params" | "readout" | "accuracy" | "choice" | "noul" | "score" | "easy" | "hard" | "original" | "latency";
 type SortDir = "asc" | "desc";
 
 const TYPE_COLORS: Record<string, string> = {
   causal: "bg-blue text-white",
   encoder: "bg-green text-white",
   reranker: "bg-[var(--accent)] text-[var(--accent-on)]",
+  unknown: "bg-bg-card text-text-dim border border-border",
+};
+
+const READOUT_LABELS: Record<string, string> = {
+  "trained-heads": "trained heads",
+  continuation: "continuation",
+  judgement: "judgement",
+  "native-reranker": "native reranker",
 };
 
 interface Props {
@@ -27,6 +35,7 @@ export default function JevBenchTable({ runs }: Props) {
       switch (sortKey) {
         case "model": cmp = a.model.name.localeCompare(b.model.name); break;
         case "params": cmp = parseParams(a.model.params) - parseParams(b.model.params); break;
+        case "readout": cmp = a.readout.localeCompare(b.readout); break;
         case "accuracy": cmp = a.accuracy - b.accuracy; break;
         case "choice": cmp = (a.by_type.choice?.accuracy ?? -1) - (b.by_type.choice?.accuracy ?? -1); break;
         case "noul": cmp = (a.by_type.noul?.accuracy ?? -1) - (b.by_type.noul?.accuracy ?? -1); break;
@@ -57,6 +66,7 @@ export default function JevBenchTable({ runs }: Props) {
         <thead>
           <tr className="border-b border-border bg-bg-card">
             <Th onClick={() => toggleSort("model")}>Model{arrow("model")}</Th>
+            <Th onClick={() => toggleSort("readout")}>Readout{arrow("readout")}</Th>
             <Th onClick={() => toggleSort("params")} align="right">Params{arrow("params")}</Th>
             <Th onClick={() => toggleSort("accuracy")} align="right">Overall{arrow("accuracy")}</Th>
             <Th onClick={() => toggleSort("choice")} align="right">Choice{arrow("choice")}</Th>
@@ -75,7 +85,15 @@ export default function JevBenchTable({ runs }: Props) {
                 <span className={`inline-block px-1.5 py-0.5 text-[10px] rounded-full mr-2 ${TYPE_COLORS[run.model.type] ?? ""}`}>
                   {run.model.type}
                 </span>
-                {run.model.name}
+                <span title={run.model_id ?? undefined}>{run.model.name}</span>
+              </td>
+              <td className="px-3 py-2 whitespace-nowrap">
+                <span
+                  className="inline-block px-1.5 py-0.5 text-[10px] rounded-full border border-border text-text-dim"
+                  title={run.readout_detail ?? undefined}
+                >
+                  {READOUT_LABELS[run.readout] ?? run.readout}
+                </span>
               </td>
               <td className="px-3 py-2 text-right text-text-dim">{run.model.params}</td>
               <td className="px-3 py-2 text-right font-mono font-medium">{pct(run.accuracy)}</td>
