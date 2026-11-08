@@ -22,6 +22,16 @@ Usage::
         data/canonical/krino-canonical-243366.jsonl \\
         --out data/benchmarks/dev/dev_800.jsonl \\
         --manifest data/benchmarks/dev/dev_800.json
+
+The defaults reproduce the first pass.  An all-held-out set with a different
+stratification and a cluster-size cap uses::
+
+    python model/experiments/dev_set/build_dev_set.py \\
+        data/canonical/krino-canonical-243366.jsonl \\
+        --out data/benchmarks/dev/dev_800.jsonl \\
+        --manifest data/benchmarks/dev/dev_800.json \\
+        --targets noul=375,choice=330,score=95 --no-authored \\
+        --max-cluster-share 0.05 --max-source-share 0.15
 """
 
 from __future__ import annotations
@@ -35,6 +45,10 @@ from pathlib import Path
 # Held-out records to draw, by type, proportional to the canonical corpus
 # (noul 113,594 / choice 100,257 / score 29,515).
 HELDOUT_TARGETS = {"noul": 256, "choice": 224, "score": 65}
+# The held-out holds 6,424 ids; 6,254 of them are scored by the promotion
+# evaluation under the current label-index rule.  The manifest records what the
+# promotion set becomes once the reserved clusters are excluded.
+HELDOUT_SCORED_ROWS = 6254
 AUTHORED_PATH = Path("data/benchmarks/openjev/authored_holdout.jsonl")
 HELDOUT_PATH = Path("model/experiments/canonical/heldout_6400.json")
 
@@ -61,7 +75,47 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--authored", type=Path, default=AUTHORED_PATH)
     parser.add_argument("--heldout", type=Path, default=HELDOUT_PATH)
+    parser.add_argument(
+        "--targets",
+        default=None,
+        help="type counts, e.g. noul=375,choice=330,score=95; defaults to HELDOUT_TARGETS",
+    )
+    parser.add_argument(
+        "--no-authored",
+        action="store_true",
+        help="omit data/benchmarks/openjev/authored_holdout.jsonl from the set",
+    )
+    parser.add_argument(
+        "--max-cluster-share",
+        type=float,
+        default=None,
+        help="skip clusters larger than this fraction of the target total, so one "
+        "cluster cannot set the design effect",
+    )
+    parser.add_argument(
+        "--max-source-share",
+        type=float,
+        default=None,
+        help="skip clusters that would take a source above this fraction of the "
+        "target total, so one source cannot carry a type block",
+    )
     args = parser.parse_args()
+
+    targets = dict(HELDOUT_TARGETS)
+    if args.targets:
+        targets = {}
+        for part in args.targets.split(","):
+            name, _, value = part.partition("=")
+            targets[name.strip()] = int(value)
+        unknown = sorted(set(targets) - set(HELDOUT_TARGETS))
+        if unknown:
+            parser.error(f"unknown type in --targets: {', '.join(unknown)}")
+    max_cluster_rows = None
+    if args.max_cluster_share is not None:
+        max_cluster_rows = int(args.max_cluster_share * sum(targets.values()))
+    max_source_rows = None
+    if args.max_source_share is not None:
+        max_source_rows = int(args.max_source_share * sum(targets.values()))
 
     heldout_ids, heldout_clusters = load_heldout_ids(args.heldout)
     wanted = {cluster_key(c["source"], c["group"]) for c in heldout_clusters}
@@ -91,18 +145,36 @@ def main() -> int:
         pool[types.pop()].append(key)
 
     selected: list[str] = []
-    for q_type, target in HELDOUT_TARGETS.items():
+    skipped_oversized: list[str] = []
+    skipped_source_cap: list[str] = []
+    source_rows: Counter = Counter()
+    for q_type, target in targets.items():
         keys = sorted(pool[q_type], key=lambda k: hashlib.sha256(k.encode()).hexdigest())
         taken = 0
         for key in keys:
             if taken >= target:
                 break
+            size = len(by_cluster[key])
+            if max_cluster_rows is not None and size > max_cluster_rows:
+                skipped_oversized.append(key)
+                continue
+            source = key.split("\x00", 1)[0]
+            if max_source_rows is not None and source_rows[source] + size > max_source_rows:
+                skipped_source_cap.append(key)
+                continue
             selected.append(key)
-            taken += len(by_cluster[key])
+            taken += size
+            source_rows[source] += size
 
     rows = [r for key in selected for r in by_cluster[key]]
 
-    authored = [json.loads(l) for l in args.authored.read_text(encoding="utf-8").splitlines() if l.strip()]
+    authored: list[dict] = []
+    if not args.no_authored:
+        authored = [
+            json.loads(line)
+            for line in args.authored.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
     rows.extend(authored)
 
     rows.sort(key=lambda r: r["id"])
@@ -117,22 +189,40 @@ def main() -> int:
     by_type = Counter(r["question"]["type"] for r in rows)
     by_source = Counter((r.get("source") or "?") for r in rows)
     heldout_row_ids = {r["id"] for r in rows if r["id"] not in {a["id"] for a in authored}}
+    sources: dict[str, dict] = {
+        "frozen_heldout": {
+            "items": len(heldout_row_ids),
+            "clusters": len(selected),
+            "clusters_reserved": sorted(selected),
+        },
+    }
+    if not args.no_authored:
+        sources["authored_holdout"] = {
+            "items": len(authored),
+            "clusters": len({a.get("group") for a in authored}),
+        }
     manifest = {
         "name": "krino-dev-800",
         "purpose": "development instrument for the judgement readout; JevBench public 231 remains acceptance",
-        "sources": {
-            "frozen_heldout": {
-                "items": len(heldout_row_ids),
-                "clusters": len(selected),
-                "clusters_reserved": sorted(selected),
-            },
-            "authored_holdout": {"items": len(authored), "clusters": len({a.get('group') for a in authored})},
-        },
+        "sources": sources,
         "counts": {
             "total": len(rows),
             "by_type": dict(by_type),
+            "by_source": dict(by_source),
             "by_source_top": dict(by_source.most_common(10)),
             "distinct_sources": len(by_source),
+            "targets": targets,
+        },
+        "cluster_sizes": {key: len(by_cluster[key]) for key in sorted(selected)},
+        "max_cluster_rows": max_cluster_rows,
+        "clusters_skipped_oversized": sorted(skipped_oversized),
+        "max_source_rows": max_source_rows,
+        "clusters_skipped_source_cap": sorted(skipped_source_cap),
+        "source_counts": dict(sorted(source_rows.items())),
+        "promotion": {
+            "heldout_scored_rows": HELDOUT_SCORED_ROWS,
+            "reserved_rows": len(heldout_row_ids),
+            "scored_rows_after_reservation": HELDOUT_SCORED_ROWS - len(heldout_row_ids),
         },
         "ids_sha256": hashlib.sha256("\n".join(sorted(ids)).encode()).hexdigest(),
         "corpus_records_scanned": n_corpus,
@@ -142,6 +232,12 @@ def main() -> int:
     print(f"corpus {n_corpus} records, held-out clusters {len(by_cluster)}")
     print(f"held-out selected {len(selected)} clusters / {len(heldout_row_ids)} rows")
     print(f"authored {len(authored)} rows")
+    if skipped_oversized:
+        print(f"oversized clusters skipped {len(skipped_oversized)}")
+    if skipped_source_cap:
+        print(f"source-cap clusters skipped {len(skipped_source_cap)}")
+        print(f"source rows {dict(sorted(source_rows.items()))}")
+    print(f"promotion rows after reservation {HELDOUT_SCORED_ROWS - len(heldout_row_ids)}")
     print(f"total {len(rows)} rows, types {dict(by_type)}, sources {len(by_source)}")
     print(f"ids_sha256 {manifest['ids_sha256']}")
     print(f"written {args.out} and {args.manifest}")
