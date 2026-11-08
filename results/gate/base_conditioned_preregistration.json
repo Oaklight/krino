@@ -12,7 +12,8 @@
     "flag": "model/scripts/train_listwise.py --base-conditioned",
     "code_commit": "19ba9a4",
     "code_commit_rewritten": "1f3ccf9a",
-    "code_commit_note": "19ba9a4 was recorded before the 2026-11-07 history rewrite; 1f3ccf9a is the same commit in the rewritten history"
+    "code_commit_note": "19ba9a4 was recorded before the 2026-11-07 history rewrite; 1f3ccf9a is the same commit in the rewritten history",
+    "code_commit_note_correction": "The code_commit_rewritten value above, 1f3ccf9a, is a transcription error and does not resolve. The rewritten commit is 1f3ccf96 (\"Let the listwise head see the base distribution\", 2026-11-07T10:17:45-06:00, ancestor of main); 19ba9a4 is its pre-rewrite form. Appended 2026-11-07 after the arm closed. The criteria in this file were not touched: every field above except this one reads as it did when the run started, so a later reader can tell a pointer fix from a criteria change."
   },
   "test_set": {
     "definition": "the frozen 6,400-id held-out, noul rows, the same basis as the canonical gate",
