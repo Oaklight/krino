@@ -1,0 +1,3228 @@
+{
+  "_provenance": {
+    "model_id": "Qwen/Qwen3-4B",
+    "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+    "snapshot_path": "<host>/.cache/huggingface/hub/models--Qwen--Qwen3-4B/snapshots/1cfa9a7208912126459214e8b04321603b3df60c",
+    "dtype": "bfloat16",
+    "device": "cuda:0",
+    "code_commit": "2819b6f67f7f3c9b7cf4d7dbaa08a3671a6cfaa0",
+    "date_utc": "2026-11-08T05:56:16Z",
+    "readout": "native P(yes) per option, reranker prompt",
+    "strategy": "reranker_native",
+    "norm": "none",
+    "command": "model/scripts/eval_jevbench_reranker.py --model Qwen/Qwen3-4B --variant instruct --output <host>/tmp/krino-277-out/exp/E_Qwen3-4B_posttained_native.json",
+    "python_version": "3.12.16",
+    "torch_version": "2.11.0+cu128",
+    "device_name": "NVIDIA H100 NVL",
+    "transformers_version": "5.21.0",
+    "variant": "instruct",
+    "scoring_kernel": "model/src/reranker_prompt.py::score_options_native",
+    "attn_implementation": "sdpa",
+    "max_length": 8192
+  },
+  "model": "Qwen/Qwen3-4B",
+  "mode": "raw_reranker",
+  "items": 231,
+  "n": 231,
+  "failed": 0,
+  "overall": {
+    "accuracy": 0.5670995670995671,
+    "correct": 131,
+    "total": 231
+  },
+  "by_tier": {
+    "easy": {
+      "accuracy": 1.0,
+      "correct": 48,
+      "total": 48
+    },
+    "hard": {
+      "accuracy": 0.3783783783783784,
+      "correct": 42,
+      "total": 111
+    },
+    "original": {
+      "accuracy": 0.5694444444444444,
+      "correct": 41,
+      "total": 72
+    }
+  },
+  "by_type": {
+    "choice": {
+      "accuracy": 0.5827338129496403,
+      "correct": 81,
+      "total": 139
+    },
+    "noul": {
+      "accuracy": 0.527027027027027,
+      "correct": 39,
+      "total": 74
+    },
+    "score": {
+      "accuracy": 0.6111111111111112,
+      "correct": 11,
+      "total": 18
+    }
+  },
+  "predictions": [
+    {
+      "id": "easy-intent-00",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 4,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-01",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-03",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0001,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-04",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "p_yes": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-05",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 4,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-06",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "p_yes": [
+        0.9968,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-08",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0002
+      ],
+      "predicted_idx": 4,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-09",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-10",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-11",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-00",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.0019
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-01",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        0.9999
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-02",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.0601
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-03",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-04",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.3208
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-05",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-06",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.0007
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-07",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0041,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-08",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.023
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-09",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-10",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.7311
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-11",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-00",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-01",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-02",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-03",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        1.0,
+        0.0,
+        0.0,
+        0.9948
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-04",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-05",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-06",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-07",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-08",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-09",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.0001,
+        1.0,
+        0.0373,
+        0.6792,
+        0.0002
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "p_yes": [
+        1.0,
+        0.0,
+        0.0007,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-11",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0004,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-00",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-01",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.9999,
+        0.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-02",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.018,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-03",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "p_yes": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-04",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 4,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-05",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.9241,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-06",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.6792,
+        0.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "p_yes": [
+        0.9981,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-08",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.9994
+      ],
+      "predicted_idx": 4,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-09",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-10",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.9627,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-11",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.9859
+      ],
+      "predicted_idx": 4,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-01",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0002,
+        0.0,
+        0.8808
+      ],
+      "predicted_idx": 4,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-04",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0006,
+        0.0009,
+        0.0,
+        0.0004
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-long_policy-08",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0001,
+        0.011,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-long_policy-09",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.8808,
+        0.0,
+        0.9988,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-long_policy-11",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.9241,
+        0.148
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-13",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.0001,
+        0.3208
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-long_policy-17",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "p_yes": [
+        0.9241,
+        0.018,
+        0.6792,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-19",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.9959,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-probability-03",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.0032,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-probability-04",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "p_yes": [
+        0.0,
+        0.9988,
+        0.5622
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-probability-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "p_yes": [
+        0.0953,
+        0.0,
+        0.9047
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-probability-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-03",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-06",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-07",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-09",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        0.0019
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-12",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.7773,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "p_yes": [
+        0.0041,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-ambiguous-03",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 3,
+      "p_yes": [
+        0.3775,
+        0.9998,
+        0.0601
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-ambiguous-07",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "p_yes": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-09",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "p_yes": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "p_yes": [
+        0.7311,
+        0.0086,
+        0.9627
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-11",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "p_yes": [
+        1.0,
+        0.9994,
+        0.0002
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-ambiguous-13",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.4378,
+        0.0,
+        0.0,
+        0.9997
+      ],
+      "predicted_idx": 3,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-03",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.8176,
+        0.0041,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-04",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "p_yes": [
+        0.0759,
+        0.0,
+        0.0012,
+        0.0,
+        0.0001,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-05",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.0293,
+        0.852,
+        0.8176,
+        0.9047,
+        0.5622
+      ],
+      "predicted_idx": 3,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-07",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "p_yes": [
+        0.0953,
+        0.0373,
+        0.0759,
+        0.5622,
+        0.0001,
+        0.0
+      ],
+      "predicted_idx": 3,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.9241,
+        0.2689
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-01",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "p_yes": [
+        0.3208,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-03",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        0.5622
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-04",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-probability-06",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "p_yes": [
+        0.0,
+        0.0004,
+        0.2689
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-tradeoff-01",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "p_yes": [
+        0.9998,
+        0.0003,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 4,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-03",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-06",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.0002,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-07",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "predicted_idx": 3,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-08",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-12",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "p_yes": [
+        0.0002,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-02",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0009,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-long_policy-03",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.3208,
+        0.8176,
+        0.9047
+      ],
+      "predicted_idx": 5,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-04",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.9999,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-long_policy-05",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.982,
+        0.9241,
+        0.9948,
+        0.148
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-08",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.9903,
+        0.7311,
+        0.9526,
+        0.8808
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.6225,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-11",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.852,
+        0.018
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-probability-03",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 3,
+      "p_yes": [
+        0.0006,
+        0.7773,
+        0.1824
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-02",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.8176,
+        0.9959
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-03",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.9999,
+        0.9997,
+        0.9994,
+        0.9999,
+        0.9399
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-04",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "p_yes": [
+        0.9241,
+        0.9999,
+        0.9999,
+        0.9997,
+        0.9933
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-06",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "p_yes": [
+        0.2689,
+        0.989,
+        0.0006,
+        0.9399,
+        0.9991,
+        0.8176
+      ],
+      "predicted_idx": 4,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-08",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.011,
+        0.1192,
+        0.148,
+        0.148,
+        0.0141
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-12",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "p_yes": [
+        0.9991,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-adversarial-01",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.9959,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-adversarial-06",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-adversarial-07",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.2689,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-adversarial-08",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.9399,
+        0.9988
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-adversarial-09",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-adversarial-11",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.2689,
+        0.0,
+        0.0001
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-01",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.0004,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-multi_hop-02",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0006
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-multi_hop-05",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.852,
+        0.0001,
+        0.0019,
+        0.0009
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0032,
+        0.0032,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-08",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.0019,
+        0.0,
+        0.0601,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-09",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.0003,
+        0.0007,
+        0.0002,
+        0.0001
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-12",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-trap-02",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.9988,
+        0.4378
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-trap-04",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0052,
+        0.0001
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-trap-05",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.9968,
+        0.8808,
+        1.0,
+        1.0
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-trap-06",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0052
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-08",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-trap-10",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.9993,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-13",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0001,
+        0.9241
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-15",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.9998,
+        0.9988
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-01",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.8176
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-judge_hard-02",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.989
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-05",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.9047
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-judge_hard-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.852
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-10",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.9999,
+        0.7311
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-14",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.9998,
+        0.3775
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-15",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.9241
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-judge_hard-18",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.9993,
+        0.2227
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-long_policy-01",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-long_policy-02",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0293,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-long_policy-05",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-long_policy-06",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.9526,
+        0.0,
+        0.0006,
+        0.0015
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-routing_hard-01",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-routing_hard-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-routing_hard-03",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-routing_hard-07",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 4,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-routing_hard-09",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-01",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0009,
+        0.977,
+        0.0041,
+        0.9994
+      ],
+      "predicted_idx": 3,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0002,
+        0.0006,
+        0.852,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-03",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.9999,
+        0.9999,
+        1.0,
+        1.0
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-04",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "p_yes": [
+        0.9859,
+        0.9985,
+        0.9999
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-judge_hard-03",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.9993,
+        0.0003
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-05",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.9988,
+        0.0086
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-judge_hard-07",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.9998,
+        0.0953
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.0067
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-09",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.9999,
+        0.0007
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-judge_hard-10",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.9948,
+        0.0025
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-judge_hard-11",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0006,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-13",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.9999,
+        0.1824
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-15",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.9988
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-multi_hop-07",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.148,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-multi_hop-09",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.2689,
+        0.0,
+        0.0,
+        0.0006
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-multi_hop-11",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0001,
+        0.0759,
+        0.148,
+        0.0141
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-multi_hop-12",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0009,
+        0.9399,
+        0.9998
+      ],
+      "predicted_idx": 3,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-multi_hop-13",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0001,
+        0.9999,
+        0.0052,
+        0.0015
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-policy-01-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-policy-01-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-policy-02-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-policy-02-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-policy-03-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        0.9914
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-policy-03-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-policy-04-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        0.9707
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-policy-04-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        0.9859
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-policy-05-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        0.977
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-policy-05-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        0.7773
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-policy-06-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.9975,
+        0.6792
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-policy-06-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.0,
+        0.9707
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-intent-01-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.018,
+        0.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "original-intent-01-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "original-intent-02-0",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0141,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "original-intent-02-1",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0001,
+        0.0,
+        0.0006
+      ],
+      "predicted_idx": 4,
+      "correct": true
+    },
+    {
+      "id": "original-intent-03-0",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "original-intent-03-1",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.9399,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-intent-04-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "p_yes": [
+        1.0,
+        0.0,
+        0.9859,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-intent-04-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "p_yes": [
+        0.0001,
+        0.0,
+        0.0032,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "original-intent-05-0",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.023,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "original-intent-05-1",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0019,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "original-intent-06-0",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "original-intent-06-1",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0019,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-01-0",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-01-1",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.0002,
+        0.0003,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-02-0",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0019,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-02-1",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.2689,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-03-0",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.9994,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-03-1",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0067,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-04-0",
+      "type": "score",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-04-1",
+      "type": "score",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-05-0",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.7773,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-05-1",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        0.0953,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-06-0",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.2689,
+        0.0,
+        0.9991,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-06-1",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-01-0",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0601,
+        0.9914,
+        0.0002,
+        0.9998
+      ],
+      "predicted_idx": 3,
+      "correct": false
+    },
+    {
+      "id": "original-extraction-01-1",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "p_yes": [
+        0.0015,
+        0.0019,
+        0.0002,
+        0.852
+      ],
+      "predicted_idx": 3,
+      "correct": false
+    },
+    {
+      "id": "original-extraction-02-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.5622,
+        0.0009,
+        0.9707,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-02-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0032,
+        0.0,
+        0.0293,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-03-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        1.0,
+        0.9627,
+        0.9859,
+        1.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-03-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        1.0,
+        0.0015,
+        0.0052,
+        0.9859
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-04-0",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.9627,
+        0.0032,
+        1.0,
+        1.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-04-1",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "p_yes": [
+        0.7773,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "predicted_idx": 2,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-05-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.0015,
+        0.0001,
+        0.0086,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-05-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "p_yes": [
+        0.9399,
+        0.148,
+        0.9997,
+        1.0
+      ],
+      "predicted_idx": 3,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-06-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        1.0,
+        0.0,
+        0.023,
+        0.9998
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-06-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "p_yes": [
+        1.0,
+        0.0001,
+        0.0,
+        1.0
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-01-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.9959
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-01-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.9047
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-02-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.982,
+        0.0759
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-02-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.023,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-03-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-03-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.9999,
+        0.4378
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-04-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-04-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        0.9991,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-05-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.0474,
+        0.148
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-05-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "p_yes": [
+        0.6225,
+        0.0141
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-06-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        1.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-06-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "p_yes": [
+        1.0,
+        0.9975
+      ],
+      "predicted_idx": 0,
+      "correct": true
+    },
+    {
+      "id": "original-routing-01-0",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "p_yes": [
+        0.0,
+        0.7773,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-routing-01-1",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "p_yes": [
+        0.0,
+        0.9627,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-routing-02-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 6,
+      "p_yes": [
+        0.0012,
+        0.9959,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-routing-02-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 6,
+      "p_yes": [
+        0.0001,
+        0.0032,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-routing-03-0",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "p_yes": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-routing-03-1",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "p_yes": [
+        0.0,
+        1.0,
+        0.0001,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": true
+    },
+    {
+      "id": "original-routing-04-0",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 6,
+      "p_yes": [
+        0.0,
+        0.4378,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-routing-04-1",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 6,
+      "p_yes": [
+        0.0,
+        0.1192,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-routing-05-0",
+      "type": "choice",
+      "gold_idx": 5,
+      "option_count": 6,
+      "p_yes": [
+        0.0,
+        0.9991,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-routing-05-1",
+      "type": "choice",
+      "gold_idx": 5,
+      "option_count": 6,
+      "p_yes": [
+        0.0,
+        0.9997,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    },
+    {
+      "id": "original-routing-06-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 6,
+      "p_yes": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 0,
+      "correct": false
+    },
+    {
+      "id": "original-routing-06-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 6,
+      "p_yes": [
+        0.0,
+        0.0015,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predicted_idx": 1,
+      "correct": false
+    }
+  ]
+}
