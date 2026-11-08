@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-08
 **Issue:** [#314](https://github.com/Oaklight/krino/issues/314)
-**Status:** Mapping approved; recorded here so every `head_version` label has one source.
+**Status:** Mapping approved; recorded here so every `head_version` label has one source. This note is the reference for the generation boundaries: a later issue that disagrees with one must amend this note rather than label something differently, and this note wins until amended.
 
 `v3` and `v4` are the project's own words in `research/24-v3-closeout.md`; `v1` and `v2` are derived labels for the project's Round 1 and Round 2 lines and do not appear literally anywhere in the repository at the commit that introduced this note.
 
@@ -34,7 +34,7 @@ All six are v1. `research/04-model-replication.md:443-452` lists exactly these s
 
 ## What the fields mean
 
-`run_id` in these six files is the published model artifact that `model/scripts/eval_jevbench.py` loaded, because that is the only run identifier recorded in the repository. The training run that produced each artifact is not recorded here, and `code_commit` is therefore `null` for all six. The file's own git history is not used as a substitute: it records when the result JSON was committed, not when the head was trained.
+`run_id` in these six files is the published model artifact that `model/scripts/eval_jevbench.py` loaded, because that is the only run identifier recorded in the repository. The training run that produced each artifact is not recorded here, and `code_commit` is therefore `null` for all six. The file's own git history is not used as a substitute: it records when the result JSON was committed, not when the head was trained. On the dashboard, `run_id` is that HuggingFace artifact name for trained-heads rows and the `jevbench-<stem>` fallback for every other row; these are different identifier spaces and must not be joined or compared across.
 
 `backbone.model_id` comes from the committed config or README that names the backbone (`model/configs/multitask_ettin150m.yaml:10`, `model/configs/multitask_qwen35_4b.yaml:12`, `README_en.md:55`, `model/configs/r2_reranker4b.yaml:16`).
 
