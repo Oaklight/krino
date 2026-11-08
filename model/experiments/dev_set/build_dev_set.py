@@ -31,7 +31,7 @@ stratification and a cluster-size cap uses::
         --out data/benchmarks/dev/dev_800.jsonl \\
         --manifest data/benchmarks/dev/dev_800.json \\
         --targets noul=375,choice=330,score=95 --no-authored \\
-        --max-cluster-share 0.05
+        --max-cluster-share 0.05 --max-source-share 0.15
 """
 
 from __future__ import annotations
@@ -92,6 +92,13 @@ def main() -> int:
         help="skip clusters larger than this fraction of the target total, so one "
         "cluster cannot set the design effect",
     )
+    parser.add_argument(
+        "--max-source-share",
+        type=float,
+        default=None,
+        help="skip clusters that would take a source above this fraction of the "
+        "target total, so one source cannot carry a type block",
+    )
     args = parser.parse_args()
 
     targets = dict(HELDOUT_TARGETS)
@@ -106,6 +113,9 @@ def main() -> int:
     max_cluster_rows = None
     if args.max_cluster_share is not None:
         max_cluster_rows = int(args.max_cluster_share * sum(targets.values()))
+    max_source_rows = None
+    if args.max_source_share is not None:
+        max_source_rows = int(args.max_source_share * sum(targets.values()))
 
     heldout_ids, heldout_clusters = load_heldout_ids(args.heldout)
     wanted = {cluster_key(c["source"], c["group"]) for c in heldout_clusters}
@@ -136,17 +146,25 @@ def main() -> int:
 
     selected: list[str] = []
     skipped_oversized: list[str] = []
+    skipped_source_cap: list[str] = []
+    source_rows: Counter = Counter()
     for q_type, target in targets.items():
         keys = sorted(pool[q_type], key=lambda k: hashlib.sha256(k.encode()).hexdigest())
         taken = 0
         for key in keys:
             if taken >= target:
                 break
-            if max_cluster_rows is not None and len(by_cluster[key]) > max_cluster_rows:
+            size = len(by_cluster[key])
+            if max_cluster_rows is not None and size > max_cluster_rows:
                 skipped_oversized.append(key)
                 continue
+            source = key.split("\x00", 1)[0]
+            if max_source_rows is not None and source_rows[source] + size > max_source_rows:
+                skipped_source_cap.append(key)
+                continue
             selected.append(key)
-            taken += len(by_cluster[key])
+            taken += size
+            source_rows[source] += size
 
     rows = [r for key in selected for r in by_cluster[key]]
 
@@ -198,6 +216,9 @@ def main() -> int:
         "cluster_sizes": {key: len(by_cluster[key]) for key in sorted(selected)},
         "max_cluster_rows": max_cluster_rows,
         "clusters_skipped_oversized": sorted(skipped_oversized),
+        "max_source_rows": max_source_rows,
+        "clusters_skipped_source_cap": sorted(skipped_source_cap),
+        "source_counts": dict(sorted(source_rows.items())),
         "promotion": {
             "heldout_scored_rows": HELDOUT_SCORED_ROWS,
             "reserved_rows": len(heldout_row_ids),
@@ -213,6 +234,9 @@ def main() -> int:
     print(f"authored {len(authored)} rows")
     if skipped_oversized:
         print(f"oversized clusters skipped {len(skipped_oversized)}")
+    if skipped_source_cap:
+        print(f"source-cap clusters skipped {len(skipped_source_cap)}")
+        print(f"source rows {dict(sorted(source_rows.items()))}")
     print(f"promotion rows after reservation {HELDOUT_SCORED_ROWS - len(heldout_row_ids)}")
     print(f"total {len(rows)} rows, types {dict(by_type)}, sources {len(by_source)}")
     print(f"ids_sha256 {manifest['ids_sha256']}")
