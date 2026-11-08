@@ -193,6 +193,10 @@ def transform_eval_file(filepath: Path) -> dict | None:
 
     benchmarks = {}
     for bm_name, bm_data in raw.items():
+        if bm_name == "provenance":
+            # Top-level record written by eval_logit.py since #277; it
+            # describes the run, not a benchmark.
+            continue
         benchmarks[bm_name] = extract_benchmark_result(bm_data, bm_name)
 
     accuracies = []

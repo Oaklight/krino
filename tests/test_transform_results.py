@@ -146,3 +146,32 @@ class TestEndToEnd:
         for bm, comp in data["jev_comparison"].items():
             assert "jev" in comp
             assert comp["jev"] > 0
+
+
+class TestProvenanceKey:
+    """The provenance block eval_logit.py writes must not be read as a benchmark."""
+
+    def test_a_provenance_block_is_not_a_benchmark(self, tmp_path):
+        payload = {
+            "provenance": {
+                "model_id": "Qwen/Qwen2.5-3B",
+                "revision": "3aab1f1954e9cc14eb9509a215f9e5ca08227a9b",
+                "strategy": "description",
+                "norm": "mean",
+            },
+            "arc": {
+                "items": 200,
+                "choice": {
+                    "accuracy": {"n": 200, "accuracy": 0.5},
+                    "ece": {"ece": 0.1, "n": 200, "n_bins": 10, "bins": []},
+                },
+            },
+        }
+        path = tmp_path / "phaseA_logit_Qwen_Qwen2.5-1.5B.json"
+        path.write_text(json.dumps(payload))
+
+        result = transform.transform_eval_file(path)
+
+        assert result is not None
+        assert result["n_benchmarks"] == 1
+        assert set(result["results"]["by_source"]) == {"arc"}

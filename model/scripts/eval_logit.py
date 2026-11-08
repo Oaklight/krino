@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import subprocess
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import torch
@@ -100,6 +103,74 @@ def evaluate_dataset(
     return results
 
 
+def _git(args: list[str]) -> str | None:
+    try:
+        out = subprocess.run(
+            ["git", *args], cwd=ROOT, capture_output=True, text=True, timeout=10
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return out.stdout.strip() if out.returncode == 0 else None
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def build_provenance(
+    model_id: str,
+    revision: str | None,
+    dtype: str,
+    device: str,
+    strategy: str,
+    norm: str,
+    max_items: int | None,
+    dataset_paths: list[str],
+    license_name: str | None,
+) -> dict:
+    """The record a reader needs to re-run this file and get these numbers.
+
+    The Phase A files carry none of this, which is why they cannot be audited.
+    ``snapshot_path`` is relative to the Hugging Face cache root so it names the
+    same location on any machine without carrying a home directory, and the
+    dataset paths are repo-relative for the same reason.
+    """
+    dirty = _git(["status", "--porcelain"]) not in (None, "")
+    snapshot = None
+    if revision and "/" in model_id:
+        org, name = model_id.split("/", 1)
+        snapshot = f"models--{org}--{name}/snapshots/{revision}"
+    datasets = {}
+    for raw in dataset_paths:
+        path = Path(raw)
+        try:
+            shown = str(path.resolve().relative_to(ROOT.resolve()))
+        except ValueError:
+            # Outside the checkout: record the name, never a host path.
+            shown = path.name
+        datasets[path.stem] = {"path": shown, "sha256": _sha256(path)}
+    return {
+        "model_id": model_id,
+        "revision": revision,
+        "revision_is_commit": bool(revision and len(revision) == 40),
+        "snapshot_path": snapshot,
+        "license": license_name,
+        "dtype": dtype,
+        "device": device,
+        "strategy": strategy,
+        "norm": norm,
+        "max_items": max_items,
+        "code_commit": _git(["rev-parse", "HEAD"]),
+        "code_dirty": dirty,
+        "date_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "datasets": datasets,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Evaluate logit readout baseline")
     parser.add_argument("--model", default="Qwen/Qwen3-0.6B", help="Model name")
@@ -126,6 +197,16 @@ def main() -> int:
         choices=["float16", "bfloat16", "float32"],
         help="Model dtype (use float16 for V100)",
     )
+    parser.add_argument(
+        "--revision",
+        default=None,
+        help="Commit, tag or branch to load and record; pass a commit SHA to pin",
+    )
+    parser.add_argument(
+        "--license",
+        default=None,
+        help="Licence identifier recorded in the provenance block",
+    )
     args = parser.parse_args()
 
     dtype_map = {
@@ -136,7 +217,10 @@ def main() -> int:
 
     print(f"Loading {args.model}...")
     model, tokenizer = load_causal_lm(
-        args.model, device=args.device, dtype=dtype_map[args.dtype]
+        args.model,
+        device=args.device,
+        dtype=dtype_map[args.dtype],
+        revision=args.revision,
     )
 
     # Hybrid models (GDN, e.g. Qwen3.5) don't support KV-cache batching —
@@ -194,8 +278,24 @@ def main() -> int:
         all_results[name] = results
 
     if args.output:
+        provenance = build_provenance(
+            model_id=args.model,
+            revision=args.revision,
+            dtype=args.dtype,
+            device=str(next(model.parameters()).device),
+            strategy=args.strategy,
+            norm=args.norm,
+            max_items=args.max_items,
+            dataset_paths=[str(Path(p)) for p in dataset_paths],
+            license_name=args.license,
+        )
+        provenance["benchmarks_scored"] = len(all_results)
+        provenance["items_per_benchmark"] = {
+            name: value.get("items") for name, value in all_results.items()
+        }
+        payload = {"provenance": provenance, **all_results}
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(all_results, indent=2, ensure_ascii=False))
+        args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
         print(f"\nResults saved to {args.output}")
 
     return 0

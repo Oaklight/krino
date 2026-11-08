@@ -62,6 +62,7 @@ def load_causal_lm(
     dtype: torch.dtype = torch.bfloat16,
     freeze: bool = True,
     flash_attention: bool = False,
+    revision: str | None = None,
 ) -> tuple[AutoModelForCausalLM, AutoTokenizer]:
     """Load a causal language model and tokenizer.
 
@@ -72,6 +73,8 @@ def load_causal_lm(
         freeze: If True, freeze all parameters (no gradients).
         flash_attention: If True, attempt to use Flash Attention 2
             (requires ``flash_attn`` package and Ampere+ GPU).
+        revision: Commit, tag or branch to load. Pass a commit SHA to pin a
+            run so the weights cannot move under it.
 
     Returns:
         (model, tokenizer) tuple.
@@ -79,10 +82,11 @@ def load_causal_lm(
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
     kwargs = {
         "dtype": dtype,
         "device_map": device if device == "auto" else None,
+        "revision": revision,
         **_flash_attention_kwargs(flash_attention),
     }
     model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
