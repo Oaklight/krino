@@ -209,10 +209,13 @@ choosing between them has to rest on grounds this sweep does not supply.
 
 The 1.74 pp is also smaller than it sounds. On those 231 items the two checkpoints
 agree on the correctness verdict for 197 (85.3%) and predict the same option index
-for 187 (81.0%). The margin is a net of 4 items: 15 that only `Qwen3-4B-Base`
-gets right against 19 that only `Phi-4-mini` does. Part of that agreement is
-inherited from the constant `original` cells above, which both answer identically.
-A 4-item net on 231 is not two models reading the set differently.
+for 187 (81.0%). Of those 187, **36 are the constant `original` cells** — both
+models answer all three families identically, and those items carry no
+information. The other **151 are genuine agreement** on items where both models
+actually chose, across two model families and two tokenizers. The margin is a net
+of 4 items: 15 that only `Qwen3-4B-Base` gets right against 19 that only
+`Phi-4-mini` does. A 4-item net on 231, next to 151 items of real agreement, is
+not two models reading the set differently.
 
 A base checkpoint sitting slightly behind an instruct checkpoint of the same size
 is also the expected direction, not a failure. More to the point, neither column
