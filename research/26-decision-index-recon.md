@@ -6,11 +6,13 @@ kit whose public half we can rebuild, run and score ourselves. The second is a p
 composite that Artificial Analysis runs on its own data; one quarter of the index is a
 private component with no harness.
 
-The community run is **not done**. The blockers are: the frozen suite is not downloadable
-prebuilt; the HLE source requires an approved access request; and scoring the v4 control
-needs a GPU. The BPoMP truncation from the first rebuild attempt is resolved. The exact
-evidence and the command sequence are below. No board number is copied anywhere in this
-note, and no home-made composite is proposed.
+The community run is **partly done**. The suite is rebuilt as `di-0.3-krino-1` (140,620
+requests, 140,178 scoreable) and is not byte-identical to the pinned edition: the kit fixed
+a future-turn leak in the SGD rows after the pinned suite was frozen, so the pinned hash
+cannot be reproduced without restoring the leak. HLE access is cleared, the BPoMP
+truncation is resolved, and the remaining blocker is a GPU for scoring the v4 control. The
+exact evidence and the command sequence are below. No board number is copied anywhere in
+this note, and no home-made composite is proposed.
 
 Scope: issue #236, Workstream A. Reconnaissance run 2026-11-06. No GPU was available for
 the reconnaissance, and the base interpreter had no `torch`.
@@ -131,6 +133,82 @@ The kit declares `requires-python >= 3.10`, but `adapters_scored.chessbench` cal
 ChessBench with `AttributeError: module 'hashlib' has no attribute 'file_digest'`. Use
 3.11 or newer; the edition 0.3 rerun uses 3.12.
 
+### Edition 0.3 rebuild result
+
+HLE access was cleared on the account, and the rebuild ran to completion on the compute
+host under Python 3.12. The 0.1 base is **not byte-identical** to the pinned suite:
+
+| file | rebuilt | pinned | result |
+|---|---|---|---|
+| release-v1 `selected-rows.jsonl` | 132,422 requests, 117,764 cases, 775,202 fields; sha256 `7068220a...` | sha256 `288d3720...` | **mismatch** |
+| `added-rows.jsonl` | 30,419 requests; sha256 `7429f3c9...` | sha256 `7429f3c9...` | match |
+
+The cause is a kit fix that postdates the freeze, not dependency or source drift. Commit
+`2d7791c` (2026-10-13), "SGD builder: copy the dialogue history per row", records that
+every SGD row stored a reference to the growing `history` list, so each row ended up with
+the whole dialogue, future turns included. The fix copies the history per row. Rebuilding
+SGD from the same pinned source with the pre-fix builder reproduces the pinned hash
+exactly (`8496e556...`); the current builder produces the corrected file (`e57d11fd...`).
+
+The per-file check confirms the isolation. `hub/manifest.json` pins the sha256 of all 37
+normalized source files; 36 match the rebuilt files and only
+`SGD-service-given-intent.jsonl` differs. GSM8K v3, the one component read through
+pyarrow, reproduces its pinned hash `75933489...` under pyarrow 26.0.1. The dependency
+versions resolved here are pandas 3.1.1, pyarrow 26.0.1, numpy 2.5.4 and scipy 1.18.1,
+later than the 2026-09-22 editions, but they do not move the 36 matching files or GSM8K,
+so pinning them cannot make the SGD file match.
+
+The pinned edition 0.1, and editions 0.2 and 0.3, which read the 0.1 rows unchanged,
+therefore carry the SGD future-turn leak in their 2,500 selected SGD requests. Our rebuilt
+suite applies the fix. Do not revert the fix to match the pinned hash; reproducing it
+would restore a benchmark-validity defect. The kit's `docs/suite.md` still claims all 37
+normalizers reproduce byte-identically; that claim predates the fix and is stale.
+
+The corrected suite is assembled and recorded as `di-0.3-krino-1`:
+
+| identity | value |
+|---|---|
+| requests / scoreable | 140,620 / 140,178 |
+| `rows_sha256` (uncompressed, v2 cut) | `8224546d...` |
+| `added_sha256` | `7429f3c9...` (matches the pin) |
+| `gsm8k_sha256` | `75933489...` (matches the pin) |
+| `suite_sha256` | `f725070c14046bb86baf1e3911b1af209ae898e9a0ab29dee5a2548555f7c3bf` |
+
+`suite_sha256` is the SHA-256 of the canonical JSON object
+`{suite_version, rows_sha256, added_sha256, gsm8k_sha256}`. The counts above are the
+edition-0.3 cut: 110,201 base requests plus 30,419 added requests. They are not
+comparable to the release-v1 `selected-rows` cut in the table above (132,422 requests,
+117,764 cases), which includes benchmarks this suite shows but does not count; the
+difference between the two pairs is a difference of cuts, not of editions. Identity
+against the pin is carried by `added_sha256` and `gsm8k_sha256`, both of which match;
+the content differs only in the SGD rows.
+
+### Suite identity and gate-row provenance
+
+The rebuilt suite is ours, not a byte copy of the pinned one. Record its identity on
+every gate row:
+
+- `suite_version`: `di-0.3-krino-1`; bump for any content change, never for a rerun.
+- `suite_sha256`: the composite above, or the three component hashes.
+- `builder_git_sha`: kit commit `25c6ec7b...`, plus the SGD fix commit `2d7791c...`.
+- `requests` / `scoreable`: 140,620 / 140,178.
+
+Rules:
+
+1. A gate row is not a gate row without `suite_version` and `suite_sha256`.
+2. Never compare a result measured on one suite version with a result on another without
+   rerunning the control on the new version. The arm-minus-control difference is valid
+   only within one version.
+3. When the #234-matched held-out replaces the interim split, existing gate rows keep
+   their version and hash; the replacement is a new version, and the control is rerun on
+   it before any arm is promoted.
+4. The suite data stays private; only the identity tuple is committed.
+
+Under the dual acceptance standard, JevBench public is a hard non-regression constraint
+and the matched held-out is the promotion signal. The gate compares an arm with the
+control on the same suite version, so board comparability is not required for the gate.
+It is required only to quote a number next to someone else's.
+
 ### v4 control: identified, not scored
 
 The control is manifest row 78 of
@@ -184,23 +262,18 @@ python -m pytest tests/test_decision_index_engine.py
 
 ## Run plan, once a GPU is allocated
 
-```bash
-# 1. Rebuild the suite (CPU, ~7 GB down, 17 GB work, HLE terms accepted)
-git clone --depth 1 https://github.com/apolinario/decision-index.git
-cd decision-index
-uv venv --python 3.12 .venv && . .venv/bin/activate
-pip install -e ".[transformers,rebuild]"
-export HF_HUB_DISABLE_XET=1
-hf auth login
-python -m decision_index suite rebuild --work work
-python -m decision_index suite import \
-    --rows work/artifacts/benchmark-suite/release-v2-rebuilt/selected-rows.jsonl.gz \
-    --added-rows work/artifacts/benchmark-suite/release-v2-rebuilt/added-rows.jsonl.gz \
-    --gsm8k-rows work/artifacts/benchmark-suite/release-v3-rebuilt/gsm8k-rows.jsonl.gz
+The suite is already built at `work/suite-0.3` as `di-0.3-krino-1`; do not rebuild it.
+The rebuild sequence, for provenance, is: `suite rebuild --edition 0.3 --work work` for
+the v1 rows, the kit's `release_v2` cut with `added=[]` (the added rows were already
+built and match the pin), `gsm8k_v3.main`, then `suite import` with `--no-verify`. The
+`--no-verify` is deliberate: the rows hash cannot match the pin without the SGD leak.
 
-# 2. Score the v4 control from the krino tree (PYTHONPATH must see both packages)
+```bash
+# Score the v4 control from the krino tree (PYTHONPATH must see both packages)
 cd <krino-worktree>
 python -m decision_index pipeline \
+    --suite-dir <build>/work/suite-0.3 \
+    --no-verify \
     --engine model.scripts.decision_index_engine:KrinoRawEngine \
     --model Qwen/Qwen3.5-4B \
     --option shared_prefix=true \
@@ -208,6 +281,8 @@ python -m decision_index pipeline \
     --option device=cuda \
     --out runs/v4-control
 ```
+
+Record `suite_version` and `suite_sha256` with the result.
 
 `pipeline` writes `results.jsonl`, `benchmark-summary.json`, `index.json` and
 `scores.json`. Record the per-benchmark and per-area values; do not report only the

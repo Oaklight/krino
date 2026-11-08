@@ -1,0 +1,94 @@
+{
+ "schema": 1,
+ "run": "two-family control, level0 cap disabled",
+ "purpose": "Direction check for the rubric/cap confound: commonsenseqa and apigen_tool_next_action labelled with the redesigned rubrics and the level-0 cap off, so the level-0 share is a property of the rubric rather than of the cap's selection.",
+ "code": {
+  "branch": "data/issue-156-score-round2",
+  "commit": "d7b9ab3",
+  "generate_score_questions_py_sha256": "f209de7cc74c2ef4d987bee2b4e8f6798b16325d93066363848e9bb0d68e167c",
+  "score_generation_py_sha256": "8f74ce44d87f3c32814617f527eba69c5eef848971a83a525d6cd12bdb799fb8",
+  "commit_note": "the generator and library hashes are unchanged from 5ffd546; the commits between 5ffd546 and d7b9ab3 are note-only"
+ },
+ "configuration": {
+  "level0_cap": 0.0,
+  "floor": 25,
+  "cap": 350,
+  "target": 700,
+  "max_candidates": 700,
+  "seed": 42,
+  "concurrency": 8,
+  "model": "jev-latest"
+ },
+ "corpus": {
+  "note": "the canonical artifact filtered to the two families, so that a two-source run does not drag the other 31 sources through selection",
+  "records": 8194,
+  "corpus_sha256": "55dd9ddef455d3917346f2581c67e7635a6a8f6952f5c5215d5a53983b7cd8b1"
+ },
+ "totals": {
+  "calls": 700,
+  "accepted": 700,
+  "rejected": 0,
+  "calls_unaccounted": 0,
+  "rejection_reasons": {},
+  "contamination_hits": {
+   "id": 0,
+   "state": 0,
+   "shingles": 0
+  },
+  "estimated_cost_usd": 0.02712,
+  "elapsed_seconds": 19.0,
+  "out_sha256": "6772ff55c6556e67b276ec31ce2af66d587713f81c2166e540a7e685754d719d"
+ },
+ "label_quality": {
+  "argmax_vs_expected": {
+   "rows": 700,
+   "disagree": 368,
+   "disagree_rate": 0.5257,
+   "mean_abs_difference": 0.6587
+  },
+  "api_score_vs_expected": {
+   "rows": 700,
+   "mean_abs_difference": 0.0108
+  }
+ },
+ "by_source": {
+  "apigen_tool_next_action": {
+   "drawn": 350,
+   "accepted": 350,
+   "rejected": 0,
+   "levels": {
+    "0": 320,
+    "2": 26,
+    "3": 4
+   },
+   "level0_rows": 320,
+   "level0_share": 0.9143,
+   "level0_share_wilson95": [
+    0.8803,
+    0.9393
+   ]
+  },
+  "commonsenseqa": {
+   "drawn": 350,
+   "accepted": 350,
+   "rejected": 0,
+   "levels": {
+    "0": 188,
+    "2": 7,
+    "3": 141,
+    "4": 14
+   },
+   "level0_rows": 188,
+   "level0_share": 0.5371,
+   "level0_share_wilson95": [
+    0.4848,
+    0.5887
+   ]
+  }
+ },
+ "reading": {
+  "apigen_tool_next_action": "91.4% of accepted rows sit at level 0 with the cap off, against 52% under the cap in round two. The cap was masking the collapse, not creating it.",
+  "commonsenseqa": "53.7% level 0 with the cap off, against 56% in the pilot; the two runs bracket one another inside the interval, so the cap was not what produced its level-0 share either.",
+  "caveat": "one seeded selection of 350 states per family, one run. The interval is the Wilson 95% bound on the level-0 share at that n; at this size it rules out a return to the round-one numbers for apigen_tool_next_action and rules out nothing decisive for commonsenseqa. The eligibility rule, not this run, decides."
+ }
+}

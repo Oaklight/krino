@@ -25,6 +25,7 @@ import torch
 import torch.nn.functional as F
 
 from .decision_model import DecisionModel
+from .heads import base_features
 from .hybrid_cache import fork_prefix_cache
 from .shape_buckets import PREFIX_BUCKETS, SUFFIX_BUCKETS, bucket_length, left_pad
 
@@ -78,7 +79,6 @@ class ListwiseMarkerReadout:
             state, instructions, model.max_length - width
         )
         real_prefix_ids = prefix_inputs["input_ids"]
-        real_prefix_mask = prefix_inputs["attention_mask"]
         real_prefix_len = real_prefix_ids.shape[1]
         prefix_bucket = bucket_length(
             real_prefix_len, PREFIX_BUCKETS, limit=model.max_length - width
@@ -133,18 +133,22 @@ class ListwiseMarkerReadout:
             [prefix_inputs["attention_mask"], suffix_mask], dim=1
         )
 
-        prefix_outputs = model._backbone_forward(
-            prefix_inputs, output_hidden_states=False, use_cache=True
+        # A grad-enabled GDN backbone cannot share a prefix cache: the suffix
+        # forward overwrites the fork's conv/recurrent states in place, which
+        # bumps the version of tensors the prefix graph saved for backward
+        # (``RuntimeError: one of the variables needed for gradient
+        # computation has been modified by an inplace operation`` in fla's
+        # chunked delta-rule backward).  The combined forward below re-encodes
+        # the prefix, so do not run the cache-only prefix forward at all: it
+        # would be a second, discarded pass.  Evaluation runs under
+        # ``no_grad``, where the fork cannot break autograd, so it keeps the
+        # cache and pays the prefix once.
+        reencode = (
+            model.is_hybrid
+            and model.backbone_requires_grad
+            and torch.is_grad_enabled()
         )
-        cache = getattr(prefix_outputs, "past_key_values", None)
-        if cache is not None and model.is_hybrid and model.backbone_requires_grad:
-            # A grad-enabled GDN backbone cannot share a prefix cache: the
-            # suffix forward overwrites the fork's conv/recurrent states in
-            # place, which bumps the version of tensors the prefix graph saved
-            # for backward (``RuntimeError: one of the variables needed for
-            # gradient computation has been modified by an inplace operation``
-            # in fla's chunked delta-rule backward).  Re-encode the context so
-            # one autograd graph covers prefix and suffix.
+        if reencode:
             if not getattr(model, "_warned_lora_hybrid_cache", False):
                 print(
                     "  LoRA + hybrid backbone: re-encoding the context instead "
@@ -153,17 +157,32 @@ class ListwiseMarkerReadout:
                 )
                 model._warned_lora_hybrid_cache = True
             cache = None
+        else:
+            prefix_outputs = model._backbone_forward(
+                prefix_inputs, output_hidden_states=False, use_cache=True
+            )
+            cache = getattr(prefix_outputs, "past_key_values", None)
         if cache is None:
             # No KV cache (checkpointing, encoder, adapted hybrid): pay the
-            # context again.  Use the unpadded prefix: a left-padded query at
-            # position 0 has every key masked, and cuDNN's SDPA backward
-            # returns NaN for that row under autocast.
-            input_ids = torch.cat(
-                [real_prefix_ids, suffix[:, :suffix_len]], dim=1
+            # context again.  Right-pad to the bucket shape.  A left-padded
+            # position 0 is fully masked under the causal mask, and cuDNN's
+            # SDPA backward returns NaN for that row under autocast.  Right
+            # padding keeps one shape per (prefix bucket, suffix bucket), so
+            # the kernels stay warm; a variable length costs a kernel load per
+            # item, which dominates the step.
+            total_width = prefix_bucket + width
+            input_ids = torch.full(
+                (1, total_width), pad_id, dtype=torch.long, device=model.device
             )
-            attention_mask = torch.cat(
-                [real_prefix_mask, suffix_mask[:, :suffix_len]], dim=1
+            attention_mask = torch.zeros(
+                (1, total_width), dtype=torch.long, device=model.device
             )
+            input_ids[0, :real_prefix_len] = real_prefix_ids[0]
+            attention_mask[0, :real_prefix_len] = 1
+            input_ids[0, real_prefix_len : real_prefix_len + suffix_len] = (
+                suffix[0, :suffix_len]
+            )
+            attention_mask[0, real_prefix_len : real_prefix_len + suffix_len] = 1
             outputs = model._backbone_forward(
                 {"input_ids": input_ids, "attention_mask": attention_mask}
             )
@@ -209,26 +228,51 @@ class ListwiseMarkerReadout:
         return self.suffix_length(option_texts) < self.model.max_length
 
     # -- scoring --------------------------------------------------------
+    @staticmethod
+    def _base_feat(
+        base_probs: torch.Tensor | None, n_options: int
+    ) -> torch.Tensor | None:
+        """``[1, K, 2]`` base features, or ``None`` when unconditioned."""
+        if base_probs is None:
+            return None
+        probs = base_probs.reshape(-1)
+        if probs.numel() != n_options:
+            raise ValueError(
+                f"base_probs has {probs.numel()} entries for {n_options} options"
+            )
+        return base_features(probs).unsqueeze(0)
+
     def score(
         self,
         state: str,
         instructions: str,
         option_texts: Sequence[str],
+        base_probs: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """Marker logits [1, K] for ``option_texts``, in the given order."""
+        """Marker logits [1, K] for ``option_texts``, in the given order.
+
+        ``base_probs`` is the frozen base distribution over the same options,
+        in the same order.  ``None`` scores without base conditioning.
+        """
         if not option_texts:
             raise ValueError("listwise readout needs at least one option")
         hidden = self._marker_hidden(state, instructions, option_texts)
-        return self.model.marker_head(hidden.unsqueeze(0))
+        feat = self._base_feat(base_probs, len(option_texts))
+        if feat is not None:
+            feat = feat.to(hidden.device)
+        return self.model.marker_head(hidden.unsqueeze(0), base_feat=feat)
 
     def probabilities(
         self,
         state: str,
         instructions: str,
         option_texts: Sequence[str],
+        base_probs: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Softmax over the set, [1, K]."""
-        return torch.softmax(self.score(state, instructions, option_texts), dim=-1)
+        return torch.softmax(
+            self.score(state, instructions, option_texts, base_probs), dim=-1
+        )
 
     def score_shifted(
         self,
@@ -236,12 +280,14 @@ class ListwiseMarkerReadout:
         instructions: str,
         option_texts: Sequence[str],
         shifts: int = 4,
+        base_probs: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Average the set distribution over cyclic shifts of the order.
 
         The head is trained on shuffled orders, so averaging a few shifts
         removes part of the order variance.  ``shifts`` is clamped to the
-        option count, and for K <= 4 every shift is used.
+        option count, and for K <= 4 every shift is used.  ``base_probs`` is
+        rotated with the options so option ``i`` keeps its own feature.
         """
         n_options = len(option_texts)
         shifts = max(1, min(shifts, n_options))
@@ -249,7 +295,13 @@ class ListwiseMarkerReadout:
         for shift in range(shifts):
             order = [index % n_options for index in range(shift, shift + n_options)]
             rotated = [option_texts[index] for index in order]
-            probs = self.probabilities(state, instructions, rotated)
+            rotated_base = None
+            if base_probs is not None:
+                index = torch.tensor(order, device=base_probs.device)
+                rotated_base = base_probs.reshape(-1)[index]
+            probs = self.probabilities(
+                state, instructions, rotated, base_probs=rotated_base
+            )
             unrotated = torch.empty_like(probs)
             for position, source in enumerate(order):
                 unrotated[0, source] = probs[0, position]
