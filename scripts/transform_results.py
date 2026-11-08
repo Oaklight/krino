@@ -327,7 +327,7 @@ JEVBENCH_META: dict[str, tuple[str, str, str]] = {
     "krino-qwen3.5-4b-heads": ("Qwen3.5-4B (trained)", "4B", "causal"),
     "krino-qwen3-reranker-4b-heads": ("Qwen3-reranker-4B (trained)", "4B", "reranker"),
     "krino-qwen3-reranker-0.6b-heads": ("Qwen3-reranker-0.6B (trained)", "0.6B", "reranker"),
-    "raw-qwen3-reranker-4b": ("Qwen3-reranker-4B (zero-shot)", "4B", "reranker"),
+    "raw-qwen3-reranker-4b": ("Qwen/Qwen3-Reranker-4B (zero-shot)", "4B", "reranker"),
 }
 
 # ``_provenance.strategy`` -> the readout label the dashboard renders.
@@ -416,10 +416,12 @@ def jevbench_source_files() -> list[Path]:
 
     ``results/jevbench`` holds the trained-head, native-reranker and three
     continuation cells. ``logit_prov`` holds the judgement and continuation
-    cells that carry ``_provenance``. The ``jevbench_reranker_*`` files in
-    ``logit_prov`` are not listed: ``raw-qwen3-reranker-4b.json`` already
-    supplies that checkpoint's native-reranker row, and pairing the two would
-    put two numbers under one label.
+    cells that carry ``_provenance``. This follows #311 item 2, which asks for
+    judgement and continuation rows only: the four ``jevbench_reranker_*``
+    files are native-reranker cells and stay out. Only the reranker
+    checkpoint's native row would collide with
+    ``raw-qwen3-reranker-4b.json``; the other three are native-reranker cells
+    for checkpoints that have no row here.
     """
     paths: list[Path] = []
     if JEVBENCH_DIR.exists():
