@@ -120,13 +120,7 @@ than moving. The largest moves are `original/intent` +6 (2/12 → 8/12), the
 `hard/sol` family −7 (sol-a −5, sol-c −2), `easy/extraction` −3, against gains
 on `hard/opus-b` +3, `easy/fact` +2 and `original/ordinal` +2.
 
-The same prompt on a post-trained model is a different readout. `Phi-4-mini` gains
-**+22 items** over its own continuation row (138 against 116, 42–20 discordant,
-p = 0.0071), with tier gains of +10 easy, +7 hard, +5 original. `Qwen/Qwen3-4B`
-gains **+20** (131 against 111, 48–28, p = 0.0286), with +6 easy, +4 hard, +10
-original. Under the same native template the post-trained model is 21 items above
-the untrained base (131 against 110, +9.09 pp, 46–25, p = 0.017); that is a
-cross-checkpoint contrast, not the template lift.
+The same prompt on a post-trained model is a different readout. `Phi-4-mini` gains **+22 items** over its own continuation row (138 against 116, 42–20 discordant, p = 0.0071; Holm 0.057, BH 0.017 — uncorrected-only), with tier gains of +10 easy, +7 hard, +5 original. `Qwen/Qwen3-4B` gains **+20** (131 against 111, 48–28, p = 0.0286; Holm 0.200, BH 0.057) — **this one does not survive either correction and is a point estimate, not an established template lift.** Under the same native template the post-trained model is 21 items above the untrained base (131 against 110, +9.09 pp, 46–25, p = 0.017; Holm 0.068, BH 0.034 — uncorrected-only); that is a cross-checkpoint contrast, not the template lift.
 
 So the sentence "the reranker's format buys nothing on a base model" is true of
 `Qwen3-4B-Base` (−0.9) and false for both post-trained checkpoints (+9.5, +8.7).
@@ -134,7 +128,7 @@ The surviving explanation is that a prompt must be in distribution. The rectangl
 is now closed: post-trained `Qwen/Qwen3-4B` moves with the prompt, so the gain
 belongs to post-training, not to Phi-4-mini's recipe.
 
-## The 62–65 band: post-training at 4B, marginal separation from the best bases
+## The 62–65 band: post-training at 4B, clean against the weak bases only
 
 Under the judgement readout the three post-trained rows are:
 
@@ -145,16 +139,7 @@ Under the judgement readout the three post-trained rows are:
 | `Qwen/Qwen3-4B` (post) | 143/231 = 0.6190 | 49/111 | 46/72 |
 
 No pair separates: Phi-4 vs reranker 23–23 (p = 1.000, agreeing on 185 of 231);
-Qwen3-4B post vs Phi-4 26–33 (p = 0.435); post vs reranker 23–30 (p = 0.410). All
-three are ahead of the untrained same-family base — Phi-4 and the reranker by 26
-items (p = 0.0019, 0.0011), Qwen3-4B post by 19 (p = 0.0448) — but that is not a
-statement about base models in general. Qwen2.5-3B (132) and Ministral (129) are
-not separable from Qwen3-4B post (45–34, p = 0.260; 40–26, p = 0.109), and Phi-4
-and the reranker clear them only at the margin (46–28, p = 0.047; 41–23,
-p = 0.033). The band is a point-estimate cluster: it is cleanly above the weak
-bases, but its separation from the strongest base, Qwen2.5-3B, is 0.033–0.047
-for Phi-4 and the reranker and null for Qwen3-4B post (p = 0.260). The in-family
-contrast is the only controlled one.
+Qwen3-4B post vs Phi-4 26–33 (p = 0.435); post vs reranker 23–30 (p = 0.410). All three are ahead of the untrained same-family base — Phi-4 and the reranker by 26 items (p = 0.0019 and 0.0011, both surviving Holm at 0.015 and 0.0096), Qwen3-4B post by 19 (p = 0.0448, **Holm 0.179, BH 0.053 — not established**). Against the two stronger bases the picture is thinner than an uncorrected read suggests. Qwen2.5-3B (132) and Ministral (129) are not separable from Qwen3-4B post (45–34, p = 0.260; 40–26, p = 0.109). Phi-4 against Qwen2.5-3B is 46–28 at p = 0.047, which survives neither correction (Holm 0.179, BH 0.053). The reranker against Qwen2.5-3B is 41–23 at p = 0.033, which survives BH (0.042) but not Holm (0.164). Phi-4 against Ministral is 41–20 at p = 0.0099, BH 0.014 and Holm 0.059. So the band is cleanly above the weak bases and **not established above the two strongest**; the in-family contrast, which was the only controlled comparison, is itself uncorrected-only.
 
 Under the native template the reranker is still ahead of the general model: 148
 against 131, 36–19 discordant, p = 0.0300. So "the reranker is not special" is a
@@ -273,6 +258,22 @@ checkpoints answer it more evenly and score 59–64%, so the yes-sayer is a
 model-and-prompt pair, not a property of independent per-option scoring. Base ×
 judgement's 53.68 is therefore a choice-and-original result.
 
+## Test families and correction
+
+Every p-value in this note is a two-sided exact McNemar test on 231 paired items, and none of them was corrected for multiplicity when the note was first written. The tests are also not independent: the same cells appear in many pairs. This revision reports two corrections for every declared family — **Holm**, which controls the family-wise error rate and holds under any dependence, and **Benjamini–Hochberg** at 5%, which controls the false discovery rate but assumes independence or positive dependence. Where the two disagree, both values are printed.
+
+The families, declared after the fact and therefore themselves a judgement:
+
+| family | tests | what it supports |
+|---|---:|---|
+| within-checkpoint readout pairs | 12 | "the readout decides how far apart checkpoints can get" |
+| band vs base rows, judgement | 18 | "the 62–65 band is above the bases" |
+| base track, judgement | 15 | "the judgement readout orders the base shortlist" |
+| continuation ordering | 10 | "neither readout orders the top" |
+| native-template cross-checkpoint | 6 | "the reranker keeps an edge under its own template" |
+
+A claim is called **established** here only if it survives both corrections. Anything that survives one and not the other is printed with both values and called **uncorrected-only**.
+
 ## Paired tests
 
 Exact McNemar over the 231 shared rows:
@@ -325,11 +326,9 @@ All six rows are at `2819b6f` with `items = 231`, `failed = 0` and
 | `openbmb/MiniCPM5-2B-Base` | 109/231 = 0.4719 | 34/48 | 42/111 | 33/72 |
 | `Qwen/Qwen3-1.7B-Base` | 108/231 = 0.4675 | 38/48 | 39/111 | 31/72 |
 
-Seven of the fifteen pairs separate at p < 0.05, all between the top three and
-the bottom three: Qwen2.5-3B from Qwen2.5-1.5B (49–27, p = 0.015), MiniCPM5
-(52–29, p = 0.014) and Qwen3-1.7B-Base (41–17, p = 0.002); Ministral from
-Qwen2.5-1.5B (40–21, p = 0.020), MiniCPM5 (52–32, p = 0.038) and Qwen3-1.7B-Base
-(46–25, p = 0.017); Qwen3-4B-Base from Qwen3-1.7B-Base (35–19, p = 0.040).
+Seven of the fifteen pairs separate at the uncorrected threshold of p < 0.05, all between the top three and the bottom three: Qwen2.5-3B from Qwen2.5-1.5B (49–27, p = 0.015), MiniCPM5 (52–29, p = 0.014) and Qwen3-1.7B-Base (41–17, p = 0.002); Ministral from Qwen2.5-1.5B (40–21, p = 0.020), MiniCPM5 (52–32, p = 0.038) and Qwen3-1.7B-Base (46–25, p = 0.017); Qwen3-4B-Base from Qwen3-1.7B-Base (35–19, p = 0.040).
+
+**Under correction the structure does not survive.** Holm leaves one test: Qwen2.5-3B over Qwen3-1.7B-Base (41–17, p = 0.0022, Holm 0.0335). Benjamini–Hochberg at 5% leaves the same one. The remaining six fall to Holm 0.20–0.38 and to BH 0.20–0.38. **The two-group reading in the earlier revision of this note is withdrawn**: what the column establishes is that one base is above one other base, not that the track splits in three and three.
 
 The top three are mutually inseparable: Qwen2.5-3B vs Ministral 29–26 (p = 0.79),
 Qwen2.5-3B vs Qwen3-4B-Base 29–21 (p = 0.32), Ministral vs Qwen3-4B-Base 32–27
@@ -359,9 +358,7 @@ Continuation fails the same way. Paired exact McNemar on the continuation files:
 | Qwen2.5-1.5B vs Phi-4-mini | −7 (17–24) | 0.3489 |
 | Phi-4-mini vs Qwen3-Reranker-4B | +5 (19–14) | 0.4869 |
 
-Ten pairs, one separates; the closest is Qwen3-4B-Base against
-Qwen3-Reranker-4B at one item, 13–12, p = 1.0000. So **neither readout orders
-the top of this shortlist on 231 items.**
+Ten pairs, one separates uncorrected (Qwen2.5-3B vs Phi-4-mini, p = 0.0294); under correction that one is gone as well (Holm 0.295, BH 0.295), and the closest remaining pair is Qwen3-4B-Base against Qwen3-Reranker-4B at one item, 13–12, p = 1.0000. So **neither readout orders the top of this shortlist on 231 items, and correction makes that conclusion stronger rather than weaker.**
 
 `MiniCPM3-4B` (instruct) is 78/231 = 0.3377 — **the plain-text judgement template
 does not work for this chat checkpoint**; the number is a format failure, not a
@@ -370,28 +367,15 @@ lowest checkpoint measured, and the response is degenerate: adequacy, ordinal an
 policy 6 of 6 questions at index 1, intent 5 of 6 at index 2. It is also 28 items
 below its own continuation row (106/231). Seventh row, outside the six-row rule.
 
-Against the six base rows, Phi-4-mini and the reranker separate from every row,
-including Qwen2.5-3B (46–28, p = 0.047; 41–23, p = 0.033). Qwen3-4B (post)
-separates from Qwen3-4B-Base (50–31, p = 0.045), Qwen2.5-1.5B, MiniCPM5 and
-Qwen3-1.7B-Base, but not from Qwen2.5-3B (45–34, p = 0.260) or Ministral (40–26,
-p = 0.109). The 62–65 band is therefore a point-estimate cluster: it is clearly
-above the weak bases, but Qwen3-4B (post) does not separate from Qwen2.5-3B, and
-the in-family contrast remains the only controlled comparison.
+Against the six base rows, Phi-4-mini and the reranker separate from every row at the uncorrected threshold. Under correction the picture splits: both clear Qwen3-4B-Base, Qwen2.5-1.5B, Qwen3-1.7B-Base and MiniCPM5 under Holm; Phi-4 against Qwen2.5-3B survives neither (Holm 0.179, BH 0.053) and Phi-4 against Ministral survives only BH (Holm 0.059, BH 0.014); the reranker against Qwen2.5-3B survives only BH (Holm 0.164, BH 0.042). Qwen3-4B (post) against Qwen3-4B-Base is 50–31 at p = 0.045, which survives neither correction (Holm 0.179, BH 0.053); it does clear Qwen2.5-1.5B, MiniCPM5 and Qwen3-1.7B-Base under both, and is null against Qwen2.5-3B (45–34, p = 0.260) and Ministral (40–26, p = 0.109). **The in-family contrast is the only controlled comparison, and after correction it is a point estimate.**
 
 ## What this means for the build plan
 
 - **The readout decides whether a difference is visible, and how big it is.**
   Continuation makes three different checkpoints identical; judgement opens an
   11-point span over the same rows and weights.
-- **The 62–65 band is a point-estimate cluster, not a separable tier.** The three
-  post-trained rows tie each other; Qwen3-4B (post) does not separate from
-  Qwen2.5-3B or Ministral, and Phi-4 and the reranker clear those two only at the
-  margin. Only the in-family post-trained-vs-base contrast clears p < 0.05.
-  An instruct model ties the reranker under judgement; under the reranker's
-  native template it does not.
-- **The chat template helps only a model that was post-trained on one.** Base
-  `Qwen3-4B` moves by −0.9 pp from the reranker's prompt; `Phi-4-mini` by +9.5
-  (p = 0.0071) and `Qwen/Qwen3-4B` by +8.7 (p = 0.029).
+- **The 62–65 band is a point-estimate cluster, not a separable tier, and correction makes that weaker still.** The three post-trained rows tie each other; Qwen3-4B (post) does not separate from Qwen2.5-3B or Ministral; Phi-4 and the reranker clear those two only at the margin; and the in-family post-trained-vs-base contrast, which used to be the one comparison that cleared p < 0.05 uncorrected, does not survive either correction (Holm 0.179, BH 0.053). An instruct model ties the reranker under judgement; under the reranker's native template the gap is uncorrected-only (p = 0.030, Holm 0.090, BH 0.045).
+- **The chat template helps only a model that was post-trained on one, and only one of the two post-trained gains is established.** Base `Qwen3-4B` moves by −0.9 pp from the reranker's prompt. `Phi-4-mini` moves by +9.5 (p = 0.0071, Holm 0.057, BH 0.017 — uncorrected-only) and `Qwen/Qwen3-4B` by +8.7 (p = 0.029, Holm 0.200, BH 0.057 — not established). The direction is the same for both; the size of the claim is not.
 - **Porting the readout means training the head with the independent-per-option
   objective, not re-prompting a model differently.** The one thing the prompt
   does by itself is redistribute accuracy across subtasks.
