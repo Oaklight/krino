@@ -26,6 +26,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from data.pipeline import load_jevbench
+from model.evaluation.run_provenance import build_run_provenance
 from model.src.reranker_prompt import (
     build_query_doc,
     get_options,
@@ -42,13 +43,22 @@ def main():
     parser.add_argument("--device", default=None)
     parser.add_argument("--max-items", type=int, default=None)
     parser.add_argument("--output", type=Path, default=None)
+    parser.add_argument("--variant", choices=["base", "instruct"], default=None)
+    parser.add_argument("--snapshot", type=Path, default=None)
+    parser.add_argument("--code-commit", default=None)
     args = parser.parse_args()
 
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
 
+    snapshot_path = args.snapshot
+    if snapshot_path is None:
+        from huggingface_hub import snapshot_download
+
+        snapshot_path = Path(snapshot_download(args.model))
+
     print(f"Loading {args.model}...")
-    tokenizer = AutoTokenizer.from_pretrained(args.model, padding_side="left")
-    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16)
+    tokenizer = AutoTokenizer.from_pretrained(str(snapshot_path), padding_side="left")
+    model = AutoModelForCausalLM.from_pretrained(str(snapshot_path), dtype=torch.bfloat16)
     if device != "auto":
         model = model.to(device)
     model.eval()
@@ -71,6 +81,7 @@ def main():
     all_correct = 0
     all_total = 0
     latencies = []
+    predictions: list[dict] = []
 
     for i, item in enumerate(items):
         tier = tier_from_id(item.id)
@@ -96,6 +107,32 @@ def main():
         elif q_type == "score":
             predicted = max(prob_dict, key=prob_dict.get)
             correct = int(predicted) == int(item.label)
+
+        # Record the prediction in the same option order the other JevBench
+        # files use: noul true-first, everything else in the criteria order.
+        if q_type == "noul":
+            order = ["yes", "no"]
+            gold_idx = 0 if item.label else 1
+            predicted_idx = 0 if prob_dict.get("yes", 0) > prob_dict.get("no", 0) else 1
+        elif q_type == "choice":
+            order = [label for label, _ in options]
+            gold_idx = order.index(item.label) if item.label in order else -1
+            predicted_idx = order.index(max(prob_dict, key=prob_dict.get))
+        else:
+            order = [label for label, _ in options]
+            gold_idx = max(0, min(len(order) - 1, int(round(float(item.label)))))
+            predicted_idx = int(max(prob_dict, key=prob_dict.get))
+        predictions.append(
+            {
+                "id": item.id,
+                "type": q_type,
+                "gold_idx": gold_idx,
+                "option_count": len(order),
+                "p_yes": [round(prob_dict[label], 4) for label in order],
+                "predicted_idx": predicted_idx,
+                "correct": bool(correct),
+            }
+        )
 
         all_total += 1
         if correct:
@@ -137,15 +174,39 @@ def main():
               f"median={latencies[len(latencies)//2]:.2f}s total={sum(latencies):.0f}s")
 
     if args.output:
+        provenance = build_run_provenance(
+            model_id=args.model,
+            snapshot_path=snapshot_path,
+            dtype="bfloat16",
+            device=str(next(model.parameters()).device),
+            strategy="reranker_native",
+            norm="none",
+            root=ROOT,
+            variant=args.variant,
+            code_commit=args.code_commit,
+            extra={
+                "readout": "native P(yes) per option, reranker prompt",
+                "scoring_kernel": "model/src/reranker_prompt.py::score_options_native",
+                "attn_implementation": getattr(
+                    getattr(model, "config", None), "_attn_implementation", None
+                ),
+                "max_length": max_length,
+            },
+        )
         summary = {
+            "_provenance": provenance,
             "model": args.model,
             "mode": "raw_reranker",
+            "items": len(items),
+            "n": all_total,
+            "failed": len(items) - all_total,
             "overall": {"accuracy": all_correct / all_total, "correct": all_correct, "total": all_total},
             "by_tier": {t: {"accuracy": d["correct"] / d["total"], **d} for t, d in results_by_tier.items()},
             "by_type": {t: {"accuracy": d["correct"] / d["total"], **d} for t, d in results_by_type.items()},
+            "predictions": predictions,
         }
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n")
+        args.output.write_text(json.dumps(summary, indent=2, ensure_ascii=False))
         print(f"\nResults saved to {args.output}")
 
     return 0
