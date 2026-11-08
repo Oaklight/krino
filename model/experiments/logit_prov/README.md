@@ -106,9 +106,11 @@ process records above are the evidence there. For batch two, the launch driver
 log for the runs started here records the tree and an empty working tree at each
 checkpoint — `57c33df4279cc65ff0ee4aa347c52034cd34c7fa` for the two launches and
 `2819b6f67f7f3c9b7cf4d7dbaa08a3671a6cfaa0` for the rerun — but no live process
-records were taken. The seven files that record the short `2819b6f` were produced
-in other sessions; their evidence is the command and commit each file records,
-not this log.
+records were taken. Two launches produced the three `57c33df` files: the first
+wrote the base reranker-prompt cell at 05:43:34Z and the reranker-native cell at
+05:43:40Z, the second wrote the Phi-4-mini cell at 05:50:12Z. The seven files
+that record the short `2819b6f` were produced in other sessions; their evidence
+is the command and commit each file records, not this log.
 
 ## Architecture eligibility
 
