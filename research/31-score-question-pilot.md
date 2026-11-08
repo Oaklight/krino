@@ -231,5 +231,6 @@ Counters for both runs, including every per-source figure in this note, are in
    families, replace the malformed rubrics with coarser 3-level scales or with a
    dimension the state actually carries, and cap the level-0 share per source.
    Scaling the current mix would add volume without adding usable label
-   variation. The round-two branch implements the cap; the replacement rubrics
-   are not in it.
+   variation. The round-two branch implements the cap and ships the replacement
+   rubrics in `data/score_rubrics_round2.json`; `research/32` reports what they
+   did.
