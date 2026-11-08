@@ -135,7 +135,7 @@ def check_landing(data: dict, tracked: set[str]) -> list[str]:
     errors: list[str] = []
     if data.get("landing") != expected:
         errors.append("landing: block does not match the committed files")
-    sources: set[str] = set()
+    sources: set[str] = set(expected.get("source_files", []))
     for section in ("judgement_vs_continuation", "post_trained_4b", "resolution"):
         sources.update(expected[section].get("source_files", []))
     for field in ("trained_source_file", "jev_source_file"):

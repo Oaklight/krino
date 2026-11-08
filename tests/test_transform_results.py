@@ -398,3 +398,15 @@ class TestLanding:
         assert landing["instrumented_rows"] == 37
         assert landing["banking77"]["trained_pp"] == 95.2
         assert landing["banking77"]["jev_pp"] == 75.0
+
+    def test_source_list_is_one_deduplicated_union(self):
+        landing = self._data()["landing"]
+        sources = landing["source_files"]
+
+        assert sources == sorted(set(sources))
+        assert "web/public/results/eval_results.json" in sources
+        assert "model/experiments/resolution_inputs.json" in sources
+        assert landing["banking77"]["trained_source_file"] in sources
+        assert landing["banking77"]["jev_source_file"] in sources
+        for section in ("judgement_vs_continuation", "post_trained_4b", "resolution"):
+            assert set(landing[section]["source_files"]) <= set(sources)

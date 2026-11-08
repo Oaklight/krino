@@ -28,6 +28,7 @@ export default function HomePage() {
   const bandNames = band.checkpoints.map((checkpoint) => checkpoint.model_id).join(", ");
   const topFourNames = resolution.top_four.map((checkpoint) => checkpoint.model_id).join(", ");
   const devPair = resolution.dev_pair.join(" vs ");
+  const sourceFiles = landing.source_files;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
@@ -62,25 +63,25 @@ export default function HomePage() {
           value={ppRange(jvc.above_10_min_pp, jvc.above_10_max_pp)}
           label="Judgement over continuation"
           detail={`${jvc.wins} of ${jvc.measured} checkpoints; ${jvc.above_10_count} win by more than 10 pp`}
-          source="model/experiments/logit_prov/jevbench_{judgement,logit}_*.json; results/jevbench/logit_*.json"
+          source="#sources"
         />
         <StatCard
           value={pctRange(band.min_pp, band.max_pp)}
           label="Post-trained 4B judgement"
           detail={`base ${pct(band.base_pp)}; ${bandNames}`}
-          source={band.source_files.join("; ")}
+          source="#sources"
         />
         <StatCard
           value={`${resolution.jevbench_pp.toFixed(1)} pp / ${resolution.dev_card_min_pp}–${resolution.dev_card_max_pp} pp`}
           label="Instrument resolution"
           detail="JevBench 231 / 812-row dev set at 80% power"
-          source="model/evaluation/paired_power.py; model/experiments/resolution_inputs.json; data/benchmarks/dev/dev_800.json"
+          source="#sources"
         />
         <StatCard
           value={String(landing.instrumented_rows)}
           label="Instrumented rows"
           detail="each names its readout and source file"
-          source="web/public/results/eval_results.json"
+          source="#sources"
         />
       </div>
 
@@ -127,9 +128,20 @@ export default function HomePage() {
           an in-domain single-task result; Jev&apos;s number is zero-shot across 77
           classes, so the comparison is not like-for-like.
         </p>
-        <p className="mt-3 font-mono text-[10px] leading-snug text-text-dim break-all">
-          {banking.trained_source_file}; {banking.jev_source_file}
+      </section>
+
+      {/* One list, deduplicated; every card links here */}
+      <section id="sources" className="mb-12 border-t border-border pt-8 scroll-mt-24">
+        <h2 className="text-xl font-semibold mb-3">Sources for the figures above</h2>
+        <p className="text-xs text-text-muted mb-3">
+          Every figure on this page is computed from one of these committed
+          files.
         </p>
+        <ul className="font-mono text-[10px] leading-relaxed text-text-dim break-all space-y-0.5">
+          {sourceFiles.map((file) => (
+            <li key={file}>{file}</li>
+          ))}
+        </ul>
       </section>
 
       <p className="text-sm">
