@@ -144,6 +144,17 @@ not three.
 are easy 48, hard 111, original 72; the task-level chance baseline for this set
 is 0.318.
 
+**The 231 are predictions, not questions.** The `original` tier repeats each
+source question as a paraphrase pair — `…-01-0` and `…-01-1`, same instructions,
+same criteria, same gold answer, different state text. That is 72 predictions
+over **36 distinct questions**, so the tier's effective n is 36, and the whole
+set is 231 predictions over **195 distinct questions** (48 + 111 + 36). A reader
+comparing the `original` 72 against another benchmark's 72 is comparing nothing,
+and any statistic that treats all 231 rows as independent is slightly
+anti-conservative because 72 of them — the whole `original` tier — form 36
+correlated paraphrase pairs. The per-subtask counts are 12 predictions over 6
+questions for each of the six original subtasks.
+
 All five rows below use the continuation readout, one named instrument each.
 
 | model | variant | all 231 | easy 48 | hard 111 | original 72 | noul 74 | choice 139 | score 18 |
@@ -162,23 +173,24 @@ That gap is the instrument, not the model: the pair is here so a reader who
 sees only one of them cannot conclude the reranker lost 15 points, or that the
 continuation rows are comparable to the anchor without saying so.
 
-**The `original` column is not wholly a measurement.** Two of the three subtasks
-in that tier are answered with the same option index by every checkpoint anyone
-has scored here: `original/intent` (12 items) at index 2 and `original/routing`
-(12 items) at index 3, constant in 8 of 8 models across the two sweeps (#288).
-In the five files committed here the same two cells are constant at the same
-indices, 5 of 5, and `original/adequacy` is constant at index 0 in 5 of 5 as
-well (7 of 8 overall); `original/policy` is constant in 4 of 8. No `easy` or
-`hard` subtask is constant in any model.
+**The `original` column is not wholly a measurement.** Two of the subtasks in
+that tier are answered with the same option index by every checkpoint anyone has
+scored here: `original/intent` (12 predictions over 6 questions) at index 2 and
+`original/routing` (12 over 6) at index 3, constant in 8 of 8 models across the
+two sweeps (#288). In the five files committed here the same two cells are
+constant at the same indices, 5 of 5, and `original/adequacy` (12 over 6) is
+constant at index 0 in 5 of 5 as well (7 of 8 overall); `original/policy` is
+constant in 4 of 8. No `easy` or `hard` subtask is constant in any model.
 
-So 24 of the 231 items carry no information from this readout, for every model
-tested, and a further 12 are near-constant. The `original` percentage is partly a
-property of where each model's constant answer falls against the gold
-distribution of those subtasks, which differs by item. It does not reorder the
-rows — every model pays the same cells — but the absolute value in that column
-should not be read as accuracy on those subtasks. Scoring them through
-`score_options_native` is the follow-up that would settle it, and it is recorded
-on #288 rather than guessed at here.
+So 24 of the 231 predictions — **12 distinct questions** — carry no information
+from this readout for every model tested, and a further 12 predictions (6
+questions) are near-constant. The `original` percentage is partly a property of
+where each model's constant answer falls against the gold distribution of those
+subtasks, which differs by item. It does not reorder the rows — every model pays
+the same cells — but the absolute value in that column should not be read as
+accuracy on those subtasks. Scoring them through `score_options_native` is the
+follow-up that would settle it, and it is recorded on #288 rather than guessed at
+here.
 
 ## Determinism check
 
@@ -206,6 +218,17 @@ Phi-4-mini is 1.74 pp ahead (50.22 against 48.48), the opposite order to the
 internal suite. Two instruments, opposite rankings, margins of 0.8 and 1.7 pp.
 **These numbers do not order `Qwen3-4B-Base` against `Phi-4-mini-instruct`**, and
 choosing between them has to rest on grounds this sweep does not supply.
+
+The 1.74 pp is also smaller than it sounds. On those 231 items the two checkpoints
+agree on the correctness verdict for 197 (85.3%) and predict the same option index
+for 187 (81.0%). Of those 187, **36 are the constant `original` cells** — 18
+distinct questions, each appearing twice, which both models answer identically
+and which carry no information. The other **151 are genuine agreement** on items
+where both models actually chose, across two model families and two tokenizers.
+The margin is a net
+of 4 items: 15 that only `Qwen3-4B-Base` gets right against 19 that only
+`Phi-4-mini` does. A 4-item net on 231, next to 151 items of real agreement, is
+not two models reading the set differently.
 
 A base checkpoint sitting slightly behind an instruct checkpoint of the same size
 is also the expected direction, not a failure. More to the point, neither column
