@@ -193,6 +193,9 @@ def transform_eval_file(filepath: Path) -> dict | None:
 
     benchmarks = {}
     for bm_name, bm_data in raw.items():
+        if bm_name.startswith("_"):
+            # ``_provenance`` and any future metadata block are not benchmarks.
+            continue
         benchmarks[bm_name] = extract_benchmark_result(bm_data, bm_name)
 
     accuracies = []

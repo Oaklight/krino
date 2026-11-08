@@ -17,6 +17,8 @@ from typing import Any
 import torch
 from transformers import DynamicCache, PreTrainedModel, PreTrainedTokenizerBase
 
+from model.evaluation.prompt_options import noul_option_texts
+
 
 class LogitScorer:
     """Score typed-question options using direct LM log-probabilities.
@@ -156,6 +158,16 @@ class LogitScorer:
 
         return scores
 
+    def score_options(self, context: str, options: list[str]) -> list[float]:
+        """Return the per-option scores for one context.
+
+        Public wrapper over the internal scorer so that a caller building its
+        own record format - the JevBench screen does - does not depend on a
+        private method.  Higher is better; the values are log-probabilities,
+        normalised by ``norm``.
+        """
+        return self._score_options(context, options)
+
     def _softmax(self, scores: list[float]) -> list[float]:
         t = torch.tensor(scores, dtype=torch.float32)
         probs = torch.softmax(t, dim=0).tolist()
@@ -189,14 +201,8 @@ class LogitScorer:
     def _eval_noul(
         self, state: Any, instructions: str, criteria: dict[str, str] | None = None
     ) -> dict[str, Any]:
-        true_desc = "yes"
-        false_desc = "no"
-        if criteria:
-            true_desc = criteria.get("true", "yes")
-            false_desc = criteria.get("false", "no")
-
         context = f"State: {state}\nQuestion: {instructions}\nAnswer:"
-        scores = self._score_options(context, [f" {true_desc}", f" {false_desc}"])
+        scores = self._score_options(context, noul_option_texts(criteria))
         probs = self._softmax(scores)
         noul = round(max(0.01, min(0.99, probs[0])), 2)
         return {"type": "noul", "noul": noul}

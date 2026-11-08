@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT))
 
 from model.src.backbone import is_hybrid_model, load_causal_lm
 from model.src.logit_scorer import LogitScorer
+from model.evaluation.run_provenance import build_run_provenance
 from data.pipeline import load_jsonl
 from model.evaluation.accuracy import noul_accuracy, choice_accuracy, score_mae
 from model.evaluation.calibration import expected_calibration_error, brier_score
@@ -126,6 +127,23 @@ def main() -> int:
         choices=["float16", "bfloat16", "float32"],
         help="Model dtype (use float16 for V100)",
     )
+    parser.add_argument(
+        "--variant",
+        default=None,
+        choices=["instruct", "base"],
+        help="Checkpoint variant, recorded in the provenance block",
+    )
+    parser.add_argument(
+        "--snapshot",
+        type=Path,
+        default=None,
+        help="Local snapshot path; default resolves the model id through the HF cache",
+    )
+    parser.add_argument(
+        "--code-commit",
+        default=None,
+        help="Commit to record when the tree is not a git checkout",
+    )
     args = parser.parse_args()
 
     dtype_map = {
@@ -135,8 +153,14 @@ def main() -> int:
     }
 
     print(f"Loading {args.model}...")
+    snapshot_path = args.snapshot
+    if snapshot_path is None:
+        from huggingface_hub import snapshot_download
+
+        snapshot_path = Path(snapshot_download(args.model))
+    print(f"Snapshot: {snapshot_path}")
     model, tokenizer = load_causal_lm(
-        args.model, device=args.device, dtype=dtype_map[args.dtype]
+        str(snapshot_path), device=args.device, dtype=dtype_map[args.dtype]
     )
 
     # Hybrid models (GDN, e.g. Qwen3.5) don't support KV-cache batching —
@@ -193,9 +217,23 @@ def main() -> int:
 
         all_results[name] = results
 
+    provenance = build_run_provenance(
+        model_id=args.model,
+        snapshot_path=snapshot_path,
+        dtype=args.dtype,
+        device=str(next(model.parameters()).device),
+        strategy=args.strategy,
+        norm=args.norm,
+        root=ROOT,
+        variant=args.variant,
+        code_commit=args.code_commit,
+    )
+    payload = {"_provenance": provenance, **all_results}
+    print(json.dumps({"_provenance": provenance}, indent=2))
+
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(all_results, indent=2, ensure_ascii=False))
+        args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
         print(f"\nResults saved to {args.output}")
 
     return 0
