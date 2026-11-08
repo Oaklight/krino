@@ -128,7 +128,7 @@ def test_option_branch_ranks_on_yes_and_records_the_no_side():
     # #310: the ranking statistic is log P(" yes") alone. log P(" no") is
     # recorded beside it, and must not enter ``logits``.
     pytest.importorskip("torch")
-    from model.scripts.eval_jevbench_judgement import score_item
+    from model.scripts.eval_jevbench_judgement import prediction_row, score_item
 
     scorer = _FixedScorer(yes=-0.75, no=-2.25)
     item = _item("choice", {"a": "First", "b": "Second"}, "a")
@@ -141,15 +141,22 @@ def test_option_branch_ranks_on_yes_and_records_the_no_side():
     assert record["label_idx"] == 0
     assert len(scorer.prompts) == 2
 
+    row = prediction_row(item, record)
+    assert row["logp_yes"] == [-0.75, -0.75]
+    assert row["logp_no"] == [-2.25, -2.25]
+    assert row["predicted_idx"] == 0
+    assert row["mode"] == "option"
+
 
 def test_polarity_branch_records_both_sides_and_keeps_the_difference():
     # A criteria-less noul item is thresholded on log P(" yes") - log P(" no"),
     # so ``logits`` stays the signed difference while both sides are recorded.
     pytest.importorskip("torch")
-    from model.scripts.eval_jevbench_judgement import score_item
+    from model.scripts.eval_jevbench_judgement import prediction_row, score_item
 
     scorer = _FixedScorer(yes=-0.5, no=-1.5)
-    record = score_item(scorer, _item("noul", None, True))
+    item = _item("noul", None, True)
+    record = score_item(scorer, item)
 
     assert record["mode"] == "polarity"
     assert record["logits"] == [-0.5 - -1.5]
@@ -157,3 +164,11 @@ def test_polarity_branch_records_both_sides_and_keeps_the_difference():
     assert record["logp_no"] == [-1.5]
     assert record["correct"] is True
     assert len(scorer.prompts) == 1
+
+    # The persisted row must not put the difference under a log-probability
+    # name; that mapping is a separate step from the one ``score_item`` does.
+    row = prediction_row(item, record)
+    assert row["logp_yes"] == [-0.5]
+    assert row["logp_no"] == [-1.5]
+    assert row["predicted_idx"] == 0
+    assert row["mode"] == "polarity"

@@ -27,6 +27,12 @@ on Qwen3-4B over all 231 items: 42 predictions change (18.2%), accuracy is
 The difference does not improve accuracy, so the single key stays the statistic
 of record (#310).
 
+Every persisted row carries both sides, ``logp_yes`` and ``logp_no``. On the
+option branch the ranking key is ``logp_yes``. A criteria-less noul item has no
+option text to score, so it is scored once and ranked on the signed difference
+``log P(" yes") - log P(" no")``; that difference is not a log probability and
+is not written under either side's name.
+
 The exact template is recorded in ``_provenance.prompt_template``, one template
 for all items.
 
@@ -124,6 +130,30 @@ def score_item(scorer: LogitScorer, item: Any) -> dict[str, Any] | None:
     }
 
 
+def prediction_row(item: Any, record: dict[str, Any]) -> dict[str, Any]:
+    """Map one scored record to the persisted prediction row.
+
+    ``logp_yes`` is the raw yes-side score and ``logp_no`` the no-side score on
+    every row. Neither is the ranking key on a polarity row: that row is ranked
+    on ``logits``, the signed difference, which is not a log probability and so
+    is not written under a log-probability name. ``mode`` marks the branch and
+    ``predicted_idx`` is the index the branch's key selects.
+    """
+    return {
+        "id": item.id,
+        "type": record["type"],
+        "gold_idx": record["label_idx"],
+        "option_count": record["option_count"],
+        "logp_yes": [round(value, 6) for value in record["logp_yes"]],
+        "logp_no": [round(value, 6) for value in record["logp_no"]],
+        # Written for every type, including noul, so a consumer that reads
+        # predicted_idx never has to fall back to the score array.
+        "predicted_idx": record["logits"].index(max(record["logits"])),
+        "mode": record.get("mode", "option"),
+        "correct": None,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", required=True)
@@ -176,25 +206,7 @@ def main() -> int:
             failed += 1
             continue
         records.append(record)
-        predictions.append(
-            {
-                "id": item.id,
-                "type": record["type"],
-                "gold_idx": record["label_idx"],
-                "option_count": record["option_count"],
-                "logp_yes": [round(value, 6) for value in record["logits"]],
-                # On an option row this is log P(" no") for the same option as
-                # logp_yes, so logp_yes - logp_no can be read off directly. On
-                # a polarity row logp_yes is the signed difference and logp_no
-                # is log P(" no"); ``mode`` says which.
-                "logp_no": [round(value, 6) for value in record["logp_no"]],
-                # Written for every type, including noul, so a consumer that
-                # reads predicted_idx never has to fall back to the score array.
-                "predicted_idx": record["logits"].index(max(record["logits"])),
-                "mode": record.get("mode", "option"),
-                "correct": None,
-            }
-        )
+        predictions.append(prediction_row(item, record))
         if (index + 1) % 50 == 0:
             print(f"  {index + 1}/{len(items)} items scored", flush=True)
 
