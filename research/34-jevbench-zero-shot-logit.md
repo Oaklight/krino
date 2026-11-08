@@ -67,8 +67,9 @@ swing is a 3-item difference (5 of 18 against 8 of 18). It is not a ranking.
 Eight checkpoints have now been scored on JevBench with this readout: the three
 above plus `Qwen/Qwen3-4B-Base`, `microsoft/Phi-4-mini-instruct`,
 `Qwen/Qwen2.5-1.5B`, `Qwen/Qwen2.5-3B` and `Qwen/Qwen3-Reranker-4B`. Their
-overall scores span 0.416-0.502. On four of the six `original` subtasks a model
-answers every item with the same option index:
+overall scores span 0.416-0.502. On five of the six `original` subtasks at least
+one model answers every row with the same option index, and in four of them most
+models do:
 
 | subtask | n | constant in | index |
 |---|---:|---|---|
@@ -76,10 +77,12 @@ answers every item with the same option index:
 | `original/routing` | 12 | **8 of 8** | 3 |
 | `original/adequacy` | 12 | 7 of 8 | 0 or 1 |
 | `original/policy` | 12 | 4 of 8 | 0 or 1 |
+| `original/ordinal` | 12 | 1 of 8 | 2 |
 
 **No `easy` or `hard` subtask is constant in any of the eight.** The split is by
-subtask family, not by difficulty, and not by model: a llama-config, a mistral, two
-minicpms, two qwen2s, two qwen3s and a phi3 all answer `intent` with index 2 and
+subtask family, not by difficulty, and not by model: eight checkpoints across six
+model families — a llama config, a minicpm3, a mistral3, two qwen2s, two qwen3s
+and a phi3 — all answer `intent` with index 2 and
 `routing` with index 3. Those two families are dead cells for every checkpoint —
 24 predictions over **12 source questions** (six per family, each asked twice)
 carry no information from this readout. The gold sits at the constant index twice
