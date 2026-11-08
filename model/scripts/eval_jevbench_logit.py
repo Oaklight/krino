@@ -37,6 +37,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from data.pipeline import load_jevbench  # noqa: E402
+from model.evaluation.dev_set import load_dev_set  # noqa: E402
 from model.evaluation.jevbench import summarize  # noqa: E402
 from model.evaluation.prompt_options import noul_option_texts  # noqa: E402
 from model.evaluation.run_provenance import build_run_provenance  # noqa: E402
@@ -128,6 +129,16 @@ def main() -> int:
     parser.add_argument("--strategy", default="description", choices=["description", "label"])
     parser.add_argument("--norm", default="mean", choices=["mean", "sum"])
     parser.add_argument("--max-items", type=int, default=None)
+    parser.add_argument(
+        "--dataset",
+        choices=["jevbench", "dev"],
+        default="jevbench",
+        help="jevbench: the 231-item public set (acceptance); dev: the 800-item "
+        "development set (#298)",
+    )
+    parser.add_argument(
+        "--dev-path", type=Path, default=ROOT / "data/benchmarks/dev/dev_800.jsonl"
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -152,10 +163,13 @@ def main() -> int:
         model, tokenizer, norm=args.norm, strategy=args.strategy, batch_size=64
     )
 
-    items = list(load_jevbench())
+    if args.dataset == "dev":
+        items = list(load_dev_set(args.dev_path))
+    else:
+        items = list(load_jevbench())
     if args.max_items:
         items = items[: args.max_items]
-    print(f"Loaded {len(items)} JevBench items", flush=True)
+    print(f"Loaded {len(items)} items from {args.dataset}", flush=True)
 
     records: list[dict[str, Any]] = []
     predictions: list[dict[str, Any]] = []
