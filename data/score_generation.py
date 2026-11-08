@@ -21,6 +21,7 @@ import json
 import math
 import re
 import unicodedata
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -30,10 +31,12 @@ __all__ = [
     "allocate_quotas",
     "build_item",
     "candidate_id",
+    "evidence_problem",
     "expected_level",
     "iter_candidates",
     "label_level",
     "level0_allowed",
+    "load_rubric_config",
     "normalise_state",
     "order_candidates",
     "select_candidates",
@@ -77,16 +80,50 @@ class Candidate:
         return candidate_id(self.source, self.state)
 
 
+def evidence_problem(state: str, evidence: Any) -> str | None:
+    """Return why ``state`` does not carry the rubric's evidence, or ``None``.
+
+    ``evidence`` names where in the state the rubric's evidence lives.  The
+    literal ``"state text"`` means the state itself; a JSON object state may
+    carry the named key; otherwise the name is a labelled section such as
+    ``"Contract clause"`` or ``"System"`` and must be followed by content.
+    """
+    text = state.strip()
+    if not text:
+        return "empty state"
+    if not isinstance(evidence, str) or not evidence.strip():
+        return "no evidence field declared"
+    if evidence == "state text":
+        return None
+    try:
+        parsed = json.loads(text)
+    except (TypeError, ValueError):
+        parsed = None
+    if isinstance(parsed, dict) and evidence in parsed:
+        value = parsed[evidence]
+        return None if value not in (None, "", [], {}) else f"{evidence!r} is empty"
+    marker = f"{evidence}:"
+    start = text.find(marker)
+    if start < 0:
+        return f"{evidence!r} not found in the state"
+    body = text[start + len(marker):].split("\n\n", 1)[0]
+    return None if body.strip() else f"{evidence!r} is empty in the state"
+
+
 def iter_candidates(
     items: Iterable[Mapping[str, Any]],
     score_states: set[str],
     rubrics: Mapping[str, Any],
-    default_rubric: Mapping[str, Any],
+    skipped: Counter[str] | None = None,
 ) -> Iterable[Candidate]:
     """Yield the first item for each distinct state with no score question.
 
     ``score_states`` holds the normalised states of every existing score item.
-    ``rubrics`` maps a source name to ``{"instructions", "criteria"}``.
+    ``rubrics`` maps a source name to its resolved rubric, evidence included.  A
+    source with no entry is an error: there is no default rubric, because a
+    rubric may only be assigned to a source whose state is declared to carry the
+    evidence for it.  A state that does not carry the declared evidence is
+    skipped and counted in ``skipped["evidence:<source>"]``.
     """
     seen: set[str] = set()
     for item in items:
@@ -100,7 +137,16 @@ def iter_candidates(
         source = str(item.get("source") or "missing")
         rubric = rubrics.get(source)
         if rubric is None:
-            rubric = default_rubric
+            raise ValueError(
+                f"source {source!r} has no rubric in data/score_rubrics.json; "
+                "declare the field that carries the rubric's evidence, or drop "
+                "the source from the generation run"
+            )
+        problem = evidence_problem(state, rubric.get("evidence"))
+        if problem is not None:
+            if skipped is not None:
+                skipped[f"evidence:{source}"] += 1
+            continue
         seen.add(normalised)
         yield Candidate(
             source=source,
@@ -281,29 +327,37 @@ def level0_allowed(fraction: float, accepted: int, level0: int) -> bool:
     return level0 + 1 <= math.ceil(fraction * (accepted + 1))
 
 
-def load_rubric_config(path: str | Path, templates: Mapping[str, Any]) -> tuple[dict[str, Any], Mapping[str, Any]]:
+def load_rubric_config(path: str | Path, templates: Mapping[str, Any]) -> dict[str, Any]:
     """Resolve ``data/score_rubrics.json`` against the domain templates.
 
-    A source entry is either ``{"template": name}`` (resolved from
-    ``templates``) or an inline ``{"instructions", "criteria"}`` object.
+    A source entry is either ``{"template": name, "evidence": ...}`` (resolved
+    from ``templates``) or an inline ``{"instructions", "criteria", "evidence"}``
+    object.  ``evidence`` is required on every entry: it names where in the
+    state the rubric's evidence lives.  A ``default`` rubric is rejected, because
+    it would assign a rubric to a source whose evidence nobody declared.
     """
     config = json.loads(Path(path).read_text(encoding="utf-8"))
+    if "default" in config:
+        raise ValueError(
+            "data/score_rubrics.json may not carry a `default` rubric: every "
+            "source must declare the field that carries its evidence"
+        )
     resolved: dict[str, Any] = {}
     for source, entry in config.get("sources", {}).items():
+        evidence = entry.get("evidence")
+        if not isinstance(evidence, str) or not evidence.strip():
+            raise ValueError(
+                f"source {source!r} has no `evidence` field naming where the "
+                "rubric's evidence lives in the state"
+            )
         if "template" in entry:
             name = entry["template"]
-            resolved[source] = templates[name]["score_template"]
+            rubric = dict(templates[name]["score_template"])
         else:
-            resolved[source] = {
+            rubric = {
                 "instructions": entry["instructions"],
                 "criteria": list(entry["criteria"]),
             }
-    default_entry = config["default"]
-    if "template" in default_entry:
-        default = templates[default_entry["template"]]["score_template"]
-    else:
-        default = {
-            "instructions": default_entry["instructions"],
-            "criteria": list(default_entry["criteria"]),
-        }
-    return resolved, default
+        rubric["evidence"] = evidence.strip()
+        resolved[source] = rubric
+    return resolved

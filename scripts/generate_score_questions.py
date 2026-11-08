@@ -208,9 +208,10 @@ def main() -> int:
         for item in items
         if (item.get("question") or {}).get("type") == "score"
     }
-    rubrics, default_rubric = load_rubric_config(str(args.rubrics), DOMAIN_TEMPLATES)
+    rubrics = load_rubric_config(str(args.rubrics), DOMAIN_TEMPLATES)
+    skipped_evidence: Counter[str] = Counter()
     candidates = list(
-        iter_candidates(items, score_states, rubrics, default_rubric)
+        iter_candidates(items, score_states, rubrics, skipped_evidence)
     )
     selected = select_candidates(
         candidates,
@@ -236,6 +237,7 @@ def main() -> int:
             "by_source": dict(
                 sorted(Counter(candidate.source for candidate in ordered).items())
             ),
+            "skipped_missing_evidence": dict(sorted(skipped_evidence.items())),
         }
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
@@ -352,6 +354,7 @@ def main() -> int:
         "max_candidates": args.max_candidates,
         "candidate_states": len(candidates),
         "selected_candidates": len(ordered),
+        "skipped_missing_evidence": dict(sorted(skipped_evidence.items())),
         "calls": calls,
         "accepted": len(accepted),
         "rejected": len(rejected),
