@@ -112,6 +112,25 @@ def test_relative_arguments_are_untouched():
     assert redact.redact_text(command) == command
 
 
+def test_a_url_is_not_rewritten():
+    """``scheme://host/path`` is not a filesystem path and must survive intact."""
+    for text in (
+        "--endpoint hf://datasets/org/name",
+        "--hub https://huggingface.co/org/name",
+    ):
+        assert redact.redact_text(text) == text
+        assert redact.absolute_paths(text) == []
+
+
+def test_the_write_is_atomic_and_leaves_no_temp_file(tmp_path):
+    """The result file is the only copy; a rewrite must not truncate it."""
+    path = tmp_path / "result.json"
+    path.write_text("old")
+    redact.write_atomically(path, "new")
+    assert path.read_text() == "new"
+    assert sorted(item.name for item in tmp_path.iterdir()) == ["result.json"]
+
+
 def test_redaction_is_idempotent():
     block = {
         "snapshot_path": "/home/u/.cache/huggingface/hub/models--o--n/snapshots/a",

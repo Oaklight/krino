@@ -26,7 +26,9 @@ script refuses the file rather than commit the username.
 
 The transform is deterministic and idempotent, and it writes the same JSON shape
 ``eval_logit.py`` writes (no trailing newline), so an already-clean file is
-byte-identical and ``--check`` is meaningful.
+byte-identical and ``--check`` is meaningful.  The write goes through a temp file
+and ``os.replace``: the result file is the only copy, and a crash must not leave
+it truncated.
 
 Each file reports which of the two happened - ``rewritten`` or ``already
 clean`` - and a summary gives both counts, so "nothing to do" is visibly
@@ -42,8 +44,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Iterator, Sequence
 
@@ -51,10 +55,11 @@ HOST_PLACEHOLDER = "<host>"
 REWRITTEN_KEYS = ("snapshot_path", "command")
 HOME_ROOT = re.compile(r"(?:/home|/homes|/Users)/[A-Za-z0-9._-]+")
 HOME_MARKERS = ("/home/", "/Users/")
-# A ``/`` that starts a path token: not glued to a word, a dot or an existing
-# placeholder, and followed by a path character.  This is the mechanical
-# "no absolute path survives" rule; it runs after the roots above.
-ABSOLUTE_LEAD = re.compile(r"(?<![\w.<>])/(?=[A-Za-z0-9._])")
+# A ``/`` that starts a path token: not glued to a word, a dot, an existing
+# placeholder, a colon (``scheme://``) or another slash (the ``//`` of a URL).
+# This is the mechanical "no absolute path survives" rule; it runs after the
+# roots above.  A URL is not a path and must come out byte-identical.
+ABSOLUTE_LEAD = re.compile(r"(?<![\w.<>:/])/(?=[A-Za-z0-9._])")
 
 
 def redact_text(text: str, extra_roots: Sequence[str] = ()) -> str:
@@ -72,7 +77,10 @@ def redact_text(text: str, extra_roots: Sequence[str] = ()) -> str:
 
 def absolute_paths(text: str) -> list[str]:
     """Return the absolute path tokens in ``text``, for the leftover check."""
-    return [match.group(0) for match in re.finditer(r"(?<![\w.<>])/[A-Za-z0-9._]", text)]
+    return [
+        match.group(0)
+        for match in re.finditer(r"(?<![\w.<>:/])/[A-Za-z0-9._]", text)
+    ]
 
 
 def iter_strings(value: Any) -> Iterator[str]:
@@ -154,6 +162,28 @@ def sanitize_payload(
     return result
 
 
+def write_atomically(path: Path, text: str) -> None:
+    """Write ``text`` to ``path`` through a temp file and ``os.replace``.
+
+    The result file is the only copy - the GPU output is kept no backup of - and
+    ``write_text`` truncates before it writes, so a crash in between would
+    destroy it.
+    """
+    descriptor, temporary = tempfile.mkstemp(
+        dir=path.parent, prefix=f".{path.name}.", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(text)
+        os.replace(temporary, path)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+        raise
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("files", nargs="+", type=Path)
@@ -184,8 +214,8 @@ def main() -> int:
             dirty += 1
             print(f"LOCAL PATHS    {path}")
             continue
-        path.write_text(
-            json.dumps(sanitized, indent=2, ensure_ascii=False), encoding="utf-8"
+        write_atomically(
+            path, json.dumps(sanitized, indent=2, ensure_ascii=False)
         )
         rewritten += 1
         print(f"rewritten      {path}")
