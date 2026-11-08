@@ -104,6 +104,7 @@ export interface Landing {
     jev_pp: number | null;
     jev_source_file: string | null;
   };
+  source_files: string[];
 }
 
 export interface DashboardData {

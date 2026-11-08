@@ -12,9 +12,12 @@ export default function StatCard({ value, label, detail, source }: StatCardProps
       <div className="text-sm font-medium text-text">{label}</div>
       <div className="text-xs text-text-muted mt-1">{detail}</div>
       {source && (
-        <div className="mt-3 font-mono text-[10px] leading-snug text-text-dim break-all" title={source}>
-          {source}
-        </div>
+        <a
+          href={source}
+          className="mt-3 inline-block text-[11px] text-accent hover:text-accent-hover transition-colors"
+        >
+          Sources ↓
+        </a>
       )}
     </div>
   );

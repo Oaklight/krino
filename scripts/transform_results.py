@@ -624,6 +624,36 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
     })
     band_sources = sorted({cells[entry["model_id"]]["judgement"]["source_file"] for entry in band})
 
+    resolution_sources = sorted({
+        source_file_label(RESOLUTION_INPUTS_PATH),
+        "model/evaluation/paired_power.py",
+        source_file_label(DEV_MANIFEST_PATH),
+        source_file_label(_logit_prov_path("jevbench_judgement", jev_first)),
+        source_file_label(_logit_prov_path("jevbench_judgement", jev_second)),
+        *(
+            source_file_label(_logit_prov_path(prefix, model_id))
+            for model_id in DEV_RESOLUTION_MODELS
+            for prefix in ("dev_judgement", "dev_logit")
+        ),
+        source_file_label(_logit_prov_path("dev_judgement", dev_first)),
+        source_file_label(_logit_prov_path("dev_judgement", dev_second)),
+    })
+
+    # Every file the page names, once. The cards link here instead of each
+    # repeating its own list.
+    page_sources = sorted({
+        source
+        for source in (
+            *pair_sources,
+            *band_sources,
+            *resolution_sources,
+            source_file_label(OUTPUT_PATH),
+            trained["source_file"] if trained else None,
+            jev_run["source_file"] if jev_run else None,
+        )
+        if source
+    })
+
     return {
         "judgement_vs_continuation": {
             "measured": len(pairs),
@@ -660,20 +690,7 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
             "top_four_spread_pp": round(
                 (top_four[0]["pp"] - top_four[-1]["pp"]) if len(top_four) == 4 else 0.0, 1
             ),
-            "source_files": sorted({
-                source_file_label(RESOLUTION_INPUTS_PATH),
-                "model/evaluation/paired_power.py",
-                source_file_label(DEV_MANIFEST_PATH),
-                source_file_label(_logit_prov_path("jevbench_judgement", jev_first)),
-                source_file_label(_logit_prov_path("jevbench_judgement", jev_second)),
-                *(
-                    source_file_label(_logit_prov_path(prefix, model_id))
-                    for model_id in DEV_RESOLUTION_MODELS
-                    for prefix in ("dev_judgement", "dev_logit")
-                ),
-                source_file_label(_logit_prov_path("dev_judgement", dev_first)),
-                source_file_label(_logit_prov_path("dev_judgement", dev_second)),
-            }),
+            "source_files": resolution_sources,
         },
         "instrumented_rows": len(jevbench_runs),
         "banking77": {
@@ -683,6 +700,7 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
             "jev_pp": round(jev_banking * 100, 1) if jev_banking is not None else None,
             "jev_source_file": jev_run["source_file"] if jev_run else None,
         },
+        "source_files": page_sources,
     }
 
 
