@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-08T21:52:32.158731+00:00",
+  "generated_at": "2026-11-08T23:04:12.489834+00:00",
   "eval_runs": [
     {
       "run_id": "cross-encoder-bert",
@@ -3595,6 +3595,7 @@
       "params": "0.6B",
       "benchmark": "banking77",
       "info": "rank=64",
+      "source_file": "model/experiments/train_banking77.json",
       "best_accuracy": 0.878,
       "best_loss": 0.4852,
       "n_epochs": 5,
@@ -3651,6 +3652,7 @@
       "params": "150M",
       "benchmark": "banking77",
       "info": "rank=128",
+      "source_file": "model/experiments/train_ettin150m_r128.json",
       "best_accuracy": 0.952,
       "best_loss": 0.2512,
       "n_epochs": 5,
@@ -3707,6 +3709,7 @@
       "params": "150M",
       "benchmark": "banking77",
       "info": "rank=64",
+      "source_file": "model/experiments/train_ettin150m_r64.json",
       "best_accuracy": 0.938,
       "best_loss": 0.3136,
       "n_epochs": 5,
@@ -3764,6 +3767,7 @@
       "params": "400M",
       "benchmark": "banking77",
       "info": "rank=64",
+      "source_file": "model/experiments/train_ettin400m_r64.json",
       "best_accuracy": 0.916,
       "best_loss": 0.3373,
       "n_epochs": 5,
@@ -3820,6 +3824,7 @@
       "params": "149M",
       "benchmark": "banking77",
       "info": "rank=64",
+      "source_file": "model/experiments/train_modernbert_base.json",
       "best_accuracy": 0.89,
       "best_loss": 0.6966,
       "n_epochs": 5,
@@ -3876,6 +3881,7 @@
       "params": "395M",
       "benchmark": "banking77",
       "info": "rank=64",
+      "source_file": "model/experiments/train_modernbert_large.json",
       "best_accuracy": 0.892,
       "best_loss": 0.4056,
       "n_epochs": 5,
@@ -3932,6 +3938,7 @@
       "params": "149M",
       "benchmark": "banking77",
       "info": "rank=128",
+      "source_file": "model/experiments/train_modernbert_r128.json",
       "best_accuracy": 0.884,
       "best_loss": 0.8413,
       "n_epochs": 5,
@@ -3987,6 +3994,7 @@
       "params": "150M",
       "benchmark": "sst2",
       "info": "rank=128",
+      "source_file": "model/experiments/train_sst2.json",
       "best_accuracy": 0.858,
       "best_loss": 0.5833,
       "n_epochs": 5,
@@ -4042,6 +4050,7 @@
       "params": "150M",
       "benchmark": "19-benchmarks",
       "info": "rank=128, multi-task",
+      "source_file": "model/experiments/train_v2_indomain.json",
       "best_accuracy": 0.932,
       "best_loss": 0.3616,
       "n_epochs": 5,
@@ -6243,6 +6252,188 @@
       "best_model": "Phi-4-mini-instruct",
       "best_accuracy": 0.5563
     }
+  },
+  "landing": {
+    "judgement_vs_continuation": {
+      "measured": 14,
+      "wins": 13,
+      "losses": [
+        {
+          "model_id": "openbmb/MiniCPM3-4B",
+          "name": "openbmb/MiniCPM3-4B (instruct)",
+          "gap_pp": -12.1
+        }
+      ],
+      "above_10_count": 9,
+      "above_10_min_pp": 10.4,
+      "above_10_max_pp": 18.6,
+      "largest_tier": "original",
+      "source_files": [
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen2.5-1.5B.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen2.5-3B.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Base.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Instruct-2507.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Thinking-2507.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-0.6B.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-8B.json",
+        "model/experiments/logit_prov/jevbench_judgement_microsoft_Phi-4-mini-instruct.json",
+        "model/experiments/logit_prov/jevbench_judgement_mistralai_Ministral-3-3B-Base-2512.json",
+        "model/experiments/logit_prov/jevbench_judgement_openbmb_MiniCPM3-4B.json",
+        "model/experiments/logit_prov/jevbench_judgement_openbmb_MiniCPM5-2B-Base.json",
+        "model/experiments/logit_prov/jevbench_judgement_zeroentropy_zerank-2-reranker.json",
+        "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen2.5-1.5B.json",
+        "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen2.5-3B.json",
+        "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Base.json",
+        "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Instruct-2507.json",
+        "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Thinking-2507.json",
+        "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B.json",
+        "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-0.6B.json",
+        "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-4B.json",
+        "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-8B.json",
+        "model/experiments/logit_prov/jevbench_logit_microsoft_Phi-4-mini-instruct.json",
+        "model/experiments/logit_prov/jevbench_logit_zeroentropy_zerank-2-reranker.json",
+        "results/jevbench/logit_mistralai_Ministral-3-3B-Base-2512.json",
+        "results/jevbench/logit_openbmb_MiniCPM3-4B.json",
+        "results/jevbench/logit_openbmb_MiniCPM5-2B-Base.json"
+      ]
+    },
+    "post_trained_4b": {
+      "base_pp": 53.7,
+      "min_pp": 61.9,
+      "max_pp": 64.9,
+      "checkpoints": [
+        {
+          "model_id": "Qwen/Qwen3-4B",
+          "name": "Qwen/Qwen3-4B (instruct)",
+          "pp": 61.9
+        },
+        {
+          "model_id": "Qwen/Qwen3-Reranker-4B",
+          "name": "Qwen/Qwen3-Reranker-4B",
+          "pp": 64.9
+        },
+        {
+          "model_id": "microsoft/Phi-4-mini-instruct",
+          "name": "microsoft/Phi-4-mini-instruct (instruct)",
+          "pp": 64.9
+        }
+      ],
+      "source_files": [
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json",
+        "model/experiments/logit_prov/jevbench_judgement_microsoft_Phi-4-mini-instruct.json"
+      ]
+    },
+    "resolution": {
+      "jevbench_pp": 9.3,
+      "jevbench_pair": [
+        "Qwen/Qwen3-4B",
+        "Qwen/Qwen3-Reranker-4B"
+      ],
+      "dev_min_pp": 4.7,
+      "dev_max_pp": 5.5,
+      "dev_card_min_pp": 5,
+      "dev_card_max_pp": 6,
+      "dev_pair": [
+        "Qwen/Qwen3-Reranker-4B",
+        "Qwen/Qwen3-Reranker-8B"
+      ],
+      "dev_pair_diff_pp": -6.03,
+      "dev_pair_p": 0.0005,
+      "jevbench_pair_item_diff": 1,
+      "top_four": [
+        {
+          "model_id": "Qwen/Qwen3-Reranker-4B",
+          "name": "Qwen/Qwen3-Reranker-4B",
+          "pp": 64.9
+        },
+        {
+          "model_id": "microsoft/Phi-4-mini-instruct",
+          "name": "microsoft/Phi-4-mini-instruct (instruct)",
+          "pp": 64.9
+        },
+        {
+          "model_id": "Qwen/Qwen3-Reranker-8B",
+          "name": "Qwen/Qwen3-Reranker-8B",
+          "pp": 64.5
+        },
+        {
+          "model_id": "zeroentropy/zerank-2-reranker",
+          "name": "zeroentropy/zerank-2-reranker",
+          "pp": 62.3
+        }
+      ],
+      "top_four_spread_pp": 2.6,
+      "source_files": [
+        "data/benchmarks/dev/dev_800.json",
+        "model/evaluation/paired_power.py",
+        "model/experiments/logit_prov/dev_judgement_Qwen_Qwen3-Reranker-0.6B.json",
+        "model/experiments/logit_prov/dev_judgement_Qwen_Qwen3-Reranker-4B.json",
+        "model/experiments/logit_prov/dev_judgement_Qwen_Qwen3-Reranker-8B.json",
+        "model/experiments/logit_prov/dev_judgement_zeroentropy_zerank-2-reranker.json",
+        "model/experiments/logit_prov/dev_logit_Qwen_Qwen3-Reranker-0.6B.json",
+        "model/experiments/logit_prov/dev_logit_Qwen_Qwen3-Reranker-4B.json",
+        "model/experiments/logit_prov/dev_logit_Qwen_Qwen3-Reranker-8B.json",
+        "model/experiments/logit_prov/dev_logit_zeroentropy_zerank-2-reranker.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json",
+        "model/experiments/resolution_inputs.json"
+      ]
+    },
+    "instrumented_rows": 37,
+    "banking77": {
+      "trained_pp": 95.2,
+      "trained_model": "Ettin-150m r128",
+      "trained_source_file": "model/experiments/train_ettin150m_r128.json",
+      "jev_pp": 75.0,
+      "jev_source_file": "model/experiments/jev_api.json"
+    },
+    "source_files": [
+      "data/benchmarks/dev/dev_800.json",
+      "model/evaluation/paired_power.py",
+      "model/experiments/jev_api.json",
+      "model/experiments/logit_prov/dev_judgement_Qwen_Qwen3-Reranker-0.6B.json",
+      "model/experiments/logit_prov/dev_judgement_Qwen_Qwen3-Reranker-4B.json",
+      "model/experiments/logit_prov/dev_judgement_Qwen_Qwen3-Reranker-8B.json",
+      "model/experiments/logit_prov/dev_judgement_zeroentropy_zerank-2-reranker.json",
+      "model/experiments/logit_prov/dev_logit_Qwen_Qwen3-Reranker-0.6B.json",
+      "model/experiments/logit_prov/dev_logit_Qwen_Qwen3-Reranker-4B.json",
+      "model/experiments/logit_prov/dev_logit_Qwen_Qwen3-Reranker-8B.json",
+      "model/experiments/logit_prov/dev_logit_zeroentropy_zerank-2-reranker.json",
+      "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen2.5-1.5B.json",
+      "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen2.5-3B.json",
+      "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Base.json",
+      "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Instruct-2507.json",
+      "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Thinking-2507.json",
+      "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B.json",
+      "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-0.6B.json",
+      "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json",
+      "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-8B.json",
+      "model/experiments/logit_prov/jevbench_judgement_microsoft_Phi-4-mini-instruct.json",
+      "model/experiments/logit_prov/jevbench_judgement_mistralai_Ministral-3-3B-Base-2512.json",
+      "model/experiments/logit_prov/jevbench_judgement_openbmb_MiniCPM3-4B.json",
+      "model/experiments/logit_prov/jevbench_judgement_openbmb_MiniCPM5-2B-Base.json",
+      "model/experiments/logit_prov/jevbench_judgement_zeroentropy_zerank-2-reranker.json",
+      "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen2.5-1.5B.json",
+      "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen2.5-3B.json",
+      "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Base.json",
+      "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Instruct-2507.json",
+      "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Thinking-2507.json",
+      "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B.json",
+      "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-0.6B.json",
+      "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-4B.json",
+      "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-8B.json",
+      "model/experiments/logit_prov/jevbench_logit_microsoft_Phi-4-mini-instruct.json",
+      "model/experiments/logit_prov/jevbench_logit_zeroentropy_zerank-2-reranker.json",
+      "model/experiments/resolution_inputs.json",
+      "model/experiments/train_ettin150m_r128.json",
+      "results/jevbench/logit_mistralai_Ministral-3-3B-Base-2512.json",
+      "results/jevbench/logit_openbmb_MiniCPM3-4B.json",
+      "results/jevbench/logit_openbmb_MiniCPM5-2B-Base.json",
+      "web/public/results/eval_results.json"
+    ]
   },
   "benchmarks": {
     "agnews": "choice",
