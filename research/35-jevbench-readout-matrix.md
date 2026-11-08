@@ -359,8 +359,9 @@ Continuation fails the same way. Paired exact McNemar on the continuation files:
 | Qwen2.5-1.5B vs Phi-4-mini | −7 (17–24) | 0.3489 |
 | Phi-4-mini vs Qwen3-Reranker-4B | +5 (19–14) | 0.4869 |
 
-Ten pairs, one separates; Qwen3-4B-Base against Phi-4-mini is a literal tie on
-this set. So **neither readout orders the top of this shortlist on 231 items.**
+Ten pairs, one separates; Qwen3-4B-Base against Phi-4-mini does not separate
+either (−4, 15–19, p = 0.61). So **neither readout orders the top of this
+shortlist on 231 items.**
 
 `MiniCPM3-4B` (instruct) is 78/231 = 0.3377 — **the plain-text judgement template
 does not work for this chat checkpoint**; the number is a format failure, not a
