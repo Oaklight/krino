@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from pathlib import Path
 
 import pytest
 
@@ -218,3 +219,22 @@ def test_load_rubric_config_rejects_a_default_rubric(tmp_path):
     templates = {"fake": {"score_template": {"instructions": "From template?", "criteria": ["x", "y"]}}}
     with pytest.raises(ValueError, match="default"):
         load_rubric_config(str(path), templates)
+
+
+def test_the_shipped_rubric_config_declares_evidence_for_every_source():
+    """The rule is only real if the file the script ships with satisfies it.
+
+    Every source entry in ``data/score_rubrics.json`` must resolve and carry
+    non-empty ``evidence``, and the file must carry no ``default`` rubric.
+    """
+    from data.synthetic_templates import DOMAIN_TEMPLATES
+
+    path = Path(__file__).resolve().parents[1] / "data" / "score_rubrics.json"
+    config = json.loads(path.read_text(encoding="utf-8"))
+    assert "default" not in config
+    rubrics = load_rubric_config(path, DOMAIN_TEMPLATES)
+    assert set(rubrics) == set(config["sources"])
+    missing = sorted(
+        source for source, rubric in rubrics.items() if not rubric.get("evidence")
+    )
+    assert missing == []
