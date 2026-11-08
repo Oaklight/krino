@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from pathlib import Path
 
 import pytest
 
@@ -180,6 +181,38 @@ def test_build_item_carries_teacher_provenance_and_distribution():
     assert item["id"] == candidate.id
 
 
+def test_build_item_derives_the_label_from_the_stored_distribution():
+    """``label`` is the argmax of the stored distribution, not of the response.
+
+    The pilot's rows were written the other way round: the label came from the
+    unrounded response while the distribution was stored at two decimals, and
+    rounding manufactured ties that moved 17 of 2,000 labels.  This fixture is a
+    near-tie one level below the stored precision; it resolves on the stored
+    values, toward the higher level key, so `label` equals
+    ``argmax(teacher_probs)`` by construction.
+    """
+    candidate = _candidate("A state.")
+    probabilities = {"0": 0.4890004, "1": 0.4890003, "2": 0.0219993}
+    item = build_item(candidate, probabilities)
+    stored = item["teacher_probs"]["jev"]
+    assert label_level(probabilities) == 0.0
+    assert item["label"] == label_level(stored) == 1.0
+
+
+def test_the_counters_artifact_accounts_for_every_call():
+    """Every call is accepted, rejected, or the one-result post-target skip."""
+    path = Path(__file__).resolve().parents[1] / "data" / "score_generation_counters.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for run in ("pilot", "round2"):
+        block = data[run]
+        assert (
+            block["calls"] - block["accepted"] - block["rejected"]
+            == block["calls_unaccounted"]
+        )
+        assert sum(s["accepted"] for s in block["by_source"].values()) == block["accepted"]
+        assert sum(s["calls"] for s in block["by_source"].values()) == block["calls"]
+
+
 def test_load_rubric_config_resolves_templates_and_carries_evidence(tmp_path):
     path = tmp_path / "rubrics.json"
     path.write_text(
@@ -230,3 +263,22 @@ def test_load_rubric_config_rejects_a_default_rubric(tmp_path):
     templates = {"fake": {"score_template": {"instructions": "From template?", "criteria": ["x", "y"]}}}
     with pytest.raises(ValueError, match="default"):
         load_rubric_config(str(path), templates)
+
+
+def test_the_shipped_rubric_config_declares_evidence_for_every_source():
+    """The rule is only real if the file the script ships with satisfies it.
+
+    Every source entry in ``data/score_rubrics.json`` must resolve and carry
+    non-empty ``evidence``, and the file must carry no ``default`` rubric.
+    """
+    from data.synthetic_templates import DOMAIN_TEMPLATES
+
+    path = Path(__file__).resolve().parents[1] / "data" / "score_rubrics.json"
+    config = json.loads(path.read_text(encoding="utf-8"))
+    assert "default" not in config
+    rubrics = load_rubric_config(path, DOMAIN_TEMPLATES)
+    assert set(rubrics) == set(config["sources"])
+    missing = sorted(
+        source for source, rubric in rubrics.items() if not rubric.get("evidence")
+    )
+    assert missing == []

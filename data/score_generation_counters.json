@@ -1,0 +1,1228 @@
+{
+ "schema": 1,
+ "provenance": "Reduced from the two score-generation report JSONs and their row files on the compute host. Counters only; no ids, states, questions, rubric text or paths. Regenerated with the definitions below, which reproduce both reports' argmax_vs_expected.disagree exactly.",
+ "definitions": {
+  "label_level": "int(round(float(row.label)))",
+  "expected_level": "int(round(sum(i * p_i))) over teacher_probs.jev",
+  "disagreement": "expected_level != label_level",
+  "table1_level0_share": "share of a source's accepted rows whose stored (2-dp) distribution has level 0 as its argmax",
+  "table2_level0_share": "share of a source's accepted rows whose label is level 0",
+  "note": "The two differ on 17 of 2,000 pilot rows and 19 of 2,000 round-two rows: the label was taken from the unrounded distribution, while the stored distribution is rounded to two decimals and creates ties (0.49/0.49, 0.39/0.39, 0.32/0.32). That is why commonsenseqa reads 59% in one table and 56% in the other."
+ },
+ "pilot": {
+  "generated_at": "2026-11-06T21:23:53Z",
+  "corpus_sha256": "07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53",
+  "seed": 42,
+  "model": "jev-latest",
+  "target": 2000,
+  "max_candidates": 3000,
+  "candidate_states": 65604,
+  "selected_candidates": 3000,
+  "calls": 2064,
+  "accepted": 2000,
+  "rejected": 63,
+  "rejection_reasons": {
+   "degenerate": 63
+  },
+  "yield_candidates_per_accepted": 1.032,
+  "label_level_distribution": {
+   "0": 972,
+   "1": 168,
+   "2": 373,
+   "3": 205,
+   "4": 282
+  },
+  "argmax_vs_expected": {
+   "rows": 2000,
+   "disagree": 898,
+   "disagree_rate": 0.449,
+   "mean_abs_difference": 0.5805
+  },
+  "api_score_vs_expected": {
+   "rows": 2000,
+   "mean_abs_difference": 0.0101
+  },
+  "contamination": {
+   "rule": "id match, normalised state match, or >=3 shared 8-word shingles",
+   "jevbench_items": 231,
+   "hits_by_reason": {
+    "id": 0,
+    "state": 0,
+    "shingles": 0
+   },
+   "hit_ids": [],
+   "dropped": 0,
+   "accepted_after_check": 2000
+  },
+  "estimated_input_tokens": 1212959,
+  "estimated_cost_usd_at_0.042_per_million": 0.05094,
+  "elapsed_seconds": 88.1,
+  "out_sha256": "8d440592dd034f8dfd849123f78cb93028abb323b63bd03a7b84a6babc13a58e",
+  "by_source": {
+   "2wiki_long_choice": {
+    "accepted": 25,
+    "calls": 25
+   },
+   "agnews": {
+    "accepted": 45,
+    "calls": 45
+   },
+   "anli": {
+    "accepted": 46,
+    "calls": 51,
+    "reject:degenerate": 5
+   },
+   "apigen_policy_compliance": {
+    "accepted": 36,
+    "calls": 36
+   },
+   "apigen_tool_action": {
+    "accepted": 53,
+    "calls": 53
+   },
+   "apigen_tool_argument": {
+    "accepted": 87,
+    "calls": 87
+   },
+   "apigen_tool_choice": {
+    "accepted": 25,
+    "calls": 25
+   },
+   "apigen_tool_next_action": {
+    "accepted": 87,
+    "calls": 87
+   },
+   "arc": {
+    "accepted": 41,
+    "calls": 44,
+    "reject:degenerate": 3
+   },
+   "banking77": {
+    "accepted": 78,
+    "calls": 87,
+    "reject:degenerate": 9
+   },
+   "boolq": {
+    "accepted": 54,
+    "calls": 57,
+    "reject:degenerate": 3
+   },
+   "codesearchnet": {
+    "accepted": 25,
+    "calls": 25
+   },
+   "commonsenseqa": {
+    "accepted": 87,
+    "calls": 87
+   },
+   "contractnli": {
+    "accepted": 87,
+    "calls": 87
+   },
+   "fever": {
+    "accepted": 68,
+    "calls": 73,
+    "reject:degenerate": 5
+   },
+   "hellaswag": {
+    "accepted": 87,
+    "calls": 87
+   },
+   "hotpotqa_long_choice": {
+    "accepted": 41,
+    "calls": 41
+   },
+   "logiqa": {
+    "accepted": 87,
+    "calls": 87
+   },
+   "longbench_long_choice": {
+    "accepted": 25,
+    "calls": 25
+   },
+   "mednli": {
+    "accepted": 76,
+    "calls": 87,
+    "reject:degenerate": 11
+   },
+   "mmlu": {
+    "accepted": 82,
+    "calls": 87,
+    "reject:degenerate": 5
+   },
+   "mmlu_pro_short_reasoning_choice": {
+    "accepted": 83,
+    "calls": 87,
+    "reject:degenerate": 3
+   },
+   "mnli": {
+    "accepted": 80,
+    "calls": 81,
+    "reject:degenerate": 1
+   },
+   "multirc": {
+    "accepted": 86,
+    "calls": 86
+   },
+   "openjev_authored144": {
+    "accepted": 24,
+    "calls": 25,
+    "reject:degenerate": 1
+   },
+   "piqa": {
+    "accepted": 64,
+    "calls": 64
+   },
+   "race": {
+    "accepted": 84,
+    "calls": 84
+   },
+   "race_short_passage_choice": {
+    "accepted": 25,
+    "calls": 25
+   },
+   "sst2": {
+    "accepted": 59,
+    "calls": 76,
+    "reject:degenerate": 17
+   },
+   "swag": {
+    "accepted": 79,
+    "calls": 79
+   },
+   "synthetic": {
+    "accepted": 25,
+    "calls": 25
+   },
+   "tabfact": {
+    "accepted": 86,
+    "calls": 86
+   },
+   "winogrande": {
+    "accepted": 63,
+    "calls": 63
+   }
+  },
+  "by_source_levels_label": {
+   "2wiki_long_choice": {
+    "4": 25
+   },
+   "agnews": {
+    "0": 1,
+    "1": 13,
+    "2": 23,
+    "3": 8
+   },
+   "anli": {
+    "0": 9,
+    "1": 6,
+    "2": 4,
+    "3": 10,
+    "4": 17
+   },
+   "apigen_policy_compliance": {
+    "0": 22,
+    "2": 13,
+    "3": 1
+   },
+   "apigen_tool_action": {
+    "0": 4,
+    "2": 49
+   },
+   "apigen_tool_argument": {
+    "0": 76,
+    "2": 11
+   },
+   "apigen_tool_choice": {
+    "0": 15,
+    "2": 10
+   },
+   "apigen_tool_next_action": {
+    "0": 80,
+    "2": 5,
+    "3": 2
+   },
+   "arc": {
+    "0": 29,
+    "1": 12
+   },
+   "banking77": {
+    "0": 32,
+    "1": 6,
+    "2": 27,
+    "3": 10,
+    "4": 3
+   },
+   "boolq": {
+    "0": 5,
+    "2": 6,
+    "3": 11,
+    "4": 32
+   },
+   "codesearchnet": {
+    "0": 18,
+    "1": 7
+   },
+   "commonsenseqa": {
+    "0": 49,
+    "2": 2,
+    "3": 31,
+    "4": 5
+   },
+   "contractnli": {
+    "0": 71,
+    "1": 2,
+    "2": 12,
+    "3": 2
+   },
+   "fever": {
+    "0": 26,
+    "1": 11,
+    "2": 2,
+    "3": 7,
+    "4": 22
+   },
+   "hellaswag": {
+    "0": 60,
+    "3": 1,
+    "4": 26
+   },
+   "hotpotqa_long_choice": {
+    "4": 41
+   },
+   "logiqa": {
+    "0": 60,
+    "1": 10,
+    "2": 16,
+    "4": 1
+   },
+   "longbench_long_choice": {
+    "3": 2,
+    "4": 23
+   },
+   "mednli": {
+    "0": 25,
+    "1": 3,
+    "2": 23,
+    "3": 19,
+    "4": 6
+   },
+   "mmlu": {
+    "0": 46,
+    "1": 22,
+    "2": 14
+   },
+   "mmlu_pro_short_reasoning_choice": {
+    "0": 25,
+    "1": 27,
+    "2": 30,
+    "3": 1
+   },
+   "mnli": {
+    "0": 11,
+    "1": 18,
+    "2": 8,
+    "3": 21,
+    "4": 22
+   },
+   "multirc": {
+    "0": 43,
+    "1": 1,
+    "2": 4,
+    "3": 14,
+    "4": 24
+   },
+   "openjev_authored144": {
+    "0": 9,
+    "3": 2,
+    "4": 13
+   },
+   "piqa": {
+    "0": 47,
+    "3": 12,
+    "4": 5
+   },
+   "race": {
+    "0": 55,
+    "1": 7,
+    "2": 22
+   },
+   "race_short_passage_choice": {
+    "0": 15,
+    "1": 3,
+    "2": 7
+   },
+   "sst2": {
+    "0": 7,
+    "1": 19,
+    "2": 33
+   },
+   "swag": {
+    "0": 78,
+    "4": 1
+   },
+   "synthetic": {
+    "0": 19,
+    "2": 1,
+    "3": 3,
+    "4": 2
+   },
+   "tabfact": {
+    "0": 29,
+    "1": 1,
+    "2": 50,
+    "3": 6
+   },
+   "winogrande": {
+    "0": 6,
+    "2": 1,
+    "3": 42,
+    "4": 14
+   }
+  },
+  "by_source_disagreement": {
+   "2wiki_long_choice": {
+    "rows": 25,
+    "disagree": 25
+   },
+   "agnews": {
+    "rows": 45,
+    "disagree": 5
+   },
+   "anli": {
+    "rows": 46,
+    "disagree": 13
+   },
+   "apigen_policy_compliance": {
+    "rows": 36,
+    "disagree": 7
+   },
+   "apigen_tool_action": {
+    "rows": 53,
+    "disagree": 17
+   },
+   "apigen_tool_argument": {
+    "rows": 87,
+    "disagree": 39
+   },
+   "apigen_tool_choice": {
+    "rows": 25,
+    "disagree": 17
+   },
+   "apigen_tool_next_action": {
+    "rows": 87,
+    "disagree": 28
+   },
+   "arc": {
+    "rows": 41,
+    "disagree": 1
+   },
+   "banking77": {
+    "rows": 78,
+    "disagree": 16
+   },
+   "boolq": {
+    "rows": 54,
+    "disagree": 17
+   },
+   "codesearchnet": {
+    "rows": 25,
+    "disagree": 3
+   },
+   "commonsenseqa": {
+    "rows": 87,
+    "disagree": 70
+   },
+   "contractnli": {
+    "rows": 87,
+    "disagree": 66
+   },
+   "fever": {
+    "rows": 68,
+    "disagree": 9
+   },
+   "hellaswag": {
+    "rows": 87,
+    "disagree": 86
+   },
+   "hotpotqa_long_choice": {
+    "rows": 41,
+    "disagree": 41
+   },
+   "logiqa": {
+    "rows": 87,
+    "disagree": 34
+   },
+   "longbench_long_choice": {
+    "rows": 25,
+    "disagree": 24
+   },
+   "mednli": {
+    "rows": 76,
+    "disagree": 23
+   },
+   "mmlu": {
+    "rows": 82,
+    "disagree": 23
+   },
+   "mmlu_pro_short_reasoning_choice": {
+    "rows": 83,
+    "disagree": 6
+   },
+   "mnli": {
+    "rows": 80,
+    "disagree": 16
+   },
+   "multirc": {
+    "rows": 86,
+    "disagree": 31
+   },
+   "openjev_authored144": {
+    "rows": 24,
+    "disagree": 14
+   },
+   "piqa": {
+    "rows": 64,
+    "disagree": 60
+   },
+   "race": {
+    "rows": 84,
+    "disagree": 41
+   },
+   "race_short_passage_choice": {
+    "rows": 25,
+    "disagree": 15
+   },
+   "sst2": {
+    "rows": 59,
+    "disagree": 4
+   },
+   "swag": {
+    "rows": 79,
+    "disagree": 64
+   },
+   "synthetic": {
+    "rows": 25,
+    "disagree": 17
+   },
+   "tabfact": {
+    "rows": 86,
+    "disagree": 35
+   },
+   "winogrande": {
+    "rows": 63,
+    "disagree": 31
+   }
+  },
+  "calls_unaccounted": 1
+ },
+ "round2": {
+  "generated_at": "2026-11-06T21:37:18Z",
+  "corpus_sha256": "07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53",
+  "seed": 42,
+  "model": "jev-latest",
+  "target": 2000,
+  "max_candidates": 3000,
+  "candidate_states": 65604,
+  "selected_candidates": 3000,
+  "calls": 2640,
+  "accepted": 2000,
+  "rejected": 633,
+  "rejection_reasons": {
+   "degenerate": 118,
+   "level0_cap": 515
+  },
+  "yield_candidates_per_accepted": 1.32,
+  "label_level_distribution": {
+   "0": 641,
+   "1": 374,
+   "2": 669,
+   "3": 147,
+   "4": 169
+  },
+  "level0_cap_fraction": 0.5,
+  "argmax_vs_expected": {
+   "rows": 2000,
+   "disagree": 532,
+   "disagree_rate": 0.266,
+   "mean_abs_difference": 0.383
+  },
+  "api_score_vs_expected": {
+   "rows": 2000,
+   "mean_abs_difference": 0.0075
+  },
+  "contamination": {
+   "rule": "id match, normalised state match, or >=3 shared 8-word shingles",
+   "jevbench_items": 231,
+   "hits_by_reason": {
+    "id": 0,
+    "state": 0,
+    "shingles": 0
+   },
+   "hit_ids": [],
+   "dropped": 0,
+   "accepted_after_check": 2000
+  },
+  "estimated_input_tokens": 1607928,
+  "estimated_cost_usd_at_0.042_per_million": 0.06753,
+  "elapsed_seconds": 100.2,
+  "out_sha256": "f7d9709fdce4eaedc09290de3470edae272cdaaf58d3913cc97caa3e0fd2ad5f",
+  "by_source": {
+   "2wiki_long_choice": {
+    "accepted": 23,
+    "calls": 25,
+    "reject:degenerate": 1,
+    "reject:level0_cap": 1
+   },
+   "agnews": {
+    "accepted": 45,
+    "calls": 45
+   },
+   "anli": {
+    "accepted": 46,
+    "calls": 51,
+    "reject:degenerate": 5
+   },
+   "apigen_policy_compliance": {
+    "accepted": 27,
+    "calls": 36,
+    "reject:level0_cap": 9
+   },
+   "apigen_tool_action": {
+    "accepted": 53,
+    "calls": 53
+   },
+   "apigen_tool_argument": {
+    "accepted": 53,
+    "calls": 150,
+    "reject:level0_cap": 97
+   },
+   "apigen_tool_choice": {
+    "accepted": 19,
+    "calls": 25,
+    "reject:level0_cap": 6
+   },
+   "apigen_tool_next_action": {
+    "accepted": 29,
+    "calls": 163,
+    "reject:level0_cap": 133
+   },
+   "arc": {
+    "accepted": 22,
+    "calls": 44,
+    "reject:degenerate": 3,
+    "reject:level0_cap": 19
+   },
+   "banking77": {
+    "accepted": 112,
+    "calls": 125,
+    "reject:degenerate": 12,
+    "reject:level0_cap": 1
+   },
+   "boolq": {
+    "accepted": 54,
+    "calls": 57,
+    "reject:degenerate": 3
+   },
+   "codesearchnet": {
+    "accepted": 13,
+    "calls": 25,
+    "reject:level0_cap": 12
+   },
+   "commonsenseqa": {
+    "accepted": 13,
+    "calls": 139,
+    "reject:degenerate": 30,
+    "reject:level0_cap": 96
+   },
+   "contractnli": {
+    "accepted": 143,
+    "calls": 163,
+    "reject:degenerate": 19
+   },
+   "fever": {
+    "accepted": 68,
+    "calls": 73,
+    "reject:degenerate": 5
+   },
+   "hellaswag": {
+    "accepted": 108,
+    "calls": 108
+   },
+   "hotpotqa_long_choice": {
+    "accepted": 40,
+    "calls": 41,
+    "reject:degenerate": 1
+   },
+   "logiqa": {
+    "accepted": 118,
+    "calls": 163,
+    "reject:level0_cap": 43
+   },
+   "longbench_long_choice": {
+    "accepted": 25,
+    "calls": 25
+   },
+   "mednli": {
+    "accepted": 92,
+    "calls": 104,
+    "reject:degenerate": 12
+   },
+   "mmlu": {
+    "accepted": 70,
+    "calls": 90,
+    "reject:degenerate": 5,
+    "reject:level0_cap": 15
+   },
+   "mmlu_pro_short_reasoning_choice": {
+    "accepted": 158,
+    "calls": 163,
+    "reject:degenerate": 3
+   },
+   "mnli": {
+    "accepted": 80,
+    "calls": 81,
+    "reject:degenerate": 1
+   },
+   "multirc": {
+    "accepted": 154,
+    "calls": 162,
+    "reject:degenerate": 1,
+    "reject:level0_cap": 6
+   },
+   "openjev_authored144": {
+    "accepted": 22,
+    "calls": 25,
+    "reject:degenerate": 1,
+    "reject:level0_cap": 2
+   },
+   "piqa": {
+    "accepted": 53,
+    "calls": 64,
+    "reject:level0_cap": 11
+   },
+   "race": {
+    "accepted": 57,
+    "calls": 84,
+    "reject:level0_cap": 27
+   },
+   "race_short_passage_choice": {
+    "accepted": 20,
+    "calls": 25,
+    "reject:level0_cap": 5
+   },
+   "sst2": {
+    "accepted": 60,
+    "calls": 76,
+    "reject:degenerate": 16
+   },
+   "swag": {
+    "accepted": 57,
+    "calls": 79,
+    "reject:level0_cap": 22
+   },
+   "synthetic": {
+    "accepted": 15,
+    "calls": 25,
+    "reject:level0_cap": 10
+   },
+   "tabfact": {
+    "accepted": 88,
+    "calls": 88
+   },
+   "winogrande": {
+    "accepted": 63,
+    "calls": 63
+   }
+  },
+  "by_source_levels_label": {
+   "2wiki_long_choice": {
+    "0": 5,
+    "1": 6,
+    "2": 12
+   },
+   "agnews": {
+    "0": 1,
+    "1": 13,
+    "2": 24,
+    "3": 7
+   },
+   "anli": {
+    "0": 9,
+    "1": 6,
+    "2": 5,
+    "3": 9,
+    "4": 17
+   },
+   "apigen_policy_compliance": {
+    "0": 13,
+    "2": 13,
+    "3": 1
+   },
+   "apigen_tool_action": {
+    "0": 4,
+    "2": 49
+   },
+   "apigen_tool_argument": {
+    "0": 27,
+    "2": 26
+   },
+   "apigen_tool_choice": {
+    "0": 9,
+    "2": 10
+   },
+   "apigen_tool_next_action": {
+    "0": 15,
+    "2": 12,
+    "3": 2
+   },
+   "arc": {
+    "0": 11,
+    "1": 11
+   },
+   "banking77": {
+    "0": 42,
+    "1": 7,
+    "2": 35,
+    "3": 22,
+    "4": 6
+   },
+   "boolq": {
+    "0": 6,
+    "1": 1,
+    "2": 4,
+    "3": 13,
+    "4": 30
+   },
+   "codesearchnet": {
+    "0": 7,
+    "1": 6
+   },
+   "commonsenseqa": {
+    "0": 7,
+    "1": 6
+   },
+   "fever": {
+    "0": 26,
+    "1": 12,
+    "2": 1,
+    "3": 7,
+    "4": 22
+   },
+   "hellaswag": {
+    "0": 27,
+    "1": 75,
+    "2": 6
+   },
+   "hotpotqa_long_choice": {
+    "0": 14,
+    "1": 10,
+    "2": 16
+   },
+   "logiqa": {
+    "0": 59,
+    "1": 20,
+    "2": 34,
+    "3": 2,
+    "4": 3
+   },
+   "longbench_long_choice": {
+    "1": 1,
+    "2": 24
+   },
+   "mednli": {
+    "0": 31,
+    "1": 3,
+    "2": 28,
+    "3": 23,
+    "4": 7
+   },
+   "mmlu": {
+    "0": 34,
+    "1": 21,
+    "2": 15
+   },
+   "mmlu_pro_short_reasoning_choice": {
+    "0": 49,
+    "1": 57,
+    "2": 51,
+    "3": 1
+   },
+   "mnli": {
+    "0": 11,
+    "1": 18,
+    "2": 8,
+    "3": 22,
+    "4": 21
+   },
+   "multirc": {
+    "0": 69,
+    "1": 3,
+    "2": 7,
+    "3": 26,
+    "4": 49
+   },
+   "openjev_authored144": {
+    "0": 8,
+    "3": 2,
+    "4": 12
+   },
+   "piqa": {
+    "0": 27,
+    "1": 13,
+    "2": 13
+   },
+   "race": {
+    "0": 29,
+    "1": 5,
+    "2": 23
+   },
+   "race_short_passage_choice": {
+    "0": 10,
+    "1": 2,
+    "2": 8
+   },
+   "sst2": {
+    "0": 7,
+    "1": 19,
+    "2": 34
+   },
+   "swag": {
+    "0": 29,
+    "1": 28
+   },
+   "synthetic": {
+    "0": 8,
+    "3": 5,
+    "4": 2
+   },
+   "tabfact": {
+    "0": 31,
+    "1": 1,
+    "2": 51,
+    "3": 5
+   },
+   "winogrande": {
+    "1": 15,
+    "2": 48
+   },
+   "contractnli": {
+    "0": 16,
+    "1": 15,
+    "2": 112
+   }
+  },
+  "by_source_disagreement": {
+   "2wiki_long_choice": {
+    "rows": 23,
+    "disagree": 5
+   },
+   "agnews": {
+    "rows": 45,
+    "disagree": 3
+   },
+   "anli": {
+    "rows": 46,
+    "disagree": 13
+   },
+   "apigen_policy_compliance": {
+    "rows": 27,
+    "disagree": 9
+   },
+   "apigen_tool_action": {
+    "rows": 53,
+    "disagree": 16
+   },
+   "apigen_tool_argument": {
+    "rows": 53,
+    "disagree": 25
+   },
+   "apigen_tool_choice": {
+    "rows": 19,
+    "disagree": 13
+   },
+   "apigen_tool_next_action": {
+    "rows": 29,
+    "disagree": 15
+   },
+   "arc": {
+    "rows": 22,
+    "disagree": 1
+   },
+   "banking77": {
+    "rows": 112,
+    "disagree": 24
+   },
+   "boolq": {
+    "rows": 54,
+    "disagree": 13
+   },
+   "codesearchnet": {
+    "rows": 13,
+    "disagree": 2
+   },
+   "commonsenseqa": {
+    "rows": 13,
+    "disagree": 0
+   },
+   "contractnli": {
+    "rows": 143,
+    "disagree": 16
+   },
+   "fever": {
+    "rows": 68,
+    "disagree": 11
+   },
+   "hellaswag": {
+    "rows": 108,
+    "disagree": 24
+   },
+   "hotpotqa_long_choice": {
+    "rows": 40,
+    "disagree": 12
+   },
+   "logiqa": {
+    "rows": 118,
+    "disagree": 43
+   },
+   "longbench_long_choice": {
+    "rows": 25,
+    "disagree": 1
+   },
+   "mednli": {
+    "rows": 92,
+    "disagree": 25
+   },
+   "mmlu": {
+    "rows": 70,
+    "disagree": 22
+   },
+   "mmlu_pro_short_reasoning_choice": {
+    "rows": 158,
+    "disagree": 15
+   },
+   "mnli": {
+    "rows": 80,
+    "disagree": 16
+   },
+   "multirc": {
+    "rows": 154,
+    "disagree": 57
+   },
+   "openjev_authored144": {
+    "rows": 22,
+    "disagree": 11
+   },
+   "piqa": {
+    "rows": 53,
+    "disagree": 29
+   },
+   "race": {
+    "rows": 57,
+    "disagree": 32
+   },
+   "race_short_passage_choice": {
+    "rows": 20,
+    "disagree": 13
+   },
+   "sst2": {
+    "rows": 60,
+    "disagree": 5
+   },
+   "swag": {
+    "rows": 57,
+    "disagree": 2
+   },
+   "synthetic": {
+    "rows": 15,
+    "disagree": 12
+   },
+   "tabfact": {
+    "rows": 88,
+    "disagree": 33
+   },
+   "winogrande": {
+    "rows": 63,
+    "disagree": 14
+   }
+  },
+  "by_source_levels_reported": {
+   "2wiki_long_choice": {
+    "0": 5,
+    "1": 6,
+    "2": 12
+   },
+   "agnews": {
+    "0": 1,
+    "1": 13,
+    "2": 24,
+    "3": 7
+   },
+   "anli": {
+    "0": 9,
+    "1": 6,
+    "2": 5,
+    "3": 9,
+    "4": 17
+   },
+   "apigen_policy_compliance": {
+    "0": 13,
+    "2": 13,
+    "3": 1
+   },
+   "apigen_tool_action": {
+    "0": 4,
+    "2": 49
+   },
+   "apigen_tool_argument": {
+    "0": 27,
+    "2": 26
+   },
+   "apigen_tool_choice": {
+    "0": 9,
+    "2": 10
+   },
+   "apigen_tool_next_action": {
+    "0": 15,
+    "2": 12,
+    "3": 2
+   },
+   "arc": {
+    "0": 11,
+    "1": 11
+   },
+   "banking77": {
+    "0": 42,
+    "1": 7,
+    "2": 35,
+    "3": 22,
+    "4": 6
+   },
+   "boolq": {
+    "0": 6,
+    "1": 1,
+    "2": 4,
+    "3": 13,
+    "4": 30
+   },
+   "codesearchnet": {
+    "0": 7,
+    "1": 6
+   },
+   "commonsenseqa": {
+    "0": 7,
+    "1": 6
+   },
+   "contractnli": {
+    "0": 16,
+    "1": 15,
+    "2": 112
+   },
+   "fever": {
+    "0": 26,
+    "1": 12,
+    "2": 1,
+    "3": 7,
+    "4": 22
+   },
+   "hellaswag": {
+    "0": 27,
+    "1": 75,
+    "2": 6
+   },
+   "hotpotqa_long_choice": {
+    "0": 14,
+    "1": 10,
+    "2": 16
+   },
+   "logiqa": {
+    "0": 59,
+    "1": 20,
+    "2": 34,
+    "3": 2,
+    "4": 3
+   },
+   "longbench_long_choice": {
+    "1": 1,
+    "2": 24
+   },
+   "mednli": {
+    "0": 31,
+    "1": 3,
+    "2": 28,
+    "3": 23,
+    "4": 7
+   },
+   "mmlu": {
+    "0": 34,
+    "1": 21,
+    "2": 15
+   },
+   "mmlu_pro_short_reasoning_choice": {
+    "0": 49,
+    "1": 57,
+    "2": 51,
+    "3": 1
+   },
+   "mnli": {
+    "0": 11,
+    "1": 18,
+    "2": 8,
+    "3": 22,
+    "4": 21
+   },
+   "multirc": {
+    "0": 69,
+    "1": 3,
+    "2": 7,
+    "3": 26,
+    "4": 49
+   },
+   "openjev_authored144": {
+    "0": 8,
+    "3": 2,
+    "4": 12
+   },
+   "piqa": {
+    "0": 27,
+    "1": 13,
+    "2": 13
+   },
+   "race": {
+    "0": 29,
+    "1": 5,
+    "2": 23
+   },
+   "race_short_passage_choice": {
+    "0": 10,
+    "1": 2,
+    "2": 8
+   },
+   "sst2": {
+    "0": 7,
+    "1": 19,
+    "2": 34
+   },
+   "swag": {
+    "0": 29,
+    "1": 28
+   },
+   "synthetic": {
+    "0": 8,
+    "3": 5,
+    "4": 2
+   },
+   "tabfact": {
+    "0": 31,
+    "1": 1,
+    "2": 51,
+    "3": 5
+   },
+   "winogrande": {
+    "1": 15,
+    "2": 48
+   }
+  },
+  "calls_unaccounted": 7
+ }
+}

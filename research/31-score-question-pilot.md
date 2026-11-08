@@ -65,7 +65,8 @@ whose result was kept. 2,064 calls against 2,000 accepted + 63 rejected = 2,063
 rows kept: one successful result in the last concurrent chunk arrived after the
 2,000-row target was already reached and was discarded by the
 `len(accepted) >= target` check, so it counts as a call and in neither kept
-column. No retry is hidden in that difference.
+column. No retry is hidden in that difference. The counters file records it as
+`pilot.calls_unaccounted = 1`; the same check on round two gives 7.
 
 ## Label quality
 
@@ -174,6 +175,31 @@ inherits the licence of the source state; the generated question text adds no
 new third-party terms. No exclusion was applied in the pilot, and the owner's
 research-use policy in `research/30` covers the restrictive and unresolved
 groups.
+
+### Two level-0 statistics
+
+The two per-source tables above report different statistics, and both are
+correct about their own.
+
+- The `level 0` column of the first table is the share of a source's accepted
+  rows whose **stored** teacher distribution has level 0 as its argmax.
+- The `l0` column of the level matrix is the share whose **`label` field** is 0.
+
+They disagree on 17 of the 2,000 rows. In this pilot's rows the label was taken
+from the unrounded response while the distribution was stored at two decimals,
+and the rounding manufactured ties: `{"0": 0.49, "1": 0.49}` with label 1,
+`{"0": 0.39, ..., "2": 0.39}` with label 2, `{"0": 0.32, ..., "3": 0.32}` with
+label 3. commonsenseqa is the visible case: 58.6% by the stored argmax, 56% by
+the label.
+
+`build_item` now rounds the distribution first and derives the label from the
+rounded values, so `label == argmax(teacher_probs)` holds by construction and a
+new run cannot produce the split;
+`test_build_item_derives_the_label_from_the_stored_distribution` fixes that with
+a near-tie fixture.
+
+Counters for both runs, including every per-source figure in this note, are in
+`data/score_generation_counters.json`.
 
 ## What the pilot says
 
