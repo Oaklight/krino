@@ -19,6 +19,7 @@ from model.scripts.eval_listwise import _load_subsets, score_item  # noqa: E402
 from model.scripts.train_listwise import (  # noqa: E402
     _subset_probs,
     build_parser,
+    evaluate,
     fused_logits,
     item_loss,
     split_items,
@@ -192,3 +193,63 @@ def test_item_loss_is_a_graphless_zero_for_an_unanswerable_row():
     assert ce == 0.0
     assert loss.item() == 0.0
     assert not loss.requires_grad
+
+
+class _NoulItem:
+    def __init__(self, label=True):
+        self.id = "noul-1"
+        self.state = "s"
+        self.question = {"type": "noul", "instructions": "does it hold"}
+        self.label = label
+
+
+class _EvalReadout:
+    """Returns a fixed distribution for whatever option set it is handed."""
+
+    class _Model:
+        def eval(self):
+            return self
+
+        def train(self):
+            return self
+
+    def __init__(self, probs):
+        self.probs = probs
+        self.model = self._Model()
+        self.calls = 0
+
+    def fits(self, options):
+        return True
+
+    def score_shifted(self, state, instructions, options, shifts=4, **kwargs):
+        self.calls += 1
+        return torch.tensor([self.probs], dtype=torch.float32)
+
+
+def test_the_validation_scores_noul_through_the_readout():
+    """A moved noul head must move the validation number.
+
+    Noul is in ``TRAINED_TYPES``, so a validation that answered from the base
+    distribution would report the frozen base under the arm's name and no
+    amount of noul training could show up.  The guard is the disagreement
+    between the two heads below: with the base shortcut in place both return
+    the same value.
+    """
+    item = _NoulItem(label=True)          # gold index 1, "yes"
+    base = {"noul-1": torch.tensor([0.5, 0.5])}
+    alphas = {"noul": torch.tensor(1.0)}
+
+    right = evaluate(_EvalReadout([0.02, 0.98]), [item], base, alphas, 4)
+    wrong = evaluate(_EvalReadout([0.98, 0.02]), [item], base, alphas, 4)
+
+    assert right["by_type"]["noul"] == pytest.approx(1.0)
+    assert wrong["by_type"]["noul"] == pytest.approx(-1.0)
+    assert right["n"] == 1 and wrong["n"] == 1
+
+
+def test_the_validation_asks_the_readout_for_noul():
+    item = _NoulItem()
+    base = {"noul-1": torch.tensor([0.5, 0.5])}
+    readout = _EvalReadout([0.5, 0.5])
+    evaluate(readout, [item], base, {"noul": torch.tensor(0.0)}, 4)
+    assert readout.calls == 1
