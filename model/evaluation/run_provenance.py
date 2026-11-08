@@ -10,11 +10,48 @@ model stack installed.
 
 from __future__ import annotations
 
+import platform
 import subprocess
 import sys
 import time
 from pathlib import Path
 from typing import Any
+
+
+def environment_info() -> dict[str, str]:
+    """Record the interpreter and the two libraries the numbers depend on.
+
+    ``device`` is ``cuda:0`` on every machine and every card, so it cannot say
+    which environment produced a file.  Versions can, and torch is imported
+    here rather than at module scope so this module stays importable - and
+    testable - without the model stack installed.
+    """
+    info: dict[str, str] = {"python_version": platform.python_version()}
+    try:
+        import torch
+    except (ImportError, OSError):
+        info["torch_version"] = "unavailable"
+        info["device_name"] = "unavailable"
+    else:
+        info["torch_version"] = str(torch.__version__)
+        try:
+            available = torch.cuda.is_available()
+        except Exception:  # a broken driver must not fail the run's record
+            available = False
+        if available:
+            try:
+                info["device_name"] = torch.cuda.get_device_name()
+            except Exception:
+                info["device_name"] = "cuda (name unavailable)"
+        else:
+            info["device_name"] = "cpu"
+    try:
+        import transformers
+    except (ImportError, OSError):
+        info["transformers_version"] = "unavailable"
+    else:
+        info["transformers_version"] = str(transformers.__version__)
+    return info
 
 
 def resolve_code_commit(root: str | Path, explicit: str | None = None) -> str:
@@ -94,6 +131,7 @@ def build_run_provenance(
         "strategy": strategy,
         "norm": norm,
         "command": " ".join(command if command is not None else sys.argv),
+        **environment_info(),
     }
     if variant:
         block["variant"] = variant

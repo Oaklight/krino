@@ -9,6 +9,14 @@ state + question, the option log-probs are softmaxed, and the accuracy rule and
 tier aggregation come from ``model/evaluation/jevbench.py`` so the rows join the
 table in ``research/13`` rather than starting a second one.
 
+**This is not the readout behind the 0.628 anchor.** That number is
+``score_options_native``: the reranker's own prompt, an independent P(yes) per
+option, one option at a time. A reranker checkpoint is trained for that prompt
+and will look worse under option-text continuation, so a continuation row for
+Qwen3-Reranker-4B does not reproduce 0.628 and must not be placed beside it
+without naming the readout. ``_provenance.readout`` records which instrument
+produced each file.
+
 Usage:
     python model/scripts/eval_jevbench_logit.py \
         --model mistralai/Ministral-3-3B-Base-2512 --variant base \
@@ -30,6 +38,7 @@ sys.path.insert(0, str(ROOT))
 
 from data.pipeline import load_jevbench  # noqa: E402
 from model.evaluation.jevbench import summarize  # noqa: E402
+from model.evaluation.prompt_options import noul_option_texts  # noqa: E402
 from model.evaluation.run_provenance import build_run_provenance  # noqa: E402
 from model.src.backbone import load_causal_lm  # noqa: E402
 from model.src.logit_scorer import LogitScorer  # noqa: E402
@@ -44,13 +53,19 @@ def _record(scorer: LogitScorer, item: Any) -> dict[str, Any] | None:
 
     if q_type == "noul":
         context = f"State: {state}\nQuestion: {instructions}\nAnswer:"
-        scores = scorer.score_options(context, [" yes", " no"])
+        # The same option construction LogitScorer._eval_noul uses: JevBench's
+        # noul items phrase the two answers per question, so hardcoding yes/no
+        # would score 74 of the 231 items under a prompt the column does not
+        # claim.
+        scores = scorer.score_options(
+            context, noul_option_texts(question.get("criteria"))
+        )
         positive = item.label if isinstance(item.label, bool) else str(item.label).lower() == "true"
         return {
             "type": "noul",
-            "logits": [scores[1], scores[0]],
+            "logits": scores,
             "label_order": [0, 1],
-            "label_idx": 1 if positive else 0,
+            "label_idx": 0 if positive else 1,
             "option_count": 2,
             "_item": item,
         }

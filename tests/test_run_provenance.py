@@ -5,8 +5,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from model.evaluation.run_provenance import (
     build_run_provenance,
+    environment_info,
     readout_label,
     resolve_code_commit,
     resolve_snapshot_revision,
@@ -23,6 +26,28 @@ def test_readout_names_the_two_strategies_differently():
     assert readout_label("description", "mean").startswith("option-text continuation")
     assert readout_label("label", "mean").startswith("one-token label code")
     assert readout_label("description", "mean") != readout_label("label", "mean")
+
+
+def test_environment_records_versions_and_a_device_name():
+    info = environment_info()
+    for key in (
+        "python_version",
+        "torch_version",
+        "transformers_version",
+        "device_name",
+    ):
+        assert isinstance(info[key], str) and info[key]
+    assert info["python_version"].count(".") >= 1
+
+
+def test_environment_says_unavailable_without_torch():
+    import importlib.util
+
+    if importlib.util.find_spec("torch") is not None:
+        pytest.skip("torch is installed here; the fallback is for the base job")
+    info = environment_info()
+    assert info["torch_version"] == "unavailable"
+    assert info["device_name"] == "unavailable"
 
 
 def test_code_commit_is_unresolved_outside_a_git_tree(tmp_path):

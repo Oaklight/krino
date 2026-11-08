@@ -17,6 +17,8 @@ from typing import Any
 import torch
 from transformers import DynamicCache, PreTrainedModel, PreTrainedTokenizerBase
 
+from model.evaluation.prompt_options import noul_option_texts
+
 
 class LogitScorer:
     """Score typed-question options using direct LM log-probabilities.
@@ -199,14 +201,8 @@ class LogitScorer:
     def _eval_noul(
         self, state: Any, instructions: str, criteria: dict[str, str] | None = None
     ) -> dict[str, Any]:
-        true_desc = "yes"
-        false_desc = "no"
-        if criteria:
-            true_desc = criteria.get("true", "yes")
-            false_desc = criteria.get("false", "no")
-
         context = f"State: {state}\nQuestion: {instructions}\nAnswer:"
-        scores = self._score_options(context, [f" {true_desc}", f" {false_desc}"])
+        scores = self._score_options(context, noul_option_texts(criteria))
         probs = self._softmax(scores)
         noul = round(max(0.01, min(0.99, probs[0])), 2)
         return {"type": "noul", "noul": noul}
