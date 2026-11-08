@@ -42,6 +42,20 @@ This is still a diagnostic set, not training data.
 The cap costs calls: 515 otherwise valid rows were dropped to hold the per-source
 share. That is the intended trade and is reported per source below.
 
+2,640 calls against 2,000 accepted + 633 rejected leaves seven calls unaccounted.
+They are post-target skips: a concurrent chunk returned valid rows after the
+2,000-row target was reached and the loop kept the first ones it saw. The
+report's `post_target_skips` field is null because it postdates this run; the
+counters file records it as `round2.calls_unaccounted = 7`, and the current
+script counts the field directly.
+
+The two level-0 statistics from the pilot recur here: 19 of the 2,000 rows carry
+a different level under the stored-argmax and the `label` definitions, for the
+same rounding-tie reason described in `research/31`, so a source's level-0 share
+can move by a point depending on which one a table uses. Every table in this
+note uses the `label` field, and the per-source label counters are in
+`data/score_generation_counters.json`.
+
 ## Result against round one
 
 | statistic | round 1 | round 2 |
@@ -81,7 +95,8 @@ readings of the state rather than a collapsed "Unanswerable" or "Minimal" level.
 
 The cap also changes the sample sizes: sources that chose level 0 often
 (commonsenseqa, codesearchnet, apigen) contribute fewer rows because the cap
-rejects the excess. That is visible in `by_source_levels` in the report.
+rejects the excess. That is visible in the per-source `cap` column of the table
+below and in `data/score_generation_counters.json`.
 
 ## Licence
 
@@ -91,65 +106,79 @@ policy in `research/30` covers all three.
 
 ## Scaling threshold
 
-A family is eligible for a larger run only when both hold:
+A family is eligible for a larger run only when both hold at the 95% confidence
+bound, not at the point estimate:
 
-1. fewer than **35%** of its rows have argmax ≠ expected level;
-2. an accepted rate of at least **30%**, where the rate is accepted rows over
-   candidates drawn **and labelled** — not over the whole candidate pool. The
-   pool denominator would measure sampling coverage and fails every family; the
-   labelled denominator measures whether the family produces usable rows at
-   scale, which is the question this rule asks.
+1. the **upper** Wilson bound of its disagreement rate (argmax ≠ expected level,
+   over accepted rows) is at most **35%**;
+2. the **lower** Wilson bound of its accepted rate is at least **30%**, where the
+   rate is accepted rows over calls — candidates drawn **and labelled**, not over
+   the whole candidate pool. The pool denominator would measure sampling coverage
+   and fails every family; the labelled denominator measures whether the family
+   produces usable rows at scale, which is the question this rule asks.
 
-The rate replaces an absolute row floor: 25 accepted rows is a property of this
-pilot's draw, not of the family, and it means nothing at a different draw size.
-On round two:
+The bounds replace both an absolute row floor and the point-estimate comparison.
+Twenty-five accepted rows is a property of this pilot's draw, not of the family,
+so a row floor would not travel to another draw. At n≈25 the standard error of
+such a rate is near 10 points, so a family that lands on the right side of 35% by
+one row has shown nothing: codesearchnet is 2 of 13 (15.4%) on the point estimate
+and 42% at its upper bound. The rule now says no.
 
-| source | accepted | drawn | rate | argmax≠exp | eligible |
-|---|---:|---:|---:|---:|---|
-| agnews | 45 | 45 | 100% | 7% | yes |
-| anli | 46 | 51 | 90% | 28% | yes |
-| apigen_policy_compliance | 27 | 36 | 75% | 33% | yes |
-| apigen_tool_action | 53 | 53 | 100% | 30% | yes |
-| apigen_tool_argument | 53 | 150 | 35% | 47% | no |
-| apigen_tool_choice | 19 | 25 | 76% | 68% | no |
-| apigen_tool_next_action | 29 | 163 | 18% | 52% | no |
-| arc | 22 | 44 | 50% | 9% | yes |
-| banking77 | 112 | 125 | 90% | 21% | yes |
-| boolq | 54 | 57 | 95% | 24% | yes |
-| codesearchnet | 13 | 25 | 52% | 15% | yes |
-| commonsenseqa | 13 | 139 | 9% | 0% | no |
-| contractnli | 143 | 163 | 88% | 10% | yes |
-| fever | 68 | 73 | 93% | 16% | yes |
-| hellaswag | 108 | 108 | 100% | 24% | yes |
-| hotpotqa_long_choice | 40 | 41 | 98% | 30% | yes |
-| logiqa | 118 | 163 | 72% | 36% | no |
-| longbench_long_choice | 25 | 25 | 100% | 4% | yes |
-| mednli | 92 | 104 | 89% | 27% | yes |
-| mmlu | 70 | 90 | 78% | 29% | yes |
-| mmlu_pro_short_reasoning_choice | 158 | 163 | 97% | 10% | yes |
-| mnli | 80 | 81 | 99% | 20% | yes |
-| multirc | 154 | 162 | 95% | 36% | no |
-| openjev_authored144 | 22 | 25 | 88% | 50% | no |
-| piqa | 53 | 64 | 83% | 55% | no |
-| race | 57 | 84 | 68% | 54% | no |
-| race_short_passage_choice | 20 | 25 | 80% | 65% | no |
-| sst2 | 60 | 76 | 79% | 8% | yes |
-| swag | 57 | 79 | 72% | 4% | yes |
-| synthetic | 15 | 25 | 60% | 80% | no |
-| tabfact | 88 | 88 | 100% | 38% | no |
-| winogrande | 63 | 63 | 100% | 21% | yes |
-| 2wiki_long_choice | 23 | 25 | 92% | 22% | yes |
+The `cap` and `degenerate` columns are the rejected calls; `accepted + cap +
+degenerate` plus any post-target skip is the call count. Both columns are from
+`data/score_generation_counters.json`.
 
-Twenty-one families clear both conditions. The rate changes the earlier result:
-arc (50%) and 2wiki (92%) now pass, because they were rejected for a small draw,
-not for a low hit rate. codesearchnet also passes at 52% on 13 rows. **The
-eligibility set changed from 18 to 21 because the metric changed, not because the
-data changed.**
+| source | accepted | cap | degenerate | calls | disagreement | upper 95% | rate | lower 95% | eligible |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 2wiki_long_choice | 23 | 1 | 1 | 25 | 21.7% | 41.9% | 92.0% | 75.0% | no |
+| agnews | 45 | 0 | 0 | 45 | 6.7% | 17.9% | 100.0% | 92.1% | yes |
+| anli | 46 | 0 | 5 | 51 | 28.3% | 42.5% | 90.2% | 79.0% | no |
+| apigen_policy_compliance | 27 | 9 | 0 | 36 | 33.3% | 52.2% | 75.0% | 58.9% | no |
+| apigen_tool_action | 53 | 0 | 0 | 53 | 30.2% | 43.5% | 100.0% | 93.2% | no |
+| apigen_tool_argument | 53 | 97 | 0 | 150 | 47.2% | 60.3% | 35.3% | 28.1% | no |
+| apigen_tool_choice | 19 | 6 | 0 | 25 | 68.4% | 84.6% | 76.0% | 56.6% | no |
+| apigen_tool_next_action | 29 | 133 | 0 | 163 | 51.7% | 68.6% | 17.8% | 12.7% | no |
+| arc | 22 | 19 | 3 | 44 | 4.5% | 21.8% | 50.0% | 35.8% | yes |
+| banking77 | 112 | 1 | 12 | 125 | 21.4% | 29.9% | 89.6% | 83.0% | yes |
+| boolq | 54 | 0 | 3 | 57 | 24.1% | 36.9% | 94.7% | 85.6% | no |
+| codesearchnet | 13 | 12 | 0 | 25 | 15.4% | 42.2% | 52.0% | 33.5% | no |
+| commonsenseqa | 13 | 96 | 30 | 139 | 0.0% | 22.8% | 9.4% | 5.5% | no |
+| contractnli | 143 | 0 | 19 | 163 | 11.2% | 17.4% | 87.7% | 81.8% | yes |
+| fever | 68 | 0 | 5 | 73 | 16.2% | 26.7% | 93.2% | 84.9% | yes |
+| hellaswag | 108 | 0 | 0 | 108 | 22.2% | 30.9% | 100.0% | 96.6% | yes |
+| hotpotqa_long_choice | 40 | 0 | 1 | 41 | 30.0% | 45.4% | 97.6% | 87.4% | no |
+| logiqa | 118 | 43 | 0 | 163 | 36.4% | 45.4% | 72.4% | 65.1% | no |
+| longbench_long_choice | 25 | 0 | 0 | 25 | 4.0% | 19.5% | 100.0% | 86.7% | yes |
+| mednli | 92 | 0 | 12 | 104 | 27.2% | 37.0% | 88.5% | 80.9% | no |
+| mmlu | 70 | 15 | 5 | 90 | 31.4% | 43.0% | 77.8% | 68.2% | no |
+| mmlu_pro_short_reasoning_choice | 158 | 0 | 3 | 163 | 9.5% | 15.1% | 96.9% | 93.0% | yes |
+| mnli | 80 | 0 | 1 | 81 | 20.0% | 30.0% | 98.8% | 93.3% | yes |
+| multirc | 154 | 6 | 1 | 162 | 37.0% | 44.9% | 95.1% | 90.6% | no |
+| openjev_authored144 | 22 | 2 | 1 | 25 | 50.0% | 69.3% | 88.0% | 70.0% | no |
+| piqa | 53 | 11 | 0 | 64 | 54.7% | 67.3% | 82.8% | 71.8% | no |
+| race | 57 | 27 | 0 | 84 | 56.1% | 68.2% | 67.9% | 57.3% | no |
+| race_short_passage_choice | 20 | 5 | 0 | 25 | 65.0% | 81.9% | 80.0% | 60.9% | no |
+| sst2 | 60 | 0 | 16 | 76 | 8.3% | 18.1% | 78.9% | 68.5% | yes |
+| swag | 57 | 22 | 0 | 79 | 3.5% | 11.9% | 72.2% | 61.4% | yes |
+| synthetic | 15 | 10 | 0 | 25 | 80.0% | 93.0% | 60.0% | 40.7% | no |
+| tabfact | 88 | 0 | 0 | 88 | 37.5% | 47.9% | 100.0% | 95.8% | no |
+| winogrande | 63 | 0 | 0 | 63 | 22.2% | 33.9% | 100.0% | 94.3% | yes |
 
-The families that fail quality are logiqa 36, multirc 36, tabfact 38, apigen
-tool_argument 47, apigen tool_next_action 52, openjev 50, piqa 55, race 54,
-race_short 65, synthetic 80, and apigen tool_choice 68. The families that fail
-yield are commonsenseqa 9% and apigen tool_next_action 18%.
+Twelve families clear both bounds: agnews, arc, banking77, contractnli, fever,
+hellaswag, longbench_long_choice, mmlu_pro_short_reasoning_choice, mnli, sst2,
+swag, winogrande. The point-estimate rule admitted 21. The nine it drops — anli,
+apigen_policy_compliance, apigen_tool_action, boolq, codesearchnet,
+hotpotqa_long_choice, mednli, mmlu, 2wiki_long_choice — are not shown to be bad;
+they are not shown to be good enough at their sample size. Scaling one of them is
+a change to this rule, not a reading of it.
+
+On the point estimates the families that miss quality are logiqa 36, multirc 36,
+tabfact 38, apigen tool_argument 47, apigen tool_next_action 52, openjev 50,
+piqa 55, race 54, race_short 65, synthetic 80, and apigen tool_choice 68. The
+families that miss yield are commonsenseqa 9% and apigen tool_next_action 18%.
+Every family in those lists also fails the bound test, so the lists describe the
+same exclusions the rule makes; the rule adds the ones the point estimates
+cannot resolve.
 
 ## The constraint: state property, not solution property
 
@@ -195,10 +224,15 @@ per-domain severity/quality/difficulty templates.
    rubric did not change moved from 30.0% to 28.8% weighted disagreement (1,442
    to 1,475 accepted rows), while the nine redesigned families moved from 84.3%
    to 19.6% (479 to 525 rows; `swag` has no round-one row).
-   `apigen_tool_next_action` lost 134 of its 163 candidates to the cap and still
-   sits at 52%. The recomputation uses the rounded per-family percentages, so it
-   carries about a point of error; a two-family run with the redesigned rubric at
-   `--level0-cap 0` would settle it outright.
+   `apigen_tool_next_action` lost 133 of its 163 candidates to the cap (one more
+   was a post-target skip) and still sits at 52%. The recomputation uses the
+   rounded per-family percentages, so it carries about a point of error; a
+   two-family run with the redesigned rubric at `--level0-cap 0` would settle it
+   outright. It is queued, with one caveat that belongs in the record: at n≈25
+   accepted rows the level-0 share has a standard error near 10 points, so a
+   single control run reports a point estimate with a wide interval, not a
+   verdict. The eligibility rule above, which uses the interval rather than the
+   point estimate, is what decides; the run is a check on direction.
 2. **The cap works.** Every accepted row satisfies the running ceiling
    `level0 <= ceil(0.5 * n)` for its source; in this run the smallest source is
    large enough that no source ends above 54%, but that maximum is a fact about
@@ -209,7 +243,7 @@ per-domain severity/quality/difficulty templates.
    families and the apigen action scales. That is the state-property constraint,
    not a tuning problem. Scale only families whose rubric asks about the state
    text; treat the rest as rubric evidence.
-4. **Recommended next step:** scale the 21 families that clear both conditions,
+4. **Recommended next step:** scale the 12 families that clear both bounds,
    keep the cap, and judge the next run against the same two conditions. Residual
    concentration (contractnli 78% at level 2, longbench 96% at level 2) is a
    separate balance issue and should be capped or reweighted before training. The
