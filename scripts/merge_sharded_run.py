@@ -9,8 +9,11 @@ would leave the merged row claiming it scored a fifth of the benchmark set.
 
 This script is what makes the merge acceptable:
 
-- every shard's ``_provenance`` must be identical to the first apart from
-  ``command``, so no shard ran different settings, dtype, revision or code;
+- every shard's ``_provenance`` must be identical to the first apart from the
+  two fields that legitimately differ between processes, ``command`` and
+  ``date_utc``, so no shard ran different settings, dtype, revision or code;
+  the merged ``date_utc`` is the earliest shard's start and each shard's own
+  start is recorded under ``shards``;
 - the merged ``command`` is rebuilt as the full invocation, listing every
   dataset in the order given on the command line;
 - ``_provenance.shards`` records each shard's index, its benchmark names and its
@@ -36,14 +39,20 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 DATASET_FLAG = " --datasets "
+#: Fields that legitimately differ between shards: each process writes its own
+#: command and start time.  Everything else has to match or the shards were not
+#: the same run.
+PER_SHARD_FIELDS = ("command", "date_utc")
 
 
 def benchmark_names(payload: dict[str, Any]) -> list[str]:
     return [key for key in payload if not key.startswith("_")]
 
 
-def provenance_without_command(provenance: dict[str, Any]) -> dict[str, Any]:
-    return {key: value for key, value in provenance.items() if key != "command"}
+def shard_invariant_provenance(provenance: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: value for key, value in provenance.items() if key not in PER_SHARD_FIELDS
+    }
 
 
 def full_command(parts: Sequence[dict[str, Any]], datasets: Sequence[str]) -> str:
@@ -88,21 +97,23 @@ def merge(
 ) -> dict[str, Any]:
     if not parts:
         raise ValueError("no shards")
-    base = provenance_without_command(parts[0]["_provenance"])
+    base = shard_invariant_provenance(parts[0]["_provenance"])
     merged: dict[str, Any] = {"_provenance": dict(base)}
     shards = []
     seen: set[str] = set()
+    dates = []
     for index, part in enumerate(parts):
         provenance = part["_provenance"]
-        if provenance_without_command(provenance) != base:
+        dates.append(provenance.get("date_utc"))
+        if shard_invariant_provenance(provenance) != base:
             differing = [
                 key
                 for key in base
                 if provenance.get(key) != base[key]
             ] + [key for key in provenance if key not in base]
             raise ValueError(
-                f"shard {index} provenance differs from shard 0 outside `command`: "
-                f"{sorted(set(differing))}"
+                f"shard {index} provenance differs from shard 0 outside "
+                f"{PER_SHARD_FIELDS}: {sorted(set(differing))}"
             )
         status = read_status(status_dir, index)
         names = benchmark_names(part)
@@ -117,6 +128,7 @@ def merge(
                 "index": index,
                 "benchmarks": names,
                 "status": status,
+                "started_utc": provenance.get("date_utc"),
             }
         )
         if status.startswith("failed") or status == "missing":
@@ -127,6 +139,9 @@ def merge(
             f"benchmarks do not match the dataset list: missing {sorted(expected - seen)}, "
             f"extra {sorted(seen - expected)}"
         )
+    present = [date for date in dates if isinstance(date, str)]
+    if present:
+        merged["_provenance"]["date_utc"] = min(present)
     merged["_provenance"]["command"] = full_command(parts, datasets)
     merged["_provenance"]["shards"] = shards
     return merged

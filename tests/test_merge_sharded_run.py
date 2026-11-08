@@ -21,13 +21,14 @@ import merge_sharded_run as merge_mod  # noqa: E402
 DATASETS = ["/data/benchmarks/agnews.jsonl", "/data/benchmarks/arc.jsonl"]
 
 
-def _provenance(datasets: list[str]) -> dict:
+def _provenance(datasets: list[str], date: str = "2026-11-08T05:35:54Z") -> dict:
     return {
         "model_id": "org/model",
         "revision": "abc",
         "dtype": "bfloat16",
         "device": "cuda:0",
         "code_commit": "deadbeef",
+        "date_utc": date,
         "command": "model/scripts/eval_logit.py --model org/model --dtype bfloat16"
         " --datasets "
         + " ".join(datasets),
@@ -46,8 +47,8 @@ def _part(name: str, provenance: dict, correct: int = 3) -> dict:
 
 def _shards() -> list[dict]:
     return [
-        _part("agnews", _provenance(DATASETS[:1])),
-        _part("arc", _provenance(DATASETS[1:])),
+        _part("agnews", _provenance(DATASETS[:1], "2026-11-08T05:36:10Z")),
+        _part("arc", _provenance(DATASETS[1:], "2026-11-08T05:35:54Z")),
     ]
 
 
@@ -67,6 +68,16 @@ def test_the_merge_records_each_shard_by_name_only():
     assert [shard["benchmarks"] for shard in shards] == [["agnews"], ["arc"]]
     text = str(shards)
     assert "/data/" not in text, "shard records must not carry paths for redaction to miss"
+
+
+def test_a_different_start_time_is_not_a_different_run():
+    """Shards start seconds apart; date_utc must not block the merge."""
+    merged = merge_mod.merge(_shards(), DATASETS)
+    assert merged["_provenance"]["date_utc"] == "2026-11-08T05:35:54Z"
+    assert [shard["started_utc"] for shard in merged["_provenance"]["shards"]] == [
+        "2026-11-08T05:36:10Z",
+        "2026-11-08T05:35:54Z",
+    ]
 
 
 def test_a_different_setting_is_refused():
