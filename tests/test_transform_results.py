@@ -203,3 +203,101 @@ class TestProvenanceIsNotABenchmark:
         result = transform.transform_eval_file(path)
         assert "_provenance" not in result["results"]["by_source"]
         assert "provenance" not in json.dumps(result["results"]["by_source"])
+
+
+class TestDeriveReadout:
+    def test_judgement(self):
+        path = Path("jevbench_judgement_M.json")
+        raw = {"_provenance": {"strategy": "judgement"}}
+        assert transform.derive_readout(path, raw) == "judgement"
+
+    def test_continuation(self):
+        path = Path("jevbench_logit_M.json")
+        raw = {"_provenance": {"strategy": "description"}}
+        assert transform.derive_readout(path, raw) == "continuation"
+
+    def test_native_reranker(self):
+        path = Path("jevbench_reranker_native_M.json")
+        raw = {"_provenance": {"strategy": "reranker_native"}}
+        assert transform.derive_readout(path, raw) == "native-reranker"
+
+    def test_raw_reranker_mode(self):
+        assert transform.derive_readout(Path("raw-M.json"), {"mode": "raw_reranker"}) == "native-reranker"
+
+    def test_trained_heads_by_suffix(self):
+        assert transform.derive_readout(Path("krino-M-heads.json"), {}) == "trained-heads"
+
+    def test_unlabelled_returns_none(self):
+        assert transform.derive_readout(Path("mystery.json"), {}) is None
+
+
+class TestBuildJevbenchRun:
+    PAYLOAD = {
+        "_provenance": {
+            "model_id": "Qwen/Qwen3-4B",
+            "strategy": "judgement",
+            "variant": "instruct",
+            "readout": 'per-option judgement, log P(" yes") against log P(" no") at "Answer:"',
+        },
+        "items": 231,
+        "n": 231,
+        "summary": {
+            "overall": {"accuracy": 0.6190476190476191, "correct": 143, "total": 231},
+            "by_type": {"choice": {"accuracy": 0.6402, "correct": 89, "total": 139}},
+            "by_tier": {"easy": {"accuracy": 1.0, "correct": 48, "total": 48}},
+        },
+    }
+
+    def test_provenance_supplies_model_id_readout_and_n(self, tmp_path):
+        path = tmp_path / "jevbench_judgement_Qwen_Qwen3-4B.json"
+        path.write_text(json.dumps(self.PAYLOAD))
+
+        run = transform.build_jevbench_run(path)
+
+        assert run["model_id"] == "Qwen/Qwen3-4B"
+        assert run["model"]["name"] == "Qwen/Qwen3-4B (instruct)"
+        assert run["readout"] == "judgement"
+        assert run["readout_detail"] == self.PAYLOAD["_provenance"]["readout"]
+        assert run["method"] == "zero-shot"
+        assert run["n"] == 231
+        assert run["total"] == 231
+        assert run["accuracy"] == 0.619
+
+    def test_trained_heads_file_uses_its_own_accuracy(self, tmp_path):
+        path = tmp_path / "krino-ettin-150m-heads.json"
+        path.write_text(json.dumps({
+            "overall": {"accuracy": 0.36796536796536794, "correct": 85, "total": 231},
+            "by_tier": {},
+            "by_type": {},
+        }))
+
+        run = transform.build_jevbench_run(path)
+
+        assert run["readout"] == "trained-heads"
+        assert run["method"] == "trained-heads"
+        assert run["model"]["name"] == "Ettin-150m (trained)"
+        assert run["n"] == 231
+        assert run["accuracy"] == 0.368
+
+    def test_unlabelled_file_is_skipped(self, tmp_path):
+        path = tmp_path / "mystery.json"
+        path.write_text(json.dumps({"overall": {"accuracy": 0.5, "total": 231}}))
+        assert transform.build_jevbench_run(path) is None
+
+
+class TestJevbenchSourceFiles:
+    def test_every_row_has_a_readout_and_a_source_file(self):
+        runs = transform.transform_jevbench()
+        assert runs
+        for run in runs:
+            assert run["readout"] in {"trained-heads", "continuation", "judgement", "native-reranker"}
+            assert run["source_file"]
+
+    def test_logit_prov_judgement_and_continuation_are_read(self):
+        names = {p.name for p in transform.jevbench_source_files()}
+        assert "jevbench_judgement_Qwen_Qwen3-4B.json" in names
+        assert "jevbench_logit_Qwen_Qwen3-4B.json" in names
+
+    def test_native_reranker_is_not_double_counted(self):
+        names = {p.name for p in transform.jevbench_source_files()}
+        assert "jevbench_reranker_native_Qwen_Qwen3-Reranker-4B.json" not in names

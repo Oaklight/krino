@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-25T13:55:33.419947+00:00",
+  "generated_at": "2026-11-08T21:16:26.905844+00:00",
   "eval_runs": [
     {
       "run_id": "cross-encoder-bert",
@@ -10,6 +10,7 @@
       },
       "method": "cross-encoder",
       "phase": null,
+      "source_file": "model/experiments/cross_bert.json",
       "n_benchmarks": 3,
       "results": {
         "aggregate": {
@@ -57,6 +58,7 @@
       },
       "method": "cross-encoder",
       "phase": null,
+      "source_file": "model/experiments/cross_qwen.json",
       "n_benchmarks": 3,
       "results": {
         "aggregate": {
@@ -104,6 +106,7 @@
       },
       "method": "encoder",
       "phase": null,
+      "source_file": "model/experiments/encoder_modernbert_base.json",
       "n_benchmarks": 4,
       "results": {
         "aggregate": {
@@ -157,6 +160,7 @@
       },
       "method": "encoder",
       "phase": null,
+      "source_file": "model/experiments/encoder_modernbert_large.json",
       "n_benchmarks": 4,
       "results": {
         "aggregate": {
@@ -210,6 +214,7 @@
       },
       "method": "jev_api",
       "phase": null,
+      "source_file": "model/experiments/jev_api.json",
       "n_benchmarks": 18,
       "results": {
         "aggregate": {
@@ -366,6 +371,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_HuggingFaceTB_SmolLM2-1.7B.json",
       "n_benchmarks": 5,
       "results": {
         "aggregate": {
@@ -425,6 +431,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_Qwen2.5-1.5B.json",
       "n_benchmarks": 5,
       "results": {
         "aggregate": {
@@ -484,6 +491,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_Qwen_Qwen2.5-0.5B.json",
       "n_benchmarks": 5,
       "results": {
         "aggregate": {
@@ -543,6 +551,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_Qwen_Qwen2.5-7B-Instruct.json",
       "n_benchmarks": 5,
       "results": {
         "aggregate": {
@@ -602,6 +611,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_Qwen_Qwen3-0.6B.json",
       "n_benchmarks": 5,
       "results": {
         "aggregate": {
@@ -661,6 +671,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_Qwen_Qwen3-1.7B.json",
       "n_benchmarks": 5,
       "results": {
         "aggregate": {
@@ -720,6 +731,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_Qwen_Qwen3-30B-A3B.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -864,6 +876,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_Qwen_Qwen3-4B.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -1008,6 +1021,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_Qwen_Qwen3-8B.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -1152,6 +1166,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_Qwen_Qwen3.5-4B.json",
       "n_benchmarks": 5,
       "results": {
         "aggregate": {
@@ -1211,6 +1226,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_Qwen_Qwen3.5-9B.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -1355,6 +1371,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_baseline_qwen_0.6b.json",
       "n_benchmarks": 3,
       "results": {
         "aggregate": {
@@ -1402,6 +1419,7 @@
       },
       "method": "logit",
       "phase": null,
+      "source_file": "model/experiments/logit_microsoft_Phi-4-mini-instruct.json",
       "n_benchmarks": 5,
       "results": {
         "aggregate": {
@@ -1453,6 +1471,441 @@
       }
     },
     {
+      "run_id": "logit-mistralai_Ministral-3-3B-Base-2512",
+      "model": {
+        "name": "Ministral-3-3B-Base-2512",
+        "params": "3B",
+        "type": "causal"
+      },
+      "method": "logit",
+      "phase": null,
+      "source_file": "model/experiments/logit_mistralai_Ministral-3-3B-Base-2512.json",
+      "n_benchmarks": 19,
+      "results": {
+        "aggregate": {
+          "accuracy": 0.535,
+          "n_benchmarks_with_accuracy": 16
+        },
+        "by_source": {
+          "authored144": {
+            "n": 144,
+            "type": "choice",
+            "accuracy": 0.4652777777777778,
+            "ece": 0.1298611111111111
+          },
+          "agnews": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.795,
+            "ece": 0.29610000000000003
+          },
+          "arc": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.745,
+            "ece": 0.142
+          },
+          "banking77": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.0,
+            "ece": 0.21875
+          },
+          "codesearchnet": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.705,
+            "ece": 0.28905000000000003
+          },
+          "contractnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.43,
+            "ece": 0.20655
+          },
+          "fever": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.495,
+            "ece": 0.27264999999999995
+          },
+          "hellaswag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.61,
+            "ece": 0.13615
+          },
+          "mednli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.34,
+            "ece": 0.2547
+          },
+          "mnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.38,
+            "ece": 0.27385
+          },
+          "multirc": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.465,
+            "ece": 0.138
+          },
+          "race": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.62,
+            "ece": 0.0894
+          },
+          "sst2": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.675,
+            "ece": 0.31634999999999996
+          },
+          "sst5": {
+            "n": 200,
+            "type": "score",
+            "mae": 1.033
+          },
+          "stsb": {
+            "n": 200,
+            "type": "score",
+            "mae": 1.4838999999999998
+          },
+          "swag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.61,
+            "ece": 0.1211
+          },
+          "tabfact": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.775,
+            "ece": 0.27985
+          },
+          "typed_decisions": {
+            "n": 200,
+            "type": "mixed",
+            "subtypes": {
+              "noul": {
+                "n": 40,
+                "accuracy": 0.5,
+                "ece": 0.16174999999999998
+              },
+              "choice": {
+                "n": 80,
+                "accuracy": 0.4,
+                "ece": 0.06999999999999999
+              },
+              "score": {
+                "n": 80,
+                "mae": 1.1171250000000001
+              }
+            }
+          },
+          "yelp": {
+            "n": 200,
+            "type": "score",
+            "mae": 0.9764499999999999
+          }
+        }
+      }
+    },
+    {
+      "run_id": "logit-openbmb_MiniCPM3-4B",
+      "model": {
+        "name": "MiniCPM3-4B (instruct)",
+        "params": "4B",
+        "type": "causal"
+      },
+      "method": "logit",
+      "phase": null,
+      "source_file": "model/experiments/logit_openbmb_MiniCPM3-4B.json",
+      "n_benchmarks": 19,
+      "results": {
+        "aggregate": {
+          "accuracy": 0.5308,
+          "n_benchmarks_with_accuracy": 16
+        },
+        "by_source": {
+          "authored144": {
+            "n": 144,
+            "type": "choice",
+            "accuracy": 0.4930555555555556,
+            "ece": 0.10493055555555554
+          },
+          "agnews": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.805,
+            "ece": 0.28865
+          },
+          "arc": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.51,
+            "ece": 0.10530000000000002
+          },
+          "banking77": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.0,
+            "ece": 0.21780000000000002
+          },
+          "codesearchnet": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.695,
+            "ece": 0.31594999999999995
+          },
+          "contractnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.435,
+            "ece": 0.2698
+          },
+          "fever": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.53,
+            "ece": 0.06960000000000002
+          },
+          "hellaswag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.575,
+            "ece": 0.1146
+          },
+          "mednli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.43,
+            "ece": 0.27765
+          },
+          "mnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.48,
+            "ece": 0.30895
+          },
+          "multirc": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.47,
+            "ece": 0.26005
+          },
+          "race": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.64,
+            "ece": 0.10595
+          },
+          "sst2": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.63,
+            "ece": 0.32315
+          },
+          "sst5": {
+            "n": 200,
+            "type": "score",
+            "mae": 0.7635500000000001
+          },
+          "stsb": {
+            "n": 200,
+            "type": "score",
+            "mae": 1.3952
+          },
+          "swag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.595,
+            "ece": 0.12269999999999999
+          },
+          "tabfact": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.78,
+            "ece": 0.3241
+          },
+          "typed_decisions": {
+            "n": 200,
+            "type": "mixed",
+            "subtypes": {
+              "noul": {
+                "n": 40,
+                "accuracy": 0.5,
+                "ece": 0.37174999999999997
+              },
+              "choice": {
+                "n": 80,
+                "accuracy": 0.35,
+                "ece": 0.0695
+              },
+              "score": {
+                "n": 80,
+                "mae": 1.324625
+              }
+            }
+          },
+          "yelp": {
+            "n": 200,
+            "type": "score",
+            "mae": 0.8429000000000001
+          }
+        }
+      }
+    },
+    {
+      "run_id": "logit-openbmb_MiniCPM5-2B-Base",
+      "model": {
+        "name": "MiniCPM5-2B-Base",
+        "params": "2B",
+        "type": "causal"
+      },
+      "method": "logit",
+      "phase": null,
+      "source_file": "model/experiments/logit_openbmb_MiniCPM5-2B-Base.json",
+      "n_benchmarks": 19,
+      "results": {
+        "aggregate": {
+          "accuracy": 0.5528,
+          "n_benchmarks_with_accuracy": 16
+        },
+        "by_source": {
+          "authored144": {
+            "n": 144,
+            "type": "choice",
+            "accuracy": 0.5138888888888888,
+            "ece": 0.11555555555555554
+          },
+          "agnews": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.735,
+            "ece": 0.24524999999999997
+          },
+          "arc": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.65,
+            "ece": 0.08420000000000001
+          },
+          "banking77": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.005,
+            "ece": 0.14614999999999997
+          },
+          "codesearchnet": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.7,
+            "ece": 0.27345
+          },
+          "contractnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.43,
+            "ece": 0.27394999999999997
+          },
+          "fever": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.495,
+            "ece": 0.16885
+          },
+          "hellaswag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.54,
+            "ece": 0.06970000000000001
+          },
+          "mednli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.42,
+            "ece": 0.2251
+          },
+          "mnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.645,
+            "ece": 0.31605000000000005
+          },
+          "multirc": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.61,
+            "ece": 0.365
+          },
+          "race": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.6,
+            "ece": 0.0919
+          },
+          "sst2": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.74,
+            "ece": 0.31585
+          },
+          "sst5": {
+            "n": 200,
+            "type": "score",
+            "mae": 0.9416500000000001
+          },
+          "stsb": {
+            "n": 200,
+            "type": "score",
+            "mae": 1.3151499999999998
+          },
+          "swag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.57,
+            "ece": 0.07189999999999996
+          },
+          "tabfact": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.735,
+            "ece": 0.29715
+          },
+          "typed_decisions": {
+            "n": 200,
+            "type": "mixed",
+            "subtypes": {
+              "noul": {
+                "n": 40,
+                "accuracy": 0.5,
+                "ece": 0.3465
+              },
+              "choice": {
+                "n": 80,
+                "accuracy": 0.4125,
+                "ece": 0.02575000000000001
+              },
+              "score": {
+                "n": 80,
+                "mae": 1.1928750000000001
+              }
+            }
+          },
+          "yelp": {
+            "n": 200,
+            "type": "score",
+            "mae": 0.97665
+          }
+        }
+      }
+    },
+    {
       "run_id": "openjev-Qwen_Qwen3-0.6B",
       "model": {
         "name": "OpenJev Qwen3-0.6B",
@@ -1461,6 +1914,7 @@
       },
       "method": "openjev",
       "phase": null,
+      "source_file": "model/experiments/openjev_Qwen_Qwen3-0.6B.json",
       "n_benchmarks": 1,
       "results": {
         "aggregate": {
@@ -1486,6 +1940,7 @@
       },
       "method": "openjev",
       "phase": null,
+      "source_file": "model/experiments/openjev_Qwen_Qwen3.5-4B.json",
       "n_benchmarks": 1,
       "results": {
         "aggregate": {
@@ -1511,6 +1966,7 @@
       },
       "method": "logit",
       "phase": "A",
+      "source_file": "model/experiments/phaseA_logit_HuggingFaceTB_SmolLM2-1.7B.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -1655,6 +2111,7 @@
       },
       "method": "logit",
       "phase": "A",
+      "source_file": "model/experiments/phaseA_logit_Qwen_Qwen2.5-0.5B.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -1799,6 +2256,7 @@
       },
       "method": "logit",
       "phase": "A",
+      "source_file": "model/experiments/phaseA_logit_Qwen_Qwen2.5-1.5B.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -1943,6 +2401,7 @@
       },
       "method": "logit",
       "phase": "A",
+      "source_file": "model/experiments/phaseA_logit_Qwen_Qwen2.5-7B-Instruct.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -2087,6 +2546,7 @@
       },
       "method": "logit",
       "phase": "A",
+      "source_file": "model/experiments/phaseA_logit_Qwen_Qwen3-0.6B.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -2231,6 +2691,7 @@
       },
       "method": "logit",
       "phase": "A",
+      "source_file": "model/experiments/phaseA_logit_Qwen_Qwen3-1.7B.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -2375,6 +2836,7 @@
       },
       "method": "logit",
       "phase": "A",
+      "source_file": "model/experiments/phaseA_logit_microsoft_Phi-4-mini-instruct.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -2519,6 +2981,7 @@
       },
       "method": "reranker",
       "phase": "A",
+      "source_file": "model/experiments/phaseA_reranker_cross-encoder_ettin-reranker-150m-v1.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -2663,6 +3126,7 @@
       },
       "method": "reranker",
       "phase": "A",
+      "source_file": "model/experiments/phaseA_reranker_cross-encoder_ettin-reranker-400m-v1.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -2807,6 +3271,7 @@
       },
       "method": "reranker",
       "phase": "A",
+      "source_file": "model/experiments/phaseA_reranker_cross-encoder_ettin-reranker-68m-v1.json",
       "n_benchmarks": 19,
       "results": {
         "aggregate": {
@@ -2951,6 +3416,7 @@
       },
       "method": "reranker",
       "phase": null,
+      "source_file": "model/experiments/reranker_cross-encoder_ettin-reranker-150m-v1.json",
       "n_benchmarks": 5,
       "results": {
         "aggregate": {
@@ -3010,6 +3476,7 @@
       },
       "method": "reranker",
       "phase": null,
+      "source_file": "model/experiments/reranker_cross-encoder_ettin-reranker-400m-v1.json",
       "n_benchmarks": 5,
       "results": {
         "aggregate": {
@@ -3069,6 +3536,7 @@
       },
       "method": "reranker",
       "phase": null,
+      "source_file": "model/experiments/reranker_cross-encoder_ettin-reranker-68m-v1.json",
       "n_benchmarks": 5,
       "results": {
         "aggregate": {
@@ -3633,8 +4101,13 @@
         "params": "150M",
         "type": "reranker"
       },
+      "model_id": null,
       "method": "trained-heads",
+      "readout": "trained-heads",
+      "readout_detail": null,
+      "source_file": "results/jevbench/krino-ettin-150m-heads.json",
       "benchmark": "jevbench",
+      "n": 231,
       "accuracy": 0.368,
       "correct": 85,
       "total": 231,
@@ -3681,8 +4154,13 @@
         "params": "149M",
         "type": "encoder"
       },
+      "model_id": null,
       "method": "trained-heads",
+      "readout": "trained-heads",
+      "readout_detail": null,
+      "source_file": "results/jevbench/krino-modernbert-base-heads.json",
       "benchmark": "jevbench",
+      "n": 231,
       "accuracy": 0.3247,
       "correct": 75,
       "total": 231,
@@ -3729,8 +4207,13 @@
         "params": "0.6B",
         "type": "causal"
       },
+      "model_id": null,
       "method": "trained-heads",
+      "readout": "trained-heads",
+      "readout_detail": null,
+      "source_file": "results/jevbench/krino-qwen3-0.6b-heads.json",
       "benchmark": "jevbench",
+      "n": 231,
       "accuracy": 0.342,
       "correct": 79,
       "total": 231,
@@ -3777,8 +4260,13 @@
         "params": "0.6B",
         "type": "reranker"
       },
+      "model_id": null,
       "method": "trained-heads",
+      "readout": "trained-heads",
+      "readout_detail": null,
+      "source_file": "results/jevbench/krino-qwen3-reranker-0.6b-heads.json",
       "benchmark": "jevbench",
+      "n": 231,
       "accuracy": 0.3636,
       "correct": 84,
       "total": 231,
@@ -3825,8 +4313,13 @@
         "params": "4B",
         "type": "reranker"
       },
+      "model_id": null,
       "method": "trained-heads",
+      "readout": "trained-heads",
+      "readout_detail": null,
+      "source_file": "results/jevbench/krino-qwen3-reranker-4b-heads.json",
       "benchmark": "jevbench",
+      "n": 231,
       "accuracy": 0.4286,
       "correct": 99,
       "total": 231,
@@ -3873,8 +4366,13 @@
         "params": "4B",
         "type": "causal"
       },
+      "model_id": null,
       "method": "trained-heads",
+      "readout": "trained-heads",
+      "readout_detail": null,
+      "source_file": "results/jevbench/krino-qwen3.5-4b-heads.json",
       "benchmark": "jevbench",
+      "n": 231,
       "accuracy": 0.3463,
       "correct": 80,
       "total": 231,
@@ -3915,14 +4413,178 @@
       "latency_ms": 8408.3
     },
     {
+      "run_id": "jevbench-logit_mistralai_Ministral-3-3B-Base-2512",
+      "model": {
+        "name": "mistralai/Ministral-3-3B-Base-2512 (base)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "mistralai/Ministral-3-3B-Base-2512",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "results/jevbench/logit_mistralai_Ministral-3-3B-Base-2512.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4545,
+      "correct": 105,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4388,
+          "correct": 61,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.527,
+          "correct": 39,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.2778,
+          "correct": 5,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7292,
+          "correct": 35,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3604,
+          "correct": 40,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.4167,
+          "correct": 30,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-logit_openbmb_MiniCPM3-4B",
+      "model": {
+        "name": "openbmb/MiniCPM3-4B (instruct)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "openbmb/MiniCPM3-4B",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "results/jevbench/logit_openbmb_MiniCPM3-4B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4589,
+      "correct": 106,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4532,
+          "correct": 63,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5,
+          "correct": 37,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.3333,
+          "correct": 6,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7292,
+          "correct": 35,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3874,
+          "correct": 43,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.3889,
+          "correct": 28,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-logit_openbmb_MiniCPM5-2B-Base",
+      "model": {
+        "name": "openbmb/MiniCPM5-2B-Base (base)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "openbmb/MiniCPM5-2B-Base",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "results/jevbench/logit_openbmb_MiniCPM5-2B-Base.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4156,
+      "correct": 96,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.3669,
+          "correct": 51,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5,
+          "correct": 37,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.4444,
+          "correct": 8,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7292,
+          "correct": 35,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3063,
+          "correct": 34,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.375,
+          "correct": 27,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
       "run_id": "jevbench-raw-qwen3-reranker-4b",
       "model": {
         "name": "Qwen3-reranker-4B (zero-shot)",
         "params": "4B",
         "type": "reranker"
       },
-      "method": "trained-heads",
+      "model_id": "Qwen/Qwen3-Reranker-4B",
+      "method": "zero-shot",
+      "readout": "native-reranker",
+      "readout_detail": null,
+      "source_file": "results/jevbench/raw-qwen3-reranker-4b.json",
       "benchmark": "jevbench",
+      "n": 231,
       "accuracy": 0.6277,
       "correct": 145,
       "total": 231,
@@ -3961,18 +4623,1237 @@
         }
       },
       "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_Qwen_Qwen2.5-1.5B",
+      "model": {
+        "name": "Qwen/Qwen2.5-1.5B (base)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen2.5-1.5B",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen2.5-1.5B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4762,
+      "correct": 110,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4532,
+          "correct": 63,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5405,
+          "correct": 40,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.3889,
+          "correct": 7,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.9167,
+          "correct": 44,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3423,
+          "correct": 38,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.3889,
+          "correct": 28,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_Qwen_Qwen2.5-3B",
+      "model": {
+        "name": "Qwen/Qwen2.5-3B (base)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen2.5-3B",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen2.5-3B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.5714,
+      "correct": 132,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.5755,
+          "correct": 80,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5541,
+          "correct": 41,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6111,
+          "correct": 11,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.9792,
+          "correct": 47,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3964,
+          "correct": 44,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.5694,
+          "correct": 41,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_Qwen_Qwen3-1.7B-Base",
+      "model": {
+        "name": "Qwen/Qwen3-1.7B-Base (base)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-1.7B-Base",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-1.7B-Base.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4675,
+      "correct": 108,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4892,
+          "correct": 68,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.4324,
+          "correct": 32,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.4444,
+          "correct": 8,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7917,
+          "correct": 38,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3514,
+          "correct": 39,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.4306,
+          "correct": 31,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_Qwen_Qwen3-1.7B",
+      "model": {
+        "name": "Qwen/Qwen3-1.7B (instruct)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-1.7B",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-1.7B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4113,
+      "correct": 95,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.3741,
+          "correct": 52,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5135,
+          "correct": 38,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.2778,
+          "correct": 5,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.6667,
+          "correct": 32,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3243,
+          "correct": 36,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.375,
+          "correct": 27,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_Qwen_Qwen3-4B-Base",
+      "model": {
+        "name": "Qwen/Qwen3-4B-Base (base)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-4B-Base",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Base.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.5368,
+      "correct": 124,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.5683,
+          "correct": 79,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5,
+          "correct": 37,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.4444,
+          "correct": 8,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.8958,
+          "correct": 43,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3694,
+          "correct": 41,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.5556,
+          "correct": 40,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_Qwen_Qwen3-4B-Instruct-2507",
+      "model": {
+        "name": "Qwen/Qwen3-4B-Instruct-2507 (instruct)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Instruct-2507.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.5887,
+      "correct": 136,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.5755,
+          "correct": 80,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5946,
+          "correct": 44,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6667,
+          "correct": 12,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4234,
+          "correct": 47,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.5694,
+          "correct": 41,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_Qwen_Qwen3-4B-Thinking-2507",
+      "model": {
+        "name": "Qwen/Qwen3-4B-Thinking-2507 (instruct)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-4B-Thinking-2507",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Thinking-2507.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.5541,
+      "correct": 128,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.5755,
+          "correct": 80,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5405,
+          "correct": 40,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.4444,
+          "correct": 8,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.9792,
+          "correct": 47,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3964,
+          "correct": 44,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.5139,
+          "correct": 37,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_Qwen_Qwen3-4B",
+      "model": {
+        "name": "Qwen/Qwen3-4B (instruct)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-4B",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.619,
+      "correct": 143,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.6403,
+          "correct": 89,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5946,
+          "correct": 44,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.5556,
+          "correct": 10,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4414,
+          "correct": 49,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.6389,
+          "correct": 46,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_Qwen_Qwen3-Reranker-4B",
+      "model": {
+        "name": "Qwen/Qwen3-Reranker-4B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-Reranker-4B",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.6494,
+      "correct": 150,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.6475,
+          "correct": 90,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6351,
+          "correct": 47,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.7222,
+          "correct": 13,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4505,
+          "correct": 50,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.7222,
+          "correct": 52,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_microsoft_Phi-4-mini-instruct",
+      "model": {
+        "name": "microsoft/Phi-4-mini-instruct (instruct)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "microsoft/Phi-4-mini-instruct",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_microsoft_Phi-4-mini-instruct.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.6494,
+      "correct": 150,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.6763,
+          "correct": 94,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6081,
+          "correct": 45,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6111,
+          "correct": 11,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.9792,
+          "correct": 47,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4414,
+          "correct": 49,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.75,
+          "correct": 54,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_mistralai_Ministral-3-3B-Base-2512",
+      "model": {
+        "name": "mistralai/Ministral-3-3B-Base-2512 (base)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "mistralai/Ministral-3-3B-Base-2512",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_mistralai_Ministral-3-3B-Base-2512.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.5584,
+      "correct": 129,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.554,
+          "correct": 77,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5811,
+          "correct": 43,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.5,
+          "correct": 9,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.9375,
+          "correct": 45,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3874,
+          "correct": 43,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.5694,
+          "correct": 41,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_openbmb_MiniCPM3-4B",
+      "model": {
+        "name": "openbmb/MiniCPM3-4B (instruct)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "openbmb/MiniCPM3-4B",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_openbmb_MiniCPM3-4B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.3377,
+      "correct": 78,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.2806,
+          "correct": 39,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.473,
+          "correct": 35,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.2222,
+          "correct": 4,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.3542,
+          "correct": 17,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3604,
+          "correct": 40,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.2917,
+          "correct": 21,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_openbmb_MiniCPM5-2B-Base",
+      "model": {
+        "name": "openbmb/MiniCPM5-2B-Base (base)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "openbmb/MiniCPM5-2B-Base",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_openbmb_MiniCPM5-2B-Base.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4719,
+      "correct": 109,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4532,
+          "correct": 63,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5,
+          "correct": 37,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.5,
+          "correct": 9,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7083,
+          "correct": 34,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3784,
+          "correct": 42,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.4583,
+          "correct": 33,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_judgement_zeroentropy_zerank-2-reranker",
+      "model": {
+        "name": "zeroentropy/zerank-2-reranker",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "zeroentropy/zerank-2-reranker",
+      "method": "zero-shot",
+      "readout": "judgement",
+      "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "source_file": "model/experiments/logit_prov/jevbench_judgement_zeroentropy_zerank-2-reranker.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.6234,
+      "correct": 144,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.6763,
+          "correct": 94,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.527,
+          "correct": 39,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6111,
+          "correct": 11,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.9792,
+          "correct": 47,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4595,
+          "correct": 51,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.6389,
+          "correct": 46,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_logit_Qwen_Qwen2.5-1.5B",
+      "model": {
+        "name": "Qwen/Qwen2.5-1.5B (base)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen2.5-1.5B",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen2.5-1.5B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4719,
+      "correct": 109,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4245,
+          "correct": 59,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5676,
+          "correct": 42,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.4444,
+          "correct": 8,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7708,
+          "correct": 37,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3694,
+          "correct": 41,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.4306,
+          "correct": 31,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_logit_Qwen_Qwen2.5-3B",
+      "model": {
+        "name": "Qwen/Qwen2.5-3B (base)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen2.5-3B",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen2.5-3B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4459,
+      "correct": 103,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4029,
+          "correct": 56,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5,
+          "correct": 37,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.5556,
+          "correct": 10,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7292,
+          "correct": 35,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3333,
+          "correct": 37,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.4306,
+          "correct": 31,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_logit_Qwen_Qwen3-4B-Base",
+      "model": {
+        "name": "Qwen/Qwen3-4B-Base (base)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-4B-Base",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Base.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4848,
+      "correct": 112,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4748,
+          "correct": 66,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5135,
+          "correct": 38,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.4444,
+          "correct": 8,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.8333,
+          "correct": 40,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3964,
+          "correct": 44,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.3889,
+          "correct": 28,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_logit_Qwen_Qwen3-4B-Instruct-2507",
+      "model": {
+        "name": "Qwen/Qwen3-4B-Instruct-2507 (instruct)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Instruct-2507.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4762,
+      "correct": 110,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4604,
+          "correct": 64,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.527,
+          "correct": 39,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.3889,
+          "correct": 7,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.8333,
+          "correct": 40,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3604,
+          "correct": 40,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.4167,
+          "correct": 30,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_logit_Qwen_Qwen3-4B-Thinking-2507",
+      "model": {
+        "name": "Qwen/Qwen3-4B-Thinking-2507 (instruct)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-4B-Thinking-2507",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Thinking-2507.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4459,
+      "correct": 103,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4245,
+          "correct": 59,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5,
+          "correct": 37,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.3889,
+          "correct": 7,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7708,
+          "correct": 37,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3423,
+          "correct": 38,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.3889,
+          "correct": 28,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_logit_Qwen_Qwen3-4B",
+      "model": {
+        "name": "Qwen/Qwen3-4B (instruct)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-4B",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4805,
+      "correct": 111,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4317,
+          "correct": 60,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5811,
+          "correct": 43,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.4444,
+          "correct": 8,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.875,
+          "correct": 42,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3423,
+          "correct": 38,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.4306,
+          "correct": 31,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_logit_Qwen_Qwen3-Reranker-4B",
+      "model": {
+        "name": "Qwen/Qwen3-Reranker-4B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-Reranker-4B",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-4B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4805,
+      "correct": 111,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4317,
+          "correct": 60,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5405,
+          "correct": 40,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6111,
+          "correct": 11,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.875,
+          "correct": 42,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3243,
+          "correct": 36,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.4583,
+          "correct": 33,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_logit_microsoft_Phi-4-mini-instruct",
+      "model": {
+        "name": "microsoft/Phi-4-mini-instruct (instruct)",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "microsoft/Phi-4-mini-instruct",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "model/experiments/logit_prov/jevbench_logit_microsoft_Phi-4-mini-instruct.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.5022,
+      "correct": 116,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4748,
+          "correct": 66,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5135,
+          "correct": 38,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6667,
+          "correct": 12,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7917,
+          "correct": 38,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3694,
+          "correct": 41,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.5139,
+          "correct": 37,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-jevbench_logit_zeroentropy_zerank-2-reranker",
+      "model": {
+        "name": "zeroentropy/zerank-2-reranker",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "zeroentropy/zerank-2-reranker",
+      "method": "zero-shot",
+      "readout": "continuation",
+      "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "source_file": "model/experiments/logit_prov/jevbench_logit_zeroentropy_zerank-2-reranker.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4372,
+      "correct": 101,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.3669,
+          "correct": 51,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.527,
+          "correct": 39,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6111,
+          "correct": 11,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7708,
+          "correct": 37,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3153,
+          "correct": 35,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.4028,
+          "correct": 29,
+          "total": 72
+        }
+      },
+      "latency_ms": null
     }
   ],
   "jev_comparison": {
     "agnews": {
       "jev": 0.79,
-      "best_model": "SmolLM2-1.7B",
-      "best_accuracy": 0.8
+      "best_model": "MiniCPM3-4B (instruct)",
+      "best_accuracy": 0.805
     },
     "arc": {
       "jev": 0.99,
-      "best_model": "Phi-4-mini-instruct",
-      "best_accuracy": 0.735
+      "best_model": "Ministral-3-3B-Base-2512",
+      "best_accuracy": 0.745
     },
     "authored144": {
       "jev": 0.9792,

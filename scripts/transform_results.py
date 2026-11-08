@@ -13,6 +13,20 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 EXPERIMENTS_DIR = REPO_ROOT / "model" / "experiments"
 OUTPUT_PATH = REPO_ROOT / "web" / "public" / "results" / "eval_results.json"
 
+
+def source_file_label(filepath: Path) -> str:
+    """Return the path a dashboard row can be traced back to.
+
+    Repo-relative where possible so the deploy guard can check it against
+    ``git ls-files``. A path outside the repository is returned verbatim and
+    the guard rejects it.
+    """
+    try:
+        return filepath.resolve().relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return str(filepath.resolve())
+
+
 # Benchmark type classification
 BENCHMARK_TYPES: dict[str, str] = {
     "agnews": "choice",
@@ -216,6 +230,7 @@ def transform_eval_file(filepath: Path) -> dict | None:
         "model": {"name": display_name, "params": params, "type": model_type},
         "method": method,
         "phase": "A" if is_phase_a else None,
+        "source_file": source_file_label(filepath),
         "n_benchmarks": len(benchmarks),
         "results": {
             "aggregate": {"accuracy": aggregate_accuracy, "n_benchmarks_with_accuracy": len(accuracies)},
@@ -301,7 +316,10 @@ def build_jev_comparison(eval_runs: list[dict]) -> dict:
 
 
 JEVBENCH_DIR = REPO_ROOT / "results" / "jevbench"
+LOGIT_PROV_DIR = REPO_ROOT / "model" / "experiments" / "logit_prov"
 
+# Display-only metadata for the trained-head and native-reranker files, which
+# record no model id of their own. Every number still comes from the file.
 JEVBENCH_META: dict[str, tuple[str, str, str]] = {
     "krino-ettin-150m-heads": ("Ettin-150m (trained)", "150M", "reranker"),
     "krino-modernbert-base-heads": ("ModernBERT-base (trained)", "149M", "encoder"),
@@ -310,48 +328,119 @@ JEVBENCH_META: dict[str, tuple[str, str, str]] = {
     "krino-qwen3-reranker-4b-heads": ("Qwen3-reranker-4B (trained)", "4B", "reranker"),
     "krino-qwen3-reranker-0.6b-heads": ("Qwen3-reranker-0.6B (trained)", "0.6B", "reranker"),
     "raw-qwen3-reranker-4b": ("Qwen3-reranker-4B (zero-shot)", "4B", "reranker"),
-    "logit_openbmb_MiniCPM5-2B-Base": ("MiniCPM5-2B-Base", "2B", "causal"),
-    "logit_mistralai_Ministral-3-3B-Base-2512": ("Ministral-3-3B-Base-2512", "3B", "causal"),
-    "logit_openbmb_MiniCPM3-4B": ("MiniCPM3-4B (instruct)", "4B", "causal"),
 }
+
+# ``_provenance.strategy`` -> the readout label the dashboard renders.
+READOUT_BY_STRATEGY: dict[str, str] = {
+    "judgement": "judgement",
+    "description": "continuation",
+    "reranker_native": "native-reranker",
+}
+
+
+def derive_readout(filepath: Path, raw: dict) -> str | None:
+    """Name the instrument that produced a JevBench cell.
+
+    ``_provenance.strategy`` is the record for zero-shot runs. The trained-head
+    files predate provenance and are identified by their ``-heads`` suffix; the
+    raw reranker files record ``mode``. ``None`` means the file cannot be
+    labelled, and the caller skips it instead of guessing.
+    """
+    provenance = raw.get("_provenance") or {}
+    strategy = provenance.get("strategy")
+    if strategy in READOUT_BY_STRATEGY:
+        return READOUT_BY_STRATEGY[strategy]
+    if raw.get("mode") == "raw_reranker":
+        return "native-reranker"
+    if filepath.stem.endswith("-heads"):
+        return "trained-heads"
+    return None
+
+
+def build_jevbench_run(filepath: Path) -> dict | None:
+    """Build one dashboard row from one committed JevBench result file."""
+    stem = filepath.stem
+    raw = json.loads(filepath.read_text())
+    provenance = raw.get("_provenance") or {}
+
+    readout = derive_readout(filepath, raw)
+    if readout is None:
+        print(f"  WARNING: cannot derive a readout for jevbench/{stem}, skipping")
+        return None
+
+    # Files written by eval_jevbench_logit.py nest the aggregate under
+    # "summary"; the trained-head files put the same keys at the top level.
+    summary = raw.get("summary", raw)
+    overall = summary.get("overall") or raw.get("overall") or {}
+    by_type = summary.get("by_type", {})
+    by_tier = summary.get("by_tier", {})
+    latency = raw.get("latency", {})
+
+    model_id = provenance.get("model_id") or raw.get("model")
+    meta = JEVBENCH_META.get(stem)
+    if meta:
+        display_name, params, model_type = meta
+    elif model_id:
+        variant = provenance.get("variant")
+        display_name = f"{model_id} ({variant})" if variant else model_id
+        # Provenance records the checkpoint, not its parameter count or
+        # architecture class. Neither is asserted here.
+        params, model_type = "—", "unknown"
+    else:
+        print(f"  WARNING: no model id for jevbench/{stem}, skipping")
+        return None
+
+    return {
+        "run_id": f"jevbench-{stem}",
+        "model": {"name": display_name, "params": params, "type": model_type},
+        "model_id": model_id,
+        "method": "trained-heads" if readout == "trained-heads" else "zero-shot",
+        "readout": readout,
+        "readout_detail": provenance.get("readout"),
+        "source_file": source_file_label(filepath),
+        "benchmark": "jevbench",
+        "n": raw.get("n") or overall.get("total", 0),
+        "accuracy": round(overall.get("accuracy", 0), 4),
+        "correct": overall.get("correct", 0),
+        "total": overall.get("total", 0),
+        "by_type": {k: {"accuracy": round(v["accuracy"], 4), "correct": v["correct"], "total": v["total"]}
+                    for k, v in by_type.items()},
+        "by_tier": {k: {"accuracy": round(v["accuracy"], 4), "correct": v["correct"], "total": v["total"]}
+                    for k, v in by_tier.items()},
+        "latency_ms": round(latency.get("mean_s", 0) * 1000, 1) if latency else None,
+    }
+
+
+def jevbench_source_files() -> list[Path]:
+    """Every committed file that supplies a JevBench row.
+
+    ``results/jevbench`` holds the trained-head, native-reranker and three
+    continuation cells. ``logit_prov`` holds the judgement and continuation
+    cells that carry ``_provenance``. The ``jevbench_reranker_*`` files in
+    ``logit_prov`` are not listed: ``raw-qwen3-reranker-4b.json`` already
+    supplies that checkpoint's native-reranker row, and pairing the two would
+    put two numbers under one label.
+    """
+    paths: list[Path] = []
+    if JEVBENCH_DIR.exists():
+        for filepath in sorted(JEVBENCH_DIR.glob("*.json")):
+            if filepath.stem in JEVBENCH_META or filepath.stem.startswith("logit_"):
+                paths.append(filepath)
+    if LOGIT_PROV_DIR.exists():
+        for pattern in ("jevbench_judgement_*.json", "jevbench_logit_*.json"):
+            paths.extend(sorted(LOGIT_PROV_DIR.glob(pattern)))
+    return paths
 
 
 def transform_jevbench() -> list[dict]:
     """Transform JevBench result files into dashboard format."""
     runs = []
-    for filepath in sorted(JEVBENCH_DIR.glob("*.json")):
-        stem = filepath.stem
-        if stem not in JEVBENCH_META:
-            print(f"  WARNING: no metadata for jevbench/{stem}, skipping")
-            continue
-
-        raw = json.loads(filepath.read_text())
-        display_name, params, model_type = JEVBENCH_META[stem]
-
-        # Files written by eval_jevbench_logit.py nest the aggregate under
-        # "summary"; the trained-head files put the same keys at the top level.
-        summary = raw.get("summary", raw)
-        overall = summary.get("overall", {})
-        by_type = summary.get("by_type", {})
-        by_tier = summary.get("by_tier", {})
-        latency = raw.get("latency", {})
-
-        runs.append({
-            "run_id": f"jevbench-{stem}",
-            "model": {"name": display_name, "params": params, "type": model_type},
-            "method": "logit" if stem.startswith("logit_") else "trained-heads",
-            "benchmark": "jevbench",
-            "accuracy": round(overall.get("accuracy", 0), 4),
-            "correct": overall.get("correct", 0),
-            "total": overall.get("total", 0),
-            "by_type": {k: {"accuracy": round(v["accuracy"], 4), "correct": v["correct"], "total": v["total"]}
-                        for k, v in by_type.items()},
-            "by_tier": {k: {"accuracy": round(v["accuracy"], 4), "correct": v["correct"], "total": v["total"]}
-                        for k, v in by_tier.items()},
-            "latency_ms": round(latency.get("mean_s", 0) * 1000, 1) if latency else None,
-        })
-        print(f"  {stem}: {overall.get('accuracy', 0):.1%} ({overall.get('correct')}/{overall.get('total')})")
-
+    for filepath in jevbench_source_files():
+        run = build_jevbench_run(filepath)
+        if run:
+            runs.append(run)
+            print(f"  {run['run_id']}: {run['readout']} "
+                  f"{run['accuracy']:.1%} ({run['correct']}/{run['total']})")
     return runs
 
 
@@ -378,7 +467,7 @@ def main() -> None:
                   f"best_acc={result['best_accuracy']}")
 
     print(f"\nProcessing JevBench files...")
-    jevbench_runs = transform_jevbench() if JEVBENCH_DIR.exists() else []
+    jevbench_runs = transform_jevbench()
 
     jev_comparison = build_jev_comparison(eval_runs)
 

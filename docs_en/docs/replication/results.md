@@ -28,16 +28,18 @@ Average accuracy ranking across choice + noul benchmarks (200 items per benchmar
 
 | Rank | Model | Params | Type | Avg Accuracy |
 |------|-------|--------|------|-------------|
-| 1 | Qwen2.5-7B-Instruct | 7B | Causal | 68.5% |
-| 2 | Phi-4-mini | 3.8B | Causal | 65.0% |
-| 3 | **Ettin-400m** | **400M** | **Reranker** | **59.4%** |
-| 4 | Qwen2.5-1.5B | 1.5B | Causal | 59.2% |
-| 5 | Qwen3-1.7B | 1.7B | Causal | 54.2% |
-| 6 | Ettin-150m | 150M | Reranker | 53.5% |
-| 7 | Qwen2.5-0.5B | 0.5B | Causal | 53.5% |
-| 8 | SmolLM2-1.7B | 1.7B | Causal | 51.1% |
-| 9 | Ettin-68m | 68M | Reranker | 50.4% |
-| 10 | Qwen3-0.6B | 0.6B | Causal | 47.8% |
+| 1 | Qwen2.5-7B-Instruct | 7B | Causal | 67.1% |
+| 2 | Phi-4-mini | 3.8B | Causal | 64.4% |
+| 3 | **Ettin-400m** | **400M** | **Reranker** | **59.0%** |
+| 4 | Qwen2.5-1.5B | 1.5B | Causal | 58.4% |
+| 5 | Qwen3-1.7B | 1.7B | Causal | 53.6% |
+| 6 | Ettin-150m | 150M | Reranker | 53.2% |
+| 7 | Qwen2.5-0.5B | 0.5B | Causal | 52.4% |
+| 8 | SmolLM2-1.7B | 1.7B | Causal | 50.7% |
+| 9 | Ettin-68m | 68M | Reranker | 50.1% |
+| 10 | Qwen3-0.6B | 0.6B | Causal | 47.7% |
+
+The average is the unweighted mean over the 16 `choice` and `noul` benchmarks, computed by `scripts/transform_results.py::get_accuracy_for_aggregate` from the committed `model/experiments/phaseA_*.json` files; the three `score` benchmarks are excluded and reported as MAE. An earlier version of this table quoted 68.5 / 65.0 / 59.4 / 59.2 / 54.2 / 53.5 / 53.5 / 51.1 / 50.4 / 47.8. Those values are not reproducible from any committed file and are superseded by the column above.
 
 Vanilla ModernBERT (base/large) scored near random on most benchmarks — embedding-similarity scoring without training is not viable for typed decisions.
 
@@ -185,7 +187,7 @@ Total trainable: ~301K–402K params depending on backbone hidden size. Backbone
 
 2. **Head capacity matters for reranker backbones but not vanilla encoders.** Ettin-150m improves from 93.8% (rank 64) to 95.2% (rank 128). ModernBERT-base stays flat (89.0% → 88.4%). The reranker backbone has richer representations that only manifest with sufficient head capacity.
 
-3. **Training > scaling.** A 0.6B causal LM with 402K trained heads (93.2%) beats a 7B causal LM with zero-training logit readout (68.5% average across 19 benchmarks).
+3. **Training > scaling.** A 0.6B causal LM with 402K trained heads (93.2%) beats a 7B causal LM with zero-training logit readout (67.1% average across the 16 choice+noul benchmarks).
 
 4. **Ettin-400m underperforms Ettin-150m** (91.6% vs 93.8%). Training instability at epoch 4 (accuracy dropped 89.0% → 75.2% before recovering) suggests the 1e-3 learning rate is too aggressive for the larger backbone.
 

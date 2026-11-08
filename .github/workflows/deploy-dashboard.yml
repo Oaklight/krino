@@ -6,7 +6,9 @@ on:
     paths:
       - "web/**"
       - "model/experiments/**"
+      - "results/**"
       - "scripts/transform_results.py"
+      - "scripts/check_results_provenance.py"
       - "docs_en/**"
   workflow_dispatch:
 
@@ -29,6 +31,9 @@ jobs:
 
       - name: Transform experiment results
         run: python scripts/transform_results.py
+
+      - name: Check every dashboard row traces to a committed file
+        run: python scripts/check_results_provenance.py
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

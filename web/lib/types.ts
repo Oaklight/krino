@@ -17,6 +17,7 @@ export interface EvalRun {
   };
   method: string;
   phase: string | null;
+  source_file: string;
   n_benchmarks: number;
   results: {
     aggregate: {
@@ -69,10 +70,15 @@ export interface JevBenchRun {
   model: {
     name: string;
     params: string;
-    type: "causal" | "encoder" | "reranker" | "moe" | "api";
+    type: "causal" | "encoder" | "reranker" | "moe" | "api" | "unknown";
   };
+  model_id: string | null;
   method: string;
+  readout: string;
+  readout_detail: string | null;
+  source_file: string;
   benchmark: string;
+  n: number;
   accuracy: number;
   correct: number;
   total: number;
