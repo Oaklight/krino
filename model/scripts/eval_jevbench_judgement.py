@@ -51,9 +51,12 @@ from model.evaluation.jevbench import summarize  # noqa: E402
 from model.evaluation.judgement_prompt import (  # noqa: E402
     JUDGEMENT_TEMPLATE,
     NO,
+    POLARITY_TEMPLATE,
     YES,
     candidates,
+    polarity_gold,
     render,
+    render_polarity,
 )
 from model.evaluation.run_provenance import build_run_provenance  # noqa: E402
 from model.src.backbone import load_causal_lm  # noqa: E402
@@ -62,12 +65,30 @@ from model.src.logit_scorer import LogitScorer  # noqa: E402
 
 def score_item(scorer: LogitScorer, item: Any) -> dict[str, Any] | None:
     """Rank one item's options by the judgement readout."""
-    prepared = candidates(item)
-    if prepared is None:
-        return None
-    texts, gold = prepared
     instructions = item.question.get("instructions", "")
 
+    prepared = candidates(item)
+    if prepared is None:
+        gold_positive = polarity_gold(item)
+        if gold_positive is None:
+            return None
+        # One proposition and no option text: read the answer at ``Answer:``.
+        scores = scorer.score_options(
+            render_polarity(item.state, instructions), [YES, NO]
+        )
+        delta = scores[0] - scores[1]
+        return {
+            "type": item.question.get("type", "noul"),
+            "logits": [delta],
+            "label_order": [0],
+            "label_idx": 0,
+            "option_count": 1,
+            "correct": (delta > 0) == gold_positive,
+            "mode": "polarity",
+            "_item": item,
+        }
+
+    texts, gold = prepared
     logp_yes = []
     for text in texts:
         scores = scorer.score_options(
@@ -81,6 +102,7 @@ def score_item(scorer: LogitScorer, item: Any) -> dict[str, Any] | None:
         "label_order": list(range(len(texts))),
         "label_idx": gold,
         "option_count": len(texts),
+        "mode": "option",
         "_item": item,
     }
 
@@ -147,6 +169,7 @@ def main() -> int:
                 # Written for every type, including noul, so a consumer that
                 # reads predicted_idx never has to fall back to the score array.
                 "predicted_idx": record["logits"].index(max(record["logits"])),
+                "mode": record.get("mode", "option"),
                 "correct": None,
             }
         )
@@ -174,8 +197,10 @@ def main() -> int:
         extra={
             "readout": 'per-option judgement, log P(" yes") against log P(" no") at "Answer:"',
             "prompt_template": JUDGEMENT_TEMPLATE,
+            "polarity_template": POLARITY_TEMPLATE,
             "option_texts": "noul: question criteria, true first; choice: description; "
-                            "score: 'Level {i}: {description}'",
+                            "score: 'Level {i}: {description}'; noul without criteria: "
+                            "one proposition, log P(yes)-log P(no) at Answer:",
             "elapsed_s": round(elapsed, 1),
         },
     )

@@ -21,8 +21,41 @@ JUDGEMENT_TEMPLATE = (
     "Does this option correctly answer the question? Answer:"
 )
 
+# A noul item without criteria has no option text worth judging: the question is
+# the proposition, so the readout reads the answer at ``Answer:`` directly.
+POLARITY_TEMPLATE = "State: {state}\nQuestion: {instructions}\nAnswer:"
+
 YES = " yes"
 NO = " no"
+
+
+def has_criteria(criteria: Any) -> bool:
+    """Whether a noul item carries its own answer wording."""
+    return isinstance(criteria, dict) and bool(
+        criteria.get("true") or criteria.get("false")
+    )
+
+
+def polarity_gold(item: Any) -> bool | None:
+    """The gold answer for a criteria-less noul item, or ``None`` if it is not one.
+
+    JevBench's 74 noul items all carry criteria, so this returns ``None`` for
+    every acceptance-set item and the branch cannot be tuned against it.
+    """
+    question = item.question
+    if question.get("type", "noul") != "noul":
+        return None
+    if has_criteria(question.get("criteria")):
+        return None
+    label = item.label
+    if isinstance(label, bool):
+        return label
+    text = str(label).strip().lower()
+    if text in ("true", "yes", "1", "y"):
+        return True
+    if text in ("false", "no", "0", "n"):
+        return False
+    return None
 
 
 def candidates(item: Any) -> tuple[list[str], int] | None:
@@ -39,7 +72,11 @@ def candidates(item: Any) -> tuple[list[str], int] | None:
     if q_type == "noul":
         from model.evaluation.prompt_options import noul_option_texts
 
-        texts = [text.strip() for text in noul_option_texts(question.get("criteria"))]
+        criteria = question.get("criteria")
+        if not has_criteria(criteria):
+            # No option text to judge; the caller reads polarity at ``Answer:``.
+            return None
+        texts = [text.strip() for text in noul_option_texts(criteria)]
         positive = (
             item.label
             if isinstance(item.label, bool)
@@ -68,3 +105,8 @@ def render(state: str, instructions: str, option: str) -> str:
     return JUDGEMENT_TEMPLATE.format(
         state=state, instructions=instructions, option=option
     )
+
+
+def render_polarity(state: str, instructions: str) -> str:
+    """The one-proposition prompt: the question is answered at ``Answer:``."""
+    return POLARITY_TEMPLATE.format(state=state, instructions=instructions)

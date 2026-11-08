@@ -46,6 +46,10 @@ def record_correct(
             callers that score in bulk, so the rule is shared without paying for
             a second softmax.
     """
+    if "correct" in record:
+        # A record whose decision is not an argmax over options - a single
+        # proposition answered yes/no - states its own outcome.
+        return bool(record["correct"])
     if prediction is None:
         probabilities = softmax([value / temperature for value in record["logits"]])
         prediction = tie_stable_argmax(probabilities, record["label_order"])

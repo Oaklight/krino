@@ -12,9 +12,12 @@ from types import SimpleNamespace
 from model.evaluation.judgement_prompt import (
     JUDGEMENT_TEMPLATE,
     NO,
+    POLARITY_TEMPLATE,
     YES,
     candidates,
+    polarity_gold,
     render,
+    render_polarity,
 )
 
 
@@ -33,10 +36,34 @@ def test_noul_keeps_the_questions_own_wording_true_first():
     assert gold == 0
 
 
-def test_noul_false_label_points_at_the_second_option():
-    texts, gold = candidates(_item("noul", None, False))
-    assert texts == ["yes", "no"]
-    assert gold == 1
+def test_noul_without_criteria_is_not_an_option_set():
+    # No criteria means no option text to judge; the caller reads polarity at
+    # Answer: instead of asking whether the word "yes" answers the question.
+    assert candidates(_item("noul", None, False)) is None
+    assert candidates(_item("noul", {}, True)) is None
+
+
+def test_polarity_gold_reads_a_boolean_label():
+    assert polarity_gold(_item("noul", None, True)) is True
+    assert polarity_gold(_item("noul", None, False)) is False
+    assert polarity_gold(_item("noul", None, "yes")) is True
+    assert polarity_gold(_item("noul", None, "False")) is False
+
+
+def test_polarity_branch_never_fires_on_a_criteria_bearing_noul():
+    # Every JevBench noul item carries criteria, so the acceptance set cannot
+    # reach this branch and the repair cannot be tuned against it.
+    assert polarity_gold(_item("noul", {"true": "Sí", "false": "No"}, True)) is None
+
+
+def test_polarity_branch_is_noul_only():
+    assert polarity_gold(_item("choice", None, "a")) is None
+    assert polarity_gold(_item("score", ["low", "high"], 1)) is None
+
+
+def test_polarity_template_has_no_option_line():
+    assert render_polarity("S", "Q") == "State: S\nQuestion: Q\nAnswer:"
+    assert "Option:" not in POLARITY_TEMPLATE
 
 
 def test_choice_presents_descriptions_and_indexes_the_gold_key():
@@ -66,3 +93,16 @@ def test_template_ends_with_the_answer_cue():
 
 def test_the_scored_pair_is_yes_then_no():
     assert (YES, NO) == (" yes", " no")
+
+
+def test_record_correct_honours_an_explicit_outcome():
+    from model.evaluation.jevbench import record_correct
+
+    # A one-proposition record states its own outcome; the argmax over a single
+    # logit would otherwise be correct by construction.
+    assert record_correct(
+        {"logits": [1.0], "label_order": [0], "label_idx": 0, "correct": False}
+    ) is False
+    assert record_correct(
+        {"logits": [-1.0], "label_order": [0], "label_idx": 0, "correct": True}
+    ) is True
