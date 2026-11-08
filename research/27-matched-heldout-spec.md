@@ -41,12 +41,13 @@ number.
 
 **Instrument limit.** 2.0 pp at 6,400 items is the same size as the project's effect
 floor. The set resolves that floor at 79% power, not 80%: the exact two-sided McNemar
-power at 32.4% discordance is 0.792, while 6,357 is the count the normal approximation
-returns for 0.80. The gap is exact-test discreteness, so a true 2.0 pp effect is missed
-about one run in five. Nothing smaller is resolvable at the planning discordance. That is
-a property of the instrument (6,400 paired items at 32.4% discordance), not of any
-result. Keep the set fixed and recompute the detectable effect at the realized
-discordance after the first two runs.
+power at 32.4% discordance is 0.792 at 6,400 items, while 6,357 reaches 0.800. The
+difference is exact-test discreteness — the discordant count is an integer, so power is
+not monotone in the item count and 6,400 lands one rounding step below 6,357. A true
+2.0 pp effect is therefore missed about one run in five. Nothing smaller is resolvable at
+the planning discordance. That is a property of the instrument (6,400 paired items at
+32.4% discordance), not of any result. Keep the set fixed and recompute the detectable
+effect at the realized discordance after the first two runs.
 
 Per-type power at the quotas below, at the same 32.4% discordance:
 
