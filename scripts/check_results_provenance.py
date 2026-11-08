@@ -126,8 +126,32 @@ def check_eval_run(run: dict, tracked: set[str]) -> list[str]:
     return _compare_fields(run, expected, EVAL_FIELDS, run_id, run["source_file"])
 
 
+def check_landing(data: dict, tracked: set[str]) -> list[str]:
+    expected = transform.build_landing(
+        data.get("jevbench_runs", []),
+        data.get("eval_runs", []),
+        data.get("training_runs", []),
+    )
+    errors: list[str] = []
+    if data.get("landing") != expected:
+        errors.append("landing: block does not match the committed files")
+    sources: set[str] = set()
+    for section in ("judgement_vs_continuation", "post_trained_4b", "resolution"):
+        sources.update(expected[section].get("source_files", []))
+    for field in ("trained_source_file", "jev_source_file"):
+        value = expected["banking77"].get(field)
+        if value:
+            sources.add(value)
+    for source in sorted(sources):
+        if source not in tracked:
+            errors.append(f"landing: source is not a committed file: {source}")
+    return errors
+
+
 def check_results(data: dict, tracked: set[str]) -> list[str]:
     errors: list[str] = []
+    if "landing" in data:
+        errors.extend(check_landing(data, tracked))
     seen: set[str] = set()
     for run in data.get("jevbench_runs", []):
         errors.extend(check_jevbench_run(run, tracked))
@@ -156,8 +180,9 @@ def main() -> int:
         return 1
 
     print(
-        f"OK: {len(data.get('jevbench_runs', []))} JevBench rows and "
-        f"{len(data.get('eval_runs', []))} eval rows trace to committed files"
+        f"OK: {len(data.get('jevbench_runs', []))} JevBench rows, "
+        f"{len(data.get('eval_runs', []))} eval rows and the landing block "
+        f"trace to committed files"
     )
     return 0
 
