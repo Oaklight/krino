@@ -196,10 +196,14 @@ score benchmarks, so this compares two instruments, not two samples of one.
    `research/34`), and both independent-per-option readouts break the constant
    for intent:
 
-   | subtask | continuation (base / reranker / post) | native (reranker / post) | judgement (reranker / base / post) |
+   The cells are **accuracies, `correct/12`** — 6 questions times 2 paraphrases —
+   for that subtask in that cell. The index notes are the separate concentration
+   fact and are stated where they matter, not encoded in the fractions.
+
+   | subtask | continuation accuracy (base / reranker / post) | native accuracy (reranker / post) | judgement accuracy (reranker / base / post) |
    |---|---:|---:|---:|
-   | original/intent | 2/12 / 2/12 / 2/12, constant at 2 | 10/12 / 6/12 | 9/12 / 9/12 / 10/12 |
-   | original/routing | 2/12 / 2/12 / 3/12 | 5/12 / 2/12 | 6/12 / 3/12 / 3/12 |
+   | original/intent | 2/12 / 2/12 / 2/12, all constant at index 2 | 10/12 / 6/12 | 9/12 / 9/12 / 10/12 |
+   | original/routing | 2/12 / 2/12 / 3/12, index 3 for the first two | 5/12 / 2/12 | 6/12 / 3/12 / 3/12 |
 
    Routing has exceptions inside the independent readouts: the wrapped reranker
    prompt moves the base to index 5 for 11 of 12 predictions (3/12 correct), and
