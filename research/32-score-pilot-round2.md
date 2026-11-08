@@ -211,12 +211,59 @@ the text, not of the solution, so it passes at 9% despite being a reasoning
 benchmark. That is where the remaining score data can come from: states with a
 text-property rubric. It is not worth a week redesigning logiqa or race rubrics.
 
+The cap-off control gives the rule its cleanest example in the other direction.
+`apigen_tool_next_action` asks what the next action should be, which is a
+property of the solution, and with the level-0 filter removed it puts 91.4% of
+rows at level 0 - the same collapse as round one, with the filter taken away.
+The reading is that the rubric is asking for a dimension the state does not
+carry; rewording that rubric is not the lever, and the state property rule is
+what says so.
+
 The synthetic rows in this pilot are 15 synthetic states re-scored with the
 default decision-clarity rubric, because the rubric map has no synthetic-domain
 entry. Fifteen states scored under a default rubric that has no domain entry is
 a result about a missing entry in the rubric map, not a result about synthetic
 data. It says nothing about the corpus's existing score rows, which use the
 per-domain severity/quality/difficulty templates.
+
+## The cap-off control
+
+After round two, the same two families were labelled with `--level0-cap 0` and
+nothing else changed: the generator and library hashes are byte-identical to the
+round-two run, 350 candidates were drawn per family, 350 were accepted, and
+nothing was rejected. The level-0 share is therefore unconstrained at this
+sample size, not censored by a filter. Counters are in
+`data/score_generation_control_counters.json`.
+
+| family | level-0 share, cap off | Wilson 95% | under the cap (round two) |
+|---|---:|---|---:|
+| apigen_tool_next_action | 91.4% | [88.0, 93.9] | 52% |
+| commonsenseqa | 53.7% | [48.5, 58.9] | 56% |
+
+The reading is per family, and it does not go the same way in both.
+
+- **apigen_tool_next_action: the cap was masking the collapse, not creating
+  it.** With the filter off the family is 91.4% level 0, worse than under the
+  cap and consistent with round one's 92%. Its rubric was not redesigned, and
+  the control says there was nothing for a redesign to recover: the rubric asks
+  for a property of the next action, not of the state, so the evidence is not in
+  the state to be read. It is the strongest example in the set of a rubric that
+  cannot see its evidence.
+- **commonsenseqa: the cap was not producing its level-0 share either.** 53.7%
+  with the cap off against the pilot's 56%; the two bracket each other inside
+  the interval. Its disagreement drop from 80% to 0% is the redesign's, not the
+  cap's. The aggregate share also hides the shape: the uncapped rows are bimodal
+  at level 0 (188) and level 3 (141), not spread.
+
+So the decomposition below holds, and is firmer in one respect: the cap's
+contribution to the level-0 fall is small, and on the one family where it was
+doing anything it was holding the number down rather than creating it.
+
+The caveat travels with the number: one seeded sample of 350 per family, so this
+settles a direction, not eligibility. The twelve-family set above is computed
+from round two's capped rows and does not change; the control is not a second
+eligibility criterion. Round two's rows were measured under the cap and remain
+valid as such.
 
 ## What round two says
 
@@ -234,13 +281,13 @@ per-domain severity/quality/difficulty templates.
    to 19.6% (479 to 525 rows; `swag` has no round-one row).
    `apigen_tool_next_action` lost 133 of its 163 candidates to the cap (one more
    was a post-target skip) and still sits at 52%. The recomputation uses the
-   rounded per-family percentages, so it carries about a point of error; a
-   two-family run with the redesigned rubric at `--level0-cap 0` would settle it
-   outright. It is queued, with one caveat that belongs in the record: at n≈25
-   accepted rows the level-0 share has a standard error near 10 points, so a
-   single control run reports a point estimate with a wide interval, not a
-   verdict. The eligibility rule above, which uses the interval rather than the
-   point estimate, is what decides; the run is a check on direction.
+   rounded per-family percentages, so it carries about a point of error. The
+   cap-off control above settles the direction: for `apigen_tool_next_action`
+   the cap was holding the level-0 share down, not producing it (91.4% without
+   it), and for `commonsenseqa` the cap changed nothing (53.7% against 56%). It
+   does not settle magnitude - one seeded sample of 350 per family, so the
+   interval is wide and the eligibility rule above, which is interval-based, is
+   what decides.
 2. **The cap works.** Every accepted row satisfies the running ceiling
    `level0 <= ceil(0.5 * n)` for its source; in this run the smallest source is
    large enough that no source ends above 54%, but that maximum is a fact about
