@@ -12,18 +12,20 @@ A gate is a suggestion with evidence attached. A pass/fail verdict that people t
 
 ## Why this shape
 
-Measured paired power, exact two-sided McNemar at alpha 0.05, discordance 0.23 on JevBench and 0.20 elsewhere, at 80% power (`model/evaluation/paired_power.py`):
+Paired power, exact two-sided McNemar at alpha 0.05, 80% power, computed with `model/evaluation/paired_power.py`. **The discordance is measured per row and stated with it**, because a single header cannot reproduce four rows: the hard tier's rate is 0.333 and the public set's is 0.229 from the same pair.
 
-| instrument | n | effective n | detectable difference |
-|---|---:|---:|---:|
-| JevBench public | 231 | 231 | 9.3 pp |
-| JevBench hard tier | 111 | 111 | 14.9 pp |
-| dev | 812 | 562–709 | 5.2–5.9 pp |
-| frozen held-out | 5,426 | about 3,600 | 1.7–2.3 pp |
+| instrument | n | effective n | discordance | detectable difference |
+|---|---:|---:|---:|---:|
+| JevBench public | 231 | 231 | 0.229 measured (53/231, `Qwen3-4B` vs `Qwen3-Reranker-4B`) | 9.3 pp |
+| JevBench hard tier | 111 | 111 | 0.333 measured (37/111, same pair) | 14.9 pp |
+| dev | 812 | 562–709 | 0.238 measured (193/812, `Reranker-4B` vs `Reranker-8B`) | 4.9 pp at the raw n; 5.2–5.8 pp at the effective n |
+| frozen held-out | 5,426 | about 3,600 | **0.20 assumed, not measured** | 1.7 pp at the raw n; 2.1 pp at the effective n |
+
+The held-out row is the only one that does not rest on a measurement: nothing has been scored against it under this readout, so 0.20 is an assumption and the row is a planning figure. Treat it as "a couple of points", not as 2 pp.
 
 The project's interesting effects are 1–3 pp.
 
-The concrete case that forced this policy: an 8B reranker scored 149 against a 4B reranker's 150 on JevBench (net −1, p = 1.0, 39 discordant, 7.6 pp detectable) and 527 against 478 on the 812-row dev set (net +49, p = 5.2e-4). The acceptance instrument called a real 6 pp difference a tie. That is not a model finding, it is a statement about 231 items.
+The concrete case that forced this policy: an 8B reranker scored 149 against a 4B reranker's 150 on JevBench (net −1, p = 1.0, 39 discordant, 7.6 pp detectable) and 527 against 478 on the 812-row dev set (net +49, p = 5.2e-4). The acceptance instrument called a difference the dev set resolved a tie. That is not a model finding, it is a statement about 231 items.
 
 ## Instrument roles
 
@@ -66,7 +68,7 @@ These states are not mutually exclusive. An arm can pass the coarse safety scree
 
 The JevBench coarse margin is **delta = 8 pp of chance-corrected accuracy**. Derivation: the 9.3 pp floor implies a standard error of about 9.3/2.80 = 3.3 pp; a one-sided 80% test at a true difference of zero needs about (1.645 + 0.84) x 3.3 = 8.2 pp.
 
-**Eight points is the instrument's resolution, not a scientific tolerance.** A genuine 6 pp regression passes this screen. The correct sentence is "passes the coarse JevBench safety screen", never "non-inferior".
+**Eight points is the instrument's resolution, not a scientific tolerance.** A genuine 6 pp regression passes this screen: 8 pp is the pass-side margin, and a true 8 pp regression lands in "material regression supported" only about 2.5% of the time under the two-sided 95% bound the states use. It is not the detection threshold, and it should not be read as one. The correct sentence is "passes the coarse JevBench safety screen", never "non-inferior".
 
 The hard tier is worse — 14.9 pp — so it is reported diagnostically and does not carry its own veto.
 
@@ -82,7 +84,7 @@ For work from here on, one of three designs must be chosen before the outcomes a
 
 When the instruments disagree, the gate produces an investigation request naming which instrument said what, what each can and cannot resolve, and what evidence would settle it. It does not average the instruments, does not pick the more favourable one, and does not convert a disagreement into a no.
 
-Worked example from `#307`:
+Worked example from `#307`, whose dev comparison is post hoc:
 
 > dev strongly favours the 8B reranker (+49 of 812, p = 5.2e-4). JevBench is uninformative about a difference of that size and does not support a material regression. Promotion remains contingent on the held-out result.
 
