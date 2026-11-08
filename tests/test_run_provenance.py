@@ -45,9 +45,9 @@ def test_environment_records_the_gdn_kernel_path():
     info = environment_info()
     for key in ("fla", "causal_conv1d"):
         assert info[key] in ("available", "absent")
-    assert info["kernel_path"] in ("fused", "reference")
+    assert info["gdn_kernel_path"] in ("fused", "reference")
     expected = "fused" if info["fla"] == info["causal_conv1d"] == "available" else "reference"
-    assert info["kernel_path"] == expected
+    assert info["gdn_kernel_path"] == expected
 
 
 def test_environment_says_unavailable_without_torch():

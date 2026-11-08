@@ -28,6 +28,13 @@ Usage:
         --datasets /data/benchmarks/openjev/authored144.jsonl /data/benchmarks/agnews.jsonl ... \
         --status-dir /tmp/krino-out/qwen35 \
         /tmp/krino-out/qwen35/part_0.json ... /tmp/krino-out/qwen35/part_7.json
+
+It has no caller in the repository today: the only run it was written for, the
+Qwen3.5-4B row of #277, was dropped when that model left the screen.  It is kept
+because the next sharded eval needs it and because the refusals are the protocol
+- provenance that agrees apart from the per-shard fields, every benchmark
+exactly once, item counts that match their scored counts, and a zero exit from
+every shard - and a protocol is worth having before the run that needs it.
 """
 
 from __future__ import annotations

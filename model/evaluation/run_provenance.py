@@ -35,7 +35,12 @@ def environment_info() -> dict[str, str]:
     here rather than at module scope so this module stays importable - and
     testable - without the model stack installed.
 
-    ``kernel_path`` records whether the GDN kernels ran fused or by reference.
+    ``gdn_kernel_path`` records whether the GDN kernels ran fused or by
+    reference.  It is derived from package availability, not from what the
+    model did: a dense run in an environment that has the packages writes
+    ``fused`` and never touches a GDN kernel, which is why the field is named
+    for the kernel family rather than for the run.
+
     Qwen3.5's linear-attention layers use ``flash-linear-attention`` and
     ``causal_conv1d`` when both are importable and fall back to PyTorch
     otherwise; the two paths compute the same quantity, but a bf16 reduction
@@ -72,7 +77,7 @@ def environment_info() -> dict[str, str]:
     }
     for name, present in fused_kernels.items():
         info[name] = "available" if present else "absent"
-    info["kernel_path"] = "fused" if all(fused_kernels.values()) else "reference"
+    info["gdn_kernel_path"] = "fused" if all(fused_kernels.values()) else "reference"
     return info
 
 
