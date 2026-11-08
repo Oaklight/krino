@@ -207,6 +207,13 @@ internal suite. Two instruments, opposite rankings, margins of 0.8 and 1.7 pp.
 **These numbers do not order `Qwen3-4B-Base` against `Phi-4-mini-instruct`**, and
 choosing between them has to rest on grounds this sweep does not supply.
 
+The 1.74 pp is also smaller than it sounds. On those 231 items the two checkpoints
+agree on the correctness verdict for 197 (85.3%) and predict the same option index
+for 187 (81.0%). The margin is a net of 4 items: 15 that only `Qwen3-4B-Base`
+gets right against 19 that only `Phi-4-mini` does. Part of that agreement is
+inherited from the constant `original` cells above, which both answer identically.
+A 4-item net on 231 is not two models reading the set differently.
+
 A base checkpoint sitting slightly behind an instruct checkpoint of the same size
 is also the expected direction, not a failure. More to the point, neither column
 says which is the better *starting point* for training, which is the only
