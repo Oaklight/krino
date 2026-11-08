@@ -128,6 +128,14 @@ The `cap` and `degenerate` columns are the rejected calls; `accepted + cap +
 degenerate` plus any post-target skip is the call count. Both columns are from
 `data/score_generation_counters.json`.
 
+The accepted rate includes the cap in its denominator, so the rate moves with
+`--level0-cap`. That is deliberate for a decision about this pipeline, but the
+cap column lets a reader remove it: with cap rejects out of the denominator, a
+source's rate is accepted over (calls - cap). Under that denominator every
+family clears the 30% bound except commonsenseqa, at 13 of 43 (30.2%, lower
+bound 18.6%), and the eligible set is unchanged at the same twelve. The cap
+changes how many rows a family yields, not whether it is eligible.
+
 | source | accepted | cap | degenerate | calls | disagreement | upper 95% | rate | lower 95% | eligible |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | 2wiki_long_choice | 23 | 1 | 1 | 25 | 21.7% | 41.9% | 92.0% | 75.0% | no |
