@@ -1,0 +1,3043 @@
+{
+  "_provenance": {
+    "model_id": "openbmb/MiniCPM5-2B-Base",
+    "revision": "96a57cd572a02506b4500f54427dca24970c1bac",
+    "snapshot_path": "<host>/.cache/huggingface/hub/models--openbmb--MiniCPM5-2B-Base/snapshots/96a57cd572a02506b4500f54427dca24970c1bac",
+    "dtype": "bfloat16",
+    "device": "cuda:0",
+    "code_commit": "33506b86990f0eaa3fdcdf5c0ef3075905edd80f",
+    "date_utc": "2026-11-08T04:47:18Z",
+    "readout": "option-text continuation, mean-normalised log-prob",
+    "strategy": "description",
+    "norm": "mean",
+    "command": "model/scripts/eval_jevbench_logit.py --model openbmb/MiniCPM5-2B-Base --variant base --dtype bfloat16 --strategy description --norm mean --output <host>/tmp/krino-out/jevbench_openbmb_MiniCPM5-2B-Base.json",
+    "python_version": "3.12.16",
+    "torch_version": "2.11.0+cu128",
+    "device_name": "NVIDIA H100 NVL",
+    "transformers_version": "5.21.0",
+    "variant": "base"
+  },
+  "items": 231,
+  "n": 231,
+  "failed": 0,
+  "summary": {
+    "overall": {
+      "accuracy": 0.4155844155844156,
+      "correct": 96,
+      "total": 231,
+      "failed": 0
+    },
+    "by_tier": {
+      "easy": {
+        "accuracy": 0.7291666666666666,
+        "correct": 35,
+        "total": 48
+      },
+      "hard": {
+        "accuracy": 0.3063063063063063,
+        "correct": 34,
+        "total": 111
+      },
+      "original": {
+        "accuracy": 0.375,
+        "correct": 27,
+        "total": 72
+      }
+    },
+    "by_type": {
+      "choice": {
+        "accuracy": 0.3669064748201439,
+        "correct": 51,
+        "total": 139
+      },
+      "noul": {
+        "accuracy": 0.5,
+        "correct": 37,
+        "total": 74
+      },
+      "score": {
+        "accuracy": 0.4444444444444444,
+        "correct": 8,
+        "total": 18
+      }
+    },
+    "by_tier_type": {
+      "easy": {
+        "choice": {
+          "accuracy": 0.7777777777777778,
+          "correct": 28,
+          "total": 36
+        },
+        "noul": {
+          "accuracy": 0.5833333333333334,
+          "correct": 7,
+          "total": 12
+        }
+      },
+      "hard": {
+        "choice": {
+          "accuracy": 0.208955223880597,
+          "correct": 14,
+          "total": 67
+        },
+        "noul": {
+          "accuracy": 0.47368421052631576,
+          "correct": 18,
+          "total": 38
+        },
+        "score": {
+          "accuracy": 0.3333333333333333,
+          "correct": 2,
+          "total": 6
+        }
+      },
+      "original": {
+        "noul": {
+          "accuracy": 0.5,
+          "correct": 12,
+          "total": 24
+        },
+        "choice": {
+          "accuracy": 0.25,
+          "correct": 9,
+          "total": 36
+        },
+        "score": {
+          "accuracy": 0.5,
+          "correct": 6,
+          "total": 12
+        }
+      }
+    }
+  },
+  "predictions": [
+    {
+      "id": "easy-intent-00",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -4.249767,
+        -3.379705,
+        -3.235409,
+        -4.27091,
+        -2.513507
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-intent-01",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -4.537508,
+        -2.123497,
+        -2.922151,
+        -4.354341,
+        -3.367818
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-intent-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -4.382101,
+        -2.893592,
+        -2.032111,
+        -4.702031,
+        -3.238508
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-intent-03",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "logits": [
+        -4.901787,
+        -3.487355,
+        -3.798945,
+        -3.047278,
+        -3.432292
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-intent-04",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "logits": [
+        -3.935377,
+        -2.858466,
+        -3.175865,
+        -4.284324,
+        -3.178966
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-intent-05",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -4.310664,
+        -2.838972,
+        -2.921791,
+        -3.858988,
+        -2.434919
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-intent-06",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -3.271089,
+        -2.592187,
+        -2.429929,
+        -8.008597,
+        -3.63454
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-intent-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "logits": [
+        -2.616463,
+        -2.917258,
+        -3.585998,
+        -7.323614,
+        -3.628003
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-intent-08",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -3.40399,
+        -3.607081,
+        -4.013647,
+        -8.351105,
+        -2.983111
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-intent-09",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -3.337887,
+        -2.818184,
+        -3.526671,
+        -8.80156,
+        -4.193297
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-intent-10",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "logits": [
+        -3.125438,
+        -2.727596,
+        -2.739665,
+        -3.639529,
+        -3.326997
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-intent-11",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -2.958626,
+        -2.535296,
+        -2.75442,
+        -6.996296,
+        -3.400429
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-fact-00",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -3.168312,
+        -3.220171
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-fact-01",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.010142,
+        -2.772362
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-fact-02",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -3.257794,
+        -3.199113
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-fact-03",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.383995,
+        -3.044189
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-fact-04",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -3.073344,
+        -2.73909
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-fact-05",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -2.920913,
+        -2.569857
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-fact-06",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -2.867517,
+        -2.717239
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-fact-07",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.007415,
+        -2.7347
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-fact-08",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -2.719644,
+        -2.702999
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-fact-09",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -2.717547,
+        -2.503149
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-fact-10",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -3.203455,
+        -2.891235
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-fact-11",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.208068,
+        -2.88322
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-00",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -3.937068,
+        -6.307316,
+        -3.973277,
+        -3.119816
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-01",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -4.216886,
+        -0.735445,
+        -4.365251,
+        -6.485445
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-02",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -2.966388,
+        -4.148241,
+        -4.220168,
+        -6.335741
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-03",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -2.748212,
+        -3.750823,
+        -5.010981,
+        -5.138612
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-04",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -3.685997,
+        -2.731043,
+        -4.455828,
+        -4.64756
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-05",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -3.20191,
+        -5.021814,
+        -5.966171,
+        -3.825509
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-extraction-06",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -6.614316,
+        -7.926816,
+        -5.926816,
+        -6.194964
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-extraction-07",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -4.496558,
+        -5.621558,
+        -3.996558,
+        -2.503485
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-08",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -4.005186,
+        -4.192686,
+        -0.505185,
+        -3.942686,
+        -4.005186
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-09",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -4.170797,
+        -1.358297,
+        -4.983297,
+        -3.483297,
+        -4.420797
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "logits": [
+        -0.509999,
+        -4.509999,
+        -4.447499,
+        -4.384999,
+        -4.822499
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-11",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -3.8406,
+        -3.927989,
+        -3.745687,
+        -5.052989
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-00",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -3.008708,
+        -4.271142,
+        -3.750572,
+        -3.316024,
+        -3.924467
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-tool_selection-01",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "logits": [
+        -3.171869,
+        -3.898796,
+        -5.110509,
+        -2.738441,
+        -4.576353
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-02",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -3.107552,
+        -3.40771,
+        -5.266867,
+        -3.161391,
+        -4.559309
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-tool_selection-03",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "logits": [
+        -1.744486,
+        -4.493376,
+        -4.522615,
+        -3.130297,
+        -3.543554
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-04",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -2.789613,
+        -4.09834,
+        -4.551099,
+        -2.783481,
+        -2.734027
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-05",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -3.26147,
+        -3.269779,
+        -5.21409,
+        -2.951317,
+        -4.326637
+      ],
+      "correct": false
+    },
+    {
+      "id": "easy-tool_selection-06",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "logits": [
+        -3.230805,
+        -4.570795,
+        -3.440447,
+        -2.656459,
+        -3.55423
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "logits": [
+        -3.008136,
+        -4.803491,
+        -3.027338,
+        -5.510082,
+        -3.450564
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-08",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -3.124109,
+        -4.203142,
+        -3.255337,
+        -5.807124,
+        -2.55103
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-09",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -3.80628,
+        -5.177213,
+        -1.872866,
+        -4.991085,
+        -3.707736
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-10",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -3.488525,
+        -3.05468,
+        -3.865145,
+        -5.329351,
+        -3.727337
+      ],
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-11",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -3.386625,
+        -4.388616,
+        -3.760141,
+        -6.05377,
+        -2.548537
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-01",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -1.527949,
+        -0.848323,
+        -2.186509,
+        -1.855679,
+        -1.735106
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-long_policy-04",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -1.547033,
+        -1.275827,
+        -1.275345,
+        -1.982422,
+        -1.253395
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-long_policy-08",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -2.132343,
+        -2.276343,
+        -1.916769,
+        -2.185752
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-09",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -3.228673,
+        -2.783325,
+        -2.521098,
+        -3.260253
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-long_policy-11",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -2.216833,
+        -2.580326
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-13",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -2.365958,
+        -3.10272
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-17",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "logits": [
+        -2.584031,
+        -3.369518,
+        -4.009761,
+        -2.152435,
+        -3.220865
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-long_policy-19",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -1.852301,
+        -2.039772
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-probability-03",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -1.533214,
+        -1.721481
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-probability-04",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "logits": [
+        -1.553504,
+        -1.64836,
+        -1.782858
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-probability-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "logits": [
+        -2.127406,
+        -3.102819,
+        -2.016611
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-probability-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -1.965784,
+        -2.207269
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-03",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -2.831922,
+        -1.800844
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-06",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.390926,
+        -3.341245
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-07",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -2.567568,
+        -2.96355,
+        -2.992299,
+        -2.972571,
+        -2.980516
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-09",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -2.848197,
+        -2.908289
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-12",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -1.373614,
+        -0.873614,
+        -0.748614,
+        -0.748614
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "logits": [
+        -5.547648,
+        -3.540323,
+        -4.180889
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-03",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 3,
+      "logits": [
+        -2.218125,
+        -1.931312,
+        -2.020284
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-ambiguous-07",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "logits": [
+        -3.323821,
+        -2.961412,
+        -2.975444
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-09",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "logits": [
+        -2.700878,
+        -2.866653,
+        -3.91955
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "logits": [
+        -1.7187,
+        -2.091289,
+        -2.445096
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-ambiguous-11",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "logits": [
+        -2.898179,
+        -4.359359,
+        -4.301777
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-ambiguous-13",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -3.498651,
+        -2.50357,
+        -2.68204,
+        -3.139163
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-03",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -1.903072,
+        -1.390451,
+        -1.499541,
+        -2.245891
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-04",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "logits": [
+        -5.790754,
+        -4.87052,
+        -5.377838,
+        -3.151184,
+        -4.832622,
+        -1.79772
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-05",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -3.031797,
+        -0.656797,
+        -2.469297,
+        -2.594297,
+        -2.906797
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-07",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "logits": [
+        -1.111676,
+        -1.569482,
+        -1.144051,
+        -1.305332,
+        -1.599308,
+        -1.941399
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -1.271589,
+        -2.66625
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-01",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "logits": [
+        -3.750253,
+        -3.342147,
+        -3.894553
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "logits": [
+        -1.42436,
+        -2.268517,
+        -2.631271
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-03",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -1.068325,
+        -1.299678
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-probability-04",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "logits": [
+        -2.833598,
+        -2.182532,
+        -2.67995
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-06",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "logits": [
+        -2.156776,
+        -3.110723,
+        -4.611848
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-01",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "logits": [
+        -1.953826,
+        -2.756921,
+        -2.90331,
+        -2.641281,
+        -2.928595
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-tradeoff-03",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -2.732439,
+        -2.530826,
+        -2.202615,
+        -2.901755
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-06",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -1.674593,
+        -1.589396
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-07",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -1.480302,
+        -1.660213,
+        -1.768954,
+        -2.159838,
+        -3.356039
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-08",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.174919,
+        -3.894101
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-12",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "logits": [
+        -3.092389,
+        -1.720323,
+        -3.612558,
+        -2.303958,
+        -2.483678
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-02",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -2.631282,
+        -2.402502,
+        -3.34261,
+        -1.71606,
+        -2.096843
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-03",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "logits": [
+        -2.694894,
+        -3.297921,
+        -3.228557,
+        -3.160313,
+        -2.726369,
+        -3.054927
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-04",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -2.551392,
+        -2.684006
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-long_policy-05",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -0.462046,
+        -0.837046,
+        -1.024546,
+        -1.212046
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-08",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -1.257935,
+        -0.820435,
+        -0.820435,
+        -0.882935
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-long_policy-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -2.205833,
+        -1.727002,
+        -2.364627,
+        -1.864279
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-11",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -1.860933,
+        -2.962016
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-probability-03",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 3,
+      "logits": [
+        -1.08544,
+        -1.703523,
+        -1.332485
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-02",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -1.696011,
+        -1.294451
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-03",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -2.619511,
+        -2.338364,
+        -2.673578,
+        -2.780897,
+        -2.745558
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-04",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "logits": [
+        -2.186141,
+        -2.648375,
+        -2.345428,
+        -2.331933,
+        -2.259213
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-06",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "logits": [
+        -1.34222,
+        -1.863879,
+        -2.495342,
+        -1.909757,
+        -1.803863,
+        -1.746596
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-08",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -3.454163,
+        -3.761758,
+        -3.6433,
+        -3.692939,
+        -3.691634
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-12",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "logits": [
+        -3.461748,
+        -2.752612,
+        -3.079106
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-adversarial-01",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -2.443383,
+        -2.982648,
+        -4.580674,
+        -3.904702
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-adversarial-06",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.339985,
+        -3.656057
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-adversarial-07",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -2.686619,
+        -3.948941,
+        -4.28124,
+        -2.549272
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-adversarial-08",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.546878,
+        -3.98598
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-adversarial-09",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -1.791847,
+        -1.604347,
+        -1.604347,
+        -1.979347
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-adversarial-11",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -5.032547,
+        -1.780269,
+        -3.73765,
+        -2.007718
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-01",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -2.924851,
+        -5.111425,
+        -4.44406,
+        -3.0688
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-multi_hop-02",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -4.738684,
+        -3.729434,
+        -5.611698,
+        -4.600121
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-05",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -4.417351,
+        -3.99053,
+        -4.236769,
+        -5.983204
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -4.785757,
+        -5.087569,
+        -4.785039,
+        -4.915358
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-08",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -2.635527,
+        -5.210182,
+        -2.36948,
+        -2.006744
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-09",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -3.773412,
+        -6.353989,
+        -3.440225,
+        -4.748791
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-multi_hop-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -5.147378,
+        -4.058205,
+        -4.420645,
+        -6.232301
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-12",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -2.284304,
+        -2.569873,
+        -4.065847,
+        -4.756923
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-trap-02",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.089986,
+        -3.706255
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-04",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -5.132504,
+        -4.862007
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-05",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -0.730273,
+        -1.042773,
+        -0.792773,
+        -0.792773
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-06",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -4.097924,
+        -4.032237,
+        -3.042375,
+        -2.688617
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-08",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -3.758401,
+        -5.132602,
+        -2.518058,
+        -2.474049
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-trap-10",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -3.256825,
+        -3.218496,
+        -2.740569,
+        -2.549404
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-trap-13",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.030486,
+        -3.751684
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-15",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.558504,
+        -4.184576
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-judge_hard-01",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -2.999096,
+        -4.202909
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-judge_hard-02",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.061583,
+        -3.982739
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-05",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -3.428223,
+        -4.723174
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-judge_hard-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -2.888069,
+        -4.110881
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-10",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.057874,
+        -3.919456
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-14",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -2.921386,
+        -4.342581
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-15",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -3.054293,
+        -4.214334
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-judge_hard-18",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.324122,
+        -4.219377
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-long_policy-01",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -4.381605,
+        -4.230268,
+        -4.591465,
+        -4.488189
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-long_policy-02",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -4.127041,
+        -4.867383,
+        -3.655873,
+        -4.3638
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-long_policy-05",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -4.703029,
+        -4.557907,
+        -4.94621,
+        -5.47377
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-long_policy-06",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -4.435908,
+        -4.160671,
+        -3.05392,
+        -4.018939
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-routing_hard-01",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "logits": [
+        -1.078057,
+        -0.840313,
+        -1.74686,
+        -0.612286,
+        -0.617006
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-routing_hard-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -1.028411,
+        -2.020918,
+        -1.042499,
+        -1.071679,
+        -1.328387
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-routing_hard-03",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "logits": [
+        -0.734231,
+        -1.225935,
+        -0.707094,
+        -0.755843,
+        -0.7668
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-routing_hard-07",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -1.107925,
+        -0.705497,
+        -1.182145,
+        -1.3157,
+        -0.653867
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-routing_hard-09",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "logits": [
+        -0.952035,
+        -1.250986,
+        -0.839422,
+        -0.656924,
+        -0.819701
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-01",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -1.9468,
+        -2.898367,
+        -3.058262,
+        -3.927222
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -3.589364,
+        -3.94401,
+        -3.018615,
+        -3.07544
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-03",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -3.51649,
+        -3.654007,
+        -3.521434,
+        -3.563522
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-04",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "logits": [
+        -3.54624,
+        -3.419126,
+        -3.972027
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-03",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -1.790161,
+        -3.887672
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-05",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -1.665291,
+        -3.6157
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-judge_hard-07",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -1.623428,
+        -3.654692
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -1.854793,
+        -3.93274
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-09",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -1.565327,
+        -3.535716
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-judge_hard-10",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -1.74519,
+        -3.690092
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-judge_hard-11",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -1.908167,
+        -3.898476
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-13",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -1.718018,
+        -3.67951
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-15",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -1.813585,
+        -3.812038
+      ],
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-multi_hop-07",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -5.471656,
+        -5.192087,
+        -4.929388,
+        -5.726347
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-multi_hop-09",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -5.06108,
+        -7.851415,
+        -7.311846,
+        -4.775865
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-multi_hop-11",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -5.593417,
+        -5.649636,
+        -6.598218,
+        -5.452578
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-multi_hop-12",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -5.560208,
+        -4.59358,
+        -4.004204,
+        -3.14386
+      ],
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-multi_hop-13",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -5.265686,
+        -3.685714,
+        -4.529758,
+        -4.422953
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-policy-01-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.775624,
+        -3.870953
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-policy-01-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.5692,
+        -3.815508
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-policy-02-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.547662,
+        -4.117689
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-policy-02-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.308955,
+        -3.976974
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-policy-03-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.519479,
+        -3.978778
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-policy-03-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.522373,
+        -4.144727
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-policy-04-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.487812,
+        -3.846236
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-policy-04-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.79183,
+        -4.015137
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-policy-05-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.328391,
+        -4.039965
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-policy-05-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.410249,
+        -4.048003
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-policy-06-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.300716,
+        -3.809467
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-policy-06-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.357996,
+        -3.850686
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-intent-01-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "logits": [
+        -5.053825,
+        -4.48453,
+        -3.125981,
+        -5.268571,
+        -9.823661
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-intent-01-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "logits": [
+        -4.265197,
+        -4.704148,
+        -3.216811,
+        -4.983876,
+        -9.829136
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-intent-02-0",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -6.06262,
+        -3.268395,
+        -3.146006,
+        -7.08797,
+        -8.711973
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-intent-02-1",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -5.964442,
+        -3.601399,
+        -3.336329,
+        -7.017353,
+        -8.100078
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-intent-03-0",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -6.231346,
+        -3.745484,
+        -3.20633,
+        -6.646047,
+        -8.681652
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-intent-03-1",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "logits": [
+        -6.041063,
+        -3.741203,
+        -3.070074,
+        -6.681668,
+        -8.973934
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-intent-04-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "logits": [
+        -3.942339,
+        -4.62078,
+        -2.943837,
+        -5.384546,
+        -9.893851
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-intent-04-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "logits": [
+        -4.127671,
+        -4.575627,
+        -2.882491,
+        -5.878985,
+        -10.252401
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-intent-05-0",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -6.740422,
+        -4.940373,
+        -3.367648,
+        -6.456098,
+        -9.728229
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-intent-05-1",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "logits": [
+        -6.032169,
+        -4.268552,
+        -3.017732,
+        -5.412005,
+        -9.930557
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-intent-06-0",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -6.489994,
+        -4.644917,
+        -3.35255,
+        -7.015626,
+        -8.242068
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-intent-06-1",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "logits": [
+        -6.557079,
+        -4.679078,
+        -3.223835,
+        -6.866938,
+        -8.987206
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-01-0",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -1.285623,
+        -1.098123,
+        -1.223123,
+        -1.410623
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-01-1",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -0.846009,
+        -0.533509,
+        -0.846009,
+        -1.471009
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-02-0",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -1.489123,
+        -1.301623,
+        -1.301623,
+        -1.364123
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-02-1",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -1.286154,
+        -1.036154,
+        -1.036154,
+        -1.223654
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-03-0",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -1.065188,
+        -1.002688,
+        -0.877688,
+        -0.940188
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-03-1",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -1.501691,
+        -1.251691,
+        -1.314191,
+        -1.376691
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-04-0",
+      "type": "score",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -1.292964,
+        -1.105464,
+        -0.855464,
+        -0.730464
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-04-1",
+      "type": "score",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -1.212414,
+        -1.087414,
+        -0.899914,
+        -0.837414
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-05-0",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -0.753356,
+        -0.753356,
+        -0.940856,
+        -1.315856
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-05-1",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -1.043398,
+        -0.855898,
+        -0.918398,
+        -1.105898
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-06-0",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -1.386115,
+        -1.136115,
+        -1.136115,
+        -1.386115
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-06-1",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -1.148596,
+        -0.836096,
+        -0.836096,
+        -1.211096
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-extraction-01-0",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -4.079576,
+        -5.384624,
+        -4.277762,
+        -2.753432
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-extraction-01-1",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "logits": [
+        -4.489062,
+        -4.737495,
+        -4.822288,
+        -2.497487
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-extraction-02-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -6.512934,
+        -7.270644,
+        -5.514566,
+        -2.511861
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-extraction-02-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -4.522753,
+        -7.382479,
+        -3.308608,
+        -2.244658
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-extraction-03-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -3.842618,
+        -5.173278,
+        -3.986604,
+        -2.248121
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-extraction-03-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -3.472608,
+        -6.190292,
+        -4.726476,
+        -2.562638
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-extraction-04-0",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -4.555295,
+        -5.827392,
+        -2.386582,
+        -2.45318
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-extraction-04-1",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "logits": [
+        -5.872568,
+        -6.911296,
+        -4.040705,
+        -2.993403
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-extraction-05-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -3.91201,
+        -6.391474,
+        -4.373978,
+        -2.321861
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-extraction-05-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "logits": [
+        -4.010654,
+        -6.581948,
+        -4.534195,
+        -2.702823
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-extraction-06-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -4.751703,
+        -8.165125,
+        -4.560739,
+        -3.014954
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-extraction-06-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "logits": [
+        -3.715976,
+        -7.084874,
+        -4.003105,
+        -2.536286
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-01-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.031022,
+        -4.996455
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-01-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -3.803545,
+        -4.892047
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-02-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.95235,
+        -4.910922
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-02-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.91939,
+        -5.036537
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-03-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.253325,
+        -4.979569
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-03-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -4.004347,
+        -4.904486
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-04-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.543132,
+        -5.065222
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-04-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.234638,
+        -5.137724
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-05-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.63188,
+        -4.959322
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-05-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "logits": [
+        -3.685086,
+        -5.013718
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-06-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.151424,
+        -4.915623
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-06-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "logits": [
+        -4.210638,
+        -5.168715
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-routing-01-0",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "logits": [
+        -6.055874,
+        -5.288146,
+        -6.052924,
+        -3.583636,
+        -6.741425,
+        -5.626114
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-routing-01-1",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "logits": [
+        -6.044425,
+        -5.469966,
+        -5.982097,
+        -3.554703,
+        -6.512222,
+        -5.745391
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-routing-02-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 6,
+      "logits": [
+        -5.790408,
+        -5.348385,
+        -6.149837,
+        -3.350541,
+        -6.688678,
+        -5.634594
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-routing-02-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 6,
+      "logits": [
+        -5.824177,
+        -5.154037,
+        -6.135576,
+        -3.528484,
+        -6.472209,
+        -5.571414
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-routing-03-0",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "logits": [
+        -5.921638,
+        -5.090353,
+        -6.109258,
+        -3.592184,
+        -7.06071,
+        -5.504088
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-routing-03-1",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "logits": [
+        -6.019804,
+        -4.805408,
+        -5.872383,
+        -3.716046,
+        -7.026549,
+        -5.383733
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-routing-04-0",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 6,
+      "logits": [
+        -5.863024,
+        -5.596948,
+        -5.752075,
+        -3.265252,
+        -6.711406,
+        -5.001521
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-routing-04-1",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 6,
+      "logits": [
+        -5.858466,
+        -5.478141,
+        -5.502161,
+        -3.376093,
+        -6.533383,
+        -5.042762
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-routing-05-0",
+      "type": "choice",
+      "gold_idx": 5,
+      "option_count": 6,
+      "logits": [
+        -6.120537,
+        -5.592878,
+        -5.758578,
+        -3.54663,
+        -7.039989,
+        -5.027356
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-routing-05-1",
+      "type": "choice",
+      "gold_idx": 5,
+      "option_count": 6,
+      "logits": [
+        -6.024726,
+        -5.300112,
+        -5.900609,
+        -3.49413,
+        -6.879025,
+        -5.12719
+      ],
+      "correct": false
+    },
+    {
+      "id": "original-routing-06-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 6,
+      "logits": [
+        -5.939821,
+        -5.512916,
+        -5.944536,
+        -3.572157,
+        -6.529247,
+        -5.460613
+      ],
+      "correct": true
+    },
+    {
+      "id": "original-routing-06-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 6,
+      "logits": [
+        -6.153763,
+        -5.739603,
+        -6.292885,
+        -3.497177,
+        -6.77585,
+        -5.437583
+      ],
+      "correct": true
+    }
+  ]
+}

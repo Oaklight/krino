@@ -310,6 +310,9 @@ JEVBENCH_META: dict[str, tuple[str, str, str]] = {
     "krino-qwen3-reranker-4b-heads": ("Qwen3-reranker-4B (trained)", "4B", "reranker"),
     "krino-qwen3-reranker-0.6b-heads": ("Qwen3-reranker-0.6B (trained)", "0.6B", "reranker"),
     "raw-qwen3-reranker-4b": ("Qwen3-reranker-4B (zero-shot)", "4B", "reranker"),
+    "logit_openbmb_MiniCPM5-2B-Base": ("MiniCPM5-2B-Base", "2B", "causal"),
+    "logit_mistralai_Ministral-3-3B-Base-2512": ("Ministral-3-3B-Base-2512", "3B", "causal"),
+    "logit_openbmb_MiniCPM3-4B": ("MiniCPM3-4B (instruct)", "4B", "causal"),
 }
 
 
@@ -325,15 +328,18 @@ def transform_jevbench() -> list[dict]:
         raw = json.loads(filepath.read_text())
         display_name, params, model_type = JEVBENCH_META[stem]
 
-        overall = raw.get("overall", {})
-        by_type = raw.get("by_type", {})
-        by_tier = raw.get("by_tier", {})
+        # Files written by eval_jevbench_logit.py nest the aggregate under
+        # "summary"; the trained-head files put the same keys at the top level.
+        summary = raw.get("summary", raw)
+        overall = summary.get("overall", {})
+        by_type = summary.get("by_type", {})
+        by_tier = summary.get("by_tier", {})
         latency = raw.get("latency", {})
 
         runs.append({
             "run_id": f"jevbench-{stem}",
             "model": {"name": display_name, "params": params, "type": model_type},
-            "method": "trained-heads",
+            "method": "logit" if stem.startswith("logit_") else "trained-heads",
             "benchmark": "jevbench",
             "accuracy": round(overall.get("accuracy", 0), 4),
             "correct": overall.get("correct", 0),
