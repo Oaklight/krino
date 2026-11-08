@@ -63,11 +63,13 @@ not read the summary: the overall count, every tier count, every type count, and
 `predicted_idx`). All twelve are consistent; no cell's summary disagrees with its
 predictions.
 
-The six-track files (three run here, three by krino-ab from the same commit) were
-checked the same way: all six have `items = 231`, `failed = 0`, `predicted_idx`
-on 231/231, and summaries that recompute from `predictions`. The fifteen pairwise
-tests were then run independently by both sessions from the same files; the two
-grids agree line by line.
+The six-track files were checked the same way: the two run here
+(MiniCPM5-2B-Base, Ministral-3-3B-Base-2512), the three run by krino-ab
+(Qwen2.5-3B, Qwen2.5-1.5B, Qwen3-1.7B-Base) and Qwen3-4B-Base from the earlier
+judgement run, all at the same commit, have `items = 231`, `failed = 0`,
+`predicted_idx` on 231/231, and summaries that recompute from `predictions`. The
+fifteen pairwise tests were then run independently by both sessions from the same
+files; the two grids agree line by line.
 
 The judgement files used here are the v2 rerun at `2819b6f`, which reproduced
 every shared field of the pre-fix A/A2/C rows exactly and added `predicted_idx` on
