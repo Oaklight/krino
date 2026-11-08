@@ -10,7 +10,10 @@ Reads ``web/public/results/eval_results.json``, produced by
   model id and readout that the dashboard publishes.
 
 Exit status is non-zero when any row fails, so the deploy job stops before it
-publishes a number no committed file yields.
+publishes a number no committed file yields. It recomputes each row with the
+same ``build_jevbench_run`` and ``transform_eval_file`` that produced the row,
+so it catches untraceable files and stale or drifted output, but not a bug
+inside the transform itself.
 """
 
 from __future__ import annotations
