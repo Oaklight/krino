@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-08T04:05:55.514216+00:00",
+  "generated_at": "2026-11-08T04:46:47.529689+00:00",
   "eval_runs": [
     {
       "run_id": "cross-encoder-bert",
@@ -1448,6 +1448,438 @@
             "type": "choice",
             "accuracy": 0.5138888888888888,
             "ece": 0.1585416666666667
+          }
+        }
+      }
+    },
+    {
+      "run_id": "logit-mistralai_Ministral-3-3B-Base-2512",
+      "model": {
+        "name": "Ministral-3-3B-Base-2512",
+        "params": "3B",
+        "type": "causal"
+      },
+      "method": "logit",
+      "phase": null,
+      "n_benchmarks": 19,
+      "results": {
+        "aggregate": {
+          "accuracy": 0.535,
+          "n_benchmarks_with_accuracy": 16
+        },
+        "by_source": {
+          "authored144": {
+            "n": 144,
+            "type": "choice",
+            "accuracy": 0.4652777777777778,
+            "ece": 0.1298611111111111
+          },
+          "agnews": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.795,
+            "ece": 0.29610000000000003
+          },
+          "arc": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.745,
+            "ece": 0.142
+          },
+          "banking77": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.0,
+            "ece": 0.21875
+          },
+          "codesearchnet": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.705,
+            "ece": 0.28905000000000003
+          },
+          "contractnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.43,
+            "ece": 0.20655
+          },
+          "fever": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.495,
+            "ece": 0.27264999999999995
+          },
+          "hellaswag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.61,
+            "ece": 0.13615
+          },
+          "mednli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.34,
+            "ece": 0.2547
+          },
+          "mnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.38,
+            "ece": 0.27385
+          },
+          "multirc": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.465,
+            "ece": 0.138
+          },
+          "race": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.62,
+            "ece": 0.0894
+          },
+          "sst2": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.675,
+            "ece": 0.31634999999999996
+          },
+          "sst5": {
+            "n": 200,
+            "type": "score",
+            "mae": 1.033
+          },
+          "stsb": {
+            "n": 200,
+            "type": "score",
+            "mae": 1.4838999999999998
+          },
+          "swag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.61,
+            "ece": 0.1211
+          },
+          "tabfact": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.775,
+            "ece": 0.27985
+          },
+          "typed_decisions": {
+            "n": 200,
+            "type": "mixed",
+            "subtypes": {
+              "noul": {
+                "n": 40,
+                "accuracy": 0.5,
+                "ece": 0.16174999999999998
+              },
+              "choice": {
+                "n": 80,
+                "accuracy": 0.4,
+                "ece": 0.06999999999999999
+              },
+              "score": {
+                "n": 80,
+                "mae": 1.1171250000000001
+              }
+            }
+          },
+          "yelp": {
+            "n": 200,
+            "type": "score",
+            "mae": 0.9764499999999999
+          }
+        }
+      }
+    },
+    {
+      "run_id": "logit-openbmb_MiniCPM3-4B",
+      "model": {
+        "name": "MiniCPM3-4B (instruct)",
+        "params": "4B",
+        "type": "causal"
+      },
+      "method": "logit",
+      "phase": null,
+      "n_benchmarks": 19,
+      "results": {
+        "aggregate": {
+          "accuracy": 0.5308,
+          "n_benchmarks_with_accuracy": 16
+        },
+        "by_source": {
+          "authored144": {
+            "n": 144,
+            "type": "choice",
+            "accuracy": 0.4930555555555556,
+            "ece": 0.10493055555555554
+          },
+          "agnews": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.805,
+            "ece": 0.28865
+          },
+          "arc": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.51,
+            "ece": 0.10530000000000002
+          },
+          "banking77": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.0,
+            "ece": 0.21780000000000002
+          },
+          "codesearchnet": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.695,
+            "ece": 0.31594999999999995
+          },
+          "contractnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.435,
+            "ece": 0.2698
+          },
+          "fever": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.53,
+            "ece": 0.06960000000000002
+          },
+          "hellaswag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.575,
+            "ece": 0.1146
+          },
+          "mednli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.43,
+            "ece": 0.27765
+          },
+          "mnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.48,
+            "ece": 0.30895
+          },
+          "multirc": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.47,
+            "ece": 0.26005
+          },
+          "race": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.64,
+            "ece": 0.10595
+          },
+          "sst2": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.63,
+            "ece": 0.32315
+          },
+          "sst5": {
+            "n": 200,
+            "type": "score",
+            "mae": 0.7635500000000001
+          },
+          "stsb": {
+            "n": 200,
+            "type": "score",
+            "mae": 1.3952
+          },
+          "swag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.595,
+            "ece": 0.12269999999999999
+          },
+          "tabfact": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.78,
+            "ece": 0.3241
+          },
+          "typed_decisions": {
+            "n": 200,
+            "type": "mixed",
+            "subtypes": {
+              "noul": {
+                "n": 40,
+                "accuracy": 0.5,
+                "ece": 0.37174999999999997
+              },
+              "choice": {
+                "n": 80,
+                "accuracy": 0.35,
+                "ece": 0.0695
+              },
+              "score": {
+                "n": 80,
+                "mae": 1.324625
+              }
+            }
+          },
+          "yelp": {
+            "n": 200,
+            "type": "score",
+            "mae": 0.8429000000000001
+          }
+        }
+      }
+    },
+    {
+      "run_id": "logit-openbmb_MiniCPM5-2B-Base",
+      "model": {
+        "name": "MiniCPM5-2B-Base",
+        "params": "2B",
+        "type": "causal"
+      },
+      "method": "logit",
+      "phase": null,
+      "n_benchmarks": 19,
+      "results": {
+        "aggregate": {
+          "accuracy": 0.5528,
+          "n_benchmarks_with_accuracy": 16
+        },
+        "by_source": {
+          "authored144": {
+            "n": 144,
+            "type": "choice",
+            "accuracy": 0.5138888888888888,
+            "ece": 0.11555555555555554
+          },
+          "agnews": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.735,
+            "ece": 0.24524999999999997
+          },
+          "arc": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.65,
+            "ece": 0.08420000000000001
+          },
+          "banking77": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.005,
+            "ece": 0.14614999999999997
+          },
+          "codesearchnet": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.7,
+            "ece": 0.27345
+          },
+          "contractnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.43,
+            "ece": 0.27394999999999997
+          },
+          "fever": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.495,
+            "ece": 0.16885
+          },
+          "hellaswag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.54,
+            "ece": 0.06970000000000001
+          },
+          "mednli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.42,
+            "ece": 0.2251
+          },
+          "mnli": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.645,
+            "ece": 0.31605000000000005
+          },
+          "multirc": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.61,
+            "ece": 0.365
+          },
+          "race": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.6,
+            "ece": 0.0919
+          },
+          "sst2": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.74,
+            "ece": 0.31585
+          },
+          "sst5": {
+            "n": 200,
+            "type": "score",
+            "mae": 0.9416500000000001
+          },
+          "stsb": {
+            "n": 200,
+            "type": "score",
+            "mae": 1.3151499999999998
+          },
+          "swag": {
+            "n": 200,
+            "type": "choice",
+            "accuracy": 0.57,
+            "ece": 0.07189999999999996
+          },
+          "tabfact": {
+            "n": 200,
+            "type": "noul",
+            "accuracy": 0.735,
+            "ece": 0.29715
+          },
+          "typed_decisions": {
+            "n": 200,
+            "type": "mixed",
+            "subtypes": {
+              "noul": {
+                "n": 40,
+                "accuracy": 0.5,
+                "ece": 0.3465
+              },
+              "choice": {
+                "n": 80,
+                "accuracy": 0.4125,
+                "ece": 0.02575000000000001
+              },
+              "score": {
+                "n": 80,
+                "mae": 1.1928750000000001
+              }
+            }
+          },
+          "yelp": {
+            "n": 200,
+            "type": "score",
+            "mae": 0.97665
           }
         }
       }
@@ -3966,13 +4398,13 @@
   "jev_comparison": {
     "agnews": {
       "jev": 0.79,
-      "best_model": "SmolLM2-1.7B",
-      "best_accuracy": 0.8
+      "best_model": "MiniCPM3-4B (instruct)",
+      "best_accuracy": 0.805
     },
     "arc": {
       "jev": 0.99,
-      "best_model": "Phi-4-mini-instruct",
-      "best_accuracy": 0.735
+      "best_model": "Ministral-3-3B-Base-2512",
+      "best_accuracy": 0.745
     },
     "authored144": {
       "jev": 0.9792,
