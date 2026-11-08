@@ -9,6 +9,11 @@ import torch
 import transformers
 from transformers import AutoConfig, AutoModel, AutoModelForCausalLM, AutoTokenizer
 
+from model.src.architecture_policy import (
+    declared_architecture,
+    routes_to_conditional_generation,
+)
+
 try:  # transformers >= 4.45 exposes the image-text auto class
     from transformers import AutoModelForImageTextToText
 except ImportError:  # pragma: no cover - older transformers
@@ -81,13 +86,15 @@ def load_causal_lm(
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
     config = AutoConfig.from_pretrained(model_name)
-    # Multimodal checkpoints that still expose a text decoder (for example
-    # Mistral3) are not in AutoModelForCausalLM's mapping.  They accept
-    # text-only inputs and return ``.logits``, so the declared architecture is
-    # loaded directly when the name says ConditionalGeneration.
+    # Multimodal checkpoints that still expose a text decoder (Mistral3 today)
+    # are not in AutoModelForCausalLM's mapping.  They accept text-only inputs
+    # and return ``.logits``, so the declared architecture is loaded directly -
+    # but only from an allowlist, never by suffix: Qwen3.5 declares
+    # Qwen3_5ForConditionalGeneration too, and routing the incumbent through it
+    # would pull a vision tower no text path asks for.
     loader = AutoModelForCausalLM
-    arch = (config.architectures or [None])[0]
-    if arch and arch.endswith("ForConditionalGeneration"):
+    if routes_to_conditional_generation(config):
+        arch = declared_architecture(config)
         loader = getattr(transformers, arch, AutoModelForCausalLM)
     tok_kwargs = {}
     if config.model_type in ("mistral3", "pixtral"):
