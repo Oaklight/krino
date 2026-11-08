@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-08T04:46:47.529689+00:00",
+  "generated_at": "2026-11-08T05:00:36.514985+00:00",
   "eval_runs": [
     {
       "run_id": "cross-encoder-bert",
@@ -4345,6 +4345,150 @@
         }
       },
       "latency_ms": 8408.3
+    },
+    {
+      "run_id": "jevbench-logit_mistralai_Ministral-3-3B-Base-2512",
+      "model": {
+        "name": "Ministral-3-3B-Base-2512",
+        "params": "3B",
+        "type": "causal"
+      },
+      "method": "logit",
+      "benchmark": "jevbench",
+      "accuracy": 0.4545,
+      "correct": 105,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4388,
+          "correct": 61,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.527,
+          "correct": 39,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.2778,
+          "correct": 5,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7292,
+          "correct": 35,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3604,
+          "correct": 40,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.4167,
+          "correct": 30,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-logit_openbmb_MiniCPM3-4B",
+      "model": {
+        "name": "MiniCPM3-4B (instruct)",
+        "params": "4B",
+        "type": "causal"
+      },
+      "method": "logit",
+      "benchmark": "jevbench",
+      "accuracy": 0.4589,
+      "correct": 106,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.4532,
+          "correct": 63,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5,
+          "correct": 37,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.3333,
+          "correct": 6,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7292,
+          "correct": 35,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3874,
+          "correct": 43,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.3889,
+          "correct": 28,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-logit_openbmb_MiniCPM5-2B-Base",
+      "model": {
+        "name": "MiniCPM5-2B-Base",
+        "params": "2B",
+        "type": "causal"
+      },
+      "method": "logit",
+      "benchmark": "jevbench",
+      "accuracy": 0.4156,
+      "correct": 96,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.3669,
+          "correct": 51,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5,
+          "correct": 37,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.4444,
+          "correct": 8,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7292,
+          "correct": 35,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3063,
+          "correct": 34,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.375,
+          "correct": 27,
+          "total": 72
+        }
+      },
+      "latency_ms": null
     },
     {
       "run_id": "jevbench-raw-qwen3-reranker-4b",
