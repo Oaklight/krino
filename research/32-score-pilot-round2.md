@@ -247,4 +247,7 @@ per-domain severity/quality/difficulty templates.
    keep the cap, and judge the next run against the same two conditions. Residual
    concentration (contractnli 78% at level 2, longbench 96% at level 2) is a
    separate balance issue and should be capped or reweighted before training. The
-   three pilot runs so far cost about $0.17.
+   two runs with committed reports cost $0.119 in input tokens ($0.051 pilot,
+   $0.068 round two); a first cap attempt on the selection quota also made calls
+   but kept no report, so the figure of about $0.17 for three runs is an
+   aggregate, not a reconciliation.
