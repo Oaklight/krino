@@ -56,23 +56,37 @@ By question type:
 The score column is 18 items, one item is 5.6 points, and the 0.278-to-0.444
 swing is a 3-item difference (5 of 18 against 8 of 18). It is not a ranking.
 
-### Two original-tier families are dead cells
+### Constant answers in the `original` tier
 
-All three checkpoints answer every `original/intent` item with option index 2
-(12 of 12 each) and every `original/routing` item with index 3 (12 of 12 each).
-The gold sits at that index twice in each family, so all three score 2 of 12
-there. **Twenty-four of the tier's 72 items carry no information from this
-readout**: those two columns measure where the constant lands against the gold
-distribution, not the model.
+Eight checkpoints have now been scored on JevBench with this readout: the three
+above plus `Qwen/Qwen3-4B-Base`, `microsoft/Phi-4-mini-instruct`,
+`Qwen/Qwen2.5-1.5B`, `Qwen/Qwen2.5-3B` and `Qwen/Qwen3-Reranker-4B`. Their
+overall scores span 0.416-0.502. On four of the six `original` subtasks a model
+answers every item with the same option index:
 
-The collapse is not confined to the cells where all three do it. MiniCPM5-2B-Base
-answers all 12 `adequacy` items with index 0 and all 12 `policy` items with
-index 1; MiniCPM3-4B answers all 12 `ordinal` items with index 2;
-Ministral-3-3B-Base-2512 answers all 12 `adequacy` items with index 1 and 11 of
-12 `policy` items with index 0. `adequacy` carries six gold at each index, so
-both constants return exactly 6 of 12 — chance, presented as a performance. The
-other constants land at 4 to 7 of 12, depending only on how the gold is spread
-across the indices.
+| subtask | n | constant in | index |
+|---|---:|---|---|
+| `original/intent` | 12 | **8 of 8** | 2 |
+| `original/routing` | 12 | **8 of 8** | 3 |
+| `original/adequacy` | 12 | 7 of 8 | 0 or 1 |
+| `original/policy` | 12 | 4 of 8 | 0 or 1 |
+
+**No `easy` or `hard` subtask is constant in any of the eight.** The split is by
+subtask family, not by difficulty, and not by model: a llama-config, a mistral, two
+minicpms, two qwen2s, two qwen3s and a phi3 all answer `intent` with index 2 and
+`routing` with index 3. Those two families are dead cells for every checkpoint —
+24 of the tier's 72 items carry no information from this readout. The gold sits
+at the constant index twice in each family, so all eight score 2 of 12 there, and
+the `original` column is partly a property of where the constant lands against
+the gold distribution.
+
+The other constants: MiniCPM3-4B answers `ordinal` with index 2 (12/12);
+MiniCPM5-2B-Base answers `policy` with index 1 (12/12); Ministral-3-3B-Base-2512
+answers `adequacy` with index 1 (12/12). The models scored by the other sweep
+answer `adequacy` with index 0 (Qwen3-4B-Base, Qwen2.5-1.5B, Qwen2.5-3B,
+Qwen3-Reranker-4B, Phi-4-mini), and `policy` with index 0 (Qwen2.5-3B,
+Qwen3-4B-Base, Qwen3-Reranker-4B). `adequacy` carries six gold at each index, so
+a constant there returns exactly 6 of 12 — chance, presented as a performance.
 
 This is a property of the instrument. Continuation scores the options against
 one shared context, and when the options are close to uniform the argmax is
@@ -80,10 +94,10 @@ decided by a token-level prior that barely changes across items, so it can name
 the same index every time. An independent P(yes) per option scores each option
 against the question rather than against its siblings, so it has no term that
 would favour one position across items; a collapse there would need every
-option to score exactly equal. That is an argument about the instrument, not a
-measurement in this note — these files carry no native-readout per-item
-predictions — and measuring these cells with the native readout is the
-experiment the argument implies.
+option to score exactly equal. That is still an argument here, not a measurement
+— these files carry no native-readout per-item predictions — and #288 records
+the experiment that would settle it: score these five subtasks through
+`score_options_native` on at least two checkpoints.
 
 MiniCPM5-2B-Base is **below chance on the hard tier** (0.306 against 0.336).
 That is not an artefact of the tier cut: the same 111 items are above chance for
@@ -106,6 +120,7 @@ interchangeable.
 | model | readout | overall |
 |---|---|---:|
 | raw Qwen3-Reranker-4B | native P(yes) per option | **0.628** |
+| Qwen3-Reranker-4B | option-text continuation | 0.481 |
 | raw Qwen3-Reranker-0.6B | native P(yes) per option | 0.476 |
 | Krino 4B (`arch_4b_loraAll_weighted`) | the heads' own readout | 0.463 |
 | MiniCPM3-4B | option-text continuation | 0.459 |
@@ -130,18 +145,19 @@ What the table supports:
    Of the eight, one is above all three continuation rows (0.463), two are above
    the lowest of them (0.433, 0.429) and below the top two, and five are below
    all three (0.368, 0.364, 0.346, 0.342, 0.325). Model choice among untuned
-   checkpoints moves this benchmark by about 4 points. The trained-head rows
-   span about 14, but that span mixes backbones from 150M to 4B, so it is the
-   width of a heterogeneous band, not a training effect: no checkpoint in this
-   table appears both with and without a head.
-2. **Every continuation row is below every native-readout row.** The weakest
-   native row (0.476, a 0.6B reranker, untrained) is above the best continuation
-   row (0.459), and the fine-tuned backbones under the native readout reach
-   0.541 and 0.623. On this benchmark, which is nearly all two- and three-option
-   items, scoring each option independently is the stronger instrument. That is
-   the same short-list effect `research/13` measures in Finding 5, seen here from
-   the other side: continuation over a short option list is not as good as an
-   independent yes/no per option.
+   checkpoints moves this benchmark by about 4 points for these three; across
+   all eight checkpoints scored with this readout it is 8.6 points (0.416 to
+   0.502). The trained-head rows span about 14, but that span mixes backbones
+   from 150M to 4B, so it is the width of a heterogeneous band, not a training
+   effect: no checkpoint in this table appears both with and without a head.
+2. **The same checkpoint under two instruments is the strongest comparison
+   here.** Qwen3-Reranker-4B scores 0.628 through the native readout and 0.481
+   through continuation — **14.8 points on identical weights and items**.
+   Nothing about the model changes between those two rows, so the difference is
+   the instrument. The native rows still occupy the top of the table, but with
+   the reranker's own continuation row in it, "native beats continuation" is an
+   observation about these rows rather than a rule: Phi-4-mini's continuation
+   score (0.502) is above the 0.6B reranker's native 0.476.
 
 What it does not support:
 
@@ -155,6 +171,11 @@ What it does not support:
    readout. `research/13` already establishes the head's deficit against the
    same backbone's native readout; nothing here changes that measurement.
 3. **Nothing about the 0.628 anchor.** No row in this note is that instrument.
+4. **A small gap between two checkpoints of the same size.** Qwen3-4B-Base
+   (0.485) and Phi-4-mini-instruct (0.502) are 1.7 points apart and agree on
+   whether each of 197 of the 231 items is correct, naming the same option on
+   187. One item on this set is 0.4 points, so a 1.7-point gap between two rows
+   that agree on 85% of items is not a separation.
 
 ## What this says for the shortlist
 
@@ -216,8 +237,10 @@ Each file carries `_provenance` with `model_id`, resolved `revision`, `dtype`,
 versions (3.12.16 / 2.11.0+cu128 / 5.21.0). Absolute paths were redacted with
 `scripts/redact_provenance.py` before commit.
 
-Files are in `results/jevbench/` under the same stems as the 19-benchmark runs,
-so `scripts/transform_results.py` reads both shapes with one rule; `method` is
+Files are in `results/jevbench/` for the three runs above and
+`model/experiments/logit_prov/` for the five from the other sweep; all eight
+carry `code_commit` 33506b8 and the same readout label, and
+`scripts/transform_results.py` reads both shapes with one rule — `method` is
 `logit` for these rows and `trained-heads` for the rest.
 
 ## Limits

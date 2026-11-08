@@ -18,6 +18,11 @@ The tail after the root is untouched, so the cache layout, the script path and
 the benchmark arguments stay readable and the revision survives.  Nothing is
 special-cased by flag name: a path is a path wherever it appears.
 
+The invariant is that no token starts with ``/``, not that the string contains
+no absolute-looking substring: ``<host>/tmp/run/out.json`` still contains
+``/tmp/`` and is clean.  ``--check`` tests the invariant; a plain grep for
+``/tmp/`` flags the file and is testing something else.
+
 Only those two fields are rewritten; every other field - model id, revision,
 dtype, device, device_name, versions, code commit, readout, scores - must come
 out byte-identical.  If a home path or an absolute path survives the rewrite in
