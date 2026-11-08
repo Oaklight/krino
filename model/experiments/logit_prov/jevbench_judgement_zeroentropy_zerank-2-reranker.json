@@ -7,7 +7,7 @@
     "device": "cuda:0",
     "code_commit": "00ac51cc8eb0b761da5d13fddb296fb5b54d2536",
     "date_utc": "2026-11-08T20:41:47Z",
-    "readout": "per-option judgement, log P(\" yes\") against log P(\" no\") at \"Answer:\"",
+    "readout": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
     "strategy": "judgement",
     "norm": "mean",
     "command": "model/scripts/eval_jevbench_judgement.py --model zeroentropy/zerank-2-reranker --output <host>/tmp/krino-305-out/jevbench_judgement_zeroentropy_zerank-2-reranker.json",

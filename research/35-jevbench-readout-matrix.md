@@ -29,9 +29,12 @@ cells score the same 231 rows with the same denominators.
 
 Continuation scores the option text as the continuation of one shared context.
 The reranker template scores each option independently against an
-`<Instruct>/<Query>/<Document>` prompt. The judgement readout scores
-`log P(" yes") − log P(" no")` per option under a plain question wording. The
-first normalises options against each other; the other two never do.
+`<Instruct>/<Query>/<Document>` prompt. The judgement readout ranks each option
+on `log P(" yes")` under a plain question wording. Ranked on the difference
+`log P(" yes") − log P(" no")` instead, the same run changes 42 of 231
+predictions and scores 138/231 against 143/231 (exact McNemar p = 0.4731, #310);
+the single key is the statistic of record. The first normalises options against
+each other; the other two never do.
 
 `predicted_idx` is present on every row of the judgement files and of the two
 `p_yes` files (base × reranker prompt, reranker × native). The continuation files
