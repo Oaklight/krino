@@ -137,6 +137,9 @@ def main() -> int:
                 "gold_idx": record["label_idx"],
                 "option_count": record["option_count"],
                 "logp_yes": [round(value, 6) for value in record["logits"]],
+                # Written for every type, including noul, so a consumer that
+                # reads predicted_idx never has to fall back to the score array.
+                "predicted_idx": record["logits"].index(max(record["logits"])),
                 "correct": None,
             }
         )
