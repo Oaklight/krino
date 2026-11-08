@@ -44,7 +44,7 @@ def _record(scorer: LogitScorer, item: Any) -> dict[str, Any] | None:
 
     if q_type == "noul":
         context = f"State: {state}\nQuestion: {instructions}\nAnswer:"
-        scores = scorer._score_options(context, [" yes", " no"])
+        scores = scorer.score_options(context, [" yes", " no"])
         positive = item.label if isinstance(item.label, bool) else str(item.label).lower() == "true"
         return {
             "type": "noul",
@@ -73,7 +73,7 @@ def _record(scorer: LogitScorer, item: Any) -> dict[str, Any] | None:
             context += "\n".join(f"{labels[i]}. {descriptions[i] or keys[i]}" for i in range(len(keys)))
             context += "\nAnswer:"
             option_texts = [f" {label}" for label in labels]
-        scores = scorer._score_options(context, option_texts)
+        scores = scorer.score_options(context, option_texts)
         return {
             "type": "choice",
             "logits": scores,
@@ -88,7 +88,7 @@ def _record(scorer: LogitScorer, item: Any) -> dict[str, Any] | None:
         context = f"State: {state}\nQuestion: {instructions}\nLevels:\n"
         context += "\n".join(f"{i}. {desc}" for i, desc in enumerate(criteria))
         context += "\nLevel:"
-        scores = scorer._score_options(context, [f" {i}" for i in range(len(criteria))])
+        scores = scorer.score_options(context, [f" {i}" for i in range(len(criteria))])
         gold_idx = max(0, min(len(criteria) - 1, int(round(float(item.label)))))
         return {
             "type": "score",

@@ -156,6 +156,16 @@ class LogitScorer:
 
         return scores
 
+    def score_options(self, context: str, options: list[str]) -> list[float]:
+        """Return the per-option scores for one context.
+
+        Public wrapper over the internal scorer so that a caller building its
+        own record format - the JevBench screen does - does not depend on a
+        private method.  Higher is better; the values are log-probabilities,
+        normalised by ``norm``.
+        """
+        return self._score_options(context, options)
+
     def _softmax(self, scores: list[float]) -> list[float]:
         t = torch.tensor(scores, dtype=torch.float32)
         probs = torch.softmax(t, dim=0).tolist()
