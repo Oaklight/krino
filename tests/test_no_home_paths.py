@@ -3,7 +3,8 @@
 The provenance block records where the weights and datasets lived, and the
 repository is public. `scripts/redact_provenance.py` replaces every absolute
 root with `<host>`; this test makes sure the next run cannot reintroduce one,
-or that a file is committed without being redacted.
+or that a file is committed without being redacted. It walks both result roots:
+`model/experiments/` for the 19-benchmark runs and `results/` for JevBench.
 """
 
 from __future__ import annotations
@@ -20,10 +21,21 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import redact_provenance as redact  # noqa: E402
 
 EXPERIMENTS = ROOT / "model" / "experiments"
+# JevBench runs carry the same `_provenance` block and live under results/, so
+# the guard has to walk both roots or a redaction miss there would pass CI.
+RESULT_DIRS = (EXPERIMENTS, ROOT / "results")
 
 
 def _result_files() -> list[Path]:
-    return sorted(EXPERIMENTS.rglob("*.json"))
+    return sorted(
+        path for directory in RESULT_DIRS for path in directory.rglob("*.json")
+    )
+
+
+def test_the_guard_walks_both_result_roots():
+    paths = _result_files()
+    assert any(EXPERIMENTS in path.parents for path in paths)
+    assert any((ROOT / "results") in path.parents for path in paths)
 
 
 def test_no_committed_result_file_contains_a_home_path():
