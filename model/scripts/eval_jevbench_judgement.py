@@ -46,6 +46,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from data.pipeline import load_jevbench  # noqa: E402
+from model.evaluation.dev_set import load_dev_set  # noqa: E402
 from model.evaluation.jevbench import summarize  # noqa: E402
 from model.evaluation.judgement_prompt import (  # noqa: E402
     JUDGEMENT_TEMPLATE,
@@ -93,6 +94,9 @@ def main() -> int:
     parser.add_argument("--dtype", default="bfloat16", choices=["float16", "bfloat16", "float32"])
     parser.add_argument("--device", default=None)
     parser.add_argument("--max-items", type=int, default=None)
+    parser.add_argument("--dataset", choices=["jevbench", "dev"], default="jevbench",
+                        help="jevbench: the 231-item public set (acceptance); dev: the 800-item development set (#298)")
+    parser.add_argument("--dev-path", type=Path, default=ROOT / "data/benchmarks/dev/dev_800.jsonl")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -115,7 +119,10 @@ def main() -> int:
     device = str(next(model.parameters()).device)
     scorer = LogitScorer(model, tokenizer, norm="mean", strategy="description", batch_size=1)
 
-    items = list(load_jevbench())
+    if args.dataset == "dev":
+        items = list(load_dev_set(args.dev_path))
+    else:
+        items = list(load_jevbench())
     if args.max_items:
         items = items[: args.max_items]
     print(f"Loaded {len(items)} JevBench items", flush=True)
