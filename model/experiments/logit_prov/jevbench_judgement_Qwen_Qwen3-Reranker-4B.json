@@ -5,19 +5,23 @@
     "snapshot_path": "<host>/.cache/huggingface/hub/models--Qwen--Qwen3-Reranker-4B/snapshots/22e683669bc0f0bd69640a1354a6d0aebcfeede5",
     "dtype": "bfloat16",
     "device": "cuda:0",
-    "code_commit": "2819b6f67f7f3c9b7cf4d7dbaa08a3671a6cfaa0",
-    "date_utc": "2026-11-08T05:57:33Z",
-    "readout": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+    "code_commit": "880a9f141176a75d7a8aba33529fac599537dd08",
+    "date_utc": "2026-11-08T21:35:03Z",
+    "readout": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; log P(\" no\") recorded but not ranked; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record",
     "strategy": "judgement",
     "norm": "mean",
-    "command": "model/scripts/eval_jevbench_judgement.py --model Qwen/Qwen3-Reranker-4B --output <host>/tmp/krino-277-out/exp/v2/C_reranker_judgement.json",
+    "command": "model/scripts/eval_jevbench_judgement.py --model Qwen/Qwen3-Reranker-4B --snapshot <host>/.cache/huggingface/hub/models--Qwen--Qwen3-Reranker-4B/snapshots/22e683669bc0f0bd69640a1354a6d0aebcfeede5 --code-commit 880a9f141176a75d7a8aba33529fac599537dd08 --output <host>/tmp/krino-307-out/verify4b_judgement.json",
     "python_version": "3.12.16",
     "torch_version": "2.11.0+cu128",
     "device_name": "NVIDIA H100 NVL",
     "transformers_version": "5.21.0",
+    "fla": "absent",
+    "causal_conv1d": "absent",
+    "gdn_kernel_path": "reference",
     "prompt_template": "State: {state}\nQuestion: {instructions}\nOption: {option}\nDoes this option correctly answer the question? Answer:",
-    "option_texts": "noul: question criteria, true first; choice: description; score: 'Level {i}: {description}'",
-    "elapsed_s": 294.1
+    "polarity_template": "State: {state}\nQuestion: {instructions}\nAnswer:",
+    "option_texts": "noul: question criteria, true first; choice: description; score: 'Level {i}: {description}'; noul without criteria: one proposition, log P(yes)-log P(no) at Answer:",
+    "elapsed_s": 293.0
   },
   "items": 231,
   "n": 231,
@@ -125,7 +129,15 @@
         -9.263527,
         -1.417078
       ],
+      "logp_no": [
+        -2.950141,
+        -2.624676,
+        -2.662245,
+        -2.826027,
+        -4.292078
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -140,7 +152,15 @@
         -8.709481,
         -5.892331
       ],
+      "logp_no": [
+        -2.348585,
+        -5.406223,
+        -2.204299,
+        -2.459481,
+        -2.017331
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -155,7 +175,15 @@
         -8.930271,
         -5.0125
       ],
+      "logp_no": [
+        -2.663752,
+        -2.498319,
+        -7.805676,
+        -2.680271,
+        -1.95
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -170,7 +198,15 @@
         -0.903607,
         -4.83866
       ],
+      "logp_no": [
+        -2.189442,
+        -1.72831,
+        -2.282231,
+        -4.528607,
+        -2.08866
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -185,7 +221,15 @@
         -8.091829,
         -6.468066
       ],
+      "logp_no": [
+        -3.173659,
+        -2.478363,
+        -2.386752,
+        -2.466829,
+        -2.218066
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -200,7 +244,15 @@
         -9.070735,
         -1.352285
       ],
+      "logp_no": [
+        -2.352588,
+        -2.353149,
+        -2.175815,
+        -2.445735,
+        -3.789784
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -215,7 +267,15 @@
         -8.122849,
         -8.685529
       ],
+      "logp_no": [
+        -2.122021,
+        -2.14997,
+        -5.938581,
+        -2.122849,
+        -2.373029
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -230,7 +290,15 @@
         -8.768258,
         -8.635375
       ],
+      "logp_no": [
+        -5.238846,
+        -2.384689,
+        -2.322349,
+        -2.080758,
+        -2.385375
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -245,7 +313,15 @@
         -8.823404,
         -1.117267
       ],
+      "logp_no": [
+        -2.02894,
+        -1.939204,
+        -2.122511,
+        -1.948404,
+        -5.304767
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -260,7 +336,15 @@
         -8.595756,
         -6.74058
       ],
+      "logp_no": [
+        -2.187306,
+        -3.354109,
+        -2.035903,
+        -2.033255,
+        -1.92808
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -275,7 +359,15 @@
         -1.024957,
         -9.426112
       ],
+      "logp_no": [
+        -2.224098,
+        -2.553483,
+        -2.495227,
+        -4.837458,
+        -2.488612
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -290,7 +382,15 @@
         -9.073521,
         -8.653163
       ],
+      "logp_no": [
+        -2.050947,
+        -2.281904,
+        -4.588624,
+        -2.073521,
+        -2.278163
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -302,7 +402,12 @@
         -0.737484,
         -5.565054
       ],
+      "logp_no": [
+        -2.987484,
+        -1.877554
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -314,7 +419,12 @@
         -3.695068,
         -1.824419
       ],
+      "logp_no": [
+        -1.507568,
+        -1.574419
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -326,7 +436,12 @@
         -0.760845,
         -4.326407
       ],
+      "logp_no": [
+        -2.760845,
+        -1.576407
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -338,7 +453,12 @@
         -3.717089,
         -1.047928
       ],
+      "logp_no": [
+        -1.467089,
+        -1.797928
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -350,7 +470,12 @@
         -1.191369,
         -3.921033
       ],
+      "logp_no": [
+        -2.316369,
+        -1.733533
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -362,7 +487,12 @@
         -5.014773,
         -2.285991
       ],
+      "logp_no": [
+        -1.827273,
+        -1.410991
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -374,7 +504,12 @@
         -0.732729,
         -4.125424
       ],
+      "logp_no": [
+        -3.545229,
+        -1.750424
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -386,7 +521,12 @@
         -2.293026,
         -0.835306
       ],
+      "logp_no": [
+        -1.293026,
+        -2.085306
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -398,7 +538,12 @@
         -1.041569,
         -4.992696
       ],
+      "logp_no": [
+        -2.541569,
+        -1.867697
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -410,7 +555,12 @@
         -2.680941,
         -2.315606
       ],
+      "logp_no": [
+        -1.493441,
+        -1.815606
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -422,7 +572,12 @@
         -1.599125,
         -3.870495
       ],
+      "logp_no": [
+        -2.411625,
+        -1.995495
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -434,7 +589,12 @@
         -3.084071,
         -2.234218
       ],
+      "logp_no": [
+        -1.834071,
+        -1.984218
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -448,7 +608,14 @@
         -3.987873,
         -0.848479
       ],
+      "logp_no": [
+        -2.263337,
+        -2.233011,
+        -1.862873,
+        -4.535979
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -462,7 +629,14 @@
         -3.636803,
         -5.45694
       ],
+      "logp_no": [
+        -2.285875,
+        -3.976249,
+        -2.136803,
+        -2.51944
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -476,7 +650,14 @@
         -3.986572,
         -6.146502
       ],
+      "logp_no": [
+        -4.369357,
+        -2.414248,
+        -2.174072,
+        -2.271502
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -490,7 +671,14 @@
         -9.659397,
         -2.8966
       ],
+      "logp_no": [
+        -4.36842,
+        -2.928058,
+        -2.971897,
+        -2.9591
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -504,7 +692,14 @@
         -7.087423,
         -5.642825
       ],
+      "logp_no": [
+        -2.331953,
+        -4.465871,
+        -2.274923,
+        -1.830325
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -518,7 +713,14 @@
         -8.454958,
         -2.037276
       ],
+      "logp_no": [
+        -2.817647,
+        -3.152667,
+        -3.204957,
+        -3.849776
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -532,7 +734,14 @@
         -5.807833,
         -6.32214
       ],
+      "logp_no": [
+        -2.219102,
+        -5.719249,
+        -2.370333,
+        -2.38464
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -546,7 +755,14 @@
         -6.115543,
         -1.466541
       ],
+      "logp_no": [
+        -2.538504,
+        -2.542591,
+        -2.740543,
+        -3.591541
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -561,7 +777,15 @@
         -7.260771,
         -6.430517
       ],
+      "logp_no": [
+        -2.5114,
+        -2.375717,
+        -5.109293,
+        -2.448271,
+        -2.430517
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -576,7 +800,15 @@
         -4.68028,
         -5.457687
       ],
+      "logp_no": [
+        -2.584196,
+        -3.810563,
+        -2.593081,
+        -2.24278,
+        -2.457688
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -591,7 +823,15 @@
         -5.383799,
         -5.1976
       ],
+      "logp_no": [
+        -2.118805,
+        -1.679364,
+        -1.660782,
+        -1.758799,
+        -1.7601
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -605,7 +845,14 @@
         -1.72487,
         -6.262435
       ],
+      "logp_no": [
+        -2.378556,
+        -2.418491,
+        -3.09987,
+        -2.262435
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -620,7 +867,15 @@
         -9.962953,
         -7.454812
       ],
+      "logp_no": [
+        -2.097558,
+        -2.018042,
+        -2.770513,
+        -2.619203,
+        -2.329812
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -635,7 +890,15 @@
         -1.09986,
         -8.562181
       ],
+      "logp_no": [
+        -2.491103,
+        -2.34319,
+        -2.767176,
+        -4.34986,
+        -2.437182
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -650,7 +913,15 @@
         -9.621851,
         -10.69333
       ],
+      "logp_no": [
+        -2.605981,
+        -4.661554,
+        -2.830292,
+        -2.746851,
+        -2.81833
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -665,7 +936,15 @@
         -10.219073,
         -7.426332
       ],
+      "logp_no": [
+        -4.865097,
+        -2.526619,
+        -2.754432,
+        -2.625323,
+        -2.113832
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -680,7 +959,15 @@
         -8.726974,
         -1.516182
       ],
+      "logp_no": [
+        -2.388622,
+        -2.334686,
+        -2.312597,
+        -2.601974,
+        -3.953682
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -695,7 +982,15 @@
         -7.205549,
         -10.067192
       ],
+      "logp_no": [
+        -2.482036,
+        -4.476218,
+        -3.110503,
+        -2.643049,
+        -2.754692
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -710,7 +1005,15 @@
         -2.342307,
         -10.270442
       ],
+      "logp_no": [
+        -2.308091,
+        -2.413427,
+        -2.641102,
+        -2.342307,
+        -2.426692
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -725,7 +1028,15 @@
         -10.491032,
         -7.175981
       ],
+      "logp_no": [
+        -5.827332,
+        -2.61312,
+        -3.043485,
+        -2.772282,
+        -2.48848
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -740,7 +1051,15 @@
         -9.116346,
         -1.327847
       ],
+      "logp_no": [
+        -2.292741,
+        -2.504496,
+        -2.396042,
+        -2.241346,
+        -5.827847
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -755,7 +1074,15 @@
         -8.501227,
         -7.491557
       ],
+      "logp_no": [
+        -2.133925,
+        -2.572326,
+        -3.104563,
+        -2.751227,
+        -2.429057
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -770,7 +1097,15 @@
         -9.468686,
         -9.78231
       ],
+      "logp_no": [
+        -1.99927,
+        -4.222188,
+        -2.319186,
+        -2.218686,
+        -2.40731
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -785,7 +1120,15 @@
         -9.558152,
         -1.145208
       ],
+      "logp_no": [
+        -2.00756,
+        -2.218779,
+        -2.329732,
+        -2.120652,
+        -4.082708
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -800,7 +1143,15 @@
         -4.492629,
         -4.084999
       ],
+      "logp_no": [
+        -3.784038,
+        -3.641755,
+        -3.382646,
+        -3.555129,
+        -4.084999
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -815,7 +1166,15 @@
         -5.884381,
         -4.726023
       ],
+      "logp_no": [
+        -3.768731,
+        -3.211464,
+        -3.178683,
+        -3.259381,
+        -3.101023
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -829,7 +1188,14 @@
         -6.230302,
         -7.040328
       ],
+      "logp_no": [
+        -2.729111,
+        -2.796465,
+        -2.730303,
+        -3.540328
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -843,7 +1209,14 @@
         -5.640173,
         -7.677714
       ],
+      "logp_no": [
+        -2.877298,
+        -2.938847,
+        -2.827673,
+        -2.927714
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -855,7 +1228,12 @@
         -3.134196,
         -4.775326
       ],
+      "logp_no": [
+        -4.759195,
+        -3.275326
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -867,7 +1245,12 @@
         -4.661724,
         -4.106993
       ],
+      "logp_no": [
+        -3.286724,
+        -3.231993
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -882,7 +1265,15 @@
         -4.573639,
         -6.068822
       ],
+      "logp_no": [
+        -1.825745,
+        -2.036854,
+        -1.886965,
+        -1.761139,
+        -1.756323
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -894,7 +1285,12 @@
         -3.407638,
         -4.356577
       ],
+      "logp_no": [
+        -4.282638,
+        -3.606577
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -906,7 +1302,12 @@
         -2.964772,
         -4.02459
       ],
+      "logp_no": [
+        -2.902272,
+        -2.462091
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -919,7 +1320,13 @@
         -3.140023,
         -3.610802
       ],
+      "logp_no": [
+        -1.745978,
+        -1.702523,
+        -1.673302
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -932,7 +1339,13 @@
         -4.629291,
         -1.994391
       ],
+      "logp_no": [
+        -1.801492,
+        -2.066791,
+        -2.119391
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -944,7 +1357,12 @@
         -3.269308,
         -3.182766
       ],
+      "logp_no": [
+        -2.894308,
+        -2.432766
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -956,7 +1374,12 @@
         -2.797421,
         -1.890957
       ],
+      "logp_no": [
+        -3.047421,
+        -4.390957
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -968,7 +1391,12 @@
         -1.511868,
         -2.617474
       ],
+      "logp_no": [
+        -3.636868,
+        -2.179974
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -983,7 +1411,15 @@
         -4.735772,
         -4.268569
       ],
+      "logp_no": [
+        -2.359293,
+        -2.385122,
+        -2.267823,
+        -2.235772,
+        -2.393569
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": false
     },
     {
@@ -995,7 +1431,12 @@
         -2.843847,
         -2.148552
       ],
+      "logp_no": [
+        -3.031347,
+        -3.523552
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1009,7 +1450,14 @@
         -3.623878,
         -3.208076
       ],
+      "logp_no": [
+        -2.767949,
+        -2.111901,
+        -2.311378,
+        -2.708076
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1022,7 +1470,13 @@
         -2.888026,
         -1.886509
       ],
+      "logp_no": [
+        -1.794205,
+        -2.075526,
+        -2.386509
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1035,7 +1489,13 @@
         -4.959491,
         -2.530453
       ],
+      "logp_no": [
+        -2.606622,
+        -3.084491,
+        -2.717953
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1048,7 +1508,13 @@
         -2.177627,
         -4.957866
       ],
+      "logp_no": [
+        -2.307502,
+        -3.240127,
+        -3.145366
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1061,7 +1527,13 @@
         -5.049693,
         -3.147071
       ],
+      "logp_no": [
+        -1.796627,
+        -2.112193,
+        -1.772071
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1074,7 +1546,13 @@
         -0.672317,
         -0.891794
       ],
+      "logp_no": [
+        -3.449121,
+        -3.797317,
+        -3.391794
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1087,7 +1565,13 @@
         -2.977923,
         -2.91679
       ],
+      "logp_no": [
+        -2.443897,
+        -2.602923,
+        -2.85429
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1101,7 +1585,14 @@
         -6.347342,
         -1.365361
       ],
+      "logp_no": [
+        -2.654779,
+        -2.864581,
+        -2.847342,
+        -2.990361
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1115,7 +1606,14 @@
         -2.292393,
         -3.227099
       ],
+      "logp_no": [
+        -2.393646,
+        -2.825542,
+        -2.854893,
+        -2.352099
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1131,7 +1629,16 @@
         -3.393044,
         -6.078809
       ],
+      "logp_no": [
+        -2.434559,
+        -2.554599,
+        -2.170161,
+        -2.890305,
+        -2.518044,
+        -2.328809
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1146,7 +1653,15 @@
         -3.497406,
         -4.209441
       ],
+      "logp_no": [
+        -1.652079,
+        -2.078648,
+        -2.14425,
+        -1.872406,
+        -1.709441
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1162,7 +1677,16 @@
         -4.529652,
         -5.089271
       ],
+      "logp_no": [
+        -2.231956,
+        -2.52977,
+        -2.404734,
+        -2.282621,
+        -2.092151,
+        -2.089271
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1174,7 +1698,12 @@
         -2.662415,
         -5.988021
       ],
+      "logp_no": [
+        -5.287415,
+        -2.925521
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1187,7 +1716,13 @@
         -5.272625,
         -4.198591
       ],
+      "logp_no": [
+        -1.798988,
+        -1.772625,
+        -2.011091
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1200,7 +1735,13 @@
         -2.334615,
         -2.757249
       ],
+      "logp_no": [
+        -2.889288,
+        -2.897115,
+        -2.382249
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1212,7 +1753,12 @@
         -3.441672,
         -4.03625
       ],
+      "logp_no": [
+        -2.379172,
+        -2.59875
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1225,7 +1771,13 @@
         -2.980978,
         -3.162857
       ],
+      "logp_no": [
+        -2.735573,
+        -2.918478,
+        -2.600357
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1238,7 +1790,13 @@
         -1.641764,
         -3.021737
       ],
+      "logp_no": [
+        -1.400398,
+        -2.016764,
+        -1.959237
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1253,7 +1811,15 @@
         -4.937996,
         -2.354183
       ],
+      "logp_no": [
+        -2.286925,
+        -2.141133,
+        -2.753961,
+        -2.312996,
+        -1.854183
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1267,7 +1833,14 @@
         -2.140982,
         -5.216568
       ],
+      "logp_no": [
+        -2.476264,
+        -2.512826,
+        -3.578482,
+        -2.341568
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1279,7 +1852,12 @@
         -4.80187,
         -2.674862
       ],
+      "logp_no": [
+        -2.80187,
+        -3.112362
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1294,7 +1872,15 @@
         -1.731205,
         -5.353219
       ],
+      "logp_no": [
+        -1.944623,
+        -2.032053,
+        -2.384551,
+        -2.793705,
+        -1.790719
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1306,7 +1892,12 @@
         -1.87151,
         -2.805748
       ],
+      "logp_no": [
+        -3.74651,
+        -2.305748
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1321,7 +1912,15 @@
         -2.829769,
         -3.248556
       ],
+      "logp_no": [
+        -2.210621,
+        -2.217049,
+        -2.170352,
+        -1.954769,
+        -2.373556
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1336,7 +1935,15 @@
         -6.413703,
         -5.427116
       ],
+      "logp_no": [
+        -2.987597,
+        -3.268731,
+        -2.472514,
+        -2.663703,
+        -2.677116
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1352,7 +1959,16 @@
         -3.886842,
         -3.484425
       ],
+      "logp_no": [
+        -3.522,
+        -2.989775,
+        -2.897399,
+        -3.148362,
+        -3.386842,
+        -3.671925
+      ],
       "predicted_idx": 5,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1364,7 +1980,12 @@
         -2.40416,
         -5.528822
       ],
+      "logp_no": [
+        -3.77916,
+        -2.903823
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1378,7 +1999,14 @@
         -3.888472,
         -3.796028
       ],
+      "logp_no": [
+        -2.535702,
+        -2.548616,
+        -2.763472,
+        -3.171028
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1392,7 +2020,14 @@
         -1.973826,
         -2.757228
       ],
+      "logp_no": [
+        -2.465709,
+        -2.713674,
+        -2.723826,
+        -2.382228
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1406,7 +2041,14 @@
         -4.965093,
         -6.014884
       ],
+      "logp_no": [
+        -2.114587,
+        -2.569214,
+        -2.402593,
+        -2.389884
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1418,7 +2060,12 @@
         -4.119571,
         -4.675974
       ],
+      "logp_no": [
+        -4.619571,
+        -3.613474
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1431,7 +2078,13 @@
         -3.151954,
         -3.428069
       ],
+      "logp_no": [
+        -3.408345,
+        -3.651954,
+        -3.303069
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1443,7 +2096,12 @@
         -2.963517,
         -3.105852
       ],
+      "logp_no": [
+        -3.463517,
+        -3.105852
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1458,7 +2116,15 @@
         -3.295163,
         -3.714681
       ],
+      "logp_no": [
+        -3.183939,
+        -3.090093,
+        -3.187581,
+        -3.295163,
+        -3.089681
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1473,7 +2139,15 @@
         -3.001969,
         -3.172188
       ],
+      "logp_no": [
+        -3.334748,
+        -3.488635,
+        -3.335561,
+        -3.126969,
+        -3.234688
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1489,7 +2163,16 @@
         -2.967182,
         -3.249441
       ],
+      "logp_no": [
+        -2.921012,
+        -4.749547,
+        -4.793303,
+        -4.638939,
+        -4.279682,
+        -4.561941
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1504,7 +2187,15 @@
         -2.506076,
         -3.17326
       ],
+      "logp_no": [
+        -2.858568,
+        -2.748731,
+        -2.616239,
+        -2.943576,
+        -2.61076
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1517,7 +2208,13 @@
         -5.053195,
         -2.554718
       ],
+      "logp_no": [
+        -3.0872,
+        -2.865695,
+        -3.804718
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1531,7 +2228,14 @@
         -2.292289,
         -3.039988
       ],
+      "logp_no": [
+        -2.381175,
+        -2.804581,
+        -2.917289,
+        -2.977488
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1543,7 +2247,12 @@
         -3.57426,
         -1.845277
       ],
+      "logp_no": [
+        -2.94926,
+        -2.845277
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1557,7 +2266,14 @@
         -4.770921,
         -2.59621
       ],
+      "logp_no": [
+        -2.848815,
+        -3.235514,
+        -3.333421,
+        -3.90871
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1569,7 +2285,12 @@
         -2.741484,
         -2.44556
       ],
+      "logp_no": [
+        -2.991484,
+        -3.00806
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1583,7 +2304,14 @@
         -3.903717,
         -3.147746
       ],
+      "logp_no": [
+        -3.530323,
+        -3.013579,
+        -3.466217,
+        -3.522746
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1597,7 +2325,14 @@
         -5.49264,
         -4.277357
       ],
+      "logp_no": [
+        -3.849711,
+        -3.029326,
+        -3.430139,
+        -2.964857
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1611,7 +2346,14 @@
         -5.56659,
         -4.863984
       ],
+      "logp_no": [
+        -2.397543,
+        -1.765832,
+        -2.06659,
+        -1.926484
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1625,7 +2367,14 @@
         -3.685196,
         -3.88383
       ],
+      "logp_no": [
+        -2.737502,
+        -2.197685,
+        -2.872696,
+        -2.75883
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1639,7 +2388,14 @@
         -3.124433,
         -4.237285
       ],
+      "logp_no": [
+        -2.74247,
+        -2.293622,
+        -2.561933,
+        -2.112285
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1653,7 +2409,14 @@
         -3.803461,
         -4.199836
       ],
+      "logp_no": [
+        -2.267853,
+        -2.45588,
+        -2.053461,
+        -2.699836
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1667,7 +2430,14 @@
         -3.356639,
         -5.611399
       ],
+      "logp_no": [
+        -2.652495,
+        -2.278805,
+        -2.669139,
+        -2.423899
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1681,7 +2451,14 @@
         -3.559145,
         -4.909071
       ],
+      "logp_no": [
+        -2.346858,
+        -2.248806,
+        -2.059145,
+        -1.909071
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1695,7 +2472,14 @@
         -4.480173,
         -3.981095
       ],
+      "logp_no": [
+        -2.308018,
+        -1.636319,
+        -2.105173,
+        -2.356095
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1709,7 +2493,14 @@
         -3.684658,
         -4.111322
       ],
+      "logp_no": [
+        -2.401232,
+        -2.60134,
+        -1.997158,
+        -2.111322
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1721,7 +2512,12 @@
         -5.067563,
         -2.644511
       ],
+      "logp_no": [
+        -3.255063,
+        -3.832011
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1733,7 +2529,12 @@
         -7.746927,
         -6.112348
       ],
+      "logp_no": [
+        -2.184427,
+        -2.424847
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1747,7 +2548,14 @@
         -3.0942,
         -3.703891
       ],
+      "logp_no": [
+        -3.136579,
+        -2.888641,
+        -3.0317,
+        -2.766391
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1761,7 +2569,14 @@
         -5.996415,
         -2.816752
       ],
+      "logp_no": [
+        -2.970263,
+        -2.8472,
+        -2.996415,
+        -3.941752
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1775,7 +2590,14 @@
         -2.246114,
         -1.643618
       ],
+      "logp_no": [
+        -2.341786,
+        -2.705132,
+        -3.746114,
+        -4.143618
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1789,7 +2611,14 @@
         -7.806398,
         -4.072828
       ],
+      "logp_no": [
+        -3.290646,
+        -2.781525,
+        -2.681398,
+        -2.697828
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1801,7 +2630,12 @@
         -4.021428,
         -3.301141
       ],
+      "logp_no": [
+        -2.208928,
+        -2.426141
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1813,7 +2647,12 @@
         -3.28125,
         -2.137049
       ],
+      "logp_no": [
+        -2.53125,
+        -2.637049
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1825,7 +2664,12 @@
         -2.080097,
         -2.396995
       ],
+      "logp_no": [
+        -2.830097,
+        -2.209495
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1837,7 +2681,12 @@
         -1.935726,
         -2.084964
       ],
+      "logp_no": [
+        -3.123226,
+        -2.334964
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1849,7 +2698,12 @@
         -1.927387,
         -2.975847
       ],
+      "logp_no": [
+        -2.302387,
+        -2.663347
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1861,7 +2715,12 @@
         -2.933488,
         -2.531462
       ],
+      "logp_no": [
+        -2.558488,
+        -2.906462
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1873,7 +2732,12 @@
         -2.256977,
         -2.843368
       ],
+      "logp_no": [
+        -2.694477,
+        -2.905868
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1885,7 +2749,12 @@
         -2.536136,
         -2.796404
       ],
+      "logp_no": [
+        -2.223636,
+        -2.233904
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1897,7 +2766,12 @@
         -1.625459,
         -1.840876
       ],
+      "logp_no": [
+        -3.500459,
+        -2.590876
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1909,7 +2783,12 @@
         -1.430138,
         -1.990353
       ],
+      "logp_no": [
+        -4.367638,
+        -2.615353
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1923,7 +2802,14 @@
         -8.86639,
         -5.709256
       ],
+      "logp_no": [
+        -2.547563,
+        -2.559705,
+        -2.49139,
+        -2.396756
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -1937,7 +2823,14 @@
         -4.816898,
         -6.232716
       ],
+      "logp_no": [
+        -2.799209,
+        -2.543919,
+        -2.941898,
+        -2.920216
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1951,7 +2844,14 @@
         -5.388216,
         -3.751512
       ],
+      "logp_no": [
+        -2.647996,
+        -2.317015,
+        -2.450716,
+        -2.189012
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1965,7 +2865,14 @@
         -5.141384,
         -3.540448
       ],
+      "logp_no": [
+        -2.192897,
+        -2.31259,
+        -2.453884,
+        -2.290448
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1980,7 +2887,15 @@
         -0.840734,
         -1.869578
       ],
+      "logp_no": [
+        -2.653833,
+        -2.555492,
+        -2.579711,
+        -7.028234,
+        -2.869578
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -1995,7 +2910,15 @@
         -7.704052,
         -2.385003
       ],
+      "logp_no": [
+        -1.838526,
+        -2.085707,
+        -6.767266,
+        -2.204052,
+        -2.697503
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2010,7 +2933,15 @@
         -0.59841,
         -4.258052
       ],
+      "logp_no": [
+        -2.034077,
+        -2.108501,
+        -2.146645,
+        -7.84841,
+        -2.070552
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2025,7 +2956,15 @@
         -8.761228,
         -0.881398
       ],
+      "logp_no": [
+        -2.067083,
+        -2.321602,
+        -2.194889,
+        -2.261227,
+        -6.193898
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2040,7 +2979,15 @@
         -1.030375,
         -5.164101
       ],
+      "logp_no": [
+        -1.838289,
+        -1.894057,
+        -2.045689,
+        -6.092875,
+        -2.226601
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2054,7 +3001,14 @@
         -3.544505,
         -1.626707
       ],
+      "logp_no": [
+        -2.381647,
+        -2.688729,
+        -2.357005,
+        -3.126707
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2068,7 +3022,14 @@
         -2.042497,
         -3.119743
       ],
+      "logp_no": [
+        -2.220165,
+        -2.18414,
+        -3.667497,
+        -2.932243
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2082,7 +3043,14 @@
         -2.348927,
         -2.226168
       ],
+      "logp_no": [
+        -2.939807,
+        -2.857738,
+        -2.661427,
+        -2.851168
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2095,7 +3063,13 @@
         -2.399747,
         -2.806047
       ],
+      "logp_no": [
+        -2.23718,
+        -2.337247,
+        -2.056047
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2107,7 +3081,12 @@
         -0.95071,
         -1.887215
       ],
+      "logp_no": [
+        -3.51321,
+        -1.762215
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2119,7 +3098,12 @@
         -0.86184,
         -2.22394
       ],
+      "logp_no": [
+        -3.48684,
+        -1.84894
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2131,7 +3115,12 @@
         -1.273694,
         -2.05117
       ],
+      "logp_no": [
+        -3.586194,
+        -2.30117
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2143,7 +3132,12 @@
         -0.778494,
         -1.909686
       ],
+      "logp_no": [
+        -3.028494,
+        -1.722186
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2155,7 +3149,12 @@
         -0.983893,
         -1.857328
       ],
+      "logp_no": [
+        -3.608893,
+        -2.107328
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2167,7 +3166,12 @@
         -1.056892,
         -2.03492
       ],
+      "logp_no": [
+        -2.869392,
+        -1.90992
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2179,7 +3183,12 @@
         -1.295856,
         -2.434282
       ],
+      "logp_no": [
+        -3.045856,
+        -1.871782
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2191,7 +3200,12 @@
         -1.191324,
         -1.476911
       ],
+      "logp_no": [
+        -3.628824,
+        -2.226911
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2203,7 +3217,12 @@
         -0.849432,
         -1.842798
       ],
+      "logp_no": [
+        -2.724432,
+        -1.592798
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2217,7 +3236,14 @@
         -4.247458,
         -3.716585
       ],
+      "logp_no": [
+        -2.561168,
+        -2.551321,
+        -2.497458,
+        -2.716585
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2231,7 +3257,14 @@
         -4.637596,
         -3.786655
       ],
+      "logp_no": [
+        -2.408257,
+        -2.188146,
+        -2.200096,
+        -2.099155
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2245,7 +3278,14 @@
         -3.299333,
         -2.705457
       ],
+      "logp_no": [
+        -2.359002,
+        -2.293118,
+        -2.361833,
+        -2.705457
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2259,7 +3299,14 @@
         -3.663151,
         -2.291795
       ],
+      "logp_no": [
+        -2.372911,
+        -2.008926,
+        -2.475651,
+        -2.854295
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2273,7 +3320,14 @@
         -4.092471,
         -5.265458
       ],
+      "logp_no": [
+        -2.499959,
+        -2.934,
+        -2.404971,
+        -2.390458
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2285,7 +3339,12 @@
         -3.911087,
         -2.819347
       ],
+      "logp_no": [
+        -2.411087,
+        -3.069347
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2297,7 +3356,12 @@
         -5.481091,
         -3.52819
       ],
+      "logp_no": [
+        -2.981092,
+        -3.21569
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2309,7 +3373,12 @@
         -2.088837,
         -2.41454
       ],
+      "logp_no": [
+        -2.526337,
+        -2.66454
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2321,7 +3390,12 @@
         -3.242556,
         -2.323016
       ],
+      "logp_no": [
+        -2.430056,
+        -2.448016
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2333,7 +3407,12 @@
         -2.36374,
         -3.409878
       ],
+      "logp_no": [
+        -2.73874,
+        -2.722378
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2345,7 +3424,12 @@
         -4.085421,
         -2.74291
       ],
+      "logp_no": [
+        -2.772921,
+        -3.18041
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2357,7 +3441,12 @@
         -3.4972,
         -2.809176
       ],
+      "logp_no": [
+        -2.0597,
+        -1.996676
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2369,7 +3458,12 @@
         -3.691335,
         -3.238198
       ],
+      "logp_no": [
+        -2.628835,
+        -2.988198
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2381,7 +3475,12 @@
         -2.822973,
         -3.700316
       ],
+      "logp_no": [
+        -2.572973,
+        -2.887816
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2393,7 +3492,12 @@
         -3.819167,
         -3.902764
       ],
+      "logp_no": [
+        -2.881667,
+        -2.965264
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2405,7 +3509,12 @@
         -2.043999,
         -4.085282
       ],
+      "logp_no": [
+        -2.606499,
+        -2.397782
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2417,7 +3526,12 @@
         -3.491209,
         -4.633178
       ],
+      "logp_no": [
+        -2.928709,
+        -2.820678
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2432,7 +3546,15 @@
         -0.683444,
         -5.630356
       ],
+      "logp_no": [
+        -1.512327,
+        -1.736044,
+        -2.344004,
+        -3.870944,
+        -1.942856
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2447,7 +3569,15 @@
         -0.989042,
         -6.053437
       ],
+      "logp_no": [
+        -1.873557,
+        -1.942604,
+        -2.597434,
+        -2.614042,
+        -2.053437
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2462,7 +3592,15 @@
         -5.156174,
         -2.23855
       ],
+      "logp_no": [
+        -1.816594,
+        -1.700385,
+        -2.239316,
+        -1.656174,
+        -1.48855
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2477,7 +3615,15 @@
         -4.05334,
         -2.073427
       ],
+      "logp_no": [
+        -1.966486,
+        -1.863289,
+        -2.158952,
+        -1.86584,
+        -2.073427
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2492,7 +3638,15 @@
         -4.375881,
         -2.868883
       ],
+      "logp_no": [
+        -1.802445,
+        -4.925751,
+        -2.852778,
+        -1.938381,
+        -1.806383
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2507,7 +3661,15 @@
         -6.386052,
         -4.58693
       ],
+      "logp_no": [
+        -1.837189,
+        -4.689278,
+        -2.347187,
+        -1.761052,
+        -1.64943
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2522,7 +3684,15 @@
         -2.888352,
         -5.164164
       ],
+      "logp_no": [
+        -2.594306,
+        -1.953625,
+        -3.243024,
+        -1.763352,
+        -2.226664
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2537,7 +3707,15 @@
         -4.181473,
         -5.391342
       ],
+      "logp_no": [
+        -2.285087,
+        -2.090688,
+        -2.749711,
+        -1.868973,
+        -2.266341
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2552,7 +3730,15 @@
         -2.249966,
         -4.847228
       ],
+      "logp_no": [
+        -1.861614,
+        -1.81192,
+        -2.540332,
+        -1.749966,
+        -1.909728
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2567,7 +3753,15 @@
         -1.470487,
         -4.60005
       ],
+      "logp_no": [
+        -1.619941,
+        -1.617049,
+        -2.551669,
+        -1.720487,
+        -1.66255
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2582,7 +3776,15 @@
         -3.238798,
         -1.029957
       ],
+      "logp_no": [
+        -1.836109,
+        -1.654019,
+        -2.167874,
+        -1.426298,
+        -2.279957
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2597,7 +3799,15 @@
         -3.960773,
         -1.518929
       ],
+      "logp_no": [
+        -1.982117,
+        -1.963894,
+        -2.393102,
+        -1.585773,
+        -1.893929
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2611,7 +3821,14 @@
         -2.947939,
         -4.730329
       ],
+      "logp_no": [
+        -2.535102,
+        -2.655922,
+        -2.572939,
+        -2.480329
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2625,7 +3842,14 @@
         -5.632489,
         -6.536522
       ],
+      "logp_no": [
+        -4.675529,
+        -2.467176,
+        -2.382489,
+        -2.536522
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2639,7 +3863,14 @@
         -3.414888,
         -6.933679
       ],
+      "logp_no": [
+        -2.386225,
+        -2.660408,
+        -2.352388,
+        -2.433679
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2653,7 +3884,14 @@
         -3.752303,
         -7.096532
       ],
+      "logp_no": [
+        -2.494417,
+        -2.967948,
+        -2.439803,
+        -2.534032
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2667,7 +3905,14 @@
         -1.759712,
         -4.910888
       ],
+      "logp_no": [
+        -2.449501,
+        -2.71148,
+        -3.384712,
+        -2.348388
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2681,7 +3926,14 @@
         -2.394885,
         -4.691944
       ],
+      "logp_no": [
+        -2.476786,
+        -2.695057,
+        -2.644885,
+        -2.566944
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2695,7 +3947,14 @@
         -5.9393,
         -2.813046
       ],
+      "logp_no": [
+        -2.660044,
+        -2.771409,
+        -2.5018,
+        -2.688046
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2709,7 +3968,14 @@
         -6.210907,
         -2.643831
       ],
+      "logp_no": [
+        -2.615119,
+        -2.821988,
+        -2.648407,
+        -2.643831
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2723,7 +3989,14 @@
         -4.523476,
         -5.784396
       ],
+      "logp_no": [
+        -2.557168,
+        -2.557222,
+        -2.710975,
+        -2.596896
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2737,7 +4010,14 @@
         -4.548579,
         -6.030354
       ],
+      "logp_no": [
+        -2.331055,
+        -2.575355,
+        -2.548579,
+        -2.717854
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2751,7 +4031,14 @@
         -1.860319,
         -5.192783
       ],
+      "logp_no": [
+        -2.304497,
+        -2.443659,
+        -3.047819,
+        -2.505283
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2765,7 +4052,14 @@
         -1.347346,
         -6.292474
       ],
+      "logp_no": [
+        -2.544498,
+        -2.637969,
+        -3.722346,
+        -2.479975
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2779,7 +4073,14 @@
         -4.778766,
         -1.173742
       ],
+      "logp_no": [
+        -1.791403,
+        -1.714236,
+        -1.841266,
+        -2.923742
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2793,7 +4094,14 @@
         -2.921818,
         -1.087126
       ],
+      "logp_no": [
+        -1.950921,
+        -1.634278,
+        -1.609318,
+        -2.712126
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2807,7 +4115,14 @@
         -1.832927,
         -1.111885
       ],
+      "logp_no": [
+        -1.74418,
+        -1.805909,
+        -1.832927,
+        -3.111885
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2821,7 +4136,14 @@
         -1.840337,
         -1.000758
       ],
+      "logp_no": [
+        -2.064591,
+        -1.946088,
+        -1.840337,
+        -4.000758
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2835,7 +4157,14 @@
         -3.106241,
         -1.593782
       ],
+      "logp_no": [
+        -2.051209,
+        -1.777055,
+        -1.731241,
+        -3.281282
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2849,7 +4178,14 @@
         -2.591867,
         -1.404146
       ],
+      "logp_no": [
+        -2.402995,
+        -1.551791,
+        -1.654367,
+        -2.654146
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2863,7 +4199,14 @@
         -0.590914,
         -1.027158
       ],
+      "logp_no": [
+        -1.634357,
+        -1.569412,
+        -3.528414,
+        -3.339658
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2877,7 +4220,14 @@
         -0.558509,
         -0.735996
       ],
+      "logp_no": [
+        -1.74302,
+        -1.648713,
+        -2.558509,
+        -3.298496
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2891,7 +4241,14 @@
         -2.377276,
         -0.830828
       ],
+      "logp_no": [
+        -1.744615,
+        -1.86753,
+        -1.814776,
+        -3.518328
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2905,7 +4262,14 @@
         -2.639096,
         -1.41969
       ],
+      "logp_no": [
+        -2.072703,
+        -2.093707,
+        -1.826596,
+        -3.10719
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2919,7 +4283,14 @@
         -1.554139,
         -1.053773
       ],
+      "logp_no": [
+        -2.940552,
+        -1.599876,
+        -1.554139,
+        -2.803772
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2933,7 +4304,14 @@
         -2.057563,
         -0.878314
       ],
+      "logp_no": [
+        -3.185926,
+        -1.827215,
+        -1.557563,
+        -3.003314
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2945,7 +4323,12 @@
         -3.149996,
         -4.041661
       ],
+      "logp_no": [
+        -2.587496,
+        -3.229162
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2957,7 +4340,12 @@
         -3.710758,
         -4.773199
       ],
+      "logp_no": [
+        -3.523258,
+        -4.210699
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -2969,7 +4357,12 @@
         -2.485918,
         -4.306105
       ],
+      "logp_no": [
+        -2.235918,
+        -3.056105
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2981,7 +4374,12 @@
         -3.431229,
         -4.535938
       ],
+      "logp_no": [
+        -2.556229,
+        -3.598438
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -2993,7 +4391,12 @@
         -2.062594,
         -3.325
       ],
+      "logp_no": [
+        -3.062594,
+        -3.2625
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -3005,7 +4408,12 @@
         -3.063742,
         -4.713814
       ],
+      "logp_no": [
+        -3.876242,
+        -3.463814
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -3017,7 +4425,12 @@
         -2.817025,
         -4.236466
       ],
+      "logp_no": [
+        -2.567025,
+        -3.236467
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -3029,7 +4442,12 @@
         -2.588387,
         -4.247772
       ],
+      "logp_no": [
+        -2.213387,
+        -2.685272
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -3041,7 +4459,12 @@
         -3.017352,
         -5.122106
       ],
+      "logp_no": [
+        -3.267352,
+        -4.747106
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -3053,7 +4476,12 @@
         -2.826377,
         -5.639991
       ],
+      "logp_no": [
+        -2.388877,
+        -3.827491
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": false
     },
     {
@@ -3065,7 +4493,12 @@
         -2.698518,
         -3.443165
       ],
+      "logp_no": [
+        -3.198518,
+        -3.693165
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -3077,7 +4510,12 @@
         -1.944705,
         -2.85097
       ],
+      "logp_no": [
+        -2.319705,
+        -2.72597
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -3093,7 +4531,16 @@
         -4.698574,
         -6.51328
       ],
+      "logp_no": [
+        -3.683294,
+        -2.755147,
+        -4.601767,
+        -2.984518,
+        -4.948574,
+        -2.45078
+      ],
       "predicted_idx": 4,
+      "mode": "option",
       "correct": true
     },
     {
@@ -3109,7 +4556,16 @@
         -4.866025,
         -5.898954
       ],
+      "logp_no": [
+        -3.731035,
+        -2.735768,
+        -3.822866,
+        -2.979073,
+        -5.053525,
+        -2.773954
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -3125,7 +4581,16 @@
         -5.300992,
         -5.742241
       ],
+      "logp_no": [
+        -2.687023,
+        -2.452584,
+        -3.304726,
+        -2.613749,
+        -2.925992,
+        -2.617242
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -3141,7 +4606,16 @@
         -5.663313,
         -5.688082
       ],
+      "logp_no": [
+        -3.053245,
+        -2.728598,
+        -3.492367,
+        -2.664399,
+        -2.975813,
+        -2.625582
+      ],
       "predicted_idx": 0,
+      "mode": "option",
       "correct": true
     },
     {
@@ -3157,7 +4631,16 @@
         -6.909887,
         -5.071856
       ],
+      "logp_no": [
+        -2.433983,
+        -2.254513,
+        -3.3083,
+        -2.356875,
+        -2.972387,
+        -2.446856
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -3173,7 +4656,16 @@
         -6.076503,
         -5.223011
       ],
+      "logp_no": [
+        -2.548676,
+        -2.634075,
+        -3.326293,
+        -2.446094,
+        -3.139003,
+        -2.410511
+      ],
       "predicted_idx": 1,
+      "mode": "option",
       "correct": true
     },
     {
@@ -3189,7 +4681,16 @@
         -6.010353,
         -3.749749
       ],
+      "logp_no": [
+        -2.759492,
+        -2.331666,
+        -3.664133,
+        -2.643083,
+        -2.947853,
+        -2.312249
+      ],
       "predicted_idx": 5,
+      "mode": "option",
       "correct": false
     },
     {
@@ -3205,7 +4706,16 @@
         -5.495051,
         -3.869845
       ],
+      "logp_no": [
+        -3.146418,
+        -2.415647,
+        -4.156983,
+        -3.128183,
+        -3.370052,
+        -2.494845
+      ],
       "predicted_idx": 5,
+      "mode": "option",
       "correct": false
     },
     {
@@ -3221,7 +4731,16 @@
         -5.945412,
         -2.383378
       ],
+      "logp_no": [
+        -3.380196,
+        -2.461908,
+        -3.734399,
+        -2.693938,
+        -3.320412,
+        -2.633378
+      ],
       "predicted_idx": 5,
+      "mode": "option",
       "correct": true
     },
     {
@@ -3237,7 +4756,16 @@
         -5.010872,
         -3.938106
       ],
+      "logp_no": [
+        -3.133801,
+        -2.422189,
+        -3.922766,
+        -2.644,
+        -2.823372,
+        -2.188106
+      ],
       "predicted_idx": 3,
+      "mode": "option",
       "correct": false
     },
     {
@@ -3253,7 +4781,16 @@
         -7.12096,
         -5.528422
       ],
+      "logp_no": [
+        -3.386834,
+        -2.971087,
+        -3.458926,
+        -3.179618,
+        -3.43346,
+        -2.965922
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     },
     {
@@ -3269,7 +4806,16 @@
         -7.224473,
         -5.224125
       ],
+      "logp_no": [
+        -3.169333,
+        -2.964903,
+        -3.303974,
+        -3.031357,
+        -3.599473,
+        -2.849125
+      ],
       "predicted_idx": 2,
+      "mode": "option",
       "correct": false
     }
   ]
