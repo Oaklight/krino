@@ -35,6 +35,8 @@ OUTPUT_PATH = transform.OUTPUT_PATH
 JEVBENCH_FIELDS = (
     "model",
     "model_id",
+    "head_version",
+    "run_id",
     "method",
     "readout",
     "readout_detail",
@@ -100,7 +102,15 @@ def check_jevbench_run(run: dict, tracked: set[str]) -> list[str]:
     if expected is None:
         return [f"{run_id}: {run['source_file']} yields no row"]
 
-    return _compare_fields(run, expected, JEVBENCH_FIELDS, run_id, run["source_file"])
+    errors = _compare_fields(run, expected, JEVBENCH_FIELDS, run_id, run["source_file"])
+    if run.get("readout") == "trained-heads":
+        raw = json.loads((REPO_ROOT / run["source_file"]).read_text())
+        for field in ("head_version", "run_id"):
+            if not raw.get(field):
+                errors.append(
+                    f"{run_id}: trained-heads file has no {field}: {run['source_file']}"
+                )
+    return errors
 
 
 def check_eval_run(run: dict, tracked: set[str]) -> list[str]:

@@ -301,3 +301,63 @@ class TestJevbenchSourceFiles:
     def test_native_reranker_is_not_double_counted(self):
         names = {p.name for p in transform.jevbench_source_files()}
         assert "jevbench_reranker_native_Qwen_Qwen3-Reranker-4B.json" not in names
+
+
+class TestAddHeadVersion:
+    def test_parenthesised_name(self):
+        assert transform.add_head_version("Ettin-150m (trained)", "v1") == "Ettin-150m (trained, v1)"
+
+    def test_bare_name(self):
+        assert transform.add_head_version("Ettin-150m", "v1") == "Ettin-150m (v1)"
+
+
+class TestTrainedHeadFields:
+    PAYLOAD = {
+        "head_version": "v1",
+        "run_id": "oaklight/krino-ettin-150m-heads",
+        "backbone": {"model_id": "cross-encoder/ettin-reranker-150m-v1"},
+        "code_commit": None,
+        "overall": {"accuracy": 0.368, "correct": 85, "total": 231},
+        "by_tier": {},
+        "by_type": {},
+    }
+
+    def test_fields_reach_the_row(self, tmp_path):
+        path = tmp_path / "krino-ettin-150m-heads.json"
+        path.write_text(json.dumps(self.PAYLOAD))
+
+        run = transform.build_jevbench_run(path)
+
+        assert run["head_version"] == "v1"
+        assert run["run_id"] == "oaklight/krino-ettin-150m-heads"
+        assert run["backbone_model_id"] == "cross-encoder/ettin-reranker-150m-v1"
+        assert run["code_commit"] is None
+        assert run["model"]["name"] == "Ettin-150m (trained, v1)"
+
+    def test_non_trained_row_has_no_generation(self, tmp_path):
+        path = tmp_path / "jevbench_judgement_M.json"
+        path.write_text(json.dumps({
+            "_provenance": {"model_id": "Qwen/Qwen3-4B", "strategy": "judgement"},
+            "n": 231,
+            "summary": {"overall": {"accuracy": 0.6, "correct": 138, "total": 231}},
+        }))
+
+        run = transform.build_jevbench_run(path)
+
+        assert run["head_version"] is None
+        assert run["run_id"] == "jevbench-jevbench_judgement_M"
+
+
+class TestTrainedHeadRows:
+    def test_trained_head_rows_carry_version_and_run(self):
+        runs = transform.transform_jevbench()
+        trained = [run for run in runs if run["readout"] == "trained-heads"]
+        assert len(trained) == 6
+        for run in trained:
+            assert run["head_version"] == "v1"
+            assert run["run_id"].startswith("oaklight/")
+
+    def test_other_rows_have_no_generation(self):
+        for run in transform.transform_jevbench():
+            if run["readout"] != "trained-heads":
+                assert run["head_version"] is None

@@ -1,6 +1,7 @@
 """Tests for scripts/check_results_provenance.py."""
 
 import importlib.util
+import json
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -76,3 +77,51 @@ class TestEvalGuard:
     def test_untracked_source_file_fails(self):
         errors = guard.check_results({"eval_runs": [self.eval_row()]}, set())
         assert any("not a committed file" in error for error in errors)
+
+
+TRAINED_SOURCE = "results/jevbench/krino-ettin-150m-heads.json"
+
+
+def trained_row() -> dict:
+    row = guard.transform.build_jevbench_run(REPO_ROOT / TRAINED_SOURCE)
+    assert row is not None
+    return row
+
+
+class TestTrainedHeadGuard:
+    def test_committed_trained_row_passes(self):
+        assert guard.check_results({"jevbench_runs": [trained_row()]}, {TRAINED_SOURCE}) == []
+
+    def test_published_version_must_recompute(self):
+        row = trained_row()
+        row["head_version"] = "v4"
+        errors = guard.check_results({"jevbench_runs": [row]}, {TRAINED_SOURCE})
+        assert any("head_version" in error for error in errors)
+
+    def _row_without(self, tmp_path, monkeypatch, missing: str) -> dict:
+        monkeypatch.setattr(guard, "REPO_ROOT", tmp_path)
+        monkeypatch.setattr(guard.transform, "REPO_ROOT", tmp_path)
+        payload = {
+            "head_version": "v1",
+            "run_id": "oaklight/krino-ettin-150m-heads",
+            "backbone": {"model_id": "cross-encoder/ettin-reranker-150m-v1"},
+            "code_commit": None,
+            "overall": {"accuracy": 0.368, "correct": 85, "total": 231},
+            "by_type": {},
+            "by_tier": {},
+        }
+        payload.pop(missing)
+        source = tmp_path / TRAINED_SOURCE
+        source.parent.mkdir(parents=True)
+        source.write_text(json.dumps(payload))
+        return guard.transform.build_jevbench_run(source)
+
+    def test_file_without_head_version_fails(self, tmp_path, monkeypatch):
+        row = self._row_without(tmp_path, monkeypatch, "head_version")
+        errors = guard.check_results({"jevbench_runs": [row]}, {TRAINED_SOURCE})
+        assert any("has no head_version" in error for error in errors)
+
+    def test_file_without_run_id_fails(self, tmp_path, monkeypatch):
+        row = self._row_without(tmp_path, monkeypatch, "run_id")
+        errors = guard.check_results({"jevbench_runs": [row]}, {TRAINED_SOURCE})
+        assert any("has no run_id" in error for error in errors)
