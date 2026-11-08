@@ -28,7 +28,13 @@ paragraph's word for it.
 231 items, chance as reported in `research/13` (0.284 easy, 0.336 hard, 0.311
 original, 0.318 overall).
 
-| run | variant | overall | easy | hard | original |
+**The set is 231 predictions over 195 distinct questions.** The `original`
+tier's 72 rows are 36 source questions, each asked twice with a different state
+and the same gold (`…-01-0` and `…-01-1`), so its effective size is 36. Every
+count in this note is a count of predictions unless it says questions; where a
+statistic treats the 231 rows as independent it is slightly anti-conservative.
+
+| run | variant | overall | easy | hard | original (72 rows / 36 questions) |
 |---|---|---:|---:|---:|---:|
 | MiniCPM5-2B-Base | base | 0.416 | 0.729 | 0.306 | 0.375 |
 | Ministral-3-3B-Base-2512 | base | 0.455 | 0.729 | 0.360 | 0.417 |
@@ -75,10 +81,10 @@ answers every item with the same option index:
 subtask family, not by difficulty, and not by model: a llama-config, a mistral, two
 minicpms, two qwen2s, two qwen3s and a phi3 all answer `intent` with index 2 and
 `routing` with index 3. Those two families are dead cells for every checkpoint —
-24 of the tier's 72 items carry no information from this readout. The gold sits
-at the constant index twice in each family, so all eight score 2 of 12 there, and
-the `original` column is partly a property of where the constant lands against
-the gold distribution.
+24 predictions over **12 source questions** (six per family, each asked twice)
+carry no information from this readout. The gold sits at the constant index twice
+in each family, so all eight score 2 of 12 there, and the `original` column is
+partly a property of where the constant lands against the gold distribution.
 
 The other constants: MiniCPM3-4B answers `ordinal` with index 2 (12/12);
 MiniCPM5-2B-Base answers `policy` with index 1 (12/12); Ministral-3-3B-Base-2512
@@ -188,11 +194,11 @@ readout on JevBench, so the next arm should be about the readout rather than the
 backbone.
 
 The dead cells above are the mechanism behind that sentence, not just a
-correlation with it: a readout that answers twelve different questions with the
-same option index is not reading the items, and scoring the options against one
-shared context is what lets it do that. It is the strongest piece of evidence in
-this note for porting the native per-option readout rather than changing the
-backbone.
+correlation with it: a readout that answers six different questions — each asked
+twice — with the same option index is not reading the items, and scoring the
+options against one shared context is what lets it do that. It is the strongest
+piece of evidence in this note for porting the native per-option readout rather
+than changing the backbone.
 
 The bound belongs in the same breath: this is a finding about the instrument's
 sensitivity, not about the candidates' quality. The same three checkpoints score
@@ -249,5 +255,9 @@ carry `code_commit` 33506b8 and the same readout label, and
   these numbers; the note reports what this instrument says, not what the best
   prompt would say.
 - The score column is 18 items; 0.278 against 0.444 is three items.
+- 231 predictions over 195 questions: the `original` tier's 72 rows are 36
+  paraphrase pairs with the same gold, so a statistic that treats every row as
+  independent — a McNemar over paired outcomes, for instance — is slightly
+  anti-conservative on this set.
 - `0.628` remains the native reranker readout and is not reproduced by anything
   in this note.
