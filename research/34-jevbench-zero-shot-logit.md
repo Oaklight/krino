@@ -53,6 +53,9 @@ By question type:
 | Ministral-3-3B-Base-2512 | 0.527 | 0.439 | 0.278 |
 | MiniCPM3-4B | 0.500 | 0.453 | 0.333 |
 
+The score column is 18 items, one item is 5.6 points, and the 0.278-to-0.444
+swing is a 3-item difference (5 of 18 against 8 of 18). It is not a ranking.
+
 MiniCPM5-2B-Base is **below chance on the hard tier** (0.306 against 0.336).
 That is not an artefact of the tier cut: the same 111 items are above chance for
 the other two checkpoints, and the model is above chance on the other two tiers.
@@ -98,8 +101,10 @@ What the table supports:
    Of the eight, one is above all three continuation rows (0.463), two are above
    the lowest of them (0.433, 0.429) and below the top two, and five are below
    all three (0.368, 0.364, 0.346, 0.342, 0.325). Model choice among untuned
-   checkpoints moves this benchmark by about 4 points; head training moves it by
-   about 14.
+   checkpoints moves this benchmark by about 4 points. The trained-head rows
+   span about 14, but that span mixes backbones from 150M to 4B, so it is the
+   width of a heterogeneous band, not a training effect: no checkpoint in this
+   table appears both with and without a head.
 2. **Every continuation row is below every native-readout row.** The weakest
    native row (0.476, a 0.6B reranker, untrained) is above the best continuation
    row (0.459), and the fine-tuned backbones under the native readout reach
