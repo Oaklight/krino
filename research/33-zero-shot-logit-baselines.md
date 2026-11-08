@@ -99,6 +99,24 @@ recomputed values, because they come from the committed files through the
 published function; where a comparison against the doc's column would change a
 conclusion, the doc's column is not used.
 
+## Architecture eligibility
+
+The screen these checkpoints are candidates for needs a backbone that is full
+attention at every layer: a hybrid or windowed model cannot replace the
+GDN state, whatever it scores. Recorded from each checkpoint's `config.json` in
+the Hugging Face cache on the machine that ran it:
+
+| run | model_type | architectures | layers | layer_types | sliding_window | linear / gdn / mamba keys | verdict |
+|---|---|---|---:|---|---|---|---|
+| MiniCPM5-2B-Base | `llama` | `LlamaForCausalLM` | 42 | absent | absent | none | `full-attention` |
+| Ministral-3-3B-Base-2512 | `mistral3`, `text_config.model_type` `ministral3` | `Mistral3ForConditionalGeneration` | 26 | absent | key present, value `null` | none | `full-attention` |
+| MiniCPM3-4B | `minicpm3` | `MiniCPM3ForCausalLM` | 62 | absent | absent | none; `q_lora_rank` / `kv_lora_rank` present, which is MLA, still full causal attention | `full-attention` |
+
+The full config key list was dumped for each checkpoint, so `absent` means the
+key is not in the config, not that it was not looked for. Ministral is the one
+that needed checking: Mistral-family configs commonly carry a non-null
+`sliding_window`, and this one carries the key with value `null`.
+
 ## Provenance
 
 Every file carries its own `_provenance` block: `model_id`, resolved `revision`
