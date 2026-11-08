@@ -461,10 +461,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#zero-training-baselines-average-across-19-benchmarks" class="md-nav__link">
+  <a href="#zero-training-baselines-average-across-the-16-choicenoul-benchmarks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Zero-training baselines (average across 19 benchmarks)
+        Zero-training baselines (average across the 16 choice+noul benchmarks)
       
     </span>
   </a>
@@ -873,10 +873,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#zero-training-baselines-average-across-19-benchmarks" class="md-nav__link">
+  <a href="#zero-training-baselines-average-across-the-16-choicenoul-benchmarks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Zero-training baselines (average across 19 benchmarks)
+        Zero-training baselines (average across the 16 choice+noul benchmarks)
       
     </span>
   </a>
@@ -984,7 +984,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="zero-training-baselines-average-across-19-benchmarks">Zero-training baselines (average across 19 benchmarks)<a class="headerlink" href="#zero-training-baselines-average-across-19-benchmarks" title="Permanent link">&para;</a></h3>
+<h3 id="zero-training-baselines-average-across-the-16-choicenoul-benchmarks">Zero-training baselines (average across the 16 choice+noul benchmarks)<a class="headerlink" href="#zero-training-baselines-average-across-the-16-choicenoul-benchmarks" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -997,20 +997,21 @@
 <tr>
 <td>Qwen2.5-7B-Instruct</td>
 <td>7B</td>
-<td>68.5%</td>
+<td>67.1%</td>
 </tr>
 <tr>
 <td>Ettin-400m</td>
 <td>400M</td>
-<td>59.4%</td>
+<td>59.0%</td>
 </tr>
 <tr>
 <td>Qwen2.5-1.5B</td>
 <td>1.5B</td>
-<td>59.2%</td>
+<td>58.4%</td>
 </tr>
 </tbody>
 </table>
+<p>The average is the unweighted mean over the 16 <code>choice</code> and <code>noul</code> benchmarks, computed by <code>scripts/transform_results.py::get_accuracy_for_aggregate</code> from the committed <code>model/experiments/phaseA_*.json</code> files. The three <code>score</code> benchmarks are reported as MAE and are not folded into this column. The values previously quoted here (68.5 / 59.4 / 59.2) were not reproducible from any committed file.</p>
 <h2 id="what-is-jev">What is Jev?<a class="headerlink" href="#what-is-jev" title="Permanent link">&para;</a></h2>
 <p>Jev is a "System One" model that returns typed, probabilistic decisions instead of generated text. It evaluates a <code>state</code> against typed <code>questions</code> and returns structured <code>answers</code> with calibrated probabilities.</p>
 <table>

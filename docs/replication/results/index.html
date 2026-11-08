@@ -1515,73 +1515,74 @@
 <td>Qwen2.5-7B-Instruct</td>
 <td>7B</td>
 <td>Causal</td>
-<td>68.5%</td>
+<td>67.1%</td>
 </tr>
 <tr>
 <td>2</td>
 <td>Phi-4-mini</td>
 <td>3.8B</td>
 <td>Causal</td>
-<td>65.0%</td>
+<td>64.4%</td>
 </tr>
 <tr>
 <td>3</td>
 <td><strong>Ettin-400m</strong></td>
 <td><strong>400M</strong></td>
 <td><strong>Reranker</strong></td>
-<td><strong>59.4%</strong></td>
+<td><strong>59.0%</strong></td>
 </tr>
 <tr>
 <td>4</td>
 <td>Qwen2.5-1.5B</td>
 <td>1.5B</td>
 <td>Causal</td>
-<td>59.2%</td>
+<td>58.4%</td>
 </tr>
 <tr>
 <td>5</td>
 <td>Qwen3-1.7B</td>
 <td>1.7B</td>
 <td>Causal</td>
-<td>54.2%</td>
+<td>53.6%</td>
 </tr>
 <tr>
 <td>6</td>
 <td>Ettin-150m</td>
 <td>150M</td>
 <td>Reranker</td>
-<td>53.5%</td>
+<td>53.2%</td>
 </tr>
 <tr>
 <td>7</td>
 <td>Qwen2.5-0.5B</td>
 <td>0.5B</td>
 <td>Causal</td>
-<td>53.5%</td>
+<td>52.4%</td>
 </tr>
 <tr>
 <td>8</td>
 <td>SmolLM2-1.7B</td>
 <td>1.7B</td>
 <td>Causal</td>
-<td>51.1%</td>
+<td>50.7%</td>
 </tr>
 <tr>
 <td>9</td>
 <td>Ettin-68m</td>
 <td>68M</td>
 <td>Reranker</td>
-<td>50.4%</td>
+<td>50.1%</td>
 </tr>
 <tr>
 <td>10</td>
 <td>Qwen3-0.6B</td>
 <td>0.6B</td>
 <td>Causal</td>
-<td>47.8%</td>
+<td>47.7%</td>
 </tr>
 </tbody>
 </table>
+<p>The average is the unweighted mean over the 16 <code>choice</code> and <code>noul</code> benchmarks, computed by <code>scripts/transform_results.py::get_accuracy_for_aggregate</code> from the committed <code>model/experiments/phaseA_*.json</code> files; the three <code>score</code> benchmarks are excluded and reported as MAE. An earlier version of this table quoted 68.5 / 65.0 / 59.4 / 59.2 / 54.2 / 53.5 / 53.5 / 51.1 / 50.4 / 47.8. Those values are not reproducible from any committed file and are superseded by the column above.</p>
 <p>Vanilla ModernBERT (base/large) scored near random on most benchmarks — embedding-similarity scoring without training is not viable for typed decisions.</p>
 <h3 id="key-findings">Key findings<a class="headerlink" href="#key-findings" title="Permanent link">&para;</a></h3>
 <ol>
@@ -1982,7 +1983,7 @@
 <p><strong>Head capacity matters for reranker backbones but not vanilla encoders.</strong> Ettin-150m improves from 93.8% (rank 64) to 95.2% (rank 128). ModernBERT-base stays flat (89.0% → 88.4%). The reranker backbone has richer representations that only manifest with sufficient head capacity.</p>
 </li>
 <li>
-<p><strong>Training &gt; scaling.</strong> A 0.6B causal LM with 402K trained heads (93.2%) beats a 7B causal LM with zero-training logit readout (68.5% average across 19 benchmarks).</p>
+<p><strong>Training &gt; scaling.</strong> A 0.6B causal LM with 402K trained heads (93.2%) beats a 7B causal LM with zero-training logit readout (67.1% average across the 16 choice+noul benchmarks).</p>
 </li>
 <li>
 <p><strong>Ettin-400m underperforms Ettin-150m</strong> (91.6% vs 93.8%). Training instability at epoch 4 (accuracy dropped 89.0% → 75.2% before recovering) suggests the 1e-3 learning rate is too aggressive for the larger backbone.</p>
