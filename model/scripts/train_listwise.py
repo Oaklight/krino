@@ -250,9 +250,9 @@ def evaluate(
 ) -> dict[str, float]:
     """Full-set evaluation.
 
-    Noul keeps the raw base readout.  Choice averages ``shifts`` cyclic
-    shifts of the option order; score keeps the natural order, because rubric
-    levels are ordered and a shift would reorder the scale.
+    Every type is scored through the readout, so a type the trainer is
+    training is a type the validation can see.  Noul and score keep the
+    natural option order; choice averages ``shifts`` cyclic shifts of it.
     """
     model = readout.model
     model.eval()
@@ -269,33 +269,32 @@ def evaluate(
         if target < 0:
             continue
         q_type = item.question["type"]
-        if q_type == "noul":
-            probs = base
-        else:
-            options = _options(item.question)
-            scored_options = options
-            if not readout.fits(options):
-                # One sequence cannot hold the whole set; score a gold-anchored
-                # subset so the item still counts, and report how many did.
-                capped += 1
-                others = [i for i in range(len(options)) if i != target]
-                keep = sorted([target] + others[: max_set - 1])
-                scored_options = [options[i] for i in keep]
-                base = _subset_probs(base, keep)
-                target = keep.index(target)
-            item_shifts = shifts if q_type == "choice" else 1
-            extra = {"base_probs": base} if base_conditioned else {}
-            probs = readout.score_shifted(
-                item.state,
-                item.question.get("instructions", ""),
-                scored_options,
-                shifts=item_shifts,
-                **extra,
-            ).reshape(-1)
-            probs = torch.softmax(
-                fused_logits(base.to(probs.device), torch.log(probs), alphas[q_type]),
-                dim=-1,
-            )
+        options = _options(item.question)
+        scored_options = options
+        if not readout.fits(options):
+            # One sequence cannot hold the whole set; score a gold-anchored
+            # subset so the item still counts, and report how many did.
+            capped += 1
+            others = [i for i in range(len(options)) if i != target]
+            keep = sorted([target] + others[: max_set - 1])
+            scored_options = [options[i] for i in keep]
+            base = _subset_probs(base, keep)
+            target = keep.index(target)
+        # Noul is binary and unordered, so it takes the natural order like
+        # score; only choice averages cyclic shifts.
+        item_shifts = shifts if q_type == "choice" else 1
+        extra = {"base_probs": base} if base_conditioned else {}
+        probs = readout.score_shifted(
+            item.state,
+            item.question.get("instructions", ""),
+            scored_options,
+            shifts=item_shifts,
+            **extra,
+        ).reshape(-1)
+        probs = torch.softmax(
+            fused_logits(base.to(probs.device), torch.log(probs), alphas[q_type]),
+            dim=-1,
+        )
         pred = int(torch.argmax(probs).item())
         k = probs.numel()
         chance = 1.0 / k
