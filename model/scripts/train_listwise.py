@@ -171,6 +171,7 @@ def item_loss(
     shuffle_score: bool,
     max_subset: int | None = None,
     lora_kl_weight: float = 0.0,
+    base_conditioned: bool = False,
 ) -> tuple[torch.Tensor, float, float]:
     """Listwise loss on one item over a sampled subset.
 
@@ -200,16 +201,21 @@ def item_loss(
         # Rubric levels are ordered; shuffling them breaks the scale.
         subset = list(range(len(options)))
     # The head contributes log-probabilities, the same scale evaluation uses
-    # after averaging shifts, so one alpha means the same thing in both.
+    # after averaging shifts, so one alpha means the same thing in both.  With
+    # base conditioning the head also sees the frozen base distribution for
+    # the same subset; without it the call is the pre-change one.
+    subset_base = _subset_probs(base, subset)
+    extra = {"base_probs": subset_base} if base_conditioned else {}
     head = torch.log_softmax(
         readout.score(
             item.state,
             q.get("instructions", ""),
             [options[index] for index in subset],
+            **extra,
         ).reshape(-1),
         dim=-1,
     )
-    subset_base = _subset_probs(base, subset).to(head.device)
+    subset_base = subset_base.to(head.device)
     logits = fused_logits(subset_base, head, alpha)
     log_p = F.log_softmax(logits, dim=-1)
     kl = torch.sum(subset_base * (torch.log(subset_base) - log_p))
@@ -240,6 +246,7 @@ def evaluate(
     alphas: dict[str, torch.Tensor],
     shifts: int,
     max_set: int = 20,
+    base_conditioned: bool = False,
 ) -> dict[str, float]:
     """Full-set evaluation.
 
@@ -277,11 +284,13 @@ def evaluate(
                 base = _subset_probs(base, keep)
                 target = keep.index(target)
             item_shifts = shifts if q_type == "choice" else 1
+            extra = {"base_probs": base} if base_conditioned else {}
             probs = readout.score_shifted(
                 item.state,
                 item.question.get("instructions", ""),
                 scored_options,
                 shifts=item_shifts,
+                **extra,
             ).reshape(-1)
             probs = torch.softmax(
                 fused_logits(base.to(probs.device), torch.log(probs), alphas[q_type]),
@@ -309,6 +318,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--items", type=Path, required=True)
     parser.add_argument("--base-probs", type=Path, required=True)
+    parser.add_argument(
+        "--base-conditioned",
+        action="store_true",
+        help="Give the marker head the frozen base distribution as two "
+        "per-option features (log p_base, is_base_argmax)",
+    )
     parser.add_argument("--model", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--rank", type=int, default=32)
@@ -596,6 +611,7 @@ def main() -> int:
                 args.shuffle_score,
                 args.max_subset,
                 args.lora_kl_weight,
+                args.base_conditioned,
             )
             task_rows += 1
             if not loss.requires_grad:
@@ -627,6 +643,7 @@ def main() -> int:
             alphas,
             args.eval_shifts,
             args.max_subset,
+            args.base_conditioned,
         )
         metrics["epoch"] = epoch
         metrics["train_loss"] = total / max(1, task_rows)
@@ -684,6 +701,7 @@ def main() -> int:
                     list(args.lora_targets) if args.lora_layers is not None else None
                 ),
                 "lora_kl_weight": args.lora_kl_weight,
+                "base_conditioned": args.base_conditioned,
                 "holdout_ids": str(args.holdout_ids) if args.holdout_ids else None,
                 "torch_seed": args.torch_seed,
                 "provenance": provenance,

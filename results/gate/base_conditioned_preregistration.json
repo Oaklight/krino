@@ -1,0 +1,78 @@
+{
+  "created_utc": "2026-11-07T16:18:11Z",
+  "experiment": "base_conditioned_head",
+  "written_before": "any base-conditioned training run or held-out prediction. The implementation and its tests are committed; no checkpoint exists yet.",
+  "question": "Does a listwise head that is shown the frozen base distribution beat the frozen base on the noul column?",
+  "motivation": "On the 2,995-row noul held-out, a logistic base-error detector reaches AUROC 0.6715 / 0.6081 / 0.6155 across three folds, but gated accuracy is 0.6260 / 0.6257 / 0.6287 against base 0.6264. The gate is not the bottleneck: on the rows it would hand the head, the head's answer is not better. Alpha therefore collapses to zero. This run tests whether giving the head the base distribution removes that failure.",
+  "change": "OptionMarkerHead gains two per-option input features, log p_base(option) and the base argmax flag. With --base-conditioned the trainer and eval_listwise pass the frozen base distribution for the same option subset; without the flag the head appends zeros and scores exactly as the pre-change head. Checkpoints saved before the change load through a zero-padding hook.",
+  "training": {
+    "arm": "base_conditioned_noul",
+    "base_arm": "noul_listwise (#264) on feat/canonical-support, the arm that trained noul through the listwise path",
+    "recipe": "the same canonical recipe as the noul arm, plus --base-conditioned; no other change",
+    "flag": "model/scripts/train_listwise.py --base-conditioned",
+    "code_commit": "19ba9a4",
+    "code_commit_rewritten": "1f3ccf9a",
+    "code_commit_note": "19ba9a4 was recorded before the 2026-11-07 history rewrite; 1f3ccf9a is the same commit in the rewritten history"
+  },
+  "test_set": {
+    "definition": "the frozen 6,400-id held-out, noul rows, the same basis as the canonical gate",
+    "noul_rows": 2995,
+    "holdout_ids_file_sha256": "b2cde7f4012fa02e0fb186a761f6863b76f4b60ebfba8137b064049efd812628",
+    "holdout_ids_sha256": "492ee0afd47bfe819dee690127b8cfc2fab8c39fe10c4ebd6293754a53dcf87b",
+    "holdout_ids_note": "the committed file is model/experiments/canonical/heldout_6400.json; holdout_ids_file_sha256 is the file, holdout_ids_sha256 is sha256 over the sorted ids joined by newlines",
+    "heldout_shards_sha256": {
+      "part0": "60625929beb045990266267357f0d442626b48c5757ab1fc714cd94dfa133633",
+      "part1": "f46592debb360ff6c97490964ed828c31a5ea5c463e9397bf12c5d1c60566ad9",
+      "part2": "faeaed78e96c005a654000f4e09e56ad26b1a38d3e0ce2ae73095c29b5bca20d"
+    }
+  },
+  "metric": {
+    "primary": "raw (unmixed) accuracy of the head alone on the noul held-out rows",
+    "head_alone": "eval_listwise --base-conditioned --head-only, which keeps the base features but skips the alpha fusion",
+    "comparison": "frozen base accuracy 0.6264 on the same 2,995 rows (chance-corrected 0.252755; for a two-option row cc = 2 * accuracy - 1, so 0.6264 accuracy is exactly that cc)",
+    "note_on_resolution": "3.0 pp is the noul-column MDE at n=2,995, discordance 0.324 and 80% power. That MDE was stated in chance-corrected units, where the paired difference is twice the accuracy difference; a 3.0 pp bar on raw accuracy is therefore a stricter bar than the cc MDE, not a looser one. The success rule below uses the instructed raw-accuracy bar and will not be restated after the result."
+  },
+  "success": {
+    "rule": "head-alone accuracy exceeds 0.6264 by more than 3.0 pp on at least two of three seeds",
+    "mixed_variant": "the alpha-mixed score is reported for every seed but is not the criterion; the point of the change is to make the mix unnecessary",
+    "per_seed": "report accuracy, delta in pp, and the paired discordant counts on the noul column for every seed"
+  },
+  "failure": {
+    "rule": "if the success rule is not met, the branch closes",
+    "meaning": "a head that is shown the base distribution and still cannot beat it is evidence that the listwise head is not the mechanism for noul. The next decision is about the objective or the type, not about more conditioning. No tuning, no rerun, no extra seeds to look for a positive."
+  },
+  "seed_plan": {
+    "first": "one seed (seed 0) for direction, reported back before any other seed starts",
+    "then": "the other two seeds only if the first-seed direction is positive; the verdict uses the stated two-of-three rule",
+    "no_sweep": "no hyperparameter sweep and no seed-only reruns"
+  },
+  "reported_but_not_gated": {
+    "choice": "held-out accuracy is reported to see whether conditioning damages it; not a gate",
+    "score": "held-out accuracy is reported to see whether conditioning damages it; not a gate",
+    "jevbench": "not used; the 231 public items have no base probabilities, so a base-conditioned head cannot be scored there without a pre-gate rule change that is not authorised here"
+  },
+  "run_amendments": [
+    {
+      "at_utc": "2026-11-07T17:11:45Z",
+      "what": "seed 0 was stopped after 1,200 training items and relaunched on the same recipe from a tree that adds commit 7bcff68 (feat/throughput-244: skip the discarded cache-only prefix pass; right-pad the combined sequence to the existing bucket shapes)",
+      "why": "the first launch ran the prefix forward twice per item and rebuilt a new sequence shape per item; its windowed rate was 1.55 items/s over items 1000-1200 against 10.3 for the comparison arm. The relaunched run is 10.2 items/s on the same window.",
+      "invalidated": "the first attempt produced no checkpoint and no held-out prediction, so no accuracy number existed when the tree changed. This was a throughput defect found and fixed before any result, not a re-run after seeing one.",
+      "criterion": "unchanged. The question, primary metric, success rule, failure rule and seed plan are the ones recorded above.",
+      "tree_identity": "the relaunched run's provenance cites 979b7c7, which the 2026-11-07 history rewrite renamed to 8549066c; the run tree is 8549066c plus 7bcff68, committed on exp/run-base-conditioned as ebf0133"
+    }
+  ],
+  "eval_identity": {
+    "eval_script": "model/scripts/eval_listwise.py",
+    "eval_script_sha256": "ff8c0348ae55c2850b86ed81c41ace73d28ffd409c0505a70c715e9b09449ee5",
+    "hash_note": "updated before any run, after an implementation fix: the conditioning argument is now passed only when the flag is set, so a call without the flag is byte-identical to the pre-change call. The question, metric and success rule are unchanged.",
+    "command": "python -m model.scripts.eval_listwise --checkpoint <run-dir>/seed<k>/listwise.pt --items <held-out-shard-p> --base-probs <base-probs-jsonl> --base-conditioned --head-only --output <run-dir>/seed<k>/heldout_head_only_part<p>.pred.jsonl --device cuda",
+    "mixed_command": "same, without --head-only, written to <run-dir>/seed<k>/heldout_mixed_part<p>.pred.jsonl",
+    "paths": "<run-dir>, <held-out-shard-p> and <base-probs-jsonl> are supplied by the run script; none is a repository path. The held-out rows are the frozen set in model/experiments/canonical/heldout_6400.json, split into three shards whose sha256 are listed above. The base probs are the frozen Qwen3.5-4B distribution over the canonical corpus."
+  },
+  "comparison_arm": {
+    "arm": "noul_listwise #264, seeds 0/1/2, the same frozen held-out and eval script",
+    "noul_base_accuracy": 0.6264,
+    "noul_base_cc": 0.252755,
+    "noul_rows": 2995
+  }
+}
