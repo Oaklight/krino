@@ -16,10 +16,19 @@ For every option the prompt is::
     Option: {option}
     Does this option correctly answer the question? Answer:
 
-and the score is ``log P(" yes")`` against ``log P(" no")`` at the final
-position. Higher is better; the options are ranked independently, as the native
-reranker ranks them, so the values do not sum to one. The exact template is
-recorded in ``_provenance.prompt_template``, one template for all items.
+and the option is ranked on ``log P(" yes")`` at the final position. Higher is
+better; the options are ranked independently, as the native reranker ranks
+them, so the values do not sum to one. ``log P(" no")`` is recorded alongside
+each option but does not enter the ranking (#310).
+
+Ranking on the difference ``log P(" yes") - log P(" no")`` instead was measured
+on Qwen3-4B over all 231 items: 42 predictions change (18.2%), accuracy is
+138/231 = 59.74% against 143/231 = 61.90%, an exact paired McNemar of p = 0.4731.
+The difference does not improve accuracy, so the single key stays the statistic
+of record (#310).
+
+The exact template is recorded in ``_provenance.prompt_template``, one template
+for all items.
 
 The accuracy rule and the tier aggregation come from
 ``model/evaluation/jevbench.py``, so a row here joins the table in
@@ -79,7 +88,11 @@ def score_item(scorer: LogitScorer, item: Any) -> dict[str, Any] | None:
         delta = scores[0] - scores[1]
         return {
             "type": item.question.get("type", "noul"),
+            # ``logits`` stays the signed difference: this branch thresholds
+            # it, where the option branch ranks on ``log P(" yes")`` alone.
             "logits": [delta],
+            "logp_yes": [scores[0]],
+            "logp_no": [scores[1]],
             "label_order": [0],
             "label_idx": 0,
             "option_count": 1,
@@ -90,15 +103,19 @@ def score_item(scorer: LogitScorer, item: Any) -> dict[str, Any] | None:
 
     texts, gold = prepared
     logp_yes = []
+    logp_no = []
     for text in texts:
         scores = scorer.score_options(
             render(item.state, instructions, text), [YES, NO]
         )
         logp_yes.append(scores[0])
+        logp_no.append(scores[1])
 
     return {
         "type": item.question.get("type", "noul"),
         "logits": logp_yes,
+        "logp_yes": list(logp_yes),
+        "logp_no": logp_no,
         "label_order": list(range(len(texts))),
         "label_idx": gold,
         "option_count": len(texts),
@@ -166,6 +183,11 @@ def main() -> int:
                 "gold_idx": record["label_idx"],
                 "option_count": record["option_count"],
                 "logp_yes": [round(value, 6) for value in record["logits"]],
+                # On an option row this is log P(" no") for the same option as
+                # logp_yes, so logp_yes - logp_no can be read off directly. On
+                # a polarity row logp_yes is the signed difference and logp_no
+                # is log P(" no"); ``mode`` says which.
+                "logp_no": [round(value, 6) for value in record["logp_no"]],
                 # Written for every type, including noul, so a consumer that
                 # reads predicted_idx never has to fall back to the score array.
                 "predicted_idx": record["logits"].index(max(record["logits"])),
@@ -195,7 +217,11 @@ def main() -> int:
         variant=args.variant,
         code_commit=args.code_commit,
         extra={
-            "readout": 'per-option judgement, log P(" yes") against log P(" no") at "Answer:"',
+            "readout": 'per-option judgement, each option ranked on log P(" yes") '
+                       'at "Answer:", options ranked independently; log P(" no") '
+                       "recorded but not ranked; ranking on the difference was "
+                       "checked on Qwen3-4B (138/231 against 143/231, exact McNemar "
+                       "p = 0.4731, #310) and stays out of the record",
             "prompt_template": JUDGEMENT_TEMPLATE,
             "polarity_template": POLARITY_TEMPLATE,
             "option_texts": "noul: question criteria, true first; choice: description; "
