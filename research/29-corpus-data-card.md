@@ -42,11 +42,12 @@ The table shows items kept after dedup. Before dedup the components sum to
 and 665 typed-decisions items already in the 20K/30K are dropped from the full
 typed-decisions copy. 246,305 - 2,939 = 243,366.
 
-RACE is the one source where the id is not the item. `race_short_passage_choice`
-has 498 distinct questions over 144 passage ids (2 to 5 questions per passage).
-All 498 are kept; the item key is (id, question), and the passage id is the
-split group so questions on one passage stay in one split. RACE is the only
-canonical file with this shape; every other file has unique ids.
+`race_short_passage_choice` has 498 distinct questions over 144 passage ids (2
+to 5 questions per passage). All 498 are kept. The builder gives each the unique
+id `<passage id>-q<N>` and keeps the passage id as the split group, so every
+canonical record has a unique id: **243,366 items, 243,366 distinct ids**. Only
+RACE reuses ids in its source file; the rule is generic and applies to any other
+source that does the same.
 
 Two synthetic numbers that must not be conflated:
 
@@ -86,6 +87,28 @@ an additional soft target.
 and must not drive option CE. Zero items fail eligibility after label
 normalisation; 124/70 noul labels and 85/108 score labels in the two sampled
 corpora are strings that require coercion.
+
+### `answerable` is binary with an implicit default
+
+The artifact has 6,000 explicit `false`, 237,366 unset, and zero explicit
+`true`. Unset means answerable; only an explicit `false` marks abstention.
+A filter written `answerable == True` returns nothing and still looks like a
+successful filter.
+
+Of the 6,000, 4,000 are noul rows that carry the implicit `false`/`true`
+options and a valid `False` label. A hard-label trainer must mask them or it
+learns "false" on removed support. The other 2,000 are choice rows whose kept
+label is no longer in the options, including 224 Banking77 rows with the full
+79-intent label space.
+
+Training masks these rows in the loss; the residual trainer does not drop them
+from the batch. Row-level id exclusion is for held-out leakage only. The
+listwise trainer has no abstain head, so it skips an `answerable=false` row at
+the top of its loss; that guard matters on the paired corpus, whose variants
+keep a valid label. Training is per row, so masking and dropping give the same
+task gradients; they differ on the abstain-head update and the display
+denominator, which leaves task metrics comparable and abstain metrics not.
+Census: `results/abstention/canonical_answerable_census.json`.
 
 ## Type mix
 
@@ -157,9 +180,9 @@ The older 97,355-row figure from the first pass is a historical scope, not a
 reproducible denominator: its parenthetical does not reconcile arithmetically
 with the named files. Use #235's canonical-union result, not that number.
 
-Item-level dedup is applied (id, except RACE at id + question). State-level and
-near-duplicate dedup is #235's deliverable; until it lands, paraphrase and
-near-duplicate pairs may cross the canonical set.
+Item-level dedup is applied by id; RACE ids are suffixed first so each record is
+distinct. State-level and near-duplicate dedup is #235's deliverable; until it
+lands, paraphrase and near-duplicate pairs may cross the canonical set.
 
 ## Terms and licences
 
@@ -236,10 +259,18 @@ python scripts/corpus_datacard.py \
 
 python scripts/corpus_licence_audit.py \
   --root data/benchmarks --repo-root . --json /tmp/licence-audit.json
+
+python scripts/build_canonical_corpus.py \
+  --manifest data/licence_manifest.json --build full \
+  --root data/benchmarks --typed-decisions <path> --repo-root . \
+  --out <path>/krino-canonical-243366.jsonl --json /tmp/build.json
 ```
 
+`data/canonical_corpus.sha256` records the hash of the build the training arm
+uses. The corpus file itself stays off-repo.
+
 If `typed_decisions.jsonl` sits outside `--root`, pass
-`--typed-decisions <path>` to both scripts. They are single-process, stdlib-only
+`--typed-decisions <path>` to each script. They are single-process, stdlib-only
 apart from `data.provenance` and `data.synthetic.family_to_typed_questions`, and
 they exit if a primary file is missing, so a partial mirror cannot silently
 produce a smaller card.

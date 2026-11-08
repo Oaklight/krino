@@ -1,0 +1,47 @@
+{
+ "sample": "research/247-handcheck-sample.json",
+ "per_ability": 10,
+ "seed": 247,
+ "labelled": 70,
+ "unlabelled": 0,
+ "agreement": 0.985714,
+ "by_ability": {
+  "Classification": {
+   "labelled": 10,
+   "agreement": 0.9,
+   "disagreements": {
+    "Verification": 1
+   }
+  },
+  "Detection": {
+   "labelled": 10,
+   "agreement": 1.0,
+   "disagreements": {}
+  },
+  "Routing": {
+   "labelled": 10,
+   "agreement": 1.0,
+   "disagreements": {}
+  },
+  "Scoring": {
+   "labelled": 10,
+   "agreement": 1.0,
+   "disagreements": {}
+  },
+  "Search": {
+   "labelled": 10,
+   "agreement": 1.0,
+   "disagreements": {}
+  },
+  "Structured Data Extraction": {
+   "labelled": 10,
+   "agreement": 1.0,
+   "disagreements": {}
+  },
+  "Verification": {
+   "labelled": 10,
+   "agreement": 1.0,
+   "disagreements": {}
+  }
+ }
+}

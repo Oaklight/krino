@@ -22,7 +22,7 @@ nn = torch.nn
 
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig
-from model.src.heads import OptionMarkerHead
+from model.src.heads import OptionMarkerHead, base_features
 
 MARKER_ID = 2
 
@@ -167,13 +167,81 @@ class TestOptionMarkerHead:
         hidden = 64 * 3
         expected = (
             2 * 1024  # LayerNorm
-            + 1024 * hidden + hidden  # scorer first layer
+            + 1024 * hidden + 2 * hidden + hidden  # scorer first layer
             + hidden + 1  # scorer second layer
         )
         assert sum(p.numel() for p in head.parameters()) == expected
         # AttentionHead(1024, rank=64) is 200,704 params; the marker scorer
         # is within one percent of it so head capacity is not confounded.
         assert abs(expected - 200_704) / 200_704 < 0.01
+
+    def test_the_zero_path_matches_the_pre_change_head(self) -> None:
+        """Without base features the head adds only exact zeros."""
+        head = OptionMarkerHead(16, rank=8).eval()
+        hidden = torch.randn(1, 4, 16)
+        with torch.no_grad():
+            logits = head(hidden)
+            x = head.layer_norm(hidden)
+            x = torch.nn.functional.linear(
+                x, head.scorer[1].weight[:, :16], head.scorer[1].bias
+            )
+            x = torch.nn.functional.gelu(x)
+            reference = torch.nn.functional.linear(
+                x, head.scorer[4].weight, head.scorer[4].bias
+            ).squeeze(-1)
+        assert torch.allclose(logits, reference, atol=1e-6)
+        # A pre-change head has no feature weights at all; the new columns
+        # start at zero, which is what makes the two computations equal.
+        assert head.scorer[1].weight[:, 16:].abs().max().item() == 0.0
+
+    def test_a_pre_change_checkpoint_still_loads_and_scores(self) -> None:
+        torch.manual_seed(0)
+        head = OptionMarkerHead(16, rank=8).eval()
+        state = {key: value.clone() for key, value in head.state_dict().items()}
+        legacy = dict(state)
+        legacy["scorer.1.weight"] = state["scorer.1.weight"][:, :16]
+
+        fresh = OptionMarkerHead(16, rank=8).eval()
+        # The hook pads the narrower weight with zeros on load.
+        fresh.load_state_dict(legacy, strict=True)
+
+        hidden = torch.randn(1, 3, 16)
+        with torch.no_grad():
+            assert torch.allclose(fresh(hidden), head(hidden), atol=1e-6)
+
+    def test_base_features_carry_log_probability_and_argmax(self) -> None:
+        probs = torch.tensor([[0.25, 0.75, 0.0]])
+        feat = base_features(probs)
+        assert torch.allclose(
+            feat[..., 0], torch.log(probs.clamp_min(1e-6))
+        )
+        assert feat[..., 1].tolist() == [[0.0, 1.0, 0.0]]
+
+    def test_a_trained_feature_column_moves_the_logits(self) -> None:
+        head = OptionMarkerHead(16, rank=8).eval()
+        hidden = torch.randn(1, 2, 16)
+        feat = base_features(torch.tensor([0.25, 0.75])).unsqueeze(0)
+        with torch.no_grad():
+            # At initialisation the feature columns are zero, so the added
+            # zeros and the real features score the same.
+            assert torch.allclose(head(hidden, base_feat=feat), head(hidden), atol=1e-6)
+            head.scorer[1].weight[:, 16:] = 0.5
+            assert not torch.allclose(
+                head(hidden, base_feat=feat), head(hidden), atol=1e-6
+            )
+
+    def test_a_gradient_step_moves_the_feature_columns(self) -> None:
+        head = OptionMarkerHead(16, rank=8)
+        hidden = torch.randn(1, 2, 16)
+        feat = base_features(torch.tensor([0.9, 0.1])).unsqueeze(0)
+        loss = torch.nn.functional.cross_entropy(
+            head(hidden, base_feat=feat), torch.tensor([1])
+        )
+        loss.backward()
+        grad = head.scorer[1].weight.grad
+        assert grad is not None
+        assert grad[:, 16:].abs().sum().item() > 0
+        assert grad[:, :16].abs().sum().item() > 0
 
 
 class TestChunking:

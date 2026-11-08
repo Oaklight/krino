@@ -18,7 +18,7 @@ transformers = pytest.importorskip("transformers")
 qwen35 = pytest.importorskip("transformers.models.qwen3_5.modeling_qwen3_5")
 
 from data.format import TypedQuestion  # noqa: E402
-from model.scripts.train_listwise import item_loss  # noqa: E402
+from model.scripts.train_listwise import item_loss, training_set  # noqa: E402
 from model.src import listwise as listwise_module  # noqa: E402
 from model.src.decision_model import DecisionModel  # noqa: E402
 from model.src.gpu_config import GPUConfig  # noqa: E402
@@ -296,6 +296,117 @@ def test_item_loss_is_zero_for_an_item_without_gold(readout):
     assert float(loss) == 0.0 and kl == 0.0 and ce == 0.0
 
 
+def _noul_item(label=True, answerable=None):
+    return TypedQuestion(
+        id="listwise-noul-1",
+        state=STATE,
+        question={"type": "noul", "instructions": INSTRUCTIONS, "criteria": None},
+        label=label,
+        source="listwise_test",
+        split="train",
+        answerable=answerable,
+    )
+
+
+def test_noul_item_trains_the_two_option_head(readout):
+    readout.model.zero_grad(set_to_none=True)
+    base = torch.full((2,), 0.5)
+    alpha = torch.nn.Parameter(torch.tensor(1.0))
+    loss, _kl, ce = item_loss(
+        readout, _noul_item(), base, alpha, random.Random(0), 1.0, 0.2, 2, False
+    )
+    assert ce > 0.0
+    loss.backward()
+    # Identical scores for "no" and "yes" would cancel the alpha gradient to
+    # exactly zero; this is the degeneracy check for the two-option softmax.
+    assert alpha.grad is not None and torch.count_nonzero(alpha.grad) > 0
+    before = alpha.item()
+    torch.optim.SGD([alpha], lr=0.1).step()
+    assert alpha.item() != before
+
+
+def test_noul_abstention_row_is_masked(readout):
+    loss, kl, ce = item_loss(
+        readout,
+        _noul_item(label=False, answerable=False),
+        torch.full((2,), 0.5),
+        torch.zeros(()),
+        random.Random(0),
+        1.0,
+        0.2,
+        2,
+        False,
+    )
+    assert float(loss) == 0.0 and kl == 0.0 and ce == 0.0
+    assert not loss.requires_grad
+
+
+def test_training_set_includes_noul_and_excludes_abstention():
+    from model.scripts.train_listwise import TRAINED_TYPES
+
+    assert "noul" in TRAINED_TYPES
+    kept, excluded = training_set(
+        [
+            _noul_item(),
+            _noul_item(label=False, answerable=False),
+            _choice_item(),
+        ]
+    )
+    assert {item.question["type"] for item in kept} == {"noul", "choice"}
+    assert len(excluded) == 1 and excluded[0].answerable is False
+
+
+def test_training_set_honours_the_answerable_switch(monkeypatch):
+    """The env kill switch must govern the set filter, not only the loss.
+
+    A raw ``getattr`` here would leave the filter on while the per-item guard
+    was disabled, so the mutation test could pass without the mechanism
+    mattering.
+    """
+    from model.scripts.train_listwise import LISTWISE_ANSWERABLE_SWITCH
+
+    items = [_noul_item(), _noul_item(label=False, answerable=False)]
+    kept, excluded = training_set(items)
+    assert len(kept) == 1 and len(excluded) == 1
+
+    monkeypatch.setenv(LISTWISE_ANSWERABLE_SWITCH, "1")
+    kept, excluded = training_set(items)
+    assert len(kept) == 2 and len(excluded) == 0
+
+
+def test_provenance_records_overrides_and_hashes(tmp_path):
+    import argparse
+    import hashlib
+
+    from model.scripts.train_listwise import run_provenance
+
+    corpus = tmp_path / "corpus.jsonl"
+    corpus.write_bytes(b"corpus")
+    base = tmp_path / "base.jsonl"
+    base.write_bytes(b"base")
+    args = argparse.Namespace(
+        code_commit="abc123",
+        corpus_sha256="def456",
+        items=corpus,
+        base_probs=base,
+        holdout_ids=None,
+    )
+    provenance = run_provenance(args)
+    assert provenance["code_commit"] == "abc123"
+    assert provenance["corpus_sha256"] == "def456"
+    assert provenance["base_probs_sha256"] == hashlib.sha256(b"base").hexdigest()
+    assert "holdout_ids_sha256" not in provenance
+
+
+def test_selection_hash_is_order_independent_and_label_sensitive():
+    from model.scripts.train_listwise import selection_sha256
+
+    first = _noul_item()
+    second = _choice_item()
+    assert selection_sha256([first, second]) == selection_sha256([second, first])
+    assert selection_sha256([first]) != selection_sha256([_noul_item(label=False)])
+
+
 def test_suffix_length_counts_every_marker(readout):
     ids = readout.model._tokenize_option_ids(OPTIONS)
     expected = sum(len(option_ids) + 1 for option_ids in ids)
@@ -317,3 +428,80 @@ def test_sampling_respects_the_capacity_cap(readout):
         )
         assert 2 <= len(subset) <= 5
         assert 7 in subset
+
+
+def test_base_probs_are_inert_until_the_feature_columns_move():
+    readout = _readout()
+    base = torch.tensor([0.1, 0.2, 0.3, 0.4])
+    with torch.no_grad():
+        assert torch.allclose(
+            readout.score(STATE, INSTRUCTIONS, OPTIONS, base_probs=base),
+            readout.score(STATE, INSTRUCTIONS, OPTIONS),
+            atol=1e-6,
+        )
+        head = readout.model.marker_head
+        head.scorer[1].weight[:, head.hidden_size:] = 0.5
+        assert not torch.allclose(
+            readout.score(STATE, INSTRUCTIONS, OPTIONS, base_probs=base),
+            readout.score(STATE, INSTRUCTIONS, OPTIONS),
+            atol=1e-6,
+        )
+
+
+def test_shifted_base_probs_rotate_with_the_options():
+    readout = _readout()
+    head = readout.model.marker_head
+    with torch.no_grad():
+        head.scorer[1].weight[:, head.hidden_size:] = 0.5
+    base = torch.tensor([0.1, 0.2, 0.3, 0.4])
+    shifts = 3
+    with torch.no_grad():
+        shifted = readout.score_shifted(
+            STATE, INSTRUCTIONS, OPTIONS, shifts=shifts, base_probs=base
+        )
+        manual = None
+        for shift in range(shifts):
+            order = [index % len(OPTIONS) for index in range(shift, shift + len(OPTIONS))]
+            rotated = [OPTIONS[index] for index in order]
+            rotated_base = base[torch.tensor(order)]
+            probs = readout.probabilities(
+                STATE, INSTRUCTIONS, rotated, base_probs=rotated_base
+            )
+            unrotated = torch.empty_like(probs)
+            for position, source in enumerate(order):
+                unrotated[0, source] = probs[0, position]
+            manual = unrotated if manual is None else manual + unrotated
+        manual = manual / shifts
+    assert torch.allclose(shifted, manual, atol=1e-6)
+
+
+def test_item_loss_conditions_the_head_only_when_asked():
+    readout = _readout()
+    item = _choice_item()
+    base = torch.tensor([0.1, 0.2, 0.3, 0.4])
+    for conditioned in (False, True):
+        readout.model.zero_grad(set_to_none=True)
+        loss, _kl, _ce = item_loss(
+            readout,
+            item,
+            base,
+            torch.nn.Parameter(torch.tensor(1.0)),
+            random.Random(0),
+            1.0,
+            0.2,
+            2,
+            False,
+            None,
+            0.0,
+            conditioned,
+        )
+        loss.backward()
+        grad = readout.model.marker_head.scorer[1].weight.grad
+        assert grad is not None
+        feature_grad = grad[:, readout.model.marker_head.hidden_size :].abs().sum()
+        if conditioned:
+            assert feature_grad.item() > 0
+        else:
+            # No base features reach the head, so the new columns get no
+            # gradient at all.
+            assert feature_grad.item() == 0.0

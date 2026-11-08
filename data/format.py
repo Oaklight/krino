@@ -49,14 +49,22 @@ class TypedQuestion:
     group: str | None = None
     teacher_probs: dict[str, float] | None = None
     teacher_name: str | None = None
-    # ``answerable=None`` means not annotated, not True.  The training loader
-    # treats an item with a gold label as answerable=True unless this is
-    # explicitly False; abstention sets must set False and a reason.
+    # ``answerable=None`` means answerable, not "unknown".  The canonical
+    # artifact has 6,000 explicit False and 237,366 unset, and zero explicit
+    # True, so a filter written as ``answerable == True`` silently returns
+    # nothing.  Only an explicit False marks abstention, and abstention rows
+    # set a reason.  With the field unset, the trainer treats an item as
+    # answerable when it carries a valid hard label and is not teacher-tier;
+    # see hard_label_eligible in model/scripts/train_residual.py.
     answerable: bool | None = None
     reason: str | None = None
     # ``gold`` / ``execution`` / ``teacher``; see data/provenance.py.  None
     # means not tagged yet, which the hard-label rule treats as ineligible.
     provenance: str | None = None
+    # ``option`` / ``withheld_gold`` for choice, ``level`` / ``fractional`` for
+    # score; see data/labels.py.  None on noul rows and on artifacts built
+    # before the field existed; consumers must not infer meaning from absence.
+    label_kind: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {k: v for k, v in asdict(self).items() if v is not None}

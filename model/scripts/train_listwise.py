@@ -15,6 +15,10 @@ the same head can rank a stage-1 shortlist.  At evaluation, choice items
 average four cyclic shifts of the option order; score items keep the natural
 order because rubric levels are ordered.
 
+``KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION`` turns the unanswerable-row
+exclusion off for the mutation test in ``tests/conftest.py``; it is not a
+production option.
+
 Usage:
     python model/scripts/train_listwise.py \
         --items data/benchmarks/residual_train_20000_jev.jsonl \
@@ -25,8 +29,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import random
+import subprocess
 import sys
 import time
 from collections import defaultdict
@@ -46,10 +52,98 @@ from model.scripts.train_residual import (
 )
 from model.src.backbone import load_causal_lm
 from model.src.decision_model import DecisionModel
+from model.src.feature_flags import feature_disabled
 from model.src.gpu_config import GPUConfig
 from model.src.listwise import ListwiseMarkerReadout
 
-TRAINED_TYPES = ("choice", "score")
+TRAINED_TYPES = ("noul", "choice", "score")
+LISTWISE_ANSWERABLE_SWITCH = "KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION"
+
+
+def unanswerable_excluded(item) -> bool:
+    """Whether an unanswerable row is excluded from the listwise loss.
+
+    The path has no abstain head, so an ``answerable=false`` row has nothing
+    to teach.  It must not reach the CE: the paired corpus keeps the option set
+    and the original label, so ``gold >= 0`` and the CE would train the head on
+    a question with no answer.
+
+    ``KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION`` turns the exclusion off for
+    the mutation test.
+    """
+    return getattr(item, "answerable", None) is False and not feature_disabled(
+        LISTWISE_ANSWERABLE_SWITCH
+    )
+
+
+def training_set(items: list) -> tuple[list, list]:
+    """Split items into ``(trained, abstention-excluded)``.
+
+    Trained rows are the ``TRAINED_TYPES`` rows whose ``answerable`` is not
+    explicitly False.  Key on the flag, not on ``_label_index < 0``: an
+    ordinary item whose label sits outside the option keys must surface as an
+    error, not vanish as if it were an abstention row.  The filter uses
+    :func:`unanswerable_excluded`, so the env switch that disables the
+    per-item guard also disables this one and the mutation test still bites.
+    """
+    typed = [item for item in items if item.question["type"] in TRAINED_TYPES]
+    abstention = [item for item in typed if unanswerable_excluded(item)]
+    kept = [item for item in typed if not unanswerable_excluded(item)]
+    return kept, abstention
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _git_commit() -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=Path(__file__).resolve().parents[2],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return result.stdout.strip() or None
+
+
+def selection_sha256(items: list) -> str:
+    """Stable hash of a training selection: sorted ``(id, type, label)`` rows.
+
+    Two runs train on the same selection iff this matches.  The file hash is
+    not the same thing: a rebuild can add a field without changing a single
+    row this function sees.
+    """
+    rows = sorted(
+        f"{item.id}\t{item.question['type']}\t{item.label!r}" for item in items
+    )
+    return hashlib.sha256("\n".join(rows).encode()).hexdigest()
+
+
+def run_provenance(args) -> dict:
+    """Pin the code and inputs before the first training step.
+
+    The branch name is not identity: it is rebased after the run.  Pass
+    ``--code-commit`` on a host without git; the script, corpus, base-probs
+    and held-out list are hashed from the files actually used.
+    """
+    provenance = {
+        "code_commit": args.code_commit or _git_commit(),
+        "script_sha256": _file_sha256(Path(__file__)),
+        "corpus_sha256": args.corpus_sha256 or _file_sha256(args.items),
+        "base_probs_sha256": _file_sha256(args.base_probs),
+    }
+    holdout = getattr(args, "holdout_ids", None)
+    if holdout:
+        provenance["holdout_ids_sha256"] = _file_sha256(holdout)
+    return provenance
 
 
 def _subset_probs(base: torch.Tensor, subset: list[int]) -> torch.Tensor:
@@ -77,6 +171,7 @@ def item_loss(
     shuffle_score: bool,
     max_subset: int | None = None,
     lora_kl_weight: float = 0.0,
+    base_conditioned: bool = False,
 ) -> tuple[torch.Tensor, float, float]:
     """Listwise loss on one item over a sampled subset.
 
@@ -85,6 +180,9 @@ def item_loss(
     output; this term constrains the backbone readout the adapter changes, and
     it stays off by default so a frozen run is unchanged.
     """
+    if unanswerable_excluded(item):
+        zero = torch.zeros((), device=base.device)
+        return zero, 0.0, 0.0
     q = item.question
     options = _options(q)
     gold = _label_index(item)
@@ -103,16 +201,21 @@ def item_loss(
         # Rubric levels are ordered; shuffling them breaks the scale.
         subset = list(range(len(options)))
     # The head contributes log-probabilities, the same scale evaluation uses
-    # after averaging shifts, so one alpha means the same thing in both.
+    # after averaging shifts, so one alpha means the same thing in both.  With
+    # base conditioning the head also sees the frozen base distribution for
+    # the same subset; without it the call is the pre-change one.
+    subset_base = _subset_probs(base, subset)
+    extra = {"base_probs": subset_base} if base_conditioned else {}
     head = torch.log_softmax(
         readout.score(
             item.state,
             q.get("instructions", ""),
             [options[index] for index in subset],
+            **extra,
         ).reshape(-1),
         dim=-1,
     )
-    subset_base = _subset_probs(base, subset).to(head.device)
+    subset_base = subset_base.to(head.device)
     logits = fused_logits(subset_base, head, alpha)
     log_p = F.log_softmax(logits, dim=-1)
     kl = torch.sum(subset_base * (torch.log(subset_base) - log_p))
@@ -143,12 +246,13 @@ def evaluate(
     alphas: dict[str, torch.Tensor],
     shifts: int,
     max_set: int = 20,
+    base_conditioned: bool = False,
 ) -> dict[str, float]:
     """Full-set evaluation.
 
-    Noul keeps the raw base readout.  Choice averages ``shifts`` cyclic
-    shifts of the option order; score keeps the natural order, because rubric
-    levels are ordered and a shift would reorder the scale.
+    Every type is scored through the readout, so a type the trainer is
+    training is a type the validation can see.  Noul and score keep the
+    natural option order; choice averages ``shifts`` cyclic shifts of it.
     """
     model = readout.model
     model.eval()
@@ -165,31 +269,32 @@ def evaluate(
         if target < 0:
             continue
         q_type = item.question["type"]
-        if q_type == "noul":
-            probs = base
-        else:
-            options = _options(item.question)
-            scored_options = options
-            if not readout.fits(options):
-                # One sequence cannot hold the whole set; score a gold-anchored
-                # subset so the item still counts, and report how many did.
-                capped += 1
-                others = [i for i in range(len(options)) if i != target]
-                keep = sorted([target] + others[: max_set - 1])
-                scored_options = [options[i] for i in keep]
-                base = _subset_probs(base, keep)
-                target = keep.index(target)
-            item_shifts = shifts if q_type == "choice" else 1
-            probs = readout.score_shifted(
-                item.state,
-                item.question.get("instructions", ""),
-                scored_options,
-                shifts=item_shifts,
-            ).reshape(-1)
-            probs = torch.softmax(
-                fused_logits(base.to(probs.device), torch.log(probs), alphas[q_type]),
-                dim=-1,
-            )
+        options = _options(item.question)
+        scored_options = options
+        if not readout.fits(options):
+            # One sequence cannot hold the whole set; score a gold-anchored
+            # subset so the item still counts, and report how many did.
+            capped += 1
+            others = [i for i in range(len(options)) if i != target]
+            keep = sorted([target] + others[: max_set - 1])
+            scored_options = [options[i] for i in keep]
+            base = _subset_probs(base, keep)
+            target = keep.index(target)
+        # Noul is binary and unordered, so it takes the natural order like
+        # score; only choice averages cyclic shifts.
+        item_shifts = shifts if q_type == "choice" else 1
+        extra = {"base_probs": base} if base_conditioned else {}
+        probs = readout.score_shifted(
+            item.state,
+            item.question.get("instructions", ""),
+            scored_options,
+            shifts=item_shifts,
+            **extra,
+        ).reshape(-1)
+        probs = torch.softmax(
+            fused_logits(base.to(probs.device), torch.log(probs), alphas[q_type]),
+            dim=-1,
+        )
         pred = int(torch.argmax(probs).item())
         k = probs.numel()
         chance = 1.0 / k
@@ -212,6 +317,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--items", type=Path, required=True)
     parser.add_argument("--base-probs", type=Path, required=True)
+    parser.add_argument(
+        "--base-conditioned",
+        action="store_true",
+        help="Give the marker head the frozen base distribution as two "
+        "per-option features (log p_base, is_base_argmax)",
+    )
     parser.add_argument("--model", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--rank", type=int, default=32)
@@ -279,13 +390,56 @@ def build_parser() -> argparse.ArgumentParser:
     "replications of one recipe.",
     )
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--torch-seed",
+        type=int,
+        default=None,
+        help="Seed torch's global RNG for reproducible model initialisation; "
+        "omitted leaves the ambient RNG state",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Load the items and print the post-filter split, then exit before "
+        "loading the backbone; used to check corpus/base-prob coverage",
+    )
+    parser.add_argument(
+        "--holdout-ids",
+        type=Path,
+        default=None,
+        help="JSON id list (or {'ids': [...]}) excluded before the internal "
+        "split; the frozen held-out gate evaluates these ids separately",
+    )
+    parser.add_argument(
+        "--code-commit",
+        default=None,
+        help="Commit SHA recorded in provenance.json; inferred from git when "
+        "omitted, and required on a host without git",
+    )
+    parser.add_argument(
+        "--corpus-sha256",
+        default=None,
+        help="Override the corpus hash when the items file is not readable "
+        "from the training host",
+    )
     return parser
 
 
 def main() -> int:
     args = build_parser().parse_args()
+    if args.torch_seed is not None:
+        # Seed the global RNG before any model or data object is built.  The
+        # flag is recorded in the checkpoint config, so a run that accepted it
+        # without applying it would describe an initialisation it did not use.
+        torch.manual_seed(args.torch_seed)
+    args.output.mkdir(parents=True, exist_ok=True)
+    provenance = run_provenance(args)
+    (args.output / "provenance.json").write_text(
+        json.dumps(provenance, indent=1) + "\n"
+    )
+    print(f"provenance {json.dumps(provenance)}", flush=True)
 
     items = load_jsonl(args.items)
     base_records = [
@@ -295,24 +449,102 @@ def main() -> int:
         rec["id"]: torch.tensor(rec["probs"], dtype=torch.float32) for rec in base_records
     }
     items = [item for item in items if item.id in base_probs]
+    if args.holdout_ids:
+        payload = json.loads(args.holdout_ids.read_text())
+        holdout_ids = set(payload["ids"] if isinstance(payload, dict) else payload)
+        items = [item for item in items if item.id not in holdout_ids]
+        print(
+            f"excluded {len(holdout_ids)} held-out ids; {len(items)} items remain",
+            flush=True,
+        )
     if args.limit:
         items = items[: args.limit]
     # The same call as train_residual, so the val split matches D20K.  The
     # split seed is separate from the training seed: a replication seed must
     # vary init and item order, not which items are held out.
     train_items, val_items = split_items(items, args.val_fraction, args.split_seed)
-    train_items = [
-        item for item in train_items if item.question["type"] in TRAINED_TYPES
+    train_items, abstention = training_set(train_items)
+    if abstention:
+        print(
+            f"excluded {len(abstention)} abstention rows (answerable=False)",
+            flush=True,
+        )
+    unlabeled = [item for item in train_items if _label_index(item) < 0]
+    if unlabeled:
+        shown = ", ".join(item.id for item in unlabeled[:10])
+        raise RuntimeError(
+            f"{len(unlabeled)} answerable train items have no label among the "
+            f"options: {shown}"
+        )
+    fractional = [
+        item for item in train_items
+        if item.question["type"] == "score"
+        and float(item.label) != int(round(float(item.label)))
     ]
+    if fractional:
+        print(
+            f"{len(fractional)} score train items have a fractional label; "
+            "the trainer rounds them to the nearest level",
+            flush=True,
+        )
+    # The file hash alone cannot say the two arms train on the same rows: the
+    # corpus was rebuilt with an added field.  The selection hashes can.
+    provenance.update(
+        {
+            "corpus_note": (
+                "8eb3b2a4 and 07600293 differ only by the added label_kind "
+                "field; ids, states, labels and option sets are identical, "
+                "and the training selection is unchanged."
+            ),
+            "split_selection_sha256": selection_sha256(items),
+            "shared_train_selection_sha256": selection_sha256(
+                [
+                    item
+                    for item in train_items
+                    if item.question["type"] in ("choice", "score")
+                ]
+            ),
+            "trained_selection_sha256": selection_sha256(train_items),
+            "train_rows": len(train_items),
+            "train_rows_by_type": {
+                q_type: sum(
+                    1 for item in train_items if item.question["type"] == q_type
+                )
+                for q_type in TYPES
+            },
+            "val_rows": len(val_items),
+            "abstention_excluded_rows": len(abstention),
+        }
+    )
+    (args.output / "provenance.json").write_text(
+        json.dumps(provenance, indent=1) + "\n"
+    )
     print(
         f"train {len(train_items)} val {len(val_items)} "
         f"types { {t: sum(1 for i in items if i.question['type'] == t) for t in TYPES} }",
         flush=True,
     )
+    if args.dry_run:
+        print(
+            f"dry run: {len(items)} items after the base-probs and held-out filters "
+            f"(train {len(train_items)} trained-type, val {len(val_items)})",
+            flush=True,
+        )
+        return 0
 
     backbone, tokenizer = load_causal_lm(
         args.model, device=args.device, freeze=True, flash_attention=False
     )
+    # Record the model that actually loaded, not only the requested name: a
+    # default or a wrapper can substitute a different checkpoint.
+    provenance["backbone_loaded"] = (
+        getattr(getattr(backbone, "config", None), "_name_or_path", None)
+        or args.model
+    )
+    (args.output / "provenance.json").write_text(
+        json.dumps(provenance, indent=1) + "\n"
+    )
+    print(f"backbone loaded {provenance['backbone_loaded']}", flush=True)
     gpu = GPUConfig(
         flash_attention=False,
         bf16_compute=True,
@@ -357,8 +589,15 @@ def main() -> int:
         rng = random.Random(args.seed + epoch)
         rng.shuffle(order)
         total = kl_total = ce_total = 0.0
+        task_rows = 0
+        masked_rows = 0
         started = time.time()
         for index, item in enumerate(order, 1):
+            if unanswerable_excluded(item):
+                # No abstain head here, and item_loss returns a zero with no
+                # graph, so the row must not reach backward().
+                masked_rows += 1
+                continue
             loss, kl_value, ce_value = item_loss(
                 readout,
                 item,
@@ -371,7 +610,16 @@ def main() -> int:
                 args.shuffle_score,
                 args.max_subset,
                 args.lora_kl_weight,
+                args.base_conditioned,
             )
+            task_rows += 1
+            if not loss.requires_grad:
+                # item_loss returns a constant zero only for a label with no
+                # index.  The filter above leaves no such answerable item, so
+                # this is a data or code error and must not pass silently.
+                raise RuntimeError(
+                    f"item {item.id} produced a loss with no gradient"
+                )
             kl_total += kl_value
             ce_total += ce_value
             optimizer.zero_grad(set_to_none=True)
@@ -382,7 +630,8 @@ def main() -> int:
             if index % 200 == 0:
                 rate = index / (time.time() - started)
                 print(
-                    f"  epoch {epoch} {index}/{len(order)} loss={total/index:.4f} "
+                    f"  epoch {epoch} {index}/{len(order)} "
+                    f"loss={total / max(1, task_rows):.4f} "
                     f"{rate:.2f} items/s",
                     flush=True,
                 )
@@ -393,11 +642,14 @@ def main() -> int:
             alphas,
             args.eval_shifts,
             args.max_subset,
+            args.base_conditioned,
         )
         metrics["epoch"] = epoch
-        metrics["train_loss"] = total / max(1, len(order))
-        metrics["kl_mean"] = kl_total / max(1, len(order))
-        metrics["ce_mean"] = ce_total / max(1, len(order))
+        metrics["train_loss"] = total / max(1, task_rows)
+        metrics["kl_mean"] = kl_total / max(1, task_rows)
+        metrics["ce_mean"] = ce_total / max(1, task_rows)
+        metrics["task_rows"] = task_rows
+        metrics["masked_rows"] = masked_rows
         metrics["alpha"] = {t: float(a.detach()) for t, a in alphas.items()}
         history.append(metrics)
         print(f"  val {json.dumps(metrics)}", flush=True)
@@ -448,6 +700,10 @@ def main() -> int:
                     list(args.lora_targets) if args.lora_layers is not None else None
                 ),
                 "lora_kl_weight": args.lora_kl_weight,
+                "base_conditioned": args.base_conditioned,
+                "holdout_ids": str(args.holdout_ids) if args.holdout_ids else None,
+                "torch_seed": args.torch_seed,
+                "provenance": provenance,
             },
             "history": history,
         },
