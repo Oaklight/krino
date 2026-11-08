@@ -146,3 +146,60 @@ class TestEndToEnd:
         for bm, comp in data["jev_comparison"].items():
             assert "jev" in comp
             assert comp["jev"] > 0
+
+
+class TestProvenanceIsNotABenchmark:
+    """A file with ``_provenance`` must transform exactly like one without it.
+
+    That is the property that matters: the September files carry no provenance,
+    and adding the block to new files must not change the benchmark set or the
+    aggregate the dashboard reads.
+    """
+
+    STEM = "logit_Qwen_Qwen3-4B.json"
+
+    def _payload(self):
+        return {
+            "agnews": {
+                "items": 200,
+                "choice": {
+                    "accuracy": {"n": 200, "accuracy": 0.79},
+                    "ece": {"ece": 0.15, "n": 200, "n_bins": 10, "bins": []},
+                },
+            },
+            "sst2": {
+                "items": 200,
+                "noul": {
+                    "accuracy": {"n": 200, "accuracy": 0.71},
+                    "ece": {"ece": 0.10, "n": 200, "n_bins": 10, "bins": []},
+                },
+            },
+        }
+
+    def test_same_benchmarks_and_aggregate(self, tmp_path):
+        plain_dir = tmp_path / "plain"
+        provenanced_dir = tmp_path / "provenanced"
+        plain_dir.mkdir()
+        provenanced_dir.mkdir()
+        plain = plain_dir / self.STEM
+        plain.write_text(json.dumps(self._payload()))
+        payload = {"_provenance": {"model_id": "Qwen/Qwen3-4B", "revision": "abc"}}
+        payload.update(self._payload())
+        provenanced = provenanced_dir / self.STEM
+        provenanced.write_text(json.dumps(payload))
+
+        a = transform.transform_eval_file(plain)
+        b = transform.transform_eval_file(provenanced)
+
+        assert set(a["results"]["by_source"]) == set(b["results"]["by_source"])
+        assert a["results"]["by_source"] == b["results"]["by_source"]
+        assert a["results"]["aggregate"] == b["results"]["aggregate"]
+        assert a["n_benchmarks"] == b["n_benchmarks"] == 2
+
+    def test_provenance_key_never_becomes_a_benchmark(self, tmp_path):
+        payload = {"_provenance": {"model_id": "m"}, **self._payload()}
+        path = tmp_path / self.STEM
+        path.write_text(json.dumps(payload))
+        result = transform.transform_eval_file(path)
+        assert "_provenance" not in result["results"]["by_source"]
+        assert "provenance" not in json.dumps(result["results"]["by_source"])
