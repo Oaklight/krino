@@ -56,6 +56,35 @@ By question type:
 The score column is 18 items, one item is 5.6 points, and the 0.278-to-0.444
 swing is a 3-item difference (5 of 18 against 8 of 18). It is not a ranking.
 
+### Two original-tier families are dead cells
+
+All three checkpoints answer every `original/intent` item with option index 2
+(12 of 12 each) and every `original/routing` item with index 3 (12 of 12 each).
+The gold sits at that index twice in each family, so all three score 2 of 12
+there. **Twenty-four of the tier's 72 items carry no information from this
+readout**: those two columns measure where the constant lands against the gold
+distribution, not the model.
+
+The collapse is not confined to the cells where all three do it. MiniCPM5-2B-Base
+answers all 12 `adequacy` items with index 0 and all 12 `policy` items with
+index 1; MiniCPM3-4B answers all 12 `ordinal` items with index 2;
+Ministral-3-3B-Base-2512 answers all 12 `adequacy` items with index 1 and 11 of
+12 `policy` items with index 0. `adequacy` carries six gold at each index, so
+both constants return exactly 6 of 12 — chance, presented as a performance. The
+other constants land at 4 to 7 of 12, depending only on how the gold is spread
+across the indices.
+
+This is a property of the instrument. Continuation scores the options against
+one shared context, and when the options are close to uniform the argmax is
+decided by a token-level prior that barely changes across items, so it can name
+the same index every time. An independent P(yes) per option scores each option
+against the question rather than against its siblings, so it has no term that
+would favour one position across items; a collapse there would need every
+option to score exactly equal. That is an argument about the instrument, not a
+measurement in this note — these files carry no native-readout per-item
+predictions — and measuring these cells with the native readout is the
+experiment the argument implies.
+
 MiniCPM5-2B-Base is **below chance on the hard tier** (0.306 against 0.336).
 That is not an artefact of the tier cut: the same 111 items are above chance for
 the other two checkpoints, and the model is above chance on the other two tiers.
@@ -135,6 +164,13 @@ the reading for exactly this outcome: every base below 0.628 means the reranker
 readout is the thing to port, not the base to change. That is what the numbers
 say. At this size, no full-attention base on the shortlist beats the reranker
 readout on JevBench, so the next arm should be about the readout rather than the
+backbone.
+
+The dead cells above are the mechanism behind that sentence, not just a
+correlation with it: a readout that answers twelve different questions with the
+same option index is not reading the items, and scoring the options against one
+shared context is what lets it do that. It is the strongest piece of evidence in
+this note for porting the native per-option readout rather than changing the
 backbone.
 
 The bound belongs in the same breath: this is a finding about the instrument's
