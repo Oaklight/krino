@@ -26,7 +26,13 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable, Sequence
 from typing import Any
 
-CODES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+CODES = (
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "!@#$%^&*()-_=+[]{}<>?|~"
+    "\\/\"'`"
+    ",.;:"
+)
 
 PANEL2_TEMPLATE = (
     "State: {state}\n"
@@ -40,7 +46,13 @@ POSITION_DOMINATED_PP = 10.0
 
 
 def codes_for(n_options: int) -> list[str]:
-    """The code letters for an item with ``n_options`` options."""
+    """The codes for an item with ``n_options`` options.
+
+    A to Z for the first 26 options, then a to z, then single-character
+    symbols.  Every code in the alphabet encodes to one token in the Qwen3
+    tokenizers; the dev set's 80-option items are the reason the alphabet goes
+    past 26.
+    """
     if not 2 <= n_options <= len(CODES):
         raise ValueError(f"n_options must be in [2, {len(CODES)}], got {n_options}")
     return list(CODES[:n_options])
