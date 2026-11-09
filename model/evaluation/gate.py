@@ -18,7 +18,10 @@ import json
 import math
 from collections import Counter
 from dataclasses import dataclass
-from typing import Any, Callable, Iterable, Sequence
+from statistics import NormalDist
+from typing import Any, Callable, Iterable, Mapping, Sequence
+
+from model.evaluation.paired_power import detectable_delta
 
 
 @dataclass(frozen=True)
@@ -275,6 +278,202 @@ def corrected_from_counts(by_options: dict[str, dict[str, int]]) -> float:
         total += (cell["correct"] - cell["n"] * chance) / (1.0 - chance)
         items += cell["n"]
     return total / items if items else 0.0
+
+
+# ---------------------------------------------------------------------------
+# Paired gate screen (#263, policy in research/37-gate-policy.md)
+# ---------------------------------------------------------------------------
+
+MATERIAL_REGRESSION_SUPPORTED = "material regression supported"
+COARSE_SAFETY_SCREEN_PASSED = "coarse safety screen passed"
+UNRESOLVED = "unresolved"
+IMPROVEMENT_SUPPORTED = "improvement supported"
+IMPROVEMENT_SUGGESTED_BUT_UNRESOLVED = "improvement suggested but unresolved"
+
+#: JevBench coarse margin: 8 pp of chance-corrected accuracy. It is the
+#: instrument's resolution at 231 items, not a scientific tolerance; a genuine
+#: 6 pp regression passes this screen. See ``research/37-gate-policy.md``.
+JEVBENCH_MARGIN_PP = 8.0
+
+
+@dataclass(frozen=True)
+class PairedOutcome:
+    """One item's outcome under one readout, with the item's chance level."""
+
+    correct: bool
+    n_options: int
+
+    def __post_init__(self) -> None:
+        if self.n_options < 2:
+            raise ValueError(f"n_options must be at least 2, got {self.n_options}")
+
+
+@dataclass(frozen=True)
+class GateScreen:
+    """The policy's output for one arm-against-control comparison.
+
+    ``states`` always carries exactly one of the three screen states and may
+    carry one improvement state as well.  The screen states are assigned from
+    the confidence interval, never from the point estimate alone.
+    """
+
+    n: int
+    delta_pp: float
+    ci_low_pp: float
+    ci_high_pp: float
+    wins: int
+    losses: int
+    p_value: float
+    discordance: float
+    detectable_pp: float | None
+    states: frozenset[str]
+    action: str
+    reason: str
+
+
+def _exact_p(
+    arm: Mapping[str, PairedOutcome],
+    control: Mapping[str, PairedOutcome],
+    ids: Sequence[str],
+) -> float:
+    """Exact two-sided McNemar p, from the form the gate has always used.
+
+    Imported here, not at module scope, so the evaluation layer does not take
+    a module-level dependency on the comparison CLI that prints this result.
+    """
+    from model.scripts.paired_mcnemar import mcnemar
+
+    first = {item_id: arm[item_id].correct for item_id in ids}
+    second = {item_id: control[item_id].correct for item_id in ids}
+    return mcnemar(first, second, list(ids))[2]
+
+
+def paired_screen(
+    arm: Mapping[str, PairedOutcome],
+    control: Mapping[str, PairedOutcome],
+    ids: Iterable[str] | None = None,
+    *,
+    margin_pp: float = JEVBENCH_MARGIN_PP,
+    alpha: float = 0.05,
+) -> GateScreen:
+    """Three-state interval screen for an arm against its control.
+
+    The paired effect is the difference in chance-corrected accuracy: each
+    item's signed difference is ``(arm - control) / (1 - 1 / n_options)``.
+    The 95% interval is the normal approximation on those per-item differences,
+    ``mean +/- z * sd / sqrt(n)`` with ``z`` from the two-sided ``alpha``.  The
+    exact two-sided McNemar p-value is reported beside it, and the detectable
+    difference at 80% power comes from ``model.evaluation.paired_power`` using
+    the measured discordance.
+
+    The screen states are assigned by the interval: material regression
+    supported when the whole interval is below ``-margin_pp``, coarse safety
+    screen passed when it is entirely above ``-margin_pp``, and unresolved when
+    it crosses.  A point estimate below the margin is not evidence of a
+    regression on its own.  Improvement states use the same interval: supported
+    when its lower bound is above zero, suggested but unresolved when the point
+    estimate is positive and the interval crosses zero.
+
+    The result also carries the policy's recommended action and a one-sentence
+    reason for the screen state.  The action is advice with the evidence
+    attached, not a verdict to rubber-stamp.
+
+    Raises:
+        ValueError: If fewer than two items are shared, if ``alpha`` is outside
+            ``(0, 1)``, or if an item carries a different option count in the
+            two maps.
+        KeyError: If a requested id is missing from either map.
+    """
+    if not 0.0 < alpha < 1.0:
+        raise ValueError(f"alpha must be in (0, 1), got {alpha}")
+    if ids is None:
+        candidates = sorted(set(arm) & set(control))
+    else:
+        candidates = list(ids)
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for item_id in candidates:
+        if item_id in seen:
+            continue
+        seen.add(item_id)
+        if item_id not in arm or item_id not in control:
+            raise KeyError(f"{item_id}: missing from arm or control outcomes")
+        ordered.append(item_id)
+    n = len(ordered)
+    if n < 2:
+        raise ValueError(f"paired screen needs at least two shared items, got {n}")
+
+    diffs: list[float] = []
+    wins = 0
+    losses = 0
+    for item_id in ordered:
+        arm_row = arm[item_id]
+        control_row = control[item_id]
+        if arm_row.n_options != control_row.n_options:
+            raise ValueError(
+                f"{item_id}: arm has {arm_row.n_options} options, "
+                f"control has {control_row.n_options}"
+            )
+        weight = 1.0 / (1.0 - 1.0 / arm_row.n_options)
+        diffs.append(weight * (float(arm_row.correct) - float(control_row.correct)))
+        if arm_row.correct and not control_row.correct:
+            wins += 1
+        elif control_row.correct and not arm_row.correct:
+            losses += 1
+
+    mean = sum(diffs) / n
+    variance = sum((value - mean) ** 2 for value in diffs) / (n - 1)
+    standard_error = math.sqrt(variance / n)
+    z = NormalDist().inv_cdf(1.0 - alpha / 2.0)
+    low = mean - z * standard_error
+    high = mean + z * standard_error
+
+    discordance = (wins + losses) / n
+    detectable = None
+    if discordance > 0.0:
+        detectable = detectable_delta(n, discordance) * 100.0
+
+    states: set[str] = set()
+    if high * 100.0 < -margin_pp:
+        states.add(MATERIAL_REGRESSION_SUPPORTED)
+        action = "block promotion"
+        reason = (
+            f"the 95% interval lies below -{margin_pp:g} pp, so the curated set "
+            "supports a material regression"
+        )
+    elif low * 100.0 > -margin_pp:
+        states.add(COARSE_SAFETY_SCREEN_PASSED)
+        action = "no objection from the coarse screen"
+        reason = (
+            f"the 95% interval lies above -{margin_pp:g} pp; this is the "
+            "instrument's resolution, not non-inferiority"
+        )
+    else:
+        states.add(UNRESOLVED)
+        action = "investigate"
+        reason = (
+            f"the 95% interval crosses -{margin_pp:g} pp; this item count cannot "
+            "resolve a difference of this size"
+        )
+    if low > 0.0:
+        states.add(IMPROVEMENT_SUPPORTED)
+    elif mean > 0.0:
+        states.add(IMPROVEMENT_SUGGESTED_BUT_UNRESOLVED)
+
+    return GateScreen(
+        n=n,
+        delta_pp=mean * 100.0,
+        ci_low_pp=low * 100.0,
+        ci_high_pp=high * 100.0,
+        wins=wins,
+        losses=losses,
+        p_value=_exact_p(arm, control, ordered),
+        discordance=discordance,
+        detectable_pp=detectable,
+        states=frozenset(states),
+        action=action,
+        reason=reason,
+    )
 
 
 def summarize(rows: Iterable[Prediction], n_bins: int = 10) -> dict[str, Any]:
