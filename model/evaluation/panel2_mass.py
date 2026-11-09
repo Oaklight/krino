@@ -150,21 +150,26 @@ def length_guard(entries: Sequence[dict[str, Any]]) -> dict[str, Any]:
     """Whether a span-mass readout is just picking the longest option.
 
     ``entries`` covers the variable-length items only (choice and score; a noul
-    item always presents ``no``/``yes``).  Each entry carries the option texts,
-    the gold natural index, and the mass readout's chosen natural index.  The
-    longest option has the most characters; ties go to the lowest natural
-    index.  The guard reports the longest-option baseline accuracy, the mass
-    accuracy on the same items, and how often the two agree.  A span-mass
-    readout that scored near this baseline would be measuring option length,
-    not the decision.
+    item always presents ``no``/``yes``).  Each entry carries its type, the
+    option texts, the gold natural index, and the mass readout's chosen natural
+    index.  The longest option has the most characters; ties go to the lowest
+    natural index.  The guard reports the longest-option baseline accuracy, the
+    mass accuracy on the same items, how often the two agree, and the item
+    composition, so the 157-of-231 total is readable at a glance: 139 choice
+    plus 18 score, with the 74 noul items excluded because their options do not
+    vary in length.  A span-mass readout that scored near this baseline would
+    be measuring option length, not the decision.
     """
     longest_correct = 0
     mass_correct = 0
     agree = 0
+    composition: dict[str, int] = {}
     for entry in entries:
         texts = entry["texts"]
         if len(texts) != entry["n_options"]:
             raise ValueError("option texts and declared width disagree")
+        q_type = entry.get("type", "choice")
+        composition[q_type] = composition.get(q_type, 0) + 1
         longest = max(range(len(texts)), key=lambda index: (len(texts[index]), -index))
         longest_correct += int(longest == entry["gold"])
         mass_correct += int(entry["chosen"] == entry["gold"])
@@ -172,10 +177,12 @@ def length_guard(entries: Sequence[dict[str, Any]]) -> dict[str, Any]:
     total = len(entries)
     return {
         "definition": (
-            "choice and score items; longest option text by characters, "
-            "ties to the lowest natural index"
+            "choice and score items, noul excluded because its options are "
+            "always no/yes; longest option text by characters, ties to the "
+            "lowest natural index"
         ),
         "items": total,
+        "composition": composition,
         "longest_option_baseline": {
             "correct": longest_correct,
             "total": total,
