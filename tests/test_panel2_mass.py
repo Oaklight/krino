@@ -110,11 +110,18 @@ def test_mean_chance_averages_over_items():
 def test_length_guard_reports_baseline_accuracy_and_agreement():
     guard = length_guard(
         [
-            {"texts": ["short", "longer", "longest"], "n_options": 3, "gold": 0, "chosen": 0},
-            {"texts": ["a", "bb"], "n_options": 2, "gold": 1, "chosen": 1},
+            {
+                "type": "choice",
+                "texts": ["short", "longer", "longest"],
+                "n_options": 3,
+                "gold": 0,
+                "chosen": 0,
+            },
+            {"type": "score", "texts": ["a", "bb"], "n_options": 2, "gold": 1, "chosen": 1},
         ]
     )
     assert guard["items"] == 2
+    assert guard["composition"] == {"choice": 1, "score": 1}
     # Item 1 picks the longest (index 2) and is wrong; item 2 picks index 1.
     assert guard["longest_option_baseline"]["correct"] == 1
     assert guard["mass_accuracy"]["correct"] == 2
@@ -123,7 +130,15 @@ def test_length_guard_reports_baseline_accuracy_and_agreement():
 
 def test_length_guard_ties_go_to_the_lowest_natural_index():
     guard = length_guard(
-        [{"texts": ["aa", "bb"], "n_options": 2, "gold": 0, "chosen": 0}]
+        [
+            {
+                "type": "choice",
+                "texts": ["aa", "bb"],
+                "n_options": 2,
+                "gold": 0,
+                "chosen": 0,
+            }
+        ]
     )
     assert guard["longest_option_baseline"]["correct"] == 1
     assert guard["agreement_with_longest"]["fraction"] == 1.0
@@ -131,7 +146,17 @@ def test_length_guard_ties_go_to_the_lowest_natural_index():
 
 def test_length_guard_rejects_a_width_mismatch():
     with pytest.raises(ValueError):
-        length_guard([{"texts": ["a", "b"], "n_options": 3, "gold": 0, "chosen": 0}])
+        length_guard(
+            [
+                {
+                    "type": "choice",
+                    "texts": ["a", "b"],
+                    "n_options": 3,
+                    "gold": 0,
+                    "chosen": 0,
+                }
+            ]
+        )
 
 
 def test_reversed_mapping_is_the_display_inverse():

@@ -384,6 +384,7 @@ def score_model(args: argparse.Namespace) -> int:
         if item.question.get("type", "noul") in ("choice", "score"):
             length_entries.append(
                 {
+                    "type": item.question.get("type", "noul"),
                     "texts": texts,
                     "n_options": len(texts),
                     "gold": gold,
