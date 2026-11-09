@@ -55,6 +55,7 @@ def test_content_codes_refuse_duplicate_texts():
 
 
 def test_seeded_codes_are_deterministic_permutations():
+    pytest.importorskip("numpy")
     first = seeded_codes(5, 0)
     assert first == seeded_codes(5, 0)
     assert sorted(first) == list(CODES[:5])
@@ -64,6 +65,7 @@ def test_seeded_codes_are_deterministic_permutations():
 
 
 def test_seeded_codes_keep_each_option_code_across_display_orders():
+    pytest.importorskip("numpy")
     texts = ["one", "two", "three", "four"]
     for forward in range(len(SEEDS)):
         forward_codes = codes_by_option(MEAN3, texts, False, forward)
@@ -104,6 +106,7 @@ def test_the_three_arms_are_the_declared_three():
 
 
 def test_natural_codes_returns_one_mapping_per_forward():
+    pytest.importorskip("numpy")
     texts = ["a", "b", "c"]
     assert len(natural_codes(POSITIONAL, texts)) == 1
     assert len(natural_codes(HASHED, texts)) == 1

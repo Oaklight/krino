@@ -43,8 +43,6 @@ import hashlib
 import math
 from typing import Sequence
 
-import numpy as np
-
 from model.evaluation.panel2 import CODES
 
 POSITIONAL = "positional"
@@ -96,7 +94,13 @@ def seeded_codes(n_options: int, seed: int) -> list[str]:
     The option at natural index ``i`` takes ``CODES[permutation[i]]``, with the
     permutation drawn from ``default_rng(seed)``.  Re-seeding per item makes
     the assignment reproducible within an item and independent across items.
+
+    numpy is imported here rather than at module scope: the repository's
+    pure-Python test lane runs without it, and content addressing does not
+    need it.
     """
+    import numpy as np
+
     permutation = np.random.default_rng(seed).permutation(n_options)
     return [CODES[int(index)] for index in permutation]
 
