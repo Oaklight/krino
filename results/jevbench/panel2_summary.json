@@ -1,0 +1,774 @@
+{
+  "_provenance": {
+    "generated_utc": "2026-11-09T07:36:50Z",
+    "code_commit": "c14f3bab8d93c144a7ed2bb8bf432541dba99d10",
+    "files": {
+      "Qwen/Qwen3-Reranker-4B": {
+        "path": "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json",
+        "sha256": "b4dbbf1763ae51f2429d2fec521854aa48d0f2f651539c671a0ec98f86aba7da"
+      },
+      "Qwen/Qwen3-4B": {
+        "path": "results/jevbench/panel2_Qwen_Qwen3-4B.json",
+        "sha256": "b82f27c04d82b152850c98040d146def4c67b1eaa4d793cc79a0f186a5df0af6"
+      },
+      "Qwen/Qwen3-4B-Instruct-2507": {
+        "path": "results/jevbench/panel2_Qwen_Qwen3-4B-Instruct-2507.json",
+        "sha256": "b840fa0d78516027ede35f500d9cb0015494e0a6fb36f848461c957517982e93"
+      },
+      "Qwen/Qwen3-4B-Base": {
+        "path": "results/jevbench/panel2_Qwen_Qwen3-4B-Base.json",
+        "sha256": "c822a6d872ca1939a14c0bd447d45a58497c319ab625f73f282367836e37babc"
+      }
+    },
+    "baseline": {
+      "path": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json",
+      "sha256": "47a33729c07189de10773303e3c879b07d5fdd704909236b276b2ea9721c8ee2"
+    }
+  },
+  "models": {
+    "Qwen/Qwen3-Reranker-4B": {
+      "valid": true,
+      "validity": {
+        "single_token_codes": true,
+        "multi_token_codes": [],
+        "unscorable_items": 0,
+        "position_diagnostic": true,
+        "position_dominated": false,
+        "valid": true,
+        "invalid_reason": null
+      },
+      "overall": {
+        "accuracy": 0.7012987012987013,
+        "correct": 162,
+        "total": 231,
+        "failed": 0
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.46846846846846846,
+          "correct": 52,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.8611111111111112,
+          "correct": 62,
+          "total": 72
+        }
+      },
+      "by_type": {
+        "choice": {
+          "accuracy": 0.7338129496402878,
+          "correct": 102,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6486486486486487,
+          "correct": 48,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6666666666666666,
+          "correct": 12,
+          "total": 18
+        }
+      },
+      "by_tier_type": {
+        "easy": {
+          "choice": {
+            "accuracy": 1.0,
+            "correct": 36,
+            "total": 36
+          },
+          "noul": {
+            "accuracy": 1.0,
+            "correct": 12,
+            "total": 12
+          }
+        },
+        "hard": {
+          "choice": {
+            "accuracy": 0.5074626865671642,
+            "correct": 34,
+            "total": 67
+          },
+          "noul": {
+            "accuracy": 0.4473684210526316,
+            "correct": 17,
+            "total": 38
+          },
+          "score": {
+            "accuracy": 0.16666666666666666,
+            "correct": 1,
+            "total": 6
+          }
+        },
+        "original": {
+          "noul": {
+            "accuracy": 0.7916666666666666,
+            "correct": 19,
+            "total": 24
+          },
+          "choice": {
+            "accuracy": 0.8888888888888888,
+            "correct": 32,
+            "total": 36
+          },
+          "score": {
+            "accuracy": 0.9166666666666666,
+            "correct": 11,
+            "total": 12
+          }
+        }
+      },
+      "position": {
+        "n": 231,
+        "predicted_position_histogram": {
+          "0": 69,
+          "1": 71,
+          "2": 35,
+          "3": 37,
+          "4": 17,
+          "5": 2
+        },
+        "gold_position_histogram": {
+          "0": 74,
+          "1": 70,
+          "2": 40,
+          "3": 29,
+          "4": 16,
+          "5": 2
+        },
+        "accuracy_by_gold_position": {
+          "0": {
+            "correct": 49,
+            "total": 74,
+            "accuracy": 0.6621621621621622
+          },
+          "1": {
+            "correct": 47,
+            "total": 70,
+            "accuracy": 0.6714285714285714
+          },
+          "2": {
+            "correct": 24,
+            "total": 40,
+            "accuracy": 0.6
+          },
+          "3": {
+            "correct": 26,
+            "total": 29,
+            "accuracy": 0.896551724137931
+          },
+          "4": {
+            "correct": 14,
+            "total": 16,
+            "accuracy": 0.875
+          },
+          "5": {
+            "correct": 2,
+            "total": 2,
+            "accuracy": 1.0
+          }
+        },
+        "modal_predicted_position": 1,
+        "modal_predicted_count": 71,
+        "accuracy_raw": 0.7012987012987013,
+        "accuracy_excluding_modal_gold": 0.7142857142857143,
+        "position_dominated": false
+      },
+      "order_effect": {
+        "n": 231,
+        "accuracy_natural": 0.7012987012987013,
+        "accuracy_reversed": 0.6796536796536796,
+        "difference_pp": -2.164502164502169,
+        "changed_fraction": 0.22510822510822512
+      },
+      "latency": {
+        "natural": {
+          "mean_s": 0.325437136978169,
+          "median_s": 0.4497351674363017
+        },
+        "reversed": {
+          "mean_s": 0.026610498110969345,
+          "median_s": 0.022795564960688353
+        }
+      },
+      "reversed_overall": {
+        "accuracy": 0.6796536796536796,
+        "correct": 157,
+        "total": 231,
+        "failed": 0
+      }
+    },
+    "Qwen/Qwen3-4B": {
+      "valid": true,
+      "validity": {
+        "single_token_codes": true,
+        "multi_token_codes": [],
+        "unscorable_items": 0,
+        "position_diagnostic": true,
+        "position_dominated": false,
+        "valid": true,
+        "invalid_reason": null
+      },
+      "overall": {
+        "accuracy": 0.696969696969697,
+        "correct": 161,
+        "total": 231,
+        "failed": 0
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4774774774774775,
+          "correct": 53,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.8333333333333334,
+          "correct": 60,
+          "total": 72
+        }
+      },
+      "by_type": {
+        "choice": {
+          "accuracy": 0.7338129496402878,
+          "correct": 102,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6486486486486487,
+          "correct": 48,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6111111111111112,
+          "correct": 11,
+          "total": 18
+        }
+      },
+      "by_tier_type": {
+        "easy": {
+          "choice": {
+            "accuracy": 1.0,
+            "correct": 36,
+            "total": 36
+          },
+          "noul": {
+            "accuracy": 1.0,
+            "correct": 12,
+            "total": 12
+          }
+        },
+        "hard": {
+          "choice": {
+            "accuracy": 0.4925373134328358,
+            "correct": 33,
+            "total": 67
+          },
+          "noul": {
+            "accuracy": 0.5,
+            "correct": 19,
+            "total": 38
+          },
+          "score": {
+            "accuracy": 0.16666666666666666,
+            "correct": 1,
+            "total": 6
+          }
+        },
+        "original": {
+          "noul": {
+            "accuracy": 0.7083333333333334,
+            "correct": 17,
+            "total": 24
+          },
+          "choice": {
+            "accuracy": 0.9166666666666666,
+            "correct": 33,
+            "total": 36
+          },
+          "score": {
+            "accuracy": 0.8333333333333334,
+            "correct": 10,
+            "total": 12
+          }
+        }
+      },
+      "position": {
+        "n": 231,
+        "predicted_position_histogram": {
+          "0": 73,
+          "1": 69,
+          "2": 38,
+          "3": 35,
+          "4": 14,
+          "5": 2
+        },
+        "gold_position_histogram": {
+          "0": 74,
+          "1": 70,
+          "2": 40,
+          "3": 29,
+          "4": 16,
+          "5": 2
+        },
+        "accuracy_by_gold_position": {
+          "0": {
+            "correct": 48,
+            "total": 74,
+            "accuracy": 0.6486486486486487
+          },
+          "1": {
+            "correct": 47,
+            "total": 70,
+            "accuracy": 0.6714285714285714
+          },
+          "2": {
+            "correct": 24,
+            "total": 40,
+            "accuracy": 0.6
+          },
+          "3": {
+            "correct": 26,
+            "total": 29,
+            "accuracy": 0.896551724137931
+          },
+          "4": {
+            "correct": 14,
+            "total": 16,
+            "accuracy": 0.875
+          },
+          "5": {
+            "correct": 2,
+            "total": 2,
+            "accuracy": 1.0
+          }
+        },
+        "modal_predicted_position": 0,
+        "modal_predicted_count": 73,
+        "accuracy_raw": 0.696969696969697,
+        "accuracy_excluding_modal_gold": 0.7197452229299363,
+        "position_dominated": false
+      },
+      "order_effect": {
+        "n": 231,
+        "accuracy_natural": 0.696969696969697,
+        "accuracy_reversed": 0.6623376623376623,
+        "difference_pp": -3.463203463203468,
+        "changed_fraction": 0.19047619047619047
+      },
+      "latency": {
+        "natural": {
+          "mean_s": 0.3218950701784746,
+          "median_s": 0.4509651460684836
+        },
+        "reversed": {
+          "mean_s": 0.026412307220265205,
+          "median_s": 0.022980228066444397
+        }
+      },
+      "reversed_overall": {
+        "accuracy": 0.6623376623376623,
+        "correct": 153,
+        "total": 231,
+        "failed": 0
+      }
+    },
+    "Qwen/Qwen3-4B-Instruct-2507": {
+      "valid": true,
+      "validity": {
+        "single_token_codes": true,
+        "multi_token_codes": [],
+        "unscorable_items": 0,
+        "position_diagnostic": true,
+        "position_dominated": false,
+        "valid": true,
+        "invalid_reason": null
+      },
+      "overall": {
+        "accuracy": 0.683982683982684,
+        "correct": 158,
+        "total": 231,
+        "failed": 0
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4594594594594595,
+          "correct": 51,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.8194444444444444,
+          "correct": 59,
+          "total": 72
+        }
+      },
+      "by_type": {
+        "choice": {
+          "accuracy": 0.6834532374100719,
+          "correct": 95,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6756756756756757,
+          "correct": 50,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.7222222222222222,
+          "correct": 13,
+          "total": 18
+        }
+      },
+      "by_tier_type": {
+        "easy": {
+          "choice": {
+            "accuracy": 1.0,
+            "correct": 36,
+            "total": 36
+          },
+          "noul": {
+            "accuracy": 1.0,
+            "correct": 12,
+            "total": 12
+          }
+        },
+        "hard": {
+          "choice": {
+            "accuracy": 0.43283582089552236,
+            "correct": 29,
+            "total": 67
+          },
+          "noul": {
+            "accuracy": 0.5263157894736842,
+            "correct": 20,
+            "total": 38
+          },
+          "score": {
+            "accuracy": 0.3333333333333333,
+            "correct": 2,
+            "total": 6
+          }
+        },
+        "original": {
+          "noul": {
+            "accuracy": 0.75,
+            "correct": 18,
+            "total": 24
+          },
+          "choice": {
+            "accuracy": 0.8333333333333334,
+            "correct": 30,
+            "total": 36
+          },
+          "score": {
+            "accuracy": 0.9166666666666666,
+            "correct": 11,
+            "total": 12
+          }
+        }
+      },
+      "position": {
+        "n": 231,
+        "predicted_position_histogram": {
+          "0": 75,
+          "1": 69,
+          "2": 33,
+          "3": 36,
+          "4": 16,
+          "5": 2
+        },
+        "gold_position_histogram": {
+          "0": 74,
+          "1": 70,
+          "2": 40,
+          "3": 29,
+          "4": 16,
+          "5": 2
+        },
+        "accuracy_by_gold_position": {
+          "0": {
+            "correct": 48,
+            "total": 74,
+            "accuracy": 0.6486486486486487
+          },
+          "1": {
+            "correct": 47,
+            "total": 70,
+            "accuracy": 0.6714285714285714
+          },
+          "2": {
+            "correct": 22,
+            "total": 40,
+            "accuracy": 0.55
+          },
+          "3": {
+            "correct": 24,
+            "total": 29,
+            "accuracy": 0.8275862068965517
+          },
+          "4": {
+            "correct": 15,
+            "total": 16,
+            "accuracy": 0.9375
+          },
+          "5": {
+            "correct": 2,
+            "total": 2,
+            "accuracy": 1.0
+          }
+        },
+        "modal_predicted_position": 0,
+        "modal_predicted_count": 75,
+        "accuracy_raw": 0.683982683982684,
+        "accuracy_excluding_modal_gold": 0.7006369426751592,
+        "position_dominated": false
+      },
+      "order_effect": {
+        "n": 231,
+        "accuracy_natural": 0.683982683982684,
+        "accuracy_reversed": 0.6666666666666666,
+        "difference_pp": -1.7316017316017396,
+        "changed_fraction": 0.1774891774891775
+      },
+      "latency": {
+        "natural": {
+          "mean_s": 0.3225628717931479,
+          "median_s": 0.45165058597922325
+        },
+        "reversed": {
+          "mean_s": 0.02663933022100946,
+          "median_s": 0.022854045033454895
+        }
+      },
+      "reversed_overall": {
+        "accuracy": 0.6666666666666666,
+        "correct": 154,
+        "total": 231,
+        "failed": 0
+      }
+    },
+    "Qwen/Qwen3-4B-Base": {
+      "valid": true,
+      "validity": {
+        "single_token_codes": true,
+        "multi_token_codes": [],
+        "unscorable_items": 0,
+        "position_diagnostic": true,
+        "position_dominated": false,
+        "valid": true,
+        "invalid_reason": null
+      },
+      "overall": {
+        "accuracy": 0.6233766233766234,
+        "correct": 144,
+        "total": 231,
+        "failed": 0
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.43243243243243246,
+          "correct": 48,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.6666666666666666,
+          "correct": 48,
+          "total": 72
+        }
+      },
+      "by_type": {
+        "choice": {
+          "accuracy": 0.6474820143884892,
+          "correct": 90,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6216216216216216,
+          "correct": 46,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.4444444444444444,
+          "correct": 8,
+          "total": 18
+        }
+      },
+      "by_tier_type": {
+        "easy": {
+          "choice": {
+            "accuracy": 1.0,
+            "correct": 36,
+            "total": 36
+          },
+          "noul": {
+            "accuracy": 1.0,
+            "correct": 12,
+            "total": 12
+          }
+        },
+        "hard": {
+          "choice": {
+            "accuracy": 0.43283582089552236,
+            "correct": 29,
+            "total": 67
+          },
+          "noul": {
+            "accuracy": 0.47368421052631576,
+            "correct": 18,
+            "total": 38
+          },
+          "score": {
+            "accuracy": 0.16666666666666666,
+            "correct": 1,
+            "total": 6
+          }
+        },
+        "original": {
+          "noul": {
+            "accuracy": 0.6666666666666666,
+            "correct": 16,
+            "total": 24
+          },
+          "choice": {
+            "accuracy": 0.6944444444444444,
+            "correct": 25,
+            "total": 36
+          },
+          "score": {
+            "accuracy": 0.5833333333333334,
+            "correct": 7,
+            "total": 12
+          }
+        }
+      },
+      "position": {
+        "n": 231,
+        "predicted_position_histogram": {
+          "0": 65,
+          "1": 85,
+          "2": 36,
+          "3": 33,
+          "4": 12
+        },
+        "gold_position_histogram": {
+          "0": 74,
+          "1": 70,
+          "2": 40,
+          "3": 29,
+          "4": 16,
+          "5": 2
+        },
+        "accuracy_by_gold_position": {
+          "0": {
+            "correct": 43,
+            "total": 74,
+            "accuracy": 0.581081081081081
+          },
+          "1": {
+            "correct": 44,
+            "total": 70,
+            "accuracy": 0.6285714285714286
+          },
+          "2": {
+            "correct": 21,
+            "total": 40,
+            "accuracy": 0.525
+          },
+          "3": {
+            "correct": 24,
+            "total": 29,
+            "accuracy": 0.8275862068965517
+          },
+          "4": {
+            "correct": 12,
+            "total": 16,
+            "accuracy": 0.75
+          },
+          "5": {
+            "correct": 0,
+            "total": 2,
+            "accuracy": 0.0
+          }
+        },
+        "modal_predicted_position": 1,
+        "modal_predicted_count": 85,
+        "accuracy_raw": 0.6233766233766234,
+        "accuracy_excluding_modal_gold": 0.6211180124223602,
+        "position_dominated": false
+      },
+      "order_effect": {
+        "n": 231,
+        "accuracy_natural": 0.6233766233766234,
+        "accuracy_reversed": 0.6017316017316018,
+        "difference_pp": -2.164502164502158,
+        "changed_fraction": 0.2077922077922078
+      },
+      "latency": {
+        "natural": {
+          "mean_s": 0.32228282898930566,
+          "median_s": 0.4517066879197955
+        },
+        "reversed": {
+          "mean_s": 0.026206586153137607,
+          "median_s": 0.022679013200104237
+        }
+      },
+      "reversed_overall": {
+        "accuracy": 0.6017316017316018,
+        "correct": 139,
+        "total": 231,
+        "failed": 0
+      }
+    }
+  },
+  "comparisons": {
+    "Qwen/Qwen3-Reranker-4B": {
+      "baseline": "judgement readout, same 231 items",
+      "baseline_accuracy": 0.6493506493506493,
+      "panel2_accuracy": 0.7012987012987013,
+      "n": 231,
+      "panel2_only_correct": 27,
+      "baseline_only_correct": 15,
+      "mcnemar_p": 0.08842954698775429
+    }
+  },
+  "validity_gate": {
+    "Qwen/Qwen3-Reranker-4B": {
+      "valid": true,
+      "reason": null
+    },
+    "Qwen/Qwen3-4B": {
+      "valid": true,
+      "reason": null
+    },
+    "Qwen/Qwen3-4B-Instruct-2507": {
+      "valid": true,
+      "reason": null
+    },
+    "Qwen/Qwen3-4B-Base": {
+      "valid": true,
+      "reason": null
+    }
+  }
+}
