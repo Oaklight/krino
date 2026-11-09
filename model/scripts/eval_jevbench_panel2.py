@@ -316,7 +316,7 @@ def score_model(args: argparse.Namespace) -> int:
         "panel": "2",
         "dataset": args.dataset,
         "prompt_template": PANEL2_TEMPLATE,
-        "code_scheme": "A..Z, one code per option",
+        "code_scheme": "A-Z, a-z, then single-character symbols, one code per option",
         "code_token_form": args.code_form,
         "code_token_ids": {code: code_ids[code] for code in used_codes if code in code_ids},
         "noul_rendering": "two options: A. no / B. yes",

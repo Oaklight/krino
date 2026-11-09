@@ -63,6 +63,13 @@ def test_codes_reject_out_of_range_option_counts():
         codes_for(len(CODES) + 1)
 
 
+def test_codes_extend_past_26_for_wide_items():
+    wide = codes_for(80)
+    assert len(wide) == 80
+    assert len(set(wide)) == 80
+    assert wide[:26] == list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+
 def test_noul_is_two_options_no_then_yes():
     texts, gold = options_for(item("noul", True, {"false": "f", "true": "t"}))
     assert texts == ["no", "yes"]
