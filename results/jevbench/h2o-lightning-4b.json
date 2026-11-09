@@ -1,0 +1,81 @@
+{
+  "_provenance": {
+    "model_id": "h2oai/h2o-lightning-4b",
+    "revision": "659fc412de8486dbc2477b0d1cb4121e97e72471",
+    "snapshot_path": "<host>/h2o-lightning-4b",
+    "dtype": "bfloat16",
+    "device": "cuda:0",
+    "device_name": "NVIDIA H100 NVL",
+    "strategy": "native_decision",
+    "readout": "one forward; the LM head's next-token read on the label tokens at the answer slot; two-way (bidirectional) attention over the whole prompt",
+    "serving": "bash h2o-lightning-4b/serve.sh (ONE_ENGINE=1, --attention-backend TRITON_ATTN, MAX_LEN 40960, shipped serve_config.json)",
+    "vllm_version": "0.30.0",
+    "vllm_build": "b05cc29ab813895947954c268c4ec41ca0da1306",
+    "vllm_build_check": "engine/vllm_per_request_attention.SHA256SUMS (30 files; sha256sum -c and serve.sh on every start)",
+    "python_version": "3.10.12",
+    "torch_version": "2.13.0+cu130",
+    "transformers_version": "5.20.2",
+    "torchcodec_version": "0.17.0",
+    "harness": "fstandhartinger/jevbench@609a664e81f46e03731600bd7bd9f1b7a61257c5",
+    "command": "python3 -m jevbench.cli run --tasks datasets/public/easy.jsonl,datasets/public/original.jsonl,datasets/public/hard.jsonl --adapter typesafe --endpoint http://127.0.0.1:8741 --key-env '' --model h2oai/h2o-lightning-4b --cost-basis self_hosted_gpu --reserve-usd 0 --results <OUT>/results.jsonl --raw-dir <OUT>/raw --ledger <OUT>/ledger.jsonl --manifest <OUT>/manifest.json --run-label h2o-lightning-4b --delay-s 0",
+    "date_utc": "2026-11-09T07:48:41.862931+00:00",
+    "started_utc": "2026-11-09T07:48:31.603728+00:00",
+    "items": 231
+  },
+  "summary": {
+    "overall": {
+      "accuracy": 0.8917748917748918,
+      "correct": 206,
+      "total": 231,
+      "failed": 0
+    },
+    "by_type": {
+      "choice": {
+        "correct": 126,
+        "total": 139,
+        "accuracy": 0.9064748201438849
+      },
+      "noul": {
+        "correct": 64,
+        "total": 74,
+        "accuracy": 0.8648648648648649
+      },
+      "score": {
+        "correct": 16,
+        "total": 18,
+        "accuracy": 0.8888888888888888
+      }
+    },
+    "by_tier": {
+      "easy": {
+        "correct": 48,
+        "total": 48,
+        "accuracy": 1.0
+      },
+      "original": {
+        "correct": 72,
+        "total": 72,
+        "accuracy": 1.0
+      },
+      "hard": {
+        "correct": 86,
+        "total": 111,
+        "accuracy": 0.7747747747747747
+      }
+    }
+  },
+  "latency": {
+    "n": 231,
+    "mean_s": 0.0388,
+    "median_s": 0.0243,
+    "p95_s": 0.1009,
+    "min_s": 0.0167,
+    "max_s": 0.1579,
+    "input_tokens_mean": 653.6,
+    "input_tokens_median": 157,
+    "input_tokens_max": 3952,
+    "output_tokens": [
+      1
+    ]
+  }
+}

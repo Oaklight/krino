@@ -20,6 +20,8 @@ const READOUT_LABELS: Record<string, string> = {
   judgement: "judgement",
   "native-reranker": "native reranker",
   panel2: "vocab code",
+  "native-decision": "native decision",
+  "native-decision-oneway": "native decision, one-way",
 };
 
 interface Props {

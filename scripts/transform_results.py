@@ -336,6 +336,10 @@ JEVBENCH_META: dict[str, tuple[str, str, str]] = {
     "krino-qwen3-reranker-4b-heads": ("Qwen3-reranker-4B (trained)", "4B", "reranker"),
     "krino-qwen3-reranker-0.6b-heads": ("Qwen3-reranker-0.6B (trained)", "0.6B", "reranker"),
     "raw-qwen3-reranker-4b": ("Qwen/Qwen3-Reranker-4B (zero-shot)", "4B", "reranker"),
+    # Third-party trained model, served natively. Display-only; the row's
+    # numbers come from the file.
+    "h2o-lightning-4b": ("H2O-Lightning-4B (third-party)", "4B", "causal"),
+    "h2o-lightning-4b-oneway": ("H2O-Lightning-4B (third-party)", "4B", "causal"),
 }
 
 # ``_provenance.strategy`` -> the readout label the dashboard renders.
@@ -344,6 +348,8 @@ READOUT_BY_STRATEGY: dict[str, str] = {
     "description": "continuation",
     "reranker_native": "native-reranker",
     "panel2_vocab_code": "panel2",
+    "native_decision": "native-decision",
+    "native_decision_oneway": "native-decision-oneway",
 }
 
 
@@ -428,13 +434,17 @@ def build_jevbench_run(filepath: Path) -> dict | None:
         "head_version": head_version,
         "backbone_model_id": backbone_model_id,
         "code_commit": code_commit,
-        "method": "trained-heads" if readout == "trained-heads" else "zero-shot",
+        "method": (
+            "trained-heads" if readout == "trained-heads"
+            else "third-party" if readout.startswith("native-decision")
+            else "zero-shot"
+        ),
         "readout": readout,
         "readout_detail": provenance.get("readout"),
         "source_file": source_file_label(filepath),
         "benchmark": "jevbench",
         "n": raw.get("n") or overall.get("total", 0),
-        "accuracy": round(overall.get("accuracy", 0), 4),
+        "accuracy": round(overall.get("accuracy", 0), 6),
         "correct": overall.get("correct", 0),
         "total": overall.get("total", 0),
         "by_type": {k: {"accuracy": round(v["accuracy"], 4), "correct": v["correct"], "total": v["total"]}
