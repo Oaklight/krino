@@ -34,6 +34,30 @@ PANEL2_TEMPLATE = (
     "Answer:"
 )
 
+#: Declared prompt orderings for #336.  ``shipped`` is ``PANEL2_TEMPLATE``.
+#: ``options_first`` moves the question block after the options block and
+#: changes nothing else; ``sandwich`` repeats the question block after the
+#: options, so it differs in content and token count as well as position and
+#: is a repetition treatment, not a third point on an order axis.
+ORDER_TEMPLATES = {
+    "shipped": PANEL2_TEMPLATE,
+    "options_first": (
+        "State: {state}\n"
+        "Options:\n"
+        "{options}\n"
+        "Question: {instructions}\n"
+        "Answer:"
+    ),
+    "sandwich": (
+        "State: {state}\n"
+        "Question: {instructions}\n"
+        "Options:\n"
+        "{options}\n"
+        "Question: {instructions}\n"
+        "Answer:"
+    ),
+}
+
 POSITION_DOMINATED_PP = 10.0
 
 
@@ -58,10 +82,22 @@ def option_lines(texts: Sequence[str], codes: Sequence[str]) -> str:
 
 
 def render_panel2(
-    state: str, instructions: str, texts: Sequence[str], codes: Sequence[str]
+    state: str,
+    instructions: str,
+    texts: Sequence[str],
+    codes: Sequence[str],
+    order: str = "shipped",
 ) -> str:
-    """The single prompt form used by every checkpoint."""
-    return PANEL2_TEMPLATE.format(
+    """The prompt form for one declared ordering (#336).
+
+    ``order`` must be a key of :data:`ORDER_TEMPLATES`; the default is the
+    shipped order every panel-2 cell before #336 used.
+    """
+    if order not in ORDER_TEMPLATES:
+        raise ValueError(
+            f"unknown order {order!r}; expected one of {sorted(ORDER_TEMPLATES)}"
+        )
+    return ORDER_TEMPLATES[order].format(
         state=state,
         instructions=instructions,
         options=option_lines(texts, codes),

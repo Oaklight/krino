@@ -11,9 +11,17 @@ All four checkpoints use the same template, the same code scheme and the same
 option construction.  That identity is the experiment (#326).
 
 Modes:
-    --check-codes   verify every code is one token in all four tokenizers
-    (default)       score one checkpoint in natural and reversed option order
-    --summarize     build the cross-model matrix and the reranker's McNemar
+    --check-codes        verify every code is one token in all four tokenizers
+    --print-config-hash  print the config and data hashes a run will record
+    (default)            score one checkpoint in natural and reversed option order
+    --summarize          build the cross-model matrix and the reranker's McNemar
+
+``--prompt-order`` selects one of the declared templates in
+``model.evaluation.panel2.ORDER_TEMPLATES`` (#336).  ``shipped`` is the template
+every panel-2 cell before #336 used; ``options_first`` moves the question block
+after the options and changes nothing else, so the pair is an order-only
+contrast; ``sandwich`` repeats the question after the options, so it differs in
+content and token count as well as position and is a repetition treatment.
 
 The prompt template lives in ``model.evaluation.panel2`` and is built only by
 ``render_panel2``.  A noul item is rendered as a two-option question,
@@ -57,7 +65,7 @@ from model.evaluation.dev_set import load_dev_set
 from model.evaluation.jevbench import summarize, tier_from_id
 from model.evaluation.panel2 import (
     CODES,
-    PANEL2_TEMPLATE,
+    ORDER_TEMPLATES,
     code_token_ids,
     codes_for,
     options_for,
@@ -102,6 +110,77 @@ def config_digest(config: dict[str, Any]) -> str:
     ).hexdigest()
 
 
+def load_items(args: argparse.Namespace) -> list[Any]:
+    if args.dataset == "dev":
+        items = list(load_dev_set(args.dev_path))
+    else:
+        items = list(load_jevbench())
+    if args.max_items:
+        items = items[: args.max_items]
+    return items
+
+
+def readout_codes(items: list[Any]) -> list[str]:
+    """The codes the scored items need, in order."""
+    prepared = [options_for(item) for item in items]
+    prepared = [entry for entry in prepared if entry is not None]
+    max_options = max(len(entry[0]) for entry in prepared) if prepared else 0
+    return list(CODES[:max_options])
+
+
+def panel2_config(
+    args: argparse.Namespace, code_ids: dict[str, int], used_codes: list[str]
+) -> dict[str, Any]:
+    """The declared configuration; hashed before a run and recorded with it."""
+    return {
+        "panel": "2",
+        "dataset": args.dataset,
+        "prompt_order": args.prompt_order,
+        "prompt_template": ORDER_TEMPLATES[args.prompt_order],
+        "code_scheme": "A-Z, a-z, then single-character symbols, one code per option",
+        "code_token_form": args.code_form,
+        "code_token_ids": {
+            code: code_ids[code] for code in used_codes if code in code_ids
+        },
+        "noul_rendering": "two options: A. no / B. yes",
+        "choice_rendering": "criteria descriptions in item order",
+        "score_rendering": "'Level {i}: {description}'",
+        "orders": ["natural", "reversed"],
+        "diagnostic_sample_items": args.diagnostic_sample,
+        "max_items": args.max_items,
+        "tokenizer_add_special_tokens": False,
+    }
+
+
+def print_config_hash(args: argparse.Namespace) -> int:
+    """The config and data hashes a run of these arguments will record.
+
+    Loads the tokenizer and the items only -- no weights -- so the hash can be
+    posted on the issue before the model run starts.
+    """
+    from transformers import AutoTokenizer
+
+    items = load_items(args)
+    used_codes = readout_codes(items)
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    code_ids, multi = code_token_ids(tokenizer, used_codes, args.code_form)
+    config = panel2_config(args, code_ids, used_codes)
+    payload = {
+        "model": args.model,
+        "config": config,
+        "config_sha256": config_digest(config),
+        "data_sha256": data_digest(items),
+        "items": len(items),
+        "multi_token_codes": multi,
+    }
+    text = json.dumps(payload, indent=2, ensure_ascii=False)
+    print(text)
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(text + "\n")
+    return 0
+
+
 def check_codes(args: argparse.Namespace) -> int:
     """Verify every code against every tokenizer before any model is loaded."""
     from transformers import AutoTokenizer
@@ -141,9 +220,10 @@ def score_prompt(
     codes: list[str],
     code_ids: dict[str, int],
     device: str,
-) -> tuple[list[float], int, float, Any]:
+) -> tuple[list[float], int, float, Any, int]:
     """One forward; the K code logits at the final position and their argmax."""
     encoded = tokenizer(prompt, return_tensors="pt", add_special_tokens=False)
+    n_tokens = int(encoded["input_ids"].shape[1])
     encoded = {key: value.to(device) for key, value in encoded.items()}
     started = time.perf_counter()
     with torch.inference_mode():
@@ -151,7 +231,7 @@ def score_prompt(
     elapsed = time.perf_counter() - started
     values = [float(logits[code_ids[code]]) for code in codes]
     prediction = max(range(len(values)), key=values.__getitem__)
-    return values, prediction, elapsed, logits
+    return values, prediction, elapsed, logits, n_tokens
 
 
 def prediction_row(
@@ -186,12 +266,7 @@ def prediction_row(
 def score_model(args: argparse.Namespace) -> int:
     from huggingface_hub import snapshot_download
 
-    if args.dataset == "dev":
-        items = list(load_dev_set(args.dev_path))
-    else:
-        items = list(load_jevbench())
-    if args.max_items:
-        items = items[: args.max_items]
+    items = load_items(args)
     print(f"Loaded {len(items)} {args.dataset} items", flush=True)
 
     snapshot_path = args.snapshot or Path(snapshot_download(args.model))
@@ -201,14 +276,13 @@ def score_model(args: argparse.Namespace) -> int:
     )
     device = str(next(model.parameters()).device)
 
-    used = [options_for(item) for item in items]
-    used = [prepared for prepared in used if prepared is not None]
-    max_options = max(len(prepared[0]) for prepared in used) if used else 0
-    used_codes = list(CODES[:max_options])
+    used_codes = readout_codes(items)
     code_ids, multi = code_token_ids(tokenizer, used_codes, args.code_form)
 
     natural: list[dict[str, Any]] = []
     reversed_order: list[dict[str, Any]] = []
+    natural_tokens: list[int] = []
+    reversed_tokens: list[int] = []
     unscorable: list[dict[str, Any]] = []
     diagnostic_sample: list[dict[str, Any]] = []
     options_by_id: dict[str, int] = {}
@@ -235,11 +309,16 @@ def score_model(args: argparse.Namespace) -> int:
             continue
 
         prompt = render_panel2(
-            item.state, item.question.get("instructions", ""), texts, codes
+            item.state,
+            item.question.get("instructions", ""),
+            texts,
+            codes,
+            order=args.prompt_order,
         )
-        values, prediction, elapsed, logits = score_prompt(
+        values, prediction, elapsed, logits, n_tokens = score_prompt(
             model, tokenizer, prompt, codes, code_ids, device
         )
+        natural_tokens.append(n_tokens)
         natural.append(
             prediction_row(item, "natural", texts, gold, values, prediction, elapsed)
         )
@@ -270,10 +349,16 @@ def score_model(args: argparse.Namespace) -> int:
             item.question.get("instructions", ""),
             reversed_texts,
             codes,
+            order=args.prompt_order,
         )
-        reversed_values, reversed_prediction, reversed_elapsed, _ = score_prompt(
-            model, tokenizer, reversed_prompt, codes, code_ids, device
-        )
+        (
+            reversed_values,
+            reversed_prediction,
+            reversed_elapsed,
+            _,
+            reversed_n_tokens,
+        ) = score_prompt(model, tokenizer, reversed_prompt, codes, code_ids, device)
+        reversed_tokens.append(reversed_n_tokens)
         reversed_order.append(
             prediction_row(
                 item,
@@ -311,22 +396,18 @@ def score_model(args: argparse.Namespace) -> int:
             "median_s": statistics.median(latency_reversed),
         },
     }
-
-    config = {
-        "panel": "2",
-        "dataset": args.dataset,
-        "prompt_template": PANEL2_TEMPLATE,
-        "code_scheme": "A-Z, a-z, then single-character symbols, one code per option",
-        "code_token_form": args.code_form,
-        "code_token_ids": {code: code_ids[code] for code in used_codes if code in code_ids},
-        "noul_rendering": "two options: A. no / B. yes",
-        "choice_rendering": "criteria descriptions in item order",
-        "score_rendering": "'Level {i}: {description}'",
-        "orders": ["natural", "reversed"],
-        "diagnostic_sample_items": args.diagnostic_sample,
-        "max_items": args.max_items,
-        "tokenizer_add_special_tokens": False,
+    prompt_tokens = {
+        "natural": {
+            "mean": statistics.mean(natural_tokens) if natural_tokens else 0.0,
+            "median": statistics.median(natural_tokens) if natural_tokens else 0.0,
+        },
+        "reversed": {
+            "mean": statistics.mean(reversed_tokens) if reversed_tokens else 0.0,
+            "median": statistics.median(reversed_tokens) if reversed_tokens else 0.0,
+        },
     }
+
+    config = panel2_config(args, code_ids, used_codes)
     code_failures = [
         entry for entry in unscorable if entry["reason"] == "multi_token_code"
     ]
@@ -368,7 +449,8 @@ def score_model(args: argparse.Namespace) -> int:
         extra={
             "readout": "one forward; argmax over the K code token ids at the "
                        "final position after 'Answer:'",
-            "prompt_template": PANEL2_TEMPLATE,
+            "prompt_template": ORDER_TEMPLATES[args.prompt_order],
+            "prompt_order": args.prompt_order,
             "code_token_form": args.code_form,
             "dataset": args.dataset,
             "dev_path": (
@@ -399,6 +481,7 @@ def score_model(args: argparse.Namespace) -> int:
             },
             "order_effect": order,
             "latency": latency,
+            "prompt_tokens": prompt_tokens,
         },
         "diagnostic_sample": diagnostic_sample,
         "predictions_natural": natural,
@@ -438,6 +521,7 @@ def summarize_panel2(args: argparse.Namespace) -> int:
             "position": natural["position"],
             "order_effect": payload["metrics"]["order_effect"],
             "latency": payload["metrics"]["latency"],
+            "prompt_tokens": payload["metrics"].get("prompt_tokens"),
             "reversed_overall": payload["metrics"]["reversed"]["summary"]["overall"],
         }
 
@@ -506,6 +590,16 @@ def main() -> int:
     parser.add_argument("--model", default=None)
     parser.add_argument("--snapshot", type=Path, default=None)
     parser.add_argument("--code-form", choices=["space", "bare"], default="space")
+    parser.add_argument(
+        "--prompt-order",
+        choices=list(ORDER_TEMPLATES),
+        default="shipped",
+        help=(
+            "shipped: as in #326; options_first: question after the options, "
+            "otherwise identical; sandwich: question repeated after the "
+            "options, a repetition treatment rather than an order point"
+        ),
+    )
     parser.add_argument("--code-commit", default=None)
     parser.add_argument("--dtype", choices=list(DTYPE_MAP), default="bfloat16")
     parser.add_argument("--device", default=None)
@@ -523,6 +617,11 @@ def main() -> int:
     parser.add_argument("--max-items", type=int, default=None)
     parser.add_argument("--diagnostic-sample", type=int, default=DIAGNOSTIC_SAMPLE)
     parser.add_argument("--summarize", type=Path, nargs="+", default=None)
+    parser.add_argument(
+        "--print-config-hash",
+        action="store_true",
+        help="print the config and data hashes this argument set will record",
+    )
     parser.add_argument("--baseline", type=Path, default=BASELINE_JUDGEMENT)
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
@@ -536,6 +635,10 @@ def main() -> int:
         if args.output is None:
             parser.error("--summarize needs --output")
         return summarize_panel2(args)
+    if args.print_config_hash:
+        if not args.model:
+            parser.error("--print-config-hash needs --model")
+        return print_config_hash(args)
     if not args.model or args.output is None:
         parser.error("scoring needs --model and --output")
     return score_model(args)
