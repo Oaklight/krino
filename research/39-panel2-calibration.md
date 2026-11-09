@@ -142,7 +142,7 @@ improve accuracy on either checkpoint.
 Config hash `4752c103e6cf2d48d97fceab313a357435a3d5bc86dd8bad6bd46c7eb68a92e9`,
 recorded in #338 before the runs; dev-run code commit
 `420d3ee96488fd1c05f565903921d36b92ee054c`, fitting script commit
-`327842e926583501189b3d2c8da867fb02e0cf38`. Dev runs at revision
+`1a672a7aecbe1387ac8a25b77e1e08cd458124b1`. Dev runs at revision
 `22e6836` (4B) and `9216db5` (32B), bf16, identical prompt template and code
 form as the committed JevBench cells. The JevBench side is the committed
 panel-2 dump; calibration transforms its stored logits, so the instrument was
