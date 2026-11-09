@@ -1,0 +1,3754 @@
+{
+  "_provenance": {
+    "model_id": "Qwen/Qwen3-Reranker-4B",
+    "revision": "22e683669bc0f0bd69640a1354a6d0aebcfeede5",
+    "snapshot_path": "<host>/.cache/huggingface/hub/models--Qwen--Qwen3-Reranker-4B/snapshots/22e683669bc0f0bd69640a1354a6d0aebcfeede5",
+    "dtype": "bfloat16",
+    "device": "cuda:0",
+    "code_commit": "unresolved",
+    "date_utc": "2026-11-09T06:18:39Z",
+    "readout": "per-request judgement: one sequence, K answer spans, each scored log P(\" yes\") - log P(\" no\") through the vocabulary head; no trained parameters",
+    "strategy": "judgement-per-request",
+    "norm": "mean",
+    "command": "model/scripts/eval_jevbench_judgement_per_request.py --model Qwen/Qwen3-Reranker-4B --snapshot <host>/.cache/huggingface/hub/models--Qwen--Qwen3-Reranker-4B/snapshots/22e683669bc0f0bd69640a1354a6d0aebcfeede5 --direction causal --output <host>/tmp/krino-324/pr_causal.json",
+    "python_version": "3.12.16",
+    "torch_version": "2.11.0+cu128",
+    "device_name": "NVIDIA H100 NVL",
+    "transformers_version": "5.21.0",
+    "fla": "absent",
+    "causal_conv1d": "absent",
+    "gdn_kernel_path": "reference",
+    "readout_direction": "causal",
+    "read_position": "answer-span (K reads)",
+    "head_kind": "vocabulary",
+    "adaptation": "frozen",
+    "yes_id": 9834,
+    "no_id": 902,
+    "latency": {
+      "mean_s": 0.33640320604118756,
+      "median_s": 0.4503461900167167,
+      "n": 231
+    }
+  },
+  "items": 231,
+  "n": 231,
+  "failed": 0,
+  "summary": {
+    "overall": {
+      "accuracy": 0.5930735930735931,
+      "correct": 137,
+      "total": 231,
+      "failed": 0
+    },
+    "by_tier": {
+      "easy": {
+        "accuracy": 0.8541666666666666,
+        "correct": 41,
+        "total": 48
+      },
+      "hard": {
+        "accuracy": 0.4594594594594595,
+        "correct": 51,
+        "total": 111
+      },
+      "original": {
+        "accuracy": 0.625,
+        "correct": 45,
+        "total": 72
+      }
+    },
+    "by_type": {
+      "choice": {
+        "accuracy": 0.5755395683453237,
+        "correct": 80,
+        "total": 139
+      },
+      "noul": {
+        "accuracy": 0.6216216216216216,
+        "correct": 46,
+        "total": 74
+      },
+      "score": {
+        "accuracy": 0.6111111111111112,
+        "correct": 11,
+        "total": 18
+      }
+    },
+    "by_tier_type": {
+      "easy": {
+        "choice": {
+          "accuracy": 0.8611111111111112,
+          "correct": 31,
+          "total": 36
+        },
+        "noul": {
+          "accuracy": 0.8333333333333334,
+          "correct": 10,
+          "total": 12
+        }
+      },
+      "hard": {
+        "choice": {
+          "accuracy": 0.4626865671641791,
+          "correct": 31,
+          "total": 67
+        },
+        "noul": {
+          "accuracy": 0.47368421052631576,
+          "correct": 18,
+          "total": 38
+        },
+        "score": {
+          "accuracy": 0.3333333333333333,
+          "correct": 2,
+          "total": 6
+        }
+      },
+      "original": {
+        "noul": {
+          "accuracy": 0.75,
+          "correct": 18,
+          "total": 24
+        },
+        "choice": {
+          "accuracy": 0.5,
+          "correct": 18,
+          "total": 36
+        },
+        "score": {
+          "accuracy": 0.75,
+          "correct": 9,
+          "total": 12
+        }
+      }
+    }
+  },
+  "latency": {
+    "mean_s": 0.33640320604118756,
+    "median_s": 0.4503461900167167,
+    "n": 231
+  },
+  "predictions": [
+    {
+      "id": "easy-intent-00",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        -3.274399,
+        -3.54406,
+        -3.001497,
+        -4.070035,
+        -0.249142
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.7347,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-01",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        -2.694164,
+        2.429457,
+        1.257591,
+        0.308451,
+        -2.019494
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0244,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        -3.533367,
+        -2.812428,
+        1.892823,
+        1.560756,
+        0.089976
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4495,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-03",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "scores": [
+        -3.003558,
+        -2.795168,
+        -1.844455,
+        3.733867,
+        -2.579613
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.435,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-04",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "scores": [
+        2.186044,
+        -1.237736,
+        -2.099649,
+        -1.559165,
+        1.626958
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4458,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-05",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        -4.141232,
+        -3.341652,
+        -2.34446,
+        -3.51757,
+        -0.087571
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.4497,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-06",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        -3.202417,
+        -0.825058,
+        4.330292,
+        -1.369569,
+        -2.789106
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4633,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "scores": [
+        3.286168,
+        -0.200227,
+        0.460936,
+        0.469442,
+        3.067355
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4568,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-08",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        -3.317008,
+        -0.849776,
+        -0.604522,
+        -1.184013,
+        2.365525
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.454,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-09",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        -4.140899,
+        1.539504,
+        0.52026,
+        -1.589412,
+        -0.582976
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4527,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-10",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "scores": [
+        -4.132668,
+        -1.499739,
+        -0.925749,
+        2.850487,
+        1.697303
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4535,
+      "correct": true
+    },
+    {
+      "id": "easy-intent-11",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        -3.90495,
+        -0.797473,
+        4.499635,
+        0.593099,
+        0.332051
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-00",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.510758,
+        1.305632
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4589,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-01",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -2.105609,
+        1.858133
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4579,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-02",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.72912,
+        -1.042938
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4535,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-03",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -2.343046,
+        0.924254
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4537,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-04",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.547105,
+        1.166718
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0235,
+      "correct": false
+    },
+    {
+      "id": "easy-fact-05",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -2.595944,
+        -0.068817
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4506,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-06",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        2.55883,
+        0.905861
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4562,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-07",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -0.606818,
+        1.133009
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4533,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-08",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.984732,
+        1.159619
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4508,
+      "correct": false
+    },
+    {
+      "id": "easy-fact-09",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -1.267499,
+        1.642548
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0232,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-10",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.80589,
+        -0.415076
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "easy-fact-11",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -1.636599,
+        -0.168599
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4518,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-00",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        -2.077143,
+        -0.967682,
+        0.036469,
+        4.316613
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4504,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-01",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -1.292115,
+        0.841463,
+        0.770758,
+        0.162836
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-02",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        1.23004,
+        0.841306,
+        1.537088,
+        2.665109
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4513,
+      "correct": false
+    },
+    {
+      "id": "easy-extraction-03",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        1.508419,
+        1.420094,
+        1.890675,
+        -0.464977
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4541,
+      "correct": false
+    },
+    {
+      "id": "easy-extraction-04",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -2.349254,
+        3.436382,
+        1.857147,
+        -3.286417
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4517,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-05",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        0.177877,
+        1.22367,
+        1.231823,
+        2.057253
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-06",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -1.204588,
+        0.158965,
+        -0.672296,
+        0.104472
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4526,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-07",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        -2.04313,
+        -1.122589,
+        -0.762157,
+        3.124543
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4526,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-08",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        -1.94449,
+        0.552122,
+        3.411819,
+        2.214208,
+        2.421068
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4544,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-09",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        -1.829165,
+        2.748904,
+        1.01021,
+        1.686539,
+        1.366666
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.024,
+      "correct": true
+    },
+    {
+      "id": "easy-extraction-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "scores": [
+        2.035287,
+        1.511138,
+        2.066041,
+        2.341812,
+        1.864665
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.452,
+      "correct": false
+    },
+    {
+      "id": "easy-extraction-11",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -2.497723,
+        0.066998,
+        1.710907,
+        -1.565017
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.0234,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-00",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        -5.362811,
+        -1.174922,
+        2.177473,
+        0.998717,
+        3.6565
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.4476,
+      "correct": false
+    },
+    {
+      "id": "easy-tool_selection-01",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "scores": [
+        -5.215529,
+        -1.340149,
+        -1.837143,
+        1.592554,
+        -0.792087
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4553,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-02",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        -5.065308,
+        1.516328,
+        0.293652,
+        1.806146,
+        -1.372063
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4473,
+      "correct": false
+    },
+    {
+      "id": "easy-tool_selection-03",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "scores": [
+        2.809937,
+        1.408199,
+        1.79758,
+        2.462386,
+        2.068185
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0232,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-04",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        -4.915366,
+        -0.834043,
+        -1.11746,
+        -0.684043,
+        -0.169112
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.4552,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-05",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        -5.152701,
+        2.068923,
+        -0.320107,
+        1.491192,
+        -2.098696
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0232,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-06",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "scores": [
+        -4.538666,
+        -0.948661,
+        -1.021833,
+        2.023051,
+        1.567577
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.023,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "scores": [
+        3.023326,
+        0.357172,
+        -0.022899,
+        2.322148,
+        1.239016
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0231,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-08",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        -3.204902,
+        -0.942824,
+        -1.758345,
+        -1.622368,
+        2.87209
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.4494,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-09",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        -3.469857,
+        0.411545,
+        2.96177,
+        2.0276,
+        0.886056
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.0231,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-10",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        -3.72749,
+        2.701637,
+        0.317852,
+        1.778602,
+        1.570131
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.023,
+      "correct": true
+    },
+    {
+      "id": "easy-tool_selection-11",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        -3.652009,
+        -0.825735,
+        -1.881561,
+        -2.192179,
+        3.343025
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.0231,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-01",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        0.737771,
+        1.54099,
+        1.904173,
+        2.18332,
+        3.660423
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.5366,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-04",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        -1.409171,
+        0.123005,
+        2.426678,
+        1.071448,
+        1.314293
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.5013,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-long_policy-08",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -0.547228,
+        2.765681,
+        2.092212,
+        -2.61629
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4907,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-long_policy-09",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -2.583747,
+        1.024014,
+        0.066543,
+        -0.127264
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4971,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-11",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        2.098243,
+        0.831612
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.492,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-13",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        -1.104988,
+        -1.658737
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4895,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-long_policy-17",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "scores": [
+        0.98029,
+        0.624688,
+        1.611844,
+        1.191727,
+        -4.80531
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4876,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-long_policy-19",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        0.975691,
+        -0.597892
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4892,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-probability-03",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        -0.282423,
+        1.095128
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4615,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-probability-04",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "scores": [
+        -0.029372,
+        1.523791,
+        1.050545
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4584,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-probability-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "scores": [
+        0.962516,
+        0.928278,
+        2.301974
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4623,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-probability-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -0.194416,
+        -0.302744
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.456,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-03",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.508887,
+        0.746146
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4514,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-06",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        1.794946,
+        0.022143
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4499,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-07",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        -1.041619,
+        0.605081,
+        0.641505,
+        -0.165558,
+        -0.008611
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4661,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-09",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        1.12229,
+        -0.283375
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4469,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-12",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -1.848131,
+        1.337596,
+        -0.035877,
+        3.4427
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4491,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "scores": [
+        -0.886051,
+        1.56074,
+        3.154501
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4541,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-ambiguous-03",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 3,
+      "scores": [
+        0.790934,
+        2.317057,
+        0.196093
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4467,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-ambiguous-07",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "scores": [
+        -2.352551,
+        2.858159,
+        2.448693
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4458,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-09",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "scores": [
+        -0.372295,
+        1.173313,
+        2.402548
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4505,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-ambiguous-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "scores": [
+        3.314671,
+        3.385037,
+        1.216251
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.447,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-11",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "scores": [
+        0.23716,
+        2.52728,
+        2.187903
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4533,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-ambiguous-13",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        -0.308419,
+        1.123686,
+        1.824318,
+        1.211593
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4495,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-03",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -1.379076,
+        2.332498,
+        2.40729,
+        1.009295
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.5021,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-multi_hop-04",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "scores": [
+        0.415564,
+        -0.031563,
+        1.679357,
+        1.076254,
+        -0.082617,
+        1.449685
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4869,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-05",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        0.162663,
+        2.181684,
+        1.014198,
+        0.258206,
+        -0.989229
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4902,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-07",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "scores": [
+        -1.326572,
+        0.21661,
+        0.273422,
+        1.62133,
+        0.320168,
+        -0.352682
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4966,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-multi_hop-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        3.718786,
+        -1.928978
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4888,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-01",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "scores": [
+        -0.187964,
+        0.930424,
+        -1.256391
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4766,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "scores": [
+        0.961241,
+        1.642191,
+        1.746791
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4481,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-probability-03",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        -0.592829,
+        1.236628
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4609,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-04",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 3,
+      "scores": [
+        0.173694,
+        0.735115,
+        0.657182
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4469,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-probability-06",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "scores": [
+        -0.351028,
+        0.765019,
+        3.114288
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4532,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-tradeoff-01",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "scores": [
+        -0.692854,
+        1.062247,
+        1.344196,
+        2.022804,
+        2.967404
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.4537,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-03",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -0.871743,
+        0.688339,
+        3.376887,
+        1.309899
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4531,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-06",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        -1.291273,
+        0.95453
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4493,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-07",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        -1.370939,
+        1.277899,
+        3.459076,
+        3.19628,
+        -1.205485
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4504,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-b-tradeoff-08",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.071627,
+        0.858821
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4466,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-b-tradeoff-12",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "scores": [
+        -1.767162,
+        -0.153881,
+        0.550079,
+        4.478036,
+        -0.64817
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4479,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-long_policy-02",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        0.534225,
+        3.264176,
+        1.111649,
+        0.462104,
+        -0.877409
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.5214,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-long_policy-03",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "scores": [
+        -1.033018,
+        2.091583,
+        1.02469,
+        0.836037,
+        -0.350427,
+        -1.270846
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.5191,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-04",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.960446,
+        -0.714242
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.5113,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-long_policy-05",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        0.64227,
+        2.243006,
+        2.088797,
+        -0.627266
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.5128,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-long_policy-08",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -1.217823,
+        2.744627,
+        3.387089,
+        0.912381
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.5108,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        0.589375,
+        2.549221,
+        2.85572,
+        -0.525357
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.5213,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-long_policy-11",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        0.137728,
+        -0.550193
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.5193,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-probability-03",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 3,
+      "scores": [
+        1.367577,
+        2.63265,
+        2.15311
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4572,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-02",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.141945,
+        -0.134373
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4501,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-03",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        -0.065129,
+        0.967771,
+        0.264088,
+        0.136279,
+        0.488483
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4553,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-04",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "scores": [
+        0.569819,
+        2.552445,
+        2.139173,
+        -0.782091,
+        0.326131
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4497,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-06",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "scores": [
+        -0.557382,
+        3.826363,
+        1.837497,
+        1.536895,
+        1.087601,
+        0.81883
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4526,
+      "correct": false
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-08",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        -0.186108,
+        2.626076,
+        0.965299,
+        0.216389,
+        0.238285
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4537,
+      "correct": true
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-12",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "scores": [
+        0.881941,
+        3.288542,
+        4.522138
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4515,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-adversarial-01",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -1.911684,
+        2.567474,
+        2.137954,
+        1.55945
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4607,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-adversarial-06",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        0.40988,
+        0.530138
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4566,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-adversarial-07",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        0.893949,
+        -0.900717,
+        -0.494116,
+        3.243574
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4473,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-adversarial-08",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.345527,
+        0.374832
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4553,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-adversarial-09",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -1.202607,
+        1.135749,
+        4.457004,
+        0.770838
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4567,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-adversarial-11",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        -1.691858,
+        2.113604,
+        1.473235,
+        0.890205
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4511,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-01",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        0.640076,
+        1.496022,
+        2.11285,
+        1.899341
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4924,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-02",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        0.556201,
+        2.069511,
+        0.52949,
+        2.652637
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4973,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-multi_hop-05",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        1.54072,
+        1.936226,
+        2.765489,
+        -0.292226
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4906,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-multi_hop-07",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        -0.431079,
+        1.42459,
+        0.663924,
+        1.201867
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4927,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-08",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        -0.119018,
+        -0.365603,
+        -0.192532,
+        -0.370533
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4923,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-multi_hop-09",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        0.821852,
+        0.772532,
+        2.079217,
+        0.474623
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.0728,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-multi_hop-10",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        -1.211689,
+        1.79124,
+        1.425839,
+        1.406337
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4923,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-multi_hop-12",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        0.053966,
+        3.212201,
+        3.835514,
+        1.841272
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.492,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-02",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -0.362267,
+        2.926913
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4523,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-04",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -3.399405,
+        -3.296118
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4546,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-05",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        -0.972912,
+        1.159437,
+        3.80199,
+        1.384011
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4512,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-trap-06",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        -1.832259,
+        -0.574541,
+        -0.271417,
+        2.608699
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4507,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-08",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -1.675278,
+        -0.173873,
+        1.76927,
+        3.92263
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0234,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-a-trap-10",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -1.650395,
+        3.784573,
+        2.114799,
+        0.472671
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4508,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-13",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -0.822795,
+        0.153187
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4499,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-a-trap-15",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        0.223877,
+        -0.050993
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4474,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-01",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.625488,
+        0.081444
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4495,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-judge_hard-02",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        1.71661,
+        0.336443
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4497,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-05",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.344684,
+        -0.511515
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4531,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-judge_hard-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        0.860695,
+        0.094417
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.452,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-10",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        1.021692,
+        0.641384
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4497,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-14",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        0.788418,
+        0.422201
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4493,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-judge_hard-15",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.952219,
+        0.41539
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4489,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-judge_hard-18",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        2.084038,
+        0.187253
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4579,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-long_policy-01",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        -0.836571,
+        0.569764,
+        -0.872976,
+        1.623006
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4988,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-long_policy-02",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -1.248897,
+        0.514703,
+        1.7097,
+        1.491804
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4958,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-long_policy-05",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        -2.074062,
+        -0.025001,
+        0.316538,
+        0.392932
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4919,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-long_policy-06",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        -0.084701,
+        1.666663,
+        0.658719,
+        1.81287
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.5039,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-routing_hard-01",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "scores": [
+        -2.834879,
+        -1.855653,
+        0.39657,
+        4.659265,
+        2.509558
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4558,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-routing_hard-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        0.039548,
+        -0.24545,
+        5.043809,
+        2.563192,
+        2.829168
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4554,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-routing_hard-03",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "scores": [
+        -2.851232,
+        -0.279733,
+        1.033887,
+        3.243461,
+        -0.090015
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0235,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-routing_hard-07",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        -3.977272,
+        -0.285838,
+        -1.520461,
+        0.280566,
+        3.70876
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.4494,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-routing_hard-09",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "scores": [
+        -1.862371,
+        -0.405615,
+        -0.639056,
+        2.921737,
+        -0.635369
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0234,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-01",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -0.153827,
+        1.201688,
+        1.086654,
+        2.913702
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4479,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-02",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -0.758285,
+        0.298357,
+        1.632513,
+        3.488544
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4486,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-03",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        -0.132683,
+        0.947237,
+        0.713304,
+        -0.016708
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.45,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-04",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 3,
+      "scores": [
+        0.715313,
+        3.026332,
+        0.99831
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4515,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-03",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        2.689328,
+        0.08954
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4528,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-05",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        2.661394,
+        1.717726
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4501,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-judge_hard-07",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        3.329356,
+        2.012315
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4539,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-08",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        2.425383,
+        2.613371
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0232,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-judge_hard-09",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        2.676192,
+        1.84208
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4493,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-judge_hard-10",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        2.478915,
+        1.643757
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4497,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-judge_hard-11",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        1.610947,
+        1.005864
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4496,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-13",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        2.589427,
+        1.655309
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4493,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-judge_hard-15",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.976041,
+        1.012607
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4494,
+      "correct": true
+    },
+    {
+      "id": "hard-sol-c-multi_hop-07",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -0.153098,
+        2.134913,
+        1.331263,
+        2.458827
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4906,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-multi_hop-09",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        0.355657,
+        -0.392857,
+        -0.880224,
+        0.44315
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4916,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-multi_hop-11",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        0.156209,
+        1.868338,
+        1.193039,
+        2.170581
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4948,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-multi_hop-12",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        -0.502477,
+        0.645411,
+        2.08015,
+        3.224605
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4491,
+      "correct": false
+    },
+    {
+      "id": "hard-sol-c-multi_hop-13",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -0.99481,
+        2.680222,
+        1.771431,
+        2.19259
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4945,
+      "correct": true
+    },
+    {
+      "id": "original-policy-01-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -0.344629,
+        2.202898
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4543,
+      "correct": true
+    },
+    {
+      "id": "original-policy-01-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -1.139391,
+        1.946629
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4561,
+      "correct": true
+    },
+    {
+      "id": "original-policy-02-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.020136,
+        -0.73534
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0236,
+      "correct": true
+    },
+    {
+      "id": "original-policy-02-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.239497,
+        -0.101793
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0234,
+      "correct": true
+    },
+    {
+      "id": "original-policy-03-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.388543,
+        -0.461837
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-policy-03-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        -0.571499,
+        1.159154
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4529,
+      "correct": false
+    },
+    {
+      "id": "original-policy-04-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -0.176313,
+        1.595487
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0236,
+      "correct": true
+    },
+    {
+      "id": "original-policy-04-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -0.172803,
+        1.235938
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4535,
+      "correct": true
+    },
+    {
+      "id": "original-policy-05-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -0.162646,
+        0.640652
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0235,
+      "correct": true
+    },
+    {
+      "id": "original-policy-05-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -0.401433,
+        -1.455614
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0234,
+      "correct": false
+    },
+    {
+      "id": "original-policy-06-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        1.036752,
+        -1.096529
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-policy-06-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.057643,
+        -1.703047
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0235,
+      "correct": true
+    },
+    {
+      "id": "original-intent-01-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "scores": [
+        -0.01938,
+        -0.38917,
+        1.401493,
+        3.218539,
+        -2.929596
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4531,
+      "correct": true
+    },
+    {
+      "id": "original-intent-01-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 5,
+      "scores": [
+        -0.167305,
+        -0.518546,
+        0.855732,
+        1.843043,
+        -3.052061
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0235,
+      "correct": true
+    },
+    {
+      "id": "original-intent-02-0",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        -1.935517,
+        2.061909,
+        2.340324,
+        1.298221,
+        1.358336
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": false
+    },
+    {
+      "id": "original-intent-02-1",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        -1.143499,
+        -0.264151,
+        2.029737,
+        0.76596,
+        2.070084
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-intent-03-0",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        -1.622447,
+        2.637805,
+        2.530281,
+        0.573246,
+        -0.661549
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4508,
+      "correct": true
+    },
+    {
+      "id": "original-intent-03-1",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 5,
+      "scores": [
+        -2.906904,
+        2.937917,
+        2.627435,
+        0.585688,
+        -2.976349
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0234,
+      "correct": true
+    },
+    {
+      "id": "original-intent-04-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "scores": [
+        2.072701,
+        0.854329,
+        2.311496,
+        2.487206,
+        -2.541454
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4475,
+      "correct": false
+    },
+    {
+      "id": "original-intent-04-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 5,
+      "scores": [
+        1.528194,
+        0.284687,
+        2.010225,
+        1.558094,
+        -3.811009
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": false
+    },
+    {
+      "id": "original-intent-05-0",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        -1.870737,
+        -0.466934,
+        1.18024,
+        1.914602,
+        -2.881699
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0232,
+      "correct": false
+    },
+    {
+      "id": "original-intent-05-1",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 5,
+      "scores": [
+        -1.109666,
+        -0.405146,
+        1.301805,
+        1.916366,
+        -2.411496
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": false
+    },
+    {
+      "id": "original-intent-06-0",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        -1.676881,
+        0.083701,
+        1.086851,
+        0.828208,
+        3.76347
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.0232,
+      "correct": true
+    },
+    {
+      "id": "original-intent-06-1",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 5,
+      "scores": [
+        -3.193368,
+        -1.082318,
+        1.480525,
+        -0.083313,
+        3.261348
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-01-0",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        0.209948,
+        0.04966,
+        0.241309,
+        -2.630155
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4486,
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-01-1",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        2.700565,
+        0.498211,
+        0.707153,
+        -2.207719
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4507,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-02-0",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -0.854665,
+        0.952999,
+        -0.03726,
+        -3.593204
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0231,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-02-1",
+      "type": "score",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -3.049342,
+        2.709336,
+        0.938602,
+        -3.355215
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4505,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-03-0",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -2.202629,
+        -0.874898,
+        2.286222,
+        -2.790992
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-03-1",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -2.586983,
+        0.263985,
+        2.142536,
+        -2.568434
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4487,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-04-0",
+      "type": "score",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        -2.562467,
+        -0.829395,
+        -0.841054,
+        2.509302
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0232,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-04-1",
+      "type": "score",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        -2.391935,
+        -0.794075,
+        -0.526961,
+        1.999892
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.023,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-05-0",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        -0.546939,
+        -0.479368,
+        -0.439159,
+        -0.228482
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4469,
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-05-1",
+      "type": "score",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        -0.490415,
+        0.276058,
+        1.335316,
+        -2.952345
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.0231,
+      "correct": false
+    },
+    {
+      "id": "original-ordinal-06-0",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -1.05737,
+        1.426005,
+        3.215664,
+        -4.085999
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.023,
+      "correct": true
+    },
+    {
+      "id": "original-ordinal-06-1",
+      "type": "score",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -4.201705,
+        1.11155,
+        4.843416,
+        -4.57013
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.4548,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-01-0",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -0.498572,
+        2.857408,
+        1.576618,
+        4.783705
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4569,
+      "correct": false
+    },
+    {
+      "id": "original-extraction-01-1",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 4,
+      "scores": [
+        -0.168246,
+        2.123734,
+        1.915836,
+        3.696496
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4584,
+      "correct": false
+    },
+    {
+      "id": "original-extraction-02-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        0.379582,
+        1.678229,
+        1.745318,
+        5.243036
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4549,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-02-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        -0.440004,
+        1.270779,
+        2.146985,
+        5.20367
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0234,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-03-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        1.578537,
+        2.211776,
+        -0.377564,
+        3.994624
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4533,
+      "correct": false
+    },
+    {
+      "id": "original-extraction-03-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        2.092214,
+        1.885666,
+        1.219187,
+        4.551595
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4623,
+      "correct": false
+    },
+    {
+      "id": "original-extraction-04-0",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -0.115732,
+        0.661136,
+        4.043235,
+        4.234015
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0235,
+      "correct": false
+    },
+    {
+      "id": "original-extraction-04-1",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 4,
+      "scores": [
+        -0.110479,
+        1.387578,
+        3.163054,
+        5.301255
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": false
+    },
+    {
+      "id": "original-extraction-05-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        0.865338,
+        2.007617,
+        3.021171,
+        5.490356
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-05-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 4,
+      "scores": [
+        0.553058,
+        1.871765,
+        2.540903,
+        4.553586
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-extraction-06-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        1.904621,
+        1.994508,
+        3.358703,
+        4.577162
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0232,
+      "correct": false
+    },
+    {
+      "id": "original-extraction-06-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 4,
+      "scores": [
+        1.780381,
+        1.289106,
+        3.152378,
+        3.844903
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0232,
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-01-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        -0.098737,
+        -0.602813
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4536,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-01-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.171258,
+        -0.826813
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0234,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-02-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        0.332234,
+        -0.059519
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-02-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        0.398007,
+        0.451884
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-03-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        0.784174,
+        0.078829
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-03-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        -0.53182,
+        -0.622831
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-04-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.920255,
+        -0.469275
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-04-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.382083,
+        -0.787158
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-05-0",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        0.106443,
+        -0.854614
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.4549,
+      "correct": false
+    },
+    {
+      "id": "original-adequacy-05-1",
+      "type": "noul",
+      "gold_idx": 1,
+      "option_count": 2,
+      "scores": [
+        0.195994,
+        0.448966
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-06-0",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.598492,
+        -0.183426
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0234,
+      "correct": true
+    },
+    {
+      "id": "original-adequacy-06-1",
+      "type": "noul",
+      "gold_idx": 0,
+      "option_count": 2,
+      "scores": [
+        0.559922,
+        -0.836817
+      ],
+      "predicted_idx": 0,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": true
+    },
+    {
+      "id": "original-routing-01-0",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "scores": [
+        -0.099765,
+        -0.659977,
+        -0.436926,
+        0.919654,
+        2.626409,
+        -0.417994
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.4455,
+      "correct": true
+    },
+    {
+      "id": "original-routing-01-1",
+      "type": "choice",
+      "gold_idx": 4,
+      "option_count": 6,
+      "scores": [
+        -0.488424,
+        -0.483127,
+        0.115064,
+        1.224293,
+        3.087824,
+        0.777098
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.4514,
+      "correct": true
+    },
+    {
+      "id": "original-routing-02-0",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 6,
+      "scores": [
+        -0.15097,
+        -1.073318,
+        -1.657237,
+        0.911177,
+        -0.130145,
+        0.321735
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4442,
+      "correct": false
+    },
+    {
+      "id": "original-routing-02-1",
+      "type": "choice",
+      "gold_idx": 0,
+      "option_count": 6,
+      "scores": [
+        -0.142999,
+        -0.726121,
+        -1.424799,
+        0.325136,
+        0.028561,
+        -0.274741
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.4499,
+      "correct": false
+    },
+    {
+      "id": "original-routing-03-0",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "scores": [
+        -1.377048,
+        0.245469,
+        -0.477636,
+        1.236665,
+        0.083044,
+        -0.700924
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0232,
+      "correct": false
+    },
+    {
+      "id": "original-routing-03-1",
+      "type": "choice",
+      "gold_idx": 1,
+      "option_count": 6,
+      "scores": [
+        -0.095404,
+        0.669849,
+        0.060413,
+        0.513987,
+        0.077496,
+        -1.345185
+      ],
+      "predicted_idx": 1,
+      "mode": "per-request",
+      "latency_s": 0.4496,
+      "correct": true
+    },
+    {
+      "id": "original-routing-04-0",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 6,
+      "scores": [
+        0.09669,
+        0.45649,
+        2.371187,
+        1.984043,
+        1.364796,
+        -0.239034
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.0235,
+      "correct": true
+    },
+    {
+      "id": "original-routing-04-1",
+      "type": "choice",
+      "gold_idx": 2,
+      "option_count": 6,
+      "scores": [
+        -0.843251,
+        0.495931,
+        1.293116,
+        1.187461,
+        1.071202,
+        -0.100667
+      ],
+      "predicted_idx": 2,
+      "mode": "per-request",
+      "latency_s": 0.0234,
+      "correct": true
+    },
+    {
+      "id": "original-routing-05-0",
+      "type": "choice",
+      "gold_idx": 5,
+      "option_count": 6,
+      "scores": [
+        -0.344257,
+        0.717938,
+        0.516264,
+        1.261583,
+        1.032061,
+        2.500195
+      ],
+      "predicted_idx": 5,
+      "mode": "per-request",
+      "latency_s": 0.4503,
+      "correct": true
+    },
+    {
+      "id": "original-routing-05-1",
+      "type": "choice",
+      "gold_idx": 5,
+      "option_count": 6,
+      "scores": [
+        -0.651371,
+        0.730433,
+        0.358102,
+        1.227745,
+        0.977593,
+        0.867887
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": false
+    },
+    {
+      "id": "original-routing-06-0",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 6,
+      "scores": [
+        -0.362786,
+        -1.029772,
+        -0.080174,
+        1.279769,
+        0.903801,
+        -0.006435
+      ],
+      "predicted_idx": 3,
+      "mode": "per-request",
+      "latency_s": 0.0232,
+      "correct": true
+    },
+    {
+      "id": "original-routing-06-1",
+      "type": "choice",
+      "gold_idx": 3,
+      "option_count": 6,
+      "scores": [
+        -0.960839,
+        -1.459707,
+        -0.821805,
+        1.155633,
+        1.170559,
+        -0.266159
+      ],
+      "predicted_idx": 4,
+      "mode": "per-request",
+      "latency_s": 0.0233,
+      "correct": false
+    }
+  ]
+}
