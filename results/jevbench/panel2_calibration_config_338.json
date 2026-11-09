@@ -1,0 +1,65 @@
+{
+  "issue": "#338",
+  "purpose": "Fit panel-2 per-type calibration on dev and evaluate once on the committed JevBench panel-2 cells",
+  "code_commit": "420d3ee96488fd1c05f565903921d36b92ee054c",
+  "harness": {
+    "script": "model/scripts/eval_jevbench_panel2.py",
+    "dataset": "dev",
+    "dev_path": "data/benchmarks/dev/dev_800.jsonl",
+    "code_form": "space",
+    "dtype": "bfloat16",
+    "orders": ["natural", "reversed"],
+    "fit_order": "natural",
+    "tokenizer_add_special_tokens": false,
+    "prompt_template": "State: {state}\nQuestion: {instructions}\nOptions:\n{options}\nAnswer:",
+    "code_scheme": "A..Z, one code per option"
+  },
+  "checkpoints": {
+    "Qwen/Qwen3-Reranker-4B": "22e683669bc0f0bd69640a1354a6d0aebcfeede5",
+    "Qwen/Qwen3-32B": "9216db5781bf21249d130ec9da846c4624c16137"
+  },
+  "expected_dev_counts": {
+    "loaded": 828,
+    "scored": 788,
+    "noul": 391,
+    "choice": 298,
+    "score": 99,
+    "unscorable": {
+      "gold_not_in_options": 16,
+      "option_count_out_of_code_range": 24
+    }
+  },
+  "fit": {
+    "model": "p = softmax(z / T + b) per type",
+    "criterion": "nll",
+    "temperature_search": "log grid 0.05..20, 400 steps, local refine",
+    "temperature_bias": {
+      "l2": 0.001,
+      "bias_bounds": [-6.0, 6.0],
+      "max_sweeps": 20,
+      "tolerance": 1e-07
+    },
+    "bins": 10,
+    "fit_dataset": "dev",
+    "never_fit_on": "jevbench"
+  },
+  "jevbench_inputs": {
+    "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json": "b4dbbf1763ae51f2429d2fec521854aa48d0f2f651539c671a0ec98f86aba7da",
+    "results/jevbench/panel2_Qwen_Qwen3-32B.json": "d4f6f55eb53bfef268a9cfb9d0ce8016696410380fa83fb46e5a1ba490f5eb08"
+  },
+  "outputs": {
+    "dev_runs": [
+      "results/jevbench/panel2_dev_Qwen_Qwen3-Reranker-4B.json",
+      "results/jevbench/panel2_dev_Qwen_Qwen3-32B.json"
+    ],
+    "calibration": [
+      "results/jevbench/panel2_calibration_Qwen_Qwen3-Reranker-4B.json",
+      "results/jevbench/panel2_calibration_Qwen_Qwen3-32B.json"
+    ]
+  },
+  "declared_checks": {
+    "argmax_unchanged_under_temperature": "asserted; temperature is monotone",
+    "scalar_bias_identifiability": "a bias equal on every slot cancels in the softmax, so the fitted bias is a per-slot vector",
+    "accuracy_before_after": "exact paired McNemar on JevBench between before and temperature+bias"
+  }
+}
