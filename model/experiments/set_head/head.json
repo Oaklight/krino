@@ -1,0 +1,86 @@
+{
+  "config": {
+    "arm": "D",
+    "head": "set transformer over option states",
+    "backbone": "Qwen/Qwen3-Reranker-4B",
+    "hidden_size": 2560,
+    "width": 192,
+    "layers": 2,
+    "heads": 4,
+    "ffn": 384,
+    "dropout": 0.0,
+    "pooling": "pma_learned_query",
+    "readout": "dot product of each option with the pooled set vector",
+    "objective": "softmax cross-entropy over the K options",
+    "train_split": "corpus train",
+    "eval_split": "corpus test",
+    "epochs": 5,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.01,
+    "seed": 42,
+    "selection": "minimum eval-split NLL over the five epochs",
+    "data_digest": "5fd0e6f9cb6b28509247a7dc1475fa5b0c630286a04d9e647086823277421ad1",
+    "io_dtype": "bfloat16 storage, float32 head",
+    "config_hash": "debd40bf46a883947db2433bf407d5695b342e3e44a6d609a765090bf690e348"
+  },
+  "cache_digest": "602c9d0c577dca47e5e1008f4df31dbaadc4178b6333e49567e1985976f5c8e2",
+  "history": [
+    {
+      "epoch": 1,
+      "train_nll": 0.6450287209226668,
+      "eval_nll": 0.6847640043136068,
+      "eval_accuracy": 0.700942521631644
+    },
+    {
+      "epoch": 2,
+      "train_nll": 0.5983752327951527,
+      "eval_nll": 0.6785963123896803,
+      "eval_accuracy": 0.7045735475896168
+    },
+    {
+      "epoch": 3,
+      "train_nll": 0.5822294608477582,
+      "eval_nll": 0.6690275088523611,
+      "eval_accuracy": 0.707972805933251
+    },
+    {
+      "epoch": 4,
+      "train_nll": 0.5683117500317033,
+      "eval_nll": 0.6639838145012025,
+      "eval_accuracy": 0.7072002472187886
+    },
+    {
+      "epoch": 5,
+      "train_nll": 0.561384361113184,
+      "eval_nll": 0.6745416036495024,
+      "eval_accuracy": 0.7041100123609394
+    }
+  ],
+  "selected_epoch": 4,
+  "selected_eval_nll": 0.6639838145012025,
+  "eval": {
+    "items": 12944,
+    "nll": 0.6639838145012025,
+    "accuracy": 0.7072002472187886
+  },
+  "elapsed_s": 70.0,
+  "validity": {
+    "base_rate": 0.30427117369126255,
+    "brier": 0.11654316391842584,
+    "brier_constant": 0.21169022655180408,
+    "gold_positive_rate": 0.7890142150803461,
+    "positive_rate_threshold": 0.15213558684563128,
+    "paired": {
+      "rows": 12944,
+      "mean_diff": 0.41789114276264944,
+      "p": 0.0
+    },
+    "checks": {
+      "brier_beats_constant": true,
+      "positive_rate_at_least_half_gold_fraction": true,
+      "gold_minus_non_gold_positive": true
+    },
+    "passes": true
+  }
+}
