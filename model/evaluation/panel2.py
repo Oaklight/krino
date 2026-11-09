@@ -147,6 +147,26 @@ def pick_code_form(tokenizers: Sequence[Any], codes: Iterable[str]) -> str:
     return "space"
 
 
+def glued_codes(tokenizer: Any, codes: Iterable[str]) -> list[str]:
+    """Codes whose option line ``{code}. {text}`` merges the code and the period.
+
+    The panel-2 readout scores the code token at the answer position, but the
+    option label is ordinary text: when ``"{code}. "`` tokenises as one token
+    (``"!."``), the code never appears in the prompt as an independent token.
+    Twenty-six of the shipped 84 symbols do this; the readout still scores them,
+    but an argument that the anchor is the code's position in the vocabulary
+    cannot cover them. The check is recorded in every run's validity block.
+    """
+    after = tokenizer.encode(". ", add_special_tokens=False)
+    glued = []
+    for code in codes:
+        bare = tokenizer.encode(code, add_special_tokens=False)
+        line = tokenizer.encode(code + ". ", add_special_tokens=False)
+        if len(bare) != 1 or line != bare + after:
+            glued.append(code)
+    return glued
+
+
 def option_index_for_display(width: int, reversed_order: bool) -> list[int]:
     """The natural option index at each display position."""
     if reversed_order:
