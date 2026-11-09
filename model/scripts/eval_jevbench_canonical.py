@@ -136,15 +136,20 @@ def print_config_hash(args: argparse.Namespace) -> int:
     return 0
 
 
-def check_premise() -> int:
+def premise_report(items: list[Any]) -> dict[str, Any]:
     """The whole claim's premise: natural and reversed inputs render identically.
 
-    No model is loaded.  For every JevBench item the options are put in
-    canonical order starting from the natural list and from the reversed list;
-    the two rendered prompt strings must be byte-identical, and the two
-    canonical permutations must describe the same text sequence.
+    For every item the options are put in canonical order starting from the
+    natural list and from the reversed list; the two rendered prompt strings
+    must be byte-identical, and the two canonical sequences must be the same
+    text list.  No model is involved.
+
+    Note for anyone recomputing this from raw criteria: a score item's
+    ``criteria`` is a list rendered as ``Level {i}: {description}`` starting at
+    zero, while a choice item's ``criteria`` is a dict of raw descriptions.
+    Use :func:`model.evaluation.panel2.options_for` for the text every readout
+    actually sees instead of re-deriving it from the raw criterion values.
     """
-    items = list(load_jevbench())
     mismatches: list[str] = []
     duplicate_texts: list[str] = []
     permutation_digest = hashlib.sha256()
@@ -175,20 +180,27 @@ def check_premise() -> int:
             mismatches.append(item.id)
         if len({option_identity(text) for text in texts}) != len(texts):
             duplicate_texts.append(item.id)
-        permutation_digest.update(
-            json.dumps([item.id, forward]).encode("utf-8")
-        )
+        permutation_digest.update(json.dumps([item.id, forward]).encode("utf-8"))
         checked += 1
-    payload = {
-        "items": len(items),
+    return {
+        "method": (
+            "each item rendered from its natural and its reversed option list "
+            "through the canonical order; the prompt strings must be identical"
+        ),
         "checked": checked,
         "mismatches": mismatches,
         "items_with_duplicate_option_texts": duplicate_texts,
         "permutation_sha256": permutation_digest.hexdigest(),
-        "premise_holds": not mismatches,
+        "holds": not mismatches,
     }
+
+
+def check_premise() -> int:
+    """Run the premise check and exit non-zero if it fails."""
+    items = list(load_jevbench())
+    payload = {"items": len(items), **premise_report(items)}
     print(json.dumps(payload, indent=2, ensure_ascii=False))
-    return 0 if not mismatches else 1
+    return 0 if payload["holds"] else 1
 
 
 def option_identity(text: str) -> str:
@@ -246,6 +258,12 @@ def score_arm(args: argparse.Namespace) -> int:
 
     items = list(load_jevbench())
     print(f"Loaded {len(items)} JevBench items", flush=True)
+    premise = premise_report(items)
+    if not premise["holds"]:
+        raise RuntimeError(
+            f"premise failed on {len(premise['mismatches'])} items: the canonical "
+            "prompt is not byte-identical from natural and reversed inputs"
+        )
 
     snapshot_path = args.snapshot or Path(snapshot_download(args.model))
     model, tokenizer = load_causal_lm(
@@ -301,7 +319,8 @@ def score_arm(args: argparse.Namespace) -> int:
         "unscorable_items": len(unscorable),
         "tie_items": len(tied),
         "tie_items_correct": sum(1 for row in tied if row["correct"]),
-        "valid": len(multi) == 0,
+        "premise": premise,
+        "valid": len(multi) == 0 and premise["holds"],
     }
     provenance = build_run_provenance(
         model_id=args.model,
