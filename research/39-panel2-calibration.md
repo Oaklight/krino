@@ -178,6 +178,13 @@ Files: `panel2_dev_Qwen_Qwen3-Reranker-4B.json`,
 `panel2_dev_Qwen_Qwen3-32B.json`, `panel2_calibration_Qwen_Qwen3-Reranker-4B.json`,
 `panel2_calibration_Qwen_Qwen3-32B.json`, all under `results/jevbench/`.
 
+**These numbers were produced under the pre-#347 tie rule** (first maximum in
+display order). #347 adopted the natural-option-index rule and made every run
+record its exact-tie count; both the dev dumps and the committed JevBench cell
+predate that, so `tie_items` is absent here and is not retro-fittable. The
+stored results are not re-run: the fit reads their logits, and re-fitting on
+the same files reproduces this note's ECE and accuracy bit for bit.
+
 ## Appendix: reliability by type on JevBench
 
 Ten equal-width bins on top-1 confidence; each entry is
