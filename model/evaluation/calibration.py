@@ -228,6 +228,218 @@ def fit_temperature(
     }
 
 
+def softmax_logits(
+    logits: Sequence[float],
+    temperature: float = 1.0,
+    bias: Sequence[float] | None = None,
+) -> list[float]:
+    """Softmax after dividing by ``temperature`` and adding a per-slot ``bias``.
+
+    ``bias`` is indexed by code slot: the first ``len(logits)`` entries apply.
+    A bias that is the same on every slot cancels inside the softmax, so only a
+    per-slot vector is identifiable.
+    """
+    if temperature <= 0:
+        raise ValueError(f"temperature must be positive, got {temperature}")
+    adjusted = [
+        value / temperature
+        + (bias[index] if bias is not None and index < len(bias) else 0.0)
+        for index, value in enumerate(logits)
+    ]
+    return softmax(adjusted)
+
+
+def _nll_with_bias(
+    logits: Sequence[Sequence[float]],
+    labels: Sequence[int],
+    temperature: float,
+    bias: Sequence[float] | None,
+) -> float:
+    total = 0.0
+    for row, label in zip(logits, labels):
+        probabilities = softmax_logits(row, temperature, bias)
+        total -= math.log(max(probabilities[label], 1e-300))
+    return total / max(len(logits), 1)
+
+
+def _golden_minimum(function, low: float, high: float, iterations: int = 80) -> float:
+    """Minimise a unimodal scalar function on ``[low, high]``."""
+    inverse_phi = (math.sqrt(5.0) - 1.0) / 2.0
+    left, right = low, high
+    inner_left = right - inverse_phi * (right - left)
+    inner_right = left + inverse_phi * (right - left)
+    value_left = function(inner_left)
+    value_right = function(inner_right)
+    for _ in range(iterations):
+        if right - left < 1e-12 * (1.0 + abs(left) + abs(right)):
+            break
+        if value_left <= value_right:
+            right, inner_right, value_right = inner_right, inner_left, value_left
+            inner_left = right - inverse_phi * (right - left)
+            value_left = function(inner_left)
+        else:
+            left, inner_left, value_left = inner_left, inner_right, value_right
+            inner_right = left + inverse_phi * (right - left)
+            value_right = function(inner_right)
+    return (left + right) / 2.0
+
+
+def _fit_inverse_temperature(
+    logits: Sequence[Sequence[float]],
+    labels: Sequence[int],
+    bias: Sequence[float] | None,
+    low: float = 1.0 / 20.0,
+    high: float = 1.0 / 0.05,
+) -> float:
+    """The inverse temperature that minimises NLL with ``bias`` held fixed.
+
+    The NLL is convex in the inverse temperature, so golden section returns the
+    exact minimiser of the search interval.
+    """
+    return _golden_minimum(
+        lambda inverse: _nll_with_bias(logits, labels, 1.0 / inverse, bias),
+        low,
+        high,
+    )
+
+
+def _sweep_bias(
+    logits: Sequence[Sequence[float]],
+    labels: Sequence[int],
+    inverse_temperature: float,
+    bias: list[float],
+    l2: float,
+    bounds: tuple[float, float],
+    bisections: int = 40,
+) -> float:
+    """One exact coordinate pass over the slot biases; returns the largest move.
+
+    For a fixed slot the residual (mean predicted mass minus observed rate, plus
+    the L2 term) is strictly increasing in that slot's bias, so the coordinate
+    minimum is found by bisection.  Holding the other slots fixed makes this a
+    coordinate-descent step on a convex objective.
+    """
+    rows = len(logits)
+    gold_counts = [0] * len(bias)
+    for label in labels:
+        if 0 <= label < len(bias):
+            gold_counts[label] += 1
+    terms: list[list[float]] = []
+    totals: list[float] = []
+    for row in logits:
+        values = [value * inverse_temperature + bias[index] for index, value in enumerate(row)]
+        peak = max(values)
+        scaled = [math.exp(value - peak) for value in values]
+        terms.append(scaled)
+        totals.append(sum(scaled))
+
+    largest = 0.0
+    for slot in range(len(bias)):
+        current = bias[slot]
+        target = gold_counts[slot] / rows
+
+        def residual(candidate: float) -> float:
+            factor = math.exp(candidate - current)
+            total = 0.0
+            for index, row in enumerate(logits):
+                if slot >= len(row):
+                    continue
+                weight = terms[index][slot]
+                numerator = weight * factor
+                denominator = totals[index] - weight + numerator
+                total += numerator / denominator if denominator > 0.0 else 0.0
+            return total / rows - target + l2 * candidate
+
+        low, high = bounds
+        if residual(low) >= 0.0:
+            updated = low
+        elif residual(high) <= 0.0:
+            updated = high
+        else:
+            left, right = low, high
+            for _ in range(bisections):
+                middle = (left + right) / 2.0
+                if residual(middle) < 0.0:
+                    left = middle
+                else:
+                    right = middle
+            updated = (left + right) / 2.0
+
+        factor = math.exp(updated - current)
+        for index, row in enumerate(logits):
+            if slot >= len(row):
+                continue
+            previous = terms[index][slot]
+            terms[index][slot] = previous * factor
+            totals[index] += previous * factor - previous
+        bias[slot] = updated
+        largest = max(largest, abs(updated - current))
+    return largest
+
+
+def fit_temperature_bias(
+    logits: Sequence[Sequence[float]],
+    labels: Sequence[int],
+    n_slots: int | None = None,
+    l2: float = 1e-3,
+    bounds: tuple[float, float] = (-6.0, 6.0),
+    sweeps: int = 20,
+    tolerance: float = 1e-7,
+) -> dict[str, Any]:
+    """Fit a temperature and a per-slot bias on held-out logits.
+
+    The model is ``p = softmax(z / T + b)``.  ``T`` is monotone and cannot move
+    the argmax; ``b`` is the only part of this family that can reorder the
+    codes, and it is effectively a learned position prior.  The objective
+    (mean NLL plus ``l2 / 2 * ||b||^2``) is convex in ``(1 / T, b)``, so the
+    alternate updates below converge to the minimiser of the declared problem
+    rather than to a local one.
+
+    Args:
+        logits: Logit vector per item.
+        labels: Gold index per item.
+        n_slots: Bias vector length; defaults to the widest row.
+        l2: Ridge on the bias.  Without it a slot that is never gold has no
+            finite minimiser.
+        bounds: Box on each bias.  Slots reported at a bound are named in the
+            result so a fit against the wall is not read as a fitted value.
+        sweeps: Maximum alternations.
+        tolerance: Stop when no bias moves by more than this in a sweep.
+
+    Returns:
+        ``{"temperature", "bias", "nll_before", "nll_after", "n",
+        "at_lower_bound", "at_upper_bound", "l2", "bounds", "sweeps"}``.
+    """
+    if len(logits) != len(labels):
+        raise ValueError("logits and labels must have the same length")
+    widest = max((len(row) for row in logits), default=0)
+    slots = widest if n_slots is None else n_slots
+    if slots < widest:
+        raise ValueError(f"n_slots {slots} is smaller than the widest row {widest}")
+    bias = [0.0] * slots
+    inverse = 1.0
+    completed = 0
+    for completed in range(1, sweeps + 1):
+        inverse = _fit_inverse_temperature(logits, labels, bias)
+        moved = _sweep_bias(logits, labels, inverse, bias, l2, bounds)
+        if moved < tolerance:
+            break
+    at_lower = [index for index, value in enumerate(bias) if abs(value - bounds[0]) < 1e-6]
+    at_upper = [index for index, value in enumerate(bias) if abs(value - bounds[1]) < 1e-6]
+    return {
+        "temperature": 1.0 / inverse,
+        "bias": bias,
+        "nll_before": _nll_with_bias(logits, labels, 1.0, None),
+        "nll_after": _nll_with_bias(logits, labels, 1.0 / inverse, bias),
+        "n": len(logits),
+        "at_lower_bound": at_lower,
+        "at_upper_bound": at_upper,
+        "l2": l2,
+        "bounds": list(bounds),
+        "sweeps": completed,
+    }
+
+
 def top1_calibration(
     probabilities: Sequence[Sequence[float]],
     labels: Sequence[int],

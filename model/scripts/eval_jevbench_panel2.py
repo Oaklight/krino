@@ -213,6 +213,7 @@ def score_model(args: argparse.Namespace) -> int:
 
     used = [options_for(item) for item in items]
     used = [prepared for prepared in used if prepared is not None]
+    used = [prepared for prepared in used if 2 <= len(prepared[0]) <= len(CODES)]
     max_options = max(len(prepared[0]) for prepared in used) if used else 0
     used_codes = list(CODES[:max_options])
     code_ids, multi = code_token_ids(tokenizer, used_codes, args.code_form)
@@ -233,6 +234,15 @@ def score_model(args: argparse.Namespace) -> int:
             unscorable.append({"id": item.id, "reason": "gold_not_in_options"})
             continue
         texts, gold = prepared
+        if not 2 <= len(texts) <= len(CODES):
+            unscorable.append(
+                {
+                    "id": item.id,
+                    "reason": "option_count_out_of_code_range",
+                    "n_options": len(texts),
+                }
+            )
+            continue
         codes = codes_for(len(texts))
         options_by_id[item.id] = len(texts)
         missing = [code for code in codes if code not in code_ids]
@@ -338,6 +348,11 @@ def score_model(args: argparse.Namespace) -> int:
     config = {
         "panel": "2",
         "dataset": args.dataset,
+        "dev_path": (
+            str(args.dev_path.resolve().relative_to(ROOT))
+            if args.dataset == "dev" and args.dev_path.resolve().is_relative_to(ROOT)
+            else (args.dev_path.name if args.dataset == "dev" else None)
+        ),
         "prompt_template": PANEL2_TEMPLATE,
         "tie_rule": "first maximum by natural option index",
         "code_scheme": "A-Z, a-z, then single-character symbols, one code per option",
@@ -461,6 +476,11 @@ def summarize_panel2(args: argparse.Namespace) -> int:
     runs: dict[str, dict[str, Any]] = {}
     for path in args.summarize:
         payload = json.loads(path.read_text())
+        dataset = payload["_provenance"].get("dataset", "jevbench")
+        if dataset != "jevbench":
+            raise SystemExit(
+                f"{path} is a {dataset} run; the cross-model matrix is JevBench only"
+            )
         model_id = payload["_provenance"]["model_id"]
         runs[model_id] = {"path": path, "payload": payload}
 
