@@ -120,3 +120,21 @@ def test_top1_calibration_reports_ece_over_confidence():
     # Five correct out of ten at 0.8 confidence: gap 0.3 in one bin.
     labels = [0] * 5 + [1] * 5
     assert top1_calibration(probabilities, labels, 10)["ece"] == pytest.approx(0.3)
+
+
+def test_mcnemar_change_aligns_on_ids_not_position():
+    # The evaluation pools rows in type order, not dump order, so a positional
+    # comparison silently pairs the wrong items.  Keying on the id must give
+    # the same answer however the dictionaries were built.
+    from model.scripts.fit_panel2_calibration import mcnemar_change
+
+    gold = {"a": 0, "b": 0, "c": 0}
+    before = {"a": 0, "b": 1, "c": 1}
+    after = {"a": 0, "b": 0, "c": 1}
+    change = mcnemar_change(before, after, gold)
+    assert change["before_correct"] == 1
+    assert change["after_correct"] == 2
+    assert change["after_only_correct"] == 1
+    assert change["before_only_correct"] == 0
+    assert change["net"] == 1
+

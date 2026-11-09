@@ -187,13 +187,39 @@ def fit_all(rows: list[dict[str, Any]], l2: float, bounds: tuple[float, float]) 
     return fitted
 
 
-def mcnemar_change(before: list[int], after: list[int], gold: list[int]) -> dict[str, Any]:
+def mcnemar_change(
+    before: dict[str, int], after: dict[str, int], gold: dict[str, int]
+) -> dict[str, Any]:
+    """Exact paired McNemar between the before and after predictions.
+
+    The two evaluations pool their rows in type order, which is not the file
+    order of the JevBench dump, so the comparison is made on item ids rather
+    than on list position.  The counts are reconciled against the accuracy
+    totals and the run aborts if they disagree, which is what a positional
+    misalignment would look like.
+    """
     from model.scripts.paired_mcnemar import mcnemar
 
-    left = {index: before[index] == gold[index] for index in range(len(gold))}
-    right = {index: after[index] == gold[index] for index in range(len(gold))}
-    wins, losses, p_value = mcnemar(right, left, list(left))
-    return {"after_only_correct": wins, "before_only_correct": losses, "exact_mcnemar_p": p_value}
+    shared = sorted(set(before) & set(after) & set(gold))
+    left = {item_id: before[item_id] == gold[item_id] for item_id in shared}
+    right = {item_id: after[item_id] == gold[item_id] for item_id in shared}
+    wins, losses, p_value = mcnemar(right, left, shared)
+    before_correct = sum(left.values())
+    after_correct = sum(right.values())
+    if after_correct - before_correct != wins - losses:
+        raise SystemExit(
+            "McNemar counts do not reconcile with the accuracy totals "
+            f"({wins} - {losses} against {after_correct} - {before_correct})"
+        )
+    return {
+        "n": len(shared),
+        "after_only_correct": wins,
+        "before_only_correct": losses,
+        "net": wins - losses,
+        "before_correct": before_correct,
+        "after_correct": after_correct,
+        "exact_mcnemar_p": p_value,
+    }
 
 
 def main() -> int:
@@ -205,6 +231,12 @@ def main() -> int:
     parser.add_argument("--l2", type=float, default=1e-3)
     parser.add_argument("--bias-bound", type=float, default=6.0)
     parser.add_argument("--code-commit", default=None)
+    parser.add_argument(
+        "--fit-code-commit",
+        default=None,
+        help="commit of the fitting script, when it is not the commit that "
+        "produced the evaluated predictions",
+    )
     args = parser.parse_args()
 
     dev_payload = load_payload(args.dev)
@@ -226,10 +258,12 @@ def main() -> int:
             "logits or the parameters are wrong"
         )
 
-    gold = [row["gold"] for row in jev_rows]
-    change = mcnemar_change(
-        before["overall"]["predictions"], after_bias["overall"]["predictions"], gold
-    )
+    gold = {row["id"]: row["gold"] for row in jev_rows}
+
+    def by_id(result: dict[str, Any]) -> dict[str, int]:
+        return dict(zip(result["overall"]["ids"], result["overall"]["predictions"]))
+
+    change = mcnemar_change(by_id(before), by_id(after_bias), gold)
 
     payload = {
         "_provenance": {
@@ -237,6 +271,7 @@ def main() -> int:
             "model_id": jev_payload["_provenance"]["model_id"],
             "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "code_commit": args.code_commit,
+            "fit_code_commit": args.fit_code_commit or args.code_commit,
             "fit_dataset": "dev",
             "dev_file": args.dev.name,
             "dev_sha256": sha256(args.dev),
