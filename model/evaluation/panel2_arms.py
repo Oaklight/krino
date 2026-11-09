@@ -43,7 +43,7 @@ import hashlib
 import math
 from typing import Sequence
 
-from model.evaluation.panel2 import CODES
+from model.evaluation.panel2 import CODES, natural_argmax, option_index_for_display
 
 POSITIONAL = "positional"
 HASHED = "hashed"
@@ -144,19 +144,14 @@ def display_codes(
     return reversed_mappings
 
 
-def option_index_for_display(width: int, reversed_order: bool) -> list[int]:
-    """The natural option index at each display position."""
-    if reversed_order:
-        return [width - 1 - position for position in range(width)]
-    return list(range(width))
-
-
 def mixture_prediction(per_seed: Sequence[Sequence[float]]) -> int:
     """Argmax of the probability mean across the declared assignments.
 
-    Each row is a distribution over options from one forward pass.  The mean
-    is taken per option in probability space; averaging logits first would
-    give a different answer whenever the code rows carry different biases.
+    Each row is a distribution over natural option indices from one forward
+    pass.  The mean is taken per option in probability space; averaging logits
+    first would give a different answer whenever the code rows carry different
+    biases.  The argmax goes through the shared natural-index rule, so an
+    exact tie resolves the same way as in every other panel-2 readout.
     """
     if not per_seed:
         raise ValueError("mixture_prediction needs at least one distribution")
@@ -167,7 +162,7 @@ def mixture_prediction(per_seed: Sequence[Sequence[float]]) -> int:
             raise ValueError("distributions must have the same width")
         for index, value in enumerate(distribution):
             totals[index] += value
-    return max(range(width), key=totals.__getitem__)
+    return natural_argmax(totals)
 
 
 def probabilities_by_option(

@@ -52,13 +52,17 @@ from model.evaluation.jevbench import summarize, tier_from_id
 from model.evaluation.panel2 import (
     CODES,
     PANEL2_TEMPLATE,
+    choose_option,
     code_token_ids,
     codes_for,
+    has_exact_tie,
+    option_index_for_display,
     options_for,
     order_effect,
     pick_code_form,
     position_diagnostics,
     render_panel2,
+    tie_report,
 )
 from model.evaluation.run_provenance import build_run_provenance
 from model.src.backbone import load_causal_lm
@@ -135,8 +139,14 @@ def score_prompt(
     codes: list[str],
     code_ids: dict[str, int],
     device: str,
+    display_to_option: list[int],
 ) -> tuple[list[float], int, float, Any]:
-    """One forward; the K code logits at the final position and their argmax."""
+    """One forward; the K code logits and the natural option they choose.
+
+    The choice goes through :func:`model.evaluation.panel2.choose_option`, so
+    an exact tie resolves to the same natural option in either display order
+    (#347).
+    """
     encoded = tokenizer(prompt, return_tensors="pt", add_special_tokens=False)
     encoded = {key: value.to(device) for key, value in encoded.items()}
     started = time.perf_counter()
@@ -144,8 +154,8 @@ def score_prompt(
         logits = model(**encoded).logits[0, -1].float()
     elapsed = time.perf_counter() - started
     values = [float(logits[code_ids[code]]) for code in codes]
-    prediction = max(range(len(values)), key=values.__getitem__)
-    return values, prediction, elapsed, logits
+    chosen = choose_option(values, display_to_option)
+    return values, chosen, elapsed, logits
 
 
 def prediction_row(
@@ -196,6 +206,8 @@ def score_model(args: argparse.Namespace) -> int:
 
     natural: list[dict[str, Any]] = []
     reversed_order: list[dict[str, Any]] = []
+    ties_natural: list[bool] = []
+    ties_reversed: list[bool] = []
     unscorable: list[dict[str, Any]] = []
     diagnostic_sample: list[dict[str, Any]] = []
     options_by_id: dict[str, int] = {}
@@ -224,9 +236,12 @@ def score_model(args: argparse.Namespace) -> int:
         prompt = render_panel2(
             item.state, item.question.get("instructions", ""), texts, codes
         )
-        values, prediction, elapsed, logits = score_prompt(
-            model, tokenizer, prompt, codes, code_ids, device
+        display_to_option = option_index_for_display(len(texts), False)
+        values, chosen, elapsed, logits = score_prompt(
+            model, tokenizer, prompt, codes, code_ids, device, display_to_option
         )
+        prediction = display_to_option.index(chosen)
+        ties_natural.append(has_exact_tie(values))
         natural.append(
             prediction_row(item, "natural", texts, gold, values, prediction, elapsed)
         )
@@ -258,9 +273,17 @@ def score_model(args: argparse.Namespace) -> int:
             reversed_texts,
             codes,
         )
-        reversed_values, reversed_prediction, reversed_elapsed, _ = score_prompt(
-            model, tokenizer, reversed_prompt, codes, code_ids, device
+        reversed_display_to_option = option_index_for_display(len(texts), True)
+        reversed_values, reversed_chosen, reversed_elapsed, _ = score_prompt(
+            model,
+            tokenizer,
+            reversed_prompt,
+            codes,
+            code_ids,
+            device,
+            reversed_display_to_option,
         )
+        ties_reversed.append(has_exact_tie(reversed_values))
         reversed_order.append(
             prediction_row(
                 item,
@@ -268,7 +291,7 @@ def score_model(args: argparse.Namespace) -> int:
                 reversed_texts,
                 reversed_gold,
                 reversed_values,
-                reversed_prediction,
+                reversed_display_to_option.index(reversed_chosen),
                 reversed_elapsed,
             )
         )
@@ -302,6 +325,7 @@ def score_model(args: argparse.Namespace) -> int:
     config = {
         "panel": "2",
         "prompt_template": PANEL2_TEMPLATE,
+        "tie_rule": "first maximum by natural option index",
         "code_scheme": "A..Z, one code per option",
         "code_token_form": args.code_form,
         "code_token_ids": {code: code_ids[code] for code in used_codes if code in code_ids},
@@ -325,6 +349,21 @@ def score_model(args: argparse.Namespace) -> int:
         "invalid_reason": None,
     }
     validity["valid"] = validity["single_token_codes"] and validity["position_diagnostic"]
+    validity["tie_items"] = {
+        "definition": "an item whose two largest code logits are exactly equal",
+        "cells": {
+            "positional": {
+                "natural": tie_report(natural, [[flag] for flag in ties_natural]),
+                "reversed": tie_report(reversed_order, [[flag] for flag in ties_reversed]),
+            }
+        },
+    }
+    validity["tie_items_correct"] = {
+        "positional": {
+            "natural": validity["tie_items"]["cells"]["positional"]["natural"]["correct"],
+            "reversed": validity["tie_items"]["cells"]["positional"]["reversed"]["correct"],
+        }
+    }
     if not validity["single_token_codes"]:
         validity["invalid_reason"] = (
             "at least one code used by an item is not a single token in this "
@@ -346,8 +385,9 @@ def score_model(args: argparse.Namespace) -> int:
         root=ROOT,
         code_commit=args.code_commit,
         extra={
-            "readout": "one forward; argmax over the K code token ids at the "
-                       "final position after 'Answer:'",
+            "readout": "one forward; the K code logits at the final position "
+                       "after 'Answer:'; first maximum by natural option index, "
+                       "ties included",
             "prompt_template": PANEL2_TEMPLATE,
             "code_token_form": args.code_form,
             "config_sha256": config_digest(config),
