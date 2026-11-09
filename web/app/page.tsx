@@ -110,8 +110,11 @@ export default function HomePage() {
             (panel 2) beats per-option judgement on {p2.wins} of {p2.measured}{" "}
             checkpoints where both exist, by {ppRange(p2.min_pp, p2.max_pp)}, and
             it costs one forward per item instead of one per option. The gain is
-            confined to <code className="font-mono text-text">choice</code>{" "}
-            questions; it does not move noul or score.
+            largest on <code className="font-mono text-text">choice</code> (
+            {p2.type_delta.choice.pp} pp across the set);{" "}
+            <code className="font-mono text-text">noul</code> and{" "}
+            <code className="font-mono text-text">score</code> move too, by{" "}
+            {p2.type_delta.noul.pp} and {p2.type_delta.score.pp} pp.
           </li>
           <li>
             JevBench 231 cannot resolve differences below about{" "}
