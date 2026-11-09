@@ -57,6 +57,7 @@ from model.evaluation.panel2_mass import (
     COMBINATION_LAMBDA,
     MASS_FLOOR,
     combine_scores,
+    length_guard,
     mean_chance,
     option_spans,
     span_masses,
@@ -298,11 +299,15 @@ def cell_summary(rows: list[dict[str, Any]], items: list[Any], failed: int) -> d
     with_items = [{**row, "_item": by_id[row["id"]]} for row in rows]
     summary = summarize(with_items, failed=failed)
     tied = [row for row in rows if has_exact_tie(row["score_values"])]
+    overall = summary["overall"]
     return {
         "summary": summary,
         "position": position_diagnostics(rows),
         "tie_items": len(tied),
         "tie_items_correct": sum(1 for row in tied if row["correct"]),
+        "accuracy": overall["accuracy"],
+        "correct": overall["correct"],
+        "total": overall["total"],
     }
 
 
@@ -339,6 +344,7 @@ def score_model(args: argparse.Namespace) -> int:
     span_sums: list[float] = []
     preambles: list[float] = []
     straddling_total = 0
+    length_entries: list[dict[str, Any]] = []
 
     for index, item in enumerate(items):
         prepared_item = options_for(item)
@@ -373,9 +379,17 @@ def score_model(args: argparse.Namespace) -> int:
         panel2_choice = display_to_option.index(
             choose_option(result["values"], display_to_option)
         )
-        mass_choice = display_to_option.index(
-            choose_option(result["masses"], display_to_option)
-        )
+        mass_natural = choose_option(result["masses"], display_to_option)
+        mass_choice = display_to_option.index(mass_natural)
+        if item.question.get("type", "noul") in ("choice", "score"):
+            length_entries.append(
+                {
+                    "texts": texts,
+                    "n_options": len(texts),
+                    "gold": gold,
+                    "chosen": mass_natural,
+                }
+            )
         combined_values = combine_scores(result["values"], result["masses"])
         combined_choice = display_to_option.index(
             choose_option(combined_values, display_to_option)
@@ -523,6 +537,7 @@ def score_model(args: argparse.Namespace) -> int:
         "span_alignment": alignment_ok,
         "straddling_tokens_total": straddling_total,
         "residual": residual_stats,
+        "length_guard": length_guard(length_entries),
         "attn_implementation": "eager",
         "valid": False,
     }

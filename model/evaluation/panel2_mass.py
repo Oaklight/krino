@@ -144,3 +144,51 @@ def mean_chance(options_by_id: dict[str, int]) -> float:
     if not options_by_id:
         return 0.0
     return sum(1.0 / width for width in options_by_id.values()) / len(options_by_id)
+
+
+def length_guard(entries: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    """Whether a span-mass readout is just picking the longest option.
+
+    ``entries`` covers the variable-length items only (choice and score; a noul
+    item always presents ``no``/``yes``).  Each entry carries the option texts,
+    the gold natural index, and the mass readout's chosen natural index.  The
+    longest option has the most characters; ties go to the lowest natural
+    index.  The guard reports the longest-option baseline accuracy, the mass
+    accuracy on the same items, and how often the two agree.  A span-mass
+    readout that scored near this baseline would be measuring option length,
+    not the decision.
+    """
+    longest_correct = 0
+    mass_correct = 0
+    agree = 0
+    for entry in entries:
+        texts = entry["texts"]
+        if len(texts) != entry["n_options"]:
+            raise ValueError("option texts and declared width disagree")
+        longest = max(range(len(texts)), key=lambda index: (len(texts[index]), -index))
+        longest_correct += int(longest == entry["gold"])
+        mass_correct += int(entry["chosen"] == entry["gold"])
+        agree += int(entry["chosen"] == longest)
+    total = len(entries)
+    return {
+        "definition": (
+            "choice and score items; longest option text by characters, "
+            "ties to the lowest natural index"
+        ),
+        "items": total,
+        "longest_option_baseline": {
+            "correct": longest_correct,
+            "total": total,
+            "accuracy": longest_correct / total if total else 0.0,
+        },
+        "mass_accuracy": {
+            "correct": mass_correct,
+            "total": total,
+            "accuracy": mass_correct / total if total else 0.0,
+        },
+        "agreement_with_longest": {
+            "count": agree,
+            "total": total,
+            "fraction": agree / total if total else 0.0,
+        },
+    }
