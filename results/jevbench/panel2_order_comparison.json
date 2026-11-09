@@ -1,0 +1,25 @@
+{
+  "first": {
+    "path": "results/jevbench/panel2_order_shipped_Qwen_Qwen3-Reranker-4B.json",
+    "option_order": "shipped"
+  },
+  "second": {
+    "path": "results/jevbench/panel2_order_canonical_Qwen_Qwen3-Reranker-4B.json",
+    "option_order": "canonical"
+  },
+  "n": 231,
+  "first_correct": 162,
+  "second_correct": 160,
+  "second_only_correct": 16,
+  "first_only_correct": 18,
+  "mcnemar_p": 0.8641662404406816,
+  "answer_changed_fraction": 0.1774891774891775,
+  "answer_changed_items": 41,
+  "stored_baseline": {
+    "path": "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json",
+    "n": 231,
+    "second_only_correct": 16,
+    "stored_only_correct": 18,
+    "mcnemar_p": 0.8641662404406816
+  }
+}
