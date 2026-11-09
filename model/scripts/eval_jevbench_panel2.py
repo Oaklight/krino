@@ -20,6 +20,11 @@ The prompt template lives in ``model.evaluation.panel2`` and is built only by
 ``A. no`` / ``B. yes``, so the 231-item total stays comparable to the 150/231
 judgement baseline.
 
+``--dataset dev`` runs the same readout on the internal 828-row development
+set.  The 16 rows whose gold is withheld cannot be scored by any readout; they
+are reported as ``unscorable`` with reason ``gold_not_in_options`` and are left
+out of the accuracy, as the judgement dev cell leaves them out.
+
 Usage:
     python model/scripts/eval_jevbench_panel2.py --check-codes \\
         --models Qwen/Qwen3-Reranker-4B,Qwen/Qwen3-4B,Qwen/Qwen3-4B-Instruct-2507,Qwen/Qwen3-4B-Base
@@ -48,6 +53,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from data.pipeline import load_jevbench
+from model.evaluation.dev_set import load_dev_set
 from model.evaluation.jevbench import summarize, tier_from_id
 from model.evaluation.panel2 import (
     CODES,
@@ -168,9 +174,13 @@ def prediction_row(
     elapsed: float,
 ) -> dict[str, Any]:
     """One saved prediction, in the contract the summary mode reads."""
+    tier = tier_from_id(item.id)
+    if tier not in ("easy", "hard", "original"):
+        # The dev set's ids are dataset/split hashes, not JevBench tiers.
+        tier = "dev"
     return {
         "id": item.id,
-        "tier": tier_from_id(item.id),
+        "tier": tier,
         "type": item.question.get("type", "noul"),
         "order": order,
         "n_options": len(texts),
@@ -186,10 +196,13 @@ def prediction_row(
 def score_model(args: argparse.Namespace) -> int:
     from huggingface_hub import snapshot_download
 
-    items = list(load_jevbench())
+    if args.dataset == "dev":
+        items = list(load_dev_set(args.dev_path))
+    else:
+        items = list(load_jevbench())
     if args.max_items:
         items = items[: args.max_items]
-    print(f"Loaded {len(items)} JevBench items", flush=True)
+    print(f"Loaded {len(items)} {args.dataset} items", flush=True)
 
     snapshot_path = args.snapshot or Path(snapshot_download(args.model))
     print(f"Loading {args.model} from {snapshot_path}", flush=True)
@@ -324,6 +337,7 @@ def score_model(args: argparse.Namespace) -> int:
 
     config = {
         "panel": "2",
+        "dataset": args.dataset,
         "prompt_template": PANEL2_TEMPLATE,
         "tie_rule": "first maximum by natural option index",
         "code_scheme": "A..Z, one code per option",
@@ -337,12 +351,18 @@ def score_model(args: argparse.Namespace) -> int:
         "max_items": args.max_items,
         "tokenizer_add_special_tokens": False,
     }
+    code_failures = [
+        entry for entry in unscorable if entry["reason"] == "multi_token_code"
+    ]
+    withheld_gold = [
+        entry for entry in unscorable if entry["reason"] == "gold_not_in_options"
+    ]
     validity = {
-        "single_token_codes": len(multi) == 0 and not any(
-            entry["reason"] == "multi_token_code" for entry in unscorable
-        ),
+        "single_token_codes": len(multi) == 0 and not code_failures,
         "multi_token_codes": multi,
         "unscorable_items": len(unscorable),
+        "unscorable_code_failures": len(code_failures),
+        "unscorable_withheld_gold": len(withheld_gold),
         "position_diagnostic": True,
         "position_dominated": natural_positions["position_dominated"],
         "valid": False,
@@ -390,6 +410,12 @@ def score_model(args: argparse.Namespace) -> int:
                        "ties included",
             "prompt_template": PANEL2_TEMPLATE,
             "code_token_form": args.code_form,
+            "dataset": args.dataset,
+            "dev_path": (
+                str(args.dev_path.relative_to(ROOT))
+                if args.dataset == "dev" and args.dev_path.is_relative_to(ROOT)
+                else None
+            ),
             "config_sha256": config_digest(config),
             "data_sha256": data_digest(items),
             "items": len(items),
@@ -523,6 +549,17 @@ def main() -> int:
     parser.add_argument("--code-commit", default=None)
     parser.add_argument("--dtype", choices=list(DTYPE_MAP), default="bfloat16")
     parser.add_argument("--device", default=None)
+    parser.add_argument(
+        "--dataset",
+        choices=["jevbench", "dev"],
+        default="jevbench",
+        help="jevbench: the 231-item public set; dev: the internal 828-row set",
+    )
+    parser.add_argument(
+        "--dev-path",
+        type=Path,
+        default=ROOT / "data/benchmarks/dev/dev_800.jsonl",
+    )
     parser.add_argument("--max-items", type=int, default=None)
     parser.add_argument("--diagnostic-sample", type=int, default=DIAGNOSTIC_SAMPLE)
     parser.add_argument("--summarize", type=Path, nargs="+", default=None)
