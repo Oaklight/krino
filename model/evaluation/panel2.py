@@ -69,6 +69,36 @@ ORDER_TEMPLATES = {
 POSITION_DOMINATED_PP = 10.0
 
 
+def read_specs(n_layers: int) -> dict[str, tuple[str, int] | tuple[str]]:
+    """The five declared read configurations for #337.
+
+    ``n_layers`` is the backbone's block count.  The three middle reads are
+    one third, two thirds, and last-but-four *by integer division of the block
+    count*, so the declaration derives from the architecture rather than from a
+    hand-picked layer.  ``last`` is the shipped read and ``mean_last_n=4``
+    averages the last four hidden states, embeddings excluded.
+    """
+    if n_layers < 8:
+        raise ValueError(f"n_layers must be at least 8, got {n_layers}")
+    return {
+        "last": ("last",),
+        f"layer={n_layers // 3}": ("layer", n_layers // 3),
+        f"layer={2 * n_layers // 3}": ("layer", 2 * n_layers // 3),
+        f"layer={n_layers - 4}": ("layer", n_layers - 4),
+        "mean_last_n=4": ("mean_last_n", 4),
+    }
+
+
+def parse_read_spec(text: str, n_layers: int) -> tuple[str, int] | tuple[str]:
+    """One declared read configuration by name."""
+    specs = read_specs(n_layers)
+    if text not in specs:
+        raise ValueError(
+            f"unknown read config {text!r}; expected one of {sorted(specs)}"
+        )
+    return specs[text]
+
+
 def codes_for(n_options: int) -> list[str]:
     """The codes for an item with ``n_options`` options.
 
