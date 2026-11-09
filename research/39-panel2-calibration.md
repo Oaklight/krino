@@ -7,6 +7,15 @@ development set, freezes them, and reports ECE, Brier and accuracy on the
 committed JevBench cells before and after. Two checkpoints, `Qwen/Qwen3-
 Reranker-4B` and `Qwen/Qwen3-32B`; nothing is fitted on JevBench.
 
+**The result in one line.** A per-type temperature fitted on dev lowers
+aggregate ECE on both checkpoints, but the gain is entirely noul, a 74-item
+binary type: choice — the 139-item type panel 2 exists to improve — is worse
+after the correction on both checkpoints (ECE 0.097 → 0.135 and 0.074 →
+0.080). The aggregate overstates the cell. The per-type split is the result,
+and the reason for it is a dev/JevBench profile difference that constrains
+the epic, not only this cell. The slot bias is reported as the negative it
+is; the recommendation is temperature-only.
+
 ## The parameterisation, and two corrections
 
 The fitted model is `p = softmax(z / T + b)`, with `T` and `b` per question
@@ -52,10 +61,12 @@ JevBench predictions.
 | 32B | temperature + slot bias | 173/231 = 74.89% | 0.0748 | 0.3295 |
 
 The aggregate ECE falls by 0.080 (−59%) on the 4B and 0.016 (−20%) on the
-32B. Accuracy is bit-identical under the temperature on both. The slot bias
-moves accuracy by +6 −6 items on the 4B (net 0, exact McNemar p = 1.0) and
-+4 −9 on the 32B (net −5 = 2.16 pp, p = 0.267); both are far inside the
-9.3 pp detectable delta of 231 items, so neither direction is resolved.
+32B, and accuracy is bit-identical under the temperature on both. That
+aggregate is a weighted sum dominated by noul, whose 74 items carry an ECE of
+0.274 (4B) and 0.152 (32B) before the fit; the per-type table below is the
+result. The slot bias moves accuracy by +6 −6 items on the 4B (net 0, exact
+McNemar p = 1.0) and +4 −9 on the 32B (net −5 = 2.16 pp, p = 0.267), both far
+inside the 9.3 pp detectable delta of 231 items.
 
 ## Per type
 
@@ -68,15 +79,15 @@ moves accuracy by +6 −6 items on the 4B (net 0, exact McNemar p = 1.0) and
 | 32B | choice | 139 | 75.54% | 0.0736 → 0.0798 | 0.3364 → 0.3248 |
 | 32B | score | 18 | 72.22% | 0.1844 → 0.2183 | 0.4058 → 0.3686 |
 
-Accuracy is unchanged for every type under the temperature. The aggregate
-gain is entirely noul: on both checkpoints it is the type with the largest
-calibration gap and the one the correction helps most. Choice, the largest
-type, is worse in top-1 ECE after the correction on both checkpoints while
-its multiclass Brier improves on the 32B and worsens slightly on the 4B
-(0.3705 to 0.3805) — the distribution gets better probabilities over the
-options on one checkpoint while the top-1 confidence moves away from the hit
-rate. Score has 18 items, so its ECE moves are worth a couple of items and
-are not read as a trend.
+Accuracy is unchanged for every type under the temperature. Choice is the
+type this readout exists to improve, and on both checkpoints the dev-fitted
+temperature makes its top-1 ECE worse: 0.097 → 0.135 on the 4B and 0.074 →
+0.080 on the 32B. Its multiclass Brier improves on the 32B (0.3364 → 0.3248)
+and worsens slightly on the 4B (0.3705 → 0.3805): the distribution over the
+options gets better on one checkpoint while the top-1 confidence moves away
+from the hit rate. Noul is the only type that improves on both, 0.274 → 0.135
+and 0.152 → 0.131, and it is what lifts the aggregate. Score has 18 items, so
+its moves are worth a couple of items and are not read as a trend.
 
 ## The fitted parameters
 
@@ -90,10 +101,11 @@ are not read as a trend.
 | 32B | score | 1.862 | 1.550 | −1.61, 0.17, 0.01, 0.53, −0.15 |
 
 No slot sits on the ±6 box. The bias is invariant to an additive shift, so
-only its spread is interpretable; the largest spread is the 32B's score
-vector, fitted on 99 rows across five slots and not transferred safely.
+only its spread is interpretable. The vectors are reported because the issue
+asked for a bias; they improve no reported quantity on either checkpoint, and
+the recommendation is temperature-only.
 
-## Why the aggregate improves while two types regress
+## Why the aggregate improves while choice regresses
 
 The dev and JevBench calibration profiles are not the same, and the fitted
 temperature carries the dev profile across. On dev before any fitting, choice
@@ -110,15 +122,26 @@ This is the direct argument for the issue's own rule: a temperature fitted on
 the acceptance instrument would have looked better on every column and
 would have said nothing about transfer.
 
+### A constraint for the epic
+
+Dev and JevBench disagree about choice in a specific way: dev choice is easier
+(59.4% and 69.1% accuracy against 73.4% and 75.5%) and less well calibrated
+(ECE 0.221 and 0.142 against 0.097 and 0.074) at the same time. Dev therefore
+ranks choice accuracy plausibly but is not a calibration-transfer set for that
+type. Any later cell that fits a calibration parameter on dev and reports it
+on JevBench for choice has to carry that caveat, not rediscover it; #342's
+threshold sweep is the next one that will meet it.
+
 ## Reading against the pre-registered branches
 
-**Branch 1 — accuracy unchanged, ECE drops materially — fires at the
-aggregate and for noul, not for choice.** The 4B's −59% is material by any
-reading; the 32B's −20% is smaller. Panel 2 becomes usable as a probability
-in the sense the issue asks for, but the useful form is per type, and the
-correction is fitted on data whose per-type profile differs from the
-deployment candidate. A production temperature should be fitted on data that
-resembles the deployment distribution, which JevBench is not allowed to be.
+**Branch 1 — accuracy unchanged, ECE drops materially — fires for noul
+only.** Accuracy is unchanged on both checkpoints, as the monotonicity
+argument requires. ECE drops materially for noul (0.274 → 0.135 and 0.152 →
+0.131) and rises for choice on both checkpoints. The aggregate falls by 59%
+and 20%, but only because noul's pre-fit ECE is the largest in the table;
+quoting the aggregate as the cell's result would invert what the cell says
+about the type the readout exists to improve. Panel 2's noul probabilities
+become usable; its choice probabilities do not.
 
 **Branch 2 — accuracy moves by more than the floor — does not fire.** The
 temperature cannot move it, and the slot bias moves it by 0 and −2.16 pp
@@ -129,13 +152,15 @@ are not scale-dependent and do not need restating.
 
 ## What this does not say
 
-It does not say the code distribution is well calibrated after the correction.
-The reliability tables are in the result files; the residual gaps are a
+It does not say the code distribution is well calibrated after the correction,
+and it does not recommend the slot bias. On both checkpoints the bias improves
+no reported quantity: on the 4B it raises ECE (0.0547 → 0.0561) and Brier
+(0.4158 → 0.4266), and on the 32B it costs five items with no detected loss
+inside the floor but no gain either. A position prior fitted on dev is the
+least transferable object in the table. The residual calibration gaps are a
 per-type shape that neither a temperature nor a slot bias can remove, and a
 monotone confidence map is the ceiling for anything that uses confidence
-alone. It also does not say the slot bias is useless in general: what it says
-is that a position prior fitted on dev and applied to JevBench does not
-improve accuracy on either checkpoint.
+alone.
 
 ## Provenance
 
