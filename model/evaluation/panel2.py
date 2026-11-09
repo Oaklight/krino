@@ -10,6 +10,14 @@ definition.
 The prompt is fixed in :data:`PANEL2_TEMPLATE` and built only by
 :func:`render_panel2`, so all four checkpoints see the same text and the
 comparison is a comparison of weights rather than of prompts (#326).
+
+**Tie-breaking is part of the readout.** When two code logits are exactly
+equal the answer must not depend on which option was displayed first, or an
+order-sensitivity measurement counts its own convention as an effect. The
+panel-2 rule is therefore: map each displayed code's logit onto its natural
+option index, then take the first maximum in that index order
+(:func:`choose_option`). Every harness that reads code logits goes through it,
+and every run records how many items were tied (:func:`has_exact_tie`).
 """
 
 from __future__ import annotations
@@ -125,6 +133,80 @@ def pick_code_form(tokenizers: Sequence[Any], codes: Iterable[str]) -> str:
         if all(not code_token_ids(tokenizer, codes, form)[1] for tokenizer in tokenizers):
             return form
     return "space"
+
+
+def option_index_for_display(width: int, reversed_order: bool) -> list[int]:
+    """The natural option index at each display position."""
+    if reversed_order:
+        return [width - 1 - position for position in range(width)]
+    return list(range(width))
+
+
+def natural_argmax(values: Sequence[float]) -> int:
+    """The first maximum, with ties broken by the natural option index."""
+    if not values:
+        raise ValueError("natural_argmax needs at least one value")
+    return max(range(len(values)), key=values.__getitem__)
+
+
+def choose_option(
+    code_logits: Sequence[float], display_to_option: Sequence[int]
+) -> int:
+    """The natural option index the readout picks.
+
+    ``code_logits`` are in display order; they are mapped onto the natural
+    option index and argmaxed there, so an exact tie resolves to the same
+    option whatever the display order is. Taking the maximum in display order
+    instead makes correctness depend on the order by construction, which is
+    the effect the order experiments are trying to measure (#347).
+    """
+    if len(code_logits) != len(display_to_option):
+        raise ValueError(
+            f"{len(code_logits)} code logits but {len(display_to_option)} display positions"
+        )
+    by_option = [0.0] * len(display_to_option)
+    for position, option in enumerate(display_to_option):
+        by_option[option] = float(code_logits[position])
+    return natural_argmax(by_option)
+
+
+def has_exact_tie(values: Sequence[float]) -> bool:
+    """Whether the two largest values are exactly equal.
+
+    This is the class whose outcome the tie rule decides, so every run records
+    its size. Exact equality is the test: a bf16 forward that produces 17.5
+    twice is a tie, and a difference in the last place is not.
+    """
+    if len(values) < 2:
+        return False
+    ordered = sorted(values, reverse=True)
+    return ordered[0] == ordered[1]
+
+
+def tie_report(
+    rows: Sequence[dict[str, Any]], ties_per_row: Sequence[Sequence[bool]]
+) -> dict[str, Any]:
+    """Tie counts and how the tie rule scored them, in one validity field.
+
+    Args:
+        rows: Prediction rows.
+        ties_per_row: For each row, one flag per forward pass, true when that
+            forward's two largest code logits were exactly equal.
+
+    Returns:
+        ``{"union", "per_forward", "correct"}``: the number of items tied in
+        at least one forward, the same count per forward, and how many tied
+        items the readout got right under the natural-index rule.
+    """
+    if not rows:
+        return {"union": 0, "per_forward": [], "correct": 0}
+    width = len(ties_per_row[0])
+    per_forward = [sum(1 for flags in ties_per_row if flags[index]) for index in range(width)]
+    union = sum(1 for flags in ties_per_row if any(flags))
+    correct = sum(
+        1 for row, flags in zip(rows, ties_per_row) if any(flags) and row["correct"]
+    )
+    return {"union": union, "per_forward": per_forward, "correct": correct}
 
 
 def position_diagnostics(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:

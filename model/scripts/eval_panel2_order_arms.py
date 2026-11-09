@@ -44,9 +44,12 @@ from model.evaluation.panel2 import (  # noqa: E402
     CODES,
     PANEL2_TEMPLATE,
     code_token_ids,
+    has_exact_tie,
+    option_index_for_display,
     options_for,
     position_diagnostics,
     render_panel2,
+    tie_report,
 )
 from model.evaluation.panel2_arms import (  # noqa: E402
     ARMS,
@@ -56,7 +59,6 @@ from model.evaluation.panel2_arms import (  # noqa: E402
     display_codes,
     mixture_prediction,
     natural_codes,
-    option_index_for_display,
     probabilities_by_option,
 )
 from model.evaluation.run_provenance import build_run_provenance  # noqa: E402
@@ -130,12 +132,14 @@ def score_item(
             to_option = option_index_for_display(width, reversed_order)
             per_forward: list[list[float]] = []
             per_forward_logits: list[list[float]] = []
+            per_forward_tie: list[bool] = []
             elapsed = 0.0
             for mapping in mappings:
                 prompt = render_panel2(item.state, instructions, display, mapping)
                 values, took = score_prompt(model, tokenizer, prompt, mapping, code_ids, device)
                 per_forward.append(probabilities_by_option(values, to_option))
                 per_forward_logits.append([round(value, 6) for value in values])
+                per_forward_tie.append(has_exact_tie(values))
                 elapsed += took
             chosen = mixture_prediction(per_forward)
             rows.append(
@@ -153,6 +157,7 @@ def score_item(
                         max(range(width), key=distribution.__getitem__)
                         for distribution in per_forward
                     ],
+                    "per_forward_tie": per_forward_tie,
                     "code_logits": per_forward_logits,
                     "latency_s": elapsed,
                 }
@@ -226,6 +231,7 @@ def build_config(code_form: str, max_items: int | None) -> dict[str, Any]:
         "mean3_mixture": "mean of per-option probabilities over the three "
         "assignments, then argmax",
         "prompt_template": PANEL2_TEMPLATE,
+        "tie_rule": "first maximum by natural option index",
         "code_scheme": "A..Z, one code per option",
         "code_token_form": code_form,
         "orders": ["natural", "reversed"],
@@ -309,12 +315,31 @@ def main() -> int:
     for arm in ARMS:
         metrics[arm] = arm_metrics([row for row in rows if row["arm"] == arm])
 
+    def tie_cell(arm: str, order: str) -> dict[str, Any]:
+        cell = [row for row in rows if row["arm"] == arm and row["order"] == order]
+        return tie_report(cell, [row["per_forward_tie"] for row in cell])
+
     validity = {
         "single_token_codes": len(multi) == 0,
         "multi_token_codes": multi,
         "unscorable_items": len(items) - len(prepared),
         "reversal_invariant_by_construction": invariance,
+        "tie_items": {
+            "definition": "an item whose two largest code logits are exactly equal "
+            "in at least one forward",
+            "cells": {
+                arm: {order: tie_cell(arm, order) for order in ("natural", "reversed")}
+                for arm in ARMS
+            },
+        },
         "valid": len(multi) == 0 and invariance[HASHED] and invariance[MEAN3],
+    }
+    validity["tie_items_correct"] = {
+        arm: {
+            order: validity["tie_items"]["cells"][arm][order]["correct"]
+            for order in ("natural", "reversed")
+        }
+        for arm in ARMS
     }
     provenance = build_run_provenance(
         model_id=args.model,
@@ -326,8 +351,9 @@ def main() -> int:
         root=ROOT,
         code_commit=args.code_commit,
         extra={
-            "readout": "one forward per assignment; argmax over the K code "
-                       "token ids at the final position after 'Answer:'",
+            "readout": "one forward per assignment; the K code logits at the "
+                       "final position after 'Answer:'; first maximum by natural "
+                       "option index, ties included",
             "arms": list(ARMS),
             "seeds": list(SEEDS),
             "hash_definition": HASH_DEFINITION,
@@ -354,6 +380,7 @@ def main() -> int:
                 "pred_pos": row["pred_pos"],
                 "correct": row["correct"],
                 "per_forward_pred": row["per_forward_pred"],
+                "per_forward_tie": row["per_forward_tie"],
                 "latency_s": row["latency_s"],
             }
             for row in rows
