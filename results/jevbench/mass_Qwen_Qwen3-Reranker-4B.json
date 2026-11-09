@@ -106,7 +106,26 @@
       "preamble_mean": 0.7635951768751972
     },
     "attn_implementation": "eager",
-    "valid": true
+    "valid": true,
+    "length_guard": {
+      "definition": "choice and score items; longest option text by characters, ties to the lowest natural index",
+      "items": 157,
+      "longest_option_baseline": {
+        "correct": 48,
+        "total": 157,
+        "accuracy": 0.3057324840764331
+      },
+      "mass_accuracy": {
+        "correct": 86,
+        "total": 157,
+        "accuracy": 0.5477707006369427
+      },
+      "agreement_with_longest": {
+        "count": 57,
+        "total": 157,
+        "fraction": 0.3630573248407643
+      }
+    }
   },
   "unscorable": [],
   "chance_level": 0.31760461760461756,
@@ -260,7 +279,10 @@
           "position_dominated": false
         },
         "tie_items": 3,
-        "tie_items_correct": 1
+        "tie_items_correct": 1,
+        "accuracy": 0.6926406926406926,
+        "correct": 160,
+        "total": 231
       },
       "reversed": {
         "summary": {
@@ -410,7 +432,10 @@
           "position_dominated": false
         },
         "tie_items": 2,
-        "tie_items_correct": 1
+        "tie_items_correct": 1,
+        "accuracy": 0.6666666666666666,
+        "correct": 154,
+        "total": 231
       },
       "order_effect": {
         "n": 231,
@@ -572,7 +597,10 @@
           "position_dominated": false
         },
         "tie_items": 0,
-        "tie_items_correct": 0
+        "tie_items_correct": 0,
+        "accuracy": 0.5670995670995671,
+        "correct": 131,
+        "total": 231
       },
       "reversed": {
         "summary": {
@@ -722,7 +750,10 @@
           "position_dominated": false
         },
         "tie_items": 0,
-        "tie_items_correct": 0
+        "tie_items_correct": 0,
+        "accuracy": 0.5411255411255411,
+        "correct": 125,
+        "total": 231
       },
       "order_effect": {
         "n": 231,
@@ -884,7 +915,10 @@
           "position_dominated": false
         },
         "tie_items": 0,
-        "tie_items_correct": 0
+        "tie_items_correct": 0,
+        "accuracy": 0.696969696969697,
+        "correct": 161,
+        "total": 231
       },
       "reversed": {
         "summary": {
@@ -1034,7 +1068,10 @@
           "position_dominated": false
         },
         "tie_items": 0,
-        "tie_items_correct": 0
+        "tie_items_correct": 0,
+        "accuracy": 0.6493506493506493,
+        "correct": 150,
+        "total": 231
       },
       "order_effect": {
         "n": 231,
