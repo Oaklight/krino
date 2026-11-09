@@ -39,10 +39,17 @@ B vs J-R1 +33 −30, p = 0.80; J-R1 vs J-R2 +97 −34, p = 3.3e-8.
 
 ## The branches
 
-**The projection is not the lever.** B, a trained two-logit head on the same
-frozen backbone and the same prompt, does not beat A: 140 against 150, a
-4.3 pp deficit against the 9.3 pp floor. Training the readout layer alone buys
-nothing.
+**All three variants sit at or below the zero-shot vocabulary readout.** A
+64.94%, B 60.61%, J-R1 59.31%, J-R2 32.03%. None of them recovers the 22 pp
+between the trained head and the untrained readout; that is the substantive
+result, and the individual p-values are secondary to it.
+
+**The projection arm failed, so the projection is not rescued.** B's head is
+degenerate: only 17 of 10,911 gold options reach P(yes) > 0.5, so it has no
+usable probability and its 60.6% is a within-item ranking artefact. A
+degenerate head cannot test the projection hypothesis. What can be said is that
+training the readout layer this way does not recover the gap; nothing here says
+a properly trained projection head would fail.
 
 **The direction is not a free change.** J-R2, the same layout under a full
 mask, falls to 32.03%, which is chance (31.8%). It predicts option 0 on 161 of
@@ -52,19 +59,22 @@ checkpoint, so it says the checkpoint cannot be flipped for free; it is not
 evidence that a trained bidirectional arm would fail. J-R2 is killed as a
 zero-shot arm.
 
-**The scope question is unresolved on both instruments.** J-R1 against A is
-5.6 pp on JevBench (13 items against a 9.3 pp floor, p = 0.136). On the 812-row
-development set, which resolves about 4.9 pp, the same pair is 466 against 478,
-1.48 pp, +64 −76, p = 0.353. A tighter floor does not resolve it either.
+**The scope difference is smaller than dev resolves.** On the 812-row
+development set — the primary instrument here because it resolves about 4.9 pp
+— J-R1 against A is 466 against 478, 1.48 pp, +64 −76, exact McNemar p = 0.353.
+JevBench says the same thing less sharply: 137 against 150, 5.6 pp, +39 −26,
+p = 0.136, against a 9.3 pp floor. The per-request layout is neither better nor
+demonstrably worse, and it does not recover the gap.
 
 ## B's degeneracy
 
-The trained head is degenerate on its own corpus eval split: 17 of 10,911 gold
-options reach P(yes) > 0.5 (0.16%), failing #299's positive-rate check. Its
-absolute probability is not calibrated, while its ordering still scores
-140/231. The number is in `model/experiments/judgement_head/arm_b/config.json`
-rather than omitted. A calibrated B would need a bias-only pass or a lower
-learning rate; that is a deviation this note does not take.
+B is reported as a failed arm, not as a null. On its own corpus eval split only
+17 of 10,911 gold options reach P(yes) > 0.5 (0.16%), failing #299's
+positive-rate check: the head has no usable probability, and its 140/231 is a
+within-item ranking artefact. The number is in
+`model/experiments/judgement_head/arm_b/config.json` rather than omitted. A
+calibrated B would need a bias-only pass or a lower learning rate; that is a
+deviation this note does not take.
 
 ## Latency
 
@@ -101,7 +111,8 @@ do not pick them up as judgement rows; they are not zero-shot per-option cells.
 
 ## What this does not say
 
-It does not say the judgement band is capacity- or direction-bound. It says the
-pretrained projection is not the lever, an untrained mask flip is not available,
-and the scope difference is smaller than either instrument can resolve. D1/D2
-remain held; the next discriminating arm is not in this note.
+It does not say the judgement band is capacity- or direction-bound. It says
+none of the three readout variants recovers the zero-shot readout's level, the
+trained projection arm failed outright, an untrained mask flip is not
+available, and the scope difference is smaller than dev resolves. D1/D2 remain
+held; the next discriminating arm is not in this note.
