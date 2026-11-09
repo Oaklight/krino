@@ -1,6 +1,6 @@
 # Gate policy: what each instrument is allowed to conclude
 
-**Date:** 2026-11-08
+**Date:** 2026-11-08 (margin scale corrected 2026-11-08, see the margin section)
 **Adopted by:** the project owner
 **Supersedes:** the point non-regression clause in `#263` and the blanket rule in `#308`
 
@@ -51,9 +51,9 @@ On JevBench the states are:
 
 | state | interval |
 |---|---|
-| material regression supported | 95% upper bound below −8 pp |
-| coarse safety screen passed | 95% lower bound above −8 pp |
-| unresolved | the interval crosses −8 pp |
+| material regression supported | 95% upper bound below −12 pp of cc |
+| coarse safety screen passed | 95% lower bound above −12 pp of cc |
+| unresolved | the interval crosses −12 pp of cc |
 
 and on any instrument:
 
@@ -66,9 +66,13 @@ These states are not mutually exclusive. An arm can pass the coarse safety scree
 
 ## The margin, and what it is not
 
-The JevBench coarse margin is **delta = 8 pp of chance-corrected accuracy**. Derivation: the 9.3 pp floor implies a standard error of about 9.3/2.80 = 3.3 pp; a one-sided 80% test at a true difference of zero needs about (1.645 + 0.84) x 3.3 = 8.2 pp.
+The JevBench coarse margin is **delta = 12 pp of chance-corrected accuracy**. The derivation is in two steps, because the two scales differ by a constant on a fixed item set.
 
-**Eight points is the instrument's resolution, not a scientific tolerance.** A genuine 6 pp regression passes this screen: 8 pp is the pass-side margin, and a true 8 pp regression lands in "material regression supported" only about 2.5% of the time under the two-sided 95% bound the states use. It is not the detection threshold, and it should not be read as one. The correct sentence is "passes the coarse JevBench safety screen", never "non-inferior".
+The 9.3 pp floor is a **raw**-accuracy quantity: `paired_power.detectable_delta` works on item-level correctness. It implies a raw standard error of 9.3/2.80 = 3.3 pp. Chance-corrected accuracy divides a difference by `1 - c`, where `c` is the per-item chance level, so it divides the standard error the same way. JevBench's mean per-item chance is 0.318, giving a cc standard error of about 3.3/0.682 = 4.9 pp and a one-sided 80% margin of about (1.645 + 0.84) x 4.9 = 12 pp.
+
+The raw margin is therefore 8 pp and its image on the scale the gate reports is 12 pp. **The two numbers are the same rule in two units. Applying the raw 8 to a cc interval makes the screen about 1.47x too tight**, which is the error this section was amended for on 2026-11-08; the first version of this note did exactly that.
+
+**Twelve points of cc is the instrument's resolution, not a scientific tolerance.** A genuine 6 pp regression in cc passes this screen: 12 pp is the pass-side margin, and a true 12 pp regression lands in "material regression supported" only about 2.5% of the time under the two-sided 95% bound the states use. It is not the detection threshold, and it should not be read as one. The correct sentence is "passes the coarse JevBench safety screen", never "non-inferior".
 
 The hard tier is worse — 14.9 pp — so it is reported diagnostically and does not carry its own veto.
 
@@ -90,6 +94,6 @@ Worked example from `#307`, whose dev comparison is post hoc:
 
 ## What this replaces
 
-- `#263`: the point non-regression clause is replaced by the three-state interval screen above, with delta = 8 pp and the derivation recorded.
+- `#263`: the point non-regression clause is replaced by the three-state interval screen above, with delta = 12 pp of cc and the derivation recorded.
 - `#308`: the requirement to quote the detectable delta stays and becomes mandatory output; its "no claim below 5 pp on dev" is subsumed by the dev-is-ordering-only role.
 - `research/10` section 7's "freeze the eval suite and every gate on day 0" stands, and this note is what the frozen gate is now defined by.
