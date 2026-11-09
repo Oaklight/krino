@@ -168,8 +168,15 @@ def order_summary(natural: dict, reversed_order: dict) -> dict:
     }
 
 
-def against_panel2(natural: dict, reversed_order: dict, panel2: dict) -> dict:
-    """D against the shipped panel-2 file, keyed on the JevBench item id."""
+def against_panel2(
+    natural: dict, reversed_order: dict, panel2: dict, max_options: int | None = None
+) -> dict:
+    """D against the shipped panel-2 file, keyed on the JevBench item id.
+
+    ``max_options`` restricts the comparison to items the shipped 26-letter code
+    alphabet can read; the development cell also holds 80-option banking77
+    items, whose panel-2 reference was read with the extended alphabet.
+    """
 
     def raw(item_id: str) -> str:
         return item_id.split(":", 1)[1] if ":" in item_id else item_id
@@ -180,6 +187,18 @@ def against_panel2(natural: dict, reversed_order: dict, panel2: dict) -> dict:
         "natural": {raw(row["id"]): row for row in panel2["predictions_natural"]},
         "reversed": {raw(row["id"]): row for row in panel2["predictions_reversed"]},
     }
+    if max_options is not None:
+        keep = {
+            item_id
+            for item_id, row in reference["natural"].items()
+            if int(row["n_options"]) <= max_options
+        }
+        natural = {k: v for k, v in natural.items() if k in keep}
+        reversed_order = {k: v for k, v in reversed_order.items() if k in keep}
+        reference = {
+            label: {k: v for k, v in rows.items() if k in keep}
+            for label, rows in reference.items()
+        }
     result = {}
     for label, scored in (("natural", natural), ("reversed", reversed_order)):
         shared = sorted(set(scored) & set(reference[label]))
@@ -317,6 +336,10 @@ def main() -> int:
             "sha256": hashlib.sha256(args.panel2.read_bytes()).hexdigest(),
         }
         result["against_panel2"] = against_panel2(natural, reversed_order, panel2)
+        if any(int(row["n_options"]) > 26 for row in panel2["predictions_natural"]):
+            result["against_panel2_code_range"] = against_panel2(
+                natural, reversed_order, panel2, max_options=26
+            )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
@@ -350,6 +373,14 @@ def main() -> int:
             f"vs panel2 {sensitivity['panel2_changed_fraction']:.4f}",
             flush=True,
         )
+        if "against_panel2_code_range" in result:
+            subset = result["against_panel2_code_range"]["natural"]
+            print(
+                f"  within the 26-code range: {subset['set_head_correct']} vs "
+                f"{subset['panel2_correct']} of {subset['items']} "
+                f"({subset['difference_pp']:+.2f} pp)",
+                flush=True,
+            )
     print(f"written {args.output}", flush=True)
     return 0
 

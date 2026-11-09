@@ -36,20 +36,20 @@ from _vendor import yaml  # noqa: E402
 from data.pipeline import load_jevbench  # noqa: E402
 from data.sources import load_source_items  # noqa: E402
 from model.evaluation.dev_set import load_dev_set  # noqa: E402
-from model.evaluation.panel2 import CODES, options_for  # noqa: E402
-from model.evaluation.panel2_states import data_digest  # noqa: E402
+from model.evaluation.panel2 import options_for  # noqa: E402
+from model.evaluation.panel2_states import EXTENDED_CODES, data_digest  # noqa: E402
 
 SEED = 42
 CONFIG = "model/configs/r2_reranker4b.yaml"
 
 
-def row(item, source: str, split: str) -> dict | None:
+def row(item, source: str, split: str, max_options: int) -> dict | None:
     """The cache row for ``item``, or ``None`` when panel 2 cannot read it."""
     prepared = options_for(item)
     if prepared is None:
         return None
     texts, gold = prepared
-    if not 2 <= len(texts) <= len(CODES):
+    if not 2 <= len(texts) <= max_options:
         return None
     return {
         "id": f"{source}:{item.id}",
@@ -63,7 +63,7 @@ def row(item, source: str, split: str) -> dict | None:
     }
 
 
-def corpus_rows(limit: int | None) -> list[dict]:
+def corpus_rows(limit: int | None, max_options: int) -> list[dict]:
     config = yaml.load(open(CONFIG, encoding="utf-8").read())
     sources = config["sources"]
     rng = random.Random(SEED)
@@ -77,7 +77,7 @@ def corpus_rows(limit: int | None) -> list[dict]:
                 if getattr(item, "answerable", True) is False:
                     counts["skipped:abstention"] += 1
                     continue
-                built = row(item, name, split)
+                built = row(item, name, split, max_options)
                 if built is None:
                     counts[f"skipped:{split}"] += 1
                     continue
@@ -90,15 +90,23 @@ def corpus_rows(limit: int | None) -> list[dict]:
     return rows[:limit] if limit else rows
 
 
-def named_rows(dataset: str, dev_path: str | None, limit: int | None) -> list[dict]:
+def named_rows(
+    dataset: str, dev_path: str | None, limit: int | None, max_options: int
+) -> list[dict]:
     if dataset == "jevbench":
         items = list(load_jevbench())
-        rows = [built for item in items if (built := row(item, "jevbench", "jevbench"))]
+        rows = [
+            built
+            for item in items
+            if (built := row(item, "jevbench", "jevbench", max_options))
+        ]
     else:
         if not dev_path:
             raise SystemExit("--dev-path is required for --dataset dev")
         items = list(load_dev_set(dev_path))
-        rows = [built for item in items if (built := row(item, "dev", "dev"))]
+        rows = [
+            built for item in items if (built := row(item, "dev", "dev", max_options))
+        ]
     return rows[:limit] if limit else rows
 
 
@@ -109,13 +117,23 @@ def main() -> int:
     )
     parser.add_argument("--dev-path")
     parser.add_argument("--limit", type=int)
+    parser.add_argument(
+        "--max-options",
+        type=int,
+        default=26,
+        help="panel-2 code alphabet is 26 letters; the dev cell also has 80-option items",
+    )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
+    if args.max_options > len(EXTENDED_CODES):
+        raise SystemExit(
+            f"--max-options {args.max_options} exceeds the {len(EXTENDED_CODES)}-symbol alphabet"
+        )
     if args.dataset == "corpus":
-        rows = corpus_rows(args.limit)
+        rows = corpus_rows(args.limit, args.max_options)
     else:
-        rows = named_rows(args.dataset, args.dev_path, args.limit)
+        rows = named_rows(args.dataset, args.dev_path, args.limit, args.max_options)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", encoding="utf-8") as handle:

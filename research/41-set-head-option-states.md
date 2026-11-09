@@ -8,13 +8,14 @@ option states, and a small set transformer over them, trained with the
 validity gate that B failed.
 
 D is valid and does not beat panel 2. It is above panel 2 on the development
-set (+6.35 pp, exact paired p = 0.00013) and below it on JevBench (−10.39 pp,
+set (+5.67 pp, exact paired p = 0.00061) and below it on JevBench (−10.39 pp,
 p = 0.0037). Under the reading rule fixed before the run, that lands in the
 issue's second branch: the run is reported as the negative it is. The
 order-invariance requirement fails on both instruments as well — D changes
-43.7% of its choices under reversal against panel 2's 22.5% — which matters
-more than the accuracy sign, because it is the one property the design was
-supposed to buy.
+35.6% of its choices under reversal against panel 2's 28.3% on the 812-item
+development set and 43.7% against 22.5% on JevBench — which matters more than
+the accuracy sign, because it is the one property the design was supposed to
+buy.
 
 ## Design
 
@@ -70,12 +71,19 @@ prompt-template digest and the display order; the composite key is
 | corpus shard 3 | train + eval | 47,541 | 146,571 | 0.77 | 957 | yes, 2 batches |
 | JevBench natural | jevbench | 231 | 849 | 0.00 | 26 | yes, 4 batches |
 | JevBench reversed | jevbench | 231 | 849 | 0.00 | 26 | yes, 4 batches |
-| dev natural | dev | 788 | 2,421 | 0.01 | 44 | yes, 2 batches |
-| dev reversed | dev | 788 | 2,421 | 0.01 | 43 | yes, 2 batches |
+| dev natural | dev | 812 | 4,341 | 0.02 | 69 | yes, 2 batches |
+| dev reversed | dev | 812 | 4,341 | 0.02 | 69 | yes, 2 batches |
 
 Every job re-ran its leading batches twice and compared the stored arrays with
 `torch.equal`: all report `identical: true` and `max_abs_diff: 0.0`. The whole
-cache is 192,206 items, 592,653 states, 3.09 GB.
+cache is 192,254 items, 596,493 states, 3.11 GB.
+
+The guarantee is "the same batch twice", not "any batching". A dev re-extraction
+at batch size 8 instead of 16 moved two of 788 predictions, because padding
+changes the GEMM shapes and bf16 reductions are not associative; the stored
+cache is fixed, so every number below is reproducible from it, but a future
+extraction should reuse the same batch construction rather than assume the
+states are batch-independent to the bit.
 
 Items whose prompt exceeds 8192 tokens are excluded and counted: 38 of 190,206
 corpus items (all in the training split, none in JevBench or dev). The first
@@ -84,13 +92,17 @@ the cap is a throughput decision, not an accuracy one — the state of an option
 at the end of a 30k-token code snippet is not a state worth spending a GPU-hour
 on.
 
-The development set has 812 items; 788 can be read by panel 2 (2 to 26
-options), and those 788 are what every dev number below uses.
+The development set is the registered 812 items, all scored. Twenty-four of them
+are banking77 items with 80 options, which the shipped 26-letter alphabet cannot
+name; those prompts are rendered with the 84-symbol alphabet the #326
+development cell used (A–Z, a–z, then single-character symbols, identical to
+main's first 26), so the panel-2 reference and the states come from the same
+text.
 
 ## Results
 
-JevBench 231 and dev 788, panel 2's shipped readout against D on the same
-items. Panel 2's JevBench reversal is the committed cell (157/231 on the
+JevBench 231 and the registered dev 812, panel 2's reference against D on the
+same items. Panel 2's JevBench reversal is the committed cell (157/231 on the
 display-order tie rule); under the #347 natural-index rule its one exact-tie
 item `hard-opus-a-probability-03` is wrong in reversed order, making it 156.
 That is noted where it is compared and is not retro-fitted.
@@ -99,14 +111,23 @@ That is noted where it is compared and is not retro-fitted.
 |---|---|---:|---:|---:|
 | JevBench 231 | natural | 138/231 = 59.74% | 162/231 = 70.13% | −10.39 pp |
 | JevBench 231 | reversed | 130/231 = 56.28% | 157/231 = 67.97% | −11.69 pp |
-| dev 788 | natural | 540/788 = 68.53% | 490/788 = 62.18% | +6.35 pp |
-| dev 788 | reversed | 437/788 = 55.46% | 463/788 = 58.76% | −3.30 pp |
+| dev 812 | natural | 545/812 = 67.12% | 499/812 = 61.45% | +5.67 pp |
+| dev 812 | reversed | 438/812 = 53.94% | 466/812 = 57.39% | −3.45 pp |
+
+The dev reference is the committed #326 cell
+(`results/jevbench/dev_panel2_Qwen_Qwen3-Reranker-4B.json` at `b68f266`,
+sha256 `f952b7e47b98a2d95c25d0ba45f497632d9c11476e9e1a1d099c4c2950562875`),
+which predates the #347 tie rule. On the 788 items whose prompts use the shipped
+A–Z alphabet, a re-run under the #347 rule gives 490/788 natural and 463/788
+reversed against that cell's 490 and 460: three reversed items differ by the
+tie convention alone. Nothing is retro-fitted, and the comparison does not move
+with them.
 
 By type on JevBench, natural / reversed: noul 45/74 and 43/74 (panel 2 48 and
 50), choice 84/139 and 79/139 (panel 2 102 and 94), score 9/18 and 8/18
-(panel 2 12 and 13). On dev, natural / reversed: noul 280/391 and 232/391
-(panel 2 258 and 244), choice 206/298 and 166/298 (panel 2 177 and 171), score
-54/99 and 39/99 (panel 2 55 and 48).
+(panel 2 12 and 13). On dev, natural / reversed: noul 281/391 and 232/391
+(panel 2 258 and 241), choice 211/322 and 168/322 (panel 2 186 and 177), score
+53/99 and 38/99 (panel 2 55 and 48).
 
 On its own corpus eval split the head reaches 70.72% at the selected epoch
 (epoch 4 of 5, eval NLL 0.664).
@@ -136,15 +157,14 @@ fraction on the same items:
 | instrument | natural | reversed | Δ pp | changed | McNemar W/L | exact p | panel 2 changed |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | JevBench 231 | 59.74% | 56.28% | +3.46 | 43.72% (101) | 46/38 | 0.445 | 22.51% |
-| dev 788 | 68.53% | 55.46% | +13.07 | 34.64% (273) | 178/75 | 7.9e-11 | 27.28% |
+| dev 812 | 67.12% | 53.94% | +13.18 | 35.59% (289) | 182/75 | 1.9e-11 | 28.33% |
 
 **D's order invariance is worse than panel 2's on both instruments, so the
 design intent is not met even where accuracy improves.** On dev the head is
-6.35 pp better than panel 2 in natural order and 3.30 pp worse in reversed
-order, and the reversal costs it 13.07 pp
-with p = 7.9e-11 — a real effect, not noise. On JevBench the churn nearly
-doubles panel 2's (43.7% against 22.5%) while the accuracy difference between
-orders is unresolved.
+5.67 pp better than panel 2 in natural order and 3.45 pp worse in reversed
+order, and the reversal costs it 13.18 pp with p = 1.9e-11 — a real effect, not
+noise. On JevBench the churn nearly doubles panel 2's (43.7% against 22.5%)
+while the accuracy difference between orders is unresolved.
 
 This is the reading the equivariance argument predicts but does not excuse. The
 head cannot inject order dependence, and it does not: permuting its input
@@ -166,8 +186,13 @@ screen with D as the arm:
 |---|---|---:|---:|---:|---:|---|---:|---:|---|
 | JevBench | natural | 138 | 162 | −10.39 pp | −14.32 pp | [−25.17, −3.47] | 20/44 | 0.0037 | unresolved |
 | JevBench | reversed | 130 | 157 | −11.69 pp | −17.58 pp | [−26.90, −8.25] | 11/38 | 0.00014 | unresolved |
-| dev | natural | 540 | 490 | +6.35 pp | +10.84 pp | [5.54, 16.15] | 108/58 | 0.00013 | improvement supported |
-| dev | reversed | 437 | 463 | −3.30 pp | −5.51 pp | [−12.00, 0.97] | 93/119 | 0.086 | unresolved |
+| dev | natural | 545 | 499 | +5.67 pp | +9.87 pp | [4.62, 15.13] | 110/64 | 0.00061 | improvement supported |
+| dev | reversed | 438 | 466 | −3.45 pp | −5.33 pp | [−11.48, 0.83] | 90/118 | 0.061 | unresolved |
+
+Within the 788 dev items the shipped A–Z alphabet can name, D is 538 against
+panel 2's 490, +6.09 pp, p = 0.00029, and 435 against 460 reversed, −3.17 pp,
+p = 0.092 — the same reading as the full 812, so the 24 extended-alphabet items
+do not carry the result.
 
 The two instruments disagree in sign, and unlike #324's B arm the disagreement
 is not a pair of nulls: dev supports an improvement and JevBench supports a
@@ -181,8 +206,8 @@ paired test says the deficit is real.
 does not substitute for the vocabulary anchor.** On the acceptance instrument D
 is 10.4 pp below panel 2 and 5.2 pp below judgement (59.74% against 64.94%),
 with 44 items that panel 2 gets and D does not against 20 the other way. On dev
-it is 6.4 pp above panel 2. A 231-item instrument cannot hold both readings at
-once, and neither can a 788-item one contradict a 10 pp JevBench deficit
+it is 5.7 pp above panel 2. A 231-item instrument cannot hold both readings at
+once, and neither can an 812-item one contradict a 10 pp JevBench deficit
 cheaply — but the acceptance gate is JevBench, and there the arm loses.
 
 **Which limitation binds is the anchor, not the interaction.** The head has
@@ -229,13 +254,21 @@ with its per-source caps and seed 42. Rows are built by
 `model/scripts/build_set_head_rows.py`; states by
 `model/scripts/extract_panel2_states.py`; the head by `model/src/set_head.py`
 and `model/scripts/train_set_head.py`; evaluation by
-`model/scripts/eval_set_head.py`. Panel 2 on the dev rows is scored by
+`model/scripts/eval_set_head.py`.
+
+The dev rows file used for the states is a later build than the corpus rows
+(sha256 `91fe63dd1aca1b15ba496f457f7e0c422b6fc2bb1179c6c8ccb534d9f071d317`): it
+holds all 812 items, and the 24 banking77 ones are rendered with the #326
+84-symbol alphabet. The corpus rows file — the one the config hash covers — is
+unchanged. Panel 2 on the JevBench rows is scored by
 `model/scripts/score_panel2_rows.py`, which drives the shipped readout and
 reproduces the committed JevBench cell exactly in natural order (162/231) and
-except for the one #347 tie item in reversed order (156 against 157).
+except for the one #347 tie item in reversed order (156 against 157); the same
+script on the 788-item dev subset gives the 490/463 quoted above.
 
 Files: `results/jevbench/set_head_jevbench_Qwen_Qwen3-Reranker-4B.json`,
 `results/jevbench/set_head_dev_Qwen_Qwen3-Reranker-4B.json`,
-`results/jevbench/set_head_config_340.json`,
-`results/jevbench/panel2_dev_rows_Qwen_Qwen3-Reranker-4B.json`, and the trained
+`results/jevbench/set_head_config_340.json`, the panel-2 dev reconstruction
+`results/jevbench/panel2_dev_rows_Qwen_Qwen3-Reranker-4B.json` (788 rows, used
+only for the tie-rule check, not as the comparison reference), and the trained
 weights at `model/experiments/set_head/head.pt` with its run JSON beside it.
