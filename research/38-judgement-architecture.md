@@ -39,12 +39,19 @@ J-R1 vs J-R2 +97 −34, p = 3.3e-8.
 
 ## The branches
 
-**The projection is not the lever.** B, a valid two-logit head trained on the
-judgement objective over the canonical corpus, does not beat A: 138 against 150,
-a 5.2 pp deficit against the 9.3 pp floor, p = 0.058. Training the readout layer
-alone does not recover the 22 pp. The arm is not a demonstration that a
-projection cannot work — it is one frozen-backbone recipe — but it rules out the
-cheapest version of the projection hypothesis.
+**The projection does not recover the gap, and B is at parity with A on dev.**
+B, a valid two-logit head trained on the judgement objective over the canonical
+corpus, does not beat A on JevBench: 138 against 150, a 5.2 pp deficit against
+the 9.3 pp floor, p = 0.058. On the 812-row development set, the instrument
+that resolves about 4.9 pp, the same head scores 500/812 = 61.58% against A's
+478/812 = 58.87%: +103 −81, net +22 = 2.71 pp, exact McNemar p = 0.121. The
+point estimate is above A, and 2.71 pp is below dev's floor.
+
+The two instruments disagree in sign and both are nulls, which is what 231-item
+noise looks like. The reading that survives is that the cheapest projection
+recipe is not demonstrably worse than the vocabulary readout. Training the
+readout layer alone does not recover the 22 pp, so the remaining question is
+adaptation, not the projection.
 
 **The direction is not a free change.** J-R2, the same layout under a full
 mask, falls to 32.03%, which is chance (31.8%). It predicts option 0 on 161 of
@@ -126,15 +133,17 @@ train rows, 13,409 eval rows. `head_version: v5` is a proposed label for the
 judgement-objective line; the register is the owner's and this note does not
 claim it.
 
-Cells: `jevbench_head_arm_b_selected.json`, `jevbench_per_request_causal.json`,
-`jevbench_per_request_full.json`, `dev_per_request_causal.json`. They are named
-so the dashboard's zero-shot globs (`jevbench_judgement_*`, `jevbench_logit_*`)
-do not pick them up as judgement rows; they are not zero-shot per-option cells.
+Cells: `jevbench_head_arm_b_selected.json`, `dev_head_arm_b_selected.json`,
+`jevbench_per_request_causal.json`, `jevbench_per_request_full.json`,
+`dev_per_request_causal.json`. They are named so the dashboard's zero-shot
+globs (`jevbench_judgement_*`, `jevbench_logit_*`) do not pick them up as
+judgement rows; they are not zero-shot per-option cells.
 
 ## What this does not say
 
 It does not say the judgement band is capacity- or direction-bound. It says the
-cheapest projection recipe does not recover the gap, an untrained mask flip is
-not available, and the per-request layout is neither better nor demonstrably
-worse on dev. D1/D2 remain held; the next discriminating arm is not in this
-note.
+cheapest projection recipe does not recover the gap and is not demonstrably
+worse than the vocabulary readout on dev, an untrained mask flip is not
+available, and the per-request layout is neither better nor demonstrably worse
+on dev. The question moves to adaptation. D1/D2 remain held; the next
+discriminating arm is not in this note.

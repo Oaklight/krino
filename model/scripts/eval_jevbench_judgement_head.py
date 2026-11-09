@@ -134,6 +134,14 @@ def main() -> int:
     parser.add_argument("--adaptation", choices=["frozen", "lora"], default="frozen")
     parser.add_argument("--dtype", default="bfloat16", choices=["float16", "bfloat16", "float32"])
     parser.add_argument("--device", default=None)
+    parser.add_argument("--max-items", type=int, default=None)
+    parser.add_argument(
+        "--dataset",
+        choices=["jevbench", "dev"],
+        default="jevbench",
+        help="jevbench: the 231-item public set; dev: the 828-row development set",
+    )
+    parser.add_argument("--dev-path", type=Path, default=ROOT / "data/benchmarks/dev/dev_800.jsonl")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -155,6 +163,12 @@ def main() -> int:
     head, head_payload = load_head(args.head, device)
 
     items = list(load_jevbench())
+    if args.dataset == "dev":
+        from model.evaluation.dev_set import load_dev_set
+
+        items = list(load_dev_set(args.dev_path))
+    if args.max_items:
+        items = items[: args.max_items]
     records: list[dict[str, Any]] = []
     predictions: list[dict[str, Any]] = []
     failed = 0
@@ -205,6 +219,7 @@ def main() -> int:
             "read_position": args.position,
             "head_kind": "linear-2logit",
             "adaptation": args.adaptation,
+            "dataset": args.dataset,
             "head_sha256": head_sha256,
             "head_training": {
                 "state_key": head_payload.get("state_key"),
