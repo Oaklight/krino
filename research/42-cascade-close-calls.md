@@ -10,8 +10,11 @@ no item triggers, and the cascade never spends the second pass.** JevBench at
 that threshold is the base cell, 162/231. The second pass does move dev accuracy
 — 499 to 511 at a 10.8% trigger rate — but that gain costs 21.7% more forwards,
 is not significant on its own (exact p = 0.058), and has disappeared by a 22%
-trigger rate. The issue's second reading applies: the gain is below the floor
-and the hard-tier failure is not recovered.
+trigger rate. The issue's second reading applies on its first half: the gain is
+below the floor. Its second half — that the hard-tier failure is not recovered
+by re-reading two candidates — is **not tested by this run**: the selected θ
+triggers nothing, so no hard item is ever re-read. What this run establishes is
+narrower: under `accuracy/(1+2f)`, the cascade does not pay.
 
 ## Design
 
@@ -138,12 +141,30 @@ One evaluation, at θ = 0:
 Gain against the base readout: 0 items, 0 pp, paired McNemar with 0 discordant
 items. Trigger fraction 0, mean forwards 1.000.
 
-The hard cell is 46.85%, the issue's 46.8% starting point, **unchanged**. Under
-the selected rule it has to be: no item triggers anywhere, so re-reading two
-candidates cannot recover a single hard item. Whether the second pass would
-recover hard items at a positive θ is not answerable from this run — the
-pre-registration allows JevBench one evaluation, at the dev-selected θ, and
-that θ has no hard item to re-read.
+The hard cell is 46.85%, the issue's 46.8% starting point, **unchanged — but
+not measured**. Under the selected rule it cannot move: no item triggers
+anywhere, so no hard item is ever re-read. The issue's branch-two clause that
+re-reading two candidates cannot recover the hard tier is **untested here**, not
+confirmed.
+
+The first-pass logits still say what the rule *would* do at the dev accuracy
+maximum, and that is free to compute: it uses only the stored panel-2 logits, no
+forward and no second-pass answer. At θ = 0.3023 JevBench would trigger on 37 of
+231 items (16.02%, mean forwards 1.32): 32 hard (28.83% of the hard tier), 5
+original (6.94%), none easy. Of those 37, 21 are currently wrong and 16 right.
+The dev trigger rate at the same θ is 10.84%, so the instrument where noul is
+eligible would pay more, not less.
+
+**The trigger rule aims at the failure: 86% of what it would re-read is
+hard-tier.** That is the axis this run cannot price. Two bounds say how much
+room there is. At this θ the best possible second pass — every triggered item
+correct, none broken — is 183/231, +9.09 pp, below the issue's 9.3 pp floor. At
+a 20% trigger rate (46 items) the ceiling is +27 items, 11.69 pp; at the 25%
+cost limit of the issue's branch one (57 items, mean forwards 1.50) it is +32
+items, 13.85 pp. So the floor is reachable only at a higher trigger rate than
+the accuracy maximum, and the hard concentration is where the room is. Whether
+the judgement readout converts any of it is what a second, fixed-threshold
+JevBench pass would answer; this run did not measure it.
 
 ## Cost
 
@@ -162,12 +183,15 @@ for 1.5 pp of accuracy that is not significant.
 
 ## Reading
 
-**Branch two.** A JevBench gain above the 9.3 pp floor at a mean cost under 1.5
-forwards is branch one; nothing above the base appears at any cost, so branch
-one is not reached. The threshold is stable across both splits, so branch three
-does not fire. What is left is branch two: report the null with the cost curve,
-and record that the hard-tier failure is not recovered by re-reading two
-candidates — here because the selection never lets the re-read happen.
+**Branch two, with its second clause unearned.** Branch one needs a JevBench
+gain above the 9.3 pp floor at a mean cost under 1.5 forwards; the selected rule
+produces no gain at any cost, so branch one is not reached by this selection.
+Branch three does not fire: both splits select the same θ. That leaves branch
+two, the null with the cost curve — but only its first clause is established.
+The clause that the hard-tier failure is not recovered by re-reading two
+candidates is not what this run shows: at the selected θ nothing is re-read at
+all. The entry for the epic is "not worth it under the stated criterion; the
+size of the gain was not measured", not "the gain is absent".
 
 **The second readout is not worthless; the trigger is.** The judgement does find
 signal among the close calls: +7 choice and +5 score on dev at a 10.8% trigger
@@ -214,3 +238,9 @@ rule `model/evaluation/cascade.py`, sweep `model/scripts/sweep_cascade.py`.
 
 Result: `results/jevbench/cascade_F_Qwen_Qwen3-Reranker-4B.json`
 (`sha256 766cada168e5b9cb850e4f5ed2de983a1023fa56ef2941ab160e5e2e9bf2df7b`).
+
+The JevBench trigger projection at θ = 0.3023 (37 items, tier split, base
+correctness among them) and the gain ceilings at 20% and 25% trigger rates are
+computed from the stored first-pass logits in the JevBench pairs file: no
+forward, no second-pass answer, and no second evaluation. They describe what the
+rule would re-read, not what it would score.
