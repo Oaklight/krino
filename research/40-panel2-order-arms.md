@@ -40,6 +40,8 @@ whose chosen option differs between the two orders.
 | 32B | hashed | 180/231 = 77.92% | 74.89% | −3.03 | 13.0% | 9/16 | 0.230 |
 | 32B | mean3 | 177/231 = 76.62% | 77.92% | +1.30 | 14.7% | 15/12 | 0.701 |
 
+**One item separates this run's shipped cell from #336's.** `hard-opus-a-probability-03` is an exact tie in the reversed prompt: its two code logits are both 17.5 in bf16. The two harnesses break the tie differently. #326's harness takes the first maximum in display order, which lands on natural option 1 and marks the item correct; this harness takes the first maximum in natural option order, which lands on option 0 and marks it wrong. That one item is the whole of 156 against 157, and the difference is the tie-break rule, not numerics and not a different reversed-list construction — the natural-order prompt for the same item is not a tie (17.25 against 18.625). The rule used here is the one `record_correct` states, that ties are broken by the option's original index so reordering cannot change whether an item counts as correct; under it this item is wrong in both orders, and under #326's rule it flips.
+
 Paired against the shipped arm on the same items, natural order: `hashed` is
 −1.73 pp on the 4B (12/16, p = 0.572) and +0.87 pp on the 32B (12/10,
 p = 0.832); `mean3` is 0.00 pp on the 4B (6/6, p = 1.0) and −0.43 pp on the
@@ -87,6 +89,15 @@ predictions agree with the shipped arm on 213 of 231 items, and for 198 items
 all three seeds pick the same option, because the model's preference is strong
 enough that most permutations do not move the argmax. That is why averaging
 three assignments mostly costs three forwards and changes little.
+
+**Hypothesis, not a result:** averaging three distributions flattens the
+mixture relative to any one member, so its argmax is decided by smaller
+margins and should be more sensitive to whatever the reversal changes in the
+context. That would explain why the 4B reverses worse under `mean3` (−7.36 pp)
+than under either single-pass arm (−1.3 to −2.6 pp) while its natural accuracy
+is unchanged. It is not tested here — the per-forward logits were not stored,
+so the mixture margins cannot be checked without a re-run — and it should not
+be quoted as the reason until they are.
 
 ## Cost
 

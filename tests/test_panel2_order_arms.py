@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from model.evaluation.panel2 import CODES
@@ -98,6 +100,25 @@ def test_probabilities_by_option_maps_display_positions_back():
     probabilities = probabilities_by_option([0.0, 3.0], [1, 0])
     assert probabilities[0] > probabilities[1]
     assert probabilities[0] + probabilities[1] == pytest.approx(1.0)
+
+
+def test_mixture_prediction_is_the_argmax_of_the_logit_mean():
+    # This input separates the two definitions the declared mixture rules out:
+    # the probability mean picks option 1, the mean of the log-probabilities
+    # picks option 0.  Without it a logit-averaging implementation would pass
+    # the majority-vote test above.
+    distributions = [
+        [0.5, 0.05, 0.45],
+        [0.5, 0.05, 0.45],
+        [0.02, 0.96, 0.02],
+    ]
+    logit_means = [
+        sum(math.log(distribution[index]) for distribution in distributions)
+        / len(distributions)
+        for index in range(3)
+    ]
+    assert max(range(3), key=logit_means.__getitem__) == 0
+    assert mixture_prediction(distributions) == 1
 
 
 def test_the_three_arms_are_the_declared_three():
