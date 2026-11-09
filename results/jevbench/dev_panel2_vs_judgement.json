@@ -1,0 +1,79 @@
+{
+  "n": 812,
+  "panel2_correct": 499,
+  "judgement_correct": 478,
+  "panel2_accuracy": 0.6145320197044335,
+  "judgement_accuracy": 0.5886699507389163,
+  "delta_pp": 2.586206896551724,
+  "discordance": 0.22536945812807882,
+  "detectable_pp": 4.8,
+  "overall": {
+    "n": 812,
+    "panel2_only_correct": 102,
+    "judgement_only_correct": 81,
+    "net": 21,
+    "mcnemar_p": 0.13907617727643085
+  },
+  "by_type": {
+    "choice": {
+      "n": 322,
+      "panel2_only_correct": 54,
+      "judgement_only_correct": 36,
+      "net": 18,
+      "mcnemar_p": 0.07254953219246181,
+      "panel2_correct": 186,
+      "judgement_correct": 168,
+      "panel2_accuracy": 0.577639751552795,
+      "judgement_accuracy": 0.5217391304347826,
+      "delta_pp": 5.590062111801243
+    },
+    "noul": {
+      "n": 391,
+      "panel2_only_correct": 32,
+      "judgement_only_correct": 37,
+      "net": -5,
+      "mcnemar_p": 0.630456491786798,
+      "panel2_correct": 258,
+      "judgement_correct": 263,
+      "panel2_accuracy": 0.659846547314578,
+      "judgement_accuracy": 0.6726342710997443,
+      "delta_pp": -1.278772378516624
+    },
+    "score": {
+      "n": 99,
+      "panel2_only_correct": 16,
+      "judgement_only_correct": 8,
+      "net": 8,
+      "mcnemar_p": 0.15158963203430176,
+      "panel2_correct": 55,
+      "judgement_correct": 47,
+      "panel2_accuracy": 0.5555555555555556,
+      "judgement_accuracy": 0.47474747474747475,
+      "delta_pp": 8.080808080808081
+    }
+  },
+  "_provenance": {
+    "panel2": {
+      "path": "results/jevbench/dev_panel2_Qwen_Qwen3-Reranker-4B.json",
+      "validity": {
+        "single_token_codes": true,
+        "multi_token_codes": [],
+        "unscorable_items": 16,
+        "unscorable_code_failures": 0,
+        "unscorable_withheld_gold": 16,
+        "position_diagnostic": true,
+        "position_dominated": false,
+        "valid": true,
+        "invalid_reason": null
+      },
+      "code_commit": "e201b81af0f63e82e9d038d3c756f5e34adc0c15",
+      "config_sha256": "7791eb13008d38b6999433c5b7aded4dd2620f80966d6282e9bfacae1cb8e3a0",
+      "data_sha256": "700a226671a6459e737816b8473c4f8d2a21342b0df21eea497d243c4739b876"
+    },
+    "judgement": {
+      "path": "model/experiments/logit_prov/dev_judgement_Qwen_Qwen3-Reranker-4B.json",
+      "code_commit": "880a9f141176a75d7a8aba33529fac599537dd08"
+    },
+    "dataset": "dev (internal)"
+  }
+}
