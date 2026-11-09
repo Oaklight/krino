@@ -152,3 +152,34 @@ equal-width bins on top-1 confidence, multiclass Brier summed over the codes.
 Files: `panel2_dev_Qwen_Qwen3-Reranker-4B.json`,
 `panel2_dev_Qwen_Qwen3-32B.json`, `panel2_calibration_Qwen_Qwen3-Reranker-4B.json`,
 `panel2_calibration_Qwen_Qwen3-32B.json`, all under `results/jevbench/`.
+
+## Appendix: reliability by type on JevBench
+
+Ten equal-width bins on top-1 confidence; each entry is
+`(items, mean confidence, accuracy)`. Empty bins are omitted. The same tables,
+with bin edges, are in the calibration result files.
+
+```
+Qwen3-Reranker-4B
+noul    before  (4, 0.55, 1.00) (5, 0.65, 0.40) (14, 0.75, 0.71) (7, 0.85, 0.57) (44, 0.97, 0.64)
+        after   (18, 0.56, 0.67) (17, 0.65, 0.59) (18, 0.75, 0.56) (14, 0.86, 0.64) (7, 0.91, 1.00)
+choice  before  (3, 0.29, 0.00) (3, 0.39, 0.33) (13, 0.44, 0.46) (12, 0.54, 0.25) (7, 0.64, 0.71) (7, 0.74, 0.71) (11, 0.84, 0.55) (83, 0.97, 0.92)
+        after   (10, 0.27, 0.30) (20, 0.35, 0.50) (17, 0.45, 0.47) (16, 0.55, 0.63) (30, 0.65, 0.87) (18, 0.76, 0.94) (26, 0.86, 1.00) (2, 0.91, 1.00)
+score   before  (1, 0.46, 0.00) (3, 0.54, 0.67) (2, 0.61, 0.00) (2, 0.78, 0.50) (1, 0.86, 1.00) (9, 0.97, 0.89)
+        after   (1, 0.39, 0.00) (3, 0.47, 0.67) (2, 0.53, 0.00) (2, 0.68, 0.50) (1, 0.76, 1.00) (1, 0.87, 1.00) (8, 0.93, 0.88)
+```
+
+```
+Qwen3-32B
+noul    before  (5, 0.56, 1.00) (5, 0.66, 0.40) (7, 0.74, 0.86) (13, 0.86, 0.54) (44, 0.97, 0.91)
+        after   (11, 0.56, 0.73) (10, 0.64, 0.90) (24, 0.75, 0.62) (15, 0.85, 0.93) (14, 0.93, 1.00)
+choice  before  (5, 0.37, 0.20) (6, 0.47, 0.33) (15, 0.55, 0.47) (13, 0.65, 0.38) (11, 0.75, 0.64) (12, 0.85, 0.67) (77, 0.97, 0.97)
+        after   (2, 0.29, 0.00) (9, 0.36, 0.22) (17, 0.45, 0.47) (19, 0.54, 0.53) (13, 0.66, 0.62) (19, 0.77, 0.95) (24, 0.86, 0.96) (36, 0.94, 1.00)
+score   before  (1, 0.48, 0.00) (2, 0.57, 0.50) (2, 0.66, 0.00) (1, 0.75, 1.00) (1, 0.87, 0.00) (11, 0.98, 1.00)
+        after   (1, 0.37, 0.00) (4, 0.46, 0.25) (1, 0.55, 1.00) (1, 0.65, 0.00) (2, 0.75, 1.00) (6, 0.86, 1.00) (3, 0.90, 1.00)
+```
+
+The 32B's choice top bin is the clearest case: 77 of 139 items at 0.97
+confidence with 0.97 accuracy before the correction, spread to 0.86-0.94 with
+accuracy 0.96-1.00 after it. The fitted temperature is correcting a
+mis-calibration that type does not have.
