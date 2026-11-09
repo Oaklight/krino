@@ -1,25 +1,28 @@
-# Judgement architecture: readout shape, direction and a trained head (#324) — 2026-11-09
+# Judgement architecture: readout shape and direction (#324) — 2026-11-09
 
 Our best trained head scores 42.9% on JevBench 231 while the same backbone,
 untrained, scores 64.9% under the judgement readout. This note asks whether the
-gap is the pretrained yes/no projection, the causal reading direction, or the
-per-option scope, on one backbone: `Qwen/Qwen3-Reranker-4B`, frozen.
+gap is the causal reading direction or the per-option scope, on one backbone:
+`Qwen/Qwen3-Reranker-4B`, frozen.
 
-The design moved three times before any cell ran, and the final family is
-smaller than the first draft. The withdrawn cells are recorded so the numbers
-below are not read against the wrong question: a per-option mask flip (E, G) was
-replaced by a per-request layout; a softmax-versus-independent pair (H2, H4)
-was dropped because softmax over a shared head is monotone and cannot change
-the argmax; and the trained one-read code head (D1, D2) is held because its
-frozen-backbone form is a random linear on a frozen backbone, the configuration
-already measured at 0.351 against a 0.441 raw readout.
+The trained-head arm B is not reported here. Its first run failed its own
+validity check, so it is a process failure rather than a hypothesis test; a
+pre-registered rerun is the arm of record and lands separately. The diagnosis
+of that first run is kept at the end because it is the reason the rerun exists.
+
+The design also moved before any cell ran, and the withdrawn cells are recorded
+so the numbers below are not read against the wrong question: a per-option mask
+flip (E, G) was replaced by a per-request layout; a softmax-versus-independent
+pair (H2, H4) was dropped because softmax over a shared head is monotone and
+cannot change the argmax; and the trained one-read code head (D1, D2) is held
+because its frozen-backbone form is a random linear on a frozen backbone, the
+configuration already measured at 0.351 against a 0.441 raw readout.
 
 ## The cells
 
 | cell | layout | direction | readout | trained |
 |---|---|---|---|---|
 | A | per-option, one sequence per option | causal | vocabulary `log P(yes) − log P(no)` at `Answer:` | no |
-| B | per-option, one sequence per option | causal | two-logit linear head at `Answer:` | head only |
 | J-R1 | per-request, one sequence with K `Answer:` spans | causal | vocabulary at each span | no |
 | J-R2 | per-request, one sequence with K `Answer:` spans | full | vocabulary at each span | no |
 
@@ -30,26 +33,13 @@ All on the same 231 items, same backbone, same 36-layer full-attention config.
 | cell | overall | noul (74) | choice (139) | score (18) |
 |---|---:|---:|---:|---:|
 | A | 150/231 = 64.94% | 47 | 90 | 13 |
-| B | 140/231 = 60.61% | 47 | 83 | 10 |
 | J-R1 | 137/231 = 59.31% | 46 | 80 | 11 |
 | J-R2 | 74/231 = 32.03% | 34 | 33 | 7 |
 
-Exact paired McNemar: B vs A +14 −24, p = 0.143; J-R1 vs A +39 −26, p = 0.136;
-B vs J-R1 +33 −30, p = 0.80; J-R1 vs J-R2 +97 −34, p = 3.3e-8.
+Exact paired McNemar: J-R1 vs A +39 −26, p = 0.136; J-R1 vs J-R2 +97 −34,
+p = 3.3e-8.
 
 ## The branches
-
-**All three variants sit at or below the zero-shot vocabulary readout.** A
-64.94%, B 60.61%, J-R1 59.31%, J-R2 32.03%. None of them recovers the 22 pp
-between the trained head and the untrained readout; that is the substantive
-result, and the individual p-values are secondary to it.
-
-**The projection arm failed, so the projection is not rescued.** B's head is
-degenerate: only 17 of 10,911 gold options reach P(yes) > 0.5, so it has no
-usable probability and its 60.6% is a within-item ranking artefact. A
-degenerate head cannot test the projection hypothesis. What can be said is that
-training the readout layer this way does not recover the gap; nothing here says
-a properly trained projection head would fail.
 
 **The direction is not a free change.** J-R2, the same layout under a full
 mask, falls to 32.03%, which is chance (31.8%). It predicts option 0 on 161 of
@@ -66,15 +56,28 @@ JevBench says the same thing less sharply: 137 against 150, 5.6 pp, +39 −26,
 p = 0.136, against a 9.3 pp floor. The per-request layout is neither better nor
 demonstrably worse, and it does not recover the gap.
 
-## B's degeneracy
+## B's first run: withdrawn, and the diagnosis
 
-B is reported as a failed arm, not as a null. On its own corpus eval split only
-17 of 10,911 gold options reach P(yes) > 0.5 (0.16%), failing #299's
-positive-rate check: the head has no usable probability, and its 140/231 is a
-within-item ranking artefact. The number is in
-`model/experiments/judgement_head/arm_b/config.json` rather than omitted. A
-calibrated B would need a bias-only pass or a lower learning rate; that is a
-deviation this note does not take.
+The first B run is withdrawn as invalid. On its own corpus eval split only 17
+of 10,911 gold options reached P(yes) > 0.5, so the head carried no usable
+probability and its 140/231 was a within-item ranking artefact. It supports
+neither side of the projection question.
+
+The diagnosis matters for the rerun. The head initialises with the yes bias at
++2.0 (`TwoWayHead` sets `bias[1]`, and `logits[1]` is yes), so at step zero
+P(yes) is about 0.88 on every option; the run cannot have collapsed at
+initialisation. The per-epoch count of gold options above P(yes) = 0.5 was 4,
+24, 17, 1117, 124: the head was driven down almost immediately, partially
+recovered at epoch 4, and fell again. That is drift under the training recipe
+(cross-entropy, lr 3e-3, early stopping), not a sign error in the bias.
+
+The pre-registered rerun fixes the recipe instead of reinterpreting the run:
+three declared variants (plain BCE with zero bias and lr 1e-3; the same plus a
+bias-only calibration pass on the train split; BCE with positive weight
+`1 / base_rate`), a validity gate on the eval split only (Brier against the
+base-rate predictor, gold positive rate, and a paired gold-minus-non-gold test
+at p < 0.01), and one JevBench evaluation of whichever variant passes. If none
+passes, the projection hypothesis is reported untested.
 
 ## Latency
 
@@ -90,29 +93,22 @@ causal is cacheable, bidirectional is not.
 
 ## Provenance
 
-Corpus: the canonical source list of `model/configs/r2_reranker4b.yaml` with the
-per-source caps, which is the documented 182,262-row training set; 933,230
-judgement prompts; abstention rows excluded. The plan is built by
-`model/scripts/build_judgement_plan.py`, which calls the readout's own
-`candidates`/`render` (#299). The frozen-backbone states are cached at both
-causal read positions by `precompute_judgement_states.py`; the head trains on
-the `Answer:` position only.
+Cells: `jevbench_per_request_causal.json`, `jevbench_per_request_full.json`,
+`dev_per_request_causal.json`. They are named so the dashboard's zero-shot globs
+(`jevbench_judgement_*`, `jevbench_logit_*`) do not pick them up as judgement
+rows; they are not zero-shot per-option cells.
 
-Head: `model/experiments/judgement_head/arm_b/head.pt`, hidden size 2560, one
-linear layer, yes bias 2.0, seed 42, lr 3e-3, early stop at epoch 3 of 5,
-181,602 train rows, 13,409 eval rows. `head_version: v5` is a proposed label for
-the judgement-objective line; the register is append-only and this note does not
-claim it until the owner accepts it.
-
-Cells: `jevbench_head_arm_b.json`, `jevbench_per_request_causal.json`,
-`jevbench_per_request_full.json`, `dev_per_request_causal.json`. They are named
-so the dashboard's zero-shot globs (`jevbench_judgement_*`, `jevbench_logit_*`)
-do not pick them up as judgement rows; they are not zero-shot per-option cells.
+Commands: `model/scripts/eval_jevbench_judgement_per_request.py --model
+Qwen/Qwen3-Reranker-4B --snapshot <cache>/22e683669bc0f0bd69640a1354a6d0aebcfeede5
+--direction {causal,full} [--dataset dev] --output <file>`. The mask is applied
+as a 4D full-attention mask through the model's prepared-mask path, and a
+tiny-Qwen3 unit test pins that a token before a later change moves under the
+full mask and not under the causal one.
 
 ## What this does not say
 
-It does not say the judgement band is capacity- or direction-bound. It says
-none of the three readout variants recovers the zero-shot readout's level, the
-trained projection arm failed outright, an untrained mask flip is not
-available, and the scope difference is smaller than dev resolves. D1/D2 remain
-held; the next discriminating arm is not in this note.
+It does not say the judgement band is capacity- or direction-bound. It says an
+untrained mask flip is not available, the per-request layout does not recover
+the gap and is not demonstrably worse on dev, and the projection question waits
+on the pre-registered rerun. D1/D2 remain held; the next discriminating arm is
+not in this note.

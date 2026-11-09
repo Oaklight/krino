@@ -191,6 +191,13 @@ def main() -> int:
     parser.add_argument("--dtype", default="bfloat16", choices=["float16", "bfloat16", "float32"])
     parser.add_argument("--device", default=None)
     parser.add_argument("--max-items", type=int, default=None)
+    parser.add_argument(
+        "--dataset",
+        choices=["jevbench", "dev"],
+        default="jevbench",
+        help="jevbench: the 231-item public set; dev: the 828-row development set",
+    )
+    parser.add_argument("--dev-path", type=Path, default=ROOT / "data/benchmarks/dev/dev_800.jsonl")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -210,7 +217,12 @@ def main() -> int:
     no_id = single_token_id(tokenizer, " no")
     lm_head = model.get_output_embeddings()
 
-    items = list(load_jevbench())
+    if args.dataset == "dev":
+        from model.evaluation.dev_set import load_dev_set
+
+        items = list(load_dev_set(args.dev_path))
+    else:
+        items = list(load_jevbench())
     if args.max_items:
         items = items[: args.max_items]
     records: list[dict[str, Any]] = []
@@ -274,6 +286,7 @@ def main() -> int:
             "adaptation": "frozen",
             "yes_id": yes_id,
             "no_id": no_id,
+            "dataset": args.dataset,
             "latency": latency,
         },
     )
