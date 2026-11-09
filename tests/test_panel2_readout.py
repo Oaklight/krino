@@ -8,6 +8,7 @@ import pytest
 
 from model.evaluation.panel2 import (
     CODES,
+    ORDER_TEMPLATES,
     PANEL2_TEMPLATE,
     code_token_ids,
     codes_for,
@@ -48,6 +49,29 @@ def test_prompt_is_exactly_the_recorded_template():
     assert PANEL2_TEMPLATE.format(
         state="S", instructions="Q", options="A. no\nB. yes"
     ) == prompt
+
+
+def test_declared_orders_place_the_question_as_declared():
+    texts, codes = ["no", "yes"], ["A", "B"]
+    shipped = render_panel2("S", "Q", texts, codes)
+    assert shipped == render_panel2("S", "Q", texts, codes, order="shipped")
+    assert PANEL2_TEMPLATE == ORDER_TEMPLATES["shipped"]
+
+    options_first = render_panel2("S", "Q", texts, codes, order="options_first")
+    assert options_first.count("Question: Q") == 1
+    assert options_first.index("Options:") < options_first.index("Question: Q")
+    assert options_first.startswith("State: S\n")
+    assert options_first.endswith("Answer:")
+
+    sandwich = render_panel2("S", "Q", texts, codes, order="sandwich")
+    assert sandwich.count("Question: Q") == 2
+    assert sandwich.index("Question: Q") < sandwich.index("Options:")
+    assert sandwich.index("Options:") < sandwich.rindex("Question: Q")
+
+
+def test_unknown_order_is_rejected():
+    with pytest.raises(ValueError):
+        render_panel2("S", "Q", ["no", "yes"], ["A", "B"], order="unknown")
 
 
 def test_option_lines_pairs_codes_with_texts():
