@@ -15,8 +15,10 @@ from model.evaluation.panel2 import (
     option_lines,
     options_for,
     order_effect,
+    parse_read_spec,
     pick_code_form,
     position_diagnostics,
+    read_specs,
     render_panel2,
 )
 
@@ -72,6 +74,37 @@ def test_declared_orders_place_the_question_as_declared():
 def test_unknown_order_is_rejected():
     with pytest.raises(ValueError):
         render_panel2("S", "Q", ["no", "yes"], ["A", "B"], order="unknown")
+
+
+def test_read_specs_derive_middle_layers_from_the_block_count():
+    specs = read_specs(36)
+    assert list(specs) == [
+        "last",
+        "layer=12",
+        "layer=24",
+        "layer=32",
+        "mean_last_n=4",
+    ]
+    assert specs["layer=12"] == ("layer", 12)
+    assert specs["mean_last_n=4"] == ("mean_last_n", 4)
+    assert list(read_specs(64)) == [
+        "last",
+        "layer=21",
+        "layer=42",
+        "layer=60",
+        "mean_last_n=4",
+    ]
+
+
+def test_read_specs_reject_tiny_backbones():
+    with pytest.raises(ValueError):
+        read_specs(4)
+
+
+def test_parse_read_spec_rejects_undeclared_names():
+    assert parse_read_spec("layer=12", 36) == ("layer", 12)
+    with pytest.raises(ValueError):
+        parse_read_spec("layer=13", 36)
 
 
 def test_option_lines_pairs_codes_with_texts():
