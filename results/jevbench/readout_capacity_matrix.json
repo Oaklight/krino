@@ -1,0 +1,1235 @@
+{
+  "issue": 329,
+  "items": 231,
+  "families": {
+    "reranker": [
+      "Qwen/Qwen3-Reranker-0.6B",
+      "Qwen/Qwen3-Reranker-4B",
+      "Qwen/Qwen3-Reranker-8B"
+    ],
+    "general": [
+      "Qwen/Qwen3-4B",
+      "Qwen/Qwen3-14B",
+      "Qwen/Qwen3-32B"
+    ]
+  },
+  "readouts": [
+    "continuation",
+    "judgement",
+    "panel2"
+  ],
+  "matrix": {
+    "reranker": {
+      "Qwen/Qwen3-Reranker-0.6B": {
+        "continuation": {
+          "valid": true,
+          "correct": 91,
+          "total": 231,
+          "accuracy": 0.3939393939393939,
+          "latency_mean_s": 0.8483585922543395,
+          "by_tier": {
+            "easy": {
+              "accuracy": 0.5625,
+              "correct": 27,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.32432432432432434,
+              "correct": 36,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.3888888888888889,
+              "correct": 28,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.302158273381295,
+              "correct": 42,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.581081081081081,
+              "correct": 43,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.3333333333333333,
+              "correct": 6,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/continuation_Qwen_Qwen3-Reranker-0.6B.json"
+        },
+        "judgement": {
+          "valid": true,
+          "correct": 96,
+          "total": 231,
+          "accuracy": 0.4155844155844156,
+          "latency_mean_s": 1.1554112554112552,
+          "by_tier": {
+            "easy": {
+              "accuracy": 0.6666666666666666,
+              "correct": 32,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.32432432432432434,
+              "correct": 36,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.3888888888888889,
+              "correct": 28,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.38848920863309355,
+              "correct": 54,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.527027027027027,
+              "correct": 39,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.16666666666666666,
+              "correct": 3,
+              "total": 18
+            }
+          },
+          "path": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-0.6B.json"
+        },
+        "panel2": {
+          "valid": true,
+          "correct": 110,
+          "total": 231,
+          "accuracy": 0.47619047619047616,
+          "latency_mean_s": 0.3273164920641908,
+          "by_tier": {
+            "easy": {
+              "accuracy": 0.7083333333333334,
+              "correct": 34,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.36936936936936937,
+              "correct": 41,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.4861111111111111,
+              "correct": 35,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.4460431654676259,
+              "correct": 62,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.5675675675675675,
+              "correct": 42,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.3333333333333333,
+              "correct": 6,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/panel2_Qwen_Qwen3-Reranker-0.6B.json"
+        }
+      },
+      "Qwen/Qwen3-Reranker-4B": {
+        "continuation": {
+          "valid": true,
+          "correct": 111,
+          "total": 231,
+          "accuracy": 0.4805194805194805,
+          "latency_mean_s": 0.8563368252047148,
+          "by_tier": {
+            "easy": {
+              "accuracy": 0.875,
+              "correct": 42,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.32432432432432434,
+              "correct": 36,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.4583333333333333,
+              "correct": 33,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.4316546762589928,
+              "correct": 60,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.5405405405405406,
+              "correct": 40,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.6111111111111112,
+              "correct": 11,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/continuation_Qwen_Qwen3-Reranker-4B.json"
+        },
+        "judgement": {
+          "valid": true,
+          "correct": 150,
+          "total": 231,
+          "accuracy": 0.6493506493506493,
+          "latency_mean_s": 1.2683982683982684,
+          "by_tier": {
+            "easy": {
+              "accuracy": 1.0,
+              "correct": 48,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.45045045045045046,
+              "correct": 50,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.7222222222222222,
+              "correct": 52,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.6474820143884892,
+              "correct": 90,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.6351351351351351,
+              "correct": 47,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.7222222222222222,
+              "correct": 13,
+              "total": 18
+            }
+          },
+          "path": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json"
+        },
+        "panel2": {
+          "valid": true,
+          "correct": 162,
+          "total": 231,
+          "accuracy": 0.7012987012987013,
+          "latency_mean_s": 0.325437136978169,
+          "by_tier": {
+            "easy": {
+              "accuracy": 1.0,
+              "correct": 48,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.46846846846846846,
+              "correct": 52,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.8611111111111112,
+              "correct": 62,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.7338129496402878,
+              "correct": 102,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.6486486486486487,
+              "correct": 48,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.6666666666666666,
+              "correct": 12,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json"
+        }
+      },
+      "Qwen/Qwen3-Reranker-8B": {
+        "continuation": {
+          "valid": true,
+          "correct": 111,
+          "total": 231,
+          "accuracy": 0.4805194805194805,
+          "latency_mean_s": 0.8693469367272249,
+          "by_tier": {
+            "easy": {
+              "accuracy": 0.7916666666666666,
+              "correct": 38,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.34234234234234234,
+              "correct": 38,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.4861111111111111,
+              "correct": 35,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.39568345323741005,
+              "correct": 55,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.5675675675675675,
+              "correct": 42,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.7777777777777778,
+              "correct": 14,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/continuation_Qwen_Qwen3-Reranker-8B.json"
+        },
+        "judgement": {
+          "valid": true,
+          "correct": 149,
+          "total": 231,
+          "accuracy": 0.645021645021645,
+          "latency_mean_s": 1.3453124271931522,
+          "by_tier": {
+            "easy": {
+              "accuracy": 0.9791666666666666,
+              "correct": 47,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.45045045045045046,
+              "correct": 50,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.7222222222222222,
+              "correct": 52,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.6690647482014388,
+              "correct": 93,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.5945945945945946,
+              "correct": 44,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.6666666666666666,
+              "correct": 12,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/judgement_Qwen_Qwen3-Reranker-8B.json"
+        },
+        "panel2": {
+          "valid": true,
+          "correct": 164,
+          "total": 231,
+          "accuracy": 0.70995670995671,
+          "latency_mean_s": 0.3240771942824383,
+          "by_tier": {
+            "easy": {
+              "accuracy": 1.0,
+              "correct": 48,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.5045045045045045,
+              "correct": 56,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.8333333333333334,
+              "correct": 60,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.7266187050359713,
+              "correct": 101,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.6621621621621622,
+              "correct": 49,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.7777777777777778,
+              "correct": 14,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/panel2_Qwen_Qwen3-Reranker-8B.json"
+        }
+      }
+    },
+    "general": {
+      "Qwen/Qwen3-4B": {
+        "continuation": {
+          "valid": true,
+          "correct": 111,
+          "total": 231,
+          "accuracy": 0.4805194805194805,
+          "latency_mean_s": 0.8486382732816944,
+          "by_tier": {
+            "easy": {
+              "accuracy": 0.875,
+              "correct": 42,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.34234234234234234,
+              "correct": 38,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.4305555555555556,
+              "correct": 31,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.4316546762589928,
+              "correct": 60,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.581081081081081,
+              "correct": 43,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.4444444444444444,
+              "correct": 8,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/continuation_Qwen_Qwen3-4B.json"
+        },
+        "judgement": {
+          "valid": true,
+          "correct": 143,
+          "total": 231,
+          "accuracy": 0.6190476190476191,
+          "latency_mean_s": 1.2657379808118043,
+          "by_tier": {
+            "easy": {
+              "accuracy": 1.0,
+              "correct": 48,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.44144144144144143,
+              "correct": 49,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.6388888888888888,
+              "correct": 46,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.6402877697841727,
+              "correct": 89,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.5945945945945946,
+              "correct": 44,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.5555555555555556,
+              "correct": 10,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/judgement_Qwen_Qwen3-4B.json"
+        },
+        "panel2": {
+          "valid": true,
+          "correct": 161,
+          "total": 231,
+          "accuracy": 0.696969696969697,
+          "latency_mean_s": 0.3218950701784746,
+          "by_tier": {
+            "easy": {
+              "accuracy": 1.0,
+              "correct": 48,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.4774774774774775,
+              "correct": 53,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.8333333333333334,
+              "correct": 60,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.7338129496402878,
+              "correct": 102,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.6486486486486487,
+              "correct": 48,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.6111111111111112,
+              "correct": 11,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/panel2_Qwen_Qwen3-4B.json"
+        }
+      },
+      "Qwen/Qwen3-14B": {
+        "continuation": {
+          "valid": true,
+          "correct": 116,
+          "total": 231,
+          "accuracy": 0.5021645021645021,
+          "latency_mean_s": 0.878554106966161,
+          "by_tier": {
+            "easy": {
+              "accuracy": 0.8333333333333334,
+              "correct": 40,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.36036036036036034,
+              "correct": 40,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.5,
+              "correct": 36,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.4748201438848921,
+              "correct": 66,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.5,
+              "correct": 37,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.7222222222222222,
+              "correct": 13,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/continuation_Qwen_Qwen3-14B.json"
+        },
+        "judgement": {
+          "valid": true,
+          "correct": 138,
+          "total": 231,
+          "accuracy": 0.5974025974025974,
+          "latency_mean_s": 1.3753199410842514,
+          "by_tier": {
+            "easy": {
+              "accuracy": 0.9791666666666666,
+              "correct": 47,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.44144144144144143,
+              "correct": 49,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.5833333333333334,
+              "correct": 42,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.5683453237410072,
+              "correct": 79,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.6486486486486487,
+              "correct": 48,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.6111111111111112,
+              "correct": 11,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/judgement_Qwen_Qwen3-14B.json"
+        },
+        "panel2": {
+          "valid": true,
+          "correct": 162,
+          "total": 231,
+          "accuracy": 0.7012987012987013,
+          "latency_mean_s": 0.3558403799951367,
+          "by_tier": {
+            "easy": {
+              "accuracy": 1.0,
+              "correct": 48,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.4954954954954955,
+              "correct": 55,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.8194444444444444,
+              "correct": 59,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.6906474820143885,
+              "correct": 96,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.7162162162162162,
+              "correct": 53,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.7222222222222222,
+              "correct": 13,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/panel2_Qwen_Qwen3-14B.json"
+        }
+      },
+      "Qwen/Qwen3-32B": {
+        "continuation": {
+          "valid": true,
+          "correct": 125,
+          "total": 231,
+          "accuracy": 0.5411255411255411,
+          "latency_mean_s": 0.9602255121244367,
+          "by_tier": {
+            "easy": {
+              "accuracy": 0.875,
+              "correct": 42,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.43243243243243246,
+              "correct": 48,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.4861111111111111,
+              "correct": 35,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.5251798561151079,
+              "correct": 73,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.527027027027027,
+              "correct": 39,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.7222222222222222,
+              "correct": 13,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/continuation_Qwen_Qwen3-32B.json"
+        },
+        "judgement": {
+          "valid": true,
+          "correct": 161,
+          "total": 231,
+          "accuracy": 0.696969696969697,
+          "latency_mean_s": 1.7453089249280012,
+          "by_tier": {
+            "easy": {
+              "accuracy": 1.0,
+              "correct": 48,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.5135135135135135,
+              "correct": 57,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.7777777777777778,
+              "correct": 56,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.6690647482014388,
+              "correct": 93,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.7567567567567568,
+              "correct": 56,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.6666666666666666,
+              "correct": 12,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/judgement_Qwen_Qwen3-32B.json"
+        },
+        "panel2": {
+          "valid": true,
+          "correct": 178,
+          "total": 231,
+          "accuracy": 0.7705627705627706,
+          "latency_mean_s": 0.40001631036070195,
+          "by_tier": {
+            "easy": {
+              "accuracy": 1.0,
+              "correct": 48,
+              "total": 48
+            },
+            "hard": {
+              "accuracy": 0.5855855855855856,
+              "correct": 65,
+              "total": 111
+            },
+            "original": {
+              "accuracy": 0.9027777777777778,
+              "correct": 65,
+              "total": 72
+            }
+          },
+          "by_type": {
+            "choice": {
+              "accuracy": 0.7553956834532374,
+              "correct": 105,
+              "total": 139
+            },
+            "noul": {
+              "accuracy": 0.8108108108108109,
+              "correct": 60,
+              "total": 74
+            },
+            "score": {
+              "accuracy": 0.7222222222222222,
+              "correct": 13,
+              "total": 18
+            }
+          },
+          "path": "results/jevbench/panel2_Qwen_Qwen3-32B.json"
+        }
+      }
+    }
+  },
+  "paired": {
+    "reranker": {
+      "capacity": {
+        "continuation:Qwen3-Reranker-0.6B vs Qwen3-Reranker-4B": {
+          "n": 231,
+          "first_only_correct": 21,
+          "second_only_correct": 41,
+          "net": -20,
+          "mcnemar_p": 0.015134080997447081
+        },
+        "continuation:Qwen3-Reranker-4B vs Qwen3-Reranker-8B": {
+          "n": 231,
+          "first_only_correct": 16,
+          "second_only_correct": 16,
+          "net": 0,
+          "mcnemar_p": 1.0
+        },
+        "continuation:Qwen3-Reranker-0.6B vs Qwen3-Reranker-8B": {
+          "n": 231,
+          "first_only_correct": 21,
+          "second_only_correct": 41,
+          "net": -20,
+          "mcnemar_p": 0.015134080997447081
+        },
+        "judgement:Qwen3-Reranker-0.6B vs Qwen3-Reranker-4B": {
+          "n": 231,
+          "first_only_correct": 14,
+          "second_only_correct": 68,
+          "net": -54,
+          "mcnemar_p": 1.1349339471612943e-09
+        },
+        "judgement:Qwen3-Reranker-4B vs Qwen3-Reranker-8B": {
+          "n": 231,
+          "first_only_correct": 20,
+          "second_only_correct": 19,
+          "net": 1,
+          "mcnemar_p": 1.0
+        },
+        "judgement:Qwen3-Reranker-0.6B vs Qwen3-Reranker-8B": {
+          "n": 231,
+          "first_only_correct": 23,
+          "second_only_correct": 76,
+          "net": -53,
+          "mcnemar_p": 8.534327680773061e-08
+        },
+        "panel2:Qwen3-Reranker-0.6B vs Qwen3-Reranker-4B": {
+          "n": 231,
+          "first_only_correct": 24,
+          "second_only_correct": 76,
+          "net": -52,
+          "mcnemar_p": 1.8100026213029256e-07
+        },
+        "panel2:Qwen3-Reranker-4B vs Qwen3-Reranker-8B": {
+          "n": 231,
+          "first_only_correct": 22,
+          "second_only_correct": 24,
+          "net": -2,
+          "mcnemar_p": 0.8829959121223965
+        },
+        "panel2:Qwen3-Reranker-0.6B vs Qwen3-Reranker-8B": {
+          "n": 231,
+          "first_only_correct": 16,
+          "second_only_correct": 70,
+          "net": -54,
+          "mcnemar_p": 3.206380351081531e-09
+        }
+      },
+      "readout": {
+        "Qwen3-Reranker-0.6B: judgement vs continuation": {
+          "n": 231,
+          "first_only_correct": 44,
+          "second_only_correct": 39,
+          "net": 5,
+          "mcnemar_p": 0.6608836477612148
+        },
+        "Qwen3-Reranker-0.6B: panel2 vs judgement": {
+          "n": 231,
+          "first_only_correct": 50,
+          "second_only_correct": 36,
+          "net": 14,
+          "mcnemar_p": 0.1605784191339798
+        },
+        "Qwen3-Reranker-0.6B: panel2 vs continuation": {
+          "n": 231,
+          "first_only_correct": 61,
+          "second_only_correct": 42,
+          "net": 19,
+          "mcnemar_p": 0.07561910758625791
+        },
+        "Qwen3-Reranker-4B: judgement vs continuation": {
+          "n": 231,
+          "first_only_correct": 55,
+          "second_only_correct": 16,
+          "net": 39,
+          "mcnemar_p": 3.7532376885930504e-06
+        },
+        "Qwen3-Reranker-4B: panel2 vs judgement": {
+          "n": 231,
+          "first_only_correct": 27,
+          "second_only_correct": 15,
+          "net": 12,
+          "mcnemar_p": 0.08842954698775429
+        },
+        "Qwen3-Reranker-4B: panel2 vs continuation": {
+          "n": 231,
+          "first_only_correct": 65,
+          "second_only_correct": 14,
+          "net": 51,
+          "mcnemar_p": 5.194941262584352e-09
+        },
+        "Qwen3-Reranker-8B: judgement vs continuation": {
+          "n": 231,
+          "first_only_correct": 58,
+          "second_only_correct": 20,
+          "net": 38,
+          "mcnemar_p": 1.951909074364107e-05
+        },
+        "Qwen3-Reranker-8B: panel2 vs judgement": {
+          "n": 231,
+          "first_only_correct": 28,
+          "second_only_correct": 13,
+          "net": 15,
+          "mcnemar_p": 0.027533155829587486
+        },
+        "Qwen3-Reranker-8B: panel2 vs continuation": {
+          "n": 231,
+          "first_only_correct": 65,
+          "second_only_correct": 12,
+          "net": 53,
+          "mcnemar_p": 5.917714592428801e-10
+        }
+      }
+    },
+    "general": {
+      "capacity": {
+        "continuation:Qwen3-4B vs Qwen3-14B": {
+          "n": 231,
+          "first_only_correct": 14,
+          "second_only_correct": 19,
+          "net": -5,
+          "mcnemar_p": 0.48685024166479707
+        },
+        "continuation:Qwen3-14B vs Qwen3-32B": {
+          "n": 231,
+          "first_only_correct": 10,
+          "second_only_correct": 19,
+          "net": -9,
+          "mcnemar_p": 0.13604594767093658
+        },
+        "continuation:Qwen3-4B vs Qwen3-32B": {
+          "n": 231,
+          "first_only_correct": 16,
+          "second_only_correct": 30,
+          "net": -14,
+          "mcnemar_p": 0.054076031858869555
+        },
+        "judgement:Qwen3-4B vs Qwen3-14B": {
+          "n": 231,
+          "first_only_correct": 28,
+          "second_only_correct": 23,
+          "net": 5,
+          "mcnemar_p": 0.5758493477318467
+        },
+        "judgement:Qwen3-14B vs Qwen3-32B": {
+          "n": 231,
+          "first_only_correct": 17,
+          "second_only_correct": 40,
+          "net": -23,
+          "mcnemar_p": 0.003201543767450382
+        },
+        "judgement:Qwen3-4B vs Qwen3-32B": {
+          "n": 231,
+          "first_only_correct": 16,
+          "second_only_correct": 34,
+          "net": -18,
+          "mcnemar_p": 0.015346677832630107
+        },
+        "panel2:Qwen3-4B vs Qwen3-14B": {
+          "n": 231,
+          "first_only_correct": 21,
+          "second_only_correct": 22,
+          "net": -1,
+          "mcnemar_p": 1.0
+        },
+        "panel2:Qwen3-14B vs Qwen3-32B": {
+          "n": 231,
+          "first_only_correct": 14,
+          "second_only_correct": 30,
+          "net": -16,
+          "mcnemar_p": 0.022628841205914796
+        },
+        "panel2:Qwen3-4B vs Qwen3-32B": {
+          "n": 231,
+          "first_only_correct": 15,
+          "second_only_correct": 32,
+          "net": -17,
+          "mcnemar_p": 0.01862383661500644
+        }
+      },
+      "readout": {
+        "Qwen3-4B: judgement vs continuation": {
+          "n": 231,
+          "first_only_correct": 59,
+          "second_only_correct": 27,
+          "net": 32,
+          "mcnemar_p": 0.0007317100653124087
+        },
+        "Qwen3-4B: panel2 vs judgement": {
+          "n": 231,
+          "first_only_correct": 31,
+          "second_only_correct": 13,
+          "net": 18,
+          "mcnemar_p": 0.009559878856634896
+        },
+        "Qwen3-4B: panel2 vs continuation": {
+          "n": 231,
+          "first_only_correct": 68,
+          "second_only_correct": 18,
+          "net": 50,
+          "mcnemar_p": 5.2936895085725706e-08
+        },
+        "Qwen3-14B: judgement vs continuation": {
+          "n": 231,
+          "first_only_correct": 49,
+          "second_only_correct": 27,
+          "net": 22,
+          "mcnemar_p": 0.015440262020906361
+        },
+        "Qwen3-14B: panel2 vs judgement": {
+          "n": 231,
+          "first_only_correct": 38,
+          "second_only_correct": 14,
+          "net": 24,
+          "mcnemar_p": 0.001195120320007348
+        },
+        "Qwen3-14B: panel2 vs continuation": {
+          "n": 231,
+          "first_only_correct": 63,
+          "second_only_correct": 17,
+          "net": 46,
+          "mcnemar_p": 2.2661405044675457e-07
+        },
+        "Qwen3-32B: judgement vs continuation": {
+          "n": 231,
+          "first_only_correct": 61,
+          "second_only_correct": 25,
+          "net": 36,
+          "mcnemar_p": 0.0001303794299119954
+        },
+        "Qwen3-32B: panel2 vs judgement": {
+          "n": 231,
+          "first_only_correct": 29,
+          "second_only_correct": 12,
+          "net": 17,
+          "mcnemar_p": 0.011507789735333063
+        },
+        "Qwen3-32B: panel2 vs continuation": {
+          "n": 231,
+          "first_only_correct": 67,
+          "second_only_correct": 14,
+          "net": 53,
+          "mcnemar_p": 1.8890284038209312e-09
+        }
+      }
+    }
+  },
+  "validity_gate": {
+    "reranker": {
+      "Qwen/Qwen3-Reranker-0.6B": {
+        "valid": true,
+        "single_token_codes": true,
+        "unscorable_items": 0
+      },
+      "Qwen/Qwen3-Reranker-4B": {
+        "valid": true,
+        "single_token_codes": true,
+        "unscorable_items": 0
+      },
+      "Qwen/Qwen3-Reranker-8B": {
+        "valid": true,
+        "single_token_codes": true,
+        "unscorable_items": 0
+      }
+    },
+    "general": {
+      "Qwen/Qwen3-4B": {
+        "valid": true,
+        "single_token_codes": true,
+        "unscorable_items": 0
+      },
+      "Qwen/Qwen3-14B": {
+        "valid": true,
+        "single_token_codes": true,
+        "unscorable_items": 0
+      },
+      "Qwen/Qwen3-32B": {
+        "valid": true,
+        "single_token_codes": true,
+        "unscorable_items": 0
+      }
+    }
+  },
+  "order_effect": {
+    "reranker": {
+      "Qwen/Qwen3-Reranker-0.6B": {
+        "n": 231,
+        "accuracy_natural": 0.47619047619047616,
+        "accuracy_reversed": 0.4458874458874459,
+        "difference_pp": -3.0303030303030276,
+        "changed_fraction": 0.6883116883116883
+      },
+      "Qwen/Qwen3-Reranker-4B": {
+        "n": 231,
+        "accuracy_natural": 0.7012987012987013,
+        "accuracy_reversed": 0.6796536796536796,
+        "difference_pp": -2.164502164502169,
+        "changed_fraction": 0.22510822510822512
+      },
+      "Qwen/Qwen3-Reranker-8B": {
+        "n": 231,
+        "accuracy_natural": 0.70995670995671,
+        "accuracy_reversed": 0.6883116883116883,
+        "difference_pp": -2.164502164502169,
+        "changed_fraction": 0.16017316017316016
+      }
+    },
+    "general": {
+      "Qwen/Qwen3-4B": {
+        "n": 231,
+        "accuracy_natural": 0.696969696969697,
+        "accuracy_reversed": 0.6623376623376623,
+        "difference_pp": -3.463203463203468,
+        "changed_fraction": 0.19047619047619047
+      },
+      "Qwen/Qwen3-14B": {
+        "n": 231,
+        "accuracy_natural": 0.7012987012987013,
+        "accuracy_reversed": 0.696969696969697,
+        "difference_pp": -0.43290043290042934,
+        "changed_fraction": 0.15584415584415584
+      },
+      "Qwen/Qwen3-32B": {
+        "n": 231,
+        "accuracy_natural": 0.7705627705627706,
+        "accuracy_reversed": 0.7619047619047619,
+        "difference_pp": -0.8658008658008698,
+        "changed_fraction": 0.18181818181818182
+      }
+    }
+  },
+  "provenance": {
+    "reranker": {
+      "Qwen/Qwen3-Reranker-0.6B": {
+        "continuation": {
+          "path": "results/jevbench/continuation_Qwen_Qwen3-Reranker-0.6B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        },
+        "judgement": {
+          "path": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-0.6B.json",
+          "code_commit": "880a9f141176a75d7a8aba33529fac599537dd08"
+        },
+        "panel2": {
+          "path": "results/jevbench/panel2_Qwen_Qwen3-Reranker-0.6B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        }
+      },
+      "Qwen/Qwen3-Reranker-4B": {
+        "continuation": {
+          "path": "results/jevbench/continuation_Qwen_Qwen3-Reranker-4B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        },
+        "judgement": {
+          "path": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json",
+          "code_commit": "880a9f141176a75d7a8aba33529fac599537dd08"
+        },
+        "panel2": {
+          "path": "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json",
+          "code_commit": "c14f3bab8d93c144a7ed2bb8bf432541dba99d10"
+        }
+      },
+      "Qwen/Qwen3-Reranker-8B": {
+        "continuation": {
+          "path": "results/jevbench/continuation_Qwen_Qwen3-Reranker-8B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        },
+        "judgement": {
+          "path": "results/jevbench/judgement_Qwen_Qwen3-Reranker-8B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        },
+        "panel2": {
+          "path": "results/jevbench/panel2_Qwen_Qwen3-Reranker-8B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        }
+      }
+    },
+    "general": {
+      "Qwen/Qwen3-4B": {
+        "continuation": {
+          "path": "results/jevbench/continuation_Qwen_Qwen3-4B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        },
+        "judgement": {
+          "path": "results/jevbench/judgement_Qwen_Qwen3-4B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        },
+        "panel2": {
+          "path": "results/jevbench/panel2_Qwen_Qwen3-4B.json",
+          "code_commit": "c14f3bab8d93c144a7ed2bb8bf432541dba99d10"
+        }
+      },
+      "Qwen/Qwen3-14B": {
+        "continuation": {
+          "path": "results/jevbench/continuation_Qwen_Qwen3-14B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        },
+        "judgement": {
+          "path": "results/jevbench/judgement_Qwen_Qwen3-14B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        },
+        "panel2": {
+          "path": "results/jevbench/panel2_Qwen_Qwen3-14B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        }
+      },
+      "Qwen/Qwen3-32B": {
+        "continuation": {
+          "path": "results/jevbench/continuation_Qwen_Qwen3-32B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        },
+        "judgement": {
+          "path": "results/jevbench/judgement_Qwen_Qwen3-32B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        },
+        "panel2": {
+          "path": "results/jevbench/panel2_Qwen_Qwen3-32B.json",
+          "code_commit": "5547ea19bef813bc44b61b8bba2d44857277d51b"
+        }
+      }
+    }
+  }
+}
