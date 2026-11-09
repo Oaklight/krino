@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-09T08:36:55.808520+00:00",
+  "generated_at": "2026-11-09T08:40:54.474719+00:00",
   "eval_runs": [
     {
       "run_id": "cross-encoder-bert",
@@ -4120,7 +4120,7 @@
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-14B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.5022,
+      "accuracy": 0.502165,
       "correct": 116,
       "total": 231,
       "by_type": {
@@ -4176,7 +4176,7 @@
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-32B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.5411,
+      "accuracy": 0.541126,
       "correct": 125,
       "total": 231,
       "by_type": {
@@ -4232,7 +4232,7 @@
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4805,
+      "accuracy": 0.480519,
       "correct": 111,
       "total": 231,
       "by_type": {
@@ -4288,7 +4288,7 @@
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-Reranker-0.6B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.3939,
+      "accuracy": 0.393939,
       "correct": 91,
       "total": 231,
       "by_type": {
@@ -4344,7 +4344,7 @@
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-Reranker-4B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4805,
+      "accuracy": 0.480519,
       "correct": 111,
       "total": 231,
       "by_type": {
@@ -4400,7 +4400,7 @@
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-Reranker-8B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4805,
+      "accuracy": 0.480519,
       "correct": 111,
       "total": 231,
       "by_type": {
@@ -4440,6 +4440,118 @@
       "latency_ms": 869.3
     },
     {
+      "run_id": "jevbench-h2o-lightning-4b-oneway",
+      "model": {
+        "name": "H2O-Lightning-4B (third-party)",
+        "params": "4B",
+        "type": "causal"
+      },
+      "model_id": "h2oai/h2o-lightning-4b",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "third-party",
+      "readout": "native-decision-oneway",
+      "readout_detail": "one forward; the LM head's next-token read on the label tokens at the answer slot; causal (one-way) attention",
+      "source_file": "results/jevbench/h2o-lightning-4b-oneway.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.874459,
+      "correct": 202,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.8921,
+          "correct": 124,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.8378,
+          "correct": 62,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.8889,
+          "correct": 16,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "original": {
+          "accuracy": 0.9722,
+          "correct": 70,
+          "total": 72
+        },
+        "hard": {
+          "accuracy": 0.7568,
+          "correct": 84,
+          "total": 111
+        }
+      },
+      "latency_ms": 38.5
+    },
+    {
+      "run_id": "jevbench-h2o-lightning-4b",
+      "model": {
+        "name": "H2O-Lightning-4B (third-party)",
+        "params": "4B",
+        "type": "causal"
+      },
+      "model_id": "h2oai/h2o-lightning-4b",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "third-party",
+      "readout": "native-decision",
+      "readout_detail": "one forward; the LM head's next-token read on the label tokens at the answer slot; two-way (bidirectional) attention over the whole prompt",
+      "source_file": "results/jevbench/h2o-lightning-4b.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.891775,
+      "correct": 206,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.9065,
+          "correct": 126,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.8649,
+          "correct": 64,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.8889,
+          "correct": 16,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "original": {
+          "accuracy": 1.0,
+          "correct": 72,
+          "total": 72
+        },
+        "hard": {
+          "accuracy": 0.7748,
+          "correct": 86,
+          "total": 111
+        }
+      },
+      "latency_ms": 38.8
+    },
+    {
       "run_id": "jevbench-judgement_Qwen_Qwen3-14B",
       "model": {
         "name": "Qwen/Qwen3-14B",
@@ -4456,7 +4568,7 @@
       "source_file": "results/jevbench/judgement_Qwen_Qwen3-14B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.5974,
+      "accuracy": 0.597403,
       "correct": 138,
       "total": 231,
       "by_type": {
@@ -4512,7 +4624,7 @@
       "source_file": "results/jevbench/judgement_Qwen_Qwen3-32B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.697,
+      "accuracy": 0.69697,
       "correct": 161,
       "total": 231,
       "by_type": {
@@ -4568,7 +4680,7 @@
       "source_file": "results/jevbench/judgement_Qwen_Qwen3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.619,
+      "accuracy": 0.619048,
       "correct": 143,
       "total": 231,
       "by_type": {
@@ -4624,7 +4736,7 @@
       "source_file": "results/jevbench/judgement_Qwen_Qwen3-Reranker-8B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.645,
+      "accuracy": 0.645022,
       "correct": 149,
       "total": 231,
       "by_type": {
@@ -4680,7 +4792,7 @@
       "source_file": "results/jevbench/krino-ettin-150m-heads.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.368,
+      "accuracy": 0.367965,
       "correct": 85,
       "total": 231,
       "by_type": {
@@ -4736,7 +4848,7 @@
       "source_file": "results/jevbench/krino-modernbert-base-heads.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.3247,
+      "accuracy": 0.324675,
       "correct": 75,
       "total": 231,
       "by_type": {
@@ -4792,7 +4904,7 @@
       "source_file": "results/jevbench/krino-qwen3-0.6b-heads.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.342,
+      "accuracy": 0.341991,
       "correct": 79,
       "total": 231,
       "by_type": {
@@ -4848,7 +4960,7 @@
       "source_file": "results/jevbench/krino-qwen3-reranker-0.6b-heads.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.3636,
+      "accuracy": 0.363636,
       "correct": 84,
       "total": 231,
       "by_type": {
@@ -4904,7 +5016,7 @@
       "source_file": "results/jevbench/krino-qwen3-reranker-4b-heads.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4286,
+      "accuracy": 0.428571,
       "correct": 99,
       "total": 231,
       "by_type": {
@@ -4960,7 +5072,7 @@
       "source_file": "results/jevbench/krino-qwen3.5-4b-heads.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.3463,
+      "accuracy": 0.34632,
       "correct": 80,
       "total": 231,
       "by_type": {
@@ -5016,7 +5128,7 @@
       "source_file": "results/jevbench/logit_mistralai_Ministral-3-3B-Base-2512.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4545,
+      "accuracy": 0.454545,
       "correct": 105,
       "total": 231,
       "by_type": {
@@ -5072,7 +5184,7 @@
       "source_file": "results/jevbench/logit_openbmb_MiniCPM3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4589,
+      "accuracy": 0.458874,
       "correct": 106,
       "total": 231,
       "by_type": {
@@ -5128,7 +5240,7 @@
       "source_file": "results/jevbench/logit_openbmb_MiniCPM5-2B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4156,
+      "accuracy": 0.415584,
       "correct": 96,
       "total": 231,
       "by_type": {
@@ -5184,7 +5296,7 @@
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-14B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.7013,
+      "accuracy": 0.701299,
       "correct": 162,
       "total": 231,
       "by_type": {
@@ -5240,7 +5352,7 @@
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-32B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.7706,
+      "accuracy": 0.770563,
       "correct": 178,
       "total": 231,
       "by_type": {
@@ -5296,7 +5408,7 @@
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-4B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.6234,
+      "accuracy": 0.623377,
       "correct": 144,
       "total": 231,
       "by_type": {
@@ -5352,7 +5464,7 @@
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-4B-Instruct-2507.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.684,
+      "accuracy": 0.683983,
       "correct": 158,
       "total": 231,
       "by_type": {
@@ -5408,7 +5520,7 @@
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.697,
+      "accuracy": 0.69697,
       "correct": 161,
       "total": 231,
       "by_type": {
@@ -5464,7 +5576,7 @@
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-Reranker-0.6B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4762,
+      "accuracy": 0.47619,
       "correct": 110,
       "total": 231,
       "by_type": {
@@ -5520,7 +5632,7 @@
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.7013,
+      "accuracy": 0.701299,
       "correct": 162,
       "total": 231,
       "by_type": {
@@ -5576,7 +5688,7 @@
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-Reranker-8B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.71,
+      "accuracy": 0.709957,
       "correct": 164,
       "total": 231,
       "by_type": {
@@ -5632,7 +5744,7 @@
       "source_file": "results/jevbench/raw-qwen3-reranker-4b.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.6277,
+      "accuracy": 0.627706,
       "correct": 145,
       "total": 231,
       "by_type": {
@@ -5688,7 +5800,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen2.5-1.5B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4762,
+      "accuracy": 0.47619,
       "correct": 110,
       "total": 231,
       "by_type": {
@@ -5744,7 +5856,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen2.5-3B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.5714,
+      "accuracy": 0.571429,
       "correct": 132,
       "total": 231,
       "by_type": {
@@ -5800,7 +5912,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-1.7B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4675,
+      "accuracy": 0.467532,
       "correct": 108,
       "total": 231,
       "by_type": {
@@ -5856,7 +5968,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-1.7B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4113,
+      "accuracy": 0.411255,
       "correct": 95,
       "total": 231,
       "by_type": {
@@ -5912,7 +6024,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.5368,
+      "accuracy": 0.536797,
       "correct": 124,
       "total": 231,
       "by_type": {
@@ -5968,7 +6080,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Instruct-2507.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.5887,
+      "accuracy": 0.588745,
       "correct": 136,
       "total": 231,
       "by_type": {
@@ -6024,7 +6136,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Thinking-2507.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.5541,
+      "accuracy": 0.554113,
       "correct": 128,
       "total": 231,
       "by_type": {
@@ -6080,7 +6192,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.619,
+      "accuracy": 0.619048,
       "correct": 143,
       "total": 231,
       "by_type": {
@@ -6136,7 +6248,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-0.6B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4156,
+      "accuracy": 0.415584,
       "correct": 96,
       "total": 231,
       "by_type": {
@@ -6192,7 +6304,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.6494,
+      "accuracy": 0.649351,
       "correct": 150,
       "total": 231,
       "by_type": {
@@ -6248,7 +6360,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-8B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.645,
+      "accuracy": 0.645022,
       "correct": 149,
       "total": 231,
       "by_type": {
@@ -6304,7 +6416,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_microsoft_Phi-4-mini-instruct.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.6494,
+      "accuracy": 0.649351,
       "correct": 150,
       "total": 231,
       "by_type": {
@@ -6360,7 +6472,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_mistralai_Ministral-3-3B-Base-2512.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.5584,
+      "accuracy": 0.558442,
       "correct": 129,
       "total": 231,
       "by_type": {
@@ -6416,7 +6528,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_openbmb_MiniCPM3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.3377,
+      "accuracy": 0.337662,
       "correct": 78,
       "total": 231,
       "by_type": {
@@ -6472,7 +6584,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_openbmb_MiniCPM5-2B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4719,
+      "accuracy": 0.471861,
       "correct": 109,
       "total": 231,
       "by_type": {
@@ -6528,7 +6640,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_judgement_zeroentropy_zerank-2-reranker.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.6234,
+      "accuracy": 0.623377,
       "correct": 144,
       "total": 231,
       "by_type": {
@@ -6584,7 +6696,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen2.5-1.5B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4719,
+      "accuracy": 0.471861,
       "correct": 109,
       "total": 231,
       "by_type": {
@@ -6640,7 +6752,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen2.5-3B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4459,
+      "accuracy": 0.445887,
       "correct": 103,
       "total": 231,
       "by_type": {
@@ -6696,7 +6808,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4848,
+      "accuracy": 0.484848,
       "correct": 112,
       "total": 231,
       "by_type": {
@@ -6752,7 +6864,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Instruct-2507.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4762,
+      "accuracy": 0.47619,
       "correct": 110,
       "total": 231,
       "by_type": {
@@ -6808,7 +6920,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Thinking-2507.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4459,
+      "accuracy": 0.445887,
       "correct": 103,
       "total": 231,
       "by_type": {
@@ -6864,7 +6976,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4805,
+      "accuracy": 0.480519,
       "correct": 111,
       "total": 231,
       "by_type": {
@@ -6920,7 +7032,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-0.6B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.3939,
+      "accuracy": 0.393939,
       "correct": 91,
       "total": 231,
       "by_type": {
@@ -6976,7 +7088,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-4B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4805,
+      "accuracy": 0.480519,
       "correct": 111,
       "total": 231,
       "by_type": {
@@ -7032,7 +7144,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-8B.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4805,
+      "accuracy": 0.480519,
       "correct": 111,
       "total": 231,
       "by_type": {
@@ -7088,7 +7200,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_logit_microsoft_Phi-4-mini-instruct.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.5022,
+      "accuracy": 0.502165,
       "correct": 116,
       "total": 231,
       "by_type": {
@@ -7144,7 +7256,7 @@
       "source_file": "model/experiments/logit_prov/jevbench_logit_zeroentropy_zerank-2-reranker.json",
       "benchmark": "jevbench",
       "n": 231,
-      "accuracy": 0.4372,
+      "accuracy": 0.437229,
       "correct": 101,
       "total": 231,
       "by_type": {
@@ -7493,7 +7605,7 @@
         "model/experiments/resolution_inputs.json"
       ]
     },
-    "instrumented_rows": 55,
+    "instrumented_rows": 57,
     "banking77": {
       "trained_pp": 95.2,
       "trained_model": "Ettin-150m r128",

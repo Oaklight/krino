@@ -1,0 +1,73 @@
+{
+  "_provenance": {
+    "model_id": "h2oai/h2o-lightning-4b",
+    "revision": "659fc412de8486dbc2477b0d1cb4121e97e72471",
+    "snapshot_path": "<host>/h2o-lightning-4b",
+    "dtype": "bfloat16",
+    "device": "cuda:0",
+    "device_name": "NVIDIA H100 NVL",
+    "strategy": "native_decision",
+    "readout": "one forward; the LM head's next-token read on the label tokens at the answer slot; two-way (bidirectional) attention over the whole prompt",
+    "serving": "bash h2o-lightning-4b/serve.sh (ONE_ENGINE=1, --attention-backend TRITON_ATTN, MAX_LEN 40960, shipped serve_config.json)",
+    "vllm_version": "0.30.0",
+    "vllm_build": "b05cc29ab813895947954c268c4ec41ca0da1306",
+    "vllm_build_check": "engine/vllm_per_request_attention.SHA256SUMS (30 files; sha256sum -c and serve.sh on every start)",
+    "python_version": "3.10.12",
+    "torch_version": "2.13.0+cu130",
+    "transformers_version": "5.20.2",
+    "torchcodec_version": "0.17.0",
+    "harness": "fstandhartinger/jevbench@609a664e81f46e03731600bd7bd9f1b7a61257c5",
+    "command": "python3 -m jevbench.cli run --tasks <INTERNAL>/dev_tasks.jsonl --adapter typesafe --endpoint http://127.0.0.1:8741 --key-env '' --model h2oai/h2o-lightning-4b --cost-basis self_hosted_gpu --reserve-usd 0 --results <OUT>/results.jsonl --raw-dir <OUT>/raw --ledger <OUT>/ledger.jsonl --manifest <OUT>/manifest.json --run-label h2o-lightning-4b-dev --delay-s 0",
+    "date_utc": "2026-11-09T08:02:56.247109+00:00",
+    "started_utc": "2026-11-09T08:02:21.804628+00:00",
+    "items": 812,
+    "dataset": "dev-812",
+    "dataset_file": "data/benchmarks/dev/dev_800.jsonl",
+    "dataset_sha256": "3a8af06e0acdd95b2e2ce58d36ffb9fc57c9bc0d2ecf7db05d5aae3622fc6a04",
+    "rows_in_file": 828,
+    "scored_records": 812,
+    "excluded_records": 16,
+    "exclusion": "withheld_gold abstention items: the gold label is deliberately absent from the criteria, so a typed readout over the supplied options cannot score them; excluded, not counted wrong",
+    "task_conversion": "TypedQuestion jsonl -> harness task rows: choice labels are the criteria keys and the expected value is the record label; noul labels are [no, yes] and the expected value is yes/no from the boolean; score labels are 0..K-1 and the expected value is the integer level. Rows whose gold label is absent from the options (label_kind withheld_gold) are excluded."
+  },
+  "summary": {
+    "overall": {
+      "accuracy": 0.7253694581280788,
+      "correct": 589,
+      "total": 812,
+      "failed": 0
+    },
+    "by_type": {
+      "choice": {
+        "correct": 239,
+        "total": 322,
+        "accuracy": 0.7422360248447205
+      },
+      "noul": {
+        "correct": 287,
+        "total": 391,
+        "accuracy": 0.7340153452685422
+      },
+      "score": {
+        "correct": 63,
+        "total": 99,
+        "accuracy": 0.6363636363636364
+      }
+    },
+    "coverage": 1.0
+  },
+  "latency": {
+    "n": 812,
+    "mean_s": 0.0294,
+    "median_s": 0.0267,
+    "p95_s": 0.0462,
+    "min_s": 0.0169,
+    "max_s": 0.2129,
+    "input_tokens_mean": 285.8,
+    "input_tokens_median": 168.0,
+    "input_tokens_max": 2872,
+    "output_tokens": [
+      1
+    ]
+  }
+}

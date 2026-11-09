@@ -16,7 +16,9 @@ export default function BenchmarksPage() {
             JevBench (231 curated items across 3 difficulty tiers), sorted by overall
             accuracy. Every row names the readout that produced it: trained heads,
             option-text continuation, per-option judgement and native reranker scores are
-            separate instruments and are not directly comparable. Hover a row for the
+            separate instruments and are not directly comparable. H2O-Lightning-4B is a
+            third-party trained model scored through its own serving stack; its native
+            decision rows are not a zero-shot readout cell. Hover a row for the
             recorded readout and model id. Trained-head rows also carry the project
             generation: v1 heads predate the v4 line, so a v1 head on a Qwen3.5-4B
             backbone is not a v4 result.

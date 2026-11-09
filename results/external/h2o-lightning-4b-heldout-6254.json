@@ -1,0 +1,76 @@
+{
+  "_provenance": {
+    "model_id": "h2oai/h2o-lightning-4b",
+    "revision": "659fc412de8486dbc2477b0d1cb4121e97e72471",
+    "snapshot_path": "<host>/h2o-lightning-4b",
+    "dtype": "bfloat16",
+    "device": "cuda:0",
+    "device_name": "NVIDIA H100 NVL",
+    "strategy": "native_decision",
+    "readout": "one forward; the LM head's next-token read on the label tokens at the answer slot; two-way (bidirectional) attention over the whole prompt",
+    "serving": "bash h2o-lightning-4b/serve.sh (ONE_ENGINE=1, --attention-backend TRITON_ATTN, MAX_LEN 40960, shipped serve_config.json)",
+    "vllm_version": "0.30.0",
+    "vllm_build": "b05cc29ab813895947954c268c4ec41ca0da1306",
+    "vllm_build_check": "engine/vllm_per_request_attention.SHA256SUMS (30 files; sha256sum -c and serve.sh on every start)",
+    "python_version": "3.10.12",
+    "torch_version": "2.13.0+cu130",
+    "transformers_version": "5.20.2",
+    "torchcodec_version": "0.17.0",
+    "harness": "fstandhartinger/jevbench@609a664e81f46e03731600bd7bd9f1b7a61257c5",
+    "command": "python3 -m jevbench.cli run --tasks <INTERNAL>/heldout_tasks.jsonl --adapter typesafe --endpoint http://127.0.0.1:8741 --key-env '' --model h2oai/h2o-lightning-4b --cost-basis self_hosted_gpu --reserve-usd 0 --results <OUT>/results.jsonl --raw-dir <OUT>/raw --ledger <OUT>/ledger.jsonl --manifest <OUT>/manifest.json --run-label h2o-lightning-4b-heldout --delay-s 0",
+    "date_utc": "2026-11-09T08:11:14.798049+00:00",
+    "started_utc": "2026-11-09T08:02:56.317117+00:00",
+    "items": 6254,
+    "dataset": "canonical-heldout-6400",
+    "dataset_file": "model/experiments/canonical/heldout_6400.json",
+    "dataset_sha256": "b2cde7f4012fa02e0fb186a761f6863b76f4b60ebfba8137b064049efd812628",
+    "selected_records": 6424,
+    "scored_records": 6254,
+    "excluded_records": 170,
+    "exclusion": "withheld_gold abstention items: the gold label is deliberately absent from the criteria, so a typed readout over the supplied options cannot score them; excluded, not counted wrong",
+    "task_conversion": "TypedQuestion jsonl -> harness task rows: choice labels are the criteria keys and the expected value is the record label; noul labels are [no, yes] and the expected value is yes/no from the boolean; score labels are 0..K-1 and the expected value is the integer level. Rows whose gold label is absent from the options (label_kind withheld_gold) are excluded.",
+    "corpus_sha256_observed": "8eb3b2a490a04c600bd652ebeed738c02976bb77e731b337efa513805c62e4f6",
+    "corpus_sha256_in_spec": "07600293087d207e1f60537f721a83d157a4f8091d300948aa3e1709bc6f1e53",
+    "ids_sha256": "492ee0afd47bfe819dee690127b8cfc2fab8c39fe10c4ebd6293754a53dcf87b"
+  },
+  "summary": {
+    "overall": {
+      "accuracy": 0.7273744803325871,
+      "correct": 4549,
+      "total": 6254,
+      "failed": 0
+    },
+    "by_type": {
+      "score": {
+        "correct": 436,
+        "total": 786,
+        "accuracy": 0.55470737913486
+      },
+      "noul": {
+        "correct": 2269,
+        "total": 2995,
+        "accuracy": 0.7575959933222036
+      },
+      "choice": {
+        "correct": 1844,
+        "total": 2473,
+        "accuracy": 0.7456530529720987
+      }
+    },
+    "coverage": 1.0
+  },
+  "latency": {
+    "n": 6254,
+    "mean_s": 0.0304,
+    "median_s": 0.0274,
+    "p95_s": 0.0477,
+    "min_s": 0.0173,
+    "max_s": 0.2252,
+    "input_tokens_mean": 310.5,
+    "input_tokens_median": 181.5,
+    "input_tokens_max": 5744,
+    "output_tokens": [
+      1
+    ]
+  }
+}

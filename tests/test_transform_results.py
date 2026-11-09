@@ -224,6 +224,16 @@ class TestDeriveReadout:
     def test_raw_reranker_mode(self):
         assert transform.derive_readout(Path("raw-M.json"), {"mode": "raw_reranker"}) == "native-reranker"
 
+    def test_native_decision(self):
+        path = Path("h2o-M.json")
+        raw = {"_provenance": {"strategy": "native_decision"}}
+        assert transform.derive_readout(path, raw) == "native-decision"
+
+    def test_native_decision_oneway(self):
+        path = Path("h2o-M-oneway.json")
+        raw = {"_provenance": {"strategy": "native_decision_oneway"}}
+        assert transform.derive_readout(path, raw) == "native-decision-oneway"
+
     def test_trained_heads_by_suffix(self):
         assert transform.derive_readout(Path("krino-M-heads.json"), {}) == "trained-heads"
 
@@ -261,7 +271,7 @@ class TestBuildJevbenchRun:
         assert run["method"] == "zero-shot"
         assert run["n"] == 231
         assert run["total"] == 231
-        assert run["accuracy"] == 0.619
+        assert run["accuracy"] == 0.619048
 
     def test_trained_heads_file_uses_its_own_accuracy(self, tmp_path):
         path = tmp_path / "krino-ettin-150m-heads.json"
@@ -277,7 +287,7 @@ class TestBuildJevbenchRun:
         assert run["method"] == "trained-heads"
         assert run["model"]["name"] == "Ettin-150m (trained)"
         assert run["n"] == 231
-        assert run["accuracy"] == 0.368
+        assert run["accuracy"] == 0.367965
 
     def test_unlabelled_file_is_skipped(self, tmp_path):
         path = tmp_path / "mystery.json"
@@ -290,7 +300,10 @@ class TestJevbenchSourceFiles:
         runs = transform.transform_jevbench()
         assert runs
         for run in runs:
-            assert run["readout"] in {"trained-heads", "continuation", "judgement", "native-reranker", "panel2"}
+            assert run["readout"] in {
+                "trained-heads", "continuation", "judgement", "native-reranker", "panel2",
+                "native-decision", "native-decision-oneway",
+            }
             assert run["source_file"]
 
     def test_logit_prov_judgement_and_continuation_are_read(self):
@@ -395,7 +408,7 @@ class TestLanding:
         assert landing["resolution"]["dev_card_min_pp"] == 5
         assert landing["resolution"]["dev_card_max_pp"] == 6
 
-        assert landing["instrumented_rows"] == 55
+        assert landing["instrumented_rows"] == 57
         assert landing["banking77"]["trained_pp"] == 95.2
         assert landing["banking77"]["jev_pp"] == 75.0
 
@@ -410,3 +423,28 @@ class TestLanding:
         assert landing["banking77"]["jev_source_file"] in sources
         for section in ("judgement_vs_continuation", "post_trained_4b", "resolution"):
             assert set(landing[section]["source_files"]) <= set(sources)
+
+
+class TestThirdPartyCells:
+    """H2O-Lightning-4B is a trained third-party model, not a readout cell."""
+
+    CELLS = (("h2o-lightning-4b", "native_decision", 206), ("h2o-lightning-4b-oneway", "native_decision_oneway", 202))
+
+    def test_cells_carry_strategy_accuracy_and_latency(self):
+        for name, strategy, correct in self.CELLS:
+            raw = json.loads((REPO_ROOT / "results" / "jevbench" / f"{name}.json").read_text())
+            assert raw["_provenance"]["strategy"] == strategy
+            assert raw["_provenance"]["model_id"] == "h2oai/h2o-lightning-4b"
+            assert raw["summary"]["overall"]["correct"] == correct
+            assert raw["summary"]["overall"]["total"] == 231
+            assert raw["latency"]["n"] == 231
+            assert raw["latency"]["mean_s"] > 0
+
+    def test_rows_are_third_party(self):
+        runs = {run["run_id"]: run for run in transform.transform_jevbench()}
+        two_way = runs["jevbench-h2o-lightning-4b"]
+        one_way = runs["jevbench-h2o-lightning-4b-oneway"]
+        assert two_way["method"] == one_way["method"] == "third-party"
+        assert two_way["readout"] == "native-decision"
+        assert one_way["readout"] == "native-decision-oneway"
+        assert two_way["latency_ms"] is not None
