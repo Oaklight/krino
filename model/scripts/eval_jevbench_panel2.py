@@ -80,6 +80,7 @@ from model.evaluation.jevbench import summarize, tier_from_id
 from model.evaluation.panel2 import (
     CODES,
     ORDER_TEMPLATES,
+    check_read_layout,
     choose_option,
     code_token_ids,
     codes_for,
@@ -90,6 +91,7 @@ from model.evaluation.panel2 import (
     parse_read_spec,
     pick_code_form,
     position_diagnostics,
+    read_logits,
     read_specs,
     render_panel2,
     tie_report,
@@ -245,58 +247,6 @@ def check_codes(args: argparse.Namespace) -> int:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(payload + "\n")
     return 0
-
-
-def check_read_layout(model: Any, output: Any) -> None:
-    """Fail loudly if the hidden-state layout is not the one the reads assume.
-
-    Verified on transformers 5.21: the tuple has ``n_layers + 1`` entries,
-    index 0 is the embedding output, index k is the output of block k for
-    ``1 <= k <= n_layers - 1``, and the last entry is the final normed state
-    rather than block ``n_layers``'s raw output.  The last entry must be the
-    tensor the LM head reads; if a library change breaks that, a middle-layer
-    read would silently mean a different layer.
-    """
-    hidden_states = output.hidden_states
-    n_layers = int(model.config.num_hidden_layers)
-    if len(hidden_states) != n_layers + 1:
-        raise RuntimeError(
-            f"hidden-state tuple has {len(hidden_states)} entries for "
-            f"{n_layers} blocks; the read layout no longer matches read_specs"
-        )
-    if not torch.equal(model.lm_head(hidden_states[-1]), output.logits):
-        raise RuntimeError(
-            "the last hidden state is not the tensor the LM head reads; "
-            "hidden-state semantics changed"
-        )
-
-
-def read_logits(
-    model: Any,
-    hidden_states: tuple[Any, ...],
-    spec: tuple[str, int] | tuple[str],
-    last_logits: Any,
-) -> Any:
-    """Logits from one declared read of the final position's hidden states.
-
-    ``last`` returns the model's own next-token logits unchanged.  A
-    middle-layer read applies the final norm and the LM head to a
-    representation that norm was never trained for: the logit-lens caveat.
-    ``mean_last_n`` averages raw block outputs and excludes the final normed
-    entry, so the average is over the last n blocks the tuple exposes.
-    """
-    kind = spec[0]
-    if kind == "last":
-        return last_logits
-    if kind == "layer":
-        hidden = hidden_states[spec[1]][0, -1]
-    elif kind == "mean_last_n":
-        hidden = torch.stack(
-            [state[0, -1] for state in hidden_states[-(spec[1] + 1):-1]]
-        ).mean(0)
-    else:
-        raise ValueError(f"unknown read spec {spec!r}")
-    return model.lm_head(model.model.norm(hidden)).float()
 
 
 def score_prompt(
