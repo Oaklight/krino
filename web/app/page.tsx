@@ -23,6 +23,7 @@ export default function HomePage() {
   const band = landing.post_trained_4b;
   const resolution = landing.resolution;
   const banking = landing.banking77;
+  const p2 = landing.panel2_vs_judgement;
 
   const loss = jvc.losses[0];
   const bandNames = band.checkpoints.map((checkpoint) => checkpoint.model_id).join(", ");
@@ -103,6 +104,14 @@ export default function HomePage() {
             Post-training that moves the objective toward the readout helps: a 4B
             base scores {pct(band.base_pp)}, while the three-checkpoint 4B judgement
             band ({bandNames}) scores {pctRange(band.min_pp, band.max_pp)}.
+          </li>
+          <li>
+            Reading one code token per option at a single answer position
+            (panel 2) beats per-option judgement on {p2.wins} of {p2.measured}{" "}
+            checkpoints where both exist, by {ppRange(p2.min_pp, p2.max_pp)}, and
+            it costs one forward per item instead of one per option. The gain is
+            confined to <code className="font-mono text-text">choice</code>{" "}
+            questions; it does not move noul or score.
           </li>
           <li>
             JevBench 231 cannot resolve differences below about{" "}

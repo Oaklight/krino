@@ -343,6 +343,7 @@ READOUT_BY_STRATEGY: dict[str, str] = {
     "judgement": "judgement",
     "description": "continuation",
     "reranker_native": "native-reranker",
+    "panel2_vocab_code": "panel2",
 }
 
 
@@ -388,7 +389,11 @@ def build_jevbench_run(filepath: Path) -> dict | None:
 
     # Files written by eval_jevbench_logit.py nest the aggregate under
     # "summary"; the trained-head files put the same keys at the top level.
+    # The panel-2 cells nest it one level deeper, under metrics.natural.
     summary = raw.get("summary", raw)
+    panel2_natural = (raw.get("metrics") or {}).get("natural")
+    if isinstance(panel2_natural, dict):
+        summary = panel2_natural.get("summary", summary)
     overall = summary.get("overall") or raw.get("overall") or {}
     by_type = summary.get("by_type", {})
     by_tier = summary.get("by_tier", {})
@@ -455,7 +460,12 @@ def jevbench_source_files() -> list[Path]:
     paths: list[Path] = []
     if JEVBENCH_DIR.exists():
         for filepath in sorted(JEVBENCH_DIR.glob("*.json")):
-            if filepath.stem in JEVBENCH_META or filepath.stem.startswith("logit_"):
+            if (
+                filepath.stem in JEVBENCH_META
+                or filepath.stem.startswith("logit_")
+                or (filepath.stem.startswith("panel2_") and not filepath.stem.startswith("panel2_summary")
+                    and not filepath.stem.startswith("panel2_code"))
+            ):
                 paths.append(filepath)
     if LOGIT_PROV_DIR.exists():
         for pattern in ("jevbench_judgement_*.json", "jevbench_logit_*.json"):
@@ -616,6 +626,20 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
     if jev_run:
         jev_banking = jev_run["results"]["by_source"].get("banking77", {}).get("accuracy")
 
+    panel2_pairs: list[dict] = []
+    for model_id, by_readout in cells.items():
+        judgement = by_readout.get("judgement")
+        panel2 = by_readout.get("panel2")
+        if not (judgement and panel2):
+            continue
+        panel2_pairs.append({
+            "model_id": model_id,
+            "name": judgement["model"]["name"],
+            "judgement_pp": round(judgement["accuracy"] * 100, 1),
+            "panel2_pp": round(panel2["accuracy"] * 100, 1),
+            "gap_pp": round((panel2["accuracy"] - judgement["accuracy"]) * 100, 1),
+        })
+
     pair_sources = sorted({
         by_readout[readout]["source_file"]
         for by_readout in cells.values()
@@ -623,6 +647,12 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
         for readout in ("judgement", "continuation")
     })
     band_sources = sorted({cells[entry["model_id"]]["judgement"]["source_file"] for entry in band})
+    panel2_sources = sorted({
+        by_readout[readout]["source_file"]
+        for by_readout in cells.values()
+        if by_readout.get("judgement") and by_readout.get("panel2")
+        for readout in ("judgement", "panel2")
+    })
 
     resolution_sources = sorted({
         source_file_label(RESOLUTION_INPUTS_PATH),
@@ -645,6 +675,7 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
         source
         for source in (
             *pair_sources,
+            *panel2_sources,
             *band_sources,
             *resolution_sources,
             source_file_label(OUTPUT_PATH),
@@ -667,6 +698,19 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
             "above_10_max_pp": max((pair["gap_pp"] for pair in above), default=None),
             "largest_tier": largest_tier,
             "source_files": pair_sources,
+        },
+        "panel2_vs_judgement": {
+            "measured": len(panel2_pairs),
+            "wins": sum(1 for pair in panel2_pairs if pair["gap_pp"] > 0),
+            "min_pp": min((pair["gap_pp"] for pair in panel2_pairs), default=None),
+            "max_pp": max((pair["gap_pp"] for pair in panel2_pairs), default=None),
+            "pairs": panel2_pairs,
+            "source_files": sorted({
+                by_readout[readout]["source_file"]
+                for by_readout in cells.values()
+                if by_readout.get("judgement") and by_readout.get("panel2")
+                for readout in ("judgement", "panel2")
+            }),
         },
         "post_trained_4b": {
             "base_pp": round(base["accuracy"] * 100, 1) if base else None,

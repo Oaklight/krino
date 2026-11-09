@@ -19,6 +19,7 @@ const READOUT_LABELS: Record<string, string> = {
   continuation: "continuation",
   judgement: "judgement",
   "native-reranker": "native reranker",
+  panel2: "vocab code",
 };
 
 interface Props {

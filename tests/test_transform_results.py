@@ -290,7 +290,7 @@ class TestJevbenchSourceFiles:
         runs = transform.transform_jevbench()
         assert runs
         for run in runs:
-            assert run["readout"] in {"trained-heads", "continuation", "judgement", "native-reranker"}
+            assert run["readout"] in {"trained-heads", "continuation", "judgement", "native-reranker", "panel2"}
             assert run["source_file"]
 
     def test_logit_prov_judgement_and_continuation_are_read(self):
@@ -395,7 +395,7 @@ class TestLanding:
         assert landing["resolution"]["dev_card_min_pp"] == 5
         assert landing["resolution"]["dev_card_max_pp"] == 6
 
-        assert landing["instrumented_rows"] == 37
+        assert landing["instrumented_rows"] == 41
         assert landing["banking77"]["trained_pp"] == 95.2
         assert landing["banking77"]["jev_pp"] == 75.0
 

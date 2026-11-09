@@ -74,6 +74,20 @@ export interface Landing {
     largest_tier: string;
     source_files: string[];
   };
+  panel2_vs_judgement: {
+    measured: number;
+    wins: number;
+    min_pp: number | null;
+    max_pp: number | null;
+    pairs: {
+      model_id: string;
+      name: string;
+      judgement_pp: number;
+      panel2_pp: number;
+      gap_pp: number;
+    }[];
+    source_files: string[];
+  };
   post_trained_4b: {
     base_pp: number | null;
     min_pp: number | null;
