@@ -23,6 +23,16 @@ after the options and changes nothing else, so the pair is an order-only
 contrast; ``sandwich`` repeats the question after the options, so it differs in
 content and token count as well as position and is a repetition treatment.
 
+``--read-config`` selects where the code logits are read (#337).  ``last`` is
+the shipped read.  ``layer=K`` reads hidden state K -- the output of block K,
+with hidden state 0 the embeddings -- and ``mean_last_n=4`` averages the last
+four hidden states.  A middle-layer read applies the final norm and the LM head
+to a representation that norm was never trained for: that is the logit-lens
+caveat, and it applies to every configuration except ``last``.  ``all`` reads
+every declared configuration from one forward; the five are then paired by
+construction, and the reported latency splits into the shared forward and the
+per-configuration norm-and-head cost.
+
 The prompt template lives in ``model.evaluation.panel2`` and is built only by
 ``render_panel2``.  A noul item is rendered as a two-option question,
 ``A. no`` / ``B. yes``, so the 231-item total stays comparable to the 150/231
@@ -70,8 +80,10 @@ from model.evaluation.panel2 import (
     codes_for,
     options_for,
     order_effect,
+    parse_read_spec,
     pick_code_form,
     position_diagnostics,
+    read_specs,
     render_panel2,
 )
 from model.evaluation.run_provenance import build_run_provenance
@@ -129,7 +141,11 @@ def readout_codes(items: list[Any]) -> list[str]:
 
 
 def panel2_config(
-    args: argparse.Namespace, code_ids: dict[str, int], used_codes: list[str]
+    args: argparse.Namespace,
+    code_ids: dict[str, int],
+    used_codes: list[str],
+    n_layers: int,
+    specs: dict[str, tuple[str, int] | tuple[str]],
 ) -> dict[str, Any]:
     """The declared configuration; hashed before a run and recorded with it."""
     return {
@@ -137,6 +153,9 @@ def panel2_config(
         "dataset": args.dataset,
         "prompt_order": args.prompt_order,
         "prompt_template": ORDER_TEMPLATES[args.prompt_order],
+        "read_config": args.read_config,
+        "read_configs": {name: list(spec) for name, spec in specs.items()},
+        "num_hidden_layers": n_layers,
         "code_scheme": "A-Z, a-z, then single-character symbols, one code per option",
         "code_token_form": args.code_form,
         "code_token_ids": {
@@ -156,15 +175,21 @@ def print_config_hash(args: argparse.Namespace) -> int:
     """The config and data hashes a run of these arguments will record.
 
     Loads the tokenizer and the items only -- no weights -- so the hash can be
-    posted on the issue before the model run starts.
+    posted on the issue before the model run starts.  The layer count comes
+    from the model config, not from the weights.
     """
-    from transformers import AutoTokenizer
+    from transformers import AutoConfig, AutoTokenizer
 
     items = load_items(args)
     used_codes = readout_codes(items)
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     code_ids, multi = code_token_ids(tokenizer, used_codes, args.code_form)
-    config = panel2_config(args, code_ids, used_codes)
+    n_layers = int(AutoConfig.from_pretrained(args.model).num_hidden_layers)
+    if args.read_config == "all":
+        specs = read_specs(n_layers)
+    else:
+        specs = {args.read_config: parse_read_spec(args.read_config, n_layers)}
+    config = panel2_config(args, code_ids, used_codes, n_layers, specs)
     payload = {
         "model": args.model,
         "config": config,
@@ -213,6 +238,28 @@ def check_codes(args: argparse.Namespace) -> int:
     return 0
 
 
+def read_logits(
+    model: Any, hidden_states: tuple[Any, ...], spec: tuple[str, int] | tuple[str]
+) -> Any:
+    """Logits from one declared read of the final position's hidden states.
+
+    A middle-layer read applies the final norm and the LM head to a
+    representation that norm was never trained for: the logit-lens caveat.
+    ``last`` reads the final hidden state, so its norm and head are the ones
+    the model was trained with.
+    """
+    kind = spec[0]
+    if kind == "last":
+        hidden = hidden_states[-1][0, -1]
+    elif kind == "layer":
+        hidden = hidden_states[spec[1]][0, -1]
+    elif kind == "mean_last_n":
+        hidden = torch.stack([state[0, -1] for state in hidden_states[-spec[1]:]]).mean(0)
+    else:
+        raise ValueError(f"unknown read spec {spec!r}")
+    return model.lm_head(model.model.norm(hidden)).float()
+
+
 def score_prompt(
     model: Any,
     tokenizer: Any,
@@ -220,18 +267,35 @@ def score_prompt(
     codes: list[str],
     code_ids: dict[str, int],
     device: str,
-) -> tuple[list[float], int, float, Any, int]:
-    """One forward; the K code logits at the final position and their argmax."""
+    specs: dict[str, tuple[str, int] | tuple[str]],
+) -> tuple[dict[str, dict[str, Any]], Any, float, int]:
+    """One forward; one code read per declared configuration.
+
+    The forward is shared, so the five configurations see identical hidden
+    states and the comparison is paired by construction.  ``read_s`` is the
+    per-configuration norm-and-head cost on top of the shared forward.
+    """
     encoded = tokenizer(prompt, return_tensors="pt", add_special_tokens=False)
     n_tokens = int(encoded["input_ids"].shape[1])
     encoded = {key: value.to(device) for key, value in encoded.items()}
     started = time.perf_counter()
     with torch.inference_mode():
-        logits = model(**encoded).logits[0, -1].float()
-    elapsed = time.perf_counter() - started
-    values = [float(logits[code_ids[code]]) for code in codes]
-    prediction = max(range(len(values)), key=values.__getitem__)
-    return values, prediction, elapsed, logits, n_tokens
+        output = model(**encoded, output_hidden_states=True)
+    forward_elapsed = time.perf_counter() - started
+
+    reads: dict[str, dict[str, Any]] = {}
+    with torch.inference_mode():
+        for name, spec in specs.items():
+            read_started = time.perf_counter()
+            logits = read_logits(model, output.hidden_states, spec)
+            values = [float(logits[code_ids[code]]) for code in codes]
+            prediction = max(range(len(values)), key=values.__getitem__)
+            reads[name] = {
+                "values": values,
+                "prediction": prediction,
+                "read_s": time.perf_counter() - read_started,
+            }
+    return reads, output.logits[0, -1].float(), forward_elapsed, n_tokens
 
 
 def prediction_row(
@@ -242,6 +306,7 @@ def prediction_row(
     values: list[float],
     prediction: int,
     elapsed: float,
+    read: str = "last",
 ) -> dict[str, Any]:
     """One saved prediction, in the contract the summary mode reads."""
     tier = tier_from_id(item.id)
@@ -253,6 +318,7 @@ def prediction_row(
         "tier": tier,
         "type": item.question.get("type", "noul"),
         "order": order,
+        "read": read,
         "n_options": len(texts),
         "gold_pos": gold,
         "pred_pos": prediction,
@@ -279,8 +345,19 @@ def score_model(args: argparse.Namespace) -> int:
     used_codes = readout_codes(items)
     code_ids, multi = code_token_ids(tokenizer, used_codes, args.code_form)
 
-    natural: list[dict[str, Any]] = []
-    reversed_order: list[dict[str, Any]] = []
+    n_layers = int(model.config.num_hidden_layers)
+    if args.read_config == "all":
+        specs = read_specs(n_layers)
+    else:
+        specs = {args.read_config: parse_read_spec(args.read_config, n_layers)}
+    print(f"Read configurations: {list(specs)}", flush=True)
+
+    predictions: dict[str, dict[str, list[dict[str, Any]]]] = {
+        name: {"natural": [], "reversed": []} for name in specs
+    }
+    latencies: dict[str, dict[str, list[tuple[float, float]]]] = {
+        name: {"natural": [], "reversed": []} for name in specs
+    }
     natural_tokens: list[int] = []
     reversed_tokens: list[int] = []
     unscorable: list[dict[str, Any]] = []
@@ -315,22 +392,38 @@ def score_model(args: argparse.Namespace) -> int:
             codes,
             order=args.prompt_order,
         )
-        values, prediction, elapsed, logits, n_tokens = score_prompt(
-            model, tokenizer, prompt, codes, code_ids, device
+        reads, logits, forward_elapsed, n_tokens = score_prompt(
+            model, tokenizer, prompt, codes, code_ids, device, specs
         )
         natural_tokens.append(n_tokens)
-        natural.append(
-            prediction_row(item, "natural", texts, gold, values, prediction, elapsed)
-        )
+        for name, read in reads.items():
+            latencies[name]["natural"].append((forward_elapsed, read["read_s"]))
+            predictions[name]["natural"].append(
+                prediction_row(
+                    item,
+                    "natural",
+                    texts,
+                    gold,
+                    read["values"],
+                    read["prediction"],
+                    forward_elapsed + read["read_s"],
+                    read=name,
+                )
+            )
 
         if item.id in sample_ids:
+            # The diagnostic is the model's own next-token distribution, so it
+            # stays comparable across read configurations.
+            model_values = [float(logits[code_ids[code]]) for code in codes]
+            model_prediction = max(range(len(model_values)), key=model_values.__getitem__)
             probabilities = torch.softmax(logits, dim=-1)
             top = torch.topk(probabilities, 5)
             diagnostic_sample.append(
                 {
                     "id": item.id,
+                    "read": "model_next_token",
                     "gold_code": codes[gold],
-                    "predicted_code": codes[prediction],
+                    "predicted_code": codes[model_prediction],
                     "top5": [
                         {
                             "token_id": int(token_id),
@@ -351,25 +444,24 @@ def score_model(args: argparse.Namespace) -> int:
             codes,
             order=args.prompt_order,
         )
-        (
-            reversed_values,
-            reversed_prediction,
-            reversed_elapsed,
-            _,
-            reversed_n_tokens,
-        ) = score_prompt(model, tokenizer, reversed_prompt, codes, code_ids, device)
-        reversed_tokens.append(reversed_n_tokens)
-        reversed_order.append(
-            prediction_row(
-                item,
-                "reversed",
-                reversed_texts,
-                reversed_gold,
-                reversed_values,
-                reversed_prediction,
-                reversed_elapsed,
-            )
+        reversed_reads, _, reversed_forward, reversed_n_tokens = score_prompt(
+            model, tokenizer, reversed_prompt, codes, code_ids, device, specs
         )
+        reversed_tokens.append(reversed_n_tokens)
+        for name, read in reversed_reads.items():
+            latencies[name]["reversed"].append((reversed_forward, read["read_s"]))
+            predictions[name]["reversed"].append(
+                prediction_row(
+                    item,
+                    "reversed",
+                    reversed_texts,
+                    reversed_gold,
+                    read["values"],
+                    read["prediction"],
+                    reversed_forward + read["read_s"],
+                    read=name,
+                )
+            )
 
         if (index + 1) % 25 == 0:
             print(f"  {index + 1}/{len(items)} items scored", flush=True)
@@ -378,24 +470,22 @@ def score_model(args: argparse.Namespace) -> int:
         by_id = {item.id: item for item in items}
         return [{**row, "_item": by_id[row["id"]]} for row in rows]
 
-    natural_summary = summarize(with_items(natural), failed=len(unscorable))
-    reversed_summary = summarize(with_items(reversed_order), failed=len(unscorable))
-    natural_positions = position_diagnostics(natural)
-    reversed_positions = position_diagnostics(reversed_order)
-    order = order_effect(natural, reversed_order, options_by_id)
+    def latency_stats(entries: list[tuple[float, float]]) -> dict[str, float]:
+        if not entries:
+            return {
+                "mean_total_s": 0.0,
+                "median_total_s": 0.0,
+                "mean_forward_s": 0.0,
+                "mean_read_s": 0.0,
+            }
+        totals = [forward + read for forward, read in entries]
+        return {
+            "mean_total_s": statistics.mean(totals),
+            "median_total_s": statistics.median(totals),
+            "mean_forward_s": statistics.mean(entry[0] for entry in entries),
+            "mean_read_s": statistics.mean(entry[1] for entry in entries),
+        }
 
-    latency_natural = [row["latency_s"] for row in natural] or [0.0]
-    latency_reversed = [row["latency_s"] for row in reversed_order] or [0.0]
-    latency = {
-        "natural": {
-            "mean_s": statistics.mean(latency_natural),
-            "median_s": statistics.median(latency_natural),
-        },
-        "reversed": {
-            "mean_s": statistics.mean(latency_reversed),
-            "median_s": statistics.median(latency_reversed),
-        },
-    }
     prompt_tokens = {
         "natural": {
             "mean": statistics.mean(natural_tokens) if natural_tokens else 0.0,
@@ -407,7 +497,30 @@ def score_model(args: argparse.Namespace) -> int:
         },
     }
 
-    config = panel2_config(args, code_ids, used_codes)
+    read_metrics: dict[str, dict[str, Any]] = {}
+    for name in specs:
+        natural_rows = predictions[name]["natural"]
+        reversed_rows = predictions[name]["reversed"]
+        read_metrics[name] = {
+            "natural": {
+                "summary": summarize(with_items(natural_rows), failed=len(unscorable)),
+                "position": position_diagnostics(natural_rows),
+            },
+            "reversed": {
+                "summary": summarize(with_items(reversed_rows), failed=len(unscorable)),
+                "position": position_diagnostics(reversed_rows),
+            },
+            "order_effect": order_effect(natural_rows, reversed_rows, options_by_id),
+            "latency": {
+                "natural": latency_stats(latencies[name]["natural"]),
+                "reversed": latency_stats(latencies[name]["reversed"]),
+            },
+        }
+
+    gate_name = "last" if "last" in specs else next(iter(specs))
+    natural_positions = read_metrics[gate_name]["natural"]["position"]
+
+    config = panel2_config(args, code_ids, used_codes, n_layers, specs)
     code_failures = [
         entry for entry in unscorable if entry["reason"] == "multi_token_code"
     ]
@@ -426,6 +539,11 @@ def score_model(args: argparse.Namespace) -> int:
         "invalid_reason": None,
     }
     validity["valid"] = validity["single_token_codes"] and validity["position_diagnostic"]
+    if args.read_config == "all":
+        validity["position_dominated_by_read"] = {
+            name: read_metrics[name]["natural"]["position"]["position_dominated"]
+            for name in specs
+        }
     if not validity["single_token_codes"]:
         validity["invalid_reason"] = (
             "at least one code used by an item is not a single token in this "
@@ -461,35 +579,56 @@ def score_model(args: argparse.Namespace) -> int:
             "config_sha256": config_digest(config),
             "data_sha256": data_digest(items),
             "items": len(items),
-            "elapsed_s": round(sum(latency_natural) + sum(latency_reversed), 1),
+            "read_configs": {name: list(spec) for name, spec in specs.items()},
+            "elapsed_s": round(
+                sum(
+                    sum(forward + read for forward, read in entries)
+                    for name in specs
+                    for entries in (
+                        latencies[name]["natural"],
+                        latencies[name]["reversed"],
+                    )
+                ),
+                1,
+            ),
         },
     )
+
+    if args.read_config == "all":
+        metrics = {"reads": read_metrics, "prompt_tokens": prompt_tokens}
+    else:
+        only = next(iter(specs))
+        metrics = {
+            "natural": read_metrics[only]["natural"],
+            "reversed": read_metrics[only]["reversed"],
+            "order_effect": read_metrics[only]["order_effect"],
+            "latency": read_metrics[only]["latency"],
+            "prompt_tokens": prompt_tokens,
+        }
 
     payload = {
         "_provenance": provenance,
         "config": config,
         "validity": validity,
         "unscorable": unscorable,
-        "metrics": {
-            "natural": {
-                "summary": natural_summary,
-                "position": natural_positions,
-            },
-            "reversed": {
-                "summary": reversed_summary,
-                "position": reversed_positions,
-            },
-            "order_effect": order,
-            "latency": latency,
-            "prompt_tokens": prompt_tokens,
-        },
+        "metrics": metrics,
         "diagnostic_sample": diagnostic_sample,
-        "predictions_natural": natural,
-        "predictions_reversed": reversed_order,
     }
+    if args.read_config == "all":
+        payload["predictions_by_read"] = {
+            name: {
+                "natural": predictions[name]["natural"],
+                "reversed": predictions[name]["reversed"],
+            }
+            for name in specs
+        }
+    else:
+        only = next(iter(specs))
+        payload["predictions_natural"] = predictions[only]["natural"]
+        payload["predictions_reversed"] = predictions[only]["reversed"]
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
-    overall = natural_summary["overall"]
+    overall = read_metrics[gate_name]["natural"]["summary"]["overall"]
     print(
         f"written {args.output}: {overall['correct']}/{overall['total']} "
         f"= {overall['accuracy']:.4f}, valid={validity['valid']}",
@@ -598,6 +737,15 @@ def main() -> int:
             "shipped: as in #326; options_first: question after the options, "
             "otherwise identical; sandwich: question repeated after the "
             "options, a repetition treatment rather than an order point"
+        ),
+    )
+    parser.add_argument(
+        "--read-config",
+        default="last",
+        help=(
+            "last, layer=K, mean_last_n=4, or all (#337). The declared middle "
+            "layers depend on the model's block count, so the name is "
+            "validated against read_specs() after the model config is read"
         ),
     )
     parser.add_argument("--code-commit", default=None)
