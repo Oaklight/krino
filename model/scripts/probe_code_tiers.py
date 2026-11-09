@@ -90,10 +90,21 @@ def banking77_items(exclude: set[str], count: int) -> list:
 
 
 def dev_items(path: Path) -> list:
-    """The K=80 development items, as the external-validity replica."""
+    """The K=80 development items, as the external-validity replica.
+
+    An item qualifies only when its gold label is one of its own options. The
+    development set also holds one 79-option abstention item whose correct label
+    has been removed from the options on purpose; it has no gold to label, so it
+    is not one of the 24 and is excluded rather than silently given a wrong
+    gold.
+    """
     from model.evaluation.dev_set import load_dev_set
 
-    items = [q for q in load_dev_set(path) if len(q.question.get("criteria") or {}) >= K]
+    items = []
+    for q in load_dev_set(path):
+        criteria = q.question.get("criteria") or {}
+        if len(criteria) >= K and q.label in criteria:
+            items.append(q)
     items.sort(key=lambda q: q.id)
     return items
 
