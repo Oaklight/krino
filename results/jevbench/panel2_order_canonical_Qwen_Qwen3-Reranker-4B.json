@@ -26,7 +26,16 @@
     "dataset": "jevbench",
     "config_sha256": "f0fde0d6312a6f2c5f93353f865fb873fa86ae7cd07b11b3ce66e735ed4f4b82",
     "data_sha256": "e85e155c8c14d7ebdb073c04efb049ded3e0186b0297ebcd8388aa259a365370",
-    "items": 231
+    "items": 231,
+    "post_run_additions": {
+      "applied_after_the_run": true,
+      "code_commit_of_the_run": "24e16b1",
+      "fields": [
+        "validity.premise"
+      ],
+      "source": "recomputed from the JevBench items with the premise rule",
+      "predictions_changed": false
+    }
   },
   "config": {
     "panel": "2",
@@ -59,7 +68,16 @@
     "unscorable_items": 0,
     "tie_items": 1,
     "tie_items_correct": 0,
-    "valid": true
+    "valid": true,
+    "premise": {
+      "method": "each item rendered from its natural and its reversed option list through the canonical order; the prompt strings must be identical",
+      "checked": 231,
+      "mismatches": [],
+      "items_with_duplicate_option_texts": [],
+      "permutation_sha256": "4c788d4a472daec2db34ea39c15ce1da8e573bfc47946a16bdd44165ea1016f0",
+      "holds": true,
+      "derived": "post hoc from the JevBench items; not produced by the run at 24e16b1"
+    }
   },
   "unscorable": [],
   "metrics": {
