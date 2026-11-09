@@ -290,10 +290,14 @@ UNRESOLVED = "unresolved"
 IMPROVEMENT_SUPPORTED = "improvement supported"
 IMPROVEMENT_SUGGESTED_BUT_UNRESOLVED = "improvement suggested but unresolved"
 
-#: JevBench coarse margin: 8 pp of chance-corrected accuracy. It is the
-#: instrument's resolution at 231 items, not a scientific tolerance; a genuine
-#: 6 pp regression passes this screen. See ``research/37-gate-policy.md``.
-JEVBENCH_MARGIN_PP = 8.0
+#: JevBench coarse margin: 12 pp of chance-corrected accuracy. The 9.3 pp
+#: detectable difference is a raw-accuracy quantity: its standard error is
+#: 9.3 / 2.80 = 3.3 pp raw, or 3.3 / (1 - 0.318) = 4.9 pp of cc at JevBench's
+#: mean chance of 0.318, and (1.645 + 0.84) x 4.9 = 12.1 pp. Eight pp raw is
+#: the same rule in the other unit and must not be applied to a cc interval.
+#: This is the instrument's resolution, not a scientific tolerance; a genuine
+#: 6 pp regression passes the screen. See ``research/37-gate-policy.md``.
+JEVBENCH_MARGIN_PP = 12.0
 
 
 @dataclass(frozen=True)
@@ -326,6 +330,7 @@ class GateScreen:
     p_value: float
     discordance: float
     detectable_pp: float | None
+    detectable_cc_pp: float | None
     states: frozenset[str]
     action: str
     reason: str
@@ -364,7 +369,10 @@ def paired_screen(
     ``mean +/- z * sd / sqrt(n)`` with ``z`` from the two-sided ``alpha``.  The
     exact two-sided McNemar p-value is reported beside it, and the detectable
     difference at 80% power comes from ``model.evaluation.paired_power`` using
-    the measured discordance.
+    the measured discordance.  ``detectable_delta`` is a raw-accuracy quantity,
+    so ``detectable_pp`` holds that value and ``detectable_cc_pp`` converts it
+    with this item set's mean chance; both are reported so the margin is never
+    compared against a number in the other unit.
 
     The screen states are assigned by the interval: material regression
     supported when the whole interval is below ``-margin_pp``, coarse safety
@@ -404,6 +412,7 @@ def paired_screen(
         raise ValueError(f"paired screen needs at least two shared items, got {n}")
 
     diffs: list[float] = []
+    chances: list[float] = []
     wins = 0
     losses = 0
     for item_id in ordered:
@@ -415,6 +424,7 @@ def paired_screen(
                 f"control has {control_row.n_options}"
             )
         weight = 1.0 / (1.0 - 1.0 / arm_row.n_options)
+        chances.append(1.0 / arm_row.n_options)
         diffs.append(weight * (float(arm_row.correct) - float(control_row.correct)))
         if arm_row.correct and not control_row.correct:
             wins += 1
@@ -430,8 +440,12 @@ def paired_screen(
 
     discordance = (wins + losses) / n
     detectable = None
+    detectable_cc = None
     if discordance > 0.0:
         detectable = detectable_delta(n, discordance) * 100.0
+        # detectable_delta is a raw-accuracy quantity; convert it with this
+        # item set's mean chance so it is on the same scale as the interval.
+        detectable_cc = detectable / (1.0 - sum(chances) / n)
 
     states: set[str] = set()
     if high * 100.0 < -margin_pp:
@@ -470,6 +484,7 @@ def paired_screen(
         p_value=_exact_p(arm, control, ordered),
         discordance=discordance,
         detectable_pp=detectable,
+        detectable_cc_pp=detectable_cc,
         states=frozenset(states),
         action=action,
         reason=reason,

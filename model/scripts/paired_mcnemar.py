@@ -111,7 +111,10 @@ def main() -> int:
             detectable = (
                 "not estimable (no discordant pairs)"
                 if screen.detectable_pp is None
-                else f"{screen.detectable_pp:.1f} pp"
+                else (
+                    f"{screen.detectable_pp:.1f} pp raw "
+                    f"({screen.detectable_cc_pp:.1f} pp cc)"
+                )
             )
             print(
                 f"  chance-corrected delta {screen.delta_pp:+.2f} pp, "
