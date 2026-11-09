@@ -363,6 +363,13 @@ def score_arm(args: argparse.Namespace) -> int:
     return 0
 
 
+def arm_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """The prediction rows of an arm, from either the new or the stored shape."""
+    if "predictions" in payload:
+        return payload["predictions"]
+    return payload["predictions_natural"]
+
+
 def compare(args: argparse.Namespace) -> int:
     from model.scripts.paired_mcnemar import mcnemar
 
@@ -370,8 +377,8 @@ def compare(args: argparse.Namespace) -> int:
         first = json.load(handle)
     with open(args.compare[1], encoding="utf-8") as handle:
         second = json.load(handle)
-    first_rows = {row["id"]: row for row in first["predictions"]}
-    second_rows = {row["id"]: row for row in second["predictions"]}
+    first_rows = {row["id"]: row for row in arm_rows(first)}
+    second_rows = {row["id"]: row for row in arm_rows(second)}
     shared = sorted(set(first_rows) & set(second_rows))
     first_correct = {key: bool(first_rows[key]["correct"]) for key in shared}
     second_correct = {key: bool(second_rows[key]["correct"]) for key in shared}
@@ -399,7 +406,7 @@ def compare(args: argparse.Namespace) -> int:
         with open(args.baseline, encoding="utf-8") as handle:
             baseline = json.load(handle)
         baseline_correct = {
-            row["id"]: bool(row["correct"]) for row in baseline["predictions"]
+            row["id"]: bool(row["correct"]) for row in arm_rows(baseline)
         }
         keys = sorted(set(baseline_correct) & set(second_correct))
         b_wins, b_losses, b_p = mcnemar(
