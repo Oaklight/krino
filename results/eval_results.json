@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-09T08:07:58.841367+00:00",
+  "generated_at": "2026-11-09T08:35:27.248213+00:00",
   "eval_runs": [
     {
       "run_id": "cross-encoder-bert",
@@ -4608,6 +4608,118 @@
       "latency_ms": null
     },
     {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-14B",
+      "model": {
+        "name": "Qwen/Qwen3-14B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-14B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-14B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.7013,
+      "correct": 162,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.6906,
+          "correct": 96,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.7162,
+          "correct": 53,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.7222,
+          "correct": 13,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4955,
+          "correct": 55,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.8194,
+          "correct": 59,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-32B",
+      "model": {
+        "name": "Qwen/Qwen3-32B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-32B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-32B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.7706,
+      "correct": 178,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.7554,
+          "correct": 105,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.8108,
+          "correct": 60,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.7222,
+          "correct": 13,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.5856,
+          "correct": 65,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.9028,
+          "correct": 65,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
       "run_id": "jevbench-panel2_Qwen_Qwen3-4B-Base",
       "model": {
         "name": "Qwen/Qwen3-4B-Base",
@@ -4776,6 +4888,62 @@
       "latency_ms": null
     },
     {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-Reranker-0.6B",
+      "model": {
+        "name": "Qwen/Qwen3-Reranker-0.6B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-Reranker-0.6B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-Reranker-0.6B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.4762,
+      "correct": 110,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.446,
+          "correct": 62,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5676,
+          "correct": 42,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.3333,
+          "correct": 6,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.7083,
+          "correct": 34,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.3694,
+          "correct": 41,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.4861,
+          "correct": 35,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
       "run_id": "jevbench-panel2_Qwen_Qwen3-Reranker-4B",
       "model": {
         "name": "Qwen/Qwen3-Reranker-4B",
@@ -4826,6 +4994,62 @@
         "original": {
           "accuracy": 0.8611,
           "correct": 62,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-Reranker-8B",
+      "model": {
+        "name": "Qwen/Qwen3-Reranker-8B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-Reranker-8B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-Reranker-8B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.71,
+      "correct": 164,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.7266,
+          "correct": 101,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6622,
+          "correct": 49,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.7778,
+          "correct": 14,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.5045,
+          "correct": 56,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.8333,
+          "correct": 60,
           "total": 72
         }
       },
@@ -6524,8 +6748,8 @@
       ]
     },
     "panel2_vs_judgement": {
-      "measured": 4,
-      "wins": 4,
+      "measured": 6,
+      "wins": 6,
       "min_pp": 5.2,
       "max_pp": 9.5,
       "pairs": [
@@ -6551,22 +6775,40 @@
           "gap_pp": 7.8
         },
         {
+          "model_id": "Qwen/Qwen3-Reranker-0.6B",
+          "name": "Qwen/Qwen3-Reranker-0.6B",
+          "judgement_pp": 41.6,
+          "panel2_pp": 47.6,
+          "gap_pp": 6.1
+        },
+        {
           "model_id": "Qwen/Qwen3-Reranker-4B",
           "name": "Qwen/Qwen3-Reranker-4B",
           "judgement_pp": 64.9,
           "panel2_pp": 70.1,
           "gap_pp": 5.2
+        },
+        {
+          "model_id": "Qwen/Qwen3-Reranker-8B",
+          "name": "Qwen/Qwen3-Reranker-8B",
+          "judgement_pp": 64.5,
+          "panel2_pp": 71.0,
+          "gap_pp": 6.5
         }
       ],
       "source_files": [
         "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Base.json",
         "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Instruct-2507.json",
         "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-0.6B.json",
         "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-8B.json",
         "results/jevbench/panel2_Qwen_Qwen3-4B-Base.json",
         "results/jevbench/panel2_Qwen_Qwen3-4B-Instruct-2507.json",
         "results/jevbench/panel2_Qwen_Qwen3-4B.json",
-        "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json"
+        "results/jevbench/panel2_Qwen_Qwen3-Reranker-0.6B.json",
+        "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json",
+        "results/jevbench/panel2_Qwen_Qwen3-Reranker-8B.json"
       ]
     },
     "post_trained_4b": {
@@ -6652,7 +6894,7 @@
         "model/experiments/resolution_inputs.json"
       ]
     },
-    "instrumented_rows": 41,
+    "instrumented_rows": 45,
     "banking77": {
       "trained_pp": 95.2,
       "trained_model": "Ettin-150m r128",
@@ -6705,7 +6947,9 @@
       "results/jevbench/panel2_Qwen_Qwen3-4B-Base.json",
       "results/jevbench/panel2_Qwen_Qwen3-4B-Instruct-2507.json",
       "results/jevbench/panel2_Qwen_Qwen3-4B.json",
+      "results/jevbench/panel2_Qwen_Qwen3-Reranker-0.6B.json",
       "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json",
+      "results/jevbench/panel2_Qwen_Qwen3-Reranker-8B.json",
       "web/public/results/eval_results.json"
     ]
   },
