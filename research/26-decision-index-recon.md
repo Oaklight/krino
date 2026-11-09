@@ -204,8 +204,7 @@ Rules:
    it before any arm is promoted.
 4. The suite data stays private; only the identity tuple is committed.
 
-Under the dual acceptance standard, JevBench public is a hard non-regression constraint
-and the matched held-out is the promotion signal. The gate compares an arm with the
+Under the dual acceptance standard, JevBench public is a hard non-regression constraint (the point form is superseded by the three-state interval screen in `research/37-gate-policy.md`; see `#263`) and the matched held-out is the promotion signal. The gate compares an arm with the
 control on the same suite version, so board comparability is not required for the gate.
 It is required only to quote a number next to someone else's.
 

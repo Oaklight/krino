@@ -13,9 +13,7 @@ it is matched to the training distribution by construction rather than by sampli
 different benchmark. It is never trained on, never used for model selection, and never
 rebuilt after the first model sees it.
 
-JevBench public is a hard non-regression constraint, not the promotion target. The public
-set is too small to resolve the effects we act on: two checkpoints disagree on about a
-third of its 231 items. This set is the promotion signal; JevBench can only veto, by
+JevBench public is a hard non-regression constraint, not the promotion target (the point form is superseded by the three-state interval screen in `research/37-gate-policy.md`; see `#263`). The public set is too small to resolve the effects we act on: two checkpoints disagree on about a third of its 231 items. This set is the promotion signal; JevBench can only veto, by
 showing a regression on the public items.
 
 ## Size and power
