@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import pytest
 
-from model.evaluation.panel2 import render_panel2
+from model.evaluation.panel2 import codes_for, render_panel2
 from model.evaluation.panel2_states import (
+    EXTENDED_CODES,
     build_batches,
     cache_key,
     data_digest,
     last_token_index,
     option_token_indices,
+    prompt_codes,
     render_with_spans,
 )
 
@@ -52,6 +54,24 @@ def test_spans_survive_a_multi_line_state_and_option_text():
     state = "line one\nline two"
     texts = ["first", "second\nwith a break", "third"]
     prompt, _, spans = render_with_spans(state, "Q", texts)
+    for text, (start, end) in zip(texts, spans):
+        assert prompt[start:end] == text
+
+
+def test_prompt_codes_matches_the_shipped_alphabet_up_to_26():
+    for n in (2, 5, 26):
+        assert prompt_codes(n) == codes_for(n)
+    # The same 84-symbol table the committed #326 development cell used.
+    assert len(EXTENDED_CODES) == 84
+    assert prompt_codes(27)[26] == "a"
+    with pytest.raises(ValueError):
+        prompt_codes(len(EXTENDED_CODES) + 1)
+
+
+def test_spans_survive_an_80_option_item():
+    texts = [f"intent number {index}" for index in range(80)]
+    prompt, codes, spans = render_with_spans("s", "q", texts)
+    assert len(codes) == 80
     for text, (start, end) in zip(texts, spans):
         assert prompt[start:end] == text
 

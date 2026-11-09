@@ -17,22 +17,54 @@ import hashlib
 from collections import defaultdict
 from typing import Sequence
 
-from model.evaluation.panel2 import PANEL2_TEMPLATE, codes_for, render_panel2
+from model.evaluation.panel2 import PANEL2_TEMPLATE, render_panel2
+
+# The 26-letter alphabet covers every corpus and JevBench item.  The committed
+# development cell (#326) also holds 24 banking77 items with 80 options, and its
+# panel-2 reference was read with this 96-symbol alphabet, where each code is
+# one token; the first 26 entries are the same letters main ships.
+EXTENDED_CODES = (
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "!@#$%^&*()-_=+[]{}<>?|~"
+    "\\/\"'`"
+    ",.;:"
+)
+
+
+def prompt_codes(n_options: int) -> list[str]:
+    """The codes for ``n_options``; identical to ``codes_for`` up to 26."""
+    if not 2 <= n_options <= len(EXTENDED_CODES):
+        raise ValueError(
+            f"n_options must be in [2, {len(EXTENDED_CODES)}], got {n_options}"
+        )
+    return list(EXTENDED_CODES[:n_options])
 
 
 def render_with_spans(
-    state: str, instructions: str, texts: Sequence[str]
+    state: str,
+    instructions: str,
+    texts: Sequence[str],
+    codes: Sequence[str] | None = None,
 ) -> tuple[str, list[str], list[tuple[int, int]]]:
-    """The shipped panel-2 prompt and the character span of each option text.
+    """The panel-2 prompt and the character span of each option text.
 
     The prompt is exactly :func:`render_panel2`'s output; the spans are checked
     against it, so a rendering change cannot silently move them.
+
+    Args:
+        state: The item's state text.
+        instructions: The question text.
+        texts: Option texts in display order.
+        codes: One code per option; the shipped A..Z by default.
 
     Returns:
         ``(prompt, codes, spans)`` where ``spans[i]`` is the half-open
         ``(start, end)`` of option ``i``'s text inside ``prompt``.
     """
-    codes = codes_for(len(texts))
+    codes = list(codes) if codes is not None else prompt_codes(len(texts))
+    if len(codes) != len(texts):
+        raise ValueError(f"{len(texts)} option texts but {len(codes)} codes")
     prompt = render_panel2(state, instructions, texts, codes)
     header = "State: " + state + "\nQuestion: " + instructions + "\nOptions:\n"
     if not prompt.startswith(header):
@@ -113,11 +145,13 @@ def prompt_for(
     row: dict, order: str
 ) -> tuple[str, list[str], list[str], list[tuple[int, int]]]:
     """The prompt, its codes, the texts in display order and each option's span."""
-    codes = codes_for(len(row["texts"]))
+    codes = prompt_codes(len(row["texts"]))
     texts = list(row["texts"])
     if order == "reversed":
         texts = list(reversed(texts))
-    prompt, codes, spans = render_with_spans(row["state"], row["instructions"], texts)
+    prompt, codes, spans = render_with_spans(
+        row["state"], row["instructions"], texts, codes
+    )
     if prompt != render_panel2(row["state"], row["instructions"], texts, codes):
         raise AssertionError("span renderer disagrees with render_panel2")
     return prompt, codes, texts, spans

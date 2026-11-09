@@ -5,7 +5,7 @@
     "cache": "<external>/states",
     "split": "dev",
     "rows": "<external>/rows_dev.jsonl",
-    "rows_sha256": "f6fd63a0503efbb17641cfefea3ea41c9d527289cc14a6a376190a63436229ca",
+    "rows_sha256": "b69a49523fc21d47e92930cc53a3640394ce29727350b87bb4dd9e6c5266b4d4",
     "device_name": "NVIDIA H100 NVL",
     "torch_version": "2.11.0+cu128"
   },
@@ -35,24 +35,24 @@
     "config_hash": "debd40bf46a883947db2433bf407d5695b342e3e44a6d609a765090bf690e348"
   },
   "natural": {
-    "items": 788,
-    "correct": 540,
-    "accuracy": 0.6852791878172588,
+    "items": 812,
+    "correct": 545,
+    "accuracy": 0.6711822660098522,
     "by_type": {
       "choice": {
-        "correct": 206,
-        "total": 298,
-        "accuracy": 0.6912751677852349
+        "correct": 211,
+        "total": 322,
+        "accuracy": 0.65527950310559
       },
       "noul": {
-        "correct": 280,
+        "correct": 281,
         "total": 391,
-        "accuracy": 0.7161125319693095
+        "accuracy": 0.7186700767263428
       },
       "score": {
-        "correct": 54,
+        "correct": 53,
         "total": 99,
-        "accuracy": 0.5454545454545454
+        "accuracy": 0.5353535353535354
       }
     },
     "by_tier": {
@@ -65,6 +65,11 @@
         "correct": 3,
         "total": 3,
         "accuracy": 1.0
+      },
+      "banking77": {
+        "correct": 7,
+        "total": 24,
+        "accuracy": 0.2916666666666667
       },
       "boolq": {
         "correct": 62,
@@ -92,9 +97,9 @@
         "accuracy": 0.6949152542372882
       },
       "piqa": {
-        "correct": 30,
+        "correct": 29,
         "total": 38,
-        "accuracy": 0.7894736842105263
+        "accuracy": 0.7631578947368421
       },
       "race": {
         "correct": 21,
@@ -102,14 +107,14 @@
         "accuracy": 0.9130434782608695
       },
       "sst2": {
-        "correct": 42,
+        "correct": 43,
         "total": 62,
-        "accuracy": 0.6774193548387096
+        "accuracy": 0.6935483870967742
       },
       "sst5": {
-        "correct": 31,
+        "correct": 30,
         "total": 56,
-        "accuracy": 0.5535714285714286
+        "accuracy": 0.5357142857142857
       },
       "swag": {
         "correct": 20,
@@ -122,9 +127,9 @@
         "accuracy": 0.7833333333333333
       },
       "winogrande": {
-        "correct": 20,
+        "correct": 19,
         "total": 30,
-        "accuracy": 0.6666666666666666
+        "accuracy": 0.6333333333333333
       },
       "yelp": {
         "correct": 23,
@@ -132,18 +137,18 @@
         "accuracy": 0.5348837209302325
       }
     },
-    "mean_gold_probability": 0.5820917087810369,
+    "mean_gold_probability": 0.5670378663642516,
     "tie_items": 0
   },
   "reversed": {
-    "items": 788,
-    "correct": 437,
-    "accuracy": 0.5545685279187818,
+    "items": 812,
+    "correct": 438,
+    "accuracy": 0.5394088669950738,
     "by_type": {
       "choice": {
-        "correct": 166,
-        "total": 298,
-        "accuracy": 0.5570469798657718
+        "correct": 168,
+        "total": 322,
+        "accuracy": 0.5217391304347826
       },
       "noul": {
         "correct": 232,
@@ -151,26 +156,31 @@
         "accuracy": 0.5933503836317136
       },
       "score": {
-        "correct": 39,
+        "correct": 38,
         "total": 99,
-        "accuracy": 0.3939393939393939
+        "accuracy": 0.3838383838383838
       }
     },
     "by_tier": {
       "agnews": {
-        "correct": 20,
+        "correct": 19,
         "total": 34,
-        "accuracy": 0.5882352941176471
+        "accuracy": 0.5588235294117647
       },
       "apigen": {
         "correct": 3,
         "total": 3,
         "accuracy": 1.0
       },
+      "banking77": {
+        "correct": 3,
+        "total": 24,
+        "accuracy": 0.125
+      },
       "boolq": {
-        "correct": 54,
+        "correct": 53,
         "total": 91,
-        "accuracy": 0.5934065934065934
+        "accuracy": 0.5824175824175825
       },
       "commonsenseqa": {
         "correct": 35,
@@ -203,19 +213,19 @@
         "accuracy": 0.8260869565217391
       },
       "sst2": {
-        "correct": 41,
+        "correct": 42,
         "total": 62,
-        "accuracy": 0.6612903225806451
+        "accuracy": 0.6774193548387096
       },
       "sst5": {
-        "correct": 29,
+        "correct": 28,
         "total": 56,
-        "accuracy": 0.5178571428571429
+        "accuracy": 0.5
       },
       "swag": {
-        "correct": 14,
+        "correct": 15,
         "total": 35,
-        "accuracy": 0.4
+        "accuracy": 0.42857142857142855
       },
       "tabfact": {
         "correct": 83,
@@ -223,9 +233,9 @@
         "accuracy": 0.6916666666666667
       },
       "winogrande": {
-        "correct": 18,
+        "correct": 17,
         "total": 30,
-        "accuracy": 0.6
+        "accuracy": 0.5666666666666667
       },
       "yelp": {
         "correct": 10,
@@ -233,21 +243,21 @@
         "accuracy": 0.23255813953488372
       }
     },
-    "mean_gold_probability": 0.5034582292031571,
+    "mean_gold_probability": 0.49024433385558697,
     "tie_items": 0
   },
   "order": {
-    "items": 788,
-    "accuracy_natural": 0.6852791878172588,
-    "accuracy_reversed": 0.5545685279187818,
-    "difference_pp": 13.071065989847707,
-    "changed_fraction": 0.3464467005076142,
-    "changed_items": 273,
+    "items": 812,
+    "accuracy_natural": 0.6711822660098522,
+    "accuracy_reversed": 0.5394088669950738,
+    "difference_pp": 13.177339901477836,
+    "changed_fraction": 0.35591133004926107,
+    "changed_items": 289,
     "mcnemar_natural_vs_reversed": {
-      "first_only_correct": 178,
+      "first_only_correct": 182,
       "second_only_correct": 75,
-      "discordant": 253,
-      "exact_p": 7.88067917461223e-11
+      "discordant": 257,
+      "exact_p": 1.9481717684181457e-11
     },
     "tie_items_natural": 0,
     "tie_items_reversed": 0
@@ -266,7 +276,7 @@
       "pred": 2,
       "gold": 3,
       "correct": false,
-      "p_gold": 0.42431503534317017,
+      "p_gold": 0.4107389450073242,
       "tie": false
     },
     {
@@ -322,7 +332,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8590378165245056,
+      "p_gold": 0.8657037615776062,
       "tie": false
     },
     {
@@ -466,7 +476,7 @@
       "pred": 0,
       "gold": 3,
       "correct": false,
-      "p_gold": 0.3148028552532196,
+      "p_gold": 0.3052101731300354,
       "tie": false
     },
     {
@@ -547,6 +557,198 @@
       "gold": 0,
       "correct": true,
       "p_gold": 0.9369179606437683,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-test-01806",
+      "pred": 25,
+      "gold": 25,
+      "correct": true,
+      "p_gold": 0.2664002776145935,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-test-01906",
+      "pred": 58,
+      "gold": 55,
+      "correct": false,
+      "p_gold": 0.015143288299441338,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-test-02806",
+      "pred": 59,
+      "gold": 57,
+      "correct": false,
+      "p_gold": 0.024445265531539917,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-00206",
+      "pred": 13,
+      "gold": 13,
+      "correct": true,
+      "p_gold": 0.12300704419612885,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-00806",
+      "pred": 47,
+      "gold": 46,
+      "correct": false,
+      "p_gold": 0.06328476220369339,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-00906",
+      "pred": 17,
+      "gold": 36,
+      "correct": false,
+      "p_gold": 0.043168805539608,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-01006",
+      "pred": 12,
+      "gold": 12,
+      "correct": true,
+      "p_gold": 0.1020016148686409,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-01306",
+      "pred": 16,
+      "gold": 14,
+      "correct": false,
+      "p_gold": 0.05543048307299614,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-01606",
+      "pred": 30,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.008868802338838577,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-02806",
+      "pred": 39,
+      "gold": 66,
+      "correct": false,
+      "p_gold": 0.01869150437414646,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-03306",
+      "pred": 5,
+      "gold": 6,
+      "correct": false,
+      "p_gold": 0.07395822554826736,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-03506",
+      "pred": 16,
+      "gold": 16,
+      "correct": true,
+      "p_gold": 0.249816432595253,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-04306",
+      "pred": 62,
+      "gold": 62,
+      "correct": true,
+      "p_gold": 0.13216634094715118,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-04706",
+      "pred": 16,
+      "gold": 28,
+      "correct": false,
+      "p_gold": 0.05290620028972626,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-05306",
+      "pred": 42,
+      "gold": 42,
+      "correct": true,
+      "p_gold": 0.1762000173330307,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-05506",
+      "pred": 8,
+      "gold": 52,
+      "correct": false,
+      "p_gold": 0.010054920800030231,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-05906",
+      "pred": 16,
+      "gold": 25,
+      "correct": false,
+      "p_gold": 0.1828204244375229,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-06406",
+      "pred": 66,
+      "gold": 63,
+      "correct": false,
+      "p_gold": 0.0006943636108189821,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-06506",
+      "pred": 73,
+      "gold": 70,
+      "correct": false,
+      "p_gold": 0.0010123695246875286,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-06706",
+      "pred": 20,
+      "gold": 67,
+      "correct": false,
+      "p_gold": 0.017834940925240517,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-07306",
+      "pred": 5,
+      "gold": 64,
+      "correct": false,
+      "p_gold": 0.004134778864681721,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-08406",
+      "pred": 38,
+      "gold": 37,
+      "correct": false,
+      "p_gold": 0.004836678970605135,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-09706",
+      "pred": 16,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.003365078242495656,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-09906",
+      "pred": 24,
+      "gold": 24,
+      "correct": true,
+      "p_gold": 0.2095484435558319,
       "tie": false
     },
     {
@@ -786,7 +988,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7147957682609558,
+      "p_gold": 0.7256184220314026,
       "tie": false
     },
     {
@@ -802,7 +1004,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.5703232884407043,
+      "p_gold": 0.5756542682647705,
       "tie": false
     },
     {
@@ -898,7 +1100,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.8145623803138733,
+      "p_gold": 0.8112702369689941,
       "tie": false
     },
     {
@@ -994,7 +1196,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.16713017225265503,
+      "p_gold": 0.17941418290138245,
       "tie": false
     },
     {
@@ -1234,7 +1436,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8963255882263184,
+      "p_gold": 0.8866426944732666,
       "tie": false
     },
     {
@@ -1250,7 +1452,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7509608864784241,
+      "p_gold": 0.7522550225257874,
       "tie": false
     },
     {
@@ -1282,7 +1484,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.6481132507324219,
+      "p_gold": 0.6391608715057373,
       "tie": false
     },
     {
@@ -1306,7 +1508,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.723931074142456,
+      "p_gold": 0.7178703546524048,
       "tie": false
     },
     {
@@ -1322,7 +1524,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.8338894248008728,
+      "p_gold": 0.8399915099143982,
       "tie": false
     },
     {
@@ -1346,7 +1548,7 @@
       "pred": 4,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.3526764512062073,
+      "p_gold": 0.3689020872116089,
       "tie": false
     },
     {
@@ -1354,7 +1556,7 @@
       "pred": 2,
       "gold": 3,
       "correct": false,
-      "p_gold": 0.10177525877952576,
+      "p_gold": 0.10115651786327362,
       "tie": false
     },
     {
@@ -1362,7 +1564,7 @@
       "pred": 4,
       "gold": 4,
       "correct": true,
-      "p_gold": 0.6009228825569153,
+      "p_gold": 0.5782694816589355,
       "tie": false
     },
     {
@@ -1370,7 +1572,7 @@
       "pred": 3,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.3670811653137207,
+      "p_gold": 0.3550604581832886,
       "tie": false
     },
     {
@@ -1378,7 +1580,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.10415217280387878,
+      "p_gold": 0.11236821115016937,
       "tie": false
     },
     {
@@ -1410,7 +1612,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.6021766662597656,
+      "p_gold": 0.5901030898094177,
       "tie": false
     },
     {
@@ -1418,7 +1620,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9432774782180786,
+      "p_gold": 0.9419556856155396,
       "tie": false
     },
     {
@@ -1426,7 +1628,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9658942222595215,
+      "p_gold": 0.9626032710075378,
       "tie": false
     },
     {
@@ -1434,7 +1636,7 @@
       "pred": 1,
       "gold": 4,
       "correct": false,
-      "p_gold": 0.23886004090309143,
+      "p_gold": 0.23830503225326538,
       "tie": false
     },
     {
@@ -1450,7 +1652,7 @@
       "pred": 4,
       "gold": 4,
       "correct": true,
-      "p_gold": 0.5804936289787292,
+      "p_gold": 0.5903598070144653,
       "tie": false
     },
     {
@@ -1458,7 +1660,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.6785573363304138,
+      "p_gold": 0.6829438805580139,
       "tie": false
     },
     {
@@ -1466,7 +1668,7 @@
       "pred": 4,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.09960054606199265,
+      "p_gold": 0.10030648857355118,
       "tie": false
     },
     {
@@ -1474,7 +1676,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7036867737770081,
+      "p_gold": 0.6958064436912537,
       "tie": false
     },
     {
@@ -1490,7 +1692,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8754251003265381,
+      "p_gold": 0.8749498724937439,
       "tie": false
     },
     {
@@ -1506,7 +1708,7 @@
       "pred": 1,
       "gold": 3,
       "correct": false,
-      "p_gold": 0.3340492248535156,
+      "p_gold": 0.342323899269104,
       "tie": false
     },
     {
@@ -1514,7 +1716,7 @@
       "pred": 4,
       "gold": 4,
       "correct": true,
-      "p_gold": 0.38012728095054626,
+      "p_gold": 0.3783825635910034,
       "tie": false
     },
     {
@@ -1530,7 +1732,7 @@
       "pred": 2,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.10416162014007568,
+      "p_gold": 0.10980311036109924,
       "tie": false
     },
     {
@@ -1538,7 +1740,7 @@
       "pred": 3,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.2173314392566681,
+      "p_gold": 0.21540193259716034,
       "tie": false
     },
     {
@@ -1546,7 +1748,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.6717934608459473,
+      "p_gold": 0.658599317073822,
       "tie": false
     },
     {
@@ -1554,7 +1756,7 @@
       "pred": 4,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.3005181849002838,
+      "p_gold": 0.30878856778144836,
       "tie": false
     },
     {
@@ -1562,7 +1764,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.7934137582778931,
+      "p_gold": 0.7837744951248169,
       "tie": false
     },
     {
@@ -1570,7 +1772,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.8444923758506775,
+      "p_gold": 0.8350614309310913,
       "tie": false
     },
     {
@@ -1578,7 +1780,7 @@
       "pred": 0,
       "gold": 4,
       "correct": false,
-      "p_gold": 0.12323974817991257,
+      "p_gold": 0.12292208522558212,
       "tie": false
     },
     {
@@ -1586,7 +1788,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7920408844947815,
+      "p_gold": 0.7916244268417358,
       "tie": false
     },
     {
@@ -1594,7 +1796,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.652094841003418,
+      "p_gold": 0.6308580040931702,
       "tie": false
     },
     {
@@ -1602,7 +1804,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.7842955589294434,
+      "p_gold": 0.8076162338256836,
       "tie": false
     },
     {
@@ -1618,7 +1820,7 @@
       "pred": 4,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.04145187512040138,
+      "p_gold": 0.044593457132577896,
       "tie": false
     },
     {
@@ -1642,7 +1844,7 @@
       "pred": 3,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.21480830013751984,
+      "p_gold": 0.2180507779121399,
       "tie": false
     },
     {
@@ -1650,7 +1852,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.1428663730621338,
+      "p_gold": 0.13678957521915436,
       "tie": false
     },
     {
@@ -1658,7 +1860,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.31126660108566284,
+      "p_gold": 0.3128081262111664,
       "tie": false
     },
     {
@@ -1666,7 +1868,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.40893253684043884,
+      "p_gold": 0.38072317838668823,
       "tie": false
     },
     {
@@ -1722,7 +1924,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9815219640731812,
+      "p_gold": 0.9807952046394348,
       "tie": false
     },
     {
@@ -1730,7 +1932,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.4582347273826599,
+      "p_gold": 0.4769115447998047,
       "tie": false
     },
     {
@@ -1746,7 +1948,7 @@
       "pred": 4,
       "gold": 4,
       "correct": true,
-      "p_gold": 0.7233059406280518,
+      "p_gold": 0.7328805327415466,
       "tie": false
     },
     {
@@ -1762,7 +1964,7 @@
       "pred": 1,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.09237682819366455,
+      "p_gold": 0.09654619544744492,
       "tie": false
     },
     {
@@ -2538,7 +2740,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6071292757987976,
+      "p_gold": 0.6145576238632202,
       "tie": false
     },
     {
@@ -2834,7 +3036,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6526035666465759,
+      "p_gold": 0.6352968215942383,
       "tie": false
     },
     {
@@ -3138,7 +3340,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.21091638505458832,
+      "p_gold": 0.18195553123950958,
       "tie": false
     },
     {
@@ -3154,7 +3356,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.74950110912323,
+      "p_gold": 0.7355822920799255,
       "tie": false
     },
     {
@@ -3194,7 +3396,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6110819578170776,
+      "p_gold": 0.6090171337127686,
       "tie": false
     },
     {
@@ -3306,7 +3508,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9090941548347473,
+      "p_gold": 0.9109293222427368,
       "tie": false
     },
     {
@@ -3346,7 +3548,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9980729818344116,
+      "p_gold": 0.9979497790336609,
       "tie": false
     },
     {
@@ -3362,7 +3564,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6642073392868042,
+      "p_gold": 0.6849569082260132,
       "tie": false
     },
     {
@@ -3370,7 +3572,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.2534332275390625,
+      "p_gold": 0.2615407705307007,
       "tie": false
     },
     {
@@ -3410,7 +3612,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.41705745458602905,
+      "p_gold": 0.43000897765159607,
       "tie": false
     },
     {
@@ -3442,7 +3644,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.48596322536468506,
+      "p_gold": 0.4905417859554291,
       "tie": false
     },
     {
@@ -3450,7 +3652,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.352347731590271,
+      "p_gold": 0.35028642416000366,
       "tie": false
     },
     {
@@ -3466,7 +3668,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.2432022988796234,
+      "p_gold": 0.239935040473938,
       "tie": false
     },
     {
@@ -3474,7 +3676,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9067272543907166,
+      "p_gold": 0.9008039236068726,
       "tie": false
     },
     {
@@ -3482,7 +3684,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.33359044790267944,
+      "p_gold": 0.34357526898384094,
       "tie": false
     },
     {
@@ -3498,7 +3700,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.8871679902076721,
+      "p_gold": 0.8866178393363953,
       "tie": false
     },
     {
@@ -3514,7 +3716,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9427801370620728,
+      "p_gold": 0.9431574940681458,
       "tie": false
     },
     {
@@ -3530,7 +3732,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9518306255340576,
+      "p_gold": 0.9496261477470398,
       "tie": false
     },
     {
@@ -3538,7 +3740,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.725878894329071,
+      "p_gold": 0.7267948389053345,
       "tie": false
     },
     {
@@ -3546,7 +3748,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6890475153923035,
+      "p_gold": 0.6614645719528198,
       "tie": false
     },
     {
@@ -3559,10 +3761,10 @@
     },
     {
       "id": "dev:piqa-train-15941",
-      "pred": 1,
+      "pred": 0,
       "gold": 1,
-      "correct": true,
-      "p_gold": 0.5199570655822754,
+      "correct": false,
+      "p_gold": 0.48707035183906555,
       "tie": false
     },
     {
@@ -3594,7 +3796,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9181278347969055,
+      "p_gold": 0.9144536256790161,
       "tie": false
     },
     {
@@ -3794,7 +3996,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9858749508857727,
+      "p_gold": 0.9858279228210449,
       "tie": false
     },
     {
@@ -3802,7 +4004,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9365069270133972,
+      "p_gold": 0.9327346682548523,
       "tie": false
     },
     {
@@ -3810,7 +4012,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9308375120162964,
+      "p_gold": 0.9345801472663879,
       "tie": false
     },
     {
@@ -3818,7 +4020,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.02957465685904026,
+      "p_gold": 0.02875763364136219,
       "tie": false
     },
     {
@@ -3834,7 +4036,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7200159430503845,
+      "p_gold": 0.7199366688728333,
       "tie": false
     },
     {
@@ -3842,7 +4044,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6779273748397827,
+      "p_gold": 0.7110556364059448,
       "tie": false
     },
     {
@@ -3850,15 +4052,15 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7068547606468201,
+      "p_gold": 0.7034665942192078,
       "tie": false
     },
     {
       "id": "dev:sst2-train-04074",
-      "pred": 0,
+      "pred": 1,
       "gold": 1,
-      "correct": false,
-      "p_gold": 0.491591215133667,
+      "correct": true,
+      "p_gold": 0.5095521211624146,
       "tie": false
     },
     {
@@ -3866,7 +4068,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8853886723518372,
+      "p_gold": 0.8859727382659912,
       "tie": false
     },
     {
@@ -3874,7 +4076,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8272506594657898,
+      "p_gold": 0.8163105249404907,
       "tie": false
     },
     {
@@ -3882,7 +4084,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5358321666717529,
+      "p_gold": 0.5251150727272034,
       "tie": false
     },
     {
@@ -3890,7 +4092,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.25053343176841736,
+      "p_gold": 0.2233339250087738,
       "tie": false
     },
     {
@@ -3906,7 +4108,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.753303587436676,
+      "p_gold": 0.7546439170837402,
       "tie": false
     },
     {
@@ -3914,7 +4116,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6112616658210754,
+      "p_gold": 0.6039955615997314,
       "tie": false
     },
     {
@@ -3922,7 +4124,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.04824739322066307,
+      "p_gold": 0.05109338462352753,
       "tie": false
     },
     {
@@ -3930,7 +4132,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7089834213256836,
+      "p_gold": 0.6957902908325195,
       "tie": false
     },
     {
@@ -3938,7 +4140,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9130305647850037,
+      "p_gold": 0.9099776744842529,
       "tie": false
     },
     {
@@ -3946,7 +4148,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.3514895737171173,
+      "p_gold": 0.3616527020931244,
       "tie": false
     },
     {
@@ -3954,7 +4156,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.4260968863964081,
+      "p_gold": 0.40550997853279114,
       "tie": false
     },
     {
@@ -3962,7 +4164,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9541775584220886,
+      "p_gold": 0.9504496455192566,
       "tie": false
     },
     {
@@ -3970,7 +4172,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.3903232216835022,
+      "p_gold": 0.4120180904865265,
       "tie": false
     },
     {
@@ -3978,7 +4180,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.28335219621658325,
+      "p_gold": 0.2749462127685547,
       "tie": false
     },
     {
@@ -3986,7 +4188,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6803976893424988,
+      "p_gold": 0.6927881836891174,
       "tie": false
     },
     {
@@ -3994,7 +4196,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8973069787025452,
+      "p_gold": 0.9080401062965393,
       "tie": false
     },
     {
@@ -4002,7 +4204,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.13762451708316803,
+      "p_gold": 0.1388191133737564,
       "tie": false
     },
     {
@@ -4010,7 +4212,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6583892703056335,
+      "p_gold": 0.6361916661262512,
       "tie": false
     },
     {
@@ -4018,7 +4220,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9380418658256531,
+      "p_gold": 0.9369428753852844,
       "tie": false
     },
     {
@@ -4026,7 +4228,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9482841491699219,
+      "p_gold": 0.946852445602417,
       "tie": false
     },
     {
@@ -4034,7 +4236,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8475702404975891,
+      "p_gold": 0.832604169845581,
       "tie": false
     },
     {
@@ -4042,7 +4244,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.4213999807834625,
+      "p_gold": 0.43129807710647583,
       "tie": false
     },
     {
@@ -4050,7 +4252,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7332776188850403,
+      "p_gold": 0.7499617338180542,
       "tie": false
     },
     {
@@ -4066,7 +4268,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.8456795811653137,
+      "p_gold": 0.8384164571762085,
       "tie": false
     },
     {
@@ -4082,7 +4284,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.533403754234314,
+      "p_gold": 0.5390498042106628,
       "tie": false
     },
     {
@@ -4090,7 +4292,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.1508190929889679,
+      "p_gold": 0.15407711267471313,
       "tie": false
     },
     {
@@ -4098,7 +4300,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7833780646324158,
+      "p_gold": 0.7899938225746155,
       "tie": false
     },
     {
@@ -4106,7 +4308,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.922202467918396,
+      "p_gold": 0.9173154830932617,
       "tie": false
     },
     {
@@ -4114,7 +4316,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.25472548604011536,
+      "p_gold": 0.254364937543869,
       "tie": false
     },
     {
@@ -4130,7 +4332,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.980319082736969,
+      "p_gold": 0.9814432859420776,
       "tie": false
     },
     {
@@ -4138,7 +4340,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.4836273789405823,
+      "p_gold": 0.47174298763275146,
       "tie": false
     },
     {
@@ -4146,7 +4348,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.8648183941841125,
+      "p_gold": 0.8582314252853394,
       "tie": false
     },
     {
@@ -4154,7 +4356,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.961622953414917,
+      "p_gold": 0.9561294913291931,
       "tie": false
     },
     {
@@ -4162,7 +4364,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7225747108459473,
+      "p_gold": 0.7186657786369324,
       "tie": false
     },
     {
@@ -4170,7 +4372,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8547807335853577,
+      "p_gold": 0.8528521060943604,
       "tie": false
     },
     {
@@ -4178,7 +4380,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.0713234394788742,
+      "p_gold": 0.07889129966497421,
       "tie": false
     },
     {
@@ -4186,7 +4388,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9100583791732788,
+      "p_gold": 0.9137437343597412,
       "tie": false
     },
     {
@@ -4194,7 +4396,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6652691960334778,
+      "p_gold": 0.6377097964286804,
       "tie": false
     },
     {
@@ -4202,7 +4404,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.4255145788192749,
+      "p_gold": 0.4402172565460205,
       "tie": false
     },
     {
@@ -4210,7 +4412,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6984419822692871,
+      "p_gold": 0.6706665754318237,
       "tie": false
     },
     {
@@ -4218,7 +4420,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9238934516906738,
+      "p_gold": 0.9256227612495422,
       "tie": false
     },
     {
@@ -4226,7 +4428,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.875723659992218,
+      "p_gold": 0.8571382164955139,
       "tie": false
     },
     {
@@ -4234,7 +4436,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.421296626329422,
+      "p_gold": 0.4170807898044586,
       "tie": false
     },
     {
@@ -4242,7 +4444,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.23688514530658722,
+      "p_gold": 0.23112474381923676,
       "tie": false
     },
     {
@@ -4250,7 +4452,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.40501344203948975,
+      "p_gold": 0.42868363857269287,
       "tie": false
     },
     {
@@ -4258,7 +4460,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6036089062690735,
+      "p_gold": 0.6024345755577087,
       "tie": false
     },
     {
@@ -4266,7 +4468,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8162333369255066,
+      "p_gold": 0.8243383765220642,
       "tie": false
     },
     {
@@ -4282,7 +4484,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.16868142783641815,
+      "p_gold": 0.1734326034784317,
       "tie": false
     },
     {
@@ -4298,7 +4500,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.5383280515670776,
+      "p_gold": 0.5265122056007385,
       "tie": false
     },
     {
@@ -4314,7 +4516,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.5523948073387146,
+      "p_gold": 0.5582276582717896,
       "tie": false
     },
     {
@@ -4322,7 +4524,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.4440239667892456,
+      "p_gold": 0.450647234916687,
       "tie": false
     },
     {
@@ -4338,7 +4540,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.23186391592025757,
+      "p_gold": 0.23978926241397858,
       "tie": false
     },
     {
@@ -4354,7 +4556,7 @@
       "pred": 1,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.12961436808109283,
+      "p_gold": 0.13166464865207672,
       "tie": false
     },
     {
@@ -4378,7 +4580,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.5356270670890808,
+      "p_gold": 0.5495379567146301,
       "tie": false
     },
     {
@@ -4386,7 +4588,7 @@
       "pred": 3,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.15922047197818756,
+      "p_gold": 0.1596314013004303,
       "tie": false
     },
     {
@@ -4394,7 +4596,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.3960324227809906,
+      "p_gold": 0.39497849345207214,
       "tie": false
     },
     {
@@ -4418,7 +4620,7 @@
       "pred": 4,
       "gold": 4,
       "correct": true,
-      "p_gold": 0.4966989755630493,
+      "p_gold": 0.5023743510246277,
       "tie": false
     },
     {
@@ -4434,7 +4636,7 @@
       "pred": 1,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.2739492952823639,
+      "p_gold": 0.26638227701187134,
       "tie": false
     },
     {
@@ -4450,7 +4652,7 @@
       "pred": 4,
       "gold": 4,
       "correct": true,
-      "p_gold": 0.8368462324142456,
+      "p_gold": 0.8298143148422241,
       "tie": false
     },
     {
@@ -4458,7 +4660,7 @@
       "pred": 4,
       "gold": 3,
       "correct": false,
-      "p_gold": 0.4256349503993988,
+      "p_gold": 0.41507968306541443,
       "tie": false
     },
     {
@@ -4490,7 +4692,7 @@
       "pred": 1,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.24014122784137726,
+      "p_gold": 0.24627463519573212,
       "tie": false
     },
     {
@@ -4498,7 +4700,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.35423344373703003,
+      "p_gold": 0.3413458466529846,
       "tie": false
     },
     {
@@ -4514,7 +4716,7 @@
       "pred": 3,
       "gold": 4,
       "correct": false,
-      "p_gold": 0.2268150895833969,
+      "p_gold": 0.23303893208503723,
       "tie": false
     },
     {
@@ -4530,7 +4732,7 @@
       "pred": 1,
       "gold": 3,
       "correct": false,
-      "p_gold": 0.05876970663666725,
+      "p_gold": 0.0569559782743454,
       "tie": false
     },
     {
@@ -4546,7 +4748,7 @@
       "pred": 4,
       "gold": 3,
       "correct": false,
-      "p_gold": 0.409778356552124,
+      "p_gold": 0.39471369981765747,
       "tie": false
     },
     {
@@ -4554,7 +4756,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.5694863796234131,
+      "p_gold": 0.583116352558136,
       "tie": false
     },
     {
@@ -4578,7 +4780,7 @@
       "pred": 4,
       "gold": 4,
       "correct": true,
-      "p_gold": 0.6423586010932922,
+      "p_gold": 0.6356648206710815,
       "tie": false
     },
     {
@@ -4602,7 +4804,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.2385750263929367,
+      "p_gold": 0.23881737887859344,
       "tie": false
     },
     {
@@ -4610,7 +4812,7 @@
       "pred": 3,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.1189483255147934,
+      "p_gold": 0.12105315178632736,
       "tie": false
     },
     {
@@ -4626,7 +4828,7 @@
       "pred": 1,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.28294116258621216,
+      "p_gold": 0.2808700501918793,
       "tie": false
     },
     {
@@ -4655,10 +4857,10 @@
     },
     {
       "id": "dev:sst5-train-07715",
-      "pred": 3,
+      "pred": 2,
       "gold": 3,
-      "correct": true,
-      "p_gold": 0.29222792387008667,
+      "correct": false,
+      "p_gold": 0.28933098912239075,
       "tie": false
     },
     {
@@ -4674,7 +4876,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.5390050411224365,
+      "p_gold": 0.5411167144775391,
       "tie": false
     },
     {
@@ -4682,7 +4884,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.5385076403617859,
+      "p_gold": 0.5511131286621094,
       "tie": false
     },
     {
@@ -4722,7 +4924,7 @@
       "pred": 3,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.14013877511024475,
+      "p_gold": 0.14077228307724,
       "tie": false
     },
     {
@@ -4778,7 +4980,7 @@
       "pred": 2,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.13271884620189667,
+      "p_gold": 0.13784004747867584,
       "tie": false
     },
     {
@@ -4802,7 +5004,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.9341384172439575,
+      "p_gold": 0.9302438497543335,
       "tie": false
     },
     {
@@ -4810,7 +5012,7 @@
       "pred": 0,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.3023011386394501,
+      "p_gold": 0.3004026412963867,
       "tie": false
     },
     {
@@ -4834,7 +5036,7 @@
       "pred": 1,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.15950478613376617,
+      "p_gold": 0.1633533239364624,
       "tie": false
     },
     {
@@ -4842,7 +5044,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.32775434851646423,
+      "p_gold": 0.34129226207733154,
       "tie": false
     },
     {
@@ -4882,7 +5084,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.8498405814170837,
+      "p_gold": 0.8554995656013489,
       "tie": false
     },
     {
@@ -4890,7 +5092,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6391609907150269,
+      "p_gold": 0.6398970484733582,
       "tie": false
     },
     {
@@ -4914,7 +5116,7 @@
       "pred": 1,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.19372360408306122,
+      "p_gold": 0.19875982403755188,
       "tie": false
     },
     {
@@ -4938,7 +5140,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.3480624854564667,
+      "p_gold": 0.3544016480445862,
       "tie": false
     },
     {
@@ -4962,7 +5164,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.7502607107162476,
+      "p_gold": 0.7641692757606506,
       "tie": false
     },
     {
@@ -4978,7 +5180,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6502572894096375,
+      "p_gold": 0.6571030020713806,
       "tie": false
     },
     {
@@ -4994,7 +5196,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.4207073450088501,
+      "p_gold": 0.4224134087562561,
       "tie": false
     },
     {
@@ -5010,7 +5212,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.41441112756729126,
+      "p_gold": 0.41222891211509705,
       "tie": false
     },
     {
@@ -5106,7 +5308,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7834179997444153,
+      "p_gold": 0.7843999862670898,
       "tie": false
     },
     {
@@ -5186,7 +5388,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.5818117260932922,
+      "p_gold": 0.5799882411956787,
       "tie": false
     },
     {
@@ -5386,7 +5588,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6868997812271118,
+      "p_gold": 0.6976017355918884,
       "tie": false
     },
     {
@@ -5522,7 +5724,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.8237369060516357,
+      "p_gold": 0.8280168175697327,
       "tie": false
     },
     {
@@ -5706,7 +5908,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7777757048606873,
+      "p_gold": 0.775121808052063,
       "tie": false
     },
     {
@@ -5730,7 +5932,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.053219251334667206,
+      "p_gold": 0.05150601267814636,
       "tie": false
     },
     {
@@ -5794,7 +5996,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7981540560722351,
+      "p_gold": 0.7992498278617859,
       "tie": false
     },
     {
@@ -5986,7 +6188,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8716012835502625,
+      "p_gold": 0.8717668652534485,
       "tie": false
     },
     {
@@ -5994,7 +6196,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.4557119607925415,
+      "p_gold": 0.4437078535556793,
       "tie": false
     },
     {
@@ -6010,7 +6212,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9436646699905396,
+      "p_gold": 0.9410120844841003,
       "tie": false
     },
     {
@@ -6018,7 +6220,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.40461841225624084,
+      "p_gold": 0.4074748754501343,
       "tie": false
     },
     {
@@ -6026,7 +6228,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.916650116443634,
+      "p_gold": 0.9370558261871338,
       "tie": false
     },
     {
@@ -6034,7 +6236,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6180747151374817,
+      "p_gold": 0.6184417009353638,
       "tie": false
     },
     {
@@ -6050,15 +6252,15 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.4387943148612976,
+      "p_gold": 0.4335680603981018,
       "tie": false
     },
     {
       "id": "dev:winogrande-train-19883",
-      "pred": 0,
+      "pred": 1,
       "gold": 0,
-      "correct": true,
-      "p_gold": 0.5117501020431519,
+      "correct": false,
+      "p_gold": 0.49315664172172546,
       "tie": false
     },
     {
@@ -6074,7 +6276,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5278774499893188,
+      "p_gold": 0.5316168069839478,
       "tie": false
     },
     {
@@ -6082,7 +6284,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6454818248748779,
+      "p_gold": 0.6539852619171143,
       "tie": false
     },
     {
@@ -6098,7 +6300,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6176550984382629,
+      "p_gold": 0.5974082350730896,
       "tie": false
     },
     {
@@ -6114,7 +6316,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6169220805168152,
+      "p_gold": 0.6374712586402893,
       "tie": false
     },
     {
@@ -6122,7 +6324,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5932301878929138,
+      "p_gold": 0.5809244513511658,
       "tie": false
     },
     {
@@ -6130,7 +6332,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6559369564056396,
+      "p_gold": 0.6633860468864441,
       "tie": false
     },
     {
@@ -6138,7 +6340,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6035985946655273,
+      "p_gold": 0.606316328048706,
       "tie": false
     },
     {
@@ -6146,7 +6348,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.2168986201286316,
+      "p_gold": 0.22381380200386047,
       "tie": false
     },
     {
@@ -6154,7 +6356,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.565994143486023,
+      "p_gold": 0.5594097971916199,
       "tie": false
     },
     {
@@ -6162,7 +6364,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.2642022371292114,
+      "p_gold": 0.24331603944301605,
       "tie": false
     },
     {
@@ -6170,7 +6372,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7757898569107056,
+      "p_gold": 0.7750173211097717,
       "tie": false
     },
     {
@@ -6178,7 +6380,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7218216061592102,
+      "p_gold": 0.7194876670837402,
       "tie": false
     },
     {
@@ -6186,7 +6388,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.2687869071960449,
+      "p_gold": 0.29158926010131836,
       "tie": false
     },
     {
@@ -6194,7 +6396,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.280139684677124,
+      "p_gold": 0.2789578437805176,
       "tie": false
     },
     {
@@ -6202,7 +6404,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.3417645990848541,
+      "p_gold": 0.36377403140068054,
       "tie": false
     },
     {
@@ -6210,7 +6412,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.3837694227695465,
+      "p_gold": 0.3703390657901764,
       "tie": false
     },
     {
@@ -6569,10 +6771,10 @@
     },
     {
       "id": "dev:agnews-test-02982",
-      "pred": 3,
+      "pred": 2,
       "gold": 3,
-      "correct": true,
-      "p_gold": 0.4248846471309662,
+      "correct": false,
+      "p_gold": 0.41530123353004456,
       "tie": false
     },
     {
@@ -6628,7 +6830,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8167181611061096,
+      "p_gold": 0.8264694809913635,
       "tie": false
     },
     {
@@ -6772,7 +6974,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.6133437752723694,
+      "p_gold": 0.6267735362052917,
       "tie": false
     },
     {
@@ -6853,6 +7055,198 @@
       "gold": 0,
       "correct": true,
       "p_gold": 0.8870797753334045,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-test-01806",
+      "pred": 25,
+      "gold": 25,
+      "correct": true,
+      "p_gold": 0.35581791400909424,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-test-01906",
+      "pred": 58,
+      "gold": 55,
+      "correct": false,
+      "p_gold": 0.009002506732940674,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-test-02806",
+      "pred": 59,
+      "gold": 57,
+      "correct": false,
+      "p_gold": 0.0011692710686475039,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-00206",
+      "pred": 62,
+      "gold": 13,
+      "correct": false,
+      "p_gold": 0.04483399540185928,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-00806",
+      "pred": 48,
+      "gold": 46,
+      "correct": false,
+      "p_gold": 0.01993238367140293,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-00906",
+      "pred": 73,
+      "gold": 36,
+      "correct": false,
+      "p_gold": 0.08691655844449997,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-01006",
+      "pred": 73,
+      "gold": 12,
+      "correct": false,
+      "p_gold": 0.037250470370054245,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-01306",
+      "pred": 62,
+      "gold": 14,
+      "correct": false,
+      "p_gold": 0.009815714322030544,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-01606",
+      "pred": 73,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.010356503538787365,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-02806",
+      "pred": 48,
+      "gold": 66,
+      "correct": false,
+      "p_gold": 0.020885324105620384,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-03306",
+      "pred": 48,
+      "gold": 6,
+      "correct": false,
+      "p_gold": 0.08018648624420166,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-03506",
+      "pred": 66,
+      "gold": 16,
+      "correct": false,
+      "p_gold": 0.02694031223654747,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-04306",
+      "pred": 62,
+      "gold": 62,
+      "correct": true,
+      "p_gold": 0.18729832768440247,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-04706",
+      "pred": 73,
+      "gold": 28,
+      "correct": false,
+      "p_gold": 0.015364117920398712,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-05306",
+      "pred": 73,
+      "gold": 42,
+      "correct": false,
+      "p_gold": 0.020866163074970245,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-05506",
+      "pred": 73,
+      "gold": 52,
+      "correct": false,
+      "p_gold": 0.005830110050737858,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-05906",
+      "pred": 62,
+      "gold": 25,
+      "correct": false,
+      "p_gold": 0.15183840692043304,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-06406",
+      "pred": 66,
+      "gold": 63,
+      "correct": false,
+      "p_gold": 0.005286402069032192,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-06506",
+      "pred": 73,
+      "gold": 70,
+      "correct": false,
+      "p_gold": 0.003991737030446529,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-06706",
+      "pred": 70,
+      "gold": 67,
+      "correct": false,
+      "p_gold": 0.04953952506184578,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-07306",
+      "pred": 69,
+      "gold": 64,
+      "correct": false,
+      "p_gold": 0.04636077955365181,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-08406",
+      "pred": 38,
+      "gold": 37,
+      "correct": false,
+      "p_gold": 0.003098629182204604,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-09706",
+      "pred": 62,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.00147049012593925,
+      "tie": false
+    },
+    {
+      "id": "dev:banking77-train-09906",
+      "pred": 24,
+      "gold": 24,
+      "correct": true,
+      "p_gold": 0.2234940081834793,
       "tie": false
     },
     {
@@ -7089,10 +7483,10 @@
     },
     {
       "id": "dev:boolq-train-02792",
-      "pred": 0,
+      "pred": 1,
       "gold": 0,
-      "correct": true,
-      "p_gold": 0.5094772577285767,
+      "correct": false,
+      "p_gold": 0.4870224595069885,
       "tie": false
     },
     {
@@ -7108,7 +7502,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.3701494634151459,
+      "p_gold": 0.3600039482116699,
       "tie": false
     },
     {
@@ -7204,7 +7598,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.615051805973053,
+      "p_gold": 0.6267955303192139,
       "tie": false
     },
     {
@@ -7300,7 +7694,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.362924724817276,
+      "p_gold": 0.35862067341804504,
       "tie": false
     },
     {
@@ -7540,7 +7934,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9132474660873413,
+      "p_gold": 0.9092299342155457,
       "tie": false
     },
     {
@@ -7556,7 +7950,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5094873309135437,
+      "p_gold": 0.5022762417793274,
       "tie": false
     },
     {
@@ -7588,7 +7982,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.47598201036453247,
+      "p_gold": 0.4727177917957306,
       "tie": false
     },
     {
@@ -7609,10 +8003,10 @@
     },
     {
       "id": "dev:commonsenseqa-train-00678",
-      "pred": 3,
+      "pred": 0,
       "gold": 0,
-      "correct": false,
-      "p_gold": 0.4068635404109955,
+      "correct": true,
+      "p_gold": 0.4285424053668976,
       "tie": false
     },
     {
@@ -7628,7 +8022,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.6692749857902527,
+      "p_gold": 0.6763429045677185,
       "tie": false
     },
     {
@@ -7652,7 +8046,7 @@
       "pred": 4,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.23625466227531433,
+      "p_gold": 0.23919188976287842,
       "tie": false
     },
     {
@@ -7660,7 +8054,7 @@
       "pred": 4,
       "gold": 3,
       "correct": false,
-      "p_gold": 0.07635483890771866,
+      "p_gold": 0.08415202051401138,
       "tie": false
     },
     {
@@ -7668,7 +8062,7 @@
       "pred": 1,
       "gold": 4,
       "correct": false,
-      "p_gold": 0.19172728061676025,
+      "p_gold": 0.204621359705925,
       "tie": false
     },
     {
@@ -7676,7 +8070,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.18398019671440125,
+      "p_gold": 0.18262512981891632,
       "tie": false
     },
     {
@@ -7684,7 +8078,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.11698369681835175,
+      "p_gold": 0.11618480831384659,
       "tie": false
     },
     {
@@ -7716,7 +8110,7 @@
       "pred": 4,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.3035370111465454,
+      "p_gold": 0.3181370794773102,
       "tie": false
     },
     {
@@ -7724,7 +8118,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.934689462184906,
+      "p_gold": 0.9307245016098022,
       "tie": false
     },
     {
@@ -7732,7 +8126,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9740681648254395,
+      "p_gold": 0.9751076102256775,
       "tie": false
     },
     {
@@ -7740,7 +8134,7 @@
       "pred": 2,
       "gold": 4,
       "correct": false,
-      "p_gold": 0.22009824216365814,
+      "p_gold": 0.20241917669773102,
       "tie": false
     },
     {
@@ -7756,7 +8150,7 @@
       "pred": 4,
       "gold": 4,
       "correct": true,
-      "p_gold": 0.5335417985916138,
+      "p_gold": 0.5542938113212585,
       "tie": false
     },
     {
@@ -7764,7 +8158,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.7246788144111633,
+      "p_gold": 0.7229472994804382,
       "tie": false
     },
     {
@@ -7772,7 +8166,7 @@
       "pred": 4,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.13970258831977844,
+      "p_gold": 0.1482543647289276,
       "tie": false
     },
     {
@@ -7780,7 +8174,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.44667375087738037,
+      "p_gold": 0.4598815441131592,
       "tie": false
     },
     {
@@ -7796,7 +8190,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8708694577217102,
+      "p_gold": 0.8706978559494019,
       "tie": false
     },
     {
@@ -7812,15 +8206,15 @@
       "pred": 1,
       "gold": 3,
       "correct": false,
-      "p_gold": 0.44730451703071594,
+      "p_gold": 0.4459187090396881,
       "tie": false
     },
     {
       "id": "dev:commonsenseqa-train-04978",
-      "pred": 2,
+      "pred": 3,
       "gold": 4,
       "correct": false,
-      "p_gold": 0.209515780210495,
+      "p_gold": 0.20257189869880676,
       "tie": false
     },
     {
@@ -7836,7 +8230,7 @@
       "pred": 2,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.027821168303489685,
+      "p_gold": 0.029431188479065895,
       "tie": false
     },
     {
@@ -7844,7 +8238,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6980668306350708,
+      "p_gold": 0.6980815529823303,
       "tie": false
     },
     {
@@ -7852,7 +8246,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.588529646396637,
+      "p_gold": 0.5851139426231384,
       "tie": false
     },
     {
@@ -7860,15 +8254,15 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7030159831047058,
+      "p_gold": 0.7085940837860107,
       "tie": false
     },
     {
       "id": "dev:commonsenseqa-train-05700",
-      "pred": 2,
+      "pred": 3,
       "gold": 2,
-      "correct": true,
-      "p_gold": 0.4746741056442261,
+      "correct": false,
+      "p_gold": 0.4619511067867279,
       "tie": false
     },
     {
@@ -7876,7 +8270,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.7780378460884094,
+      "p_gold": 0.7607529163360596,
       "tie": false
     },
     {
@@ -7884,7 +8278,7 @@
       "pred": 4,
       "gold": 4,
       "correct": true,
-      "p_gold": 0.5535416603088379,
+      "p_gold": 0.5493607521057129,
       "tie": false
     },
     {
@@ -7892,7 +8286,7 @@
       "pred": 3,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.33006128668785095,
+      "p_gold": 0.336593896150589,
       "tie": false
     },
     {
@@ -7900,7 +8294,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5257098078727722,
+      "p_gold": 0.5115258693695068,
       "tie": false
     },
     {
@@ -7908,7 +8302,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.8190221190452576,
+      "p_gold": 0.8041812181472778,
       "tie": false
     },
     {
@@ -7924,7 +8318,7 @@
       "pred": 4,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.07344859838485718,
+      "p_gold": 0.0760185644030571,
       "tie": false
     },
     {
@@ -7948,7 +8342,7 @@
       "pred": 3,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.2065943032503128,
+      "p_gold": 0.20262455940246582,
       "tie": false
     },
     {
@@ -7956,7 +8350,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.34909024834632874,
+      "p_gold": 0.3384288251399994,
       "tie": false
     },
     {
@@ -7964,7 +8358,7 @@
       "pred": 0,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.27480548620224,
+      "p_gold": 0.2763848304748535,
       "tie": false
     },
     {
@@ -7972,7 +8366,7 @@
       "pred": 4,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.26265576481819153,
+      "p_gold": 0.2668635845184326,
       "tie": false
     },
     {
@@ -8028,7 +8422,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.5050389766693115,
+      "p_gold": 0.5059847235679626,
       "tie": false
     },
     {
@@ -8036,7 +8430,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.49467048048973083,
+      "p_gold": 0.47899648547172546,
       "tie": false
     },
     {
@@ -8052,7 +8446,7 @@
       "pred": 4,
       "gold": 4,
       "correct": true,
-      "p_gold": 0.3607533574104309,
+      "p_gold": 0.3620500862598419,
       "tie": false
     },
     {
@@ -8068,7 +8462,7 @@
       "pred": 1,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.19895465672016144,
+      "p_gold": 0.21064426004886627,
       "tie": false
     },
     {
@@ -8844,7 +9238,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.36350053548812866,
+      "p_gold": 0.3663894832134247,
       "tie": false
     },
     {
@@ -9140,7 +9534,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.1688571572303772,
+      "p_gold": 0.1706959307193756,
       "tie": false
     },
     {
@@ -9444,7 +9838,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.22498400509357452,
+      "p_gold": 0.23397612571716309,
       "tie": false
     },
     {
@@ -9460,7 +9854,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.16515982151031494,
+      "p_gold": 0.17028744518756866,
       "tie": false
     },
     {
@@ -9500,7 +9894,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.3130477964878082,
+      "p_gold": 0.32357415556907654,
       "tie": false
     },
     {
@@ -9612,7 +10006,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7511481642723083,
+      "p_gold": 0.7506731748580933,
       "tie": false
     },
     {
@@ -9652,7 +10046,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9980190992355347,
+      "p_gold": 0.9981770515441895,
       "tie": false
     },
     {
@@ -9668,7 +10062,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9770972728729248,
+      "p_gold": 0.9759396314620972,
       "tie": false
     },
     {
@@ -9676,7 +10070,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.42381957173347473,
+      "p_gold": 0.40553873777389526,
       "tie": false
     },
     {
@@ -9716,7 +10110,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.8864263296127319,
+      "p_gold": 0.8889904618263245,
       "tie": false
     },
     {
@@ -9748,7 +10142,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.5283599495887756,
+      "p_gold": 0.5135132670402527,
       "tie": false
     },
     {
@@ -9756,7 +10150,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9232944846153259,
+      "p_gold": 0.9130318760871887,
       "tie": false
     },
     {
@@ -9772,7 +10166,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.4238138198852539,
+      "p_gold": 0.4275009334087372,
       "tie": false
     },
     {
@@ -9780,7 +10174,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9760695099830627,
+      "p_gold": 0.9760273098945618,
       "tie": false
     },
     {
@@ -9788,7 +10182,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.3479345738887787,
+      "p_gold": 0.34668949246406555,
       "tie": false
     },
     {
@@ -9804,7 +10198,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6451667547225952,
+      "p_gold": 0.6389102935791016,
       "tie": false
     },
     {
@@ -9820,7 +10214,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.850534975528717,
+      "p_gold": 0.8459653854370117,
       "tie": false
     },
     {
@@ -9836,7 +10230,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7284067869186401,
+      "p_gold": 0.7052074074745178,
       "tie": false
     },
     {
@@ -9844,7 +10238,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8780357837677002,
+      "p_gold": 0.8815997838973999,
       "tie": false
     },
     {
@@ -9852,7 +10246,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.923641562461853,
+      "p_gold": 0.9290972352027893,
       "tie": false
     },
     {
@@ -9868,7 +10262,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5782464146614075,
+      "p_gold": 0.5762042999267578,
       "tie": false
     },
     {
@@ -9900,7 +10294,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9279125928878784,
+      "p_gold": 0.9206356406211853,
       "tie": false
     },
     {
@@ -10100,7 +10494,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8606569170951843,
+      "p_gold": 0.8518115878105164,
       "tie": false
     },
     {
@@ -10108,7 +10502,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.780375599861145,
+      "p_gold": 0.7851340770721436,
       "tie": false
     },
     {
@@ -10116,7 +10510,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7903047800064087,
+      "p_gold": 0.8035370111465454,
       "tie": false
     },
     {
@@ -10124,7 +10518,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.03318405523896217,
+      "p_gold": 0.03385195508599281,
       "tie": false
     },
     {
@@ -10140,7 +10534,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.4437217712402344,
+      "p_gold": 0.4337533712387085,
       "tie": false
     },
     {
@@ -10148,7 +10542,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8182299733161926,
+      "p_gold": 0.8123561143875122,
       "tie": false
     },
     {
@@ -10156,7 +10550,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.38732314109802246,
+      "p_gold": 0.36689668893814087,
       "tie": false
     },
     {
@@ -10164,7 +10558,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.685339629650116,
+      "p_gold": 0.6850600242614746,
       "tie": false
     },
     {
@@ -10172,7 +10566,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9395705461502075,
+      "p_gold": 0.9348630905151367,
       "tie": false
     },
     {
@@ -10180,7 +10574,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8812357187271118,
+      "p_gold": 0.893513560295105,
       "tie": false
     },
     {
@@ -10188,7 +10582,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8541858196258545,
+      "p_gold": 0.8609482645988464,
       "tie": false
     },
     {
@@ -10196,7 +10590,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5158655047416687,
+      "p_gold": 0.511285126209259,
       "tie": false
     },
     {
@@ -10212,7 +10606,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6998016834259033,
+      "p_gold": 0.7017775774002075,
       "tie": false
     },
     {
@@ -10220,7 +10614,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7791188359260559,
+      "p_gold": 0.7681933641433716,
       "tie": false
     },
     {
@@ -10228,7 +10622,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.08244989812374115,
+      "p_gold": 0.08186007291078568,
       "tie": false
     },
     {
@@ -10236,7 +10630,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5872621536254883,
+      "p_gold": 0.5936405062675476,
       "tie": false
     },
     {
@@ -10244,7 +10638,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.534726619720459,
+      "p_gold": 0.5729484558105469,
       "tie": false
     },
     {
@@ -10252,7 +10646,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5814810395240784,
+      "p_gold": 0.5317866802215576,
       "tie": false
     },
     {
@@ -10260,7 +10654,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7881014943122864,
+      "p_gold": 0.7949508428573608,
       "tie": false
     },
     {
@@ -10268,7 +10662,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.906188428401947,
+      "p_gold": 0.9109922647476196,
       "tie": false
     },
     {
@@ -10276,7 +10670,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7255172729492188,
+      "p_gold": 0.7203317880630493,
       "tie": false
     },
     {
@@ -10284,7 +10678,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7144448161125183,
+      "p_gold": 0.7251991033554077,
       "tie": false
     },
     {
@@ -10292,7 +10686,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9238710999488831,
+      "p_gold": 0.9181095361709595,
       "tie": false
     },
     {
@@ -10300,7 +10694,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8946913480758667,
+      "p_gold": 0.8915209174156189,
       "tie": false
     },
     {
@@ -10308,7 +10702,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.0494149886071682,
+      "p_gold": 0.04873074218630791,
       "tie": false
     },
     {
@@ -10316,7 +10710,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.09314805269241333,
+      "p_gold": 0.09741134196519852,
       "tie": false
     },
     {
@@ -10324,7 +10718,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.4607298970222473,
+      "p_gold": 0.4510326683521271,
       "tie": false
     },
     {
@@ -10332,7 +10726,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8764336705207825,
+      "p_gold": 0.8590201139450073,
       "tie": false
     },
     {
@@ -10340,7 +10734,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7936851978302002,
+      "p_gold": 0.7958809733390808,
       "tie": false
     },
     {
@@ -10348,7 +10742,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.1491713523864746,
+      "p_gold": 0.14970310032367706,
       "tie": false
     },
     {
@@ -10356,7 +10750,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8041371703147888,
+      "p_gold": 0.8240198493003845,
       "tie": false
     },
     {
@@ -10372,7 +10766,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.34702688455581665,
+      "p_gold": 0.35929036140441895,
       "tie": false
     },
     {
@@ -10388,7 +10782,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8183194994926453,
+      "p_gold": 0.8021008372306824,
       "tie": false
     },
     {
@@ -10396,7 +10790,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6605150103569031,
+      "p_gold": 0.678655743598938,
       "tie": false
     },
     {
@@ -10404,7 +10798,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.3497762978076935,
+      "p_gold": 0.35916027426719666,
       "tie": false
     },
     {
@@ -10412,7 +10806,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.3108085095882416,
+      "p_gold": 0.31548580527305603,
       "tie": false
     },
     {
@@ -10420,7 +10814,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.1851176768541336,
+      "p_gold": 0.18716394901275635,
       "tie": false
     },
     {
@@ -10436,7 +10830,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.939145565032959,
+      "p_gold": 0.9401248693466187,
       "tie": false
     },
     {
@@ -10444,7 +10838,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.1557167023420334,
+      "p_gold": 0.14910821616649628,
       "tie": false
     },
     {
@@ -10452,7 +10846,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.3460404574871063,
+      "p_gold": 0.35337164998054504,
       "tie": false
     },
     {
@@ -10460,7 +10854,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7681363821029663,
+      "p_gold": 0.763749897480011,
       "tie": false
     },
     {
@@ -10468,7 +10862,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7306661009788513,
+      "p_gold": 0.7289601564407349,
       "tie": false
     },
     {
@@ -10476,7 +10870,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7411375641822815,
+      "p_gold": 0.7310568690299988,
       "tie": false
     },
     {
@@ -10484,7 +10878,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.2787671387195587,
+      "p_gold": 0.26911845803260803,
       "tie": false
     },
     {
@@ -10492,7 +10886,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8850902318954468,
+      "p_gold": 0.8820273876190186,
       "tie": false
     },
     {
@@ -10500,7 +10894,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7266882061958313,
+      "p_gold": 0.744926393032074,
       "tie": false
     },
     {
@@ -10508,15 +10902,15 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.46851906180381775,
+      "p_gold": 0.43751639127731323,
       "tie": false
     },
     {
       "id": "dev:sst2-train-51486",
-      "pred": 0,
+      "pred": 1,
       "gold": 1,
-      "correct": false,
-      "p_gold": 0.49538886547088623,
+      "correct": true,
+      "p_gold": 0.5053207278251648,
       "tie": false
     },
     {
@@ -10524,7 +10918,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.9255114197731018,
+      "p_gold": 0.9154137372970581,
       "tie": false
     },
     {
@@ -10532,7 +10926,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.834632396697998,
+      "p_gold": 0.8352522850036621,
       "tie": false
     },
     {
@@ -10540,7 +10934,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.13734102249145508,
+      "p_gold": 0.1406945288181305,
       "tie": false
     },
     {
@@ -10548,7 +10942,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.590312659740448,
+      "p_gold": 0.6045929193496704,
       "tie": false
     },
     {
@@ -10556,7 +10950,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7864802479743958,
+      "p_gold": 0.7966800332069397,
       "tie": false
     },
     {
@@ -10564,7 +10958,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.785126805305481,
+      "p_gold": 0.786530613899231,
       "tie": false
     },
     {
@@ -10572,7 +10966,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8725711703300476,
+      "p_gold": 0.8725759983062744,
       "tie": false
     },
     {
@@ -10588,7 +10982,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.630477249622345,
+      "p_gold": 0.6159664392471313,
       "tie": false
     },
     {
@@ -10604,7 +10998,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.6137661933898926,
+      "p_gold": 0.5975931286811829,
       "tie": false
     },
     {
@@ -10620,7 +11014,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.711371123790741,
+      "p_gold": 0.722418487071991,
       "tie": false
     },
     {
@@ -10628,7 +11022,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.6370047330856323,
+      "p_gold": 0.6330128312110901,
       "tie": false
     },
     {
@@ -10644,7 +11038,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.07307606935501099,
+      "p_gold": 0.0731758326292038,
       "tie": false
     },
     {
@@ -10660,7 +11054,7 @@
       "pred": 1,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.10347732156515121,
+      "p_gold": 0.1002519279718399,
       "tie": false
     },
     {
@@ -10684,7 +11078,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.6354954242706299,
+      "p_gold": 0.6278424263000488,
       "tie": false
     },
     {
@@ -10692,7 +11086,7 @@
       "pred": 3,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.16217710077762604,
+      "p_gold": 0.16261832416057587,
       "tie": false
     },
     {
@@ -10700,7 +11094,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.5778695940971375,
+      "p_gold": 0.5769774317741394,
       "tie": false
     },
     {
@@ -10724,7 +11118,7 @@
       "pred": 3,
       "gold": 4,
       "correct": false,
-      "p_gold": 0.38711366057395935,
+      "p_gold": 0.38202911615371704,
       "tie": false
     },
     {
@@ -10740,7 +11134,7 @@
       "pred": 3,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.14248263835906982,
+      "p_gold": 0.1509392112493515,
       "tie": false
     },
     {
@@ -10753,10 +11147,10 @@
     },
     {
       "id": "dev:sst5-train-02212",
-      "pred": 4,
+      "pred": 3,
       "gold": 4,
-      "correct": true,
-      "p_gold": 0.47005683183670044,
+      "correct": false,
+      "p_gold": 0.45153602957725525,
       "tie": false
     },
     {
@@ -10764,7 +11158,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.5482326149940491,
+      "p_gold": 0.5546364784240723,
       "tie": false
     },
     {
@@ -10796,7 +11190,7 @@
       "pred": 3,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.16791284084320068,
+      "p_gold": 0.17379361391067505,
       "tie": false
     },
     {
@@ -10804,7 +11198,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.27043527364730835,
+      "p_gold": 0.2790915369987488,
       "tie": false
     },
     {
@@ -10820,7 +11214,7 @@
       "pred": 3,
       "gold": 4,
       "correct": false,
-      "p_gold": 0.09819820523262024,
+      "p_gold": 0.09778691828250885,
       "tie": false
     },
     {
@@ -10836,7 +11230,7 @@
       "pred": 1,
       "gold": 3,
       "correct": false,
-      "p_gold": 0.04168766364455223,
+      "p_gold": 0.042286600917577744,
       "tie": false
     },
     {
@@ -10852,7 +11246,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.48548707365989685,
+      "p_gold": 0.4739063084125519,
       "tie": false
     },
     {
@@ -10860,7 +11254,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.5226360559463501,
+      "p_gold": 0.5096267461776733,
       "tie": false
     },
     {
@@ -10884,7 +11278,7 @@
       "pred": 3,
       "gold": 4,
       "correct": false,
-      "p_gold": 0.40398716926574707,
+      "p_gold": 0.412138432264328,
       "tie": false
     },
     {
@@ -10908,7 +11302,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.13256026804447174,
+      "p_gold": 0.1347864419221878,
       "tie": false
     },
     {
@@ -10916,7 +11310,7 @@
       "pred": 3,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.1072293296456337,
+      "p_gold": 0.10756918787956238,
       "tie": false
     },
     {
@@ -10932,7 +11326,7 @@
       "pred": 3,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.2146838903427124,
+      "p_gold": 0.22508414089679718,
       "tie": false
     },
     {
@@ -10964,7 +11358,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.5845783948898315,
+      "p_gold": 0.5978929400444031,
       "tie": false
     },
     {
@@ -10980,7 +11374,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.6743558049201965,
+      "p_gold": 0.6578231453895569,
       "tie": false
     },
     {
@@ -10988,7 +11382,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.5335708260536194,
+      "p_gold": 0.5424584150314331,
       "tie": false
     },
     {
@@ -11028,7 +11422,7 @@
       "pred": 3,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.046196188777685165,
+      "p_gold": 0.043560177087783813,
       "tie": false
     },
     {
@@ -11084,7 +11478,7 @@
       "pred": 2,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.17300887405872345,
+      "p_gold": 0.16362951695919037,
       "tie": false
     },
     {
@@ -11108,7 +11502,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.9499899744987488,
+      "p_gold": 0.9489560127258301,
       "tie": false
     },
     {
@@ -11116,7 +11510,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.43071597814559937,
+      "p_gold": 0.4310062825679779,
       "tie": false
     },
     {
@@ -11140,7 +11534,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.7002646923065186,
+      "p_gold": 0.7081127166748047,
       "tie": false
     },
     {
@@ -11148,7 +11542,7 @@
       "pred": 3,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.17432837188243866,
+      "p_gold": 0.1831888109445572,
       "tie": false
     },
     {
@@ -11188,7 +11582,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.7750934958457947,
+      "p_gold": 0.7822215557098389,
       "tie": false
     },
     {
@@ -11196,7 +11590,7 @@
       "pred": 3,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.1870427280664444,
+      "p_gold": 0.17840158939361572,
       "tie": false
     },
     {
@@ -11220,7 +11614,7 @@
       "pred": 1,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.14124754071235657,
+      "p_gold": 0.14524433016777039,
       "tie": false
     },
     {
@@ -11244,7 +11638,7 @@
       "pred": 3,
       "gold": 2,
       "correct": false,
-      "p_gold": 0.26817744970321655,
+      "p_gold": 0.26677507162094116,
       "tie": false
     },
     {
@@ -11268,7 +11662,7 @@
       "pred": 3,
       "gold": 3,
       "correct": true,
-      "p_gold": 0.8893028497695923,
+      "p_gold": 0.8908352255821228,
       "tie": false
     },
     {
@@ -11284,7 +11678,7 @@
       "pred": 3,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.20748981833457947,
+      "p_gold": 0.21357765793800354,
       "tie": false
     },
     {
@@ -11300,7 +11694,7 @@
       "pred": 2,
       "gold": 2,
       "correct": true,
-      "p_gold": 0.5157474875450134,
+      "p_gold": 0.5153535604476929,
       "tie": false
     },
     {
@@ -11313,10 +11707,10 @@
     },
     {
       "id": "dev:swag-validation-15743",
-      "pred": 3,
+      "pred": 0,
       "gold": 0,
-      "correct": false,
-      "p_gold": 0.35584157705307007,
+      "correct": true,
+      "p_gold": 0.3720396161079407,
       "tie": false
     },
     {
@@ -11412,7 +11806,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.0768660232424736,
+      "p_gold": 0.0759395882487297,
       "tie": false
     },
     {
@@ -11492,7 +11886,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.24058589339256287,
+      "p_gold": 0.25292789936065674,
       "tie": false
     },
     {
@@ -11692,7 +12086,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.13503649830818176,
+      "p_gold": 0.1450422704219818,
       "tie": false
     },
     {
@@ -11828,7 +12222,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.15986374020576477,
+      "p_gold": 0.14146201312541962,
       "tie": false
     },
     {
@@ -12012,7 +12406,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.1536412239074707,
+      "p_gold": 0.13937389850616455,
       "tie": false
     },
     {
@@ -12036,7 +12430,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.09571250528097153,
+      "p_gold": 0.09458225965499878,
       "tie": false
     },
     {
@@ -12100,7 +12494,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.1749827116727829,
+      "p_gold": 0.16780076920986176,
       "tie": false
     },
     {
@@ -12292,7 +12686,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5551006197929382,
+      "p_gold": 0.5547744631767273,
       "tie": false
     },
     {
@@ -12300,7 +12694,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.439370721578598,
+      "p_gold": 0.4384051561355591,
       "tie": false
     },
     {
@@ -12316,7 +12710,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9505580067634583,
+      "p_gold": 0.9529958963394165,
       "tie": false
     },
     {
@@ -12324,7 +12718,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.48074933886528015,
+      "p_gold": 0.487596333026886,
       "tie": false
     },
     {
@@ -12332,7 +12726,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.8744924068450928,
+      "p_gold": 0.8764271140098572,
       "tie": false
     },
     {
@@ -12340,7 +12734,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5675011277198792,
+      "p_gold": 0.5705028772354126,
       "tie": false
     },
     {
@@ -12356,7 +12750,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.4441368281841278,
+      "p_gold": 0.43696069717407227,
       "tie": false
     },
     {
@@ -12364,7 +12758,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.30066585540771484,
+      "p_gold": 0.29657408595085144,
       "tie": false
     },
     {
@@ -12380,7 +12774,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6916264295578003,
+      "p_gold": 0.6815422177314758,
       "tie": false
     },
     {
@@ -12388,7 +12782,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.6403623819351196,
+      "p_gold": 0.638669490814209,
       "tie": false
     },
     {
@@ -12404,7 +12798,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.6767424941062927,
+      "p_gold": 0.6833065748214722,
       "tie": false
     },
     {
@@ -12420,15 +12814,15 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.1852603405714035,
+      "p_gold": 0.18810196220874786,
       "tie": false
     },
     {
       "id": "dev:winogrande-train-28134",
-      "pred": 1,
+      "pred": 0,
       "gold": 1,
-      "correct": true,
-      "p_gold": 0.5006848573684692,
+      "correct": false,
+      "p_gold": 0.4975001811981201,
       "tie": false
     },
     {
@@ -12436,7 +12830,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.9084327816963196,
+      "p_gold": 0.9152953028678894,
       "tie": false
     },
     {
@@ -12444,7 +12838,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5003563165664673,
+      "p_gold": 0.5141839981079102,
       "tie": false
     },
     {
@@ -12452,7 +12846,7 @@
       "pred": 1,
       "gold": 0,
       "correct": false,
-      "p_gold": 0.3496594727039337,
+      "p_gold": 0.34090694785118103,
       "tie": false
     },
     {
@@ -12460,7 +12854,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7119444012641907,
+      "p_gold": 0.7011370658874512,
       "tie": false
     },
     {
@@ -12468,7 +12862,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.26892805099487305,
+      "p_gold": 0.2650775611400604,
       "tie": false
     },
     {
@@ -12476,7 +12870,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.7832653522491455,
+      "p_gold": 0.7824159264564514,
       "tie": false
     },
     {
@@ -12484,7 +12878,7 @@
       "pred": 1,
       "gold": 1,
       "correct": true,
-      "p_gold": 0.5244878530502319,
+      "p_gold": 0.5147384405136108,
       "tie": false
     },
     {
@@ -12492,7 +12886,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.10982464253902435,
+      "p_gold": 0.11048471927642822,
       "tie": false
     },
     {
@@ -12500,7 +12894,7 @@
       "pred": 0,
       "gold": 0,
       "correct": true,
-      "p_gold": 0.5066379308700562,
+      "p_gold": 0.500756025314331,
       "tie": false
     },
     {
@@ -12508,7 +12902,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.41697821021080017,
+      "p_gold": 0.4316096901893616,
       "tie": false
     },
     {
@@ -12516,7 +12910,7 @@
       "pred": 0,
       "gold": 1,
       "correct": false,
-      "p_gold": 0.20431673526763916,
+      "p_gold": 0.2252022624015808,
       "tie": false
     },
     {
@@ -12865,32 +13259,102 @@
     }
   ],
   "panel2": {
-    "path": "<external>/panel2_dev.json",
-    "sha256": "daa6f9576de011cc652476ed26601a1f5b2dfc81bf07dc37859c7f87a15c5043"
+    "path": "<external>/panel2_dev_326.json",
+    "sha256": "f952b7e47b98a2d95c25d0ba45f497632d9c11476e9e1a1d099c4c2950562875"
   },
   "against_panel2": {
     "natural": {
-      "items": 788,
-      "set_head_correct": 540,
-      "panel2_correct": 490,
-      "set_head_accuracy": 0.6852791878172588,
-      "panel2_accuracy": 0.6218274111675127,
-      "difference_pp": 6.345177664974619,
+      "items": 812,
+      "set_head_correct": 545,
+      "panel2_correct": 499,
+      "set_head_accuracy": 0.6711822660098522,
+      "panel2_accuracy": 0.6145320197044335,
+      "difference_pp": 5.665024630541872,
       "mcnemar_set_head_vs_panel2": {
-        "first_only_correct": 108,
-        "second_only_correct": 58,
-        "discordant": 166,
-        "exact_p": 0.0001283061930585686
+        "first_only_correct": 110,
+        "second_only_correct": 64,
+        "discordant": 174,
+        "exact_p": 0.0006052447871282059
+      },
+      "screen": {
+        "n": 812,
+        "delta_pp": 9.872556617583744,
+        "ci_low_pp": 4.618019765073156,
+        "ci_high_pp": 15.12709347009433,
+        "wins": 110,
+        "losses": 64,
+        "p_value": 0.0006052447871282059,
+        "discordance": 0.21428571428571427,
+        "detectable_pp": 4.7,
+        "detectable_cc_pp": 7.551620084095969,
+        "states": [
+          "coarse safety screen passed",
+          "improvement supported"
+        ],
+        "action": "no objection from the coarse screen",
+        "reason": "the 95% interval lies above -12 pp; this is the instrument's resolution, not non-inferiority"
+      }
+    },
+    "reversed": {
+      "items": 812,
+      "set_head_correct": 438,
+      "panel2_correct": 466,
+      "set_head_accuracy": 0.5394088669950738,
+      "panel2_accuracy": 0.5738916256157636,
+      "difference_pp": -3.4482758620689653,
+      "mcnemar_set_head_vs_panel2": {
+        "first_only_correct": 90,
+        "second_only_correct": 118,
+        "discordant": 208,
+        "exact_p": 0.060930467194636524
+      },
+      "screen": {
+        "n": 812,
+        "delta_pp": -5.3251669502371,
+        "ci_low_pp": -11.47592191649248,
+        "ci_high_pp": 0.8255880160182791,
+        "wins": 90,
+        "losses": 118,
+        "p_value": 0.060930467194636524,
+        "discordance": 0.2561576354679803,
+        "detectable_pp": 5.0,
+        "detectable_cc_pp": 8.033638387336138,
+        "states": [
+          "coarse safety screen passed"
+        ],
+        "action": "no objection from the coarse screen",
+        "reason": "the 95% interval lies above -12 pp; this is the instrument's resolution, not non-inferiority"
+      }
+    },
+    "order_sensitivity": {
+      "items": 812,
+      "set_head_changed_fraction": 0.35591133004926107,
+      "panel2_changed_fraction": 0.2832512315270936
+    }
+  },
+  "against_panel2_code_range": {
+    "natural": {
+      "items": 788,
+      "set_head_correct": 538,
+      "panel2_correct": 490,
+      "set_head_accuracy": 0.682741116751269,
+      "panel2_accuracy": 0.6218274111675127,
+      "difference_pp": 6.091370558375635,
+      "mcnemar_set_head_vs_panel2": {
+        "first_only_correct": 109,
+        "second_only_correct": 61,
+        "discordant": 170,
+        "exact_p": 0.0002872494656864465
       },
       "screen": {
         "n": 788,
-        "delta_pp": 10.842700024172105,
-        "ci_low_pp": 5.537899542237054,
-        "ci_high_pp": 16.147500506107157,
-        "wins": 108,
-        "losses": 58,
-        "p_value": 0.0001283061930585686,
-        "discordance": 0.21065989847715735,
+        "delta_pp": 10.430263475948754,
+        "ci_low_pp": 5.042885468323128,
+        "ci_high_pp": 15.817641483574382,
+        "wins": 109,
+        "losses": 61,
+        "p_value": 0.0002872494656864465,
+        "discordance": 0.21573604060913706,
         "detectable_pp": 4.8,
         "detectable_cc_pp": 7.852597705922042,
         "states": [
@@ -12903,28 +13367,28 @@
     },
     "reversed": {
       "items": 788,
-      "set_head_correct": 437,
-      "panel2_correct": 463,
-      "set_head_accuracy": 0.5545685279187818,
-      "panel2_accuracy": 0.5875634517766497,
-      "difference_pp": -3.2994923857868024,
+      "set_head_correct": 435,
+      "panel2_correct": 460,
+      "set_head_accuracy": 0.5520304568527918,
+      "panel2_accuracy": 0.583756345177665,
+      "difference_pp": -3.1725888324873095,
       "mcnemar_set_head_vs_panel2": {
-        "first_only_correct": 93,
-        "second_only_correct": 119,
-        "discordant": 212,
-        "exact_p": 0.08573734055389359
+        "first_only_correct": 89,
+        "second_only_correct": 114,
+        "discordant": 203,
+        "exact_p": 0.09184530038378098
       },
       "screen": {
         "n": 788,
-        "delta_pp": -5.514261542180324,
-        "ci_low_pp": -11.997844171392247,
-        "ci_high_pp": 0.9693210870315994,
-        "wins": 93,
-        "losses": 119,
-        "p_value": 0.08573734055389359,
-        "discordance": 0.26903553299492383,
-        "detectable_pp": 5.2,
-        "detectable_cc_pp": 8.506980848082213,
+        "delta_pp": -5.101824993956973,
+        "ci_low_pp": -11.416160930759265,
+        "ci_high_pp": 1.2125109428453198,
+        "wins": 89,
+        "losses": 114,
+        "p_value": 0.09184530038378098,
+        "discordance": 0.25761421319796957,
+        "detectable_pp": 5.0,
+        "detectable_cc_pp": 8.179789277002127,
         "states": [
           "coarse safety screen passed"
         ],
@@ -12935,7 +13399,7 @@
     "order_sensitivity": {
       "items": 788,
       "set_head_changed_fraction": 0.3464467005076142,
-      "panel2_changed_fraction": 0.27284263959390864
+      "panel2_changed_fraction": 0.2703045685279188
     }
   }
 }
