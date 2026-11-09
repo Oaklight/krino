@@ -10,6 +10,7 @@ from model.evaluation.panel2 import order_effect, render_panel2
 from model.evaluation.panel2_mass import (
     MASS_FLOOR,
     combine_scores,
+    length_guard,
     mean_chance,
     option_spans,
     span_masses,
@@ -104,6 +105,33 @@ def test_combination_rejects_length_mismatch():
 def test_mean_chance_averages_over_items():
     assert mean_chance({"a": 2, "b": 4}) == pytest.approx(0.375)
     assert mean_chance({}) == 0.0
+
+
+def test_length_guard_reports_baseline_accuracy_and_agreement():
+    guard = length_guard(
+        [
+            {"texts": ["short", "longer", "longest"], "n_options": 3, "gold": 0, "chosen": 0},
+            {"texts": ["a", "bb"], "n_options": 2, "gold": 1, "chosen": 1},
+        ]
+    )
+    assert guard["items"] == 2
+    # Item 1 picks the longest (index 2) and is wrong; item 2 picks index 1.
+    assert guard["longest_option_baseline"]["correct"] == 1
+    assert guard["mass_accuracy"]["correct"] == 2
+    assert guard["agreement_with_longest"]["count"] == 1
+
+
+def test_length_guard_ties_go_to_the_lowest_natural_index():
+    guard = length_guard(
+        [{"texts": ["aa", "bb"], "n_options": 2, "gold": 0, "chosen": 0}]
+    )
+    assert guard["longest_option_baseline"]["correct"] == 1
+    assert guard["agreement_with_longest"]["fraction"] == 1.0
+
+
+def test_length_guard_rejects_a_width_mismatch():
+    with pytest.raises(ValueError):
+        length_guard([{"texts": ["a", "b"], "n_options": 3, "gold": 0, "chosen": 0}])
 
 
 def test_reversed_mapping_is_the_display_inverse():
