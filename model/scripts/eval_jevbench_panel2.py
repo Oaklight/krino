@@ -61,6 +61,7 @@ from model.evaluation.panel2 import (
     choose_option,
     code_token_ids,
     codes_for,
+    glued_codes,
     has_exact_tie,
     option_index_for_display,
     options_for,
@@ -382,6 +383,15 @@ def score_model(args: argparse.Namespace) -> int:
         "position_dominated": natural_positions["position_dominated"],
         "valid": False,
         "invalid_reason": None,
+    }
+    # A code that merges with the option line's period never appears in the
+    # prompt as an independent token. This is a property of the shipped
+    # alphabet, recorded so the alphabet's coverage is visible in every run.
+    validity["codes_glued_to_separator"] = {
+        "definition": "codes whose '{code}. ' option line tokenises the code "
+        "and the period as one token, in the space code form",
+        "codes": glued_codes(tokenizer, used_codes),
+        "count": len(glued_codes(tokenizer, used_codes)),
     }
     validity["valid"] = validity["single_token_codes"] and validity["position_diagnostic"]
     validity["tie_items"] = {
