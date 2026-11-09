@@ -75,8 +75,9 @@ def read_specs(n_layers: int) -> dict[str, tuple[str, int] | tuple[str]]:
     ``n_layers`` is the backbone's block count.  The three middle reads are
     one third, two thirds, and last-but-four *by integer division of the block
     count*, so the declaration derives from the architecture rather than from a
-    hand-picked layer.  ``last`` is the shipped read and ``mean_last_n=4``
-    averages the last four hidden states, embeddings excluded.
+    hand-picked layer.  ``last`` is the shipped read and returns the model's
+    own next-token logits; ``mean_last_n=4`` averages the last four raw block
+    outputs the hidden-state tuple exposes, excluding the final normed entry.
     """
     if n_layers < 8:
         raise ValueError(f"n_layers must be at least 8, got {n_layers}")
