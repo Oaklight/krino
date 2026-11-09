@@ -198,13 +198,17 @@ def main() -> int:
 
     records: list[dict[str, Any]] = []
     predictions: list[dict[str, Any]] = []
+    latencies: list[float] = []
     failed = 0
     started = time.monotonic()
     for index, item in enumerate(items):
+        item_started = time.perf_counter()
         record = score_item(scorer, item)
+        item_elapsed = time.perf_counter() - item_started
         if record is None:
             failed += 1
             continue
+        latencies.append(item_elapsed)
         records.append(record)
         predictions.append(prediction_row(item, record))
         if (index + 1) % 50 == 0:
@@ -247,6 +251,13 @@ def main() -> int:
         "items": len(items),
         "n": summary["overall"]["total"],
         "failed": failed,
+        "latency": {
+            "n": len(latencies),
+            "mean_s": sum(latencies) / len(latencies) if latencies else 0.0,
+            "median_s": (
+                sorted(latencies)[len(latencies) // 2] if latencies else 0.0
+            ),
+        },
         "summary": summary,
         "predictions": predictions,
     }
