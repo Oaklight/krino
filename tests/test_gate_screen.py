@@ -1,10 +1,11 @@
 """Tests for the three-state gate screen (#263, research/37-gate-policy.md).
 
 Each synthetic case is specified by its raw paired accuracy difference, the
-scale the power analysis in #263 uses. The screen converts it to chance-
-corrected accuracy with each item's own chance level, so at two options a raw
-difference of d pp is 2d pp of chance-corrected accuracy. The states are then
-assigned on the chance-corrected interval.
+scale the power analysis in #263 uses. The items are three-option items, so
+their chance level is 1/3 and a raw difference of d pp is about 1.5d pp of
+chance-corrected accuracy; JevBench's mean per-item chance is 0.318 (factor
+1.47), close enough that the cases read at JevBench's scale. The states are
+assigned on the chance-corrected interval against the 12 pp cc margin.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from model.evaluation.gate import (
     COARSE_SAFETY_SCREEN_PASSED,
     IMPROVEMENT_SUGGESTED_BUT_UNRESOLVED,
     IMPROVEMENT_SUPPORTED,
+    JEVBENCH_MARGIN_PP,
     MATERIAL_REGRESSION_SUPPORTED,
     UNRESOLVED,
     PairedOutcome,
@@ -28,7 +30,7 @@ def paired(
     n: int,
     wins: int,
     losses: int,
-    n_options: int | tuple[int, ...] = 2,
+    n_options: int | tuple[int, ...] = 3,
 ) -> tuple[dict[str, PairedOutcome], dict[str, PairedOutcome]]:
     """Arm/control outcomes with ``wins`` arm-only and ``losses`` control-only.
 
@@ -54,6 +56,10 @@ def paired(
     return arm, control
 
 
+def test_jevbench_margin_is_twelve_points_of_chance_corrected_accuracy():
+    assert JEVBENCH_MARGIN_PP == 12.0
+
+
 def test_perfect_replication_passes_the_screen_and_claims_no_improvement():
     arm, control = paired(JEVBENCH_ITEMS, 0, 0)
     screen = paired_screen(arm, control)
@@ -68,24 +74,34 @@ def test_perfect_replication_passes_the_screen_and_claims_no_improvement():
 
 
 def test_six_point_deficit_is_unresolved_not_a_material_regression():
-    # 20 wins / 34 losses is a raw deficit of 6.1 pp, 12.1 pp chance-corrected
-    # at two options. The point estimate is below -8 pp, so a point clause
-    # would call this a material regression; the interval crosses -8.
+    # 20 wins / 34 losses is a raw deficit of 6.1 pp, 9.1 pp chance-corrected
+    # at three options. The interval crosses -12 pp, so this is unresolved.
     arm, control = paired(JEVBENCH_ITEMS, 20, 34)
     screen = paired_screen(arm, control)
 
-    assert screen.delta_pp < -8.0
-    assert screen.ci_low_pp < -8.0 < screen.ci_high_pp
+    assert screen.ci_low_pp < -12.0 < screen.ci_high_pp
     assert screen.states == {UNRESOLVED}
     assert screen.action == "investigate"
     assert MATERIAL_REGRESSION_SUPPORTED not in screen.states
 
 
-def test_fifteen_point_deficit_is_a_material_regression():
-    arm, control = paired(JEVBENCH_ITEMS, 9, 44)
+def test_a_point_deficit_below_the_margin_can_still_be_unresolved():
+    # 17 wins / 38 losses is 13.6 pp chance-corrected, below the -12 pp
+    # margin, and the interval still crosses it. A point rule calls this a
+    # material regression; the interval says the item count cannot resolve it.
+    arm, control = paired(JEVBENCH_ITEMS, 17, 38)
     screen = paired_screen(arm, control)
 
-    assert screen.ci_high_pp < -8.0
+    assert screen.delta_pp < -JEVBENCH_MARGIN_PP
+    assert screen.ci_low_pp < -JEVBENCH_MARGIN_PP < screen.ci_high_pp
+    assert screen.states == {UNRESOLVED}
+
+
+def test_eighteen_point_deficit_is_a_material_regression():
+    arm, control = paired(JEVBENCH_ITEMS, 6, 48)
+    screen = paired_screen(arm, control)
+
+    assert screen.ci_high_pp < -12.0
     assert screen.states == {MATERIAL_REGRESSION_SUPPORTED}
     assert screen.action == "block promotion"
 
@@ -112,18 +128,20 @@ def test_twelve_point_improvement_is_supported():
 
 
 def test_detectable_difference_uses_the_measured_discordance():
-    arm, control = paired(JEVBENCH_ITEMS, 9, 44)
+    arm, control = paired(JEVBENCH_ITEMS, 6, 48)
     screen = paired_screen(arm, control)
 
     assert screen.n == JEVBENCH_ITEMS
-    assert screen.discordance == pytest.approx(53 / JEVBENCH_ITEMS)
-    assert screen.detectable_pp == pytest.approx(9.3, abs=0.05)
+    assert screen.discordance == pytest.approx(54 / JEVBENCH_ITEMS)
+    assert screen.detectable_pp == pytest.approx(9.0, abs=0.05)
+    # Raw to chance-corrected at a mean chance of 1/3.
+    assert screen.detectable_cc_pp == pytest.approx(9.0 / (1 - 1 / 3), abs=0.08)
 
 
 def test_interval_matches_a_hand_computed_case():
     # Seven wins, one loss, eight items, two options: d = +2 (x7), -2 (x1).
     # mean 1.5, sd sqrt(2), se 0.5, 95% half-width 0.97998.
-    arm, control = paired(8, 7, 1)
+    arm, control = paired(8, 7, 1, n_options=2)
     screen = paired_screen(arm, control)
 
     assert screen.delta_pp == pytest.approx(150.0)
