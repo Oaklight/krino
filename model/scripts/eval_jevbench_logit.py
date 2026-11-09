@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -173,12 +174,16 @@ def main() -> int:
 
     records: list[dict[str, Any]] = []
     predictions: list[dict[str, Any]] = []
+    latencies: list[float] = []
     failed = 0
     for index, item in enumerate(items):
+        started = time.perf_counter()
         record = _record(scorer, item)
+        elapsed = time.perf_counter() - started
         if record is None:
             failed += 1
             continue
+        latencies.append(elapsed)
         records.append(record)
         predictions.append(
             {
@@ -212,11 +217,21 @@ def main() -> int:
         variant=args.variant,
         code_commit=args.code_commit,
     )
+    latency: dict[str, Any] = {}
+    if latencies:
+        ordered = sorted(latencies)
+        latency = {
+            "n": len(ordered),
+            "mean_s": sum(ordered) / len(ordered),
+            "median_s": ordered[len(ordered) // 2],
+        }
+
     payload = {
         "_provenance": provenance,
         "items": len(items),
         "n": summary["overall"]["total"],
         "failed": failed,
+        "latency": latency,
         "summary": summary,
         "predictions": predictions,
     }
