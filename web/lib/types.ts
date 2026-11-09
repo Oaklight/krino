@@ -75,6 +75,7 @@ export interface Landing {
     source_files: string[];
   };
   panel2_vs_judgement: {
+    type_delta: Record<string, { items: number; total: number; pp: number }>;
     measured: number;
     wins: number;
     min_pp: number | null;

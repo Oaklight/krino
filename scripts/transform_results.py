@@ -463,8 +463,7 @@ def jevbench_source_files() -> list[Path]:
             if (
                 filepath.stem in JEVBENCH_META
                 or filepath.stem.startswith("logit_")
-                or (filepath.stem.startswith("panel2_") and not filepath.stem.startswith("panel2_summary")
-                    and not filepath.stem.startswith("panel2_code"))
+                or filepath.stem.startswith(("panel2_Qwen", "continuation_", "judgement_"))
             ):
                 paths.append(filepath)
     if LOGIT_PROV_DIR.exists():
@@ -640,6 +639,27 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
             "gap_pp": round((panel2["accuracy"] - judgement["accuracy"]) * 100, 1),
         })
 
+    panel2_type_delta: dict[str, dict] = {}
+    for panel2_type in ("choice", "noul", "score"):
+        delta = 0
+        total = 0
+        for by_readout in cells.values():
+            judgement = by_readout.get("judgement")
+            panel2 = by_readout.get("panel2")
+            if not (judgement and panel2):
+                continue
+            judgement_type = judgement["by_type"].get(panel2_type)
+            panel2_cell = panel2["by_type"].get(panel2_type)
+            if judgement_type and panel2_cell:
+                delta += panel2_cell["correct"] - judgement_type["correct"]
+                total += judgement_type["total"]
+        if total:
+            panel2_type_delta[panel2_type] = {
+                "items": delta,
+                "total": total,
+                "pp": round(delta / total * 100, 1),
+            }
+
     pair_sources = sorted({
         by_readout[readout]["source_file"]
         for by_readout in cells.values()
@@ -700,6 +720,7 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
             "source_files": pair_sources,
         },
         "panel2_vs_judgement": {
+            "type_delta": panel2_type_delta,
             "measured": len(panel2_pairs),
             "wins": sum(1 for pair in panel2_pairs if pair["gap_pp"] > 0),
             "min_pp": min((pair["gap_pp"] for pair in panel2_pairs), default=None),

@@ -381,9 +381,9 @@ class TestLanding:
     def test_key_figures(self):
         landing = self._data()["landing"]
 
-        assert landing["judgement_vs_continuation"]["measured"] == 14
-        assert landing["judgement_vs_continuation"]["wins"] == 13
-        assert landing["judgement_vs_continuation"]["above_10_count"] == 9
+        assert landing["judgement_vs_continuation"]["measured"] == 16
+        assert landing["judgement_vs_continuation"]["wins"] == 15
+        assert landing["judgement_vs_continuation"]["above_10_count"] == 10
         assert landing["judgement_vs_continuation"]["above_10_min_pp"] == 10.4
         assert landing["judgement_vs_continuation"]["above_10_max_pp"] == 18.6
 
@@ -395,7 +395,7 @@ class TestLanding:
         assert landing["resolution"]["dev_card_min_pp"] == 5
         assert landing["resolution"]["dev_card_max_pp"] == 6
 
-        assert landing["instrumented_rows"] == 41
+        assert landing["instrumented_rows"] == 55
         assert landing["banking77"]["trained_pp"] == 95.2
         assert landing["banking77"]["jev_pp"] == 75.0
 
