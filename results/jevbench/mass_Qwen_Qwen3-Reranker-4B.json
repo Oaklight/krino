@@ -37,7 +37,18 @@
     "dataset": "jevbench",
     "config_sha256": "50bc046612bd96f125d5bf9a9760b518e44a3ad67be09276b919fc96f739823d",
     "data_sha256": "e85e155c8c14d7ebdb073c04efb049ded3e0186b0297ebcd8388aa259a365370",
-    "items": 231
+    "items": 231,
+    "post_run_additions": {
+      "applied_after_the_run": true,
+      "code_commit_of_the_run": "af221c2",
+      "fields": [
+        "validity.length_guard",
+        "metrics.<cell>.natural.accuracy/correct/total",
+        "metrics.<cell>.reversed.accuracy/correct/total"
+      ],
+      "source": "computed from the stored per-item masses and the JevBench option texts",
+      "predictions_changed": false
+    }
   },
   "config": {
     "panel": "2",
@@ -108,8 +119,12 @@
     "attn_implementation": "eager",
     "valid": true,
     "length_guard": {
-      "definition": "choice and score items; longest option text by characters, ties to the lowest natural index",
+      "definition": "choice and score items, noul excluded because its options are always no/yes; longest option text by characters, ties to the lowest natural index",
       "items": 157,
+      "composition": {
+        "choice": 139,
+        "score": 18
+      },
       "longest_option_baseline": {
         "correct": 48,
         "total": 157,
@@ -124,7 +139,8 @@
         "count": 57,
         "total": 157,
         "fraction": 0.3630573248407643
-      }
+      },
+      "derived": "post hoc from the stored per-item masses and the JevBench option texts; not produced by the run at af221c2"
     }
   },
   "unscorable": [],
