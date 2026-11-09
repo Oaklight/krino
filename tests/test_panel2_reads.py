@@ -8,7 +8,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from model.scripts.eval_jevbench_panel2 import check_read_layout, read_logits
+from model.evaluation.panel2 import check_read_layout, read_logits
 
 
 class FakeModel:
