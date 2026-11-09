@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-08T23:00:12.371622+00:00",
+  "generated_at": "2026-11-09T08:02:02.905903+00:00",
   "eval_runs": [
     {
       "run_id": "cross-encoder-bert",
@@ -4608,6 +4608,230 @@
       "latency_ms": null
     },
     {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-4B-Base",
+      "model": {
+        "name": "Qwen/Qwen3-4B-Base",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-4B-Base",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-4B-Base.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.6234,
+      "correct": 144,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.6475,
+          "correct": 90,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6216,
+          "correct": 46,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.4444,
+          "correct": 8,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4324,
+          "correct": 48,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.6667,
+          "correct": 48,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-4B-Instruct-2507",
+      "model": {
+        "name": "Qwen/Qwen3-4B-Instruct-2507",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-4B-Instruct-2507.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.684,
+      "correct": 158,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.6835,
+          "correct": 95,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6757,
+          "correct": 50,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.7222,
+          "correct": 13,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4595,
+          "correct": 51,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.8194,
+          "correct": 59,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-4B",
+      "model": {
+        "name": "Qwen/Qwen3-4B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-4B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-4B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.697,
+      "correct": 161,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.7338,
+          "correct": 102,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6486,
+          "correct": 48,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6111,
+          "correct": 11,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4775,
+          "correct": 53,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.8333,
+          "correct": 60,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-Reranker-4B",
+      "model": {
+        "name": "Qwen/Qwen3-Reranker-4B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-Reranker-4B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.7013,
+      "correct": 162,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.7338,
+          "correct": 102,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6486,
+          "correct": 48,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6667,
+          "correct": 12,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4685,
+          "correct": 52,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.8611,
+          "correct": 62,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
       "run_id": "jevbench-raw-qwen3-reranker-4b",
       "model": {
         "name": "Qwen/Qwen3-Reranker-4B (zero-shot)",
@@ -6299,6 +6523,52 @@
         "results/jevbench/logit_openbmb_MiniCPM5-2B-Base.json"
       ]
     },
+    "panel2_vs_judgement": {
+      "measured": 4,
+      "wins": 4,
+      "min_pp": 5.2,
+      "max_pp": 9.5,
+      "pairs": [
+        {
+          "model_id": "Qwen/Qwen3-4B-Base",
+          "name": "Qwen/Qwen3-4B-Base (base)",
+          "judgement_pp": 53.7,
+          "panel2_pp": 62.3,
+          "gap_pp": 8.7
+        },
+        {
+          "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+          "name": "Qwen/Qwen3-4B-Instruct-2507 (instruct)",
+          "judgement_pp": 58.9,
+          "panel2_pp": 68.4,
+          "gap_pp": 9.5
+        },
+        {
+          "model_id": "Qwen/Qwen3-4B",
+          "name": "Qwen/Qwen3-4B (instruct)",
+          "judgement_pp": 61.9,
+          "panel2_pp": 69.7,
+          "gap_pp": 7.8
+        },
+        {
+          "model_id": "Qwen/Qwen3-Reranker-4B",
+          "name": "Qwen/Qwen3-Reranker-4B",
+          "judgement_pp": 64.9,
+          "panel2_pp": 70.1,
+          "gap_pp": 5.2
+        }
+      ],
+      "source_files": [
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Base.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Instruct-2507.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B.json",
+        "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json",
+        "results/jevbench/panel2_Qwen_Qwen3-4B-Base.json",
+        "results/jevbench/panel2_Qwen_Qwen3-4B-Instruct-2507.json",
+        "results/jevbench/panel2_Qwen_Qwen3-4B.json",
+        "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json"
+      ]
+    },
     "post_trained_4b": {
       "base_pp": 53.7,
       "min_pp": 61.9,
@@ -6382,7 +6652,7 @@
         "model/experiments/resolution_inputs.json"
       ]
     },
-    "instrumented_rows": 37,
+    "instrumented_rows": 41,
     "banking77": {
       "trained_pp": 95.2,
       "trained_model": "Ettin-150m r128",
@@ -6432,6 +6702,10 @@
       "results/jevbench/logit_mistralai_Ministral-3-3B-Base-2512.json",
       "results/jevbench/logit_openbmb_MiniCPM3-4B.json",
       "results/jevbench/logit_openbmb_MiniCPM5-2B-Base.json",
+      "results/jevbench/panel2_Qwen_Qwen3-4B-Base.json",
+      "results/jevbench/panel2_Qwen_Qwen3-4B-Instruct-2507.json",
+      "results/jevbench/panel2_Qwen_Qwen3-4B.json",
+      "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json",
       "web/public/results/eval_results.json"
     ]
   },
