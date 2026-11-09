@@ -1,0 +1,3908 @@
+{
+  "_provenance": {
+    "head": "<external>/head.pt",
+    "head_sha256": "44f76a4eec71913a29ce23279743698cfcbd8aac4eb7a410c2850642fef682d4",
+    "cache": "<external>/states",
+    "split": "jevbench",
+    "rows": "<external>/rows_jevbench.jsonl",
+    "rows_sha256": "b3f49665b8346f4c501d72d4327f99402dbd5d7579d8cba276ba939e53a1a7fe",
+    "device_name": "NVIDIA H100 NVL",
+    "torch_version": "2.11.0+cu128"
+  },
+  "config": {
+    "arm": "D",
+    "head": "set transformer over option states",
+    "backbone": "Qwen/Qwen3-Reranker-4B",
+    "hidden_size": 2560,
+    "width": 192,
+    "layers": 2,
+    "heads": 4,
+    "ffn": 384,
+    "dropout": 0.0,
+    "pooling": "pma_learned_query",
+    "readout": "dot product of each option with the pooled set vector",
+    "objective": "softmax cross-entropy over the K options",
+    "train_split": "corpus train",
+    "eval_split": "corpus test",
+    "epochs": 5,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.01,
+    "seed": 42,
+    "selection": "minimum eval-split NLL over the five epochs",
+    "data_digest": "5fd0e6f9cb6b28509247a7dc1475fa5b0c630286a04d9e647086823277421ad1",
+    "io_dtype": "bfloat16 storage, float32 head",
+    "config_hash": "debd40bf46a883947db2433bf407d5695b342e3e44a6d609a765090bf690e348"
+  },
+  "natural": {
+    "items": 231,
+    "correct": 138,
+    "accuracy": 0.5974025974025974,
+    "by_type": {
+      "choice": {
+        "correct": 84,
+        "total": 139,
+        "accuracy": 0.60431654676259
+      },
+      "noul": {
+        "correct": 45,
+        "total": 74,
+        "accuracy": 0.6081081081081081
+      },
+      "score": {
+        "correct": 9,
+        "total": 18,
+        "accuracy": 0.5
+      }
+    },
+    "by_tier": {
+      "easy": {
+        "correct": 44,
+        "total": 48,
+        "accuracy": 0.9166666666666666
+      },
+      "hard": {
+        "correct": 52,
+        "total": 111,
+        "accuracy": 0.46846846846846846
+      },
+      "original": {
+        "correct": 42,
+        "total": 72,
+        "accuracy": 0.5833333333333334
+      }
+    },
+    "mean_gold_probability": 0.523285634170621,
+    "tie_items": 0
+  },
+  "reversed": {
+    "items": 231,
+    "correct": 130,
+    "accuracy": 0.5627705627705628,
+    "by_type": {
+      "choice": {
+        "correct": 79,
+        "total": 139,
+        "accuracy": 0.5683453237410072
+      },
+      "noul": {
+        "correct": 43,
+        "total": 74,
+        "accuracy": 0.581081081081081
+      },
+      "score": {
+        "correct": 8,
+        "total": 18,
+        "accuracy": 0.4444444444444444
+      }
+    },
+    "by_tier": {
+      "easy": {
+        "correct": 45,
+        "total": 48,
+        "accuracy": 0.9375
+      },
+      "hard": {
+        "correct": 42,
+        "total": 111,
+        "accuracy": 0.3783783783783784
+      },
+      "original": {
+        "correct": 43,
+        "total": 72,
+        "accuracy": 0.5972222222222222
+      }
+    },
+    "mean_gold_probability": 0.4990941042814291,
+    "tie_items": 0
+  },
+  "order": {
+    "items": 231,
+    "accuracy_natural": 0.5974025974025974,
+    "accuracy_reversed": 0.5627705627705628,
+    "difference_pp": 3.463203463203457,
+    "changed_fraction": 0.43722943722943725,
+    "changed_items": 101,
+    "mcnemar_natural_vs_reversed": {
+      "first_only_correct": 46,
+      "second_only_correct": 38,
+      "discordant": 84,
+      "exact_p": 0.4452046690465762
+    },
+    "tie_items_natural": 0,
+    "tie_items_reversed": 0
+  },
+  "predictions_natural": [
+    {
+      "id": "jevbench:easy-extraction-00",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.6979223489761353,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-01",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.3114556074142456,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-02",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.012124598026275635,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-03",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9075840711593628,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-04",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8313593864440918,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-05",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.6560011506080627,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-06",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.9498175382614136,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-07",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.8132291436195374,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-08",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.9972206354141235,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-09",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.9922101497650146,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-10",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9805573225021362,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-11",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.9969093203544617,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-00",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.9352516531944275,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-01",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9839679002761841,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-02",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7704604268074036,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-03",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9906747937202454,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-04",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.9434745907783508,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-05",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9914702773094177,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-06",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.9590862989425659,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-07",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9855906963348389,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-08",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8649194240570068,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-09",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9891694784164429,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-10",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.9203399419784546,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-11",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9885390400886536,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-00",
+      "pred": 0,
+      "gold": 4,
+      "correct": false,
+      "p_gold": 0.10542140901088715,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-01",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.824161946773529,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-02",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.9747335910797119,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-03",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.46862244606018066,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-04",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8930132389068604,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-05",
+      "pred": 2,
+      "gold": 4,
+      "correct": false,
+      "p_gold": 0.09004929661750793,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-06",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.6592259407043457,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-07",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8223844170570374,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-08",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.5432246923446655,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-09",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7373195290565491,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-10",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.9731148481369019,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-11",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.6029199361801147,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-00",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.39339154958724976,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-01",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.7526390552520752,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-02",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.9556480646133423,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-03",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9947226047515869,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-04",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.610204815864563,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-05",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.9667209386825562,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-06",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.9724502563476562,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-07",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9950758814811707,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-08",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.9541191458702087,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-09",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.976992130279541,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-10",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8919055461883545,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-11",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.9604294896125793,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-01",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.6320998072624207,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-04",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.05635283142328262,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-08",
+      "pred": 1,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.17804878950119019,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-09",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.3105383515357971,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-11",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.34066134691238403,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-13",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.2618790864944458,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-17",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.46746447682380676,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-19",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.669046938419342,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-probability-03",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5499587059020996,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-probability-04",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.7024872899055481,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-probability-07",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.11345290392637253,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-probability-08",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.6694175601005554,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-temporal_numeric-03",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6372256278991699,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-temporal_numeric-06",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.4322541356086731,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-temporal_numeric-07",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.28693801164627075,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-temporal_numeric-09",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.49460849165916443,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-temporal_numeric-12",
+      "pred": 3,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.29238763451576233,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-02",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.9050785899162292,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-03",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.13833896815776825,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-07",
+      "pred": 1,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.1595793515443802,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-09",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.6472086310386658,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-10",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.31150907278060913,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-11",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.6409355401992798,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-13",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.3393822908401489,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-multi_hop-03",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.44622960686683655,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-multi_hop-04",
+      "pred": 5,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.016006574034690857,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-multi_hop-05",
+      "pred": 1,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.19902750849723816,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-multi_hop-07",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.16617192327976227,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-multi_hop-08",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.1107080727815628,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-probability-01",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.6353532671928406,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-probability-02",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.18952076137065887,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-probability-03",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.42233285307884216,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-probability-04",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.2075537145137787,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-probability-06",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.6368887424468994,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-01",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.3420569896697998,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-03",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.0496504120528698,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-06",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.14168259501457214,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-07",
+      "pred": 3,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.154069185256958,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-08",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.192152738571167,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-12",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.27966615557670593,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-02",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5417381525039673,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-03",
+      "pred": 1,
+      "gold": 4,
+      "correct": false,
+      "p_gold": 0.028872963041067123,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-04",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.38435980677604675,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-05",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.062468137592077255,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-08",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.12162337452173233,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-10",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.26427578926086426,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-11",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.4163837134838104,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-probability-03",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.3063209652900696,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-02",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.29651758074760437,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-03",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.16852417588233948,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-04",
+      "pred": 2,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.165687695145607,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-06",
+      "pred": 0,
+      "gold": 4,
+      "correct": false,
+      "p_gold": 0.07213012874126434,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-08",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.20746973156929016,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-12",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.5481586456298828,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-01",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.2510397136211395,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-06",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8207871317863464,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-07",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.5565814971923828,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-08",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.4044087827205658,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-09",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.48975592851638794,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-11",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.5451429486274719,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-01",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5035523772239685,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-02",
+      "pred": 2,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.3273366093635559,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-05",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.4700244963169098,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-07",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.23984579741954803,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-08",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.20580033957958221,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-09",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.408284068107605,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-10",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.2604913115501404,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-12",
+      "pred": 1,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.12584519386291504,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-02",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8033732175827026,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-04",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9349315762519836,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-05",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.45990991592407227,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-06",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.4978962540626526,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-08",
+      "pred": 3,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.3848033845424652,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-10",
+      "pred": 3,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.2917386591434479,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-13",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.86210697889328,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-15",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5670838952064514,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-01",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6983240842819214,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-02",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.4759068787097931,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-05",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.28528887033462524,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-08",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5096516609191895,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-10",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.4774041473865509,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-14",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.7279043197631836,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-15",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7076473832130432,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-18",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.6638155579566956,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-long_policy-01",
+      "pred": 0,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.27400681376457214,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-long_policy-02",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.2123623937368393,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-long_policy-05",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.4632474482059479,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-long_policy-06",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5072307586669922,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-routing_hard-01",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.956613302230835,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-routing_hard-02",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.9920935034751892,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-routing_hard-03",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.5928196907043457,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-routing_hard-07",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.9085372686386108,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-routing_hard-09",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.6800553798675537,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-temporal_numeric-01",
+      "pred": 3,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.11268586665391922,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-temporal_numeric-02",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.7270511388778687,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-temporal_numeric-03",
+      "pred": 0,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.14914129674434662,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-temporal_numeric-04",
+      "pred": 1,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.2708916962146759,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-03",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5031701922416687,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-05",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.302430659532547,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-07",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5825051069259644,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-08",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5043078660964966,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-09",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.43248966336250305,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-10",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.2973008155822754,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-11",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.7596333622932434,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-13",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5449308156967163,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-15",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.37440377473831177,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-multi_hop-07",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6472252607345581,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-multi_hop-09",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8112347722053528,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-multi_hop-11",
+      "pred": 1,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.3272223472595215,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-multi_hop-12",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.34189531207084656,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-multi_hop-13",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8177799582481384,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-01-0",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.457424521446228,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-01-1",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.3698027431964874,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-02-0",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8005853891372681,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-02-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8884021639823914,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-03-0",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.72397381067276,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-03-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5334097146987915,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-04-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7730025053024292,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-04-1",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.3714548647403717,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-05-0",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.6863601207733154,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-05-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8520974516868591,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-06-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6586130857467651,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-06-1",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.4194719195365906,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-01-0",
+      "pred": 3,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.24963170289993286,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-01-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.31135791540145874,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-02-0",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.36168596148490906,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-02-1",
+      "pred": 2,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.2961622178554535,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-03-0",
+      "pred": 3,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.2864148020744324,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-03-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.6017435193061829,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-04-0",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.8342035412788391,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-04-1",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.7597688436508179,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-05-0",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.4652543365955353,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-05-1",
+      "pred": 0,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.2738421559333801,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-06-0",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.7273523211479187,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-06-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8652098774909973,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-01-0",
+      "pred": 2,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.3248920440673828,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-01-1",
+      "pred": 2,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.44981589913368225,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-02-0",
+      "pred": 2,
+      "gold": 4,
+      "correct": false,
+      "p_gold": 0.04366149753332138,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-02-1",
+      "pred": 2,
+      "gold": 4,
+      "correct": false,
+      "p_gold": 0.09125981479883194,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-03-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.600635290145874,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-03-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6914305090904236,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-04-0",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5451473593711853,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-04-1",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.10284914821386337,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-05-0",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.6601523756980896,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-05-1",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.5950759053230286,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-06-0",
+      "pred": 2,
+      "gold": 4,
+      "correct": false,
+      "p_gold": 0.23041196167469025,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-06-1",
+      "pred": 2,
+      "gold": 4,
+      "correct": false,
+      "p_gold": 0.19289584457874298,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-01-0",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.2835509777069092,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-01-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5173555612564087,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-02-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6016806960105896,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-02-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7782913446426392,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-03-0",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.7460326552391052,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-03-1",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.4637444317340851,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-04-0",
+      "pred": 1,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.09660082310438156,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-04-1",
+      "pred": 1,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.16147592663764954,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-05-0",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.11110137403011322,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-05-1",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.19394366443157196,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-06-0",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.5118539333343506,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-06-1",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.7139642834663391,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-01-0",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9417566657066345,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-01-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9248446226119995,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-02-0",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.24936766922473907,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-02-1",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.10749919712543488,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-03-0",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.35886484384536743,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-03-1",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.0382809080183506,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-04-0",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.7309602499008179,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-04-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.6577026844024658,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-05-0",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8869432210922241,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-05-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.952034592628479,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-06-0",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.2276007980108261,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-06-1",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.1958697885274887,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-01-0",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.43219974637031555,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-01-1",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.50613933801651,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-02-0",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.29102227091789246,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-02-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.6522195935249329,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-03-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7275934219360352,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-03-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.798362135887146,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-04-0",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.6171091794967651,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-04-1",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.5644723773002625,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-05-0",
+      "pred": 5,
+      "gold": 5,
+      "correct": true,
+      "p_gold": 0.567347526550293,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-05-1",
+      "pred": 1,
+      "gold": 5,
+      "correct": false,
+      "p_gold": 0.2382904589176178,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-06-0",
+      "pred": 2,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.15226486325263977,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-06-1",
+      "pred": 2,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.13695412874221802,
+      "tie": false
+    }
+  ],
+  "predictions_reversed": [
+    {
+      "id": "jevbench:easy-extraction-00",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.8098055720329285,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-01",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.24818682670593262,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-02",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.022972460836172104,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-03",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.7773019671440125,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-04",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8459272384643555,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-05",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.9892822504043579,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-06",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.984877347946167,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-07",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.8199846744537354,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-08",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.9963560104370117,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-09",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.9910340905189514,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-10",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.965175449848175,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-extraction-11",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.9938884973526001,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-00",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.839384913444519,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-01",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.660631000995636,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-02",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8362182378768921,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-03",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.7172278165817261,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-04",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5860261917114258,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-05",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9720832705497742,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-06",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.705669105052948,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-07",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9077531695365906,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-08",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8999661803245544,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-09",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.722957968711853,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-10",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.9224432110786438,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-fact-11",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.6770403981208801,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-00",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.7389699816703796,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-01",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8395857214927673,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-02",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.9767201542854309,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-03",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.8739153742790222,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-04",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9316582679748535,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-05",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.7086575627326965,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-06",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.9090183973312378,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-07",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.747471034526825,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-08",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.9647607207298279,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-09",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8596606254577637,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-10",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.9963482022285461,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-intent-11",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.8377871513366699,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-00",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.6098535656929016,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-01",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.831531286239624,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-02",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7990777492523193,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-03",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.9779332876205444,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-04",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.7719426155090332,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-05",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7362511157989502,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-06",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.9560085535049438,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-07",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.43795114755630493,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-08",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.9809235334396362,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-09",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.9366326928138733,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-10",
+      "pred": 3,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.28255170583724976,
+      "tie": false
+    },
+    {
+      "id": "jevbench:easy-tool_selection-11",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.9279858469963074,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-01",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.3652328550815582,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-04",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.23032522201538086,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-08",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.25917714834213257,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-09",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6419312953948975,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-11",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7170593738555908,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-13",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.4119766056537628,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-17",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.3381810486316681,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-long_policy-19",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.23845763504505157,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-probability-03",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.32478687167167664,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-probability-04",
+      "pred": 1,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.18162019550800323,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-probability-07",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.3349226117134094,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-probability-08",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8752184510231018,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-temporal_numeric-03",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.2843877077102661,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-temporal_numeric-06",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.1547563225030899,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-temporal_numeric-07",
+      "pred": 4,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.2219812124967575,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-temporal_numeric-09",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.2782704532146454,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-a-temporal_numeric-12",
+      "pred": 3,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.15925592184066772,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-02",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.13955432176589966,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-03",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.06289740651845932,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-07",
+      "pred": 1,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.11173967272043228,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-09",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.46251359581947327,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-10",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.422817200422287,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-11",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.7357572913169861,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-ambiguous-13",
+      "pred": 3,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.08235777914524078,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-multi_hop-03",
+      "pred": 1,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.14750850200653076,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-multi_hop-04",
+      "pred": 4,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.11041773110628128,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-multi_hop-05",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.3689603805541992,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-multi_hop-07",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.19644798338413239,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-multi_hop-08",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.6404873132705688,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-probability-01",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.28591248393058777,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-probability-02",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.22283591330051422,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-probability-03",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.10590305924415588,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-probability-04",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.7002818584442139,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-probability-06",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.2240714430809021,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-01",
+      "pred": 3,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.043388258665800095,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-03",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.04572019726037979,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-06",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5451927185058594,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-07",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.01575019210577011,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-08",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.3681815564632416,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-b-tradeoff-12",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.8438166975975037,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-02",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.425275593996048,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-03",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.31951096653938293,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-04",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5633790493011475,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-05",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.11145241558551788,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-08",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6601472496986389,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-10",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.24776306748390198,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-long_policy-11",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.31908056139945984,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-probability-03",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.19413825869560242,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-02",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7465893030166626,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-03",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.4285610616207123,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-04",
+      "pred": 1,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.20851020514965057,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-06",
+      "pred": 0,
+      "gold": 4,
+      "correct": false,
+      "p_gold": 0.07246708124876022,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-08",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.18588368594646454,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-opus-c-temporal_numeric-12",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.3674714267253876,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-01",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5697622895240784,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-06",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.6277845501899719,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-07",
+      "pred": 0,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.10020242631435394,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-08",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5008386969566345,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-09",
+      "pred": 3,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.1911400407552719,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-adversarial-11",
+      "pred": 2,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.33015012741088867,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-01",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.8914268016815186,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-02",
+      "pred": 2,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.1370474249124527,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-05",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.07432644814252853,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-07",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.15711484849452972,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-08",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.12494730204343796,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-09",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.2894687056541443,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-10",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.022971373051404953,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-multi_hop-12",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.04955867677927017,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-02",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5798982977867126,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-04",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.7989647388458252,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-05",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.1422349363565445,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-06",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.9291244149208069,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-08",
+      "pred": 3,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.13628798723220825,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-10",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8020154237747192,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-13",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.888027012348175,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-a-trap-15",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.36823347210884094,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-01",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.83651202917099,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-02",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.11407226324081421,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-05",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6687874794006348,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-08",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.2234467715024948,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-10",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.11862391978502274,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-14",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.21680501103401184,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-15",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8915111422538757,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-judge_hard-18",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.043133001774549484,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-long_policy-01",
+      "pred": 0,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.22370794415473938,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-long_policy-02",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.12126659601926804,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-long_policy-05",
+      "pred": 1,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.22557611763477325,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-long_policy-06",
+      "pred": 3,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.13377521932125092,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-routing_hard-01",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.8822956681251526,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-routing_hard-02",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.9752716422080994,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-routing_hard-03",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.7458412647247314,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-routing_hard-07",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.9979861974716187,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-routing_hard-09",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.9092697501182556,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-temporal_numeric-01",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.064999058842659,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-temporal_numeric-02",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.6306732296943665,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-temporal_numeric-03",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.6206908226013184,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-b-temporal_numeric-04",
+      "pred": 0,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.2917328178882599,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-03",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.3186475932598114,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-05",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6711634993553162,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-07",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.33232012391090393,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-08",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.2939893901348114,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-09",
+      "pred": 0,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.49770158529281616,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-10",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5118420124053955,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-11",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.45153772830963135,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-13",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.28807902336120605,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-judge_hard-15",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6834299564361572,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-multi_hop-07",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5159906148910522,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-multi_hop-09",
+      "pred": 3,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.2320176661014557,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-multi_hop-11",
+      "pred": 1,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.1590537577867508,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-multi_hop-12",
+      "pred": 3,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.020437901839613914,
+      "tie": false
+    },
+    {
+      "id": "jevbench:hard-sol-c-multi_hop-13",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8593723177909851,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-01-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6699838042259216,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-01-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7872288227081299,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-02-0",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.36234378814697266,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-02-1",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.46961110830307007,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-03-0",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.12843100726604462,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-03-1",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.2817783057689667,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-04-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.9508426785469055,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-04-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8677236437797546,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-05-0",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.17107459902763367,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-05-1",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.20634064078330994,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-06-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5148740410804749,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-adequacy-06-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8822693228721619,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-01-0",
+      "pred": 3,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.17991745471954346,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-01-1",
+      "pred": 3,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.08858276903629303,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-02-0",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.6282919049263,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-02-1",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.569518506526947,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-03-0",
+      "pred": 3,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.28042638301849365,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-03-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.6443622708320618,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-04-0",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.8498224020004272,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-04-1",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.7021022439002991,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-05-0",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.6827781200408936,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-05-1",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.5998672842979431,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-06-0",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.40033066272735596,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-extraction-06-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5649684071540833,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-01-0",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.6911274790763855,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-01-1",
+      "pred": 3,
+      "gold": 3,
+      "correct": true,
+      "p_gold": 0.7207364439964294,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-02-0",
+      "pred": 2,
+      "gold": 4,
+      "correct": false,
+      "p_gold": 0.104117751121521,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-02-1",
+      "pred": 2,
+      "gold": 4,
+      "correct": false,
+      "p_gold": 0.0677458792924881,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-03-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.43558022379875183,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-03-1",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.23171357810497284,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-04-0",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.5491580963134766,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-04-1",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.18995754420757294,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-05-0",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.5575668811798096,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-05-1",
+      "pred": 3,
+      "gold": 2,
+      "correct": false,
+      "p_gold": 0.3350374102592468,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-06-0",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.5525790452957153,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-intent-06-1",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.4728323817253113,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-01-0",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.2173384577035904,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-01-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.3389168977737427,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-02-0",
+      "pred": 2,
+      "gold": 1,
+      "correct": false,
+      "p_gold": 0.4125862717628479,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-02-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.7042067646980286,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-03-0",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.8081965446472168,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-03-1",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.6925783753395081,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-04-0",
+      "pred": 2,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.19064871966838837,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-04-1",
+      "pred": 2,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.19121070206165314,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-05-0",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.07826480269432068,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-05-1",
+      "pred": 2,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.12615695595741272,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-06-0",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.7042408585548401,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-ordinal-06-1",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.8328071236610413,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-01-0",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.3969626724720001,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-01-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.581108808517456,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-02-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6253969669342041,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-02-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5418776273727417,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-03-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.8750776648521423,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-03-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.5665685534477234,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-04-0",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.523565411567688,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-04-1",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.4916408360004425,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-05-0",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.4380326271057129,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-05-1",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.4830591082572937,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-06-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6481135487556458,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-policy-06-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6168516874313354,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-01-0",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.6486033201217651,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-01-1",
+      "pred": 4,
+      "gold": 4,
+      "correct": true,
+      "p_gold": 0.652421772480011,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-02-0",
+      "pred": 1,
+      "gold": 0,
+      "correct": false,
+      "p_gold": 0.24775300920009613,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-02-1",
+      "pred": 0,
+      "gold": 0,
+      "correct": true,
+      "p_gold": 0.2850905954837799,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-03-0",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6915522813796997,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-03-1",
+      "pred": 1,
+      "gold": 1,
+      "correct": true,
+      "p_gold": 0.6856288909912109,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-04-0",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.3706883192062378,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-04-1",
+      "pred": 2,
+      "gold": 2,
+      "correct": true,
+      "p_gold": 0.37416645884513855,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-05-0",
+      "pred": 5,
+      "gold": 5,
+      "correct": true,
+      "p_gold": 0.7238318920135498,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-05-1",
+      "pred": 1,
+      "gold": 5,
+      "correct": false,
+      "p_gold": 0.11282214522361755,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-06-0",
+      "pred": 4,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.11700066924095154,
+      "tie": false
+    },
+    {
+      "id": "jevbench:original-routing-06-1",
+      "pred": 4,
+      "gold": 3,
+      "correct": false,
+      "p_gold": 0.14538618922233582,
+      "tie": false
+    }
+  ],
+  "panel2": {
+    "path": "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json",
+    "sha256": "b4dbbf1763ae51f2429d2fec521854aa48d0f2f651539c671a0ec98f86aba7da"
+  },
+  "against_panel2": {
+    "natural": {
+      "items": 231,
+      "set_head_correct": 138,
+      "panel2_correct": 162,
+      "set_head_accuracy": 0.5974025974025974,
+      "panel2_accuracy": 0.7012987012987013,
+      "difference_pp": -10.38961038961039,
+      "mcnemar_set_head_vs_panel2": {
+        "first_only_correct": 20,
+        "second_only_correct": 44,
+        "discordant": 64,
+        "exact_p": 0.0036899642765400487
+      },
+      "screen": {
+        "n": 231,
+        "delta_pp": -14.32178932178932,
+        "ci_low_pp": -25.174491662413857,
+        "ci_high_pp": -3.4690869811647844,
+        "wins": 20,
+        "losses": 44,
+        "p_value": 0.0036899642765400487,
+        "discordance": 0.27705627705627706,
+        "detectable_pp": 10.100000000000001,
+        "detectable_cc_pp": 14.800803552548109,
+        "states": [
+          "unresolved"
+        ],
+        "action": "investigate",
+        "reason": "the 95% interval crosses -12 pp; this item count cannot resolve a difference of this size"
+      }
+    },
+    "reversed": {
+      "items": 231,
+      "set_head_correct": 130,
+      "panel2_correct": 157,
+      "set_head_accuracy": 0.5627705627705628,
+      "panel2_accuracy": 0.6796536796536796,
+      "difference_pp": -11.688311688311687,
+      "mcnemar_set_head_vs_panel2": {
+        "first_only_correct": 11,
+        "second_only_correct": 38,
+        "discordant": 49,
+        "exact_p": 0.00014197068519905542
+      },
+      "screen": {
+        "n": 231,
+        "delta_pp": -17.575757575757574,
+        "ci_low_pp": -26.898336606128126,
+        "ci_high_pp": -8.253178545387026,
+        "wins": 11,
+        "losses": 38,
+        "p_value": 0.00014197068519905542,
+        "discordance": 0.21212121212121213,
+        "detectable_pp": 8.4,
+        "detectable_cc_pp": 12.309579192218228,
+        "states": [
+          "unresolved"
+        ],
+        "action": "investigate",
+        "reason": "the 95% interval crosses -12 pp; this item count cannot resolve a difference of this size"
+      }
+    },
+    "order_sensitivity": {
+      "items": 231,
+      "set_head_changed_fraction": 0.43722943722943725,
+      "panel2_changed_fraction": 0.22510822510822512
+    }
+  }
+}
