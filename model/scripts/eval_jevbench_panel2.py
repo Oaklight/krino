@@ -24,14 +24,18 @@ contrast; ``sandwich`` repeats the question after the options, so it differs in
 content and token count as well as position and is a repetition treatment.
 
 ``--read-config`` selects where the code logits are read (#337).  ``last`` is
-the shipped read.  ``layer=K`` reads hidden state K -- the output of block K,
-with hidden state 0 the embeddings -- and ``mean_last_n=4`` averages the last
-four hidden states.  A middle-layer read applies the final norm and the LM head
-to a representation that norm was never trained for: that is the logit-lens
-caveat, and it applies to every configuration except ``last``.  ``all`` reads
-every declared configuration from one forward; the five are then paired by
-construction, and the reported latency splits into the shared forward and the
-per-configuration norm-and-head cost.
+the shipped read and returns the model's own next-token logits.  ``layer=K``
+applies the final norm and LM head to hidden state K; on the verified
+transformers 5.21 layout, index 0 is the embedding output, index k is block k's
+output, and the last entry is the final normed state.  ``mean_last_n=4``
+averages the last four raw block outputs and excludes the final normed entry.
+A middle-layer read applies the norm and head to a representation that norm was
+never trained for: that is the logit-lens caveat, and it applies to every
+configuration except ``last``.  ``all`` reads every declared configuration from
+one forward; the five are then paired by construction, and the reported latency
+splits into the shared forward and the per-configuration norm-and-head cost.
+The first forward of a run checks the layout and fails loudly if the library's
+hidden-state semantics change.
 
 The prompt template lives in ``model.evaluation.panel2`` and is built only by
 ``render_panel2``.  A noul item is rendered as a two-option question,
@@ -238,23 +242,53 @@ def check_codes(args: argparse.Namespace) -> int:
     return 0
 
 
+def check_read_layout(model: Any, output: Any) -> None:
+    """Fail loudly if the hidden-state layout is not the one the reads assume.
+
+    Verified on transformers 5.21: the tuple has ``n_layers + 1`` entries,
+    index 0 is the embedding output, index k is the output of block k for
+    ``1 <= k <= n_layers - 1``, and the last entry is the final normed state
+    rather than block ``n_layers``'s raw output.  The last entry must be the
+    tensor the LM head reads; if a library change breaks that, a middle-layer
+    read would silently mean a different layer.
+    """
+    hidden_states = output.hidden_states
+    n_layers = int(model.config.num_hidden_layers)
+    if len(hidden_states) != n_layers + 1:
+        raise RuntimeError(
+            f"hidden-state tuple has {len(hidden_states)} entries for "
+            f"{n_layers} blocks; the read layout no longer matches read_specs"
+        )
+    if not torch.equal(model.lm_head(hidden_states[-1]), output.logits):
+        raise RuntimeError(
+            "the last hidden state is not the tensor the LM head reads; "
+            "hidden-state semantics changed"
+        )
+
+
 def read_logits(
-    model: Any, hidden_states: tuple[Any, ...], spec: tuple[str, int] | tuple[str]
+    model: Any,
+    hidden_states: tuple[Any, ...],
+    spec: tuple[str, int] | tuple[str],
+    last_logits: Any,
 ) -> Any:
     """Logits from one declared read of the final position's hidden states.
 
-    A middle-layer read applies the final norm and the LM head to a
+    ``last`` returns the model's own next-token logits unchanged.  A
+    middle-layer read applies the final norm and the LM head to a
     representation that norm was never trained for: the logit-lens caveat.
-    ``last`` reads the final hidden state, so its norm and head are the ones
-    the model was trained with.
+    ``mean_last_n`` averages raw block outputs and excludes the final normed
+    entry, so the average is over the last n blocks the tuple exposes.
     """
     kind = spec[0]
     if kind == "last":
-        hidden = hidden_states[-1][0, -1]
-    elif kind == "layer":
+        return last_logits
+    if kind == "layer":
         hidden = hidden_states[spec[1]][0, -1]
     elif kind == "mean_last_n":
-        hidden = torch.stack([state[0, -1] for state in hidden_states[-spec[1]:]]).mean(0)
+        hidden = torch.stack(
+            [state[0, -1] for state in hidden_states[-(spec[1] + 1):-1]]
+        ).mean(0)
     else:
         raise ValueError(f"unknown read spec {spec!r}")
     return model.lm_head(model.model.norm(hidden)).float()
@@ -268,12 +302,14 @@ def score_prompt(
     code_ids: dict[str, int],
     device: str,
     specs: dict[str, tuple[str, int] | tuple[str]],
+    verify_layout: bool = False,
 ) -> tuple[dict[str, dict[str, Any]], Any, float, int]:
     """One forward; one code read per declared configuration.
 
     The forward is shared, so the five configurations see identical hidden
     states and the comparison is paired by construction.  ``read_s`` is the
     per-configuration norm-and-head cost on top of the shared forward.
+    ``verify_layout`` checks the hidden-state semantics on the first item.
     """
     encoded = tokenizer(prompt, return_tensors="pt", add_special_tokens=False)
     n_tokens = int(encoded["input_ids"].shape[1])
@@ -282,12 +318,15 @@ def score_prompt(
     with torch.inference_mode():
         output = model(**encoded, output_hidden_states=True)
     forward_elapsed = time.perf_counter() - started
+    if verify_layout:
+        check_read_layout(model, output)
+    last_logits = output.logits[0, -1].float()
 
     reads: dict[str, dict[str, Any]] = {}
     with torch.inference_mode():
         for name, spec in specs.items():
             read_started = time.perf_counter()
-            logits = read_logits(model, output.hidden_states, spec)
+            logits = read_logits(model, output.hidden_states, spec, last_logits)
             values = [float(logits[code_ids[code]]) for code in codes]
             prediction = max(range(len(values)), key=values.__getitem__)
             reads[name] = {
@@ -295,7 +334,7 @@ def score_prompt(
                 "prediction": prediction,
                 "read_s": time.perf_counter() - read_started,
             }
-    return reads, output.logits[0, -1].float(), forward_elapsed, n_tokens
+    return reads, last_logits, forward_elapsed, n_tokens
 
 
 def prediction_row(
@@ -363,6 +402,7 @@ def score_model(args: argparse.Namespace) -> int:
     unscorable: list[dict[str, Any]] = []
     diagnostic_sample: list[dict[str, Any]] = []
     options_by_id: dict[str, int] = {}
+    layout_checked = False
     step = max(1, len(items) // max(1, args.diagnostic_sample))
     sample_ids = {item.id for item in items[::step][: args.diagnostic_sample]}
 
@@ -393,8 +433,16 @@ def score_model(args: argparse.Namespace) -> int:
             order=args.prompt_order,
         )
         reads, logits, forward_elapsed, n_tokens = score_prompt(
-            model, tokenizer, prompt, codes, code_ids, device, specs
+            model,
+            tokenizer,
+            prompt,
+            codes,
+            code_ids,
+            device,
+            specs,
+            verify_layout=not layout_checked,
         )
+        layout_checked = True
         natural_tokens.append(n_tokens)
         for name, read in reads.items():
             latencies[name]["natural"].append((forward_elapsed, read["read_s"]))
