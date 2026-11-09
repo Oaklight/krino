@@ -236,6 +236,7 @@ def config_for(args: argparse.Namespace, hidden_size: int) -> dict:
         "seed": SEED,
         "selection": "minimum eval-split NLL over the five epochs",
         "data_digest": args.data_digest,
+        "extraction": json.loads(args.extraction),
         "io_dtype": "bfloat16 storage, float32 head",
     }
 
@@ -249,6 +250,15 @@ def main() -> int:
     parser.add_argument("--print-config-hash", action="store_true")
     parser.add_argument("--epochs", type=int, default=EPOCHS)
     parser.add_argument("--data-digest", required=True, help="sha256 of the rows file")
+    parser.add_argument(
+        "--extraction",
+        default="{}",
+        help=(
+            "JSON object describing how the states were extracted (batch size, "
+            "token caps); it enters the config hash because a different batching "
+            "changes the stored bits"
+        ),
+    )
     args = parser.parse_args()
 
     train_groups = load_cache(args.cache, "train", "natural")

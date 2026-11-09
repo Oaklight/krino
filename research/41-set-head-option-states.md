@@ -249,6 +249,18 @@ compared before extraction), branch `feature/340-set-head`. Model
 `Qwen/Qwen3-Reranker-4B` at `22e683669bc0f0bd69640a1354a6d0aebcfeede5`, bf16,
 one forward per item, `--code-form space`, prompt template unchanged from main.
 
+**The extraction recipe is part of the run, not an implementation detail.**
+Re-extracting the 788-item dev subset at batch size 8 instead of 16 moved two
+predictions, so the stored states are deterministic for a given batching and
+not across batchings. The recipe used here is corpus batch 32 (four shards),
+JevBench 16, dev 8 (the second pass, whose states are the ones scored), with
+`max_batch_tokens` 65536 and `max_prompt_tokens` 8192; every manifest records
+the batch size, both caps and the skip list, and `head.json` records the
+sha256 of the train states it consumed. The registered hash above predates that
+field; the same settings under the current code give
+`e9094d15622c0e6910815064926e4bd295defac4998361f5924a0287dc16844d`, which is
+the hash a re-run now produces. No reported number changes.
+
 The corpus is the canonical source list of `model/configs/r2_reranker4b.yaml`
 with its per-source caps and seed 42. Rows are built by
 `model/scripts/build_set_head_rows.py`; states by

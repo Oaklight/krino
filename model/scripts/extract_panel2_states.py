@@ -326,6 +326,8 @@ def main() -> int:
         "rows_file_sha256": hashlib.sha256(args.rows.read_bytes()).hexdigest(),
         "rows": len(rows),
         "shard": args.shard,
+        "batch_size": args.batch_size,
+        "max_batch_tokens": args.max_batch_tokens,
         "max_prompt_tokens": args.max_prompt_tokens,
         "skipped_over_cap": len(skipped),
         "skipped_over_cap_items": skipped,
