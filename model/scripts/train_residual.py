@@ -171,6 +171,57 @@ def _question_digest(item) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
+def file_sha256(path: Path) -> str:
+    """The content digest recorded beside a run's recipe."""
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def recipe_config(args) -> dict:
+    """The training recipe, for the config hash printed before the run.
+
+    The output path is deliberately excluded: the six marker arms must hash
+    identically except for ``marker_token``.
+    """
+    return {
+        "arm": "marker-token ablation",
+        "items": str(args.items),
+        "items_sha256": file_sha256(args.items),
+        "base_probs": str(args.base_probs),
+        "base_probs_sha256": file_sha256(args.base_probs),
+        "model": args.model,
+        "option_marker": bool(args.option_marker),
+        "noul_marker": bool(args.noul_marker),
+        "marker_token": args.marker_token,
+        "rank": args.rank,
+        "max_length": args.max_length,
+        "option_chunk_size": args.option_chunk_size,
+        "option_max_tokens": args.option_max_tokens,
+        "option_batch": args.option_batch,
+        "train_safe_buckets": bool(args.train_safe_buckets),
+        "lora_layers": args.lora_layers,
+        "lora_rank": args.lora_rank,
+        "lora_alpha": args.lora_alpha,
+        "epochs": args.epochs,
+        "patience": args.patience,
+        "lr": args.lr,
+        "alpha_lr": args.alpha_lr,
+        "kl_weight": args.kl_weight,
+        "ce_weight": args.ce_weight,
+        "val_fraction": args.val_fraction,
+        "seed": args.seed,
+    }
+
+
+def config_hash(config: dict) -> str:
+    return hashlib.sha256(
+        json.dumps(config, sort_keys=True, default=str).encode()
+    ).hexdigest()
+
+
 def dedup_by_id(
     items: list, seen: set[tuple[str, str]] | None = None
 ) -> tuple[list, int]:
@@ -391,6 +442,18 @@ def main() -> int:
         help="Score options at a marker token (chunk=1 is the only exact setting)",
     )
     parser.add_argument(
+        "--marker-token",
+        type=int,
+        default=None,
+        help="Token id used as the option marker; default is the tokenizer's "
+        "eos (the marker-token ablation varies only this)",
+    )
+    parser.add_argument(
+        "--print-config-hash",
+        action="store_true",
+        help="Print the recipe config hash and exit before loading anything",
+    )
+    parser.add_argument(
         "--noul-marker",
         action="store_true",
         help="Score noul through the shared marker readout as a two-option "
@@ -458,6 +521,14 @@ def main() -> int:
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
+
+    config = recipe_config(args)
+    run_hash = config_hash(config)
+    config["config_hash"] = run_hash
+    print(f"config_hash {run_hash}", flush=True)
+    print(json.dumps(config, sort_keys=True), flush=True)
+    if args.print_config_hash:
+        return 0
 
     items = load_jsonl(args.items)
     items, duplicate_rows = dedup_by_id(items)
@@ -554,6 +625,7 @@ def main() -> int:
         max_length=args.max_length,
         option_marker=args.option_marker,
         noul_marker=args.noul_marker,
+        marker_token_id=args.marker_token,
         option_chunk_size=args.option_chunk_size,
         option_max_tokens=args.option_max_tokens,
         option_batch=args.option_batch,

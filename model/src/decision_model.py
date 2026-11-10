@@ -85,6 +85,13 @@ def _noul_option_texts(criteria: Any) -> list[str]:
     return [str(false_text), str(true_text)]
 
 
+def marker_token_id_for(tokenizer, override: int | None = None) -> int:
+    """Re-exported from :mod:`model.src.marker`, which has no torch import."""
+    from .marker import marker_token_id_for as resolve
+
+    return resolve(tokenizer, override)
+
+
 class DecisionModel(nn.Module):
     """Frozen backbone + trainable decision heads.
 
@@ -191,6 +198,7 @@ class DecisionModel(nn.Module):
         train_safe_buckets: bool = False,
         choice_mode: str = "tower",
         answerable_head: bool = False,
+        marker_token_id: int | None = None,
     ) -> None:
         super().__init__()
         if choice_mode not in ("tower", "cross_encoder"):
@@ -230,17 +238,10 @@ class DecisionModel(nn.Module):
                 "support a second backbone"
             )
         self.marker_token_id = None
+        if marker_token_id is not None and not option_marker:
+            raise ValueError("marker_token_id needs option_marker=True")
         if option_marker:
-            self.marker_token_id = (
-                getattr(tokenizer, "eos_token_id", None)
-                or getattr(tokenizer, "sep_token_id", None)
-                or getattr(tokenizer, "pad_token_id", None)
-            )
-            if self.marker_token_id is None:
-                raise ValueError(
-                    "option_marker needs a tokenizer with an eos, sep or pad token "
-                    "to use as the option marker"
-                )
+            self.marker_token_id = marker_token_id_for(tokenizer, marker_token_id)
 
         # GPU optimization config — auto-detect if not provided
         if gpu_config is None:
