@@ -48,6 +48,7 @@ from eval_jevbench_panel2 import score_prompt  # noqa: E402
 from model.evaluation import clinc  # noqa: E402
 from model.evaluation.code_tiers import item_seed, subsample  # noqa: E402
 from model.evaluation.panel2 import code_token_ids, codes_for, render_panel2  # noqa: E402
+from model.evaluation.position import bucket, check_gate, permuted  # noqa: E402
 from model.src.backbone import load_causal_lm  # noqa: E402
 from probe_code_tiers import banking77_items, dev_items  # noqa: E402
 
@@ -64,17 +65,6 @@ LETTERS = codes_for(52)
 SYMBOLS = codes_for(ALPHABET_K)[52:]
 EARLY_CODES = LETTERS + SYMBOLS
 LATE_CODES = SYMBOLS + LETTERS
-
-
-def bucket(position: int, k: int) -> int:
-    """One of five equal buckets, clipped to the last."""
-    return min(4, position * 5 // k)
-
-
-def permuted(texts: list[str], gold: int, item_id: str, index: int) -> tuple[list[str], int]:
-    order = list(range(len(texts)))
-    random.Random(f"{SEED}:{item_id}:perm{index}").shuffle(order)
-    return [texts[position] for position in order], order.index(gold)
 
 
 def arrange(texts: list[str], gold: int, target: int) -> tuple[list[str], int]:
@@ -271,6 +261,8 @@ def main() -> int:
     rows: list[dict] = []
     rows += run_ladder(model, tokenizer, device, args.dataset, items)
     if not args.limit:
+        gate = check_gate(rows, args.dataset)
+        print(f"  gate {gate['correct']}/{gate['items']} reproduced", flush=True)
         rows += run_alphabet(model, tokenizer, device, args.dataset, items)
         rows += run_text(model, tokenizer, device, args.dataset, items, own_pool, cross_pool)
 

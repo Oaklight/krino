@@ -119,6 +119,35 @@ in-domain distractors being confusable, not about position alone.
 The own-swap control sits close to the natural cell (Banking77 71 against 72,
 CLINC150 139 against 146), so the replacement itself is not the effect.
 
+## What the dead tail is made of
+
+The natural K=52 cell grouped by natural bucket, with the gold's class index in
+Banking77's label order and the label's character length:
+
+| bucket | correct | distinct classes | class index | mean label chars |
+|---|---:|---:|---|---:|
+| 0 | 31/48 | 20 | 0–20 | 23.5 |
+| 1 | 25/36 | 18 | 13–39 | 22.3 |
+| 2 | 15/45 | 21 | 30–53 | 17.9 |
+| 3 | 1/47 | 18 | 43–64 | 18.1 |
+| 4 | 0/24 | 12 | 61–76 | 20.6 |
+
+Buckets 3 and 4 together hold 71 items over **28 distinct classes, all at class
+indices 43–76** — the alphabetical suffix of the label space (`pending_*`,
+`top_up_*`, `transaction_*`, `transfer_*`, `verify_*`, `virtual_card_*`,
+`visa_or_mastercard`, and their neighbours). None of those 28 classes appears in
+the head bucket, whose 20 classes sit at indices 0–20.
+
+**The labels are not longer.** The dead classes average 18.1 and 20.6
+characters against 23.5 and 22.3 in the head buckets, so the "longer or vaguer
+description" hypothesis is not supported by label length.
+
+Three of the four candidates are now excluded by measurement — display position
+(P1), the letter block's position (P3), distractor text (P4) — and length does
+not separate the tail. What remains is the gold class itself. That is a
+description, not a mechanism: the next steps are a per-class error analysis of
+these 28 classes and a gold-text replacement probe, not another display probe.
+
 ## What this says, and what it does not
 
 - **The mechanism differs by dataset.** Banking77's tail is the gold's rank in
@@ -128,9 +157,12 @@ CLINC150 139 against 146), so the replacement itself is not the effect.
   changes nothing (P3), so the collapse is the symbol tier plus whatever makes
   the late-class golds hard, not the place where the symbols sit.
 - **The natural-rank effect is not yet explained.** With the option set fixed,
-  accuracy follows the gold's class rank. That rank is confounded with the gold
-  class's text and with the distractor pool the draw can offer, and this design
-  does not separate them. Calling it "the item" is a description, not a cause.
+  accuracy follows the gold's class rank. The dead region is the alphabetical
+  suffix of the label space (28 classes at indices 43–76), and their labels are
+  shorter, not longer, so label length does not separate them. The rank remains
+  confounded with the gold class's text and with the distractor pool the draw
+  can offer, and this design does not separate them. Calling it "the item" is a
+  description, not a cause.
 - **The cross-domain salience confound is named, not removed.** In P4 the
   in-domain gold among out-of-domain distractors is the odd one out; the
   own-swap controls for text replacement but not for that salience.
