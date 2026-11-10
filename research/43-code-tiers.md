@@ -13,9 +13,10 @@ changing only which tier labels the gold.
 
 **No tier can. All four cells are rejected on a 200-item main instrument, the
 positive control included, and the positive control repeats on the 24-item
-replica.** The usable alphabet stays at 52. Supporting more than 52 options
-without dropping items therefore needs a blocking readout or a multi-token code,
-not a wider alphabet.
+replica.** The usable alphabet stays at 52 *on this instrument*. That last claim
+is scoped to Banking77 by a cross-dataset check run after this one: see *Scope*
+at the end. Supporting more than 52 options here therefore needs a blocking
+readout or a multi-token code, not a wider alphabet.
 
 ## Design
 
@@ -149,6 +150,35 @@ the adoption bound. This ordering is a hypothesis about the tier effect; it is
 not a decomposition of that effect from the tier's damage to the rest of the
 option list, which the cells cannot separate (see *The letter baselines are not
 equal across cells*).
+
+## Scope: Banking77 only, and mostly its early positions
+
+Added after the run and before merge, from the CLINC150 cells in #356. **No
+number above changes.** What changes is what they may be generalised to.
+
+**The item set is not neutral.** Panel 2's accuracy at K=52 on 200 Banking77
+items falls with the gold's position: 64.6%, 69.4%, 33.3%, 2.1%, 0.0% across five
+position buckets. The model almost never answers from the last 40% of the option
+list, so an item whose gold sits there is unwinnable whatever its code. Fifty-
+nine of the 200 items here are of exactly that kind — those whose intent falls in
+the last 28 classes of the 80-class list — and they score **0/59 at K=52 with
+letters only**, while the other 141 score 72/141 = 51.1%. An unwinnable item
+contributes 0 to a paired difference, so the effective sample behind the four
+rejections is well under 200.
+
+**The headline does not transfer.** On CLINC150, 200 items of the same
+construction and seed: K=52 letters-only is **73.0%**; K=80 with the shipped 84
+alphabet is **62.5%**, and the 78 items whose gold carries a symbol code score
+**60.3%** against 63.9% for letters. Symbol codes work on that distribution.
+
+So "the usable alphabet is 52" is an observation about the Banking77
+distribution as read out with this position bias. It is not a property of the
+tokenizer and not a property of the model's vocabulary. What survives is
+narrower: **on Banking77, at the positions these items occupy, replacing a
+gold's letter code with an accented-Latin, Hangul, symbol, two- or three-letter
+code makes it worse.** The paired design is what makes that a statement about
+codes — it holds position fixed — but it cannot make the finding distribution-
+independent, and it cannot recover the items that were never winnable.
 
 ## What this does not say
 
