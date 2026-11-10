@@ -82,6 +82,25 @@ def arrange(texts: list[str], gold: int, target: int) -> tuple[list[str], int]:
     return others[:target] + [texts[gold]] + others[target:], target
 
 
+def select_nested(criteria: dict, label: str, k: int, item_id: str) -> tuple[list[str], int]:
+    """The nested ladder draw: smaller K is a prefix of the K=52 draw.
+
+    The K=52 set is the recorded subsample, drawn exactly as ``subsample`` does
+    (one ``rng.sample`` call on the same RNG). At K < 52 the gold keeps the
+    first ``k - 1`` distractors of that draw in original criteria order, so the
+    ladder changes the list length and nothing else: no independent redraw.
+    """
+    keys = list(criteria)
+    gold_index = keys.index(label)
+    others = [index for index in range(len(keys)) if index != gold_index]
+    kept = sorted([gold_index, *item_seed(item_id, SEED).sample(others, MAIN_K - 1)])
+    if k < MAIN_K:
+        prefix = [index for index in kept if index != gold_index][: k - 1]
+        kept = sorted([gold_index, *prefix])
+    texts = [str(criteria[keys[index]]) for index in kept]
+    return texts, kept.index(gold_index)
+
+
 def score(model, tokenizer, device, state, instructions, texts, codes):
     code_ids, multi = code_token_ids(tokenizer, codes, CODE_FORM)
     if multi:
@@ -114,8 +133,8 @@ def run_ladder(model, tokenizer, device, dataset, items) -> list[dict]:
     for k in LADDER:
         codes = codes_for(k)
         for item in items:
-            texts, gold = subsample(
-                item.question["criteria"], item.label, k, item_seed(item.id, SEED)
+            texts, gold = select_nested(
+                item.question["criteria"], item.label, k, item.id
             )
             instructions = item.question.get("instructions", "")
             for index in range(PERMS[k] + 1):
@@ -202,6 +221,7 @@ def main() -> int:
         "dataset": args.dataset,
         "items": ITEMS,
         "ladder": list(LADDER),
+        "ladder_nesting": "K=7/14/28 keep the gold plus the first k-1 distractors of the K=52 draw, in original criteria order; the K=52 cell is the recorded subsample",
         "perms": {str(k): PERMS[k] for k in LADDER},
         "alphabet_k": ALPHABET_K,
         "letters_early": "letters on display 0-51, the 28 symbols on 52-79",
