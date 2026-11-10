@@ -54,6 +54,7 @@ sys.path.insert(0, str(ROOT))
 
 from eval_jevbench_panel2 import score_prompt  # noqa: E402
 from data.pipeline import load_banking77  # noqa: E402
+from model.evaluation import clinc  # noqa: E402
 from model.evaluation.code_space import sample_tier, survey, usable_chars  # noqa: E402
 from model.evaluation.code_tiers import (  # noqa: E402
     K,
@@ -223,6 +224,7 @@ def config_for(args, tiers: dict[str, list[str]]) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--snapshot", type=Path, required=True)
+    parser.add_argument("--dataset", choices=("banking77", "clinc150"), default="banking77")
     parser.add_argument(
         "--dev-path", type=Path, default=Path("data/benchmarks/dev/dev_800.jsonl")
     )
@@ -236,6 +238,13 @@ def main() -> int:
     model, tokenizer = load_causal_lm(str(args.snapshot), dtype=torch.bfloat16)
     tiers = tier_spec(tokenizer)
     config = config_for(args, tiers)
+    if args.dataset == "clinc150":
+        # The Banking77 keys do not describe this item set.
+        config.pop("banking77_items", None)
+        config.pop("distractors", None)
+        _, meta = clinc.load(BANKING77_ITEMS, SEED)
+        config.update(meta)
+        config["items"] = BANKING77_ITEMS
     config_hash = hashlib.sha256(
         json.dumps(config, sort_keys=True, ensure_ascii=False).encode("utf-8")
     ).hexdigest()
@@ -246,12 +255,15 @@ def main() -> int:
         return 0
 
     device = str(next(model.parameters()).device)
-    dev = dev_items(args.dev_path)
-    dev_ids = {q.id for q in dev}
-    instruments = {
-        "banking77": banking77_items(dev_ids, BANKING77_ITEMS),
-        "dev24": dev,
-    }
+    dev = dev_items(args.dev_path) if args.dataset == "banking77" else []
+    if args.dataset == "banking77":
+        instruments = {
+            "banking77": banking77_items({q.id for q in dev}, BANKING77_ITEMS),
+            "dev24": dev,
+        }
+    else:
+        items, _ = clinc.load(BANKING77_ITEMS, SEED)
+        instruments = {"clinc150": items}
     if args.limit:
         instruments = {
             name: items[: args.limit] for name, items in instruments.items()
