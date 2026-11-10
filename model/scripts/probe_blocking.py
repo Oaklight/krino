@@ -36,6 +36,13 @@ sys.path.insert(0, str(ROOT))
 
 from eval_jevbench_panel2 import score_prompt  # noqa: E402
 from model.evaluation import clinc  # noqa: E402
+from model.evaluation.blocking import (  # noqa: E402
+    blocks_of,
+    gold_block as find_gold_block,
+    position_bin,
+    scheme_a_correct,
+    scheme_b_correct,
+)
 from model.evaluation.judgement_prompt import NO, YES, render  # noqa: E402
 from model.evaluation.panel2 import code_token_ids, codes_for, render_panel2  # noqa: E402
 from model.src.backbone import load_causal_lm  # noqa: E402
@@ -47,10 +54,6 @@ ITEMS = 200
 JUDGEMENT_ITEMS = 50
 BLOCK_SIZES = (52, 32, 26)
 K = 150
-
-
-def blocks_of(k: int, size: int) -> list[list[int]]:
-    return [list(range(start, min(start + size, k))) for start in range(0, k, size)]
 
 
 def block_answer(model, tokenizer, device, state, instructions, texts, indices):
@@ -103,14 +106,6 @@ def judgement_full(scorer, state, instructions, texts):
         if best_score is None or score > best_score:
             best, best_score = index, score
     return best, time.perf_counter() - started
-
-
-def position_bin(local: int, width: int) -> str:
-    if local < 0.2 * width:
-        return "first"
-    if local >= 0.8 * width:
-        return "last"
-    return "middle"
 
 
 def main() -> int:
@@ -177,7 +172,7 @@ def main() -> int:
                 logits.append(logit)
                 local = indices.index(gold) if gold in indices else None
                 in_block[len(winners) - 1] = local
-            gold_block = next(i for i, ind in enumerate(blocks) if gold in ind)
+            gold_block = find_gold_block(blocks, gold)
             won_block = winners[gold_block] == gold
             scheme_a = winners[max(range(len(logits)), key=lambda i: (logits[i], -i))]
             scheme_b, seconds_b = final_pass(
@@ -194,9 +189,9 @@ def main() -> int:
                 "gold_local_bin": position_bin(in_block[gold_block], len(blocks[gold_block])),
                 "won_block": won_block,
                 "scheme_a": scheme_a,
-                "scheme_a_correct": scheme_a == gold,
+                "scheme_a_correct": scheme_a_correct(gold, winners, logits),
                 "scheme_b": scheme_b,
-                "scheme_b_correct": scheme_b == gold,
+                "scheme_b_correct": scheme_b_correct(gold, winners, scheme_b),
                 "scheme_c": scheme_c,
                 "scheme_c_correct": scheme_c == gold,
                 "block_seconds": round(elapsed, 3),

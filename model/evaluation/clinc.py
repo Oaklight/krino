@@ -25,34 +25,40 @@ INSTRUCTIONS = "Which intent category does this customer message belong to?"
 SEED = 342
 
 
-def load(count: int, seed: int = SEED) -> tuple[list[Any], dict[str, Any]]:
-    """In-scope CLINC150 test items over one 150-class criteria dict.
+def build(
+    rows: list[tuple[int, str, int]],
+    names: list[str],
+    count: int,
+    seed: int = SEED,
+) -> tuple[list[Any], dict[str, Any]]:
+    """Items from the dataset's rows, without the download.
 
-    Rows are shuffled with a fixed seed and the first ``count`` are taken, so a
-    subset is stable and independent of how many items the caller asks for.
+    ``rows`` holds ``(row_index, text, intent_index)`` in the dataset's own
+    order. The row index is the item id suffix, so an id names the same CLINC
+    row however many items the caller keeps, and the first ``count`` of one
+    call are the first ``count`` of any larger call.
+
+    The 150-class guard lives here so a loader change that alters the label
+    space fails loudly instead of silently shifting every class index.
     """
-    from datasets import load_dataset
-
-    data = load_dataset(REPO, CONFIG, split=SPLIT, revision=REVISION)
-    names = data.features["intent"].names
     in_scope = [name for name in names if name != "oos"]
     if len(in_scope) != 150:
         raise SystemExit(f"expected 150 in-scope classes, got {len(in_scope)}")
     criteria = {name: name.replace("_", " ") for name in in_scope}
-    rows = [
-        (index, row)
-        for index, row in enumerate(data)
-        if names[int(row["intent"])] != "oos"
+    kept = [
+        (index, text, intent)
+        for index, text, intent in rows
+        if names[intent] != "oos"
     ]
-    random.Random(seed).shuffle(rows)
+    random.Random(seed).shuffle(kept)
     items = [
         SimpleNamespace(
             id=f"clinc150-{SPLIT}-{index:05d}",
-            state=row["text"],
-            label=names[int(row["intent"])],
+            state=text,
+            label=names[intent],
             question={"criteria": criteria, "instructions": INSTRUCTIONS},
         )
-        for index, row in rows[:count]
+        for index, text, intent in kept[:count]
     ]
     meta = {
         "dataset": "clinc150",
@@ -66,3 +72,19 @@ def load(count: int, seed: int = SEED) -> tuple[list[Any], dict[str, Any]]:
         "item_selection": f"in-scope rows shuffled with Random({seed}), first {count}",
     }
     return items, meta
+
+
+def load(count: int, seed: int = SEED) -> tuple[list[Any], dict[str, Any]]:
+    """In-scope CLINC150 test items over one 150-class criteria dict.
+
+    Rows are shuffled with a fixed seed and the first ``count`` are taken, so a
+    subset is stable and independent of how many items the caller asks for.
+    """
+    from datasets import load_dataset
+
+    data = load_dataset(REPO, CONFIG, split=SPLIT, revision=REVISION)
+    names = data.features["intent"].names
+    rows = [
+        (index, row["text"], int(row["intent"])) for index, row in enumerate(data)
+    ]
+    return build(rows, names, count, seed)

@@ -30,7 +30,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import random
 import sys
 from pathlib import Path
 
@@ -48,17 +47,17 @@ from probe_blocking import (  # noqa: E402
     block_answer,
     final_pass,
     judgement_pick,
-    position_bin,
 )
 from model.evaluation import clinc  # noqa: E402
+from model.evaluation.blocking import (  # noqa: E402
+    gold_block as find_gold_block,
+    position_bin,
+    scheme_a_correct,
+    scheme_b_correct,
+    shuffled_blocks,
+)
 from model.src.backbone import load_causal_lm  # noqa: E402
 from model.src.logit_scorer import LogitScorer  # noqa: E402
-
-
-def shuffled_blocks(item_id: str, size: int) -> list[list[int]]:
-    order = list(range(K))
-    random.Random(f"{SEED}:{item_id}").shuffle(order)
-    return [order[start : start + size] for start in range(0, K, size)]
 
 
 def main() -> int:
@@ -124,7 +123,7 @@ def main() -> int:
                 winners.append(winner)
                 logits.append(logit)
                 in_block[len(winners) - 1] = indices.index(gold) if gold in indices else None
-            gold_block = next(i for i, ind in enumerate(blocks) if gold in ind)
+            gold_block = find_gold_block(blocks, gold)
             won_block = winners[gold_block] == gold
             scheme_a = winners[max(range(len(logits)), key=lambda i: (logits[i], -i))]
             scheme_b, seconds_b = final_pass(
@@ -142,9 +141,9 @@ def main() -> int:
                 "gold_local_bin": position_bin(in_block[gold_block], len(blocks[gold_block])),
                 "won_block": won_block,
                 "scheme_a": scheme_a,
-                "scheme_a_correct": scheme_a == gold,
+                "scheme_a_correct": scheme_a_correct(gold, winners, logits),
                 "scheme_b": scheme_b,
-                "scheme_b_correct": scheme_b == gold,
+                "scheme_b_correct": scheme_b_correct(gold, winners, scheme_b),
                 "scheme_c": scheme_c,
                 "scheme_c_correct": scheme_c == gold,
                 "block_seconds": round(elapsed, 3),
