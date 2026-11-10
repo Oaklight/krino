@@ -1,10 +1,10 @@
 {
   "_provenance": {
-    "config_hash": "1e5191e1d3b8b09fe1623860fd2c9fc1cecc0e57b86c8738ebd52084fc5eeab0",
+    "config_hash": "1821729ac1dc307da229ed4dc44384847e55cc8e13a736d7fa4e94c6e6403d5e",
     "config": {
-      "arm": "K=52 letter-only calibration",
+      "arm": "panel 2 single pass at K=52",
       "k": 52,
-      "alphabet": "A-Z, a-z",
+      "codes": "codes_for(k): A-Z, a-z, then single symbols",
       "code_form": "space",
       "seed": 342,
       "item_seed": "random.Random(f'{seed}:{item_id}')",
@@ -13,17 +13,22 @@
       "order": "original criteria order of the kept options",
       "tie_rule": "first maximum by natural option index",
       "model": "22e683669bc0f0bd69640a1354a6d0aebcfeede5",
-      "config_hash": "1e5191e1d3b8b09fe1623860fd2c9fc1cecc0e57b86c8738ebd52084fc5eeab0"
+      "config_hash": "1821729ac1dc307da229ed4dc44384847e55cc8e13a736d7fa4e94c6e6403d5e"
     }
   },
   "banking77": {
     "summary": {
+      "k": 52,
       "items": 200,
       "correct": 72,
       "accuracy": 0.36,
       "chance": 0.019230769230769232,
-      "mean_latency_s": 0.11751095346175135,
+      "mean_latency_s": 0.1183530962979421,
       "ties": 2
+    },
+    "letter_gold": {
+      "items": 200,
+      "correct": 72
     },
     "rows": [
       {
@@ -33,9 +38,9 @@
         "pred_pos": 9,
         "pred_code": "J",
         "correct": true,
+        "gold_code": "J",
         "tie": false,
-        "latency_s": 0.7024014568887651,
-        "prompt_chars": 1426
+        "latency_s": 0.7092057722620666
       },
       {
         "source": "banking77",
@@ -44,9 +49,9 @@
         "pred_pos": 22,
         "pred_code": "W",
         "correct": true,
+        "gold_code": "W",
         "tie": false,
-        "latency_s": 0.44502692110836506,
-        "prompt_chars": 1388
+        "latency_s": 0.45222649397328496
       },
       {
         "source": "banking77",
@@ -55,9 +60,9 @@
         "pred_pos": 17,
         "pred_code": "R",
         "correct": true,
+        "gold_code": "R",
         "tie": false,
-        "latency_s": 0.434948842972517,
-        "prompt_chars": 1543
+        "latency_s": 0.4494206300005317
       },
       {
         "source": "banking77",
@@ -66,9 +71,9 @@
         "pred_pos": 21,
         "pred_code": "V",
         "correct": false,
+        "gold_code": "U",
         "tie": false,
-        "latency_s": 0.44437497202306986,
-        "prompt_chars": 1396
+        "latency_s": 0.44595863530412316
       },
       {
         "source": "banking77",
@@ -77,9 +82,9 @@
         "pred_pos": 44,
         "pred_code": "s",
         "correct": false,
+        "gold_code": "i",
         "tie": false,
-        "latency_s": 0.44555638870224357,
-        "prompt_chars": 1385
+        "latency_s": 0.4479880570434034
       },
       {
         "source": "banking77",
@@ -88,9 +93,9 @@
         "pred_pos": 41,
         "pred_code": "p",
         "correct": false,
+        "gold_code": "d",
         "tie": false,
-        "latency_s": 0.4482495621778071,
-        "prompt_chars": 1399
+        "latency_s": 0.44910188391804695
       },
       {
         "source": "banking77",
@@ -99,9 +104,9 @@
         "pred_pos": 20,
         "pred_code": "U",
         "correct": true,
+        "gold_code": "U",
         "tie": false,
-        "latency_s": 0.02285277796909213,
-        "prompt_chars": 1401
+        "latency_s": 0.022780396044254303
       },
       {
         "source": "banking77",
@@ -110,9 +115,9 @@
         "pred_pos": 32,
         "pred_code": "g",
         "correct": false,
+        "gold_code": "f",
         "tie": false,
-        "latency_s": 0.44580906396731734,
-        "prompt_chars": 1405
+        "latency_s": 0.4495941908098757
       },
       {
         "source": "banking77",
@@ -121,9 +126,9 @@
         "pred_pos": 13,
         "pred_code": "N",
         "correct": false,
+        "gold_code": "Q",
         "tie": false,
-        "latency_s": 0.45067742886021733,
-        "prompt_chars": 1409
+        "latency_s": 0.4567865841090679
       },
       {
         "source": "banking77",
@@ -132,9 +137,9 @@
         "pred_pos": 49,
         "pred_code": "x",
         "correct": false,
+        "gold_code": "g",
         "tie": false,
-        "latency_s": 0.02250807173550129,
-        "prompt_chars": 1416
+        "latency_s": 0.022980509791523218
       },
       {
         "source": "banking77",
@@ -143,9 +148,9 @@
         "pred_pos": 43,
         "pred_code": "r",
         "correct": false,
+        "gold_code": "n",
         "tie": false,
-        "latency_s": 0.45813117595389485,
-        "prompt_chars": 1377
+        "latency_s": 0.4526944807730615
       },
       {
         "source": "banking77",
@@ -154,9 +159,9 @@
         "pred_pos": 21,
         "pred_code": "V",
         "correct": true,
+        "gold_code": "V",
         "tie": false,
-        "latency_s": 0.4495047410018742,
-        "prompt_chars": 1475
+        "latency_s": 0.44954211078584194
       },
       {
         "source": "banking77",
@@ -165,9 +170,9 @@
         "pred_pos": 36,
         "pred_code": "k",
         "correct": false,
+        "gold_code": "j",
         "tie": false,
-        "latency_s": 0.4479379472322762,
-        "prompt_chars": 1437
+        "latency_s": 0.4580014538951218
       },
       {
         "source": "banking77",
@@ -176,9 +181,9 @@
         "pred_pos": 33,
         "pred_code": "h",
         "correct": false,
+        "gold_code": "g",
         "tie": false,
-        "latency_s": 0.4534747041761875,
-        "prompt_chars": 1557
+        "latency_s": 0.45770367002114654
       },
       {
         "source": "banking77",
@@ -187,9 +192,9 @@
         "pred_pos": 7,
         "pred_code": "H",
         "correct": false,
+        "gold_code": "j",
         "tie": false,
-        "latency_s": 0.44984652614220977,
-        "prompt_chars": 1355
+        "latency_s": 0.4530418957583606
       },
       {
         "source": "banking77",
@@ -198,9 +203,9 @@
         "pred_pos": 9,
         "pred_code": "J",
         "correct": true,
+        "gold_code": "J",
         "tie": false,
-        "latency_s": 0.022575253155082464,
-        "prompt_chars": 1377
+        "latency_s": 0.023044391069561243
       },
       {
         "source": "banking77",
@@ -209,9 +214,9 @@
         "pred_pos": 31,
         "pred_code": "f",
         "correct": false,
+        "gold_code": "e",
         "tie": false,
-        "latency_s": 0.44751437986269593,
-        "prompt_chars": 1478
+        "latency_s": 0.45443608798086643
       },
       {
         "source": "banking77",
@@ -220,9 +225,9 @@
         "pred_pos": 3,
         "pred_code": "D",
         "correct": false,
+        "gold_code": "g",
         "tie": false,
-        "latency_s": 0.02255097310990095,
-        "prompt_chars": 1405
+        "latency_s": 0.02296676905825734
       },
       {
         "source": "banking77",
@@ -231,9 +236,9 @@
         "pred_pos": 25,
         "pred_code": "Z",
         "correct": false,
+        "gold_code": "Y",
         "tie": false,
-        "latency_s": 0.022553561720997095,
-        "prompt_chars": 1389
+        "latency_s": 0.0226002330891788
       },
       {
         "source": "banking77",
@@ -242,9 +247,9 @@
         "pred_pos": 3,
         "pred_code": "D",
         "correct": true,
+        "gold_code": "D",
         "tie": false,
-        "latency_s": 0.448058167938143,
-        "prompt_chars": 1444
+        "latency_s": 0.45418040407821536
       },
       {
         "source": "banking77",
@@ -253,9 +258,9 @@
         "pred_pos": 31,
         "pred_code": "f",
         "correct": false,
+        "gold_code": "e",
         "tie": false,
-        "latency_s": 0.4478105250746012,
-        "prompt_chars": 1381
+        "latency_s": 0.44899569312110543
       },
       {
         "source": "banking77",
@@ -264,9 +269,9 @@
         "pred_pos": 47,
         "pred_code": "v",
         "correct": false,
+        "gold_code": "L",
         "tie": false,
-        "latency_s": 0.4482047213241458,
-        "prompt_chars": 1459
+        "latency_s": 0.45066849887371063
       },
       {
         "source": "banking77",
@@ -275,9 +280,9 @@
         "pred_pos": 22,
         "pred_code": "W",
         "correct": true,
+        "gold_code": "W",
         "tie": false,
-        "latency_s": 0.022611973341554403,
-        "prompt_chars": 1480
+        "latency_s": 0.02286833804100752
       },
       {
         "source": "banking77",
@@ -286,9 +291,9 @@
         "pred_pos": 14,
         "pred_code": "O",
         "correct": false,
+        "gold_code": "E",
         "tie": false,
-        "latency_s": 0.4480921388603747,
-        "prompt_chars": 1374
+        "latency_s": 0.44802255695685744
       },
       {
         "source": "banking77",
@@ -297,9 +302,9 @@
         "pred_pos": 31,
         "pred_code": "f",
         "correct": false,
+        "gold_code": "n",
         "tie": false,
-        "latency_s": 0.44671145686879754,
-        "prompt_chars": 1474
+        "latency_s": 0.44824220100417733
       },
       {
         "source": "banking77",
@@ -308,9 +313,9 @@
         "pred_pos": 35,
         "pred_code": "j",
         "correct": false,
+        "gold_code": "i",
         "tie": false,
-        "latency_s": 0.02260693395510316,
-        "prompt_chars": 1334
+        "latency_s": 0.022746926173567772
       },
       {
         "source": "banking77",
@@ -319,9 +324,9 @@
         "pred_pos": 31,
         "pred_code": "f",
         "correct": false,
+        "gold_code": "e",
         "tie": false,
-        "latency_s": 0.44691408006474376,
-        "prompt_chars": 1418
+        "latency_s": 0.4479283671826124
       },
       {
         "source": "banking77",
@@ -330,9 +335,9 @@
         "pred_pos": 11,
         "pred_code": "L",
         "correct": false,
+        "gold_code": "l",
         "tie": false,
-        "latency_s": 0.022659894078969955,
-        "prompt_chars": 1416
+        "latency_s": 0.02298329910263419
       },
       {
         "source": "banking77",
@@ -341,9 +346,9 @@
         "pred_pos": 8,
         "pred_code": "I",
         "correct": true,
+        "gold_code": "I",
         "tie": false,
-        "latency_s": 0.4473086269572377,
-        "prompt_chars": 1349
+        "latency_s": 0.45009353989735246
       },
       {
         "source": "banking77",
@@ -352,9 +357,9 @@
         "pred_pos": 42,
         "pred_code": "q",
         "correct": false,
+        "gold_code": "X",
         "tie": false,
-        "latency_s": 0.02267089392989874,
-        "prompt_chars": 1361
+        "latency_s": 0.022973569110035896
       },
       {
         "source": "banking77",
@@ -363,9 +368,9 @@
         "pred_pos": 40,
         "pred_code": "o",
         "correct": false,
+        "gold_code": "I",
         "tie": false,
-        "latency_s": 0.02253296272829175,
-        "prompt_chars": 1379
+        "latency_s": 0.022729166317731142
       },
       {
         "source": "banking77",
@@ -374,9 +379,9 @@
         "pred_pos": 7,
         "pred_code": "H",
         "correct": false,
+        "gold_code": "J",
         "tie": false,
-        "latency_s": 0.02247600071132183,
-        "prompt_chars": 1388
+        "latency_s": 0.022640883922576904
       },
       {
         "source": "banking77",
@@ -385,9 +390,9 @@
         "pred_pos": 40,
         "pred_code": "o",
         "correct": false,
+        "gold_code": "m",
         "tie": false,
-        "latency_s": 0.02254011295735836,
-        "prompt_chars": 1366
+        "latency_s": 0.022679544985294342
       },
       {
         "source": "banking77",
@@ -396,9 +401,9 @@
         "pred_pos": 2,
         "pred_code": "C",
         "correct": false,
+        "gold_code": "y",
         "tie": false,
-        "latency_s": 0.022569993045181036,
-        "prompt_chars": 1385
+        "latency_s": 0.022750406060367823
       },
       {
         "source": "banking77",
@@ -407,9 +412,9 @@
         "pred_pos": 44,
         "pred_code": "s",
         "correct": false,
+        "gold_code": "p",
         "tie": false,
-        "latency_s": 0.022718194872140884,
-        "prompt_chars": 1441
+        "latency_s": 0.022825716994702816
       },
       {
         "source": "banking77",
@@ -418,9 +423,9 @@
         "pred_pos": 51,
         "pred_code": "z",
         "correct": false,
+        "gold_code": "w",
         "tie": false,
-        "latency_s": 0.45163211412727833,
-        "prompt_chars": 1534
+        "latency_s": 0.45048848586156964
       },
       {
         "source": "banking77",
@@ -429,9 +434,9 @@
         "pred_pos": 40,
         "pred_code": "o",
         "correct": false,
+        "gold_code": "m",
         "tie": false,
-        "latency_s": 0.022770886309444904,
-        "prompt_chars": 1398
+        "latency_s": 0.022850056644529104
       },
       {
         "source": "banking77",
@@ -440,9 +445,9 @@
         "pred_pos": 16,
         "pred_code": "Q",
         "correct": true,
+        "gold_code": "Q",
         "tie": false,
-        "latency_s": 0.022467931732535362,
-        "prompt_chars": 1387
+        "latency_s": 0.022661274764686823
       },
       {
         "source": "banking77",
@@ -451,9 +456,9 @@
         "pred_pos": 18,
         "pred_code": "S",
         "correct": false,
+        "gold_code": "k",
         "tie": true,
-        "latency_s": 0.022528151981532574,
-        "prompt_chars": 1423
+        "latency_s": 0.022794166579842567
       },
       {
         "source": "banking77",
@@ -462,9 +467,9 @@
         "pred_pos": 5,
         "pred_code": "F",
         "correct": true,
+        "gold_code": "F",
         "tie": false,
-        "latency_s": 0.022435219958424568,
-        "prompt_chars": 1398
+        "latency_s": 0.022750636097043753
       },
       {
         "source": "banking77",
@@ -473,9 +478,9 @@
         "pred_pos": 2,
         "pred_code": "C",
         "correct": true,
+        "gold_code": "C",
         "tie": false,
-        "latency_s": 0.022557073272764683,
-        "prompt_chars": 1362
+        "latency_s": 0.022938269190490246
       },
       {
         "source": "banking77",
@@ -484,9 +489,9 @@
         "pred_pos": 25,
         "pred_code": "Z",
         "correct": true,
+        "gold_code": "Z",
         "tie": false,
-        "latency_s": 0.022491721902042627,
-        "prompt_chars": 1399
+        "latency_s": 0.022689364850521088
       },
       {
         "source": "banking77",
@@ -495,9 +500,9 @@
         "pred_pos": 51,
         "pred_code": "z",
         "correct": false,
+        "gold_code": "v",
         "tie": false,
-        "latency_s": 0.022534952964633703,
-        "prompt_chars": 1493
+        "latency_s": 0.022825096733868122
       },
       {
         "source": "banking77",
@@ -506,9 +511,9 @@
         "pred_pos": 7,
         "pred_code": "H",
         "correct": false,
+        "gold_code": "c",
         "tie": false,
-        "latency_s": 0.44753146916627884,
-        "prompt_chars": 1362
+        "latency_s": 0.45295003429055214
       },
       {
         "source": "banking77",
@@ -517,9 +522,9 @@
         "pred_pos": 12,
         "pred_code": "M",
         "correct": true,
+        "gold_code": "M",
         "tie": false,
-        "latency_s": 0.4468820998445153,
-        "prompt_chars": 1541
+        "latency_s": 0.45145629113540053
       },
       {
         "source": "banking77",
@@ -528,9 +533,9 @@
         "pred_pos": 24,
         "pred_code": "Y",
         "correct": true,
+        "gold_code": "Y",
         "tie": false,
-        "latency_s": 0.022527942433953285,
-        "prompt_chars": 1387
+        "latency_s": 0.022911979351192713
       },
       {
         "source": "banking77",
@@ -539,9 +544,9 @@
         "pred_pos": 4,
         "pred_code": "E",
         "correct": true,
+        "gold_code": "E",
         "tie": false,
-        "latency_s": 0.022544462699443102,
-        "prompt_chars": 1432
+        "latency_s": 0.022625313606113195
       },
       {
         "source": "banking77",
@@ -550,9 +555,9 @@
         "pred_pos": 30,
         "pred_code": "e",
         "correct": false,
+        "gold_code": "d",
         "tie": false,
-        "latency_s": 0.4477280741557479,
-        "prompt_chars": 1339
+        "latency_s": 0.45074378000572324
       },
       {
         "source": "banking77",
@@ -561,9 +566,9 @@
         "pred_pos": 37,
         "pred_code": "l",
         "correct": false,
+        "gold_code": "A",
         "tie": false,
-        "latency_s": 0.02284102700650692,
-        "prompt_chars": 1358
+        "latency_s": 0.022835836745798588
       },
       {
         "source": "banking77",
@@ -572,9 +577,9 @@
         "pred_pos": 9,
         "pred_code": "J",
         "correct": false,
+        "gold_code": "c",
         "tie": false,
-        "latency_s": 0.022462211083620787,
-        "prompt_chars": 1390
+        "latency_s": 0.02269371598958969
       },
       {
         "source": "banking77",
@@ -583,9 +588,9 @@
         "pred_pos": 22,
         "pred_code": "W",
         "correct": true,
+        "gold_code": "W",
         "tie": false,
-        "latency_s": 0.02254460286349058,
-        "prompt_chars": 1414
+        "latency_s": 0.022784805856645107
       },
       {
         "source": "banking77",
@@ -594,9 +599,9 @@
         "pred_pos": 49,
         "pred_code": "x",
         "correct": false,
+        "gold_code": "v",
         "tie": false,
-        "latency_s": 0.0224818610586226,
-        "prompt_chars": 1385
+        "latency_s": 0.02272036485373974
       },
       {
         "source": "banking77",
@@ -605,9 +610,9 @@
         "pred_pos": 4,
         "pred_code": "E",
         "correct": false,
+        "gold_code": "m",
         "tie": false,
-        "latency_s": 0.022620193660259247,
-        "prompt_chars": 1400
+        "latency_s": 0.023783842101693153
       },
       {
         "source": "banking77",
@@ -616,9 +621,9 @@
         "pred_pos": 18,
         "pred_code": "S",
         "correct": true,
+        "gold_code": "S",
         "tie": false,
-        "latency_s": 0.02265119506046176,
-        "prompt_chars": 1373
+        "latency_s": 0.022975538857281208
       },
       {
         "source": "banking77",
@@ -627,9 +632,9 @@
         "pred_pos": 3,
         "pred_code": "D",
         "correct": false,
+        "gold_code": "j",
         "tie": false,
-        "latency_s": 0.022707275114953518,
-        "prompt_chars": 1431
+        "latency_s": 0.02283507725223899
       },
       {
         "source": "banking77",
@@ -638,9 +643,9 @@
         "pred_pos": 44,
         "pred_code": "s",
         "correct": false,
+        "gold_code": "q",
         "tie": false,
-        "latency_s": 0.02258173283189535,
-        "prompt_chars": 1586
+        "latency_s": 0.02270822459831834
       },
       {
         "source": "banking77",
@@ -649,9 +654,9 @@
         "pred_pos": 17,
         "pred_code": "R",
         "correct": true,
+        "gold_code": "R",
         "tie": false,
-        "latency_s": 0.022816547192633152,
-        "prompt_chars": 1447
+        "latency_s": 0.022878937888890505
       },
       {
         "source": "banking77",
@@ -660,9 +665,9 @@
         "pred_pos": 47,
         "pred_code": "v",
         "correct": false,
+        "gold_code": "i",
         "tie": false,
-        "latency_s": 0.02253443282097578,
-        "prompt_chars": 1376
+        "latency_s": 0.02271683467552066
       },
       {
         "source": "banking77",
@@ -671,9 +676,9 @@
         "pred_pos": 33,
         "pred_code": "h",
         "correct": true,
+        "gold_code": "h",
         "tie": false,
-        "latency_s": 0.022698144894093275,
-        "prompt_chars": 1418
+        "latency_s": 0.02274500485509634
       },
       {
         "source": "banking77",
@@ -682,9 +687,9 @@
         "pred_pos": 42,
         "pred_code": "q",
         "correct": false,
+        "gold_code": "o",
         "tie": false,
-        "latency_s": 0.44971484411507845,
-        "prompt_chars": 1472
+        "latency_s": 0.44964773301035166
       },
       {
         "source": "banking77",
@@ -693,9 +698,9 @@
         "pred_pos": 27,
         "pred_code": "b",
         "correct": false,
+        "gold_code": "F",
         "tie": false,
-        "latency_s": 0.022617742884904146,
-        "prompt_chars": 1332
+        "latency_s": 0.02291005803272128
       },
       {
         "source": "banking77",
@@ -704,9 +709,9 @@
         "pred_pos": 7,
         "pred_code": "H",
         "correct": false,
+        "gold_code": "a",
         "tie": false,
-        "latency_s": 0.022500982973724604,
-        "prompt_chars": 1451
+        "latency_s": 0.0228058067150414
       },
       {
         "source": "banking77",
@@ -715,9 +720,9 @@
         "pred_pos": 26,
         "pred_code": "a",
         "correct": false,
+        "gold_code": "K",
         "tie": false,
-        "latency_s": 0.4472329248674214,
-        "prompt_chars": 1507
+        "latency_s": 0.4561459249816835
       },
       {
         "source": "banking77",
@@ -726,9 +731,9 @@
         "pred_pos": 21,
         "pred_code": "V",
         "correct": false,
+        "gold_code": "t",
         "tie": false,
-        "latency_s": 0.4516034252010286,
-        "prompt_chars": 1421
+        "latency_s": 0.4531264780089259
       },
       {
         "source": "banking77",
@@ -737,9 +742,9 @@
         "pred_pos": 2,
         "pred_code": "C",
         "correct": true,
+        "gold_code": "C",
         "tie": false,
-        "latency_s": 0.02268277481198311,
-        "prompt_chars": 1441
+        "latency_s": 0.02316994173452258
       },
       {
         "source": "banking77",
@@ -748,9 +753,9 @@
         "pred_pos": 47,
         "pred_code": "v",
         "correct": false,
+        "gold_code": "t",
         "tie": false,
-        "latency_s": 0.022567473351955414,
-        "prompt_chars": 1366
+        "latency_s": 0.02278089616447687
       },
       {
         "source": "banking77",
@@ -759,9 +764,9 @@
         "pred_pos": 9,
         "pred_code": "J",
         "correct": true,
+        "gold_code": "J",
         "tie": false,
-        "latency_s": 0.02267040405422449,
-        "prompt_chars": 1387
+        "latency_s": 0.022717435844242573
       },
       {
         "source": "banking77",
@@ -770,9 +775,9 @@
         "pred_pos": 42,
         "pred_code": "q",
         "correct": false,
+        "gold_code": "p",
         "tie": false,
-        "latency_s": 0.4508455032482743,
-        "prompt_chars": 1504
+        "latency_s": 0.45149998227134347
       },
       {
         "source": "banking77",
@@ -781,9 +786,9 @@
         "pred_pos": 23,
         "pred_code": "X",
         "correct": true,
+        "gold_code": "X",
         "tie": false,
-        "latency_s": 0.4524207469075918,
-        "prompt_chars": 1361
+        "latency_s": 0.45015683118253946
       },
       {
         "source": "banking77",
@@ -792,9 +797,9 @@
         "pred_pos": 47,
         "pred_code": "v",
         "correct": false,
+        "gold_code": "x",
         "tie": false,
-        "latency_s": 0.022668663877993822,
-        "prompt_chars": 1394
+        "latency_s": 0.0228519169613719
       },
       {
         "source": "banking77",
@@ -803,9 +808,9 @@
         "pred_pos": 25,
         "pred_code": "Z",
         "correct": false,
+        "gold_code": "N",
         "tie": false,
-        "latency_s": 0.02247438207268715,
-        "prompt_chars": 1393
+        "latency_s": 0.023914013989269733
       },
       {
         "source": "banking77",
@@ -814,9 +819,9 @@
         "pred_pos": 33,
         "pred_code": "h",
         "correct": false,
+        "gold_code": "g",
         "tie": false,
-        "latency_s": 0.022553333081305027,
-        "prompt_chars": 1381
+        "latency_s": 0.02304662996903062
       },
       {
         "source": "banking77",
@@ -825,9 +830,9 @@
         "pred_pos": 19,
         "pred_code": "T",
         "correct": true,
+        "gold_code": "T",
         "tie": false,
-        "latency_s": 0.4399207611568272,
-        "prompt_chars": 1495
+        "latency_s": 0.44009740371257067
       },
       {
         "source": "banking77",
@@ -836,9 +841,9 @@
         "pred_pos": 36,
         "pred_code": "k",
         "correct": false,
+        "gold_code": "j",
         "tie": false,
-        "latency_s": 0.02260412322357297,
-        "prompt_chars": 1370
+        "latency_s": 0.02286363672465086
       },
       {
         "source": "banking77",
@@ -847,9 +852,9 @@
         "pred_pos": 16,
         "pred_code": "Q",
         "correct": true,
+        "gold_code": "Q",
         "tie": false,
-        "latency_s": 0.02244932111352682,
-        "prompt_chars": 1406
+        "latency_s": 0.022673724684864283
       },
       {
         "source": "banking77",
@@ -858,9 +863,9 @@
         "pred_pos": 22,
         "pred_code": "W",
         "correct": true,
+        "gold_code": "W",
         "tie": false,
-        "latency_s": 0.4496528240852058,
-        "prompt_chars": 1369
+        "latency_s": 0.4512092866934836
       },
       {
         "source": "banking77",
@@ -869,9 +874,9 @@
         "pred_pos": 2,
         "pred_code": "C",
         "correct": true,
+        "gold_code": "C",
         "tie": false,
-        "latency_s": 0.4502292121760547,
-        "prompt_chars": 1470
+        "latency_s": 0.45523808104917407
       },
       {
         "source": "banking77",
@@ -880,9 +885,9 @@
         "pred_pos": 32,
         "pred_code": "g",
         "correct": false,
+        "gold_code": "f",
         "tie": false,
-        "latency_s": 0.0225408929400146,
-        "prompt_chars": 1389
+        "latency_s": 0.022941308096051216
       },
       {
         "source": "banking77",
@@ -891,9 +896,9 @@
         "pred_pos": 23,
         "pred_code": "X",
         "correct": true,
+        "gold_code": "X",
         "tie": false,
-        "latency_s": 0.022464741952717304,
-        "prompt_chars": 1404
+        "latency_s": 0.022935128770768642
       },
       {
         "source": "banking77",
@@ -902,9 +907,9 @@
         "pred_pos": 9,
         "pred_code": "J",
         "correct": false,
+        "gold_code": "K",
         "tie": false,
-        "latency_s": 0.022455520927906036,
-        "prompt_chars": 1397
+        "latency_s": 0.022794235963374376
       },
       {
         "source": "banking77",
@@ -913,9 +918,9 @@
         "pred_pos": 39,
         "pred_code": "n",
         "correct": false,
+        "gold_code": "B",
         "tie": false,
-        "latency_s": 0.02267724508419633,
-        "prompt_chars": 1399
+        "latency_s": 0.022928919177502394
       },
       {
         "source": "banking77",
@@ -924,9 +929,9 @@
         "pred_pos": 4,
         "pred_code": "E",
         "correct": false,
+        "gold_code": "h",
         "tie": false,
-        "latency_s": 0.022508752066642046,
-        "prompt_chars": 1404
+        "latency_s": 0.022863327991217375
       },
       {
         "source": "banking77",
@@ -935,9 +940,9 @@
         "pred_pos": 14,
         "pred_code": "O",
         "correct": true,
+        "gold_code": "O",
         "tie": false,
-        "latency_s": 0.022589162923395634,
-        "prompt_chars": 1353
+        "latency_s": 0.022789465729147196
       },
       {
         "source": "banking77",
@@ -946,9 +951,9 @@
         "pred_pos": 34,
         "pred_code": "i",
         "correct": false,
+        "gold_code": "h",
         "tie": false,
-        "latency_s": 0.0225044721737504,
-        "prompt_chars": 1357
+        "latency_s": 0.022785827051848173
       },
       {
         "source": "banking77",
@@ -957,9 +962,9 @@
         "pred_pos": 11,
         "pred_code": "L",
         "correct": true,
+        "gold_code": "L",
         "tie": false,
-        "latency_s": 0.022476290818303823,
-        "prompt_chars": 1383
+        "latency_s": 0.02285708673298359
       },
       {
         "source": "banking77",
@@ -968,9 +973,9 @@
         "pred_pos": 0,
         "pred_code": "A",
         "correct": true,
+        "gold_code": "A",
         "tie": false,
-        "latency_s": 0.02255894336849451,
-        "prompt_chars": 1439
+        "latency_s": 0.022896658163517714
       },
       {
         "source": "banking77",
@@ -979,9 +984,9 @@
         "pred_pos": 7,
         "pred_code": "H",
         "correct": false,
+        "gold_code": "e",
         "tie": false,
-        "latency_s": 0.022602783981710672,
-        "prompt_chars": 1424
+        "latency_s": 0.022849686909466982
       },
       {
         "source": "banking77",
@@ -990,9 +995,9 @@
         "pred_pos": 1,
         "pred_code": "B",
         "correct": true,
+        "gold_code": "B",
         "tie": false,
-        "latency_s": 0.02251033205538988,
-        "prompt_chars": 1487
+        "latency_s": 0.02288235817104578
       },
       {
         "source": "banking77",
@@ -1001,9 +1006,9 @@
         "pred_pos": 35,
         "pred_code": "j",
         "correct": false,
+        "gold_code": "i",
         "tie": false,
-        "latency_s": 0.022527953144162893,
-        "prompt_chars": 1430
+        "latency_s": 0.022890937980264425
       },
       {
         "source": "banking77",
@@ -1012,9 +1017,9 @@
         "pred_pos": 21,
         "pred_code": "V",
         "correct": true,
+        "gold_code": "V",
         "tie": false,
-        "latency_s": 0.022529012989252806,
-        "prompt_chars": 1375
+        "latency_s": 0.02279388578608632
       },
       {
         "source": "banking77",
@@ -1023,9 +1028,9 @@
         "pred_pos": 30,
         "pred_code": "e",
         "correct": false,
+        "gold_code": "d",
         "tie": false,
-        "latency_s": 0.022910538129508495,
-        "prompt_chars": 1422
+        "latency_s": 0.024859979283064604
       },
       {
         "source": "banking77",
@@ -1034,9 +1039,9 @@
         "pred_pos": 46,
         "pred_code": "u",
         "correct": false,
+        "gold_code": "r",
         "tie": false,
-        "latency_s": 0.02251073159277439,
-        "prompt_chars": 1455
+        "latency_s": 0.023233923595398664
       },
       {
         "source": "banking77",
@@ -1045,9 +1050,9 @@
         "pred_pos": 26,
         "pred_code": "a",
         "correct": false,
+        "gold_code": "Z",
         "tie": false,
-        "latency_s": 0.022601434029638767,
-        "prompt_chars": 1411
+        "latency_s": 0.02284887805581093
       },
       {
         "source": "banking77",
@@ -1056,9 +1061,9 @@
         "pred_pos": 19,
         "pred_code": "T",
         "correct": true,
+        "gold_code": "T",
         "tie": false,
-        "latency_s": 0.022460130974650383,
-        "prompt_chars": 1391
+        "latency_s": 0.022842437028884888
       },
       {
         "source": "banking77",
@@ -1067,9 +1072,9 @@
         "pred_pos": 3,
         "pred_code": "D",
         "correct": true,
+        "gold_code": "D",
         "tie": false,
-        "latency_s": 0.022600493859499693,
-        "prompt_chars": 1401
+        "latency_s": 0.02287021791562438
       },
       {
         "source": "banking77",
@@ -1078,9 +1083,9 @@
         "pred_pos": 22,
         "pred_code": "W",
         "correct": false,
+        "gold_code": "K",
         "tie": false,
-        "latency_s": 0.02246355125680566,
-        "prompt_chars": 1396
+        "latency_s": 0.022781506180763245
       },
       {
         "source": "banking77",
@@ -1089,9 +1094,9 @@
         "pred_pos": 38,
         "pred_code": "m",
         "correct": false,
+        "gold_code": "M",
         "tie": false,
-        "latency_s": 0.022565863095223904,
-        "prompt_chars": 1370
+        "latency_s": 0.022992560174316168
       },
       {
         "source": "banking77",
@@ -1100,9 +1105,9 @@
         "pred_pos": 2,
         "pred_code": "C",
         "correct": false,
+        "gold_code": "h",
         "tie": false,
-        "latency_s": 0.02254776330664754,
-        "prompt_chars": 1368
+        "latency_s": 0.02282440708950162
       },
       {
         "source": "banking77",
@@ -1111,9 +1116,9 @@
         "pred_pos": 43,
         "pred_code": "r",
         "correct": false,
+        "gold_code": "D",
         "tie": false,
-        "latency_s": 0.022576482966542244,
-        "prompt_chars": 1400
+        "latency_s": 0.022814496885985136
       },
       {
         "source": "banking77",
@@ -1122,9 +1127,9 @@
         "pred_pos": 12,
         "pred_code": "M",
         "correct": true,
+        "gold_code": "M",
         "tie": false,
-        "latency_s": 0.022645925171673298,
-        "prompt_chars": 1397
+        "latency_s": 0.022839686833322048
       },
       {
         "source": "banking77",
@@ -1133,9 +1138,9 @@
         "pred_pos": 4,
         "pred_code": "E",
         "correct": false,
+        "gold_code": "q",
         "tie": false,
-        "latency_s": 0.022716784849762917,
-        "prompt_chars": 1443
+        "latency_s": 0.022922519128769636
       },
       {
         "source": "banking77",
@@ -1144,9 +1149,9 @@
         "pred_pos": 2,
         "pred_code": "C",
         "correct": false,
+        "gold_code": "k",
         "tie": false,
-        "latency_s": 0.022515572141855955,
-        "prompt_chars": 1397
+        "latency_s": 0.022694694809615612
       },
       {
         "source": "banking77",
@@ -1155,9 +1160,9 @@
         "pred_pos": 21,
         "pred_code": "V",
         "correct": false,
+        "gold_code": "q",
         "tie": false,
-        "latency_s": 0.022611613385379314,
-        "prompt_chars": 1401
+        "latency_s": 0.02287736814469099
       },
       {
         "source": "banking77",
@@ -1166,9 +1171,9 @@
         "pred_pos": 2,
         "pred_code": "C",
         "correct": false,
+        "gold_code": "b",
         "tie": false,
-        "latency_s": 0.02258997317403555,
-        "prompt_chars": 1457
+        "latency_s": 0.022806207183748484
       },
       {
         "source": "banking77",
@@ -1177,9 +1182,9 @@
         "pred_pos": 50,
         "pred_code": "y",
         "correct": false,
+        "gold_code": "v",
         "tie": false,
-        "latency_s": 0.02259418275207281,
-        "prompt_chars": 1331
+        "latency_s": 0.0228545181453228
       },
       {
         "source": "banking77",
@@ -1188,9 +1193,9 @@
         "pred_pos": 3,
         "pred_code": "D",
         "correct": true,
+        "gold_code": "D",
         "tie": false,
-        "latency_s": 0.022697234991937876,
-        "prompt_chars": 1418
+        "latency_s": 0.022857036907225847
       },
       {
         "source": "banking77",
@@ -1199,9 +1204,9 @@
         "pred_pos": 6,
         "pred_code": "G",
         "correct": true,
+        "gold_code": "G",
         "tie": false,
-        "latency_s": 0.44761143159121275,
-        "prompt_chars": 1523
+        "latency_s": 0.44968866324052215
       },
       {
         "source": "banking77",
@@ -1210,9 +1215,9 @@
         "pred_pos": 19,
         "pred_code": "T",
         "correct": false,
+        "gold_code": "m",
         "tie": false,
-        "latency_s": 0.022549693007022142,
-        "prompt_chars": 1388
+        "latency_s": 0.022875217720866203
       },
       {
         "source": "banking77",
@@ -1221,9 +1226,9 @@
         "pred_pos": 18,
         "pred_code": "S",
         "correct": true,
+        "gold_code": "S",
         "tie": false,
-        "latency_s": 0.4477330632507801,
-        "prompt_chars": 1319
+        "latency_s": 0.4511273573152721
       },
       {
         "source": "banking77",
@@ -1232,9 +1237,9 @@
         "pred_pos": 39,
         "pred_code": "n",
         "correct": false,
+        "gold_code": "l",
         "tie": false,
-        "latency_s": 0.022873397916555405,
-        "prompt_chars": 1466
+        "latency_s": 0.023040430154651403
       },
       {
         "source": "banking77",
@@ -1243,9 +1248,9 @@
         "pred_pos": 31,
         "pred_code": "f",
         "correct": false,
+        "gold_code": "h",
         "tie": false,
-        "latency_s": 0.02249449212104082,
-        "prompt_chars": 1410
+        "latency_s": 0.02262922376394272
       },
       {
         "source": "banking77",
@@ -1254,9 +1259,9 @@
         "pred_pos": 11,
         "pred_code": "L",
         "correct": true,
+        "gold_code": "L",
         "tie": false,
-        "latency_s": 0.022471181116998196,
-        "prompt_chars": 1392
+        "latency_s": 0.022804916836321354
       },
       {
         "source": "banking77",
@@ -1265,9 +1270,9 @@
         "pred_pos": 44,
         "pred_code": "s",
         "correct": false,
+        "gold_code": "f",
         "tie": false,
-        "latency_s": 0.02250716183334589,
-        "prompt_chars": 1376
+        "latency_s": 0.02272723475471139
       },
       {
         "source": "banking77",
@@ -1276,9 +1281,9 @@
         "pred_pos": 14,
         "pred_code": "O",
         "correct": true,
+        "gold_code": "O",
         "tie": false,
-        "latency_s": 0.022590714041143656,
-        "prompt_chars": 1411
+        "latency_s": 0.022741255816072226
       },
       {
         "source": "banking77",
@@ -1287,9 +1292,9 @@
         "pred_pos": 3,
         "pred_code": "D",
         "correct": false,
+        "gold_code": "c",
         "tie": false,
-        "latency_s": 0.0225450131110847,
-        "prompt_chars": 1409
+        "latency_s": 0.02282976685091853
       },
       {
         "source": "banking77",
@@ -1298,9 +1303,9 @@
         "pred_pos": 4,
         "pred_code": "E",
         "correct": true,
+        "gold_code": "E",
         "tie": false,
-        "latency_s": 0.022644783835858107,
-        "prompt_chars": 1427
+        "latency_s": 0.02271999465301633
       },
       {
         "source": "banking77",
@@ -1309,9 +1314,9 @@
         "pred_pos": 49,
         "pred_code": "x",
         "correct": false,
+        "gold_code": "v",
         "tie": false,
-        "latency_s": 0.022534851916134357,
-        "prompt_chars": 1408
+        "latency_s": 0.02273323480039835
       },
       {
         "source": "banking77",
@@ -1320,9 +1325,9 @@
         "pred_pos": 38,
         "pred_code": "m",
         "correct": false,
+        "gold_code": "k",
         "tie": false,
-        "latency_s": 0.022499632090330124,
-        "prompt_chars": 1369
+        "latency_s": 0.02274898625910282
       },
       {
         "source": "banking77",
@@ -1331,9 +1336,9 @@
         "pred_pos": 15,
         "pred_code": "P",
         "correct": true,
+        "gold_code": "P",
         "tie": false,
-        "latency_s": 0.022692525293678045,
-        "prompt_chars": 1425
+        "latency_s": 0.02278680680319667
       },
       {
         "source": "banking77",
@@ -1342,9 +1347,9 @@
         "pred_pos": 0,
         "pred_code": "A",
         "correct": false,
+        "gold_code": "h",
         "tie": false,
-        "latency_s": 0.022544552106410265,
-        "prompt_chars": 1420
+        "latency_s": 0.02269022399559617
       },
       {
         "source": "banking77",
@@ -1353,9 +1358,9 @@
         "pred_pos": 42,
         "pred_code": "q",
         "correct": false,
+        "gold_code": "n",
         "tie": false,
-        "latency_s": 0.44597533578053117,
-        "prompt_chars": 1546
+        "latency_s": 0.44649819377809763
       },
       {
         "source": "banking77",
@@ -1364,9 +1369,9 @@
         "pred_pos": 29,
         "pred_code": "d",
         "correct": false,
+        "gold_code": "c",
         "tie": false,
-        "latency_s": 0.022636984009295702,
-        "prompt_chars": 1391
+        "latency_s": 0.022788566071540117
       },
       {
         "source": "banking77",
@@ -1375,9 +1380,9 @@
         "pred_pos": 22,
         "pred_code": "W",
         "correct": true,
+        "gold_code": "W",
         "tie": false,
-        "latency_s": 0.02260750299319625,
-        "prompt_chars": 1421
+        "latency_s": 0.022744975052773952
       },
       {
         "source": "banking77",
@@ -1386,9 +1391,9 @@
         "pred_pos": 11,
         "pred_code": "L",
         "correct": true,
+        "gold_code": "L",
         "tie": false,
-        "latency_s": 0.02268622489646077,
-        "prompt_chars": 1423
+        "latency_s": 0.022615873720496893
       },
       {
         "source": "banking77",
@@ -1397,9 +1402,9 @@
         "pred_pos": 8,
         "pred_code": "I",
         "correct": true,
+        "gold_code": "I",
         "tie": false,
-        "latency_s": 0.022623544093221426,
-        "prompt_chars": 1359
+        "latency_s": 0.022727135568857193
       },
       {
         "source": "banking77",
@@ -1408,9 +1413,9 @@
         "pred_pos": 4,
         "pred_code": "E",
         "correct": false,
+        "gold_code": "X",
         "tie": false,
-        "latency_s": 0.4476223918609321,
-        "prompt_chars": 1520
+        "latency_s": 0.45015027094632387
       },
       {
         "source": "banking77",
@@ -1419,9 +1424,9 @@
         "pred_pos": 17,
         "pred_code": "R",
         "correct": true,
+        "gold_code": "R",
         "tie": false,
-        "latency_s": 0.022672874853014946,
-        "prompt_chars": 1393
+        "latency_s": 0.022816337179392576
       },
       {
         "source": "banking77",
@@ -1430,9 +1435,9 @@
         "pred_pos": 8,
         "pred_code": "I",
         "correct": false,
+        "gold_code": "m",
         "tie": true,
-        "latency_s": 0.02262368379160762,
-        "prompt_chars": 1362
+        "latency_s": 0.022696875035762787
       },
       {
         "source": "banking77",
@@ -1441,9 +1446,9 @@
         "pred_pos": 21,
         "pred_code": "V",
         "correct": false,
+        "gold_code": "X",
         "tie": false,
-        "latency_s": 0.022635813802480698,
-        "prompt_chars": 1477
+        "latency_s": 0.02280353708192706
       },
       {
         "source": "banking77",
@@ -1452,9 +1457,9 @@
         "pred_pos": 8,
         "pred_code": "I",
         "correct": true,
+        "gold_code": "I",
         "tie": false,
-        "latency_s": 0.022573753260076046,
-        "prompt_chars": 1476
+        "latency_s": 0.02490811888128519
       },
       {
         "source": "banking77",
@@ -1463,9 +1468,9 @@
         "pred_pos": 19,
         "pred_code": "T",
         "correct": false,
+        "gold_code": "i",
         "tie": false,
-        "latency_s": 0.02251673210412264,
-        "prompt_chars": 1363
+        "latency_s": 0.022872947622090578
       },
       {
         "source": "banking77",
@@ -1474,9 +1479,9 @@
         "pred_pos": 41,
         "pred_code": "p",
         "correct": false,
+        "gold_code": "e",
         "tie": false,
-        "latency_s": 0.022537803277373314,
-        "prompt_chars": 1420
+        "latency_s": 0.022917648311704397
       },
       {
         "source": "banking77",
@@ -1485,9 +1490,9 @@
         "pred_pos": 33,
         "pred_code": "h",
         "correct": false,
+        "gold_code": "s",
         "tie": false,
-        "latency_s": 0.022637643851339817,
-        "prompt_chars": 1410
+        "latency_s": 0.022927477955818176
       },
       {
         "source": "banking77",
@@ -1496,9 +1501,9 @@
         "pred_pos": 41,
         "pred_code": "p",
         "correct": false,
+        "gold_code": "x",
         "tie": false,
-        "latency_s": 0.022614633198827505,
-        "prompt_chars": 1474
+        "latency_s": 0.022894967813044786
       },
       {
         "source": "banking77",
@@ -1507,9 +1512,9 @@
         "pred_pos": 31,
         "pred_code": "f",
         "correct": false,
+        "gold_code": "E",
         "tie": false,
-        "latency_s": 0.02258195262402296,
-        "prompt_chars": 1433
+        "latency_s": 0.023023210000246763
       },
       {
         "source": "banking77",
@@ -1518,9 +1523,9 @@
         "pred_pos": 18,
         "pred_code": "S",
         "correct": false,
+        "gold_code": "f",
         "tie": false,
-        "latency_s": 0.02273852564394474,
-        "prompt_chars": 1386
+        "latency_s": 0.02291361801326275
       },
       {
         "source": "banking77",
@@ -1529,9 +1534,9 @@
         "pred_pos": 31,
         "pred_code": "f",
         "correct": false,
+        "gold_code": "e",
         "tie": false,
-        "latency_s": 0.022549111861735582,
-        "prompt_chars": 1368
+        "latency_s": 0.022859448101371527
       },
       {
         "source": "banking77",
@@ -1540,9 +1545,9 @@
         "pred_pos": 3,
         "pred_code": "D",
         "correct": true,
+        "gold_code": "D",
         "tie": false,
-        "latency_s": 0.02252268185839057,
-        "prompt_chars": 1360
+        "latency_s": 0.02299559023231268
       },
       {
         "source": "banking77",
@@ -1551,9 +1556,9 @@
         "pred_pos": 8,
         "pred_code": "I",
         "correct": true,
+        "gold_code": "I",
         "tie": false,
-        "latency_s": 0.022763766814023256,
-        "prompt_chars": 1400
+        "latency_s": 0.02288538683205843
       },
       {
         "source": "banking77",
@@ -1562,9 +1567,9 @@
         "pred_pos": 4,
         "pred_code": "E",
         "correct": false,
+        "gold_code": "q",
         "tie": false,
-        "latency_s": 0.022656565066426992,
-        "prompt_chars": 1385
+        "latency_s": 0.022778716403990984
       },
       {
         "source": "banking77",
@@ -1573,9 +1578,9 @@
         "pred_pos": 0,
         "pred_code": "A",
         "correct": false,
+        "gold_code": "Z",
         "tie": false,
-        "latency_s": 0.022542973048985004,
-        "prompt_chars": 1399
+        "latency_s": 0.02276074467226863
       },
       {
         "source": "banking77",
@@ -1584,9 +1589,9 @@
         "pred_pos": 51,
         "pred_code": "z",
         "correct": false,
+        "gold_code": "v",
         "tie": false,
-        "latency_s": 0.4472733070142567,
-        "prompt_chars": 1453
+        "latency_s": 0.45468220207840204
       },
       {
         "source": "banking77",
@@ -1595,9 +1600,9 @@
         "pred_pos": 25,
         "pred_code": "Z",
         "correct": true,
+        "gold_code": "Z",
         "tie": false,
-        "latency_s": 0.02271865587681532,
-        "prompt_chars": 1353
+        "latency_s": 0.023259093053638935
       },
       {
         "source": "banking77",
@@ -1606,9 +1611,9 @@
         "pred_pos": 25,
         "pred_code": "Z",
         "correct": false,
+        "gold_code": "c",
         "tie": false,
-        "latency_s": 0.022477281279861927,
-        "prompt_chars": 1396
+        "latency_s": 0.022817377001047134
       },
       {
         "source": "banking77",
@@ -1617,9 +1622,9 @@
         "pred_pos": 2,
         "pred_code": "C",
         "correct": true,
+        "gold_code": "C",
         "tie": false,
-        "latency_s": 0.0227032951079309,
-        "prompt_chars": 1414
+        "latency_s": 0.022779286839067936
       },
       {
         "source": "banking77",
@@ -1628,9 +1633,9 @@
         "pred_pos": 19,
         "pred_code": "T",
         "correct": true,
+        "gold_code": "T",
         "tie": false,
-        "latency_s": 0.45440223813056946,
-        "prompt_chars": 1449
+        "latency_s": 0.4509574230760336
       },
       {
         "source": "banking77",
@@ -1639,9 +1644,9 @@
         "pred_pos": 23,
         "pred_code": "X",
         "correct": true,
+        "gold_code": "X",
         "tie": false,
-        "latency_s": 0.022757865954190493,
-        "prompt_chars": 1365
+        "latency_s": 0.02279733680188656
       },
       {
         "source": "banking77",
@@ -1650,9 +1655,9 @@
         "pred_pos": 28,
         "pred_code": "c",
         "correct": false,
+        "gold_code": "h",
         "tie": false,
-        "latency_s": 0.022750605829060078,
-        "prompt_chars": 1407
+        "latency_s": 0.02278472576290369
       },
       {
         "source": "banking77",
@@ -1661,9 +1666,9 @@
         "pred_pos": 1,
         "pred_code": "B",
         "correct": true,
+        "gold_code": "B",
         "tie": false,
-        "latency_s": 0.02249183226376772,
-        "prompt_chars": 1385
+        "latency_s": 0.022894928231835365
       },
       {
         "source": "banking77",
@@ -1672,9 +1677,9 @@
         "pred_pos": 11,
         "pred_code": "L",
         "correct": false,
+        "gold_code": "j",
         "tie": false,
-        "latency_s": 0.022507281973958015,
-        "prompt_chars": 1372
+        "latency_s": 0.022771256044507027
       },
       {
         "source": "banking77",
@@ -1683,9 +1688,9 @@
         "pred_pos": 41,
         "pred_code": "p",
         "correct": false,
+        "gold_code": "o",
         "tie": false,
-        "latency_s": 0.022481052204966545,
-        "prompt_chars": 1465
+        "latency_s": 0.02278855722397566
       },
       {
         "source": "banking77",
@@ -1694,9 +1699,9 @@
         "pred_pos": 39,
         "pred_code": "n",
         "correct": false,
+        "gold_code": "c",
         "tie": false,
-        "latency_s": 0.02258191304281354,
-        "prompt_chars": 1390
+        "latency_s": 0.02312598191201687
       },
       {
         "source": "banking77",
@@ -1705,9 +1710,9 @@
         "pred_pos": 34,
         "pred_code": "i",
         "correct": false,
+        "gold_code": "l",
         "tie": false,
-        "latency_s": 0.022559772711247206,
-        "prompt_chars": 1432
+        "latency_s": 0.022912397980690002
       },
       {
         "source": "banking77",
@@ -1716,9 +1721,9 @@
         "pred_pos": 7,
         "pred_code": "H",
         "correct": true,
+        "gold_code": "H",
         "tie": false,
-        "latency_s": 0.022573223803192377,
-        "prompt_chars": 1373
+        "latency_s": 0.022822396829724312
       },
       {
         "source": "banking77",
@@ -1727,9 +1732,9 @@
         "pred_pos": 30,
         "pred_code": "e",
         "correct": false,
+        "gold_code": "d",
         "tie": false,
-        "latency_s": 0.02256171265617013,
-        "prompt_chars": 1422
+        "latency_s": 0.022727755829691887
       },
       {
         "source": "banking77",
@@ -1738,9 +1743,9 @@
         "pred_pos": 18,
         "pred_code": "S",
         "correct": true,
+        "gold_code": "S",
         "tie": false,
-        "latency_s": 0.022673724219202995,
-        "prompt_chars": 1379
+        "latency_s": 0.02285688789561391
       },
       {
         "source": "banking77",
@@ -1749,9 +1754,9 @@
         "pred_pos": 20,
         "pred_code": "U",
         "correct": false,
+        "gold_code": "z",
         "tie": false,
-        "latency_s": 0.02265404397621751,
-        "prompt_chars": 1345
+        "latency_s": 0.022773806005716324
       },
       {
         "source": "banking77",
@@ -1760,9 +1765,9 @@
         "pred_pos": 9,
         "pred_code": "J",
         "correct": false,
+        "gold_code": "S",
         "tie": false,
-        "latency_s": 0.02257276326417923,
-        "prompt_chars": 1399
+        "latency_s": 0.022768035996705294
       },
       {
         "source": "banking77",
@@ -1771,9 +1776,9 @@
         "pred_pos": 5,
         "pred_code": "F",
         "correct": true,
+        "gold_code": "F",
         "tie": false,
-        "latency_s": 0.022661283612251282,
-        "prompt_chars": 1437
+        "latency_s": 0.022881367709487677
       },
       {
         "source": "banking77",
@@ -1782,9 +1787,9 @@
         "pred_pos": 22,
         "pred_code": "W",
         "correct": false,
+        "gold_code": "u",
         "tie": false,
-        "latency_s": 0.022627572994679213,
-        "prompt_chars": 1408
+        "latency_s": 0.0228674178943038
       },
       {
         "source": "banking77",
@@ -1793,9 +1798,9 @@
         "pred_pos": 7,
         "pred_code": "H",
         "correct": false,
+        "gold_code": "k",
         "tie": false,
-        "latency_s": 0.4486065376549959,
-        "prompt_chars": 1480
+        "latency_s": 0.45021315198391676
       },
       {
         "source": "banking77",
@@ -1804,9 +1809,9 @@
         "pred_pos": 25,
         "pred_code": "Z",
         "correct": false,
+        "gold_code": "T",
         "tie": false,
-        "latency_s": 0.022682904731482267,
-        "prompt_chars": 1409
+        "latency_s": 0.022823636885732412
       },
       {
         "source": "banking77",
@@ -1815,9 +1820,9 @@
         "pred_pos": 42,
         "pred_code": "q",
         "correct": false,
+        "gold_code": "p",
         "tie": false,
-        "latency_s": 0.022557093296200037,
-        "prompt_chars": 1354
+        "latency_s": 0.022777405567467213
       },
       {
         "source": "banking77",
@@ -1826,9 +1831,9 @@
         "pred_pos": 3,
         "pred_code": "D",
         "correct": false,
+        "gold_code": "c",
         "tie": false,
-        "latency_s": 0.022535603027790785,
-        "prompt_chars": 1420
+        "latency_s": 0.02279347600415349
       },
       {
         "source": "banking77",
@@ -1837,9 +1842,9 @@
         "pred_pos": 7,
         "pred_code": "H",
         "correct": true,
+        "gold_code": "H",
         "tie": false,
-        "latency_s": 0.02230226807296276,
-        "prompt_chars": 1410
+        "latency_s": 0.022729586344212294
       },
       {
         "source": "banking77",
@@ -1848,9 +1853,9 @@
         "pred_pos": 22,
         "pred_code": "W",
         "correct": true,
+        "gold_code": "W",
         "tie": false,
-        "latency_s": 0.024764017201960087,
-        "prompt_chars": 1369
+        "latency_s": 0.022677035070955753
       },
       {
         "source": "banking77",
@@ -1859,9 +1864,9 @@
         "pred_pos": 22,
         "pred_code": "W",
         "correct": false,
+        "gold_code": "s",
         "tie": false,
-        "latency_s": 0.44797488721087575,
-        "prompt_chars": 1513
+        "latency_s": 0.45049260603263974
       },
       {
         "source": "banking77",
@@ -1870,9 +1875,9 @@
         "pred_pos": 23,
         "pred_code": "X",
         "correct": false,
+        "gold_code": "v",
         "tie": false,
-        "latency_s": 0.022595032583922148,
-        "prompt_chars": 1425
+        "latency_s": 0.022924648132175207
       },
       {
         "source": "banking77",
@@ -1881,9 +1886,9 @@
         "pred_pos": 41,
         "pred_code": "p",
         "correct": false,
+        "gold_code": "i",
         "tie": false,
-        "latency_s": 0.0225105918943882,
-        "prompt_chars": 1408
+        "latency_s": 0.022657454013824463
       },
       {
         "source": "banking77",
@@ -1892,9 +1897,9 @@
         "pred_pos": 13,
         "pred_code": "N",
         "correct": true,
+        "gold_code": "N",
         "tie": false,
-        "latency_s": 0.0226705651730299,
-        "prompt_chars": 1417
+        "latency_s": 0.022771426010876894
       },
       {
         "source": "banking77",
@@ -1903,9 +1908,9 @@
         "pred_pos": 14,
         "pred_code": "O",
         "correct": true,
+        "gold_code": "O",
         "tie": false,
-        "latency_s": 0.022611933760344982,
-        "prompt_chars": 1401
+        "latency_s": 0.022721475921571255
       },
       {
         "source": "banking77",
@@ -1914,9 +1919,9 @@
         "pred_pos": 12,
         "pred_code": "M",
         "correct": true,
+        "gold_code": "M",
         "tie": false,
-        "latency_s": 0.022580432705581188,
-        "prompt_chars": 1400
+        "latency_s": 0.02272155601531267
       },
       {
         "source": "banking77",
@@ -1925,9 +1930,9 @@
         "pred_pos": 36,
         "pred_code": "k",
         "correct": false,
+        "gold_code": "i",
         "tie": false,
-        "latency_s": 0.022782467305660248,
-        "prompt_chars": 1445
+        "latency_s": 0.022800386883318424
       },
       {
         "source": "banking77",
@@ -1936,9 +1941,9 @@
         "pred_pos": 9,
         "pred_code": "J",
         "correct": true,
+        "gold_code": "J",
         "tie": false,
-        "latency_s": 0.02271380601450801,
-        "prompt_chars": 1443
+        "latency_s": 0.022903549019247293
       },
       {
         "source": "banking77",
@@ -1947,9 +1952,9 @@
         "pred_pos": 25,
         "pred_code": "Z",
         "correct": false,
+        "gold_code": "y",
         "tie": false,
-        "latency_s": 0.022755226120352745,
-        "prompt_chars": 1404
+        "latency_s": 0.02280265698209405
       },
       {
         "source": "banking77",
@@ -1958,9 +1963,9 @@
         "pred_pos": 10,
         "pred_code": "K",
         "correct": true,
+        "gold_code": "K",
         "tie": false,
-        "latency_s": 0.022617803886532784,
-        "prompt_chars": 1448
+        "latency_s": 0.022799146827310324
       },
       {
         "source": "banking77",
@@ -1969,9 +1974,9 @@
         "pred_pos": 21,
         "pred_code": "V",
         "correct": false,
+        "gold_code": "I",
         "tie": false,
-        "latency_s": 0.0225301431491971,
-        "prompt_chars": 1418
+        "latency_s": 0.022721595130860806
       },
       {
         "source": "banking77",
@@ -1980,9 +1985,9 @@
         "pred_pos": 23,
         "pred_code": "X",
         "correct": false,
+        "gold_code": "K",
         "tie": false,
-        "latency_s": 0.022531942930072546,
-        "prompt_chars": 1401
+        "latency_s": 0.02285942668095231
       },
       {
         "source": "banking77",
@@ -1991,9 +1996,9 @@
         "pred_pos": 25,
         "pred_code": "Z",
         "correct": false,
+        "gold_code": "K",
         "tie": false,
-        "latency_s": 0.450026439037174,
-        "prompt_chars": 1490
+        "latency_s": 0.449244546238333
       },
       {
         "source": "banking77",
@@ -2002,9 +2007,9 @@
         "pred_pos": 6,
         "pred_code": "G",
         "correct": true,
+        "gold_code": "G",
         "tie": false,
-        "latency_s": 0.02311468217521906,
-        "prompt_chars": 1490
+        "latency_s": 0.02296501910313964
       },
       {
         "source": "banking77",
@@ -2013,9 +2018,9 @@
         "pred_pos": 13,
         "pred_code": "N",
         "correct": false,
+        "gold_code": "J",
         "tie": false,
-        "latency_s": 0.022486922331154346,
-        "prompt_chars": 1460
+        "latency_s": 0.02263723500072956
       },
       {
         "source": "banking77",
@@ -2024,9 +2029,9 @@
         "pred_pos": 13,
         "pred_code": "N",
         "correct": true,
+        "gold_code": "N",
         "tie": false,
-        "latency_s": 0.02245302079245448,
-        "prompt_chars": 1477
+        "latency_s": 0.022713614627718925
       },
       {
         "source": "banking77",
@@ -2035,9 +2040,9 @@
         "pred_pos": 6,
         "pred_code": "G",
         "correct": false,
+        "gold_code": "e",
         "tie": false,
-        "latency_s": 0.0225580339320004,
-        "prompt_chars": 1433
+        "latency_s": 0.022724154870957136
       },
       {
         "source": "banking77",
@@ -2046,9 +2051,9 @@
         "pred_pos": 4,
         "pred_code": "E",
         "correct": true,
+        "gold_code": "E",
         "tie": false,
-        "latency_s": 0.02253343304619193,
-        "prompt_chars": 1452
+        "latency_s": 0.02267005480825901
       },
       {
         "source": "banking77",
@@ -2057,9 +2062,9 @@
         "pred_pos": 49,
         "pred_code": "x",
         "correct": false,
+        "gold_code": "S",
         "tie": false,
-        "latency_s": 0.4489176319912076,
-        "prompt_chars": 1377
+        "latency_s": 0.4522590930573642
       },
       {
         "source": "banking77",
@@ -2068,9 +2073,9 @@
         "pred_pos": 25,
         "pred_code": "Z",
         "correct": false,
+        "gold_code": "p",
         "tie": false,
-        "latency_s": 0.022675564978271723,
-        "prompt_chars": 1470
+        "latency_s": 0.022941709961742163
       },
       {
         "source": "banking77",
@@ -2079,9 +2084,9 @@
         "pred_pos": 10,
         "pred_code": "K",
         "correct": true,
+        "gold_code": "K",
         "tie": false,
-        "latency_s": 0.022563313134014606,
-        "prompt_chars": 1434
+        "latency_s": 0.02289886912330985
       },
       {
         "source": "banking77",
@@ -2090,9 +2095,9 @@
         "pred_pos": 11,
         "pred_code": "L",
         "correct": true,
+        "gold_code": "L",
         "tie": false,
-        "latency_s": 0.022532852832227945,
-        "prompt_chars": 1434
+        "latency_s": 0.02280980721116066
       },
       {
         "source": "banking77",
@@ -2101,9 +2106,9 @@
         "pred_pos": 42,
         "pred_code": "q",
         "correct": false,
+        "gold_code": "n",
         "tie": false,
-        "latency_s": 0.02250009309500456,
-        "prompt_chars": 1336
+        "latency_s": 0.022685685195028782
       },
       {
         "source": "banking77",
@@ -2112,9 +2117,9 @@
         "pred_pos": 41,
         "pred_code": "p",
         "correct": false,
+        "gold_code": "n",
         "tie": false,
-        "latency_s": 0.4467910989187658,
-        "prompt_chars": 1337
+        "latency_s": 0.4522410831414163
       },
       {
         "source": "banking77",
@@ -2123,9 +2128,9 @@
         "pred_pos": 23,
         "pred_code": "X",
         "correct": false,
+        "gold_code": "L",
         "tie": false,
-        "latency_s": 0.022604044061154127,
-        "prompt_chars": 1442
+        "latency_s": 0.022788546979427338
       },
       {
         "source": "banking77",
@@ -2134,9 +2139,9 @@
         "pred_pos": 22,
         "pred_code": "W",
         "correct": true,
+        "gold_code": "W",
         "tie": false,
-        "latency_s": 0.022521842271089554,
-        "prompt_chars": 1415
+        "latency_s": 0.022763546090573072
       },
       {
         "source": "banking77",
@@ -2145,9 +2150,9 @@
         "pred_pos": 14,
         "pred_code": "O",
         "correct": false,
+        "gold_code": "P",
         "tie": false,
-        "latency_s": 0.022592504043132067,
-        "prompt_chars": 1475
+        "latency_s": 0.02270619524642825
       },
       {
         "source": "banking77",
@@ -2156,9 +2161,9 @@
         "pred_pos": 8,
         "pred_code": "I",
         "correct": false,
+        "gold_code": "J",
         "tie": false,
-        "latency_s": 0.022672154940664768,
-        "prompt_chars": 1468
+        "latency_s": 0.022729575634002686
       },
       {
         "source": "banking77",
@@ -2167,9 +2172,9 @@
         "pred_pos": 3,
         "pred_code": "D",
         "correct": false,
+        "gold_code": "h",
         "tie": false,
-        "latency_s": 0.022630445193499327,
-        "prompt_chars": 1418
+        "latency_s": 0.022773686330765486
       },
       {
         "source": "banking77",
@@ -2178,9 +2183,9 @@
         "pred_pos": 6,
         "pred_code": "G",
         "correct": true,
+        "gold_code": "G",
         "tie": false,
-        "latency_s": 0.022766985930502415,
-        "prompt_chars": 1413
+        "latency_s": 0.02273515611886978
       },
       {
         "source": "banking77",
@@ -2189,9 +2194,9 @@
         "pred_pos": 14,
         "pred_code": "O",
         "correct": false,
+        "gold_code": "T",
         "tie": false,
-        "latency_s": 0.022769286762923002,
-        "prompt_chars": 1390
+        "latency_s": 0.02289585815742612
       },
       {
         "source": "banking77",
@@ -2200,9 +2205,9 @@
         "pred_pos": 26,
         "pred_code": "a",
         "correct": false,
+        "gold_code": "q",
         "tie": false,
-        "latency_s": 0.022655655164271593,
-        "prompt_chars": 1398
+        "latency_s": 0.02285736706107855
       },
       {
         "source": "banking77",
@@ -2211,9 +2216,9 @@
         "pred_pos": 7,
         "pred_code": "H",
         "correct": false,
+        "gold_code": "C",
         "tie": false,
-        "latency_s": 0.02261884417384863,
-        "prompt_chars": 1467
+        "latency_s": 0.0228592068888247
       },
       {
         "source": "banking77",
@@ -2222,20 +2227,25 @@
         "pred_pos": 51,
         "pred_code": "z",
         "correct": false,
+        "gold_code": "x",
         "tie": false,
-        "latency_s": 0.022723596077412367,
-        "prompt_chars": 1473
+        "latency_s": 0.022786506917327642
       }
     ]
   },
   "dev24": {
     "summary": {
+      "k": 52,
       "items": 24,
       "correct": 8,
       "accuracy": 0.3333333333333333,
       "chance": 0.019230769230769232,
-      "mean_latency_s": 0.09359326520158599,
+      "mean_latency_s": 0.09420227936546628,
       "ties": 0
+    },
+    "letter_gold": {
+      "items": 24,
+      "correct": 8
     },
     "rows": [
       {
@@ -2245,9 +2255,9 @@
         "pred_pos": 17,
         "pred_code": "R",
         "correct": true,
+        "gold_code": "R",
         "tie": false,
-        "latency_s": 0.022711604833602905,
-        "prompt_chars": 1364
+        "latency_s": 0.024261929094791412
       },
       {
         "source": "dev24",
@@ -2256,9 +2266,9 @@
         "pred_pos": 39,
         "pred_code": "n",
         "correct": false,
+        "gold_code": "m",
         "tie": false,
-        "latency_s": 0.022709105163812637,
-        "prompt_chars": 1464
+        "latency_s": 0.022740426007658243
       },
       {
         "source": "dev24",
@@ -2267,9 +2277,9 @@
         "pred_pos": 43,
         "pred_code": "r",
         "correct": false,
+        "gold_code": "n",
         "tie": false,
-        "latency_s": 0.022743974812328815,
-        "prompt_chars": 1412
+        "latency_s": 0.02269043494015932
       },
       {
         "source": "dev24",
@@ -2278,9 +2288,9 @@
         "pred_pos": 6,
         "pred_code": "G",
         "correct": true,
+        "gold_code": "G",
         "tie": false,
-        "latency_s": 0.02283951686695218,
-        "prompt_chars": 1418
+        "latency_s": 0.02261892380192876
       },
       {
         "source": "dev24",
@@ -2289,9 +2299,9 @@
         "pred_pos": 31,
         "pred_code": "f",
         "correct": false,
+        "gold_code": "e",
         "tie": false,
-        "latency_s": 0.45120914792642,
-        "prompt_chars": 1643
+        "latency_s": 0.45271308068186045
       },
       {
         "source": "dev24",
@@ -2300,9 +2310,9 @@
         "pred_pos": 40,
         "pred_code": "o",
         "correct": false,
+        "gold_code": "W",
         "tie": false,
-        "latency_s": 0.4476925232447684,
-        "prompt_chars": 1321
+        "latency_s": 0.45146778179332614
       },
       {
         "source": "dev24",
@@ -2311,9 +2321,9 @@
         "pred_pos": 7,
         "pred_code": "H",
         "correct": true,
+        "gold_code": "H",
         "tie": false,
-        "latency_s": 0.02266500424593687,
-        "prompt_chars": 1402
+        "latency_s": 0.02272587502375245
       },
       {
         "source": "dev24",
@@ -2322,9 +2332,9 @@
         "pred_pos": 3,
         "pred_code": "D",
         "correct": false,
+        "gold_code": "H",
         "tie": false,
-        "latency_s": 0.022485670633614063,
-        "prompt_chars": 1395
+        "latency_s": 0.022622154094278812
       },
       {
         "source": "dev24",
@@ -2333,9 +2343,9 @@
         "pred_pos": 2,
         "pred_code": "C",
         "correct": false,
+        "gold_code": "A",
         "tie": false,
-        "latency_s": 0.02284680726006627,
-        "prompt_chars": 1451
+        "latency_s": 0.02257161308079958
       },
       {
         "source": "dev24",
@@ -2344,9 +2354,9 @@
         "pred_pos": 35,
         "pred_code": "j",
         "correct": false,
+        "gold_code": "r",
         "tie": false,
-        "latency_s": 0.022453681100159883,
-        "prompt_chars": 1377
+        "latency_s": 0.022677494678646326
       },
       {
         "source": "dev24",
@@ -2355,9 +2365,9 @@
         "pred_pos": 5,
         "pred_code": "F",
         "correct": true,
+        "gold_code": "F",
         "tie": false,
-        "latency_s": 0.02254048315808177,
-        "prompt_chars": 1380
+        "latency_s": 0.02256767312064767
       },
       {
         "source": "dev24",
@@ -2366,9 +2376,9 @@
         "pred_pos": 3,
         "pred_code": "D",
         "correct": false,
+        "gold_code": "M",
         "tie": false,
-        "latency_s": 0.022452691104263067,
-        "prompt_chars": 1433
+        "latency_s": 0.022567152976989746
       },
       {
         "source": "dev24",
@@ -2377,9 +2387,9 @@
         "pred_pos": 50,
         "pred_code": "y",
         "correct": false,
+        "gold_code": "r",
         "tie": false,
-        "latency_s": 0.02251273300498724,
-        "prompt_chars": 1442
+        "latency_s": 0.02276535565033555
       },
       {
         "source": "dev24",
@@ -2388,9 +2398,9 @@
         "pred_pos": 4,
         "pred_code": "E",
         "correct": false,
+        "gold_code": "R",
         "tie": false,
-        "latency_s": 0.4476831532083452,
-        "prompt_chars": 1536
+        "latency_s": 0.44723312510177493
       },
       {
         "source": "dev24",
@@ -2399,9 +2409,9 @@
         "pred_pos": 29,
         "pred_code": "d",
         "correct": true,
+        "gold_code": "d",
         "tie": false,
-        "latency_s": 0.022529992274940014,
-        "prompt_chars": 1427
+        "latency_s": 0.02286173775792122
       },
       {
         "source": "dev24",
@@ -2410,9 +2420,9 @@
         "pred_pos": 28,
         "pred_code": "c",
         "correct": false,
+        "gold_code": "e",
         "tie": false,
-        "latency_s": 0.022525703068822622,
-        "prompt_chars": 1464
+        "latency_s": 0.022866168059408665
       },
       {
         "source": "dev24",
@@ -2421,9 +2431,9 @@
         "pred_pos": 18,
         "pred_code": "S",
         "correct": true,
+        "gold_code": "S",
         "tie": false,
-        "latency_s": 0.02257921313866973,
-        "prompt_chars": 1411
+        "latency_s": 0.022682365030050278
       },
       {
         "source": "dev24",
@@ -2432,9 +2442,9 @@
         "pred_pos": 42,
         "pred_code": "q",
         "correct": false,
+        "gold_code": "o",
         "tie": false,
-        "latency_s": 0.02262446377426386,
-        "prompt_chars": 1467
+        "latency_s": 0.023146152030676603
       },
       {
         "source": "dev24",
@@ -2443,9 +2453,9 @@
         "pred_pos": 48,
         "pred_code": "w",
         "correct": false,
+        "gold_code": "t",
         "tie": false,
-        "latency_s": 0.022616772912442684,
-        "prompt_chars": 1407
+        "latency_s": 0.02355535887181759
       },
       {
         "source": "dev24",
@@ -2454,9 +2464,9 @@
         "pred_pos": 14,
         "pred_code": "O",
         "correct": false,
+        "gold_code": "s",
         "tie": false,
-        "latency_s": 0.02259257296100259,
-        "prompt_chars": 1443
+        "latency_s": 0.02329110400751233
       },
       {
         "source": "dev24",
@@ -2465,9 +2475,9 @@
         "pred_pos": 5,
         "pred_code": "F",
         "correct": false,
+        "gold_code": "r",
         "tie": false,
-        "latency_s": 0.44745938014239073,
-        "prompt_chars": 1558
+        "latency_s": 0.4519181791692972
       },
       {
         "source": "dev24",
@@ -2476,9 +2486,9 @@
         "pred_pos": 24,
         "pred_code": "Y",
         "correct": false,
+        "gold_code": "X",
         "tie": false,
-        "latency_s": 0.02263271389529109,
-        "prompt_chars": 1377
+        "latency_s": 0.022933078929781914
       },
       {
         "source": "dev24",
@@ -2487,9 +2497,9 @@
         "pred_pos": 1,
         "pred_code": "B",
         "correct": true,
+        "gold_code": "B",
         "tie": false,
-        "latency_s": 0.02256150310859084,
-        "prompt_chars": 1428
+        "latency_s": 0.02271578600630164
       },
       {
         "source": "dev24",
@@ -2498,9 +2508,9 @@
         "pred_pos": 18,
         "pred_code": "S",
         "correct": true,
+        "gold_code": "S",
         "tie": false,
-        "latency_s": 0.022569952998310328,
-        "prompt_chars": 1420
+        "latency_s": 0.022661754861474037
       }
     ]
   }
