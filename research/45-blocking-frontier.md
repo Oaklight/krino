@@ -273,10 +273,21 @@ blocked readout.
 
 ## What this does not show
 
+- **Generalisation of blocking.** Every blocking cell is on CLINC150. Banking77
+  cannot test blocking's success — its failure is class confusion, not display
+  position (#357) — and no third intent space has been run. The 76.5% at
+  `b = 26` is panel 2 on this one distribution, and CLINC150 is the one
+  distribution with a mild display gradient and a clean class structure. A
+  figure quotable as a general blocking result needs a third intent space
+  (another CLINC config or another intent dataset) reproducing the single-pass
+  and blocking points.
 - **Banking77.** The issue's K = 80 sanity cell was not run. The product model
   was checked on CLINC instead, where the second factor turned out to be the
   mis-estimated one; the Banking77 check would test a different distribution,
   not this model.
+- **Capability.** None of these cells is a capability figure. They are panel 2
+  on the CLINC150 distribution; the Banking77 aggregates are depressed by a
+  label-space pathology and are not comparable.
 - **Multiplicity.** Nine scheme cells are compared against one judgement
   reference. Under a nine-way Bonferroni (0.0056) only B at `b = 26` clears the
   threshold; B at `b = 32` clears a three-way family for the B cells (0.0167)
