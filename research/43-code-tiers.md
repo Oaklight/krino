@@ -84,6 +84,23 @@ The one undecided cell is the replica's accented-Latin cell: n = 24 can only
 reject, and the same tier is rejected at −22.5 pp with p = 7e-11 on 200 items.
 It is a power limitation of the replica, not a conflicting result.
 
+## The letter baselines are not equal across cells
+
+The four `letter_gold` baselines are 78, 70, 78 and 79 of 200. The accented-Latin
+cell's baseline is eight items lower than the others on the same items, the same
+gold positions and the same option order; the only difference is which tier's
+codes label the other slots. A later experiment on the same design measured that
+effect directly (word codes cost eight points on a letter-labelled gold, exact
+p = 4.0e-4), so the accented-Latin cell's −22.5 pp is measured against a baseline
+its own codes depressed, and it is conservative: against the 78/200 baseline it
+would be about −26 pp. No number here changes and every rejection stands.
+
+What does change is how the four differences may be compared. They are not
+measured against a common baseline, so their ordering mixes each tier's own
+effect with the damage that tier's codes do to the rest of the list. The
+"distance from the answer-position distribution" reading below is a hypothesis,
+not a decomposition of the two.
+
 **The method self-check passes.** `shipped_symbols` is rejected on both
 instruments, so the positive control reproduces the failure the stored K=80
 items show and the other cells are readable. No paired contrast was skipped: the
@@ -128,7 +145,10 @@ token the model has seen in answer position, and the letters are. Accented
 Latin is closer to that than Hangul or symbols — the ordering of the three
 departures from `A` is the ordering you would predict if distance from the
 letter distribution mattered — but close is not enough: 22.5 pp is far outside
-the adoption bound.
+the adoption bound. This ordering is a hypothesis about the tier effect; it is
+not a decomposition of that effect from the tier's damage to the rest of the
+option list, which the cells cannot separate (see *The letter baselines are not
+equal across cells*).
 
 ## What this does not say
 
