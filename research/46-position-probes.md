@@ -148,6 +148,41 @@ not separate the tail. What remains is the gold class itself. That is a
 description, not a mechanism: the next steps are a per-class error analysis of
 these 28 classes and a gold-text replacement probe, not another display probe.
 
+### Where the tail's wrong answers land
+
+The stored natural K=52 rows give the predicted display position, and the
+option list is reconstructible from the recorded draw, so the predicted class
+of every wrong tail answer is known without another run. Of the 71 tail items,
+70 are wrong. Their predictions land:
+
+| zone | observed | uniform null |
+|---|---:|---:|
+| tail (class index 43–76) | 42 (60.0%) | 31.7 (45.2%) |
+| middle (21–42) | 12 (17.1%) | 19.9 (28.5%) |
+| head (0–20) | 16 (22.9%) | 18.4 (26.3%) |
+
+The null is the zone composition of each item's own 51 distractors, so it
+already accounts for the fact that tail items draw mostly tail distractors.
+Two things stand out. **The wrong answers are enriched within five class
+indices of the gold: 34/70 = 48.6% against a 12.9% null, a 3.8× enrichment.**
+And the head is *not* over-selected: 22.9% observed against 26.3% expected, so
+there is no evidence that the model prefers the head labels.
+
+The most-selected wrong classes are `extra_charge_on_statement` (5),
+`automatic_top_up` (4), `receiving_money` (4),
+`wrong_exchange_rate_for_cash_withdrawal` (4), `transaction_charged_twice` (4),
+`Refund_not_showing_up` (3), `transfer_fee_charged` (3),
+`top_up_by_cash_or_cheque` (3). They are the same money-movement vocabulary as
+the tail, and some carry middle or head indices, so the class-order suffix is a
+proxy for a semantic cluster rather than the cause itself.
+
+**This is the dataset-property branch.** The 28-class suffix is a mutually
+confusable cluster: the readout's errors stay inside it and next to the gold,
+not at the head. The Banking77 aggregates (36.0% at K=52, 33.5% at K=80) are
+therefore depressed by the class table's confusability and are not a measure of
+panel 2's capability at those option counts. The capability cells are the
+CLINC150 ones: 73.0% at K=52 and 62.5% at K=80.
+
 ## What this says, and what it does not
 
 - **The mechanism differs by dataset.** Banking77's tail is the gold's rank in
