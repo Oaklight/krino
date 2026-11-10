@@ -54,6 +54,7 @@ from probe_code_tiers import banking77_items, dev_items  # noqa: E402
 CODE_FORM = "space"
 SEED = 342
 ITEMS = 200
+MAIN_K = 52
 LADDER = (7, 14, 28, 52)
 PERMS = {7: 2, 14: 2, 28: 2, 52: 4}
 ALPHABET_K = 80
