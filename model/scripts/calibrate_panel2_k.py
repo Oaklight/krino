@@ -30,11 +30,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import random
 import statistics
 import sys
 from pathlib import Path
-from types import SimpleNamespace
 
 import torch
 
@@ -42,6 +40,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from eval_jevbench_panel2 import score_prompt  # noqa: E402
+from model.evaluation import clinc  # noqa: E402
 from model.evaluation.code_tiers import item_seed, subsample  # noqa: E402
 from model.evaluation.panel2 import (  # noqa: E402
     code_token_ids,
@@ -55,55 +54,11 @@ from probe_code_tiers import banking77_items, dev_items  # noqa: E402
 CODE_FORM = "space"
 SEED = 342
 MAIN_ITEMS = 200
-CLINC_REPO = "clinc/clinc_oos"
-CLINC_CONFIG = "plus"
-CLINC_SPLIT = "test"
-CLINC_REVISION = "155b9c710419136e17307b80d0a13e68cd46b4ec"
-CLINC_INSTRUCTIONS = (
-    "Which intent category does this customer message belong to?"
-)
 
 
 def clinc_items(count: int) -> tuple[list, dict]:
-    """In-scope CLINC150 test items over one 150-class criteria dict."""
-    from datasets import load_dataset
-
-    data = load_dataset(
-        CLINC_REPO, CLINC_CONFIG, split=CLINC_SPLIT, revision=CLINC_REVISION
-    )
-    names = data.features["intent"].names
-    in_scope = [name for name in names if name != "oos"]
-    if len(in_scope) != 150:
-        raise SystemExit(f"expected 150 in-scope classes, got {len(in_scope)}")
-    criteria = {name: name.replace("_", " ") for name in in_scope}
-    rows = [
-        (index, row)
-        for index, row in enumerate(data)
-        if names[int(row["intent"])] != "oos"
-    ]
-    random.Random(SEED).shuffle(rows)
-    items = []
-    for index, row in rows[:count]:
-        items.append(
-            SimpleNamespace(
-                id=f"clinc150-{CLINC_SPLIT}-{index:05d}",
-                state=row["text"],
-                label=names[int(row["intent"])],
-                question={"criteria": criteria, "instructions": CLINC_INSTRUCTIONS},
-            )
-        )
-    meta = {
-        "dataset": "clinc150",
-        "repo": CLINC_REPO,
-        "config": CLINC_CONFIG,
-        "split": CLINC_SPLIT,
-        "revision": CLINC_REVISION,
-        "license": "CC BY 3.0",
-        "classes_in_scope": len(in_scope),
-        "instructions": CLINC_INSTRUCTIONS,
-        "item_selection": "in-scope rows shuffled with Random(342), first 200",
-    }
-    return items, meta
+    """The shared CLINC150 loader, by its historical name in this script."""
+    return clinc.load(count, SEED)
 
 
 def run(model, tokenizer, device, items, source: str, k: int) -> list[dict]:
@@ -182,7 +137,7 @@ def main() -> int:
             "uniform from the same 80-intent criteria, excluding gold"
         )
     else:
-        _, meta = clinc_items(1)
+        _, meta = clinc_items(MAIN_ITEMS)
         config.update(meta)
         config["items"] = MAIN_ITEMS
         config["distractors"] = "uniform from the same 150-intent space, excluding gold"
