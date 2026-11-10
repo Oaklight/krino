@@ -13,10 +13,10 @@ changing only which tier labels the gold.
 
 **No tier can. All four cells are rejected on a 200-item main instrument, the
 positive control included, and the positive control repeats on the 24-item
-replica.** The usable alphabet stays at 52 *on this instrument*. That last claim
-is scoped to Banking77 by a cross-dataset check run after this one: see *Scope*
-at the end. Supporting more than 52 options here therefore needs a blocking
-readout or a multi-token code, not a wider alphabet.
+replica.** The same four cells are also rejected on 200 CLINC150 items, so the
+finding is not distribution-specific; only the level is. See *Scope* at the end.
+Supporting more than 52 options therefore needs a blocking readout or a
+multi-token code, not a wider alphabet.
 
 ## Design
 
@@ -151,34 +151,50 @@ not a decomposition of that effect from the tier's damage to the rest of the
 option list, which the cells cannot separate (see *The letter baselines are not
 equal across cells*).
 
-## Scope: Banking77 only, and mostly its early positions
+## Scope: the item set's position bias, and what transfers
 
-Added after the run and before merge, from the CLINC150 cells in #356. **No
-number above changes.** What changes is what they may be generalised to.
+Added after the run and before merge. **No number above changes.** What changes
+is what they may be generalised to, and one correction of an earlier version of
+this note.
 
-**The item set is not neutral.** Panel 2's accuracy at K=52 on 200 Banking77
-items falls with the gold's position: 64.6%, 69.4%, 33.3%, 2.1%, 0.0% across five
-position buckets. The model almost never answers from the last 40% of the option
-list, so an item whose gold sits there is unwinnable whatever its code. Fifty-
-nine of the 200 items here are of exactly that kind — those whose intent falls in
-the last 28 classes of the 80-class list — and they score **0/59 at K=52 with
-letters only**, while the other 141 score 72/141 = 51.1%. An unwinnable item
-contributes 0 to a paired difference, so the effective sample behind the four
-rejections is well under 200.
+**The Banking77 item set is not neutral.** Panel 2's accuracy at K=52 on 200
+Banking77 items falls with the gold's position: 64.6%, 69.4%, 33.3%, 2.1%, 0.0%
+across five position buckets. The model almost never answers from the last 40%
+of the option list, so an item whose gold sits there is unwinnable whatever its
+code. Fifty-nine of the 200 items here are of exactly that kind — those whose
+intent falls in the last 28 classes of the 80-class list — and they score
+**0/59 at K=52 with letters only**, while the other 141 score 72/141 = 51.1%.
+An unwinnable item contributes 0 to a paired difference, so the effective sample
+behind the four rejections is well under 200.
 
-**The headline does not transfer.** On CLINC150, 200 items of the same
-construction and seed: K=52 letters-only is **73.0%**; K=80 with the shipped 84
-alphabet is **62.5%**, and the 78 items whose gold carries a symbol code score
-**60.3%** against 63.9% for letters. Symbol codes work on that distribution.
+**The paired result does transfer.** The same design on 200 CLINC150 items, same
+tiers, same seed:
 
-So "the usable alphabet is 52" is an observation about the Banking77
-distribution as read out with this position bias. It is not a property of the
-tokenizer and not a property of the model's vocabulary. What survives is
-narrower: **on Banking77, at the positions these items occupy, replacing a
-gold's letter code with an accented-Latin, Hangul, symbol, two- or three-letter
-code makes it worse.** The paired design is what makes that a statement about
-codes — it holds position fixed — but it cannot make the finding distribution-
-independent, and it cannot recover the items that were never winnable.
+| tier | gold_in_tier | letter_gold | difference | exact p |
+|---|---:|---:|---:|---:|
+| `shipped_symbols` | 86/200 | 170/200 | −42.0 pp | 1.0e-25 |
+| `accented_latin` | 78/200 | 161/200 | −41.5 pp | 4.4e-24 |
+| `hangul` | 26/200 | 165/200 | −69.5 pp | 2.9e-42 |
+| `clean_symbols` | 86/200 | 159/200 | −36.5 pp | 4.0e-20 |
+
+Every tier is rejected again, by a wider margin, against letter baselines of
+80–85%. The letter baseline there is flat across gold positions (71–85% in five
+buckets), so the CLINC run carries none of the Banking77 position problem.
+
+**Correction.** An earlier version of this note said symbol codes work on CLINC,
+citing the single-pass K=80 cell (60.3% on symbol-coded golds). That was the
+position confound read in the other direction: CLINC's option tail is *alive*
+(59.1% in the last bucket), so a symbol-labelled option in the tail is answered
+at the tail's own rate without the code contributing. The paired design, which
+holds position fixed, shows symbols far below letters on the same items. **The
+single-pass K=80 decomposition cannot speak to codes on either distribution** —
+on Banking77 it makes symbols look 0%, on CLINC 60%, and neither is a
+measurement of the code.
+
+So "no tested tier extends the alphabet" holds on two distributions under the
+clean design. What remains Banking77-specific is the *level*: its letter
+baseline at K=58 is 39.5% against 80–85% on CLINC, and its K=80 single-pass
+cells are position-confounded.
 
 ## What this does not say
 
