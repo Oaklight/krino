@@ -1,17 +1,18 @@
-"""Measure panel 2 at K = 52 with the letter alphabet only (#356).
+"""Measure panel 2 single-pass at a fixed K (#356).
 
-The blocking readout's ceiling is the probability that the gold option wins its
-own block, and a block is a 52-option item. The 39% figure quoted earlier came
-from K = 58 with six tier codes occupying six slots; that is not the same
-construction. This measures the 52-option cell directly: the gold plus 51
-distractors from the same intent space, labelled with `A`-`Z` and `a`-`z` only.
+Every point on the step-4 cost-accuracy frontier has to be measured on the same
+items. This runs the unblocked readout at one option count with the shipped
+alphabet, so the K=52 ceiling, the K=80 single pass and the blocking cells share
+one coordinate system.
 
-No blocking is implemented here. One prompt per item.
+`codes_for(K)` uses `A`-`Z`, `a`-`z`, then the single symbols, so K=52 is letters
+only and K=80 carries the 28 shipped symbols, which are known to be dead for
+gold options.
 
 Usage::
 
-    python model/scripts/calibrate_k52.py --snapshot <snapshot> \\
-        --output results/jevbench/k52_calibration_Qwen_Qwen3-Reranker-4B.json
+    python model/scripts/calibrate_panel2_k.py --snapshot <snapshot> --k 80 \\
+        --output results/jevbench/panel2_k80_Qwen_Qwen3-Reranker-4B.json
 """
 
 from __future__ import annotations
@@ -41,24 +42,23 @@ from probe_code_tiers import banking77_items, dev_items  # noqa: E402
 
 CODE_FORM = "space"
 SEED = 342
-K = 52
 BANKING77_ITEMS = 200
 
 
-def run(model, tokenizer, device, items, source: str) -> list[dict]:
-    codes = codes_for(K)
+def run(model, tokenizer, device, items, source: str, k: int) -> list[dict]:
+    codes = codes_for(k)
     code_ids, multi = code_token_ids(tokenizer, codes, CODE_FORM)
     if multi:
         raise SystemExit(f"codes {multi} are not single tokens")
     rows = []
     for item in items:
         criteria = item.question["criteria"]
-        texts, gold_pos = subsample(criteria, item.label, K, item_seed(item.id, SEED))
+        texts, gold_pos = subsample(criteria, item.label, k, item_seed(item.id, SEED))
         prompt = render_panel2(
             item.state, item.question.get("instructions", ""), texts, codes
         )
         values, chosen, elapsed, _ = score_prompt(
-            model, tokenizer, prompt, codes, code_ids, device, list(range(K))
+            model, tokenizer, prompt, codes, code_ids, device, list(range(k))
         )
         rows.append(
             {
@@ -68,22 +68,23 @@ def run(model, tokenizer, device, items, source: str) -> list[dict]:
                 "pred_pos": chosen,
                 "pred_code": codes[chosen],
                 "correct": chosen == gold_pos,
+                "gold_code": codes[gold_pos],
                 "tie": has_exact_tie(values),
                 "latency_s": elapsed,
-                "prompt_chars": len(prompt),
             }
         )
     return rows
 
 
-def summarise(rows: list[dict]) -> dict:
+def summarise(rows: list[dict], k: int) -> dict:
     n = len(rows)
     correct = sum(1 for r in rows if r["correct"])
     return {
+        "k": k,
         "items": n,
         "correct": correct,
         "accuracy": correct / n,
-        "chance": 1 / K,
+        "chance": 1 / k,
         "mean_latency_s": statistics.mean(r["latency_s"] for r in rows),
         "ties": sum(1 for r in rows if r["tie"]),
     }
@@ -92,22 +93,19 @@ def summarise(rows: list[dict]) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--snapshot", type=Path, required=True)
+    parser.add_argument("--k", type=int, required=True)
     parser.add_argument(
         "--dev-path", type=Path, default=Path("data/benchmarks/dev/dev_800.jsonl")
     )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=Path("results/jevbench/k52_calibration_Qwen_Qwen3-Reranker-4B.json"),
-    )
+    parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--print-config-hash", action="store_true")
     parser.add_argument("--limit", type=int)
     args = parser.parse_args()
 
     config = {
-        "arm": "K=52 letter-only calibration",
-        "k": K,
-        "alphabet": "A-Z, a-z",
+        "arm": f"panel 2 single pass at K={args.k}",
+        "k": args.k,
+        "codes": "codes_for(k): A-Z, a-z, then single symbols",
         "code_form": CODE_FORM,
         "seed": SEED,
         "item_seed": "random.Random(f'{seed}:{item_id}')",
@@ -137,12 +135,24 @@ def main() -> int:
         instruments = {k: v[: args.limit] for k, v in instruments.items()}
     result = {"_provenance": {"config_hash": config_hash, "config": config}}
     for name, items in instruments.items():
-        rows = run(model, tokenizer, device, items, name)
-        result[name] = {"summary": summarise(rows), "rows": rows}
-        s = result[name]["summary"]
+        rows = run(model, tokenizer, device, items, name, args.k)
+        summary = summarise(rows, args.k)
+        result[name] = {
+            "summary": summary,
+            "letter_gold": {
+                "items": sum(1 for r in rows if r["gold_code"] in codes_for(args.k)[:52]),
+                "correct": sum(
+                    1
+                    for r in rows
+                    if r["gold_code"] in codes_for(args.k)[:52] and r["correct"]
+                ),
+            },
+            "rows": rows,
+        }
         print(
-            f"{name}: {s['correct']}/{s['items']} = {s['accuracy']:.4f} "
-            f"(chance {s['chance']:.4f}, mean {s['mean_latency_s']:.3f}s)",
+            f"{name}: {summary['correct']}/{summary['items']} = "
+            f"{summary['accuracy']:.4f} (chance {summary['chance']:.4f}, "
+            f"mean {summary['mean_latency_s']:.3f}s)",
             flush=True,
         )
 
