@@ -5,9 +5,12 @@ from __future__ import annotations
 import pytest
 
 from model.evaluation.code_space import (
+    candidate_strings,
     code_forms,
     sample_tier,
+    string_survey,
     survey,
+    text_forms,
     tier_of,
     usable_chars,
 )
@@ -131,3 +134,52 @@ def test_tier_of_covers_the_tiers_an_alphabet_may_draw_from():
     assert tier_of("é") == "other_letter"
     assert tier_of("€") == "other_symbol"
     assert tier_of(" ") == "space_control"
+
+
+def string_tokenizer() -> DictTokenizer:
+    return DictTokenizer(
+        [
+            "<s>",
+            "A",
+            "B",
+            "AA",
+            " AA",
+            "AB",
+            " ",
+            ".",
+            "\n",
+            "\nOptions:\n",
+        ]
+    )
+
+
+def test_candidate_strings_enumerates_the_level_in_lexical_order():
+    codes = candidate_strings(2, "AB")
+    assert codes == ["AA", "AB", "BA", "BB"]
+    assert len(candidate_strings(2)) == 676
+    assert candidate_strings(3, "AB")[-1] == "BBB"
+
+
+def test_text_forms_apply_the_same_four_tests_to_a_string():
+    tok = string_tokenizer()
+    stable = text_forms(tok, "AA")
+    assert (stable["bare"], stable["space"]) == (True, True)
+    assert stable["left_ok"] and stable["right_ok"]
+
+    # One token bare, two with the leading space.
+    no_space = text_forms(tok, "AB")
+    assert (no_space["bare"], no_space["space"]) == (True, False)
+
+    # Two tokens bare.
+    no_bare = text_forms(tok, "BA")
+    assert (no_bare["bare"], no_bare["space"]) == (False, False)
+
+
+def test_string_survey_counts_each_level():
+    level = string_survey(string_tokenizer(), 2, "AB")
+    assert level["candidates"] == 4
+    assert level["bare"] == 2
+    assert level["space"] == 1
+    assert level["both"] == 1
+    assert level["stable"] == 1
+    assert level["stable_codes"] == ["AA"]
