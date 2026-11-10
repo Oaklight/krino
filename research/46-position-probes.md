@@ -180,8 +180,13 @@ proxy for a semantic cluster rather than the cause itself.
 confusable cluster: the readout's errors stay inside it and next to the gold,
 not at the head. The Banking77 aggregates (36.0% at K=52, 33.5% at K=80) are
 therefore depressed by the class table's confusability and are not a measure of
-panel 2's capability at those option counts. The capability cells are the
-CLINC150 ones: 73.0% at K=52 and 62.5% at K=80.
+panel 2's capability at those option counts.
+
+The only cells not depressed by a label-space pathology are on the CLINC150
+distribution: 73.0% at K=52 and 62.5% at K=80. Even those are panel 2 on that
+**one distribution**, not panel 2's capability. A third intent space would be
+needed before either number could be quoted as a capability figure, and none of
+the blocking cells has been run outside CLINC150.
 
 ## What this says, and what it does not
 
