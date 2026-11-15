@@ -56,6 +56,7 @@ from model.src.judgement_readout import (  # noqa: E402
     subsample_prompts,
 )
 from model.src.lora import inject_lora  # noqa: E402
+from model.src.shape_buckets import PREFIX_BUCKETS, bucket_length  # noqa: E402
 from model.training import distributed  # noqa: E402
 from model.training.group_split import (  # noqa: E402
     load_cluster_manifest,
@@ -217,6 +218,16 @@ def build_parser(config: dict | None = None) -> argparse.ArgumentParser:
     )
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--batch-rows", type=int, default=8)
+    parser.add_argument(
+        "--chunk-tokens",
+        type=int,
+        default=8192,
+        help=(
+            "prefix-token budget of one forward/backward chunk inside an "
+            "optimizer step; bounds graph memory so batch_rows stays a "
+            "throughput knob"
+        ),
+    )
     parser.add_argument("--lr", type=float, default=1e-3, help="LoRA learning rate")
     parser.add_argument(
         "--head-lr", type=float, default=1e-2, help="scale/bias learning rate"
@@ -398,6 +409,31 @@ def reduce_step(loss: float, rows: int, device, world_size: int) -> tuple[float,
     values = torch.tensor([loss, 1.0, float(rows)], device=device)
     torch.distributed.all_reduce(values)
     return float(values[0] / values[1]), int(values[2])
+
+
+def step_chunks(rows, token_budget: int) -> list[tuple[int, int]]:
+    """Index ranges of rows whose prefixes together fit ``token_budget``.
+
+    A step's graph memory is set by the padded prefix tokens of one forward,
+    not by the optimizer batch, so a chunk budget lets batch_rows stay a
+    throughput knob.  Each row costs its *padded* prefix bucket, not its raw
+    length: the readout pads every row of a bucket group to the same bucket, so
+    a raw-length budget underestimates memory by up to two bucket steps.  A row
+    whose own bucket exceeds the budget forms its own chunk.
+    """
+    chunks: list[tuple[int, int]] = []
+    start = 0
+    total = 0
+    for index, prompts in enumerate(rows):
+        tokens = max(len(prompt.prefix) for prompt in prompts) // 4
+        cost = bucket_length(tokens, PREFIX_BUCKETS) + 16
+        if index > start and total + cost > token_budget:
+            chunks.append((start, index))
+            start, total = index, 0
+        total += cost
+    if start < len(rows):
+        chunks.append((start, len(rows)))
+    return chunks
 
 
 def _batch_shard(rows, rank: int, world_size: int, batch_rows: int):
@@ -589,31 +625,38 @@ def _run(args, rank: int, world_size: int) -> int:
                 # step, and one backward covers the step's rows.  The per-row
                 # path launched a forward and a backward per row and left the
                 # card idle between them (#299 throughput).
-                margin_rows = readout.step_margins(chosen_rows)
-                terms = []
-                for prompts, weight, raw in zip(chosen_rows, weights, margin_rows):
-                    margin = scaling(raw)
-                    labels = torch.tensor(
-                        [p.label for p in prompts],
-                        dtype=torch.float32,
-                        device=margin.device,
-                    )
-                    # Mean within the row (row_bce), then one over the number of
-                    # unmasked rows (denominator).
-                    term = (
-                        row_bce(margin, labels) * weight.to(margin.device) / denominator
-                    )
-                    batch_loss += float(term.detach())
-                    rows_done += 1
-                    prompts_done += margin.numel()
-                    if float(weight) == 0.0:
-                        # Masked, not dropped: the forward above still ran, but
-                        # the row adds no gradient.
-                        masked += 1
-                        continue
-                    terms.append(term)
-                if terms:
-                    torch.stack(terms).sum().backward()
+                for start, stop in step_chunks(chosen_rows, args.chunk_tokens):
+                    chunk = chosen_rows[start:stop]
+                    chunk_weights = weights[start:stop]
+                    chunk_terms = []
+                    for prompts, weight, raw in zip(
+                        chunk, chunk_weights, readout.step_margins(chunk)
+                    ):
+                        margin = scaling(raw)
+                        labels = torch.tensor(
+                            [p.label for p in prompts],
+                            dtype=torch.float32,
+                            device=margin.device,
+                        )
+                        # Mean within the row (row_bce), then one over the
+                        # step's unmasked rows (denominator).
+                        term = (
+                            row_bce(margin, labels) * weight.to(margin.device) / denominator
+                        )
+                        batch_loss += float(term.detach())
+                        rows_done += 1
+                        prompts_done += margin.numel()
+                        if float(weight) == 0.0:
+                            # Masked, not dropped: the forward above still ran,
+                            # but the row adds no gradient.
+                            masked += 1
+                            continue
+                        chunk_terms.append(term)
+                    if chunk_terms:
+                        # One backward per chunk bounds the graph memory by the
+                        # chunk, not the optimizer batch, so rows per step stay
+                        # a throughput knob.
+                        torch.stack(chunk_terms).sum().backward()
             # Data-parallel: every replica must reach the collective, so this
             # runs even when a rank contributed no gradient.
             distributed.average_gradients(opt_params, world_size)
