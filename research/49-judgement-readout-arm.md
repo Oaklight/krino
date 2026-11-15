@@ -104,7 +104,7 @@ The cells come from a fresh deterministic re-score of the run's per-item records
 
 ## The eval bug behind the first numbers
 
-`candidates()` in `model/evaluation/judgement_prompt.py` decided which noul option was gold by comparing the label to the string `"true"`. The public JevBench files carry `expected` as `"yes"` and `"no"`, so neither matched, every one of the 74 noul items was built with gold index 1, and unknown strings fell through silently. The correction in #378 routes both call sites through one `label_polarity()` that accepts booleans, 0/1, and true/yes/y/false/no/n in any case with surrounding space, and raises on an unknown form instead of defaulting.
+`candidates()` in `model/evaluation/judgement_prompt.py` decided which noul option was gold by comparing the label to the string `"true"`. The public JevBench files carry `expected` as `"yes"` and `"no"`, so neither matched, every one of the 74 noul items was built with gold index 1, and unknown strings fell through silently. The correction in #378, merged as 906530e, routes both call sites through one `label_polarity()` that accepts booleans, 0/1, and true/yes/y/false/no/n in any case with surrounding space, and raises on an unknown form instead of defaulting.
 
 The numbers separate by pass. On the deterministic re-score, the buggy labels put the frozen arm at 126/231 (cc 0.3339); the corrected labels put the same pass at 149/231 (cc 0.4798), so the label fix alone accounts for 0.3339 to 0.4798. The earlier in-run aggregate with the buggy labels was 124/231 (cc 0.3212), which differs from the re-score by the usual one or two items and is not a second measure of the fix. The noul cells that were reported through this path are superseded: frozen noul 24/74 becomes 47/74, adapted noul 28/74 becomes 45/74, and the aggregate flips above replace the earlier ones. The audit in #378 checked every committed JevBench JSON for the fingerprint (gold index 1 on every noul row) and found none, because the committed files pass through `load_jevbench()`, which maps "yes" to `True` before `candidates()` sees it. No earlier research note requires a superseded marker. The `148/231` figure in the marker-ablation note is a different arm, scored through `load_jevbench`, and is not the same measurement as the `149/231` frozen cell here.
 
@@ -152,7 +152,7 @@ On distribution, A fits the training distribution worse (validation loss 0.51037
 | number group | status | source |
 |---|---|---|
 | arm definition, train loss, validation table, by-source table, mechanism gaps, ECE, throughput | measured; run directory and eight eval shards on the run host, not committed | C, 2026-11-15, seed 42: 166,208 rows, 2,597 steps, mean train loss 0.48022 |
-| JevBench corrected cells, flips, decisive subset, by-type cells, scale-free quartiles | measured; the label correction is PR #378, unmerged at the time of writing; per-item margins retained on the run host, not committed | #378, recomputed from the run's per-item records |
+| JevBench corrected cells, flips, decisive subset, by-type cells, scale-free quartiles | measured; label correction merged as 906530e; per-item margins retained on the run host, not committed | #378 (906530e), recomputed from the run's per-item records |
 | marker-token ablation | measured; committed | #372 and `research/44-marker-token-ablation.md` |
 | arm A, 20k subset | measured; run directory on the run host, not committed | A, 2026-11-15, seed 42: 20,000 rows (19,968 in 312 whole steps), mean train loss 0.5128, final logged step loss 0.5134 at step 310 |
 
