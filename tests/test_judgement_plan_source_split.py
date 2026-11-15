@@ -2,22 +2,38 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import sys
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
 
-from model.scripts.build_judgement_plan import (
+import pytest
+
+from model.src.plan_rows import (
     cap_per_template,
     namespace_of,
+    permute_options,
     synthetic_family,
     synthetic_template,
 )
 from model.training.group_split import build_group_keys, split_items_by_group
 
 ROOT = Path(__file__).resolve().parents[1]
+needs_torch = pytest.mark.skipif(
+    importlib.util.find_spec("torch") is None, reason="plan builder imports torch"
+)
+
+
+@dataclass
+class _Prompt:
+    text: str
+    label: int
+    option_index: int
+    n_options: int
 
 
 def _item(item_id: str, state: str, source: str = "s", group: str | None = None):
@@ -84,6 +100,76 @@ def test_forced_cluster_component_never_reaches_val():
         assert not any(item.source == "apigen" for item in val)
 
 
+def test_permute_options_is_deterministic_and_keeps_texts():
+    def prompts():
+        return [
+            _Prompt(
+                text=f"Option: {name}",
+                label=1 if name == "b" else 0,
+                option_index=index,
+                n_options=4,
+            )
+            for index, name in enumerate(["a", "b", "c", "d"])
+        ]
+
+    first = permute_options(prompts(), "corpus:r1")
+    second = permute_options(prompts(), "corpus:r1")
+    assert [(prompt.option_index, prompt.text, prompt.label) for prompt in first] == [
+        (prompt.option_index, prompt.text, prompt.label) for prompt in second
+    ]
+    assert sorted(prompt.text for prompt in first) == sorted(
+        prompt.text for prompt in prompts()
+    )
+    assert sorted(prompt.option_index for prompt in first) == [0, 1, 2, 3]
+    gold = [prompt for prompt in first if prompt.label == 1]
+    assert len(gold) == 1 and gold[0].text == "Option: b"
+
+    other = permute_options(prompts(), "corpus:r2")
+    assert [(prompt.option_index, prompt.text) for prompt in other] != [
+        (prompt.option_index, prompt.text) for prompt in first
+    ]
+
+    for slot in range(4):
+        placed = permute_options(prompts(), "corpus:r1", gold_slot=slot)
+        gold = [prompt for prompt in placed if prompt.label == 1]
+        assert len(gold) == 1 and gold[0].option_index == slot
+        assert gold[0].text == "Option: b"
+        assert sorted(prompt.text for prompt in placed) == sorted(
+            prompt.text for prompt in prompts()
+        )
+
+
+@needs_torch
+def test_criteria_bearing_noul_keeps_its_option_order(tmp_path):
+    from types import SimpleNamespace
+
+    from data.pipeline import load_jsonl
+    from model.scripts.build_judgement_plan import plan_items
+
+    corpus = tmp_path / "corpus.jsonl"
+    corpus.write_text(
+        json.dumps(
+            {
+                "id": "agnews-1",
+                "state": "A team won.",
+                "question": {
+                    "type": "noul",
+                    "instructions": "Is it sports?",
+                    "criteria": {"true": "Yes", "false": "No"},
+                },
+                "label": True,
+                "source": "agnews",
+                "split": "train",
+            }
+        )
+        + "\n"
+    )
+    entries = [("corpus", load_jsonl(corpus))]
+    rows = list(plan_items(SimpleNamespace(permute_options=True), entries))
+    prompts = rows[0][5]
+    assert [(prompt.option_index, prompt.label) for prompt in prompts] == [(0, 1), (1, 0)]
+
+
 def _template_rows():
     item = SimpleNamespace(
         id="synthetic-fam-0001-choice-0",
@@ -146,6 +232,7 @@ def test_helpers_read_item_source_and_synthetic_family():
     assert synthetic_template(plain) is None
 
 
+@needs_torch
 def test_builder_writes_the_rows_own_source(tmp_path):
     corpus = tmp_path / "corpus.jsonl"
     rows = [
@@ -186,6 +273,7 @@ def test_builder_writes_the_rows_own_source(tmp_path):
             "--out",
             str(out),
             "--internal-split",
+            "--permute-options",
         ],
         cwd=ROOT,
         check=True,

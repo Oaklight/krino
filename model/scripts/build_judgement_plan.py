@@ -31,9 +31,9 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import hashlib
 import json
 import random
-import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -46,13 +46,19 @@ from _vendor import yaml  # noqa: E402
 from data.pipeline import load_jsonl  # noqa: E402
 from data.sources import load_source_items  # noqa: E402
 from model.src.judgement_objective import build_prompts  # noqa: E402
+from model.src.plan_rows import (  # noqa: E402
+    cap_per_template,
+    namespace_of,
+    permute_options,
+    source_of,
+    synthetic_family,
+    synthetic_template,
+)
 from model.training.group_split import (  # noqa: E402
     load_cluster_manifest,
     split_items_by_group,
     state_key,
 )
-
-SYNTHETIC_TEMPLATE = re.compile(r"^synthetic-(.+)-(\d{4})-")
 
 
 def load_yaml(path: Path) -> dict:
@@ -67,39 +73,7 @@ def load_ids(path: Path | None) -> set[str]:
     return {str(value) for value in values}
 
 
-def source_of(item, fallback: str) -> str:
-    """The item's own source; ``corpus`` is a mode name, not a source."""
-    value = getattr(item, "source", None)
-    return value if isinstance(value, str) and value else fallback
-
-
-def synthetic_family(item) -> str | None:
-    """The family embedded in a synthetic group key (``synthetic-<family>-NNNN``)."""
-    if source_of(item, "") != "synthetic":
-        return None
-    group = getattr(item, "group", "") or ""
-    parts = group.split("-")
-    if len(parts) > 1 and parts[0] == "synthetic":
-        return parts[1]
-    return None
-
-
-def synthetic_template(item) -> tuple[str, str] | None:
-    """The generated item behind a synthetic row: ``(family, 4-digit item id)``."""
-    if source_of(item, "") != "synthetic":
-        return None
-    match = SYNTHETIC_TEMPLATE.match(str(getattr(item, "id", "")))
-    return (match.group(1), match.group(2)) if match else None
-
-
-def namespace_of(item) -> str:
-    """Split namespace: source, or source+family for synthetic rows."""
-    source = source_of(item, "")
-    family = synthetic_family(item)
-    return f"synthetic/{family}" if source == "synthetic" and family else source
-
-
-def plan_items(args, entries):
+def plan_items(args, entries, gold_slots=None):
     """Yield ``(name, item, row_id, split, answerable, prompts)`` for one plan row."""
     for name, items in entries:
         for item in items:
@@ -113,20 +87,26 @@ def plan_items(args, entries):
                 split=split,
                 answerable=answerable,
             )
+            if args.permute_options and not (
+                item.question.get("type") == "noul" and item.question.get("criteria")
+            ):
+                slot = (gold_slots or {}).get(row_id)
+                built = permute_options(built, row_id, slot)
             yield name, item, row_id, split, answerable, built
 
 
-def internal_labels(args, entries) -> tuple[dict[str, str], dict] | tuple[None, None]:
-    """Compute the corrected split and the per-row ``internal_split`` labels."""
+def internal_labels(args, entries):
+    """Compute the corrected split, per-row ``internal_split`` and gold slots."""
     if not args.internal_split:
-        return None, None
+        return None, None, None
     clusters = load_cluster_manifest(args.clusters) if args.clusters else None
-    records: list[tuple[str, object, int, str, str]] = []
+    records: list[tuple] = []
     for _name, item, row_id, split, _answerable, built in plan_items(args, entries):
         if not built:
             continue
         q_type = item.question.get("type", "noul")
-        records.append((row_id, item, len(built), q_type, split))
+        positives = sum(1 for prompt in built if prompt.label == 1)
+        records.append((row_id, item, len(built), q_type, split, positives))
 
     def cluster_of(record):
         if clusters is None:
@@ -167,44 +147,18 @@ def internal_labels(args, entries) -> tuple[dict[str, str], dict] | tuple[None, 
     report = dict(report)
     report["train_after_cap"] = len(train)
     report["val_after_cap"] = len(val)
-    return labels, report
-
-
-def cap_per_template(records, cap: int):
-    """Keep at most ``cap`` rows per synthetic template, round-robin over q_type.
-
-    The kept rows are the lexicographically smallest row ids per q_type, so the
-    result is deterministic and keeps every question type the template has.
-    """
-    groups: dict[tuple[str, str], dict[str, list]] = defaultdict(
-        lambda: defaultdict(list)
-    )
-    keep = []
-    for record in records:
-        template = synthetic_template(record[1])
-        if template is None:
-            keep.append(record)
-        else:
-            groups[template][record[3]].append(record)
-    for by_type in groups.values():
-        for q_type in by_type:
-            by_type[q_type].sort(key=lambda record: record[0])
-        picked = []
-        index = 0
-        while len(picked) < cap:
-            added = False
-            for q_type in sorted(by_type):
-                if index < len(by_type[q_type]):
-                    picked.append(by_type[q_type][index])
-                    added = True
-                    if len(picked) == cap:
-                        break
-            if not added:
-                break
-            index += 1
-        keep.extend(picked)
-    kept = {record[0] for record in keep}
-    return [record for record in records if record[0] in kept]
+    gold_slots = {}
+    if args.permute_options:
+        strata: dict[tuple, list[str]] = defaultdict(list)
+        for record in records:
+            row_id, _item, k, q_type, _split, positives = record
+            if positives == 1 and row_id in labels:
+                strata[(labels[row_id], q_type, k)].append(row_id)
+        for (_split, _q_type, k), row_ids in strata.items():
+            row_ids.sort(key=lambda rid: hashlib.sha256(rid.encode()).hexdigest())
+            for rank, row_id in enumerate(row_ids):
+                gold_slots[row_id] = rank % k
+    return labels, report, gold_slots
 
 
 def corpus_items(args, rng: random.Random) -> list[tuple[str, list]]:
@@ -306,6 +260,11 @@ def main() -> int:
         help="draw this many rows once from the capped train set and keep only those",
     )
     parser.add_argument("--subset-seed", type=int, default=42)
+    parser.add_argument(
+        "--permute-options",
+        action="store_true",
+        help="deterministically permute each row's option order by row_id",
+    )
     args = parser.parse_args()
     if args.cap_per_template and not args.internal_split:
         parser.error("--cap-per-template requires --internal-split")
@@ -322,7 +281,7 @@ def main() -> int:
     masked_rows = 0
 
     entries = corpus_items(args, rng)
-    labels, split_report = internal_labels(args, entries)
+    labels, split_report, gold_slots = internal_labels(args, entries)
     if split_report is not None:
         print(f"internal split {json.dumps(split_report, sort_keys=True)}", flush=True)
 
@@ -330,7 +289,9 @@ def main() -> int:
     with args.out.open("w", encoding="utf-8") as handle:
         current = None
         kept = 0
-        for name, item, row_id, split, answerable, built in plan_items(args, entries):
+        for name, item, row_id, split, answerable, built in plan_items(
+            args, entries, gold_slots
+        ):
             if name != current:
                 if current is not None:
                     print(f"{current:22} rows {kept:7,}", flush=True)
