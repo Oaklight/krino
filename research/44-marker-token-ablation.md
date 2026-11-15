@@ -111,6 +111,13 @@ correct sentence is "no measurable marker effect at JevBench resolution", not
 
 ## Caveats
 
+- The runs used `f7ec100`. `main` has since adopted the group-aware
+  `split_items` from #364: on the same data, seed and fraction it yields
+  15,931 train / 4,069 validation rows with digest `43498054...`, so a rerun
+  from `main` will not reproduce the recorded split (`edca4993...`, 16,001 /
+  3,999) or necessarily the exact per-arm validation curves. The six config
+  hashes are unchanged because the split is not part of the recipe hash. Every
+  number in this note is the `f7ec100` run.
 - One seed per arm. The training seed is fixed at 42 for every arm, so seed
   variance is not measured; the arm spread (1.7 pp) is the observable noise
   here.
