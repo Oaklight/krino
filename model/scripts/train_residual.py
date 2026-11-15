@@ -49,6 +49,7 @@ from model.src.backbone import load_causal_lm
 from model.src.decision_model import DecisionModel
 from model.src.feature_flags import feature_disabled
 from model.src.gpu_config import GPUConfig
+from model.training.group_split import cluster_for, load_cluster_manifest
 
 TYPES = ("noul", "choice", "score")
 ANSWERABLE_MASK_SWITCH = "KRINO_DISABLE_ANSWERABLE_MASK"
@@ -149,19 +150,32 @@ def answerable_target(item) -> bool | None:
     return True
 
 
-def split_items(items: list, val_fraction: float, seed: int) -> tuple[list, list]:
-    """Stratified split by (type, K bucket)."""
-    rng = random.Random(seed)
-    buckets: dict[tuple[str, int], list] = defaultdict(list)
-    for item in items:
-        buckets[_stratum(item)].append(item)
-    train, val = [], []
-    for key in sorted(buckets):
-        group = buckets[key]
-        rng.shuffle(group)
-        n_val = max(1, int(round(len(group) * val_fraction))) if len(group) > 1 else 0
-        val.extend(group[:n_val])
-        train.extend(group[n_val:])
+def split_items(
+    items: list,
+    val_fraction: float,
+    seed: int,
+    clusters: dict[str, str] | None = None,
+) -> tuple[list, list]:
+    """Stratified split by (type, K bucket) over whole groups.
+
+    An item's group is the union of its near-duplicate cluster, its exact
+    normalized state and its own ``group`` key, so cluster mates never land on
+    both sides.  ``clusters`` maps item id to cluster key; ids absent from it
+    fall back to the other two relations.
+    """
+    from model.training.group_split import split_items_by_group
+
+    clusters = clusters or {}
+    train, val, _ = split_items_by_group(
+        list(items),
+        val_fraction,
+        seed,
+        id_of=lambda item: item.id,
+        state_of=lambda item: item.state,
+        group_of=lambda item: getattr(item, "group", None),
+        cluster_of=lambda item: cluster_for(clusters, item.id, item.state),
+        stratum_of=_stratum,
+    )
     return train, val
 
 
@@ -205,9 +219,9 @@ def head_logits(
     q = question or item.question
     instructions = q.get("instructions", "")
     if q["type"] == "noul":
-        logit = model.forward_noul(
-            item.state, instructions, q.get("criteria")
-        ).reshape(1)
+        logit = model.forward_noul(item.state, instructions, q.get("criteria")).reshape(
+            1
+        )
         return torch.stack([torch.zeros_like(logit), logit], dim=-1)
     if q["type"] == "choice":
         return model.forward_choice(item.state, instructions, _options(q))
@@ -262,7 +276,9 @@ def soft_target(item, n_options: int) -> torch.Tensor | None:
     return values / total
 
 
-def fusion_logits(base: torch.Tensor, head: torch.Tensor, alpha: torch.Tensor) -> torch.Tensor:
+def fusion_logits(
+    base: torch.Tensor, head: torch.Tensor, alpha: torch.Tensor
+) -> torch.Tensor:
     return torch.log(base.clamp_min(1e-6)) + alpha * head
 
 
@@ -352,7 +368,9 @@ def evaluate(
         if base is None:
             continue
         head = head_logits(model, item).reshape(-1)
-        logits = fusion_logits(base.to(head.device), head, alphas[item.question["type"]])
+        logits = fusion_logits(
+            base.to(head.device), head, alphas[item.question["type"]]
+        )
         pred = int(torch.argmax(logits).item())
         if getattr(item, "answerable", None) is False or not _hard_label_valid(item):
             # Abstention rows keep a provenance label, not a gold answer, and
@@ -454,6 +472,12 @@ def main() -> int:
         "the training batch and masked in the loss",
     )
     parser.add_argument("--val-fraction", type=float, default=0.2)
+    parser.add_argument(
+        "--split-clusters",
+        type=Path,
+        default=None,
+        help="JSON id->cluster manifest for the group-aware split",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int, default=None)
@@ -463,13 +487,17 @@ def main() -> int:
     items, duplicate_rows = dedup_by_id(items)
     if duplicate_rows:
         print(
-            f"  dropped {duplicate_rows} duplicate (id, question) row(s) "
-            "from --items",
+            f"  dropped {duplicate_rows} duplicate (id, question) row(s) from --items",
             flush=True,
         )
-    base_records = [json.loads(line) for line in args.base_probs.read_text().splitlines() if line.strip()]
+    base_records = [
+        json.loads(line)
+        for line in args.base_probs.read_text().splitlines()
+        if line.strip()
+    ]
     base_probs = {
-        rec["id"]: torch.tensor(rec["probs"], dtype=torch.float32) for rec in base_records
+        rec["id"]: torch.tensor(rec["probs"], dtype=torch.float32)
+        for rec in base_records
     }
     items = [item for item in items if item.id in base_probs]
     exclude_ids: set[str] = set()
@@ -483,7 +511,12 @@ def main() -> int:
         items = [item for item in items if item.id not in exclude_ids]
     if args.limit:
         items = items[: args.limit]
-    train_items, val_items = split_items(items, args.val_fraction, args.seed)
+    train_items, val_items = split_items(
+        items,
+        args.val_fraction,
+        args.seed,
+        load_cluster_manifest(args.split_clusters) if args.split_clusters else None,
+    )
     answerable_items = []
     for path in args.answerable_items or []:
         answerable_items.extend(load_jsonl(path))
@@ -624,7 +657,7 @@ def main() -> int:
             if index % 200 == 0:
                 rate = index / (time.time() - started)
                 print(
-                    f"  epoch {epoch} {index}/{len(order)} loss={total/index:.4f} "
+                    f"  epoch {epoch} {index}/{len(order)} loss={total / index:.4f} "
                     f"{rate:.2f} items/s",
                     flush=True,
                 )
@@ -674,8 +707,12 @@ def main() -> int:
                 "seed": args.seed,
                 "option_marker": args.option_marker,
                 "noul_marker": args.noul_marker,
-                "option_chunk_size": args.option_chunk_size if args.option_marker else None,
-                "option_max_tokens": args.option_max_tokens if args.option_marker else None,
+                "option_chunk_size": args.option_chunk_size
+                if args.option_marker
+                else None,
+                "option_max_tokens": args.option_max_tokens
+                if args.option_marker
+                else None,
                 "option_batch": args.option_batch if args.option_marker else None,
                 "train_safe_buckets": args.train_safe_buckets,
                 "lora_layers": args.lora_layers,
@@ -692,7 +729,7 @@ def main() -> int:
     if torch.cuda.is_available():
         peak = torch.cuda.max_memory_allocated() / 2**30
         print(f"max_memory_allocated {peak:.1f} GiB", flush=True)
-    print(f"saved {args.output/'residual.pt'} best_cc={best:.4f}", flush=True)
+    print(f"saved {args.output / 'residual.pt'} best_cc={best:.4f}", flush=True)
     return 0
 
 

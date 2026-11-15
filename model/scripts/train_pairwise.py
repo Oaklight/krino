@@ -42,6 +42,7 @@ from model.src.backbone import load_causal_lm
 from model.src.decision_model import DecisionModel
 from model.src.gpu_config import GPUConfig
 from model.src.pairwise import PairwiseMarkerReadout, stage1_shortlist
+from model.training.group_split import load_cluster_manifest
 
 TRAINED_TYPES = ("choice", "score")
 
@@ -153,6 +154,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--val-fraction", type=float, default=0.2)
     parser.add_argument(
+        "--split-clusters",
+        type=Path,
+        default=None,
+        help="JSON id->cluster manifest for the group-aware split",
+    )
+    parser.add_argument(
         "--split-seed",
         type=int,
         default=42,
@@ -183,15 +190,18 @@ def main() -> int:
         if line.strip()
     ]
     base_probs = {
-        rec["id"]: torch.tensor(
-            rec["probs"], dtype=torch.float32, device=args.device
-        )
+        rec["id"]: torch.tensor(rec["probs"], dtype=torch.float32, device=args.device)
         for rec in base_records
     }
     items = [item for item in items if item.id in base_probs]
     if args.limit:
         items = items[: args.limit]
-    train_items, val_items = split_items(items, args.val_fraction, args.split_seed)
+    train_items, val_items = split_items(
+        items,
+        args.val_fraction,
+        args.split_seed,
+        load_cluster_manifest(args.split_clusters) if args.split_clusters else None,
+    )
     train_items = [
         item for item in train_items if item.question["type"] in TRAINED_TYPES
     ]
@@ -285,13 +295,11 @@ def main() -> int:
             if index % 200 == 0:
                 rate = index / (time.time() - started)
                 print(
-                    f"  epoch {epoch} {index}/{len(order)} loss={total/index:.4f} "
+                    f"  epoch {epoch} {index}/{len(order)} loss={total / index:.4f} "
                     f"{rate:.2f} items/s",
                     flush=True,
                 )
-        metrics = evaluate(
-            readout, val_items, base_probs, alphas, args.shortlist_m
-        )
+        metrics = evaluate(readout, val_items, base_probs, alphas, args.shortlist_m)
         metrics["epoch"] = epoch
         metrics["train_loss"] = total / max(1, len(order))
         metrics["kl_mean"] = kl_total / max(1, len(order))
@@ -352,7 +360,7 @@ def main() -> int:
     if torch.cuda.is_available():
         peak = torch.cuda.max_memory_allocated() / 2**30
         print(f"max_memory_allocated {peak:.1f} GiB", flush=True)
-    print(f"saved {args.output/'pairwise.pt'} best_cc={best:.4f}", flush=True)
+    print(f"saved {args.output / 'pairwise.pt'} best_cc={best:.4f}", flush=True)
     return 0
 
 
