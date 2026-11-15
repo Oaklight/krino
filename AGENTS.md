@@ -75,6 +75,17 @@ tests/            — pytest test suite
 - Jev API access: `TYPESAFE_API_KEY` in `.env`
 - Seeded domains require pyarrow (available on cpu-host-a, not laptop)
 
+### Where to run
+
+- Read `machines.md` before any job that touches a full corpus or plan, more
+  than a few thousand rows, or a GPU. It is operator-local and gitignored, so
+  if it is absent, ask the operator rather than guessing.
+- The laptop is for reading, editing, and small tests on fixtures. Corpus-scale
+  tokenisation, profiling, dedup, and any training run go to the designated CPU
+  or GPU host.
+- Never commit hostnames, hardware details, or absolute operator paths here;
+  use the sanitised names this file already uses.
+
 ### HuggingFace Data Sync
 
 ```bash
