@@ -80,25 +80,36 @@ def source_class(row_id: str) -> str:
     return name.split("-", 1)[0] if "-" in name else name
 
 
-def build_rows(path: Path, noul_gold: str = "position") -> tuple[list[Row], str]:
-    """Rows from a plan, and which field supplied their split.
+def build_rows(path: Path, noul_gold: str = "position",
+               plan_unpermuted_noul: bool = False) -> tuple[list[Row], str, int]:
+    """Rows from a plan, the field that supplied their split, and masks.
 
     ``internal_split`` is the v3 field; the v2 plans predate it and carry only
     ``split``. The reader records which one it used, requires every record to
     agree, and raises rather than counting a row without a split as train.
 
     ``noul_gold`` says how a criteria-bearing noul row names its gold side.
-    ``position`` is the default and assumes option 0 carries the true wording;
-    it is valid only for a plan whose criteria-bearing noul rows are never
-    permuted, which is the v3 plan's contract.  ``role`` reads the option's
-    polarity marker and survives permutation, and is for a plan built through
+    ``position`` assumes option 0 carries the true wording and is refused unless
+    the caller also asserts ``plan_unpermuted_noul``, because a permuted plan
+    would invert every noul gold silently.  ``role`` reads the option's polarity
+    marker and survives permutation; it is for a plan built through
     ``build_prompts``, which writes that field.
+
+    Rows the plan marks ``answerable: false`` carry no gold and are excluded
+    from the returned rows and counted, the way the judgement path masked them
+    rather than dropping the file.
     """
     if noul_gold not in ("role", "position"):
         raise ValueError(f"noul_gold must be 'role' or 'position', not {noul_gold!r}")
+    if noul_gold == "position" and not plan_unpermuted_noul:
+        raise ValueError(
+            "noul_gold='position' assumes the plan left criteria-bearing noul rows "
+            "unpermuted; pass plan_unpermuted_noul=True to state that contract"
+        )
     grouped: dict[str, list[dict]] = {}
     order: list[str] = []
     split_field: str | None = None
+    masked = 0
     with path.open(encoding="utf-8") as handle:
         for line in handle:
             if not line.strip():
@@ -124,6 +135,11 @@ def build_rows(path: Path, noul_gold: str = "position") -> tuple[list[Row], str]
     for row_id in order:
         records = sorted(grouped[row_id], key=lambda r: r["option_index"])
         first = records[0]
+        if first.get("answerable") is False:
+            # No gold to train or score against; the plan keeps these rows so
+            # the file matches the corpus, not so they can be learnt.
+            masked += 1
+            continue
         q_type = first["q_type"]
         if len(records) == 1 and q_type == "noul":
             state, instructions = parse_prompt_text(first["suffix"])
@@ -165,7 +181,7 @@ def build_rows(path: Path, noul_gold: str = "position") -> tuple[list[Row], str]
         split = first.get("internal_split") or first.get("split") or "train"
         rows.append(Row(row_id, split, q_type, state,
                         instructions, texts, gold, codes, source_class(row_id)))
-    return rows, split_field
+    return rows, split_field, masked
 
 
 def prompt_of(row: Row) -> str:
@@ -228,6 +244,14 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--plan-unpermuted-noul",
+        action="store_true",
+        help=(
+            "assert that the plan leaves criteria-bearing noul rows in their "
+            "original true/false order; required with --noul-gold position"
+        ),
+    )
+    parser.add_argument(
         "--stop-on-loss-rise",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -255,20 +279,24 @@ def main() -> int:
     device = f"cuda:{local_rank}"
     torch.manual_seed(42)
 
-    rows, split_field = build_rows(args.plan, args.noul_gold)
+    rows, split_field, masked = build_rows(
+        args.plan, args.noul_gold, args.plan_unpermuted_noul
+    )
     train_rows = [r for r in rows if r.split == "train"]
     val_rows = [r for r in rows if r.split == "val"]
     plan_sha = hashlib.sha256(args.plan.read_bytes()).hexdigest()
     eval_plan_sha = None
     if args.eval_plan is not None:
-        eval_rows, eval_split_field = build_rows(args.eval_plan, args.noul_gold)
+        eval_rows, eval_split_field, _ = build_rows(
+            args.eval_plan, args.noul_gold, args.plan_unpermuted_noul
+        )
         val_rows = [r for r in eval_rows if r.split == "val"]
         eval_plan_sha = hashlib.sha256(args.eval_plan.read_bytes()).hexdigest()
         print(f"rank {args.rank}: eval plan val rows {len(val_rows)} "
               f"split_field {eval_split_field} sha {eval_plan_sha[:16]}", flush=True)
     print(f"rank {args.rank}: rows {len(rows)} train {len(train_rows)} "
-          f"val {len(val_rows)} split_field {split_field} plan_sha {plan_sha[:16]}",
-          flush=True)
+          f"val {len(val_rows)} masked {masked} split_field {split_field} "
+          f"plan_sha {plan_sha[:16]}", flush=True)
 
     model, tokenizer = load_causal_lm(
         "Qwen/Qwen3-Reranker-4B", device=device, dtype=torch.bfloat16,
@@ -377,7 +405,8 @@ def main() -> int:
                "eval_plan": str(args.eval_plan) if args.eval_plan else None,
                "eval_plan_sha256": eval_plan_sha,
                "split_field": split_field, "noul_gold": args.noul_gold,
-               "epochs": args.epochs,
+               "plan_unpermuted_noul": args.plan_unpermuted_noul,
+               "masked_rows": masked, "epochs": args.epochs,
                "epoch_mean_loss": (sum(history) / len(history)) if history else None,
                "frozen_sample_ce": frozen_mean}
 
