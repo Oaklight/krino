@@ -35,7 +35,8 @@ Every number on the page is read from the committed result files:
 | Full judgement 127/200 at 150 forwards | `results/jevbench/clinc_judgement_full_Qwen_Qwen3-Reranker-4B.json` |
 | Single pass `K = 52`: 146/200 | `results/jevbench/clinc_k52_Qwen_Qwen3-Reranker-4B.json` |
 | Single pass `K = 80`: 125/200 | `results/jevbench/clinc_k80_Qwen_Qwen3-Reranker-4B.json` |
-| `p = 0.0525`, symbol-tier failures | `research/45-blocking-frontier.md`, `research/43-code-tiers.md` |
+| `p = 0.0525` for `b = 26` against `b = 32` | `research/45-blocking-frontier.md` |
+| Symbol-coded gold 86/200 vs 170/200 for a letter, `p = 1.0e-25` | `results/jevbench/clinc_code_tiers_Qwen_Qwen3-Reranker-4B.json` |
 
 ## Status
 
