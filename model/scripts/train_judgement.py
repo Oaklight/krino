@@ -585,8 +585,13 @@ def _run(args, rank: int, world_size: int) -> int:
             batch_loss = 0.0
             if not all_masked:
                 denominator = weights.sum().clamp_min(1.0).to(readout.device)
-                for prompts, weight in zip(chosen_rows, weights):
-                    raw = readout.row_margins(prompts)
+                # One prefix forward and one suffix forward cover the whole
+                # step, and one backward covers the step's rows.  The per-row
+                # path launched a forward and a backward per row and left the
+                # card idle between them (#299 throughput).
+                margin_rows = readout.step_margins(chosen_rows)
+                terms = []
+                for prompts, weight, raw in zip(chosen_rows, weights, margin_rows):
                     margin = scaling(raw)
                     labels = torch.tensor(
                         [p.label for p in prompts],
@@ -594,8 +599,7 @@ def _run(args, rank: int, world_size: int) -> int:
                         device=margin.device,
                     )
                     # Mean within the row (row_bce), then one over the number of
-                    # unmasked rows (denominator).  Backward per row frees the
-                    # prefix graph before the next row's forward.
+                    # unmasked rows (denominator).
                     term = (
                         row_bce(margin, labels) * weight.to(margin.device) / denominator
                     )
@@ -607,7 +611,9 @@ def _run(args, rank: int, world_size: int) -> int:
                         # the row adds no gradient.
                         masked += 1
                         continue
-                    term.backward()
+                    terms.append(term)
+                if terms:
+                    torch.stack(terms).sum().backward()
             # Data-parallel: every replica must reach the collective, so this
             # runs even when a rank contributed no gradient.
             distributed.average_gradients(opt_params, world_size)
