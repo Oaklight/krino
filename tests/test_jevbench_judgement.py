@@ -90,6 +90,39 @@ def test_label_polarity_names_the_forms_it_accepts():
         assert label_polarity(value) is None, value
 
 
+def test_no_scorer_carries_its_own_noul_label_parse():
+    # Milo's review on #378: six copies of the same expression, five of them in
+    # the eval scripts. One parser now, and a seventh copy fails here.
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    offenders = [
+        path.relative_to(root).as_posix()
+        for path in sorted((root / "model").rglob("*.py"))
+        if 'str(item.label).lower() == "true"' in path.read_text(encoding="utf-8")
+    ]
+    assert offenders == []
+
+
+def test_a_corpus_noul_label_survives_the_jsonl_round_trip_as_a_bool(tmp_path):
+    # Four scorers read noul labels straight from load_jsonl. That the label
+    # arrives as a bool is the invariant the shared parser is written against.
+    from data.format import TypedQuestion
+    from data.pipeline import load_jsonl, save_jsonl
+
+    item = TypedQuestion(
+        id="corpus:probe-00001", state="A situation.", source="corpus",
+        split="train", label=True,
+        question={"type": "noul", "instructions": "Does it hold?",
+                  "criteria": {"true": "Yes.", "false": "No."}},
+    )
+    path = tmp_path / "corpus.jsonl"
+    save_jsonl([item], path)
+    (loaded,) = load_jsonl(path)
+    assert loaded.label is True
+    assert label_polarity(loaded.label) is True
+
+
 def test_polarity_gold_reads_a_boolean_label():
     assert polarity_gold(_item("noul", None, True)) is True
     assert polarity_gold(_item("noul", None, False)) is False

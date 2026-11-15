@@ -30,32 +30,14 @@ POLARITY_TEMPLATE = "State: {state}\nQuestion: {instructions}\nAnswer:"
 YES = " yes"
 NO = " no"
 
-#: The words a noul label may use for each side.  JevBench stores ``"yes"`` and
-#: ``"no"`` as strings, so a comparison against ``"true"`` alone marks every one
-#: of its noul items negative (#299).
-TRUE_LABELS = frozenset({"true", "yes", "1", "y"})
-FALSE_LABELS = frozenset({"false", "no", "0", "n"})
-
-
-def label_polarity(label: Any) -> bool | None:
-    """Map a noul label to its polarity, or ``None`` when the form is unknown.
-
-    Accepts a bool, the integers 0 and 1, and :data:`TRUE_LABELS` /
-    :data:`FALSE_LABELS` in any case and with either quantity of surrounding
-    space.  The caller decides what an unknown form means: :func:`polarity_gold`
-    treats it as "not a polarity item" and :func:`candidates` raises, because a
-    silent default to negative is how the JevBench labels were inverted.
-    """
-    if isinstance(label, bool):
-        return label
-    if isinstance(label, int) and label in (0, 1):
-        return bool(label)
-    text = str(label).strip().lower()
-    if text in TRUE_LABELS:
-        return True
-    if text in FALSE_LABELS:
-        return False
-    return None
+# The label vocabulary lives in model/evaluation/labels.py so every scorer that
+# reads a noul label shares one parser (#378).
+from model.evaluation.labels import (  # noqa: E402,F401
+    FALSE_LABELS,
+    TRUE_LABELS,
+    label_polarity,
+    require_polarity,
+)
 
 
 def has_criteria(criteria: Any) -> bool:
@@ -98,12 +80,7 @@ def candidates(item: Any) -> tuple[list[str], int] | None:
             # No option text to judge; the caller reads polarity at ``Answer:``.
             return None
         texts = [text.strip() for text in noul_option_texts(criteria)]
-        positive = label_polarity(item.label)
-        if positive is None:
-            raise ValueError(
-                f"noul label {item.label!r} of item {getattr(item, 'id', '?')!r} "
-                "is neither true nor false; refusing to mark an option gold"
-            )
+        positive = require_polarity(item.label, getattr(item, "id", "?"))
         return texts, 0 if positive else 1
 
     if q_type == "choice":
