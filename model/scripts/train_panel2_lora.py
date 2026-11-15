@@ -77,25 +77,39 @@ def source_class(row_id: str) -> str:
     return name.split("-", 1)[0] if "-" in name else name
 
 
-def build_rows(path: Path) -> tuple[list[Row], str]:
+def build_rows(path: Path, noul_gold: str = "role") -> tuple[list[Row], str]:
     """Rows from a plan, and which field supplied their split.
 
     ``internal_split`` is the v3 field; the v2 plans predate it and carry only
-    ``split``. The reader records which one it used rather than inventing a
-    split or re-running the splitter (#379).
+    ``split``. The reader records which one it used, requires every record to
+    agree, and raises rather than counting a row without a split as train.
+
+    ``noul_gold`` says how a criteria-bearing noul row names its gold side.
+    ``role`` reads the option's own polarity marker, which survives an option
+    permutation; ``position`` is the legacy assumption that option 0 carries
+    the true wording, valid only for a plan whose options were never permuted.
     """
+    if noul_gold not in ("role", "position"):
+        raise ValueError(f"noul_gold must be 'role' or 'position', not {noul_gold!r}")
     grouped: dict[str, list[dict]] = {}
     order: list[str] = []
-    split_field = "internal_split"
+    split_field: str | None = None
     with path.open(encoding="utf-8") as handle:
         for line in handle:
             if not line.strip():
                 continue
             record = json.loads(line)
             row_id = record["row_id"]
-            if not grouped:
-                split_field = ("internal_split" if "internal_split" in record
-                               else "split")
+            field = ("internal_split" if "internal_split" in record
+                     else "split" if "split" in record else None)
+            if field is None:
+                raise ValueError(f"record {row_id!r} carries neither split field")
+            if split_field is None:
+                split_field = field
+            elif field != split_field:
+                raise ValueError(
+                    f"plan mixes {split_field!r} and {field!r} split fields"
+                )
             if row_id not in grouped:
                 grouped[row_id] = []
                 order.append(row_id)
@@ -112,10 +126,28 @@ def build_rows(path: Path) -> tuple[list[Row], str]:
         else:
             state, instructions = parse_prompt_text(first["prefix"])
             if q_type == "noul":
-                positive_index = next(
-                    r["option_index"] for r in records if r["label"] == 1
-                )
-                texts, gold = ["no", "yes"], 1 if positive_index == 0 else 0
+                if len(records) == 1:
+                    texts, gold = ["no", "yes"], 1 if first["label"] == 1 else 0
+                else:
+                    gold_record = [r for r in records if r["label"] == 1]
+                    if len(gold_record) != 1:
+                        raise ValueError(
+                            f"noul row {row_id!r} has {len(gold_record)} gold options"
+                        )
+                    gold_record = gold_record[0]
+                    if noul_gold == "role":
+                        role = (gold_record.get("polarity")
+                                or gold_record.get("option_role"))
+                        if role not in ("true", "false"):
+                            raise ValueError(
+                                f"noul row {row_id!r} has no polarity marker on "
+                                "its gold option; use --noul-gold position only for "
+                                "an unpermuted plan"
+                            )
+                        texts, gold = ["no", "yes"], 1 if role == "true" else 0
+                    else:
+                        texts = ["no", "yes"]
+                        gold = 1 if gold_record["option_index"] == 0 else 0
             else:
                 texts = [option_of(r["suffix"]) for r in records]
                 gold = next(i for i, r in enumerate(records) if r["label"] == 1)
@@ -175,7 +207,21 @@ def main() -> int:
         default=None,
         help="score this plan's val rows instead of the training plan's",
     )
-    parser.add_argument("--stop-on-loss-rise", action="store_true", default=True)
+    parser.add_argument(
+        "--noul-gold",
+        choices=["role", "position"],
+        default="role",
+        help=(
+            "how a criteria-bearing noul row names its gold side: role reads the "
+            "option's polarity marker and survives permutation; position assumes "
+            "option 0 is the true wording and is valid only for an unpermuted plan"
+        ),
+    )
+    parser.add_argument(
+        "--stop-on-loss-rise",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--epochs", type=int, default=1)
@@ -198,13 +244,13 @@ def main() -> int:
     device = f"cuda:{args.rank}"
     torch.manual_seed(42)
 
-    rows, split_field = build_rows(args.plan)
+    rows, split_field = build_rows(args.plan, args.noul_gold)
     train_rows = [r for r in rows if r.split == "train"]
     val_rows = [r for r in rows if r.split == "val"]
     plan_sha = hashlib.sha256(args.plan.read_bytes()).hexdigest()
     eval_plan_sha = None
     if args.eval_plan is not None:
-        eval_rows, eval_split_field = build_rows(args.eval_plan)
+        eval_rows, eval_split_field = build_rows(args.eval_plan, args.noul_gold)
         val_rows = [r for r in eval_rows if r.split == "val"]
         eval_plan_sha = hashlib.sha256(args.eval_plan.read_bytes()).hexdigest()
         print(f"rank {args.rank}: eval plan val rows {len(val_rows)} "
@@ -333,7 +379,6 @@ def main() -> int:
 
 def evaluate_jevbench(model, tokenizer, code_ids, device):
     """The 231 public items, natural and reversed option order, per-item logits."""
-    sys.path.insert(0, "/home/pding/scratch/judgement-299")
     from data.pipeline import load_jevbench
     from model.evaluation.panel2 import options_for
 

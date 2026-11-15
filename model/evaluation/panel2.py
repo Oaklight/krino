@@ -26,6 +26,8 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable, Sequence
 from typing import Any
 
+from model.evaluation.polarity import require_polarity
+
 CODES = (
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz"
@@ -210,11 +212,7 @@ def options_for(item: Any) -> tuple[list[str], int] | None:
     q_type = question.get("type", "noul")
 
     if q_type == "noul":
-        label = item.label
-        if isinstance(label, bool):
-            positive = label
-        else:
-            positive = str(label).strip().lower() in ("true", "yes", "1", "y")
+        positive = require_polarity(item.label, getattr(item, "id", "?"))
         return ["no", "yes"], 1 if positive else 0
 
     if q_type == "choice":
