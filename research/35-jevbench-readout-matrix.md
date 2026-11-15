@@ -383,6 +383,29 @@ Against the six base rows, Phi-4-mini and the reranker separate from every row a
   objective, not re-prompting a model differently.** The one thing the prompt
   does by itself is redistribute accuracy across subtasks.
 
+## Figure
+
+`figures/readout-taxonomy/readout-taxonomy.pdf` maps the designs behind these
+cells; build it with `make -C research/figures/readout-taxonomy`.
+
+> **Figure 1. Where does the per-option score come from? Eight readout
+> designs.** Pointwise designs score one candidate per sequence, so candidates
+> never interact: 1 (full-option likelihood) and R (the reranker). Listwise
+> designs put every candidate in one sequence: 2 (vocabulary single-token
+> code), 3a (last-position head), 3b (pointer / cross-attention), 3c
+> (per-option marker) and 4 (diffusion fill). D1 is a proposed
+> single-read-position variant, drawn dashed and held. The bottom panel places
+> the project: Krino v3's residual scorer was pointwise, and Krino v4 is 3c ---
+> one marker read per option with a softmax over the options. The cells quoted
+> there are the JevBench-public 231-row measurements of research/38:
+> per-option judgement (A) 150/231 = 64.9%, listwise judgement J-R1 137/231 =
+> 59.3% (exact p = 0.14 against A, unresolved), and the full-mask variant J-R2
+> 74/231 = 32.0%, at chance. The taxonomy is a design map, not a measurement of
+> every design drawn: the accuracies belong to the cells measured in this note
+> and in research/38. External design names on the panels (Oumi, Dibia, Drex,
+> H2O-Lightning, "Releasing the Inner Jev", Kev, djev) identify the published
+> design each panel sketches and are not reproductions.
+
 ## Limits
 
 - 231 predictions over 195 questions; 219 informative ones once the adequacy
