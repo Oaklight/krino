@@ -26,7 +26,7 @@ milestones.
 | P4 | 2026-11-01 .. 11-05 | v3 lands, v4 starts | 09, 10, 11, 12, 13, 14, 23, 24 |
 | P5 | 2026-11-06 .. 11-08 | canonical corpus, v4 infrastructure, zero-shot, readout matrix | 25–37, 235, 247, 314 |
 | P6 | 2026-11-09 .. 11-10 | judgement, panel 2, code space, blocking, position | 38–46 |
-| P7 | 2026-11-11 .. 11-15 | consolidation, corpus v2, readout training | 47, 48 |
+| P7 | 2026-11-11 .. 11-15 | consolidation, corpus v2, readout training | 47, 48, 49 |
 
 ## Catalogue
 
@@ -132,6 +132,7 @@ Clef analysis, later written up as `08-clef-analysis.md`.
 |---|---|---|---|
 | `47-h2o-lightning.md` | 2026-11-15 | H2O-Lightning-4B scored on our instruments (#327) | current |
 | `48-near-duplicate-remediation.md` | 2026-11-15 | the per-row near-duplicate policy and canonical corpus v2 (#235 follow-up) | current |
+| `49-judgement-readout-arm.md` | 2026-11-15 | the judgement-objective LoRA arm: a significant JevBench regression, calibration excluded | current |
 
 ## Numbering collisions
 
