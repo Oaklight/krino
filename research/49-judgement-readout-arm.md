@@ -1,6 +1,6 @@
 # The judgement-readout arm regresses JevBench — 2026-11-15
 
-Status: measured, one seed, one epoch. The adapted arm is a significant regression on the local 231-item JevBench proxy, and the calibration explanation is excluded by construction. The 20k-versus-full-corpus comparison is not measured yet; its placeholder states what it must report.
+Status: measured, one seed, one epoch. On the full corpus the adapted arm is a significant regression on the local 231-item JevBench proxy, and the calibration explanation is excluded by construction. A 20,000-row subset arm is 15 items better and does not regress, but it differs in both data volume and step count, so that contrast is confounded.
 
 ## Arm
 
@@ -10,7 +10,7 @@ Status: measured, one seed, one epoch. The adapted arm is a significant regressi
 | adapter | LoRA on the last 8 blocks, rank 16, alpha 32, targets `q_proj k_proj v_proj o_proj` |
 | readout | per-option yes/no margin, `log P(" yes") - log P(" no")` through a learned scale and bias |
 | loss | row-normalised BCE: each row's option losses are averaged within the row, then across rows |
-| data | canonical corpus, `answerable=false` masked, 166,208 train rows, one epoch, 2,608 steps |
+| data | canonical corpus, `answerable=false` masked, 166,208 train rows, one epoch, 2,597 steps |
 | batch | 8 rows per step per rank, 8 ranks |
 | length | at most 4,096 tokens per row and 20 options per row |
 | seed | 42 (training and torch seed) |
@@ -27,9 +27,51 @@ Every number below belongs to this arm unless the table names the frozen control
 | val, choice | 15,660 | 0.3860 | 0.6691 | 0.1366 | 0.4683 | 0.1896 |
 | val, score | 5,882 | 0.4315 | 0.5184 | 0.0826 | 0.3610 | 0.2278 |
 
-The train loss is the mean over the 2,608 steps; 2,947 rows were masked by the answerable flag and 0 were skipped. Accuracy is argmax over each item's options. The noul cell is above its 0.5 chance level. The score cell is not interpretable against chance without the level count. The run's by-source breakdown needs a pooling step before it can be read. The row id carries the exact source only for ids ending in `-<split>-<digits>`; synthetic, `typed_decisions` and apigen rows are identified only by prefix, so their cells are prefix pools. The pooling is additive over the run's shards, so a pooled table would reproduce.
+The train loss is the mean over the 2,597 steps; 2,947 rows were masked by the answerable flag and 0 were skipped. Accuracy is argmax over each item's options. The noul cell is above its 0.5 chance level. The score cell is not interpretable against chance without the level count. The run's by-source breakdown is pooled from C's eight eval shards by source prefix; the shards group benchmark ids exactly (ids ending `-<split>-NNN`) and carry one key per row for synthetic, apigen and `typed_decisions` rows, whose ids end in a descriptor. Pooling is additive over the eight shards. Re-aggregating the shards reproduces C's validation totals (n = 42,667, accuracy 0.6675, loss 0.47426), which is the check that the table is C's split.
 
-The per-source table is pending trainer's run-level eval report. Two procedural caveats will apply to it. Only families with at least 90 rows are shown, because the rest are too thin to read. And a benchmark source with a large option set is confounded with that option set, so its cell is not a pure source effect.
+Families with at least 90 rows, accuracy / loss / ECE / rows:
+
+| source | family | acc | loss | ECE | rows |
+|---|---|---:|---:|---:|---:|
+| synthetic | spatial_reasoning | 0.5855 | 0.54954 | 0.0872 | 2,878 |
+| synthetic | multi_hop_reasoning | 0.7156 | 0.47839 | 0.1462 | 2,103 |
+| synthetic | navigation_planning | 0.6366 | 0.50806 | 0.1661 | 2,083 |
+| synthetic | education_assessment | 0.6137 | 0.52177 | 0.1384 | 1,952 |
+| synthetic | safety_moderation | 0.6040 | 0.52855 | 0.1715 | 1,884 |
+| synthetic | game_strategy | 0.6249 | 0.51420 | 0.1420 | 1,738 |
+| synthetic | content_analysis | 0.7109 | 0.44626 | 0.1977 | 1,705 |
+| synthetic | adversarial_inference | 0.7440 | 0.42306 | 0.2132 | 1,676 |
+| synthetic | financial_analysis | 0.6398 | 0.53704 | 0.1140 | 1,663 |
+| synthetic | sequential_action | 0.6718 | 0.48292 | 0.1868 | 1,639 |
+| synthetic | resource_management | 0.6610 | 0.48747 | 0.1374 | 1,602 |
+| synthetic | product_categorization | 0.8465 | 0.27827 | 0.2508 | 1,570 |
+| synthetic | numerical_reasoning | 0.6015 | 0.53976 | 0.1523 | 1,566 |
+| synthetic | passage_decision | 0.7562 | 0.42272 | 0.2156 | 1,530 |
+| typed decisions | typed_decisions | 0.4878 | 0.60918 | 0.0685 | 1,476 |
+| synthetic | code_review | 0.7128 | 0.44614 | 0.1972 | 1,466 |
+| synthetic | academic_reasoning | 0.7217 | 0.41790 | 0.2142 | 1,398 |
+| synthetic | multi_agent_coordination | 0.6548 | 0.50417 | 0.2010 | 1,295 |
+| synthetic | scientific_reasoning | 0.7002 | 0.45280 | 0.2000 | 1,254 |
+| synthetic | logical_inference | 0.7102 | 0.42205 | 0.2467 | 1,142 |
+| synthetic | commonsense_decision | 0.6655 | 0.47433 | 0.1788 | 1,139 |
+| synthetic | medical_triage | 0.6922 | 0.43217 | 0.1993 | 952 |
+| benchmark | swag | 0.4277 | 0.54565 | 0.1587 | 816 |
+| synthetic | legal_judgment | 0.6295 | 0.50183 | 0.1549 | 556 |
+| benchmark | hellaswag | 0.5803 | 0.46716 | 0.1330 | 498 |
+| benchmark | agnews | 0.6839 | 0.36088 | 0.0895 | 386 |
+| benchmark | multirc | 0.7826 | 0.47386 | 0.3488 | 299 |
+| benchmark | banking77 | 0.2891 | 0.08626 | 0.2668 | 294 |
+| benchmark | tabfact | 0.8481 | 0.42415 | 0.1359 | 283 |
+| synthetic | long_document | 0.6333 | 0.51422 | 0.1313 | 240 |
+| benchmark | fever | 0.6575 | 0.49008 | 0.1191 | 219 |
+| benchmark | piqa | 0.6348 | 0.71951 | 0.2048 | 178 |
+| benchmark | logiqa | 0.3594 | 0.56171 | 0.0701 | 128 |
+| benchmark | stsb | 0.2975 | 0.40560 | 0.0541 | 121 |
+| benchmark | winogrande | 0.5500 | 0.69918 | 0.0985 | 100 |
+| benchmark | yelp | 0.4624 | 0.40597 | 0.1781 | 93 |
+| benchmark | apigen | 0.882 | — | — | 2,483 |
+
+Two caveats apply. banking77's 0.289 is confounded with its 80-option set, so it is not a pure source effect. And the synthetic families are 82.1% of the validation rows, so per-source rows are not equal-weight evidence.
 
 ## JevBench public 231: frozen against adapted
 
@@ -39,6 +81,8 @@ Both columns use the same backbone and readout. `frozen` is the unchanged Qwen3-
 |---|---:|---:|---:|---:|---:|---:|
 | frozen | 149/231 | 0.6450 | 0.4798 | 1.0000 | 0.4324 | 0.7361 |
 | adapted | 135/231 | 0.5844 | 0.3910 | 1.0000 | 0.3514 | 0.6667 |
+
+Hard is 48 of 111 against 39 of 111; original is 53 of 72 against 48 of 72.
 
 Paired flips, frozen to adapted, exact two-sided McNemar on the paired items:
 
@@ -80,24 +124,36 @@ The marker-token ablation (#362, merged as #372) trains six heads identical exce
 
 ## Throughput
 
-The per-row loop idled the card: mean utilization 20.7%, with 57% of samples at zero and 25% at or above 50%, at 3.36 rows/s cold and 9.54 rows/s warm. Batching the chunked forwards raised the real full-corpus epoch to 52.6 rows/s at 8 ranks over the 166,208 rows and 2,608 steps. Data-parallel scaling is 7.8x from one rank to eight once the shapes are warm (9.54 to 74.37 rows/s, with per-step cost near 0.86 s at every world size); the earlier 1.0x reading was cold-shape compilation per process, not a scaling limit. Units are rows per second, one row being one judgement item with its option set.
+The per-row loop was launch-bound: 3.36 rows/s cold and 9.54 rows/s warm. Batching the chunked forwards raised the full-corpus epoch to 52.6 rows/s at 8 ranks over the 166,208 rows and 2,597 steps. A separate warm fixed-row scaling probe, not the epoch run, gives 7.8x from one rank to eight (9.54 to 74.37 rows/s, with per-step cost near 0.86 s at every world size); the earlier 1.0x reading was cold-shape compilation per process, not a scaling limit. A 20.7% mean card utilisation with 57% of samples at zero was reported outside the run and is unverified, so it is not used. Units are rows per second, one row being one judgement item with its option set.
 
-## Pending: 20k against the full corpus
+## 20k subset against the full corpus
 
-Not measured. The 20k arm draws a deterministic 20,000-row subset and runs one epoch, about 313 steps at 64 rows per step; the full arm is 2,608 steps. The comparison is therefore confounded by optimizer steps (about 8.3x) at the same one-epoch schedule, and no difference may be attributed to corpus size alone without both step counts. Evidence required before any conclusion: the same plan, seed, learning rate and batch; both arms scored through the corrected label path; JevBench paired flips against the frozen arm with the exact McNemar test and n; validation loss, accuracy and ECE; wall time. Until then this section is unverified.
+Arm A draws a deterministic 20,000-row subset and runs one epoch in 312 logged steps; arm C is the full corpus at 2,597 steps. Labels are corrected throughout, and both arms are scored against the same frozen baseline.
+
+| arm | JevBench correct | accuracy | cc | easy | hard | original | val loss | val accuracy |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| A, 20k | 150/231 | 0.6494 | 0.4862 | 47/48 | 48/111 | 55/72 | 0.51037 | 0.62730 |
+| C, full | 135/231 | 0.5844 | 0.3910 | 48/48 | 39/111 | 48/72 | 0.47426 | 0.66750 |
+
+A's own frozen pass reproduces 149/231 exactly, so the contrast is not a scoring artefact. Paired against the frozen arm, A is net +1 with exact McNemar p = 1.0; C is net -14 with p = 0.0161.
+
+By question type the advantage is in choice: A is choice 92/139, noul 48/74, score 10/18; C is choice 80/139, noul 45/74, score 10/18; the frozen readout is choice 89/139, noul 47/74, score 13/18 in both runs. The adapter therefore damages the score head at either data size, 10/18 against 13/18, and that is a separate finding.
+
+The confound is explicit: 312 versus 2,597 optimizer steps, so the difference is data volume confounded with step count and does not isolate a data effect. What the comparison shows is the direction: the smaller, shorter arm is 15 items better, and it is the only one of the two not below its own frozen baseline. More data and more steps together made the result worse, which is evidence against a pure training-length artefact but is not proof.
+
+On distribution, A fits the training distribution worse (validation loss 0.51037 against 0.47426) and still transfers better, so the effect is not explained by fit. Status: measured; neither run log is committed.
 
 ## Provenance
 
 | number group | status | source |
 |---|---|---|
-| arm definition, train loss, validation table, mechanism gaps, ECE, throughput | measured; run log not committed | training run of 2026-11-15, seed 42 |
-| JevBench corrected cells, flips, decisive subset, by-type cells | measured; correction committed, per-item records not committed | #378, recomputed from the run's per-item records |
-| by-source table | pending | awaiting trainer's run-level eval report for run C (166,208 rows, 2,608 steps, mean loss 0.48022) |
+| arm definition, train loss, validation table, by-source table, mechanism gaps, ECE, throughput | measured; run directory and eight eval shards on the run host, not committed | C, 2026-11-15, seed 42: 166,208 rows, 2,597 steps, mean train loss 0.48022 |
+| JevBench corrected cells, flips, decisive subset, by-type cells | measured; correction committed, per-item margins retained on the run host, not committed | #378, recomputed from the run's per-item records |
 | marker-token ablation | measured; committed | #372 and `research/44-marker-token-ablation.md` |
-| 20k against full | pending | not measured |
+| arm A, 20k subset | measured; run directory on the run host, not committed | A, 2026-11-15, seed 42: 20,000 rows, 312 steps |
 
-Committing the run's validation JSON and per-item records in a follow-up would give the first two rows artifact provenance. The repository currently holds the method for the correction, not the run's own records.
+The merged validation report is about 8 MB. JevBench per-item margins are retained; validation per-item margins are not. Committing the validation JSON and the merged report in a follow-up would give the first two rows artifact provenance. The repository currently holds the method for the correction, not the run's own records.
 
 ## Scope
 
-One backbone, one adapter position, one readout, one corpus, one seed, one epoch. The JevBench number is the local 231-item proxy, not the official Intelligence metric. Nothing here measures a second seed, a different adapter position, a different corpus size, or a trained head on top of the adapted backbone.
+One backbone, one adapter position, one readout, two corpus sizes, one seed, one epoch. The JevBench number is the local 231-item proxy, not the official Intelligence metric. Nothing here measures a second seed, a different adapter position, or a trained head on top of the adapted backbone. The corpus-size contrast is the confounded A-against-C comparison of the previous section, not a data-effect estimate.
