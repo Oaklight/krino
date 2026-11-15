@@ -71,7 +71,7 @@ def test_noul_gold_reads_the_option_role_not_its_position(tmp_path):
         _record("corpus:b", 1, 1, "noul", PREFIX, "It holds.", 2,
                 polarity="true"),
     ]
-    rows, _ = build_rows(_write(tmp_path, permuted))
+    rows, _ = build_rows(_write(tmp_path, permuted), noul_gold="role")
     (row,) = rows
     assert row.texts == ["no", "yes"]
     assert row.gold == 1, "the gold option is the true wording, so 'yes' is gold"
@@ -82,26 +82,29 @@ def test_noul_gold_reads_the_option_role_not_its_position(tmp_path):
         _record("corpus:c", 1, 0, "noul", PREFIX, "It holds.", 2,
                 polarity="true"),
     ]
-    rows, _ = build_rows(_write(tmp_path, negated, "plan2.jsonl"))
+    rows, _ = build_rows(_write(tmp_path, negated, "plan2.jsonl"),
+                         noul_gold="role")
     assert rows[0].gold == 0
 
 
-def test_noul_role_mode_refuses_a_plan_without_the_marker(tmp_path):
+def test_the_default_reads_position_and_says_so(tmp_path):
+    # The v3 plan keeps criteria-bearing noul rows unpermuted, so position is
+    # the default; the payload records which mode produced the gold.
     records = [
         _record("corpus:d", 0, 1, "noul", PREFIX, "It holds.", 2),
         _record("corpus:d", 1, 0, "noul", PREFIX, "It does not.", 2),
     ]
-    with pytest.raises(ValueError, match="no polarity marker"):
-        build_rows(_write(tmp_path, records))
+    rows, _ = build_rows(_write(tmp_path, records))
+    assert rows[0].gold == 1
 
 
-def test_noul_position_mode_reads_the_legacy_unpermuted_order(tmp_path):
+def test_noul_role_mode_refuses_a_plan_without_the_marker(tmp_path):
     records = [
         _record("corpus:e", 0, 1, "noul", PREFIX, "It holds.", 2),
         _record("corpus:e", 1, 0, "noul", PREFIX, "It does not.", 2),
     ]
-    rows, _ = build_rows(_write(tmp_path, records), noul_gold="position")
-    assert rows[0].gold == 1
+    with pytest.raises(ValueError, match="no polarity marker"):
+        build_rows(_write(tmp_path, records), noul_gold="role")
 
 
 def test_criteria_less_noul_row_reads_its_polarity_from_the_single_prompt(tmp_path):

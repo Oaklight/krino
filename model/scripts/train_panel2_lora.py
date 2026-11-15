@@ -80,7 +80,7 @@ def source_class(row_id: str) -> str:
     return name.split("-", 1)[0] if "-" in name else name
 
 
-def build_rows(path: Path, noul_gold: str = "role") -> tuple[list[Row], str]:
+def build_rows(path: Path, noul_gold: str = "position") -> tuple[list[Row], str]:
     """Rows from a plan, and which field supplied their split.
 
     ``internal_split`` is the v3 field; the v2 plans predate it and carry only
@@ -88,9 +88,11 @@ def build_rows(path: Path, noul_gold: str = "role") -> tuple[list[Row], str]:
     agree, and raises rather than counting a row without a split as train.
 
     ``noul_gold`` says how a criteria-bearing noul row names its gold side.
-    ``role`` reads the option's own polarity marker, which survives an option
-    permutation; ``position`` is the legacy assumption that option 0 carries
-    the true wording, valid only for a plan whose options were never permuted.
+    ``position`` is the default and assumes option 0 carries the true wording;
+    it is valid only for a plan whose criteria-bearing noul rows are never
+    permuted, which is the v3 plan's contract.  ``role`` reads the option's
+    polarity marker and survives permutation, and is for a plan built through
+    ``build_prompts``, which writes that field.
     """
     if noul_gold not in ("role", "position"):
         raise ValueError(f"noul_gold must be 'role' or 'position', not {noul_gold!r}")
@@ -218,7 +220,7 @@ def main() -> int:
     parser.add_argument(
         "--noul-gold",
         choices=["role", "position"],
-        default="role",
+        default="position",
         help=(
             "how a criteria-bearing noul row names its gold side: role reads the "
             "option's polarity marker and survives permutation; position assumes "
