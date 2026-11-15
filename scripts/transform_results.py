@@ -427,6 +427,16 @@ def build_jevbench_run(filepath: Path) -> dict | None:
     if head_version:
         display_name = add_head_version(display_name, head_version)
 
+    config = raw.get("config") or {}
+    prompt_order = config.get("prompt_order")
+    readout_detail = provenance.get("readout")
+    if prompt_order and prompt_order not in ("shipped", "default"):
+        readout_detail = (
+            f"{readout_detail}; prompt order: {prompt_order}"
+            if readout_detail
+            else f"prompt order: {prompt_order}"
+        )
+
     return {
         "run_id": file_run_id or f"jevbench-{stem}",
         "model": {"name": display_name, "params": params, "type": model_type},
@@ -440,7 +450,8 @@ def build_jevbench_run(filepath: Path) -> dict | None:
             else "zero-shot"
         ),
         "readout": readout,
-        "readout_detail": provenance.get("readout"),
+        "readout_detail": readout_detail,
+        "prompt_order": prompt_order,
         "source_file": source_file_label(filepath),
         "benchmark": "jevbench",
         "n": raw.get("n") or overall.get("total", 0),
@@ -473,7 +484,16 @@ def jevbench_source_files() -> list[Path]:
             if (
                 filepath.stem in JEVBENCH_META
                 or filepath.stem.startswith("logit_")
-                or filepath.stem.startswith(("panel2_Qwen", "continuation_", "judgement_"))
+                or filepath.stem.startswith(
+                    (
+                        "panel2_Qwen",
+                        "continuation_",
+                        "judgement_",
+                        "set_head_jevbench_",
+                        "mass_",
+                        "cascade_",
+                    )
+                )
             ):
                 paths.append(filepath)
     if LOGIT_PROV_DIR.exists():
@@ -482,16 +502,375 @@ def jevbench_source_files() -> list[Path]:
     return paths
 
 
+def _counted(summary: dict) -> dict[str, dict]:
+    """Round one ``{correct, total, accuracy}`` block for the dashboard."""
+    return {
+        key: {
+            "accuracy": round(value["accuracy"], 4),
+            "correct": value["correct"],
+            "total": value["total"],
+        }
+        for key, value in summary.items()
+    }
+
+
+def _jevbench_row(
+    filepath: Path,
+    *,
+    run_id: str,
+    name: str,
+    params: str,
+    model_type: str,
+    model_id: str | None,
+    method: str,
+    readout: str,
+    readout_detail: str,
+    summary: dict,
+) -> dict:
+    """Build one 231-item row from a summary the file already computed."""
+    overall = summary["overall"]
+    return {
+        "run_id": run_id,
+        "model": {"name": name, "params": params, "type": model_type},
+        "model_id": model_id,
+        "head_version": None,
+        "backbone_model_id": None,
+        "code_commit": None,
+        "method": method,
+        "readout": readout,
+        "readout_detail": readout_detail,
+        "source_file": source_file_label(filepath),
+        "benchmark": "jevbench",
+        "n": overall["total"],
+        "accuracy": round(overall["accuracy"], 6),
+        "correct": overall["correct"],
+        "total": overall["total"],
+        "by_type": _counted(summary.get("by_type", {})),
+        "by_tier": _counted(summary.get("by_tier", {})),
+        "latency_ms": None,
+    }
+
+
+def build_extra_jevbench_runs(filepath: Path) -> list[dict]:
+    """Rows for 231-item cells whose files do not use the summary shape.
+
+    Three instruments live in their own schemas: the set head (arm D), the
+    attention-mass re-read, and the cascade. Each row copies the counts the file
+    recorded and names the readout that produced them. A file that is not one
+    of these returns an empty list and falls through to
+    ``build_jevbench_run``.
+    """
+    stem = filepath.stem
+    raw = json.loads(filepath.read_text())
+
+    if stem.startswith("set_head_jevbench_"):
+        natural = raw["natural"]
+        panel2 = (raw.get("against_panel2") or {}).get("natural", {})
+        summary = {
+            "overall": {
+                "accuracy": natural["accuracy"],
+                "correct": natural["correct"],
+                "total": natural["items"],
+            },
+            "by_type": natural.get("by_type", {}),
+            "by_tier": natural.get("by_tier", {}),
+        }
+        detail = (
+            "one forward; set transformer over the K option states, PMA pooling, "
+            "dot product. Natural order "
+            f"{natural['correct']}/{natural['items']}; panel 2 on the same items "
+            f"{panel2.get('panel2_correct')}/{panel2.get('items')} "
+            f"({panel2.get('difference_pp', 0):+.2f} pp)."
+        )
+        return [
+            _jevbench_row(
+                filepath,
+                run_id=f"jevbench-{stem}",
+                name="Qwen/Qwen3-Reranker-4B (set head, arm D)",
+                params="4B",
+                model_type="reranker",
+                model_id=(raw.get("config") or {}).get("backbone"),
+                method="trained-head",
+                readout="set-head",
+                readout_detail=detail,
+                summary=summary,
+            )
+        ]
+
+    if stem.startswith("mass_"):
+        metrics = raw["metrics"]
+        panel2 = metrics["panel2_eager"]["natural"]["summary"]["overall"]
+        rows = []
+        for key, readout, label in (
+            ("mass", "attention-mass", "attention mass"),
+            ("combined", "attention-mass+code", "attention mass + code logit"),
+        ):
+            summary = metrics[key]["natural"]["summary"]
+            detail = (
+                f"{label} re-read of the same panel-2 prompt; panel-2 eager "
+                f"{panel2['correct']}/{panel2['total']} "
+                f"({panel2['accuracy']:.1%}) on this file's own cells."
+            )
+            rows.append(
+                _jevbench_row(
+                    filepath,
+                    run_id=f"jevbench-{key}_{stem}",
+                    name=f"Qwen/Qwen3-Reranker-4B ({label})",
+                    params="4B",
+                    model_type="reranker",
+                    model_id=(raw.get("_provenance") or {}).get("model_id"),
+                    method="zero-shot",
+                    readout=readout,
+                    readout_detail=detail,
+                    summary=summary,
+                )
+            )
+        return rows
+
+    if stem.startswith("cascade_"):
+        cell = raw["jevbench"]
+        result = cell["result"]
+        summary = {
+            "overall": {
+                "accuracy": result["accuracy"],
+                "correct": result["correct"],
+                "total": result["items"],
+            },
+            "by_type": {
+                name: {
+                    "accuracy": value["correct"] / value["items"],
+                    "correct": value["correct"],
+                    "total": value["items"],
+                }
+                for name, value in result.get("by_type", {}).items()
+            },
+            "by_tier": {},
+        }
+        detail = (
+            f"dev-selected threshold {cell['selected_threshold']}; "
+            f"{result['triggered']} items triggered; "
+            f"{result['mean_forwards']:.2f} forwards/item. Equals the base "
+            "panel-2 cell because no item triggered."
+        )
+        return [
+            _jevbench_row(
+                filepath,
+                run_id=f"jevbench-{stem}",
+                name="Qwen/Qwen3-Reranker-4B (cascade, arm F)",
+                params="4B",
+                model_type="reranker",
+                model_id=None,
+                method="zero-shot",
+                readout="cascade",
+                readout_detail=detail,
+                summary=summary,
+            )
+        ]
+
+    return []
+
+
+def _probe_row(
+    filepath: Path,
+    *,
+    run_id: str,
+    instrument: str,
+    dataset: str,
+    correct: int,
+    total: int,
+    metric: str,
+    value: float,
+    detail: str,
+) -> dict:
+    return {
+        "run_id": run_id,
+        "instrument": instrument,
+        "dataset": dataset,
+        "n": total,
+        "metric": metric,
+        "value": round(value, 6),
+        "correct": correct,
+        "total": total,
+        "detail": detail,
+        "source_file": source_file_label(filepath),
+    }
+
+
+def build_probe_run(filepath: Path) -> dict | None:
+    """One headline row for a probe that is not a 231-item JevBench cell.
+
+    These instruments answer different questions on different item sets. The
+    row names the dataset and the item count so it cannot be read as a
+    JevBench row.
+    """
+    stem = filepath.stem
+    raw = json.loads(filepath.read_text())
+
+    if stem.startswith("clinc_blocking_shuffle_"):
+        # The control, not the frontier. The frontier row names the block size.
+        return None
+
+    if stem.startswith("clinc_blocking_"):
+        best = raw["by_block_size"]["26"]
+        items = raw["items"]
+        return _probe_row(
+            filepath,
+            run_id=f"probe-{stem}",
+            instrument="blocking",
+            dataset="CLINC150",
+            correct=best["scheme_b_correct"],
+            total=items,
+            metric="accuracy",
+            value=best["scheme_b_correct"] / items,
+            detail=(
+                "scheme B over six blocks of 26 (7 forwards/item); scheme A "
+                f"{best['scheme_a_correct']}/{items}, scheme C "
+                f"{best['scheme_c_correct']}/{items}; full judgement 127/200 at "
+                "150 forwards."
+            ),
+        )
+
+    if stem.startswith("clinc_judgement_full_"):
+        return _probe_row(
+            filepath,
+            run_id=f"probe-{stem}",
+            instrument="judgement, full list",
+            dataset="CLINC150",
+            correct=raw["correct"],
+            total=raw["items"],
+            metric="accuracy",
+            value=raw["accuracy"],
+            detail="per-option judgement over all 150 options; 150 forwards/item.",
+        )
+
+    for prefix, key, dataset in (
+        ("code_tiers_", "banking77", "Banking77"),
+        ("clinc_code_tiers_", "clinc150", "CLINC150"),
+    ):
+        if stem.startswith(prefix):
+            tier = raw[key]["tiers"]["shipped_symbols"]
+            return _probe_row(
+                filepath,
+                run_id=f"probe-{stem}",
+                instrument="code tiers",
+                dataset=dataset,
+                correct=tier["gold_in_tier_correct"],
+                total=tier["items"],
+                metric="accuracy",
+                value=tier["gold_in_tier_accuracy"],
+                detail=(
+                    "shipped symbol tier against the letter-gold control "
+                    f"{tier['letter_gold_correct']}/{tier['items']} "
+                    f"({tier['difference_pp']:+.1f} pp, p={tier['exact_p']:.1e}); "
+                    "all four tiers rejected."
+                ),
+            )
+
+    if stem.startswith("position_"):
+        rows = [row for row in raw["rows"] if row["cell"] == "natural_k52"]
+        correct = sum(1 for row in rows if row["correct"])
+        dataset = "Banking77" if "banking77" in stem else "CLINC150"
+        last = [row for row in rows if row["natural_bucket"] == 4]
+        last_correct = sum(1 for row in last if row["correct"])
+        if dataset == "Banking77":
+            mechanism = "the tail follows the gold's class rank, not the display position"
+        else:
+            mechanism = "the tail follows the display position"
+        return _probe_row(
+            filepath,
+            run_id=f"probe-{stem}",
+            instrument="position",
+            dataset=dataset,
+            correct=correct,
+            total=len(rows),
+            metric="accuracy",
+            value=correct / len(rows),
+            detail=(
+                f"K=52 natural cell; {mechanism}. Last natural bucket "
+                f"{last_correct}/{len(last)}."
+            ),
+        )
+
+    for prefix, key, dataset in (
+        ("panel2_k80_", "banking77", "Banking77"),
+        ("clinc_k80_", "clinc150", "CLINC150"),
+    ):
+        if stem.startswith(prefix):
+            summary = raw[key]["summary"]
+            return _probe_row(
+                filepath,
+                run_id=f"probe-{stem}",
+                instrument="panel 2, K=80",
+                dataset=dataset,
+                correct=summary["correct"],
+                total=summary["items"],
+                metric="accuracy",
+                value=summary["accuracy"],
+                detail="shipped 84-symbol alphabet at K=80; every option is code-named.",
+            )
+
+    return None
+
+
+def transform_probes() -> list[dict]:
+    """Transform the non-JevBench probe files into dashboard rows."""
+    rows = []
+    for filepath in probe_source_files():
+        row = build_probe_run(filepath)
+        if row:
+            rows.append(row)
+            print(f"  {row['run_id']}: {row['instrument']} "
+                  f"{row['value']:.1%} ({row['correct']}/{row['total']})")
+    return rows
+
+
 def transform_jevbench() -> list[dict]:
     """Transform JevBench result files into dashboard format."""
     runs = []
     for filepath in jevbench_source_files():
-        run = build_jevbench_run(filepath)
-        if run:
+        for run in build_jevbench_rows(filepath):
             runs.append(run)
             print(f"  {run['run_id']}: {run['readout']} "
                   f"{run['accuracy']:.1%} ({run['correct']}/{run['total']})")
     return runs
+
+
+def build_jevbench_rows(filepath: Path) -> list[dict]:
+    """Every dashboard row one committed JevBench file yields."""
+    extra = build_extra_jevbench_runs(filepath)
+    if extra:
+        return extra
+    run = build_jevbench_run(filepath)
+    return [run] if run else []
+
+
+def find_jevbench_row(filepath: Path, run_id: str) -> dict | None:
+    """Recompute the row with ``run_id`` from its source file."""
+    for row in build_jevbench_rows(filepath):
+        if row["run_id"] == run_id:
+            return row
+    return None
+
+
+def probe_source_files() -> list[Path]:
+    """Committed files that supply one non-JevBench probe row each."""
+    prefixes = (
+        "clinc_blocking_",
+        "clinc_judgement_full_",
+        "code_tiers_",
+        "clinc_code_tiers_",
+        "position_",
+        "panel2_k80_",
+        "clinc_k80_",
+    )
+    if not JEVBENCH_DIR.exists():
+        return []
+    return [
+        filepath
+        for filepath in sorted(JEVBENCH_DIR.glob("*.json"))
+        if filepath.stem.startswith(prefixes)
+        and not filepath.stem.startswith("clinc_blocking_shuffle_")
+    ]
 
 
 LANDING_BAND = (
@@ -534,8 +913,17 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
     cells: dict[str, dict[str, dict]] = {}
     for run in jevbench_runs:
         model_id = run.get("model_id")
-        if model_id:
-            cells.setdefault(model_id, {})[run["readout"]] = run
+        if not model_id:
+            continue
+        # The landing pairs the shipped panel-2 cell with judgement. The
+        # prompt-order variants are separate rows; they must not overwrite it.
+        if run["readout"] == "panel2" and run.get("prompt_order") not in (
+            None,
+            "shipped",
+            "default",
+        ):
+            continue
+        cells.setdefault(model_id, {})[run["readout"]] = run
 
     pairs: list[dict] = []
     tier_gaps: dict[str, list[float]] = {"easy": [], "hard": [], "original": []}
@@ -641,12 +1029,18 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
         panel2 = by_readout.get("panel2")
         if not (judgement and panel2):
             continue
+        gap_pp = round((panel2["accuracy"] - judgement["accuracy"]) * 100, 1)
         panel2_pairs.append({
             "model_id": model_id,
             "name": judgement["model"]["name"],
             "judgement_pp": round(judgement["accuracy"] * 100, 1),
             "panel2_pp": round(panel2["accuracy"] * 100, 1),
-            "gap_pp": round((panel2["accuracy"] - judgement["accuracy"]) * 100, 1),
+            "gap_pp": gap_pp,
+            "state": (
+                "above the JevBench resolution floor"
+                if gap_pp >= jev_mde
+                else "improvement suggested but unresolved"
+            ),
         })
 
     panel2_type_delta: dict[str, dict] = {}
@@ -735,6 +1129,13 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
             "wins": sum(1 for pair in panel2_pairs if pair["gap_pp"] > 0),
             "min_pp": min((pair["gap_pp"] for pair in panel2_pairs), default=None),
             "max_pp": max((pair["gap_pp"] for pair in panel2_pairs), default=None),
+            "resolution_pp": jev_mde,
+            "clears_floor_count": sum(
+                1 for pair in panel2_pairs if pair["gap_pp"] >= jev_mde
+            ),
+            "below_floor_count": sum(
+                1 for pair in panel2_pairs if pair["gap_pp"] < jev_mde
+            ),
             "pairs": panel2_pairs,
             "source_files": sorted({
                 by_readout[readout]["source_file"]
@@ -804,6 +1205,9 @@ def main() -> None:
     print(f"\nProcessing JevBench files...")
     jevbench_runs = transform_jevbench()
 
+    print("\nProcessing probe files...")
+    probe_runs = transform_probes()
+
     jev_comparison = build_jev_comparison(eval_runs)
     landing = build_landing(jevbench_runs, eval_runs, training_runs)
 
@@ -812,6 +1216,7 @@ def main() -> None:
         "eval_runs": eval_runs,
         "training_runs": training_runs,
         "jevbench_runs": jevbench_runs,
+        "probe_runs": probe_runs,
         "jev_comparison": jev_comparison,
         "landing": landing,
         "benchmarks": dict(sorted(BENCHMARK_TYPES.items())),

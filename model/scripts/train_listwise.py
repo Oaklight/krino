@@ -55,6 +55,7 @@ from model.src.decision_model import DecisionModel
 from model.src.feature_flags import feature_disabled
 from model.src.gpu_config import GPUConfig
 from model.src.listwise import ListwiseMarkerReadout
+from model.training.group_split import load_cluster_manifest
 
 TRAINED_TYPES = ("noul", "choice", "score")
 LISTWISE_ANSWERABLE_SWITCH = "KRINO_DISABLE_LISTWISE_ANSWERABLE_EXCLUSION"
@@ -357,37 +358,43 @@ def build_parser() -> argparse.ArgumentParser:
         "0 leaves the loss unchanged",
     )
     parser.add_argument(
-    "--min-subset",
-    type=int,
-    default=2,
-    help="Smallest gold-containing subset sampled during training",
+        "--min-subset",
+        type=int,
+        default=2,
+        help="Smallest gold-containing subset sampled during training",
     )
     parser.add_argument(
-    "--max-subset",
-    type=int,
-    default=20,
-    help="Largest option subset one sequence scores; also the eval "
-    "fallback for sets that do not fit max_length",
+        "--max-subset",
+        type=int,
+        default=20,
+        help="Largest option subset one sequence scores; also the eval "
+        "fallback for sets that do not fit max_length",
     )
     parser.add_argument(
-    "--shuffle-score",
-    action="store_true",
-    help="Also shuffle score items; off because rubric levels are ordered",
+        "--shuffle-score",
+        action="store_true",
+        help="Also shuffle score items; off because rubric levels are ordered",
     )
     parser.add_argument(
-    "--eval-shifts",
-    type=int,
-    default=4,
-    help="Cyclic shifts averaged at evaluation",
+        "--eval-shifts",
+        type=int,
+        default=4,
+        help="Cyclic shifts averaged at evaluation",
     )
     parser.add_argument("--val-fraction", type=float, default=0.2)
     parser.add_argument(
-    "--split-seed",
-    type=int,
-    default=42,
-    help="Seed for the train/val split.  Keep it at 42 to match D20K "
-    "when --seed varies the training run, or the seeds stop being "
-    "replications of one recipe.",
+        "--split-clusters",
+        type=Path,
+        default=None,
+        help="JSON id->cluster manifest for the group-aware split",
+    )
+    parser.add_argument(
+        "--split-seed",
+        type=int,
+        default=42,
+        help="Seed for the train/val split.  Keep it at 42 to match D20K "
+        "when --seed varies the training run, or the seeds stop being "
+        "replications of one recipe.",
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument(
@@ -443,10 +450,13 @@ def main() -> int:
 
     items = load_jsonl(args.items)
     base_records = [
-        json.loads(line) for line in args.base_probs.read_text().splitlines() if line.strip()
+        json.loads(line)
+        for line in args.base_probs.read_text().splitlines()
+        if line.strip()
     ]
     base_probs = {
-        rec["id"]: torch.tensor(rec["probs"], dtype=torch.float32) for rec in base_records
+        rec["id"]: torch.tensor(rec["probs"], dtype=torch.float32)
+        for rec in base_records
     }
     items = [item for item in items if item.id in base_probs]
     if args.holdout_ids:
@@ -462,7 +472,12 @@ def main() -> int:
     # The same call as train_residual, so the val split matches D20K.  The
     # split seed is separate from the training seed: a replication seed must
     # vary init and item order, not which items are held out.
-    train_items, val_items = split_items(items, args.val_fraction, args.split_seed)
+    train_items, val_items = split_items(
+        items,
+        args.val_fraction,
+        args.split_seed,
+        load_cluster_manifest(args.split_clusters) if args.split_clusters else None,
+    )
     train_items, abstention = training_set(train_items)
     if abstention:
         print(
@@ -477,7 +492,8 @@ def main() -> int:
             f"options: {shown}"
         )
     fractional = [
-        item for item in train_items
+        item
+        for item in train_items
         if item.question["type"] == "score"
         and float(item.label) != int(round(float(item.label)))
     ]
@@ -538,8 +554,7 @@ def main() -> int:
     # Record the model that actually loaded, not only the requested name: a
     # default or a wrapper can substitute a different checkpoint.
     provenance["backbone_loaded"] = (
-        getattr(getattr(backbone, "config", None), "_name_or_path", None)
-        or args.model
+        getattr(getattr(backbone, "config", None), "_name_or_path", None) or args.model
     )
     (args.output / "provenance.json").write_text(
         json.dumps(provenance, indent=1) + "\n"
@@ -617,9 +632,7 @@ def main() -> int:
                 # item_loss returns a constant zero only for a label with no
                 # index.  The filter above leaves no such answerable item, so
                 # this is a data or code error and must not pass silently.
-                raise RuntimeError(
-                    f"item {item.id} produced a loss with no gradient"
-                )
+                raise RuntimeError(f"item {item.id} produced a loss with no gradient")
             kl_total += kl_value
             ce_total += ce_value
             optimizer.zero_grad(set_to_none=True)
@@ -713,7 +726,7 @@ def main() -> int:
     if torch.cuda.is_available():
         peak = torch.cuda.max_memory_allocated() / 2**30
         print(f"max_memory_allocated {peak:.1f} GiB", flush=True)
-    print(f"saved {args.output/'listwise.pt'} best_cc={best:.4f}", flush=True)
+    print(f"saved {args.output / 'listwise.pt'} best_cc={best:.4f}", flush=True)
     return 0
 
 

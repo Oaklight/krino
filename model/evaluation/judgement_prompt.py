@@ -14,12 +14,14 @@ from __future__ import annotations
 
 from typing import Any
 
-JUDGEMENT_TEMPLATE = (
-    "State: {state}\n"
-    "Question: {instructions}\n"
-    "Option: {option}\n"
-    "Does this option correctly answer the question? Answer:"
+# The prompt is split at the option so a row's K options share one prefix.  The
+# training path encodes the prefix once and batches the suffixes (#299); the
+# scoring path concatenates the two parts, so both use the same text.
+JUDGEMENT_PREFIX = "State: {state}\nQuestion: {instructions}\n"
+JUDGEMENT_SUFFIX = (
+    "Option: {option}\nDoes this option correctly answer the question? Answer:"
 )
+JUDGEMENT_TEMPLATE = JUDGEMENT_PREFIX + JUDGEMENT_SUFFIX
 
 # A noul item without criteria has no option text worth judging: the question is
 # the proposition, so the readout reads the answer at ``Answer:`` directly.
@@ -100,11 +102,23 @@ def candidates(item: Any) -> tuple[list[str], int] | None:
     return None
 
 
+def render_parts(state: str, instructions: str, option: str) -> tuple[str, str]:
+    """The shared prefix and the option suffix of one judgement prompt.
+
+    ``"".join(render_parts(...)) == render(...)`` for every input, so the
+    prefix-cached training path and the concatenated scoring path ask the same
+    question.
+    """
+    return (
+        JUDGEMENT_PREFIX.format(state=state, instructions=instructions),
+        JUDGEMENT_SUFFIX.format(option=option),
+    )
+
+
 def render(state: str, instructions: str, option: str) -> str:
     """One option's judgement prompt."""
-    return JUDGEMENT_TEMPLATE.format(
-        state=state, instructions=instructions, option=option
-    )
+    prefix, suffix = render_parts(state, instructions, option)
+    return prefix + suffix
 
 
 def render_polarity(state: str, instructions: str) -> str:

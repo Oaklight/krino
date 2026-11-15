@@ -1,0 +1,1437 @@
+{
+  "_provenance": {
+    "config_hash": "55925975450fd1cb4465e98c1d4f39d40b7b8dac2890c793206e96eaf0843fdc",
+    "config": {
+      "arm": "full judgement at K=150",
+      "dataset": "clinc150",
+      "repo": "clinc/clinc_oos",
+      "config": "plus",
+      "split": "test",
+      "revision": "155b9c710419136e17307b80d0a13e68cd46b4ec",
+      "classes_in_scope": 150,
+      "k": 150,
+      "items": 200,
+      "options": "all in-scope classes in the dataset's class order",
+      "labels": [
+        " yes",
+        " no"
+      ],
+      "norm": "mean",
+      "strategy": "description",
+      "batch_size": 1,
+      "score": "log P(' yes') per option",
+      "tie_rule": "smaller natural option index",
+      "model": "22e683669bc0f0bd69640a1354a6d0aebcfeede5",
+      "config_hash": "55925975450fd1cb4465e98c1d4f39d40b7b8dac2890c793206e96eaf0843fdc"
+    }
+  },
+  "items": 200,
+  "correct": 127,
+  "accuracy": 0.635,
+  "chance": 0.006666666666666667,
+  "mean_latency_s": 11.684875,
+  "first_50_correct": 34,
+  "first_50_items": 50,
+  "rows": [
+    {
+      "id": "clinc150-test-00530",
+      "gold": 33,
+      "pick": 33,
+      "correct": true,
+      "seconds": 16.392
+    },
+    {
+      "id": "clinc150-test-01711",
+      "gold": 39,
+      "pick": 39,
+      "correct": true,
+      "seconds": 13.827
+    },
+    {
+      "id": "clinc150-test-02573",
+      "gold": 119,
+      "pick": 148,
+      "correct": false,
+      "seconds": 13.082
+    },
+    {
+      "id": "clinc150-test-03167",
+      "gold": 10,
+      "pick": 10,
+      "correct": true,
+      "seconds": 13.044
+    },
+    {
+      "id": "clinc150-test-04024",
+      "gold": 109,
+      "pick": 44,
+      "correct": false,
+      "seconds": 12.332
+    },
+    {
+      "id": "clinc150-test-02700",
+      "gold": 56,
+      "pick": 56,
+      "correct": true,
+      "seconds": 11.591
+    },
+    {
+      "id": "clinc150-test-00757",
+      "gold": 35,
+      "pick": 67,
+      "correct": false,
+      "seconds": 13.064
+    },
+    {
+      "id": "clinc150-test-03867",
+      "gold": 27,
+      "pick": 73,
+      "correct": false,
+      "seconds": 11.609
+    },
+    {
+      "id": "clinc150-test-01770",
+      "gold": 94,
+      "pick": 12,
+      "correct": false,
+      "seconds": 13.692
+    },
+    {
+      "id": "clinc150-test-03733",
+      "gold": 15,
+      "pick": 15,
+      "correct": true,
+      "seconds": 11.598
+    },
+    {
+      "id": "clinc150-test-03217",
+      "gold": 135,
+      "pick": 76,
+      "correct": false,
+      "seconds": 11.584
+    },
+    {
+      "id": "clinc150-test-01404",
+      "gold": 106,
+      "pick": 69,
+      "correct": false,
+      "seconds": 11.581
+    },
+    {
+      "id": "clinc150-test-03120",
+      "gold": 31,
+      "pick": 31,
+      "correct": true,
+      "seconds": 11.575
+    },
+    {
+      "id": "clinc150-test-01683",
+      "gold": 59,
+      "pick": 59,
+      "correct": true,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-04116",
+      "gold": 66,
+      "pick": 146,
+      "correct": false,
+      "seconds": 11.591
+    },
+    {
+      "id": "clinc150-test-03195",
+      "gold": 115,
+      "pick": 115,
+      "correct": true,
+      "seconds": 15.974
+    },
+    {
+      "id": "clinc150-test-03663",
+      "gold": 7,
+      "pick": 7,
+      "correct": true,
+      "seconds": 11.573
+    },
+    {
+      "id": "clinc150-test-04306",
+      "gold": 45,
+      "pick": 29,
+      "correct": false,
+      "seconds": 11.578
+    },
+    {
+      "id": "clinc150-test-02663",
+      "gold": 139,
+      "pick": 139,
+      "correct": true,
+      "seconds": 11.59
+    },
+    {
+      "id": "clinc150-test-00479",
+      "gold": 102,
+      "pick": 102,
+      "correct": true,
+      "seconds": 11.596
+    },
+    {
+      "id": "clinc150-test-04203",
+      "gold": 98,
+      "pick": 98,
+      "correct": true,
+      "seconds": 11.581
+    },
+    {
+      "id": "clinc150-test-04271",
+      "gold": 17,
+      "pick": 17,
+      "correct": true,
+      "seconds": 11.588
+    },
+    {
+      "id": "clinc150-test-03495",
+      "gold": 71,
+      "pick": 71,
+      "correct": true,
+      "seconds": 11.589
+    },
+    {
+      "id": "clinc150-test-01067",
+      "gold": 144,
+      "pick": 144,
+      "correct": true,
+      "seconds": 11.588
+    },
+    {
+      "id": "clinc150-test-04302",
+      "gold": 45,
+      "pick": 45,
+      "correct": true,
+      "seconds": 11.59
+    },
+    {
+      "id": "clinc150-test-01543",
+      "gold": 118,
+      "pick": 118,
+      "correct": true,
+      "seconds": 11.594
+    },
+    {
+      "id": "clinc150-test-01510",
+      "gold": 75,
+      "pick": 75,
+      "correct": true,
+      "seconds": 11.577
+    },
+    {
+      "id": "clinc150-test-00816",
+      "gold": 20,
+      "pick": 20,
+      "correct": true,
+      "seconds": 11.586
+    },
+    {
+      "id": "clinc150-test-04338",
+      "gold": 103,
+      "pick": 103,
+      "correct": true,
+      "seconds": 11.589
+    },
+    {
+      "id": "clinc150-test-03228",
+      "gold": 135,
+      "pick": 57,
+      "correct": false,
+      "seconds": 11.581
+    },
+    {
+      "id": "clinc150-test-00556",
+      "gold": 143,
+      "pick": 106,
+      "correct": false,
+      "seconds": 11.596
+    },
+    {
+      "id": "clinc150-test-03985",
+      "gold": 104,
+      "pick": 59,
+      "correct": false,
+      "seconds": 11.593
+    },
+    {
+      "id": "clinc150-test-02833",
+      "gold": 83,
+      "pick": 83,
+      "correct": true,
+      "seconds": 11.585
+    },
+    {
+      "id": "clinc150-test-00034",
+      "gold": 132,
+      "pick": 132,
+      "correct": true,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-02745",
+      "gold": 41,
+      "pick": 41,
+      "correct": true,
+      "seconds": 11.58
+    },
+    {
+      "id": "clinc150-test-04078",
+      "gold": 43,
+      "pick": 43,
+      "correct": true,
+      "seconds": 11.585
+    },
+    {
+      "id": "clinc150-test-00634",
+      "gold": 114,
+      "pick": 114,
+      "correct": true,
+      "seconds": 11.585
+    },
+    {
+      "id": "clinc150-test-00465",
+      "gold": 102,
+      "pick": 102,
+      "correct": true,
+      "seconds": 11.584
+    },
+    {
+      "id": "clinc150-test-00084",
+      "gold": 32,
+      "pick": 85,
+      "correct": false,
+      "seconds": 11.58
+    },
+    {
+      "id": "clinc150-test-02890",
+      "gold": 113,
+      "pick": 123,
+      "correct": false,
+      "seconds": 11.578
+    },
+    {
+      "id": "clinc150-test-02606",
+      "gold": 46,
+      "pick": 46,
+      "correct": true,
+      "seconds": 11.586
+    },
+    {
+      "id": "clinc150-test-00977",
+      "gold": 65,
+      "pick": 65,
+      "correct": true,
+      "seconds": 11.581
+    },
+    {
+      "id": "clinc150-test-02562",
+      "gold": 119,
+      "pick": 119,
+      "correct": true,
+      "seconds": 11.596
+    },
+    {
+      "id": "clinc150-test-00348",
+      "gold": 29,
+      "pick": 29,
+      "correct": true,
+      "seconds": 11.596
+    },
+    {
+      "id": "clinc150-test-03547",
+      "gold": 81,
+      "pick": 81,
+      "correct": true,
+      "seconds": 11.593
+    },
+    {
+      "id": "clinc150-test-00212",
+      "gold": 127,
+      "pick": 127,
+      "correct": true,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-03661",
+      "gold": 7,
+      "pick": 7,
+      "correct": true,
+      "seconds": 11.602
+    },
+    {
+      "id": "clinc150-test-01618",
+      "gold": 30,
+      "pick": 106,
+      "correct": false,
+      "seconds": 11.594
+    },
+    {
+      "id": "clinc150-test-03446",
+      "gold": 51,
+      "pick": 127,
+      "correct": false,
+      "seconds": 11.596
+    },
+    {
+      "id": "clinc150-test-01204",
+      "gold": 68,
+      "pick": 68,
+      "correct": true,
+      "seconds": 11.58
+    },
+    {
+      "id": "clinc150-test-01670",
+      "gold": 1,
+      "pick": 1,
+      "correct": true,
+      "seconds": 11.6
+    },
+    {
+      "id": "clinc150-test-02939",
+      "gold": 2,
+      "pick": 67,
+      "correct": false,
+      "seconds": 11.591
+    },
+    {
+      "id": "clinc150-test-02419",
+      "gold": 0,
+      "pick": 0,
+      "correct": true,
+      "seconds": 11.587
+    },
+    {
+      "id": "clinc150-test-03243",
+      "gold": 5,
+      "pick": 5,
+      "correct": true,
+      "seconds": 11.599
+    },
+    {
+      "id": "clinc150-test-03997",
+      "gold": 116,
+      "pick": 116,
+      "correct": true,
+      "seconds": 11.598
+    },
+    {
+      "id": "clinc150-test-00219",
+      "gold": 127,
+      "pick": 127,
+      "correct": true,
+      "seconds": 11.601
+    },
+    {
+      "id": "clinc150-test-02945",
+      "gold": 21,
+      "pick": 21,
+      "correct": true,
+      "seconds": 11.6
+    },
+    {
+      "id": "clinc150-test-02771",
+      "gold": 101,
+      "pick": 101,
+      "correct": true,
+      "seconds": 11.587
+    },
+    {
+      "id": "clinc150-test-02928",
+      "gold": 2,
+      "pick": 2,
+      "correct": true,
+      "seconds": 12.322
+    },
+    {
+      "id": "clinc150-test-01656",
+      "gold": 1,
+      "pick": 1,
+      "correct": true,
+      "seconds": 11.549
+    },
+    {
+      "id": "clinc150-test-01728",
+      "gold": 39,
+      "pick": 148,
+      "correct": false,
+      "seconds": 11.559
+    },
+    {
+      "id": "clinc150-test-00434",
+      "gold": 4,
+      "pick": 65,
+      "correct": false,
+      "seconds": 11.558
+    },
+    {
+      "id": "clinc150-test-01097",
+      "gold": 49,
+      "pick": 35,
+      "correct": false,
+      "seconds": 11.57
+    },
+    {
+      "id": "clinc150-test-03395",
+      "gold": 58,
+      "pick": 127,
+      "correct": false,
+      "seconds": 11.561
+    },
+    {
+      "id": "clinc150-test-03313",
+      "gold": 142,
+      "pick": 142,
+      "correct": true,
+      "seconds": 11.575
+    },
+    {
+      "id": "clinc150-test-03825",
+      "gold": 26,
+      "pick": 71,
+      "correct": false,
+      "seconds": 11.575
+    },
+    {
+      "id": "clinc150-test-01639",
+      "gold": 131,
+      "pick": 131,
+      "correct": true,
+      "seconds": 11.583
+    },
+    {
+      "id": "clinc150-test-03542",
+      "gold": 81,
+      "pick": 121,
+      "correct": false,
+      "seconds": 11.589
+    },
+    {
+      "id": "clinc150-test-00954",
+      "gold": 11,
+      "pick": 143,
+      "correct": false,
+      "seconds": 11.581
+    },
+    {
+      "id": "clinc150-test-02577",
+      "gold": 119,
+      "pick": 119,
+      "correct": true,
+      "seconds": 11.588
+    },
+    {
+      "id": "clinc150-test-04311",
+      "gold": 45,
+      "pick": 45,
+      "correct": true,
+      "seconds": 11.58
+    },
+    {
+      "id": "clinc150-test-03438",
+      "gold": 51,
+      "pick": 51,
+      "correct": true,
+      "seconds": 11.582
+    },
+    {
+      "id": "clinc150-test-02938",
+      "gold": 2,
+      "pick": 67,
+      "correct": false,
+      "seconds": 11.579
+    },
+    {
+      "id": "clinc150-test-02964",
+      "gold": 21,
+      "pick": 105,
+      "correct": false,
+      "seconds": 11.565
+    },
+    {
+      "id": "clinc150-test-02671",
+      "gold": 149,
+      "pick": 149,
+      "correct": true,
+      "seconds": 11.589
+    },
+    {
+      "id": "clinc150-test-03812",
+      "gold": 26,
+      "pick": 4,
+      "correct": false,
+      "seconds": 11.581
+    },
+    {
+      "id": "clinc150-test-03998",
+      "gold": 116,
+      "pick": 116,
+      "correct": true,
+      "seconds": 11.566
+    },
+    {
+      "id": "clinc150-test-01634",
+      "gold": 131,
+      "pick": 7,
+      "correct": false,
+      "seconds": 11.591
+    },
+    {
+      "id": "clinc150-test-03304",
+      "gold": 142,
+      "pick": 142,
+      "correct": true,
+      "seconds": 11.58
+    },
+    {
+      "id": "clinc150-test-00790",
+      "gold": 84,
+      "pick": 84,
+      "correct": true,
+      "seconds": 11.576
+    },
+    {
+      "id": "clinc150-test-01475",
+      "gold": 64,
+      "pick": 64,
+      "correct": true,
+      "seconds": 11.571
+    },
+    {
+      "id": "clinc150-test-02088",
+      "gold": 52,
+      "pick": 47,
+      "correct": false,
+      "seconds": 11.569
+    },
+    {
+      "id": "clinc150-test-01439",
+      "gold": 148,
+      "pick": 148,
+      "correct": true,
+      "seconds": 11.587
+    },
+    {
+      "id": "clinc150-test-04163",
+      "gold": 36,
+      "pick": 128,
+      "correct": false,
+      "seconds": 11.582
+    },
+    {
+      "id": "clinc150-test-00224",
+      "gold": 127,
+      "pick": 127,
+      "correct": true,
+      "seconds": 11.563
+    },
+    {
+      "id": "clinc150-test-02905",
+      "gold": 113,
+      "pick": 113,
+      "correct": true,
+      "seconds": 11.573
+    },
+    {
+      "id": "clinc150-test-02442",
+      "gold": 44,
+      "pick": 44,
+      "correct": true,
+      "seconds": 11.589
+    },
+    {
+      "id": "clinc150-test-03216",
+      "gold": 135,
+      "pick": 57,
+      "correct": false,
+      "seconds": 11.588
+    },
+    {
+      "id": "clinc150-test-00632",
+      "gold": 114,
+      "pick": 114,
+      "correct": true,
+      "seconds": 11.578
+    },
+    {
+      "id": "clinc150-test-04067",
+      "gold": 43,
+      "pick": 43,
+      "correct": true,
+      "seconds": 11.57
+    },
+    {
+      "id": "clinc150-test-00076",
+      "gold": 32,
+      "pick": 4,
+      "correct": false,
+      "seconds": 11.562
+    },
+    {
+      "id": "clinc150-test-01380",
+      "gold": 106,
+      "pick": 106,
+      "correct": true,
+      "seconds": 11.56
+    },
+    {
+      "id": "clinc150-test-03377",
+      "gold": 146,
+      "pick": 146,
+      "correct": true,
+      "seconds": 11.572
+    },
+    {
+      "id": "clinc150-test-04109",
+      "gold": 140,
+      "pick": 140,
+      "correct": true,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-03358",
+      "gold": 14,
+      "pick": 113,
+      "correct": false,
+      "seconds": 11.568
+    },
+    {
+      "id": "clinc150-test-03941",
+      "gold": 105,
+      "pick": 117,
+      "correct": false,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-02997",
+      "gold": 136,
+      "pick": 67,
+      "correct": false,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-01145",
+      "gold": 70,
+      "pick": 70,
+      "correct": true,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-01936",
+      "gold": 129,
+      "pick": 14,
+      "correct": false,
+      "seconds": 11.576
+    },
+    {
+      "id": "clinc150-test-00281",
+      "gold": 28,
+      "pick": 68,
+      "correct": false,
+      "seconds": 11.578
+    },
+    {
+      "id": "clinc150-test-03290",
+      "gold": 93,
+      "pick": 93,
+      "correct": true,
+      "seconds": 11.584
+    },
+    {
+      "id": "clinc150-test-03930",
+      "gold": 105,
+      "pick": 105,
+      "correct": true,
+      "seconds": 11.583
+    },
+    {
+      "id": "clinc150-test-04240",
+      "gold": 40,
+      "pick": 40,
+      "correct": true,
+      "seconds": 11.572
+    },
+    {
+      "id": "clinc150-test-02835",
+      "gold": 83,
+      "pick": 83,
+      "correct": true,
+      "seconds": 11.579
+    },
+    {
+      "id": "clinc150-test-02711",
+      "gold": 56,
+      "pick": 16,
+      "correct": false,
+      "seconds": 11.573
+    },
+    {
+      "id": "clinc150-test-03587",
+      "gold": 87,
+      "pick": 87,
+      "correct": true,
+      "seconds": 11.575
+    },
+    {
+      "id": "clinc150-test-02566",
+      "gold": 119,
+      "pick": 65,
+      "correct": false,
+      "seconds": 11.58
+    },
+    {
+      "id": "clinc150-test-01910",
+      "gold": 145,
+      "pick": 57,
+      "correct": false,
+      "seconds": 11.575
+    },
+    {
+      "id": "clinc150-test-04465",
+      "gold": 126,
+      "pick": 126,
+      "correct": true,
+      "seconds": 11.585
+    },
+    {
+      "id": "clinc150-test-00525",
+      "gold": 33,
+      "pick": 33,
+      "correct": true,
+      "seconds": 11.576
+    },
+    {
+      "id": "clinc150-test-01106",
+      "gold": 49,
+      "pick": 35,
+      "correct": false,
+      "seconds": 11.576
+    },
+    {
+      "id": "clinc150-test-02563",
+      "gold": 119,
+      "pick": 119,
+      "correct": true,
+      "seconds": 11.578
+    },
+    {
+      "id": "clinc150-test-02811",
+      "gold": 9,
+      "pick": 23,
+      "correct": false,
+      "seconds": 11.577
+    },
+    {
+      "id": "clinc150-test-01604",
+      "gold": 30,
+      "pick": 106,
+      "correct": false,
+      "seconds": 12.233
+    },
+    {
+      "id": "clinc150-test-02609",
+      "gold": 46,
+      "pick": 46,
+      "correct": true,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-01080",
+      "gold": 49,
+      "pick": 68,
+      "correct": false,
+      "seconds": 11.574
+    },
+    {
+      "id": "clinc150-test-00006",
+      "gold": 60,
+      "pick": 60,
+      "correct": true,
+      "seconds": 11.577
+    },
+    {
+      "id": "clinc150-test-02213",
+      "gold": 82,
+      "pick": 82,
+      "correct": true,
+      "seconds": 11.581
+    },
+    {
+      "id": "clinc150-test-02181",
+      "gold": 25,
+      "pick": 25,
+      "correct": true,
+      "seconds": 11.589
+    },
+    {
+      "id": "clinc150-test-04107",
+      "gold": 140,
+      "pick": 140,
+      "correct": true,
+      "seconds": 11.586
+    },
+    {
+      "id": "clinc150-test-00187",
+      "gold": 80,
+      "pick": 80,
+      "correct": true,
+      "seconds": 11.587
+    },
+    {
+      "id": "clinc150-test-04373",
+      "gold": 92,
+      "pick": 92,
+      "correct": true,
+      "seconds": 11.575
+    },
+    {
+      "id": "clinc150-test-00462",
+      "gold": 102,
+      "pick": 102,
+      "correct": true,
+      "seconds": 11.589
+    },
+    {
+      "id": "clinc150-test-01469",
+      "gold": 73,
+      "pick": 73,
+      "correct": true,
+      "seconds": 11.583
+    },
+    {
+      "id": "clinc150-test-03234",
+      "gold": 135,
+      "pick": 71,
+      "correct": false,
+      "seconds": 11.596
+    },
+    {
+      "id": "clinc150-test-02691",
+      "gold": 149,
+      "pick": 149,
+      "correct": true,
+      "seconds": 11.591
+    },
+    {
+      "id": "clinc150-test-03533",
+      "gold": 72,
+      "pick": 72,
+      "correct": true,
+      "seconds": 11.578
+    },
+    {
+      "id": "clinc150-test-01597",
+      "gold": 30,
+      "pick": 69,
+      "correct": false,
+      "seconds": 11.573
+    },
+    {
+      "id": "clinc150-test-00446",
+      "gold": 4,
+      "pick": 4,
+      "correct": true,
+      "seconds": 11.59
+    },
+    {
+      "id": "clinc150-test-02408",
+      "gold": 0,
+      "pick": 53,
+      "correct": false,
+      "seconds": 11.588
+    },
+    {
+      "id": "clinc150-test-04181",
+      "gold": 54,
+      "pick": 54,
+      "correct": true,
+      "seconds": 11.576
+    },
+    {
+      "id": "clinc150-test-00355",
+      "gold": 29,
+      "pick": 29,
+      "correct": true,
+      "seconds": 11.581
+    },
+    {
+      "id": "clinc150-test-04023",
+      "gold": 109,
+      "pick": 77,
+      "correct": false,
+      "seconds": 11.59
+    },
+    {
+      "id": "clinc150-test-00561",
+      "gold": 143,
+      "pick": 143,
+      "correct": true,
+      "seconds": 11.573
+    },
+    {
+      "id": "clinc150-test-02718",
+      "gold": 56,
+      "pick": 95,
+      "correct": false,
+      "seconds": 11.573
+    },
+    {
+      "id": "clinc150-test-00083",
+      "gold": 32,
+      "pick": 32,
+      "correct": true,
+      "seconds": 11.591
+    },
+    {
+      "id": "clinc150-test-02856",
+      "gold": 88,
+      "pick": 90,
+      "correct": false,
+      "seconds": 11.588
+    },
+    {
+      "id": "clinc150-test-04347",
+      "gold": 103,
+      "pick": 111,
+      "correct": false,
+      "seconds": 11.577
+    },
+    {
+      "id": "clinc150-test-00771",
+      "gold": 35,
+      "pick": 67,
+      "correct": false,
+      "seconds": 11.587
+    },
+    {
+      "id": "clinc150-test-03993",
+      "gold": 116,
+      "pick": 106,
+      "correct": false,
+      "seconds": 11.584
+    },
+    {
+      "id": "clinc150-test-02191",
+      "gold": 82,
+      "pick": 82,
+      "correct": true,
+      "seconds": 11.587
+    },
+    {
+      "id": "clinc150-test-03834",
+      "gold": 26,
+      "pick": 81,
+      "correct": false,
+      "seconds": 11.588
+    },
+    {
+      "id": "clinc150-test-03713",
+      "gold": 108,
+      "pick": 41,
+      "correct": false,
+      "seconds": 11.588
+    },
+    {
+      "id": "clinc150-test-00443",
+      "gold": 4,
+      "pick": 4,
+      "correct": true,
+      "seconds": 11.589
+    },
+    {
+      "id": "clinc150-test-03643",
+      "gold": 107,
+      "pick": 92,
+      "correct": false,
+      "seconds": 11.588
+    },
+    {
+      "id": "clinc150-test-00452",
+      "gold": 102,
+      "pick": 102,
+      "correct": true,
+      "seconds": 11.593
+    },
+    {
+      "id": "clinc150-test-04342",
+      "gold": 103,
+      "pick": 103,
+      "correct": true,
+      "seconds": 11.577
+    },
+    {
+      "id": "clinc150-test-02692",
+      "gold": 149,
+      "pick": 149,
+      "correct": true,
+      "seconds": 11.587
+    },
+    {
+      "id": "clinc150-test-01621",
+      "gold": 131,
+      "pick": 7,
+      "correct": false,
+      "seconds": 11.578
+    },
+    {
+      "id": "clinc150-test-01584",
+      "gold": 97,
+      "pick": 97,
+      "correct": true,
+      "seconds": 11.593
+    },
+    {
+      "id": "clinc150-test-01873",
+      "gold": 130,
+      "pick": 130,
+      "correct": true,
+      "seconds": 11.578
+    },
+    {
+      "id": "clinc150-test-03903",
+      "gold": 6,
+      "pick": 6,
+      "correct": true,
+      "seconds": 11.585
+    },
+    {
+      "id": "clinc150-test-00896",
+      "gold": 95,
+      "pick": 56,
+      "correct": false,
+      "seconds": 11.571
+    },
+    {
+      "id": "clinc150-test-01429",
+      "gold": 148,
+      "pick": 148,
+      "correct": true,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-00020",
+      "gold": 60,
+      "pick": 60,
+      "correct": true,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-03750",
+      "gold": 62,
+      "pick": 62,
+      "correct": true,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-03302",
+      "gold": 142,
+      "pick": 110,
+      "correct": false,
+      "seconds": 11.587
+    },
+    {
+      "id": "clinc150-test-00952",
+      "gold": 11,
+      "pick": 11,
+      "correct": true,
+      "seconds": 11.593
+    },
+    {
+      "id": "clinc150-test-02612",
+      "gold": 38,
+      "pick": 38,
+      "correct": true,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-02111",
+      "gold": 12,
+      "pick": 12,
+      "correct": true,
+      "seconds": 11.59
+    },
+    {
+      "id": "clinc150-test-03383",
+      "gold": 146,
+      "pick": 149,
+      "correct": false,
+      "seconds": 11.566
+    },
+    {
+      "id": "clinc150-test-00682",
+      "gold": 120,
+      "pick": 120,
+      "correct": true,
+      "seconds": 11.585
+    },
+    {
+      "id": "clinc150-test-01689",
+      "gold": 59,
+      "pick": 59,
+      "correct": true,
+      "seconds": 11.586
+    },
+    {
+      "id": "clinc150-test-03582",
+      "gold": 87,
+      "pick": 87,
+      "correct": true,
+      "seconds": 11.586
+    },
+    {
+      "id": "clinc150-test-01215",
+      "gold": 68,
+      "pick": 68,
+      "correct": true,
+      "seconds": 11.593
+    },
+    {
+      "id": "clinc150-test-04105",
+      "gold": 140,
+      "pick": 140,
+      "correct": true,
+      "seconds": 11.586
+    },
+    {
+      "id": "clinc150-test-02744",
+      "gold": 41,
+      "pick": 41,
+      "correct": true,
+      "seconds": 11.585
+    },
+    {
+      "id": "clinc150-test-01864",
+      "gold": 130,
+      "pick": 37,
+      "correct": false,
+      "seconds": 11.594
+    },
+    {
+      "id": "clinc150-test-01578",
+      "gold": 97,
+      "pick": 97,
+      "correct": true,
+      "seconds": 11.592
+    },
+    {
+      "id": "clinc150-test-03274",
+      "gold": 93,
+      "pick": 93,
+      "correct": true,
+      "seconds": 11.587
+    },
+    {
+      "id": "clinc150-test-00485",
+      "gold": 79,
+      "pick": 79,
+      "correct": true,
+      "seconds": 11.586
+    },
+    {
+      "id": "clinc150-test-04371",
+      "gold": 92,
+      "pick": 92,
+      "correct": true,
+      "seconds": 11.577
+    },
+    {
+      "id": "clinc150-test-04469",
+      "gold": 126,
+      "pick": 126,
+      "correct": true,
+      "seconds": 11.583
+    },
+    {
+      "id": "clinc150-test-03989",
+      "gold": 104,
+      "pick": 59,
+      "correct": false,
+      "seconds": 11.582
+    },
+    {
+      "id": "clinc150-test-00419",
+      "gold": 89,
+      "pick": 12,
+      "correct": false,
+      "seconds": 11.594
+    },
+    {
+      "id": "clinc150-test-00395",
+      "gold": 89,
+      "pick": 89,
+      "correct": true,
+      "seconds": 11.594
+    },
+    {
+      "id": "clinc150-test-04236",
+      "gold": 40,
+      "pick": 40,
+      "correct": true,
+      "seconds": 11.586
+    },
+    {
+      "id": "clinc150-test-00127",
+      "gold": 22,
+      "pick": 22,
+      "correct": true,
+      "seconds": 11.594
+    },
+    {
+      "id": "clinc150-test-01958",
+      "gold": 123,
+      "pick": 106,
+      "correct": false,
+      "seconds": 11.596
+    },
+    {
+      "id": "clinc150-test-02097",
+      "gold": 52,
+      "pick": 75,
+      "correct": false,
+      "seconds": 11.589
+    },
+    {
+      "id": "clinc150-test-01504",
+      "gold": 75,
+      "pick": 75,
+      "correct": true,
+      "seconds": 11.59
+    },
+    {
+      "id": "clinc150-test-01154",
+      "gold": 70,
+      "pick": 70,
+      "correct": true,
+      "seconds": 11.583
+    },
+    {
+      "id": "clinc150-test-04263",
+      "gold": 17,
+      "pick": 17,
+      "correct": true,
+      "seconds": 11.594
+    },
+    {
+      "id": "clinc150-test-00112",
+      "gold": 138,
+      "pick": 138,
+      "correct": true,
+      "seconds": 11.583
+    },
+    {
+      "id": "clinc150-test-01231",
+      "gold": 90,
+      "pick": 90,
+      "correct": true,
+      "seconds": 11.596
+    },
+    {
+      "id": "clinc150-test-00900",
+      "gold": 77,
+      "pick": 71,
+      "correct": false,
+      "seconds": 11.589
+    },
+    {
+      "id": "clinc150-test-00658",
+      "gold": 114,
+      "pick": 47,
+      "correct": false,
+      "seconds": 11.595
+    },
+    {
+      "id": "clinc150-test-00747",
+      "gold": 23,
+      "pick": 23,
+      "correct": true,
+      "seconds": 11.576
+    },
+    {
+      "id": "clinc150-test-00974",
+      "gold": 65,
+      "pick": 65,
+      "correct": true,
+      "seconds": 11.595
+    },
+    {
+      "id": "clinc150-test-03356",
+      "gold": 14,
+      "pick": 146,
+      "correct": false,
+      "seconds": 11.575
+    },
+    {
+      "id": "clinc150-test-00463",
+      "gold": 102,
+      "pick": 102,
+      "correct": true,
+      "seconds": 11.597
+    },
+    {
+      "id": "clinc150-test-00901",
+      "gold": 77,
+      "pick": 71,
+      "correct": false,
+      "seconds": 11.587
+    },
+    {
+      "id": "clinc150-test-01383",
+      "gold": 106,
+      "pick": 106,
+      "correct": true,
+      "seconds": 11.585
+    },
+    {
+      "id": "clinc150-test-03153",
+      "gold": 10,
+      "pick": 71,
+      "correct": false,
+      "seconds": 11.577
+    },
+    {
+      "id": "clinc150-test-01373",
+      "gold": 122,
+      "pick": 37,
+      "correct": false,
+      "seconds": 11.585
+    },
+    {
+      "id": "clinc150-test-03653",
+      "gold": 107,
+      "pick": 71,
+      "correct": false,
+      "seconds": 11.593
+    },
+    {
+      "id": "clinc150-test-02274",
+      "gold": 50,
+      "pick": 50,
+      "correct": true,
+      "seconds": 11.583
+    },
+    {
+      "id": "clinc150-test-04397",
+      "gold": 16,
+      "pick": 124,
+      "correct": false,
+      "seconds": 11.593
+    },
+    {
+      "id": "clinc150-test-04074",
+      "gold": 43,
+      "pick": 43,
+      "correct": true,
+      "seconds": 11.6
+    },
+    {
+      "id": "clinc150-test-02264",
+      "gold": 50,
+      "pick": 50,
+      "correct": true,
+      "seconds": 11.585
+    }
+  ]
+}

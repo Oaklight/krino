@@ -1,0 +1,8886 @@
+{
+  "_provenance": {
+    "model_id": "Qwen/Qwen3-Reranker-4B",
+    "revision": "22e683669bc0f0bd69640a1354a6d0aebcfeede5",
+    "snapshot_path": "<host>/.cache/huggingface/hub/models--Qwen--Qwen3-Reranker-4B/snapshots/22e683669bc0f0bd69640a1354a6d0aebcfeede5",
+    "dtype": "bfloat16",
+    "device": "cuda:0",
+    "code_commit": "bd08b022fc7673b204f147e348dc75c4eb982d91",
+    "date_utc": "2026-11-09T10:31:47Z",
+    "readout": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+    "strategy": "panel2_vocab_code",
+    "norm": "none",
+    "command": "model/scripts/eval_jevbench_panel2.py --model Qwen/Qwen3-Reranker-4B --code-form space --prompt-order sandwich --code-commit bd08b022fc7673b204f147e348dc75c4eb982d91 --output results/jevbench/panel2_Qwen_Qwen3-Reranker-4B_sandwich.json",
+    "python_version": "3.12.16",
+    "torch_version": "2.11.0+cu128",
+    "device_name": "NVIDIA H100 NVL",
+    "transformers_version": "5.21.0",
+    "fla": "absent",
+    "causal_conv1d": "absent",
+    "gdn_kernel_path": "reference",
+    "prompt_template": "State: {state}\nQuestion: {instructions}\nOptions:\n{options}\nQuestion: {instructions}\nAnswer:",
+    "prompt_order": "sandwich",
+    "code_token_form": "space",
+    "dataset": "jevbench",
+    "dev_path": null,
+    "config_sha256": "43ac6ac8ad1c64c1ae3d8e05009faad321bdef902834187c96c629b7c8194624",
+    "data_sha256": "e85e155c8c14d7ebdb073c04efb049ded3e0186b0297ebcd8388aa259a365370",
+    "items": 231,
+    "elapsed_s": 78.2
+  },
+  "config": {
+    "panel": "2",
+    "dataset": "jevbench",
+    "prompt_order": "sandwich",
+    "prompt_template": "State: {state}\nQuestion: {instructions}\nOptions:\n{options}\nQuestion: {instructions}\nAnswer:",
+    "code_scheme": "A-Z, a-z, then single-character symbols, one code per option",
+    "code_token_form": "space",
+    "code_token_ids": {
+      "A": 362,
+      "B": 425,
+      "C": 356,
+      "D": 422,
+      "E": 468,
+      "F": 434
+    },
+    "noul_rendering": "two options: A. no / B. yes",
+    "choice_rendering": "criteria descriptions in item order",
+    "score_rendering": "'Level {i}: {description}'",
+    "orders": [
+      "natural",
+      "reversed"
+    ],
+    "diagnostic_sample_items": 10,
+    "max_items": null,
+    "tokenizer_add_special_tokens": false
+  },
+  "validity": {
+    "single_token_codes": true,
+    "multi_token_codes": [],
+    "unscorable_items": 0,
+    "unscorable_code_failures": 0,
+    "unscorable_withheld_gold": 0,
+    "position_diagnostic": true,
+    "position_dominated": false,
+    "valid": true,
+    "invalid_reason": null
+  },
+  "unscorable": [],
+  "metrics": {
+    "natural": {
+      "summary": {
+        "overall": {
+          "accuracy": 0.670995670995671,
+          "correct": 155,
+          "total": 231,
+          "failed": 0
+        },
+        "by_tier": {
+          "easy": {
+            "accuracy": 1.0,
+            "correct": 48,
+            "total": 48
+          },
+          "hard": {
+            "accuracy": 0.44144144144144143,
+            "correct": 49,
+            "total": 111
+          },
+          "original": {
+            "accuracy": 0.8055555555555556,
+            "correct": 58,
+            "total": 72
+          }
+        },
+        "by_type": {
+          "choice": {
+            "accuracy": 0.7050359712230215,
+            "correct": 98,
+            "total": 139
+          },
+          "noul": {
+            "accuracy": 0.6081081081081081,
+            "correct": 45,
+            "total": 74
+          },
+          "score": {
+            "accuracy": 0.6666666666666666,
+            "correct": 12,
+            "total": 18
+          }
+        },
+        "by_tier_type": {
+          "easy": {
+            "choice": {
+              "accuracy": 1.0,
+              "correct": 36,
+              "total": 36
+            },
+            "noul": {
+              "accuracy": 1.0,
+              "correct": 12,
+              "total": 12
+            }
+          },
+          "hard": {
+            "choice": {
+              "accuracy": 0.4626865671641791,
+              "correct": 31,
+              "total": 67
+            },
+            "noul": {
+              "accuracy": 0.47368421052631576,
+              "correct": 18,
+              "total": 38
+            },
+            "score": {
+              "accuracy": 0.0,
+              "correct": 0,
+              "total": 6
+            }
+          },
+          "original": {
+            "noul": {
+              "accuracy": 0.625,
+              "correct": 15,
+              "total": 24
+            },
+            "choice": {
+              "accuracy": 0.8611111111111112,
+              "correct": 31,
+              "total": 36
+            },
+            "score": {
+              "accuracy": 1.0,
+              "correct": 12,
+              "total": 12
+            }
+          }
+        }
+      },
+      "position": {
+        "n": 231,
+        "predicted_position_histogram": {
+          "0": 70,
+          "1": 71,
+          "2": 37,
+          "3": 38,
+          "4": 14,
+          "5": 1
+        },
+        "gold_position_histogram": {
+          "0": 74,
+          "1": 70,
+          "2": 40,
+          "3": 29,
+          "4": 16,
+          "5": 2
+        },
+        "accuracy_by_gold_position": {
+          "0": {
+            "correct": 48,
+            "total": 74,
+            "accuracy": 0.6486486486486487
+          },
+          "1": {
+            "correct": 44,
+            "total": 70,
+            "accuracy": 0.6285714285714286
+          },
+          "2": {
+            "correct": 24,
+            "total": 40,
+            "accuracy": 0.6
+          },
+          "3": {
+            "correct": 25,
+            "total": 29,
+            "accuracy": 0.8620689655172413
+          },
+          "4": {
+            "correct": 13,
+            "total": 16,
+            "accuracy": 0.8125
+          },
+          "5": {
+            "correct": 1,
+            "total": 2,
+            "accuracy": 0.5
+          }
+        },
+        "modal_predicted_position": 1,
+        "modal_predicted_count": 71,
+        "accuracy_raw": 0.670995670995671,
+        "accuracy_excluding_modal_gold": 0.6894409937888198,
+        "position_dominated": false
+      }
+    },
+    "reversed": {
+      "summary": {
+        "overall": {
+          "accuracy": 0.670995670995671,
+          "correct": 155,
+          "total": 231,
+          "failed": 0
+        },
+        "by_tier": {
+          "easy": {
+            "accuracy": 1.0,
+            "correct": 48,
+            "total": 48
+          },
+          "hard": {
+            "accuracy": 0.42342342342342343,
+            "correct": 47,
+            "total": 111
+          },
+          "original": {
+            "accuracy": 0.8333333333333334,
+            "correct": 60,
+            "total": 72
+          }
+        },
+        "by_type": {
+          "choice": {
+            "accuracy": 0.6834532374100719,
+            "correct": 95,
+            "total": 139
+          },
+          "noul": {
+            "accuracy": 0.6351351351351351,
+            "correct": 47,
+            "total": 74
+          },
+          "score": {
+            "accuracy": 0.7222222222222222,
+            "correct": 13,
+            "total": 18
+          }
+        },
+        "by_tier_type": {
+          "easy": {
+            "choice": {
+              "accuracy": 1.0,
+              "correct": 36,
+              "total": 36
+            },
+            "noul": {
+              "accuracy": 1.0,
+              "correct": 12,
+              "total": 12
+            }
+          },
+          "hard": {
+            "choice": {
+              "accuracy": 0.40298507462686567,
+              "correct": 27,
+              "total": 67
+            },
+            "noul": {
+              "accuracy": 0.5,
+              "correct": 19,
+              "total": 38
+            },
+            "score": {
+              "accuracy": 0.16666666666666666,
+              "correct": 1,
+              "total": 6
+            }
+          },
+          "original": {
+            "noul": {
+              "accuracy": 0.6666666666666666,
+              "correct": 16,
+              "total": 24
+            },
+            "choice": {
+              "accuracy": 0.8888888888888888,
+              "correct": 32,
+              "total": 36
+            },
+            "score": {
+              "accuracy": 1.0,
+              "correct": 12,
+              "total": 12
+            }
+          }
+        }
+      },
+      "position": {
+        "n": 231,
+        "predicted_position_histogram": {
+          "0": 86,
+          "1": 51,
+          "2": 42,
+          "3": 37,
+          "4": 14,
+          "5": 1
+        },
+        "gold_position_histogram": {
+          "0": 74,
+          "1": 73,
+          "2": 35,
+          "3": 34,
+          "4": 13,
+          "5": 2
+        },
+        "accuracy_by_gold_position": {
+          "0": {
+            "correct": 52,
+            "total": 74,
+            "accuracy": 0.7027027027027027
+          },
+          "1": {
+            "correct": 38,
+            "total": 73,
+            "accuracy": 0.5205479452054794
+          },
+          "2": {
+            "correct": 28,
+            "total": 35,
+            "accuracy": 0.8
+          },
+          "3": {
+            "correct": 25,
+            "total": 34,
+            "accuracy": 0.7352941176470589
+          },
+          "4": {
+            "correct": 11,
+            "total": 13,
+            "accuracy": 0.8461538461538461
+          },
+          "5": {
+            "correct": 1,
+            "total": 2,
+            "accuracy": 0.5
+          }
+        },
+        "modal_predicted_position": 0,
+        "modal_predicted_count": 86,
+        "accuracy_raw": 0.670995670995671,
+        "accuracy_excluding_modal_gold": 0.6560509554140127,
+        "position_dominated": false
+      }
+    },
+    "order_effect": {
+      "n": 231,
+      "accuracy_natural": 0.670995670995671,
+      "accuracy_reversed": 0.670995670995671,
+      "difference_pp": 0.0,
+      "changed_fraction": 0.22510822510822512
+    },
+    "latency": {
+      "natural": {
+        "mean_s": 0.3128711261052751,
+        "median_s": 0.4491192791610956
+      },
+      "reversed": {
+        "mean_s": 0.025544102600013666,
+        "median_s": 0.0226012310013175
+      }
+    },
+    "prompt_tokens": {
+      "natural": {
+        "mean": 616.2770562770563,
+        "median": 124
+      },
+      "reversed": {
+        "mean": 616.2770562770563,
+        "median": 124
+      }
+    }
+  },
+  "diagnostic_sample": [
+    {
+      "id": "easy-intent-00",
+      "gold_code": "E",
+      "predicted_code": "E",
+      "top5": [
+        {
+          "token_id": 468,
+          "token": " E",
+          "probability": 0.9429346919059753
+        },
+        {
+          "token_id": 576,
+          "token": " The",
+          "probability": 0.005606894381344318
+        },
+        {
+          "token_id": 362,
+          "token": " A",
+          "probability": 0.00385355856269598
+        },
+        {
+          "token_id": 6959,
+          "token": " Option",
+          "probability": 0.0034007534850388765
+        },
+        {
+          "token_id": 6771,
+          "token": " Let",
+          "probability": 0.003001154400408268
+        }
+      ]
+    },
+    {
+      "id": "easy-fact-11",
+      "gold_code": "A",
+      "predicted_code": "A",
+      "top5": [
+        {
+          "token_id": 362,
+          "token": " A",
+          "probability": 0.920007586479187
+        },
+        {
+          "token_id": 902,
+          "token": " no",
+          "probability": 0.013123203068971634
+        },
+        {
+          "token_id": 1124,
+          "token": " \\",
+          "probability": 0.0102203618735075
+        },
+        {
+          "token_id": 264,
+          "token": " a",
+          "probability": 0.00795962568372488
+        },
+        {
+          "token_id": 320,
+          "token": " (",
+          "probability": 0.004827756900340319
+        }
+      ]
+    },
+    {
+      "id": "easy-tool_selection-10",
+      "gold_code": "B",
+      "predicted_code": "B",
+      "top5": [
+        {
+          "token_id": 425,
+          "token": " B",
+          "probability": 0.9731255769729614
+        },
+        {
+          "token_id": 6959,
+          "token": " Option",
+          "probability": 0.0021287035197019577
+        },
+        {
+          "token_id": 362,
+          "token": " A",
+          "probability": 0.0021287035197019577
+        },
+        {
+          "token_id": 576,
+          "token": " The",
+          "probability": 0.0018785742577165365
+        },
+        {
+          "token_id": 220,
+          "token": " ",
+          "probability": 0.0018785742577165365
+        }
+      ]
+    },
+    {
+      "id": "hard-opus-b-ambiguous-10",
+      "gold_code": "A",
+      "predicted_code": "A",
+      "top5": [
+        {
+          "token_id": 362,
+          "token": " A",
+          "probability": 0.8213751316070557
+        },
+        {
+          "token_id": 425,
+          "token": " B",
+          "probability": 0.09809926897287369
+        },
+        {
+          "token_id": 576,
+          "token": " The",
+          "probability": 0.009124654345214367
+        },
+        {
+          "token_id": 264,
+          "token": " a",
+          "probability": 0.005199070554226637
+        },
+        {
+          "token_id": 356,
+          "token": " C",
+          "probability": 0.0038037216290831566
+        }
+      ]
+    },
+    {
+      "id": "hard-opus-c-long_policy-08",
+      "gold_code": "B",
+      "predicted_code": "C",
+      "top5": [
+        {
+          "token_id": 4710,
+          "token": " \n\n",
+          "probability": 0.16958265006542206
+        },
+        {
+          "token_id": 23754,
+          "token": " ?\n\n",
+          "probability": 0.11655233800411224
+        },
+        {
+          "token_id": 356,
+          "token": " C",
+          "probability": 0.09077105671167374
+        },
+        {
+          "token_id": 425,
+          "token": " B",
+          "probability": 0.08010517805814743
+        },
+        {
+          "token_id": 320,
+          "token": " (",
+          "probability": 0.042877208441495895
+        }
+      ]
+    },
+    {
+      "id": "hard-sol-a-multi_hop-12",
+      "gold_code": "C",
+      "predicted_code": "B",
+      "top5": [
+        {
+          "token_id": 425,
+          "token": " B",
+          "probability": 0.6405242681503296
+        },
+        {
+          "token_id": 362,
+          "token": " A",
+          "probability": 0.12612669169902802
+        },
+        {
+          "token_id": 356,
+          "token": " C",
+          "probability": 0.046399421989917755
+        },
+        {
+          "token_id": 220,
+          "token": " ",
+          "probability": 0.015063687227666378
+        },
+        {
+          "token_id": 320,
+          "token": " (",
+          "probability": 0.01173161156475544
+        }
+      ]
+    },
+    {
+      "id": "hard-sol-b-routing_hard-03",
+      "gold_code": "D",
+      "predicted_code": "D",
+      "top5": [
+        {
+          "token_id": 422,
+          "token": " D",
+          "probability": 0.8288846611976624
+        },
+        {
+          "token_id": 356,
+          "token": " C",
+          "probability": 0.028362873941659927
+        },
+        {
+          "token_id": 576,
+          "token": " The",
+          "probability": 0.01518155261874199
+        },
+        {
+          "token_id": 4710,
+          "token": " \n\n",
+          "probability": 0.01043411809951067
+        },
+        {
+          "token_id": 362,
+          "token": " A",
+          "probability": 0.008126099593937397
+        }
+      ]
+    },
+    {
+      "id": "original-policy-02-0",
+      "gold_code": "B",
+      "predicted_code": "A",
+      "top5": [
+        {
+          "token_id": 362,
+          "token": " A",
+          "probability": 0.7395563125610352
+        },
+        {
+          "token_id": 425,
+          "token": " B",
+          "probability": 0.11341463774442673
+        },
+        {
+          "token_id": 902,
+          "token": " no",
+          "probability": 0.025306224822998047
+        },
+        {
+          "token_id": 9834,
+          "token": " yes",
+          "probability": 0.010549203492701054
+        },
+        {
+          "token_id": 356,
+          "token": " C",
+          "probability": 0.009309640154242516
+        }
+      ]
+    },
+    {
+      "id": "original-ordinal-01-1",
+      "gold_code": "A",
+      "predicted_code": "A",
+      "top5": [
+        {
+          "token_id": 362,
+          "token": " A",
+          "probability": 0.888429582118988
+        },
+        {
+          "token_id": 9395,
+          "token": " Level",
+          "probability": 0.01843876764178276
+        },
+        {
+          "token_id": 220,
+          "token": " ",
+          "probability": 0.009869561530649662
+        },
+        {
+          "token_id": 356,
+          "token": " C",
+          "probability": 0.004662050399929285
+        },
+        {
+          "token_id": 425,
+          "token": " B",
+          "probability": 0.004114245530217886
+        }
+      ]
+    },
+    {
+      "id": "original-adequacy-01-0",
+      "gold_code": "B",
+      "predicted_code": "B",
+      "top5": [
+        {
+          "token_id": 425,
+          "token": " B",
+          "probability": 0.5655928254127502
+        },
+        {
+          "token_id": 362,
+          "token": " A",
+          "probability": 0.30274003744125366
+        },
+        {
+          "token_id": 9834,
+          "token": " yes",
+          "probability": 0.028159206733107567
+        },
+        {
+          "token_id": 902,
+          "token": " no",
+          "probability": 0.015072537586092949
+        },
+        {
+          "token_id": 422,
+          "token": " D",
+          "probability": 0.011738504283130169
+        }
+      ]
+    }
+  ],
+  "predictions_natural": [
+    {
+      "id": "easy-intent-00",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.0,
+        15.8125,
+        16.0,
+        16.625,
+        22.5
+      ],
+      "latency_s": 0.7048727967776358
+    },
+    {
+      "id": "easy-intent-01",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        22.875,
+        16.125,
+        16.5,
+        15.625
+      ],
+      "latency_s": 0.022685074247419834
+    },
+    {
+      "id": "easy-intent-02",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.125,
+        15.5,
+        22.75,
+        15.625,
+        15.0
+      ],
+      "latency_s": 0.45457766205072403
+    },
+    {
+      "id": "easy-intent-03",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        16.375,
+        16.75,
+        23.75,
+        16.25
+      ],
+      "latency_s": 0.44498486211523414
+    },
+    {
+      "id": "easy-intent-04",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.25,
+        15.9375,
+        15.5,
+        15.625,
+        16.625
+      ],
+      "latency_s": 0.4507665829733014
+    },
+    {
+      "id": "easy-intent-05",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.125,
+        16.25,
+        16.875,
+        17.5,
+        22.0
+      ],
+      "latency_s": 0.45129315136000514
+    },
+    {
+      "id": "easy-intent-06",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.25,
+        15.1875,
+        22.125,
+        15.1875,
+        14.3125
+      ],
+      "latency_s": 0.45407779375091195
+    },
+    {
+      "id": "easy-intent-07",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.625,
+        14.75,
+        14.6875,
+        14.875,
+        14.8125
+      ],
+      "latency_s": 0.4599436349235475
+    },
+    {
+      "id": "easy-intent-08",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        16.25,
+        16.125,
+        17.375,
+        23.5
+      ],
+      "latency_s": 0.453901341650635
+    },
+    {
+      "id": "easy-intent-09",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        21.5,
+        17.625,
+        17.0,
+        15.6875
+      ],
+      "latency_s": 0.4548176359385252
+    },
+    {
+      "id": "easy-intent-10",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.125,
+        15.375,
+        15.8125,
+        23.75,
+        15.9375
+      ],
+      "latency_s": 0.4536299672909081
+    },
+    {
+      "id": "easy-intent-11",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        15.875,
+        15.25,
+        22.5,
+        15.3125,
+        14.5625
+      ],
+      "latency_s": 0.022511891089379787
+    },
+    {
+      "id": "easy-fact-00",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.5,
+        23.75
+      ],
+      "latency_s": 0.455247363075614
+    },
+    {
+      "id": "easy-fact-01",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.75,
+        16.0
+      ],
+      "latency_s": 0.4500317396596074
+    },
+    {
+      "id": "easy-fact-02",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        22.625
+      ],
+      "latency_s": 0.4554713563993573
+    },
+    {
+      "id": "easy-fact-03",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.5,
+        15.4375
+      ],
+      "latency_s": 0.45517279114574194
+    },
+    {
+      "id": "easy-fact-04",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.5,
+        24.25
+      ],
+      "latency_s": 0.4501547017134726
+    },
+    {
+      "id": "easy-fact-05",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.875,
+        14.5625
+      ],
+      "latency_s": 0.45031735580414534
+    },
+    {
+      "id": "easy-fact-06",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        23.75
+      ],
+      "latency_s": 0.022672764025628567
+    },
+    {
+      "id": "easy-fact-07",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.75,
+        16.125
+      ],
+      "latency_s": 0.44938816130161285
+    },
+    {
+      "id": "easy-fact-08",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.125,
+        22.5
+      ],
+      "latency_s": 0.45134601183235645
+    },
+    {
+      "id": "easy-fact-09",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.25,
+        16.0
+      ],
+      "latency_s": 0.02243142994120717
+    },
+    {
+      "id": "easy-fact-10",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        23.875
+      ],
+      "latency_s": 0.450868793297559
+    },
+    {
+      "id": "easy-fact-11",
+      "tier": "easy",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.625,
+        16.875
+      ],
+      "latency_s": 0.46207134798169136
+    },
+    {
+      "id": "easy-extraction-00",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        14.5,
+        15.5625,
+        23.0
+      ],
+      "latency_s": 0.022599443327635527
+    },
+    {
+      "id": "easy-extraction-01",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        22.625,
+        17.375,
+        16.875
+      ],
+      "latency_s": 0.4497150229290128
+    },
+    {
+      "id": "easy-extraction-02",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.625,
+        16.0,
+        15.5625,
+        15.4375
+      ],
+      "latency_s": 0.448675821069628
+    },
+    {
+      "id": "easy-extraction-03",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.125,
+        12.9375,
+        13.6875,
+        16.75
+      ],
+      "latency_s": 0.4504217579960823
+    },
+    {
+      "id": "easy-extraction-04",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.625,
+        23.25,
+        15.875,
+        17.25
+      ],
+      "latency_s": 0.022485950030386448
+    },
+    {
+      "id": "easy-extraction-05",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.125,
+        15.75,
+        15.1875,
+        22.5
+      ],
+      "latency_s": 0.0224994788877666
+    },
+    {
+      "id": "easy-extraction-06",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.5,
+        24.125,
+        17.375,
+        18.125
+      ],
+      "latency_s": 0.44905227702111006
+    },
+    {
+      "id": "easy-extraction-07",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        15.375,
+        15.1875,
+        23.25
+      ],
+      "latency_s": 0.44763063499704003
+    },
+    {
+      "id": "easy-extraction-08",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.375,
+        14.5625,
+        24.125,
+        16.0,
+        14.4375
+      ],
+      "latency_s": 0.4459250080399215
+    },
+    {
+      "id": "easy-extraction-09",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.75,
+        24.625,
+        16.625,
+        17.875,
+        15.875
+      ],
+      "latency_s": 0.022481400053948164
+    },
+    {
+      "id": "easy-extraction-10",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.75,
+        15.25,
+        15.0,
+        15.25,
+        15.6875
+      ],
+      "latency_s": 0.4484671079553664
+    },
+    {
+      "id": "easy-extraction-11",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.5,
+        15.875,
+        22.625,
+        16.625
+      ],
+      "latency_s": 0.022605701349675655
+    },
+    {
+      "id": "easy-tool_selection-00",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.5,
+        15.8125,
+        23.125,
+        16.75,
+        16.75
+      ],
+      "latency_s": 0.02267146296799183
+    },
+    {
+      "id": "easy-tool_selection-01",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        16.625,
+        14.5625,
+        15.0,
+        23.25,
+        15.875
+      ],
+      "latency_s": 0.4517049780115485
+    },
+    {
+      "id": "easy-tool_selection-02",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.75,
+        23.0,
+        14.9375,
+        15.5625,
+        14.125
+      ],
+      "latency_s": 0.02356145577505231
+    },
+    {
+      "id": "easy-tool_selection-03",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        23.25,
+        15.8125,
+        16.25,
+        15.8125,
+        17.5
+      ],
+      "latency_s": 0.4542357977479696
+    },
+    {
+      "id": "easy-tool_selection-04",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.0,
+        15.0,
+        15.3125,
+        15.9375,
+        22.375
+      ],
+      "latency_s": 0.45345106488093734
+    },
+    {
+      "id": "easy-tool_selection-05",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.75,
+        22.75,
+        14.625,
+        15.375,
+        14.375
+      ],
+      "latency_s": 0.022550069727003574
+    },
+    {
+      "id": "easy-tool_selection-06",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        16.875,
+        15.625,
+        15.25,
+        22.875,
+        14.9375
+      ],
+      "latency_s": 0.022555739618837833
+    },
+    {
+      "id": "easy-tool_selection-07",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.75,
+        14.875,
+        14.4375,
+        14.375,
+        14.75
+      ],
+      "latency_s": 0.02265198202803731
+    },
+    {
+      "id": "easy-tool_selection-08",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        16.75,
+        15.25,
+        14.9375,
+        15.4375,
+        22.875
+      ],
+      "latency_s": 0.4502992662601173
+    },
+    {
+      "id": "easy-tool_selection-09",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.25,
+        14.625,
+        21.5,
+        14.8125,
+        14.3125
+      ],
+      "latency_s": 0.022459309082478285
+    },
+    {
+      "id": "easy-tool_selection-10",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.875,
+        23.0,
+        14.6875,
+        15.8125,
+        14.9375
+      ],
+      "latency_s": 0.022822725120931864
+    },
+    {
+      "id": "easy-tool_selection-11",
+      "tier": "easy",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        16.625,
+        15.1875,
+        14.75,
+        15.5,
+        22.875
+      ],
+      "latency_s": 0.02254473976790905
+    },
+    {
+      "id": "hard-opus-a-long_policy-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.0,
+        15.375,
+        15.9375,
+        16.375,
+        17.375
+      ],
+      "latency_s": 0.4843260948546231
+    },
+    {
+      "id": "hard-opus-a-long_policy-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        15.75,
+        15.0625,
+        19.375,
+        16.125,
+        17.0
+      ],
+      "latency_s": 0.4631097852252424
+    },
+    {
+      "id": "hard-opus-a-long_policy-08",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        17.875,
+        17.75,
+        17.625,
+        16.625
+      ],
+      "latency_s": 0.46222790190950036
+    },
+    {
+      "id": "hard-opus-a-long_policy-09",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.625,
+        17.625,
+        16.75,
+        15.5625
+      ],
+      "latency_s": 0.459521250333637
+    },
+    {
+      "id": "hard-opus-a-long_policy-11",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.5,
+        19.125
+      ],
+      "latency_s": 0.4615231608040631
+    },
+    {
+      "id": "hard-opus-a-long_policy-13",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.875,
+        16.75
+      ],
+      "latency_s": 0.45890637021511793
+    },
+    {
+      "id": "hard-opus-a-long_policy-17",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        18.0,
+        15.0625,
+        16.75,
+        19.125,
+        14.75
+      ],
+      "latency_s": 0.45532078482210636
+    },
+    {
+      "id": "hard-opus-a-long_policy-19",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.25,
+        17.875
+      ],
+      "latency_s": 0.4542233468964696
+    },
+    {
+      "id": "hard-opus-a-probability-03",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.625,
+        18.875
+      ],
+      "latency_s": 0.46106345392763615
+    },
+    {
+      "id": "hard-opus-a-probability-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.25,
+        18.75,
+        15.25
+      ],
+      "latency_s": 0.4482029443606734
+    },
+    {
+      "id": "hard-opus-a-probability-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        17.0,
+        15.25,
+        18.5
+      ],
+      "latency_s": 0.449199958704412
+    },
+    {
+      "id": "hard-opus-a-probability-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.125,
+        18.25
+      ],
+      "latency_s": 0.45511426124721766
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-03",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.375,
+        18.5
+      ],
+      "latency_s": 0.45021854480728507
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-06",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.375,
+        20.875
+      ],
+      "latency_s": 0.43816355895251036
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.875,
+        16.875,
+        17.5,
+        17.0,
+        17.25
+      ],
+      "latency_s": 0.4529907680116594
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-09",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        16.875,
+        17.5
+      ],
+      "latency_s": 0.44767124485224485
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-12",
+      "tier": "hard",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        17.5,
+        17.25,
+        17.5,
+        21.375
+      ],
+      "latency_s": 0.45147532504051924
+    },
+    {
+      "id": "hard-opus-b-ambiguous-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.375,
+        16.875,
+        21.125
+      ],
+      "latency_s": 0.4482483146712184
+    },
+    {
+      "id": "hard-opus-b-ambiguous-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 1,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        19.25,
+        18.625,
+        19.5
+      ],
+      "latency_s": 0.44636752596125007
+    },
+    {
+      "id": "hard-opus-b-ambiguous-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.875,
+        20.625,
+        17.0
+      ],
+      "latency_s": 0.4467820920981467
+    },
+    {
+      "id": "hard-opus-b-ambiguous-09",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        15.375,
+        18.5
+      ],
+      "latency_s": 0.4495447142980993
+    },
+    {
+      "id": "hard-opus-b-ambiguous-10",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.875,
+        18.75,
+        15.5
+      ],
+      "latency_s": 0.4463458647951484
+    },
+    {
+      "id": "hard-opus-b-ambiguous-11",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.125,
+        17.5,
+        17.25
+      ],
+      "latency_s": 0.44868911197409034
+    },
+    {
+      "id": "hard-opus-b-ambiguous-13",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.875,
+        17.625,
+        17.0,
+        20.25
+      ],
+      "latency_s": 0.4486344610340893
+    },
+    {
+      "id": "hard-opus-b-multi_hop-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        14.875,
+        18.125,
+        16.75,
+        15.1875
+      ],
+      "latency_s": 0.4627957111224532
+    },
+    {
+      "id": "hard-opus-b-multi_hop-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 1,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": false,
+      "code_logits": [
+        14.6875,
+        13.875,
+        16.125,
+        16.625,
+        16.75,
+        15.125
+      ],
+      "latency_s": 0.45566696021705866
+    },
+    {
+      "id": "hard-opus-b-multi_hop-05",
+      "tier": "hard",
+      "type": "score",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        15.0625,
+        16.25,
+        13.625,
+        14.6875,
+        14.5
+      ],
+      "latency_s": 0.45827933121472597
+    },
+    {
+      "id": "hard-opus-b-multi_hop-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.25,
+        16.5,
+        16.375,
+        16.25,
+        16.5,
+        16.0
+      ],
+      "latency_s": 0.45810061832889915
+    },
+    {
+      "id": "hard-opus-b-multi_hop-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        15.4375,
+        19.125
+      ],
+      "latency_s": 0.4576523411087692
+    },
+    {
+      "id": "hard-opus-b-probability-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        14.5,
+        12.6875,
+        15.8125
+      ],
+      "latency_s": 0.4489405150525272
+    },
+    {
+      "id": "hard-opus-b-probability-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.5,
+        15.9375,
+        16.125
+      ],
+      "latency_s": 0.023138609249144793
+    },
+    {
+      "id": "hard-opus-b-probability-03",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.375,
+        17.375
+      ],
+      "latency_s": 0.45190709084272385
+    },
+    {
+      "id": "hard-opus-b-probability-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        19.0,
+        15.9375,
+        17.625
+      ],
+      "latency_s": 0.4444912471808493
+    },
+    {
+      "id": "hard-opus-b-probability-06",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.0,
+        18.625,
+        17.125
+      ],
+      "latency_s": 0.4465761692263186
+    },
+    {
+      "id": "hard-opus-b-tradeoff-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        18.375,
+        21.875,
+        16.875,
+        17.625,
+        18.125
+      ],
+      "latency_s": 0.44886654522269964
+    },
+    {
+      "id": "hard-opus-b-tradeoff-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        17.375,
+        16.5,
+        22.0,
+        17.5
+      ],
+      "latency_s": 0.4495030250400305
+    },
+    {
+      "id": "hard-opus-b-tradeoff-06",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.625,
+        14.6875
+      ],
+      "latency_s": 0.4471038170158863
+    },
+    {
+      "id": "hard-opus-b-tradeoff-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        16.0,
+        17.125,
+        17.375,
+        21.25,
+        14.8125
+      ],
+      "latency_s": 0.45238815899938345
+    },
+    {
+      "id": "hard-opus-b-tradeoff-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.875,
+        15.9375
+      ],
+      "latency_s": 0.44740125304087996
+    },
+    {
+      "id": "hard-opus-b-tradeoff-12",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        16.375,
+        17.125,
+        21.375,
+        20.0
+      ],
+      "latency_s": 0.4490489480085671
+    },
+    {
+      "id": "hard-opus-c-long_policy-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        19.0,
+        19.125,
+        15.4375,
+        17.375,
+        17.625
+      ],
+      "latency_s": 0.4762298087589443
+    },
+    {
+      "id": "hard-opus-c-long_policy-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.25,
+        17.25,
+        17.25,
+        18.75,
+        19.5,
+        17.375
+      ],
+      "latency_s": 0.4735636292025447
+    },
+    {
+      "id": "hard-opus-c-long_policy-04",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.0,
+        18.375
+      ],
+      "latency_s": 0.46964360726997256
+    },
+    {
+      "id": "hard-opus-c-long_policy-05",
+      "tier": "hard",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        15.875,
+        14.5625,
+        16.375,
+        14.9375
+      ],
+      "latency_s": 0.46839625807479024
+    },
+    {
+      "id": "hard-opus-c-long_policy-08",
+      "tier": "hard",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        16.0,
+        18.25,
+        18.375,
+        16.625
+      ],
+      "latency_s": 0.47553491871804
+    },
+    {
+      "id": "hard-opus-c-long_policy-10",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        19.5,
+        20.625,
+        17.25,
+        16.75
+      ],
+      "latency_s": 0.47591564478352666
+    },
+    {
+      "id": "hard-opus-c-long_policy-11",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        17.25,
+        15.75
+      ],
+      "latency_s": 0.4719723337329924
+    },
+    {
+      "id": "hard-opus-c-probability-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        15.625,
+        19.0,
+        16.875
+      ],
+      "latency_s": 0.4517139280214906
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-02",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.125,
+        16.25
+      ],
+      "latency_s": 0.44994044210761786
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.125,
+        18.125,
+        18.125,
+        19.0,
+        17.375
+      ],
+      "latency_s": 0.4457114660181105
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        18.625,
+        18.25,
+        19.75,
+        18.125,
+        18.0
+      ],
+      "latency_s": 0.448538769967854
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-06",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 4,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.125,
+        17.375,
+        17.25,
+        16.875,
+        16.875,
+        16.5
+      ],
+      "latency_s": 0.4460178008303046
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-08",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.75,
+        18.375,
+        18.375,
+        18.25,
+        18.0
+      ],
+      "latency_s": 0.44750685431063175
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-12",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.25,
+        19.375,
+        19.125
+      ],
+      "latency_s": 0.44973507802933455
+    },
+    {
+      "id": "hard-sol-a-adversarial-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        17.5,
+        19.0,
+        20.0,
+        20.375
+      ],
+      "latency_s": 0.45601292606443167
+    },
+    {
+      "id": "hard-sol-a-adversarial-06",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.625,
+        17.875
+      ],
+      "latency_s": 0.4580062972381711
+    },
+    {
+      "id": "hard-sol-a-adversarial-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        19.0,
+        15.75,
+        15.375,
+        21.125
+      ],
+      "latency_s": 0.4499029600992799
+    },
+    {
+      "id": "hard-sol-a-adversarial-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.625,
+        18.125
+      ],
+      "latency_s": 0.45393656427040696
+    },
+    {
+      "id": "hard-sol-a-adversarial-09",
+      "tier": "hard",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        17.375,
+        17.125,
+        19.125,
+        20.5
+      ],
+      "latency_s": 0.4551160619594157
+    },
+    {
+      "id": "hard-sol-a-adversarial-11",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        17.125,
+        15.1875,
+        21.375
+      ],
+      "latency_s": 0.45656042359769344
+    },
+    {
+      "id": "hard-sol-a-multi_hop-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.125,
+        17.0,
+        17.125,
+        18.0
+      ],
+      "latency_s": 0.45802223589271307
+    },
+    {
+      "id": "hard-sol-a-multi_hop-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.0,
+        19.5,
+        17.25,
+        20.5
+      ],
+      "latency_s": 0.46409997111186385
+    },
+    {
+      "id": "hard-sol-a-multi_hop-05",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.75,
+        15.5,
+        18.375,
+        16.0
+      ],
+      "latency_s": 0.4585243151523173
+    },
+    {
+      "id": "hard-sol-a-multi_hop-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.75,
+        20.375,
+        17.25,
+        18.25
+      ],
+      "latency_s": 0.4567190767265856
+    },
+    {
+      "id": "hard-sol-a-multi_hop-08",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        17.75,
+        17.75,
+        20.75,
+        18.75
+      ],
+      "latency_s": 0.46200030809268355
+    },
+    {
+      "id": "hard-sol-a-multi_hop-09",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.5,
+        15.625,
+        18.875,
+        15.6875
+      ],
+      "latency_s": 0.45617323787882924
+    },
+    {
+      "id": "hard-sol-a-multi_hop-10",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        18.25,
+        18.25,
+        19.25,
+        19.875
+      ],
+      "latency_s": 0.4565029228106141
+    },
+    {
+      "id": "hard-sol-a-multi_hop-12",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        18.875,
+        20.5,
+        17.875,
+        16.375
+      ],
+      "latency_s": 0.45946610858663917
+    },
+    {
+      "id": "hard-sol-a-trap-02",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.375,
+        15.8125
+      ],
+      "latency_s": 0.4517733799293637
+    },
+    {
+      "id": "hard-sol-a-trap-04",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.375,
+        15.8125
+      ],
+      "latency_s": 0.4537510806694627
+    },
+    {
+      "id": "hard-sol-a-trap-05",
+      "tier": "hard",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        18.75,
+        16.75,
+        19.625,
+        18.375
+      ],
+      "latency_s": 0.45490622939541936
+    },
+    {
+      "id": "hard-sol-a-trap-06",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        16.75,
+        16.25,
+        16.75,
+        21.875
+      ],
+      "latency_s": 0.45134012261405587
+    },
+    {
+      "id": "hard-sol-a-trap-08",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        17.625,
+        15.5625,
+        18.875,
+        22.5
+      ],
+      "latency_s": 0.44828530587255955
+    },
+    {
+      "id": "hard-sol-a-trap-10",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        17.875,
+        21.625,
+        18.875,
+        22.375
+      ],
+      "latency_s": 0.4489452657289803
+    },
+    {
+      "id": "hard-sol-a-trap-13",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.125,
+        16.375
+      ],
+      "latency_s": 0.02243848890066147
+    },
+    {
+      "id": "hard-sol-a-trap-15",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.375,
+        17.875
+      ],
+      "latency_s": 0.4516899990849197
+    },
+    {
+      "id": "hard-sol-b-judge_hard-01",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        20.625
+      ],
+      "latency_s": 0.45082032587379217
+    },
+    {
+      "id": "hard-sol-b-judge_hard-02",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        18.25,
+        20.875
+      ],
+      "latency_s": 0.4449593941681087
+    },
+    {
+      "id": "hard-sol-b-judge_hard-05",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.875,
+        21.125
+      ],
+      "latency_s": 0.44675340224057436
+    },
+    {
+      "id": "hard-sol-b-judge_hard-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        18.625,
+        20.5
+      ],
+      "latency_s": 0.4510238077491522
+    },
+    {
+      "id": "hard-sol-b-judge_hard-10",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        19.125,
+        21.0
+      ],
+      "latency_s": 0.449307091999799
+    },
+    {
+      "id": "hard-sol-b-judge_hard-14",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.5,
+        18.875
+      ],
+      "latency_s": 0.45223224675282836
+    },
+    {
+      "id": "hard-sol-b-judge_hard-15",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        21.625
+      ],
+      "latency_s": 0.44579171668738127
+    },
+    {
+      "id": "hard-sol-b-judge_hard-18",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        19.125,
+        23.125
+      ],
+      "latency_s": 0.4549063388258219
+    },
+    {
+      "id": "hard-sol-b-long_policy-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.625,
+        19.625,
+        17.125,
+        17.625
+      ],
+      "latency_s": 0.4648006521165371
+    },
+    {
+      "id": "hard-sol-b-long_policy-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        18.0,
+        17.25,
+        20.75,
+        18.5
+      ],
+      "latency_s": 0.4595604413188994
+    },
+    {
+      "id": "hard-sol-b-long_policy-05",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.75,
+        18.25,
+        18.5,
+        21.625
+      ],
+      "latency_s": 0.038375826086848974
+    },
+    {
+      "id": "hard-sol-b-long_policy-06",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        19.625,
+        17.375,
+        17.5,
+        22.0
+      ],
+      "latency_s": 0.46232243394479156
+    },
+    {
+      "id": "hard-sol-b-routing_hard-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        16.5,
+        14.9375,
+        15.5625,
+        22.25,
+        16.625
+      ],
+      "latency_s": 0.4490959388203919
+    },
+    {
+      "id": "hard-sol-b-routing_hard-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.125,
+        15.125,
+        21.875,
+        15.5,
+        14.875
+      ],
+      "latency_s": 0.4491610489785671
+    },
+    {
+      "id": "hard-sol-b-routing_hard-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.0,
+        16.0,
+        18.25,
+        21.625,
+        14.75
+      ],
+      "latency_s": 0.022415518760681152
+    },
+    {
+      "id": "hard-sol-b-routing_hard-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.75,
+        16.875,
+        16.75,
+        17.625,
+        22.5
+      ],
+      "latency_s": 0.45646737422794104
+    },
+    {
+      "id": "hard-sol-b-routing_hard-09",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.75,
+        16.625,
+        16.75,
+        22.125,
+        15.25
+      ],
+      "latency_s": 0.4465811001136899
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        20.0,
+        19.75,
+        19.25,
+        20.875
+      ],
+      "latency_s": 0.444202883169055
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        18.25,
+        20.625,
+        18.375
+      ],
+      "latency_s": 0.44767931709066033
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.5,
+        19.0,
+        19.5,
+        19.25
+      ],
+      "latency_s": 0.4512637830339372
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        16.75,
+        18.625,
+        17.25
+      ],
+      "latency_s": 0.4542832085862756
+    },
+    {
+      "id": "hard-sol-c-judge_hard-03",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        18.75,
+        20.75
+      ],
+      "latency_s": 0.45266780396923423
+    },
+    {
+      "id": "hard-sol-c-judge_hard-05",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        19.625,
+        20.875
+      ],
+      "latency_s": 0.45207859482616186
+    },
+    {
+      "id": "hard-sol-c-judge_hard-07",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        20.0,
+        21.375
+      ],
+      "latency_s": 0.45050957100465894
+    },
+    {
+      "id": "hard-sol-c-judge_hard-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        19.125,
+        19.75
+      ],
+      "latency_s": 0.44695125613361597
+    },
+    {
+      "id": "hard-sol-c-judge_hard-09",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        19.125,
+        21.0
+      ],
+      "latency_s": 0.44839575700461864
+    },
+    {
+      "id": "hard-sol-c-judge_hard-10",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        19.25,
+        21.375
+      ],
+      "latency_s": 0.4491192791610956
+    },
+    {
+      "id": "hard-sol-c-judge_hard-11",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        19.75,
+        20.0
+      ],
+      "latency_s": 0.44973300909623504
+    },
+    {
+      "id": "hard-sol-c-judge_hard-13",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        19.25,
+        20.875
+      ],
+      "latency_s": 0.4489943669177592
+    },
+    {
+      "id": "hard-sol-c-judge_hard-15",
+      "tier": "hard",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.125,
+        19.625
+      ],
+      "latency_s": 0.44943681405857205
+    },
+    {
+      "id": "hard-sol-c-multi_hop-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.25,
+        19.125,
+        16.75,
+        18.75
+      ],
+      "latency_s": 0.45646095275878906
+    },
+    {
+      "id": "hard-sol-c-multi_hop-09",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        18.875,
+        16.75,
+        18.125,
+        18.75
+      ],
+      "latency_s": 0.45553226908668876
+    },
+    {
+      "id": "hard-sol-c-multi_hop-11",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        17.25,
+        20.0,
+        17.625
+      ],
+      "latency_s": 0.4581887498497963
+    },
+    {
+      "id": "hard-sol-c-multi_hop-12",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        17.125,
+        16.5,
+        17.5,
+        20.75
+      ],
+      "latency_s": 0.45124468207359314
+    },
+    {
+      "id": "hard-sol-c-multi_hop-13",
+      "tier": "hard",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        21.375,
+        16.875,
+        18.375
+      ],
+      "latency_s": 0.45692651998251677
+    },
+    {
+      "id": "original-policy-01-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.875,
+        16.875
+      ],
+      "latency_s": 0.023557106032967567
+    },
+    {
+      "id": "original-policy-01-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.5,
+        18.25
+      ],
+      "latency_s": 0.022670932114124298
+    },
+    {
+      "id": "original-policy-02-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.125,
+        19.25
+      ],
+      "latency_s": 0.45376749243587255
+    },
+    {
+      "id": "original-policy-02-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.0,
+        18.25
+      ],
+      "latency_s": 0.022642772179096937
+    },
+    {
+      "id": "original-policy-03-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.75,
+        21.0
+      ],
+      "latency_s": 0.4520458751358092
+    },
+    {
+      "id": "original-policy-03-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        22.5,
+        20.0
+      ],
+      "latency_s": 0.02274932386353612
+    },
+    {
+      "id": "original-policy-04-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.5,
+        18.375
+      ],
+      "latency_s": 0.022726194001734257
+    },
+    {
+      "id": "original-policy-04-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.125,
+        18.875
+      ],
+      "latency_s": 0.45315550174564123
+    },
+    {
+      "id": "original-policy-05-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.75,
+        19.375
+      ],
+      "latency_s": 0.4526295829564333
+    },
+    {
+      "id": "original-policy-05-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.25,
+        18.75
+      ],
+      "latency_s": 0.02266678214073181
+    },
+    {
+      "id": "original-policy-06-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.875,
+        19.25
+      ],
+      "latency_s": 0.02259468100965023
+    },
+    {
+      "id": "original-policy-06-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.25,
+        17.875
+      ],
+      "latency_s": 0.0226964526809752
+    },
+    {
+      "id": "original-intent-01-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        15.9375,
+        18.375,
+        21.875,
+        16.75
+      ],
+      "latency_s": 0.022668901830911636
+    },
+    {
+      "id": "original-intent-01-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        16.5,
+        18.625,
+        21.75,
+        17.25
+      ],
+      "latency_s": 0.022686801850795746
+    },
+    {
+      "id": "original-intent-02-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        18.125,
+        18.875,
+        21.0,
+        18.125,
+        18.0
+      ],
+      "latency_s": 0.022633921820670366
+    },
+    {
+      "id": "original-intent-02-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        16.375,
+        18.75,
+        17.625,
+        21.5
+      ],
+      "latency_s": 0.02265162207186222
+    },
+    {
+      "id": "original-intent-03-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        20.625,
+        19.625,
+        17.75,
+        16.25
+      ],
+      "latency_s": 0.022683402989059687
+    },
+    {
+      "id": "original-intent-03-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        20.625,
+        18.0,
+        17.25,
+        15.875
+      ],
+      "latency_s": 0.02300030691549182
+    },
+    {
+      "id": "original-intent-04-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.5,
+        16.625,
+        19.0,
+        17.125,
+        17.0
+      ],
+      "latency_s": 0.022735353093594313
+    },
+    {
+      "id": "original-intent-04-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        18.875,
+        16.625,
+        20.875,
+        17.875,
+        17.5
+      ],
+      "latency_s": 0.022632792126387358
+    },
+    {
+      "id": "original-intent-05-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.75,
+        16.875,
+        21.625,
+        19.0,
+        17.25
+      ],
+      "latency_s": 0.022603910882025957
+    },
+    {
+      "id": "original-intent-05-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        16.5,
+        20.375,
+        19.75,
+        17.125
+      ],
+      "latency_s": 0.022656462155282497
+    },
+    {
+      "id": "original-intent-06-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.75,
+        16.375,
+        18.5,
+        17.5,
+        21.0
+      ],
+      "latency_s": 0.45370620023459196
+    },
+    {
+      "id": "original-intent-06-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.5,
+        16.25,
+        18.625,
+        17.625,
+        21.875
+      ],
+      "latency_s": 0.02273441292345524
+    },
+    {
+      "id": "original-ordinal-01-0",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.75,
+        16.875,
+        17.25,
+        16.125
+      ],
+      "latency_s": 0.45409352565184236
+    },
+    {
+      "id": "original-ordinal-01-1",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.5,
+        16.125,
+        16.25,
+        15.5625
+      ],
+      "latency_s": 0.45177187118679285
+    },
+    {
+      "id": "original-ordinal-02-0",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        20.0,
+        19.5,
+        17.0
+      ],
+      "latency_s": 0.4503421592526138
+    },
+    {
+      "id": "original-ordinal-02-1",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.75,
+        21.625,
+        18.125,
+        17.375
+      ],
+      "latency_s": 0.45272231567651033
+    },
+    {
+      "id": "original-ordinal-03-0",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.125,
+        17.375,
+        22.125,
+        18.0
+      ],
+      "latency_s": 0.4565547751262784
+    },
+    {
+      "id": "original-ordinal-03-1",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        17.75,
+        21.875,
+        17.625
+      ],
+      "latency_s": 0.45112997107207775
+    },
+    {
+      "id": "original-ordinal-04-0",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        17.125,
+        18.125,
+        22.625
+      ],
+      "latency_s": 0.02245022915303707
+    },
+    {
+      "id": "original-ordinal-04-1",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        17.0,
+        18.125,
+        22.625
+      ],
+      "latency_s": 0.022535881027579308
+    },
+    {
+      "id": "original-ordinal-05-0",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.125,
+        17.5,
+        19.625,
+        17.0
+      ],
+      "latency_s": 0.45590507611632347
+    },
+    {
+      "id": "original-ordinal-05-1",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.25,
+        17.0,
+        19.25,
+        17.75
+      ],
+      "latency_s": 0.02251339890062809
+    },
+    {
+      "id": "original-ordinal-06-0",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        18.25,
+        22.125,
+        17.5
+      ],
+      "latency_s": 0.022715152241289616
+    },
+    {
+      "id": "original-ordinal-06-1",
+      "tier": "original",
+      "type": "score",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        17.125,
+        22.125,
+        16.625
+      ],
+      "latency_s": 0.44214823096990585
+    },
+    {
+      "id": "original-extraction-01-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        19.625,
+        22.125,
+        19.25,
+        20.75
+      ],
+      "latency_s": 0.022694631945341825
+    },
+    {
+      "id": "original-extraction-01-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        19.0,
+        21.375,
+        19.625,
+        20.375
+      ],
+      "latency_s": 0.0225965422578156
+    },
+    {
+      "id": "original-extraction-02-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.5,
+        17.75,
+        19.25,
+        22.0
+      ],
+      "latency_s": 0.022652671672403812
+    },
+    {
+      "id": "original-extraction-02-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        18.125,
+        17.25,
+        21.625,
+        19.875
+      ],
+      "latency_s": 0.022599741350859404
+    },
+    {
+      "id": "original-extraction-03-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.25,
+        18.375,
+        17.125,
+        18.5
+      ],
+      "latency_s": 0.022926395758986473
+    },
+    {
+      "id": "original-extraction-03-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.125,
+        17.625,
+        17.5,
+        17.25
+      ],
+      "latency_s": 0.022673842031508684
+    },
+    {
+      "id": "original-extraction-04-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        17.25,
+        22.375,
+        17.5
+      ],
+      "latency_s": 0.02265943167731166
+    },
+    {
+      "id": "original-extraction-04-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.625,
+        17.625,
+        22.125,
+        18.125
+      ],
+      "latency_s": 0.022709133103489876
+    },
+    {
+      "id": "original-extraction-05-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        19.5,
+        19.0,
+        19.125,
+        23.25
+      ],
+      "latency_s": 0.02256058994680643
+    },
+    {
+      "id": "original-extraction-05-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.125,
+        17.375,
+        17.75,
+        21.5
+      ],
+      "latency_s": 0.022696502972394228
+    },
+    {
+      "id": "original-extraction-06-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.75,
+        17.25,
+        17.75,
+        17.125
+      ],
+      "latency_s": 0.02262703236192465
+    },
+    {
+      "id": "original-extraction-06-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.875,
+        17.125,
+        17.75,
+        16.5
+      ],
+      "latency_s": 0.02260939171537757
+    },
+    {
+      "id": "original-adequacy-01-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        20.125,
+        20.75
+      ],
+      "latency_s": 0.022809874266386032
+    },
+    {
+      "id": "original-adequacy-01-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        19.375,
+        20.375
+      ],
+      "latency_s": 0.022648582234978676
+    },
+    {
+      "id": "original-adequacy-02-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.625,
+        19.25
+      ],
+      "latency_s": 0.02329919207841158
+    },
+    {
+      "id": "original-adequacy-02-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        16.0,
+        14.5
+      ],
+      "latency_s": 0.02256204094737768
+    },
+    {
+      "id": "original-adequacy-03-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        18.375,
+        21.25
+      ],
+      "latency_s": 0.022680432070046663
+    },
+    {
+      "id": "original-adequacy-03-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.625,
+        20.25
+      ],
+      "latency_s": 0.4494945649057627
+    },
+    {
+      "id": "original-adequacy-04-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        19.75
+      ],
+      "latency_s": 0.022491289768368006
+    },
+    {
+      "id": "original-adequacy-04-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        17.375,
+        16.875
+      ],
+      "latency_s": 0.022516898810863495
+    },
+    {
+      "id": "original-adequacy-05-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        16.375
+      ],
+      "latency_s": 0.02259665122255683
+    },
+    {
+      "id": "original-adequacy-05-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        19.25,
+        18.5
+      ],
+      "latency_s": 0.0225165500305593
+    },
+    {
+      "id": "original-adequacy-06-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.75,
+        20.875
+      ],
+      "latency_s": 0.022717724088579416
+    },
+    {
+      "id": "original-adequacy-06-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "natural",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        19.25
+      ],
+      "latency_s": 0.022630101069808006
+    },
+    {
+      "id": "original-routing-01-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 4,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        18.5,
+        16.5,
+        17.0,
+        19.75,
+        19.5,
+        16.875
+      ],
+      "latency_s": 0.4513223231770098
+    },
+    {
+      "id": "original-routing-01-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        15.625,
+        16.25,
+        18.375,
+        18.75,
+        15.9375
+      ],
+      "latency_s": 0.022463389206677675
+    },
+    {
+      "id": "original-routing-02-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.375,
+        18.25,
+        16.625,
+        17.25,
+        16.5,
+        15.625
+      ],
+      "latency_s": 0.45227359887212515
+    },
+    {
+      "id": "original-routing-02-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.875,
+        15.625,
+        15.5625,
+        17.375,
+        15.8125,
+        14.9375
+      ],
+      "latency_s": 0.02253524074330926
+    },
+    {
+      "id": "original-routing-03-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.75,
+        21.875,
+        16.25,
+        16.5,
+        16.25,
+        16.875
+      ],
+      "latency_s": 0.022576861083507538
+    },
+    {
+      "id": "original-routing-03-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.375,
+        21.5,
+        16.125,
+        16.25,
+        15.8125,
+        16.625
+      ],
+      "latency_s": 0.45347321685403585
+    },
+    {
+      "id": "original-routing-04-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.75,
+        15.0,
+        20.375,
+        17.5,
+        15.4375,
+        14.75
+      ],
+      "latency_s": 0.02250013966113329
+    },
+    {
+      "id": "original-routing-04-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.5,
+        14.9375,
+        18.25,
+        17.25,
+        15.4375,
+        15.125
+      ],
+      "latency_s": 0.022557630203664303
+    },
+    {
+      "id": "original-routing-05-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 5,
+      "pred_pos": 5,
+      "pred_code": "F",
+      "correct": true,
+      "code_logits": [
+        16.75,
+        15.0,
+        15.5,
+        16.125,
+        15.5625,
+        20.0
+      ],
+      "latency_s": 0.022691363003104925
+    },
+    {
+      "id": "original-routing-05-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 5,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        16.5,
+        16.0,
+        16.0,
+        20.0,
+        16.375,
+        18.5
+      ],
+      "latency_s": 0.022663502022624016
+    },
+    {
+      "id": "original-routing-06-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        15.6875,
+        14.625,
+        15.25,
+        21.375,
+        15.75,
+        16.125
+      ],
+      "latency_s": 0.02259834110736847
+    },
+    {
+      "id": "original-routing-06-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "natural",
+      "n_options": 6,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        15.0,
+        14.25,
+        15.125,
+        21.125,
+        15.8125,
+        16.625
+      ],
+      "latency_s": 0.0225524608977139
+    }
+  ],
+  "predictions_reversed": [
+    {
+      "id": "easy-intent-00",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.25,
+        14.4375,
+        14.3125,
+        14.3125,
+        13.75
+      ],
+      "latency_s": 0.02407514536753297
+    },
+    {
+      "id": "easy-intent-01",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        16.0,
+        16.625,
+        23.0,
+        15.25
+      ],
+      "latency_s": 0.02266713371500373
+    },
+    {
+      "id": "easy-intent-02",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        15.9375,
+        23.0,
+        15.8125,
+        14.75
+      ],
+      "latency_s": 0.022885176818817854
+    },
+    {
+      "id": "easy-intent-03",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.75,
+        22.5,
+        15.9375,
+        16.25,
+        15.0
+      ],
+      "latency_s": 0.02265356434509158
+    },
+    {
+      "id": "easy-intent-04",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        16.375,
+        16.5,
+        17.125,
+        22.5
+      ],
+      "latency_s": 0.022722564171999693
+    },
+    {
+      "id": "easy-intent-05",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.75,
+        15.0625,
+        14.875,
+        15.0625,
+        14.0
+      ],
+      "latency_s": 0.023670848924666643
+    },
+    {
+      "id": "easy-intent-06",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.0,
+        14.75,
+        22.125,
+        14.625,
+        14.375
+      ],
+      "latency_s": 0.022650384344160557
+    },
+    {
+      "id": "easy-intent-07",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.25,
+        15.4375,
+        15.5,
+        16.5,
+        22.25
+      ],
+      "latency_s": 0.02258925186470151
+    },
+    {
+      "id": "easy-intent-08",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.75,
+        14.75,
+        14.4375,
+        14.6875,
+        14.5625
+      ],
+      "latency_s": 0.022725353948771954
+    },
+    {
+      "id": "easy-intent-09",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.75,
+        16.0,
+        17.0,
+        21.25,
+        15.8125
+      ],
+      "latency_s": 0.022801256272941828
+    },
+    {
+      "id": "easy-intent-10",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.75,
+        22.875,
+        14.875,
+        15.75,
+        15.0
+      ],
+      "latency_s": 0.022829436231404543
+    },
+    {
+      "id": "easy-intent-11",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.75,
+        15.4375,
+        22.25,
+        15.75,
+        15.0
+      ],
+      "latency_s": 0.022473091259598732
+    },
+    {
+      "id": "easy-fact-00",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.875,
+        16.75
+      ],
+      "latency_s": 0.022646112833172083
+    },
+    {
+      "id": "easy-fact-01",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.5,
+        23.125
+      ],
+      "latency_s": 0.02280987612903118
+    },
+    {
+      "id": "easy-fact-02",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.5,
+        16.625
+      ],
+      "latency_s": 0.02256069192662835
+    },
+    {
+      "id": "easy-fact-03",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        15.3125,
+        21.125
+      ],
+      "latency_s": 0.02254063170403242
+    },
+    {
+      "id": "easy-fact-04",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        23.625,
+        15.8125
+      ],
+      "latency_s": 0.022539372090250254
+    },
+    {
+      "id": "easy-fact-05",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        23.125
+      ],
+      "latency_s": 0.022545491810888052
+    },
+    {
+      "id": "easy-fact-06",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        23.25,
+        15.75
+      ],
+      "latency_s": 0.023118460085242987
+    },
+    {
+      "id": "easy-fact-07",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.75,
+        23.25
+      ],
+      "latency_s": 0.02249390073120594
+    },
+    {
+      "id": "easy-fact-08",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.875,
+        15.875
+      ],
+      "latency_s": 0.02249799109995365
+    },
+    {
+      "id": "easy-fact-09",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.75,
+        22.375
+      ],
+      "latency_s": 0.022473369725048542
+    },
+    {
+      "id": "easy-fact-10",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        23.75,
+        16.25
+      ],
+      "latency_s": 0.02251859102398157
+    },
+    {
+      "id": "easy-fact-11",
+      "tier": "easy",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.875,
+        23.375
+      ],
+      "latency_s": 0.022781996056437492
+    },
+    {
+      "id": "easy-extraction-00",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.25,
+        12.75,
+        13.0,
+        12.9375
+      ],
+      "latency_s": 0.022386508993804455
+    },
+    {
+      "id": "easy-extraction-01",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.125,
+        15.9375,
+        22.75,
+        16.25
+      ],
+      "latency_s": 0.02256246004253626
+    },
+    {
+      "id": "easy-extraction-02",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        16.125,
+        15.625,
+        24.0
+      ],
+      "latency_s": 0.02247461909428239
+    },
+    {
+      "id": "easy-extraction-03",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        15.8125,
+        15.375,
+        23.0
+      ],
+      "latency_s": 0.022656172048300505
+    },
+    {
+      "id": "easy-extraction-04",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.125,
+        16.625,
+        23.5,
+        17.0
+      ],
+      "latency_s": 0.02247493900358677
+    },
+    {
+      "id": "easy-extraction-05",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.375,
+        13.625,
+        13.125,
+        13.5625
+      ],
+      "latency_s": 0.022469500079751015
+    },
+    {
+      "id": "easy-extraction-06",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.625,
+        16.0,
+        24.125,
+        16.875
+      ],
+      "latency_s": 0.02269695233553648
+    },
+    {
+      "id": "easy-extraction-07",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        23.25,
+        14.5625,
+        15.1875,
+        17.125
+      ],
+      "latency_s": 0.02253131102770567
+    },
+    {
+      "id": "easy-extraction-08",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.25,
+        14.8125,
+        24.125,
+        15.875,
+        15.0
+      ],
+      "latency_s": 0.022566031198948622
+    },
+    {
+      "id": "easy-extraction-09",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.5,
+        16.125,
+        16.25,
+        24.625,
+        16.25
+      ],
+      "latency_s": 0.02242916775867343
+    },
+    {
+      "id": "easy-extraction-10",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        16.875,
+        15.375,
+        15.6875,
+        16.375,
+        22.75
+      ],
+      "latency_s": 0.022517699748277664
+    },
+    {
+      "id": "easy-extraction-11",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        22.5,
+        16.25,
+        17.25
+      ],
+      "latency_s": 0.022341907024383545
+    },
+    {
+      "id": "easy-tool_selection-00",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        16.375,
+        23.125,
+        17.375,
+        17.0
+      ],
+      "latency_s": 0.022436577826738358
+    },
+    {
+      "id": "easy-tool_selection-01",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        23.375,
+        15.3125,
+        15.625,
+        15.125
+      ],
+      "latency_s": 0.02506505884230137
+    },
+    {
+      "id": "easy-tool_selection-02",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.5,
+        15.6875,
+        16.375,
+        23.625,
+        15.3125
+      ],
+      "latency_s": 0.02248464012518525
+    },
+    {
+      "id": "easy-tool_selection-03",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.75,
+        15.9375,
+        15.9375,
+        16.375,
+        22.625
+      ],
+      "latency_s": 0.02267900202423334
+    },
+    {
+      "id": "easy-tool_selection-04",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.75,
+        15.375,
+        15.0,
+        15.5625,
+        15.625
+      ],
+      "latency_s": 0.022770684212446213
+    },
+    {
+      "id": "easy-tool_selection-05",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.25,
+        15.3125,
+        15.4375,
+        23.625,
+        14.875
+      ],
+      "latency_s": 0.02253777999430895
+    },
+    {
+      "id": "easy-tool_selection-06",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        23.25,
+        14.8125,
+        16.0,
+        14.625
+      ],
+      "latency_s": 0.02249872963875532
+    },
+    {
+      "id": "easy-tool_selection-07",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        16.875,
+        16.125,
+        15.125,
+        15.9375,
+        23.25
+      ],
+      "latency_s": 0.022601280827075243
+    },
+    {
+      "id": "easy-tool_selection-08",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        23.25,
+        14.9375,
+        14.3125,
+        14.5,
+        14.125
+      ],
+      "latency_s": 0.022564860060811043
+    },
+    {
+      "id": "easy-tool_selection-09",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        15.625,
+        14.6875,
+        20.625,
+        15.0,
+        14.375
+      ],
+      "latency_s": 0.023470625281333923
+    },
+    {
+      "id": "easy-tool_selection-10",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        16.875,
+        15.8125,
+        15.75,
+        24.0,
+        15.5
+      ],
+      "latency_s": 0.02248244872316718
+    },
+    {
+      "id": "easy-tool_selection-11",
+      "tier": "easy",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        23.25,
+        15.3125,
+        14.5,
+        14.625,
+        14.9375
+      ],
+      "latency_s": 0.022604481782764196
+    },
+    {
+      "id": "hard-opus-a-long_policy-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        18.0,
+        15.375,
+        16.75,
+        18.375,
+        16.25
+      ],
+      "latency_s": 0.05970393680036068
+    },
+    {
+      "id": "hard-opus-a-long_policy-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        16.125,
+        14.25,
+        19.5,
+        16.75,
+        16.25
+      ],
+      "latency_s": 0.03853600891306996
+    },
+    {
+      "id": "hard-opus-a-long_policy-08",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        16.625,
+        18.0,
+        16.5,
+        21.875
+      ],
+      "latency_s": 0.036699170246720314
+    },
+    {
+      "id": "hard-opus-a-long_policy-09",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.625,
+        15.4375,
+        19.0,
+        16.0
+      ],
+      "latency_s": 0.03815476270392537
+    },
+    {
+      "id": "hard-opus-a-long_policy-11",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        18.625,
+        17.5
+      ],
+      "latency_s": 0.03517290577292442
+    },
+    {
+      "id": "hard-opus-a-long_policy-13",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        18.75,
+        17.625
+      ],
+      "latency_s": 0.0364754069596529
+    },
+    {
+      "id": "hard-opus-a-long_policy-17",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        15.8125,
+        15.25,
+        16.25,
+        15.125,
+        19.75
+      ],
+      "latency_s": 0.035123635083436966
+    },
+    {
+      "id": "hard-opus-a-long_policy-19",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        18.375,
+        15.4375
+      ],
+      "latency_s": 0.03527148813009262
+    },
+    {
+      "id": "hard-opus-a-probability-03",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        18.875,
+        16.75
+      ],
+      "latency_s": 0.022651032079011202
+    },
+    {
+      "id": "hard-opus-a-probability-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        16.5,
+        19.375,
+        15.0625
+      ],
+      "latency_s": 0.02274156315252185
+    },
+    {
+      "id": "hard-opus-a-probability-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.75,
+        14.6875,
+        15.5
+      ],
+      "latency_s": 0.02273743273690343
+    },
+    {
+      "id": "hard-opus-a-probability-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.375,
+        18.125
+      ],
+      "latency_s": 0.02262208191677928
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-03",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        19.75,
+        19.25
+      ],
+      "latency_s": 0.022500529885292053
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-06",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.125,
+        15.625
+      ],
+      "latency_s": 0.02242114767432213
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        17.375,
+        16.125,
+        17.125,
+        18.125,
+        17.75
+      ],
+      "latency_s": 0.022786894347518682
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-09",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        17.625,
+        16.5
+      ],
+      "latency_s": 0.02252385998144746
+    },
+    {
+      "id": "hard-opus-a-temporal_numeric-12",
+      "tier": "hard",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.125,
+        18.125,
+        16.875,
+        17.625
+      ],
+      "latency_s": 0.022145924158394337
+    },
+    {
+      "id": "hard-opus-b-ambiguous-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.625,
+        17.375,
+        18.375
+      ],
+      "latency_s": 0.022289677057415247
+    },
+    {
+      "id": "hard-opus-b-ambiguous-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.75,
+        17.0,
+        19.625
+      ],
+      "latency_s": 0.022763884160667658
+    },
+    {
+      "id": "hard-opus-b-ambiguous-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        18.5,
+        20.75,
+        17.75
+      ],
+      "latency_s": 0.022443709429353476
+    },
+    {
+      "id": "hard-opus-b-ambiguous-09",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        18.125,
+        15.9375,
+        19.125
+      ],
+      "latency_s": 0.022340297233313322
+    },
+    {
+      "id": "hard-opus-b-ambiguous-10",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        19.875,
+        17.625,
+        20.625
+      ],
+      "latency_s": 0.022344357799738646
+    },
+    {
+      "id": "hard-opus-b-ambiguous-11",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        19.25,
+        20.75
+      ],
+      "latency_s": 0.022476928774267435
+    },
+    {
+      "id": "hard-opus-b-ambiguous-13",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.5,
+        17.0,
+        16.875,
+        18.25
+      ],
+      "latency_s": 0.02225453592836857
+    },
+    {
+      "id": "hard-opus-b-multi_hop-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        14.75,
+        15.3125,
+        18.75,
+        15.25
+      ],
+      "latency_s": 0.044207577127963305
+    },
+    {
+      "id": "hard-opus-b-multi_hop-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 4,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        13.9375,
+        16.625,
+        14.5,
+        16.875,
+        14.75,
+        14.375
+      ],
+      "latency_s": 0.03483305126428604
+    },
+    {
+      "id": "hard-opus-b-multi_hop-05",
+      "tier": "hard",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": false,
+      "code_logits": [
+        14.9375,
+        14.25,
+        15.1875,
+        15.75,
+        16.5
+      ],
+      "latency_s": 0.038444967940449715
+    },
+    {
+      "id": "hard-opus-b-multi_hop-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        16.0,
+        15.25,
+        16.125,
+        16.5,
+        17.0,
+        15.5
+      ],
+      "latency_s": 0.03932032221928239
+    },
+    {
+      "id": "hard-opus-b-multi_hop-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.0,
+        15.375
+      ],
+      "latency_s": 0.034187451004981995
+    },
+    {
+      "id": "hard-opus-b-probability-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        15.25,
+        13.25,
+        17.875
+      ],
+      "latency_s": 0.028778247069567442
+    },
+    {
+      "id": "hard-opus-b-probability-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        16.5,
+        15.0,
+        20.0
+      ],
+      "latency_s": 0.022334597073495388
+    },
+    {
+      "id": "hard-opus-b-probability-03",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        16.125
+      ],
+      "latency_s": 0.02284184517338872
+    },
+    {
+      "id": "hard-opus-b-probability-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.125,
+        14.5625,
+        20.0
+      ],
+      "latency_s": 0.0221702940762043
+    },
+    {
+      "id": "hard-opus-b-probability-06",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        18.375,
+        18.5,
+        15.375
+      ],
+      "latency_s": 0.022476088721305132
+    },
+    {
+      "id": "hard-opus-b-tradeoff-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.875,
+        19.0,
+        17.0,
+        18.75,
+        17.0
+      ],
+      "latency_s": 0.023084719199687243
+    },
+    {
+      "id": "hard-opus-b-tradeoff-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.875,
+        21.875,
+        18.5,
+        18.125
+      ],
+      "latency_s": 0.0222912160679698
+    },
+    {
+      "id": "hard-opus-b-tradeoff-06",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.25,
+        20.75
+      ],
+      "latency_s": 0.022531460970640182
+    },
+    {
+      "id": "hard-opus-b-tradeoff-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        15.5625,
+        19.875,
+        19.625,
+        16.5,
+        14.1875
+      ],
+      "latency_s": 0.02216922491788864
+    },
+    {
+      "id": "hard-opus-b-tradeoff-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        18.375,
+        21.125
+      ],
+      "latency_s": 0.022456558886915445
+    },
+    {
+      "id": "hard-opus-b-tradeoff-12",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.625,
+        20.125,
+        16.75,
+        15.75,
+        16.0
+      ],
+      "latency_s": 0.02231301600113511
+    },
+    {
+      "id": "hard-opus-c-long_policy-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        16.75,
+        15.0625,
+        15.0625,
+        20.25,
+        19.875
+      ],
+      "latency_s": 0.05323562677949667
+    },
+    {
+      "id": "hard-opus-c-long_policy-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.75,
+        18.125,
+        18.125,
+        16.625,
+        17.5,
+        17.0
+      ],
+      "latency_s": 0.05228083208203316
+    },
+    {
+      "id": "hard-opus-c-long_policy-04",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        18.625,
+        14.4375
+      ],
+      "latency_s": 0.04888508003205061
+    },
+    {
+      "id": "hard-opus-c-long_policy-05",
+      "tier": "hard",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        15.625,
+        15.3125,
+        14.9375,
+        19.375
+      ],
+      "latency_s": 0.048996570985764265
+    },
+    {
+      "id": "hard-opus-c-long_policy-08",
+      "tier": "hard",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.25,
+        18.0,
+        19.125,
+        16.0
+      ],
+      "latency_s": 0.048677247017621994
+    },
+    {
+      "id": "hard-opus-c-long_policy-10",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        17.5,
+        16.625,
+        20.5,
+        20.0
+      ],
+      "latency_s": 0.053681334014981985
+    },
+    {
+      "id": "hard-opus-c-long_policy-11",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        17.375,
+        14.375
+      ],
+      "latency_s": 0.05225264187902212
+    },
+    {
+      "id": "hard-opus-c-probability-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        17.875,
+        17.25,
+        17.25
+      ],
+      "latency_s": 0.022580360062420368
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-02",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        19.375,
+        19.75
+      ],
+      "latency_s": 0.022614441346377134
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        18.0,
+        19.125,
+        18.75,
+        17.5
+      ],
+      "latency_s": 0.02242576889693737
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        19.125,
+        17.5,
+        17.875,
+        20.5,
+        17.375
+      ],
+      "latency_s": 0.022378968074917793
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-06",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 1,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": false,
+      "code_logits": [
+        17.625,
+        16.5,
+        17.0,
+        17.5,
+        18.625,
+        17.875
+      ],
+      "latency_s": 0.022471729200333357
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-08",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.875,
+        17.875,
+        18.75,
+        19.0,
+        19.0
+      ],
+      "latency_s": 0.02236761711537838
+    },
+    {
+      "id": "hard-opus-c-temporal_numeric-12",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.125,
+        18.0,
+        18.625
+      ],
+      "latency_s": 0.022627612110227346
+    },
+    {
+      "id": "hard-sol-a-adversarial-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.625,
+        17.75,
+        20.75,
+        16.25
+      ],
+      "latency_s": 0.02263723174110055
+    },
+    {
+      "id": "hard-sol-a-adversarial-06",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.375,
+        20.25
+      ],
+      "latency_s": 0.022892285138368607
+    },
+    {
+      "id": "hard-sol-a-adversarial-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        18.375,
+        16.375,
+        16.0,
+        21.125
+      ],
+      "latency_s": 0.022462829016149044
+    },
+    {
+      "id": "hard-sol-a-adversarial-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.0,
+        18.875
+      ],
+      "latency_s": 0.022678742185235023
+    },
+    {
+      "id": "hard-sol-a-adversarial-09",
+      "tier": "hard",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.25,
+        18.25,
+        16.25,
+        16.375
+      ],
+      "latency_s": 0.022594000678509474
+    },
+    {
+      "id": "hard-sol-a-adversarial-11",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        18.75,
+        15.75,
+        16.375,
+        20.75
+      ],
+      "latency_s": 0.022370236925780773
+    },
+    {
+      "id": "hard-sol-a-multi_hop-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        16.375,
+        15.0,
+        14.5625,
+        22.125
+      ],
+      "latency_s": 0.03860613005235791
+    },
+    {
+      "id": "hard-sol-a-multi_hop-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        17.875,
+        17.375,
+        19.0,
+        18.75
+      ],
+      "latency_s": 0.03986734012141824
+    },
+    {
+      "id": "hard-sol-a-multi_hop-05",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        16.125,
+        15.6875,
+        14.875,
+        21.75
+      ],
+      "latency_s": 0.03897341573610902
+    },
+    {
+      "id": "hard-sol-a-multi_hop-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        16.375,
+        17.625,
+        18.875,
+        18.75
+      ],
+      "latency_s": 0.037710036151111126
+    },
+    {
+      "id": "hard-sol-a-multi_hop-08",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        19.875,
+        17.5,
+        21.25
+      ],
+      "latency_s": 0.03764920495450497
+    },
+    {
+      "id": "hard-sol-a-multi_hop-09",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        15.6875,
+        17.5,
+        15.6875,
+        21.0
+      ],
+      "latency_s": 0.03746320214122534
+    },
+    {
+      "id": "hard-sol-a-multi_hop-10",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.0,
+        19.5,
+        17.875,
+        18.125
+      ],
+      "latency_s": 0.038995245937258005
+    },
+    {
+      "id": "hard-sol-a-multi_hop-12",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        17.0,
+        17.5,
+        16.375,
+        21.75
+      ],
+      "latency_s": 0.03781690774485469
+    },
+    {
+      "id": "hard-sol-a-trap-02",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        20.25
+      ],
+      "latency_s": 0.022663692943751812
+    },
+    {
+      "id": "hard-sol-a-trap-04",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        20.875
+      ],
+      "latency_s": 0.02261703135445714
+    },
+    {
+      "id": "hard-sol-a-trap-05",
+      "tier": "hard",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        16.875,
+        19.5,
+        17.375,
+        17.75
+      ],
+      "latency_s": 0.02251554001122713
+    },
+    {
+      "id": "hard-sol-a-trap-06",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.375,
+        16.375,
+        16.875,
+        16.25
+      ],
+      "latency_s": 0.022499399725347757
+    },
+    {
+      "id": "hard-sol-a-trap-08",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        20.75,
+        21.25,
+        16.0,
+        15.875
+      ],
+      "latency_s": 0.022476719692349434
+    },
+    {
+      "id": "hard-sol-a-trap-10",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.5,
+        16.75,
+        22.5,
+        17.0
+      ],
+      "latency_s": 0.022549140732735395
+    },
+    {
+      "id": "hard-sol-a-trap-13",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        21.875
+      ],
+      "latency_s": 0.02246968913823366
+    },
+    {
+      "id": "hard-sol-a-trap-15",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.875,
+        18.875
+      ],
+      "latency_s": 0.022522800136357546
+    },
+    {
+      "id": "hard-sol-b-judge_hard-01",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.5,
+        17.375
+      ],
+      "latency_s": 0.02284384472295642
+    },
+    {
+      "id": "hard-sol-b-judge_hard-02",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.875,
+        16.0
+      ],
+      "latency_s": 0.02267230162397027
+    },
+    {
+      "id": "hard-sol-b-judge_hard-05",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.125,
+        17.375
+      ],
+      "latency_s": 0.022507369983941317
+    },
+    {
+      "id": "hard-sol-b-judge_hard-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.0,
+        16.625
+      ],
+      "latency_s": 0.02260219119489193
+    },
+    {
+      "id": "hard-sol-b-judge_hard-10",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.25,
+        18.0
+      ],
+      "latency_s": 0.022464897949248552
+    },
+    {
+      "id": "hard-sol-b-judge_hard-14",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.875,
+        20.25
+      ],
+      "latency_s": 0.02248546900227666
+    },
+    {
+      "id": "hard-sol-b-judge_hard-15",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.875,
+        17.0
+      ],
+      "latency_s": 0.022634382359683514
+    },
+    {
+      "id": "hard-sol-b-judge_hard-18",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        22.625,
+        16.375
+      ],
+      "latency_s": 0.022445267997682095
+    },
+    {
+      "id": "hard-sol-b-long_policy-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": false,
+      "code_logits": [
+        17.625,
+        16.125,
+        17.0,
+        21.625
+      ],
+      "latency_s": 0.04236857779324055
+    },
+    {
+      "id": "hard-sol-b-long_policy-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        17.0,
+        19.875,
+        16.75,
+        16.875
+      ],
+      "latency_s": 0.038974415976554155
+    },
+    {
+      "id": "hard-sol-b-long_policy-05",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        18.0,
+        18.625,
+        21.25,
+        16.375
+      ],
+      "latency_s": 0.03846082743257284
+    },
+    {
+      "id": "hard-sol-b-long_policy-06",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.75,
+        16.875,
+        16.875,
+        22.25
+      ],
+      "latency_s": 0.04040141822770238
+    },
+    {
+      "id": "hard-sol-b-routing_hard-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.875,
+        22.0,
+        15.375,
+        15.5625,
+        13.875
+      ],
+      "latency_s": 0.022409637924283743
+    },
+    {
+      "id": "hard-sol-b-routing_hard-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.125,
+        14.6875,
+        21.625,
+        15.3125,
+        15.5
+      ],
+      "latency_s": 0.022566951345652342
+    },
+    {
+      "id": "hard-sol-b-routing_hard-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.875,
+        21.5,
+        16.875,
+        17.25,
+        15.3125
+      ],
+      "latency_s": 0.02241736836731434
+    },
+    {
+      "id": "hard-sol-b-routing_hard-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.5,
+        16.25,
+        16.25,
+        16.875,
+        15.75
+      ],
+      "latency_s": 0.022546631284058094
+    },
+    {
+      "id": "hard-sol-b-routing_hard-09",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        22.25,
+        16.5,
+        17.875,
+        16.25
+      ],
+      "latency_s": 0.022461348678916693
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-01",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.625,
+        18.625,
+        19.375,
+        19.625
+      ],
+      "latency_s": 0.022415208164602518
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-02",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.375,
+        20.25,
+        19.125,
+        19.375
+      ],
+      "latency_s": 0.022443659137934446
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-03",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        19.75,
+        19.125,
+        18.5,
+        19.5
+      ],
+      "latency_s": 0.02269511204212904
+    },
+    {
+      "id": "hard-sol-b-temporal_numeric-04",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 3,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        16.625,
+        18.25,
+        18.5
+      ],
+      "latency_s": 0.02240284811705351
+    },
+    {
+      "id": "hard-sol-c-judge_hard-03",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.625,
+        18.375
+      ],
+      "latency_s": 0.022477799095213413
+    },
+    {
+      "id": "hard-sol-c-judge_hard-05",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.125,
+        19.25
+      ],
+      "latency_s": 0.022551499772816896
+    },
+    {
+      "id": "hard-sol-c-judge_hard-07",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.625,
+        19.5
+      ],
+      "latency_s": 0.022487969137728214
+    },
+    {
+      "id": "hard-sol-c-judge_hard-08",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.375,
+        18.5
+      ],
+      "latency_s": 0.02257964015007019
+    },
+    {
+      "id": "hard-sol-c-judge_hard-09",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.5,
+        19.125
+      ],
+      "latency_s": 0.022485829889774323
+    },
+    {
+      "id": "hard-sol-c-judge_hard-10",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.375,
+        19.125
+      ],
+      "latency_s": 0.022546730935573578
+    },
+    {
+      "id": "hard-sol-c-judge_hard-11",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.5,
+        19.125
+      ],
+      "latency_s": 0.022597530856728554
+    },
+    {
+      "id": "hard-sol-c-judge_hard-13",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.75,
+        18.375
+      ],
+      "latency_s": 0.022561110090464354
+    },
+    {
+      "id": "hard-sol-c-judge_hard-15",
+      "tier": "hard",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.0,
+        17.125
+      ],
+      "latency_s": 0.02255540108308196
+    },
+    {
+      "id": "hard-sol-c-multi_hop-07",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        16.25,
+        19.5,
+        17.5
+      ],
+      "latency_s": 0.03793593030422926
+    },
+    {
+      "id": "hard-sol-c-multi_hop-09",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        16.875,
+        17.375,
+        18.125,
+        20.5
+      ],
+      "latency_s": 0.03774639731273055
+    },
+    {
+      "id": "hard-sol-c-multi_hop-11",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        19.0,
+        18.0,
+        19.125,
+        17.0
+      ],
+      "latency_s": 0.03900443576276302
+    },
+    {
+      "id": "hard-sol-c-multi_hop-12",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        20.625,
+        16.75,
+        16.375,
+        17.0
+      ],
+      "latency_s": 0.022223904728889465
+    },
+    {
+      "id": "hard-sol-c-multi_hop-13",
+      "tier": "hard",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        16.375,
+        15.8125,
+        21.0,
+        16.375
+      ],
+      "latency_s": 0.03863654099404812
+    },
+    {
+      "id": "original-policy-01-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.75,
+        22.875
+      ],
+      "latency_s": 0.022599961142987013
+    },
+    {
+      "id": "original-policy-01-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        21.375
+      ],
+      "latency_s": 0.022529580164700747
+    },
+    {
+      "id": "original-policy-02-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.75,
+        19.5
+      ],
+      "latency_s": 0.022706013172864914
+    },
+    {
+      "id": "original-policy-02-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        20.125,
+        20.25
+      ],
+      "latency_s": 0.0225678700953722
+    },
+    {
+      "id": "original-policy-03-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        22.25,
+        21.0
+      ],
+      "latency_s": 0.02265142183750868
+    },
+    {
+      "id": "original-policy-03-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        20.625,
+        22.5
+      ],
+      "latency_s": 0.02253661025315523
+    },
+    {
+      "id": "original-policy-04-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        19.0,
+        21.75
+      ],
+      "latency_s": 0.022566149942576885
+    },
+    {
+      "id": "original-policy-04-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        19.25,
+        22.0
+      ],
+      "latency_s": 0.022679542656987906
+    },
+    {
+      "id": "original-policy-05-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        20.875,
+        21.25
+      ],
+      "latency_s": 0.022703733295202255
+    },
+    {
+      "id": "original-policy-05-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        19.25,
+        20.875
+      ],
+      "latency_s": 0.02258809097111225
+    },
+    {
+      "id": "original-policy-06-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.125,
+        19.625
+      ],
+      "latency_s": 0.02268753293901682
+    },
+    {
+      "id": "original-policy-06-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": false,
+      "code_logits": [
+        18.25,
+        18.875
+      ],
+      "latency_s": 0.022560810204595327
+    },
+    {
+      "id": "original-intent-01-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        21.25,
+        19.75,
+        17.5,
+        17.0
+      ],
+      "latency_s": 0.02257921127602458
+    },
+    {
+      "id": "original-intent-01-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.5,
+        21.125,
+        20.0,
+        18.0,
+        18.0
+      ],
+      "latency_s": 0.022677011787891388
+    },
+    {
+      "id": "original-intent-02-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        19.75,
+        16.875,
+        21.375,
+        18.25,
+        16.625
+      ],
+      "latency_s": 0.022872005123645067
+    },
+    {
+      "id": "original-intent-02-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        20.125,
+        16.75,
+        20.625,
+        17.25,
+        16.125
+      ],
+      "latency_s": 0.022629601880908012
+    },
+    {
+      "id": "original-intent-03-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.125,
+        16.625,
+        18.75,
+        21.5,
+        16.875
+      ],
+      "latency_s": 0.022684542927891016
+    },
+    {
+      "id": "original-intent-03-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        16.0,
+        17.875,
+        21.25,
+        16.0
+      ],
+      "latency_s": 0.02270741295069456
+    },
+    {
+      "id": "original-intent-04-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        17.5,
+        16.25,
+        18.125,
+        16.75,
+        21.25
+      ],
+      "latency_s": 0.02266523288562894
+    },
+    {
+      "id": "original-intent-04-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        17.25,
+        20.5,
+        17.875,
+        20.75
+      ],
+      "latency_s": 0.022582710720598698
+    },
+    {
+      "id": "original-intent-05-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        18.0,
+        21.625,
+        17.625,
+        16.875
+      ],
+      "latency_s": 0.0225712601095438
+    },
+    {
+      "id": "original-intent-05-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        18.0,
+        20.375,
+        17.25,
+        16.625
+      ],
+      "latency_s": 0.02256560092791915
+    },
+    {
+      "id": "original-intent-06-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.25,
+        16.625,
+        20.0,
+        17.25,
+        17.125
+      ],
+      "latency_s": 0.022681502159684896
+    },
+    {
+      "id": "original-intent-06-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 5,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.75,
+        16.125,
+        20.25,
+        16.375,
+        16.375
+      ],
+      "latency_s": 0.02262603072449565
+    },
+    {
+      "id": "original-ordinal-01-0",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        17.5,
+        17.5,
+        22.0
+      ],
+      "latency_s": 0.022540670353919268
+    },
+    {
+      "id": "original-ordinal-01-1",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.125,
+        16.625,
+        17.75,
+        23.0
+      ],
+      "latency_s": 0.02257719077169895
+    },
+    {
+      "id": "original-ordinal-02-0",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.0,
+        17.375,
+        22.0,
+        17.375
+      ],
+      "latency_s": 0.022485619876533747
+    },
+    {
+      "id": "original-ordinal-02-1",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        18.5,
+        17.375,
+        22.25,
+        17.625
+      ],
+      "latency_s": 0.022597980685532093
+    },
+    {
+      "id": "original-ordinal-03-0",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.625,
+        22.0,
+        17.0,
+        17.25
+      ],
+      "latency_s": 0.022603760939091444
+    },
+    {
+      "id": "original-ordinal-03-1",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.625,
+        22.5,
+        18.25,
+        17.875
+      ],
+      "latency_s": 0.02260362124070525
+    },
+    {
+      "id": "original-ordinal-04-0",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.0,
+        17.25,
+        17.125,
+        17.125
+      ],
+      "latency_s": 0.02250208891928196
+    },
+    {
+      "id": "original-ordinal-04-1",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.375,
+        16.875,
+        16.75,
+        16.75
+      ],
+      "latency_s": 0.02253313921391964
+    },
+    {
+      "id": "original-ordinal-05-0",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.75,
+        18.75,
+        18.125,
+        21.625
+      ],
+      "latency_s": 0.022827635053545237
+    },
+    {
+      "id": "original-ordinal-05-1",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        18.625,
+        18.0,
+        18.125,
+        22.875
+      ],
+      "latency_s": 0.0226012310013175
+    },
+    {
+      "id": "original-ordinal-06-0",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.5,
+        22.25,
+        18.125,
+        18.375
+      ],
+      "latency_s": 0.022615680936723948
+    },
+    {
+      "id": "original-ordinal-06-1",
+      "tier": "original",
+      "type": "score",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.875,
+        21.625,
+        16.375,
+        16.5
+      ],
+      "latency_s": 0.022660881280899048
+    },
+    {
+      "id": "original-extraction-01-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        21.0,
+        17.875,
+        21.25,
+        18.25
+      ],
+      "latency_s": 0.022658952046185732
+    },
+    {
+      "id": "original-extraction-01-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        21.0,
+        18.5,
+        21.625,
+        18.5
+      ],
+      "latency_s": 0.02273506298661232
+    },
+    {
+      "id": "original-extraction-02-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.25,
+        17.5,
+        17.0,
+        16.75
+      ],
+      "latency_s": 0.022604730911552906
+    },
+    {
+      "id": "original-extraction-02-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.625,
+        17.75,
+        16.625,
+        16.25
+      ],
+      "latency_s": 0.02272060327231884
+    },
+    {
+      "id": "original-extraction-03-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        19.0,
+        17.625,
+        19.0,
+        22.125
+      ],
+      "latency_s": 0.022705312818288803
+    },
+    {
+      "id": "original-extraction-03-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.5,
+        17.0,
+        17.5,
+        22.375
+      ],
+      "latency_s": 0.02258063107728958
+    },
+    {
+      "id": "original-extraction-04-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        19.125,
+        23.25,
+        16.875,
+        17.25
+      ],
+      "latency_s": 0.022636682260781527
+    },
+    {
+      "id": "original-extraction-04-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        20.125,
+        23.25,
+        17.0,
+        17.625
+      ],
+      "latency_s": 0.022607980761677027
+    },
+    {
+      "id": "original-extraction-05-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        21.625,
+        17.5,
+        18.125,
+        18.875
+      ],
+      "latency_s": 0.02262089168652892
+    },
+    {
+      "id": "original-extraction-05-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.625,
+        17.5,
+        17.625,
+        19.75
+      ],
+      "latency_s": 0.022642422001808882
+    },
+    {
+      "id": "original-extraction-06-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        19.375,
+        18.125,
+        17.125,
+        21.375
+      ],
+      "latency_s": 0.022600971162319183
+    },
+    {
+      "id": "original-extraction-06-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 4,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        19.125,
+        18.125,
+        18.125,
+        22.5
+      ],
+      "latency_s": 0.02273110393434763
+    },
+    {
+      "id": "original-adequacy-01-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.75,
+        18.375
+      ],
+      "latency_s": 0.02255086973309517
+    },
+    {
+      "id": "original-adequacy-01-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.75,
+        19.375
+      ],
+      "latency_s": 0.0245154513977468
+    },
+    {
+      "id": "original-adequacy-02-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        18.75,
+        20.625
+      ],
+      "latency_s": 0.022571670822799206
+    },
+    {
+      "id": "original-adequacy-02-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        15.625,
+        15.3125
+      ],
+      "latency_s": 0.022591810673475266
+    },
+    {
+      "id": "original-adequacy-03-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        21.375,
+        17.25
+      ],
+      "latency_s": 0.022553230170160532
+    },
+    {
+      "id": "original-adequacy-03-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        19.75,
+        18.875
+      ],
+      "latency_s": 0.022582401055842638
+    },
+    {
+      "id": "original-adequacy-04-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.25,
+        16.625
+      ],
+      "latency_s": 0.022529929876327515
+    },
+    {
+      "id": "original-adequacy-04-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        18.25,
+        17.5
+      ],
+      "latency_s": 0.022506769746541977
+    },
+    {
+      "id": "original-adequacy-05-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        17.375,
+        16.125
+      ],
+      "latency_s": 0.02249032910913229
+    },
+    {
+      "id": "original-adequacy-05-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 1,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": false,
+      "code_logits": [
+        18.5,
+        18.375
+      ],
+      "latency_s": 0.022578769829124212
+    },
+    {
+      "id": "original-adequacy-06-0",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.25,
+        17.75
+      ],
+      "latency_s": 0.022565071005374193
+    },
+    {
+      "id": "original-adequacy-06-1",
+      "tier": "original",
+      "type": "noul",
+      "order": "reversed",
+      "n_options": 2,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        18.75,
+        17.875
+      ],
+      "latency_s": 0.022582850884646177
+    },
+    {
+      "id": "original-routing-01-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        17.25,
+        20.625,
+        17.75,
+        17.375,
+        16.625,
+        19.0
+      ],
+      "latency_s": 0.022688263095915318
+    },
+    {
+      "id": "original-routing-01-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 1,
+      "pred_pos": 1,
+      "pred_code": "B",
+      "correct": true,
+      "code_logits": [
+        16.625,
+        21.0,
+        17.25,
+        16.5,
+        15.4375,
+        17.125
+      ],
+      "latency_s": 0.02246358897536993
+    },
+    {
+      "id": "original-routing-02-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 5,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": false,
+      "code_logits": [
+        16.25,
+        16.5,
+        18.125,
+        16.375,
+        18.125,
+        18.0
+      ],
+      "latency_s": 0.02270216215401888
+    },
+    {
+      "id": "original-routing-02-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 5,
+      "pred_pos": 5,
+      "pred_code": "F",
+      "correct": true,
+      "code_logits": [
+        15.4375,
+        15.1875,
+        17.375,
+        15.3125,
+        15.875,
+        19.375
+      ],
+      "latency_s": 0.02251334022730589
+    },
+    {
+      "id": "original-routing-03-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        15.3125,
+        14.3125,
+        15.3125,
+        14.9375,
+        21.25,
+        14.9375
+      ],
+      "latency_s": 0.022630622144788504
+    },
+    {
+      "id": "original-routing-03-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 4,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": true,
+      "code_logits": [
+        15.4375,
+        14.6875,
+        15.4375,
+        15.1875,
+        21.25,
+        14.9375
+      ],
+      "latency_s": 0.022737134248018265
+    },
+    {
+      "id": "original-routing-04-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        17.375,
+        15.75,
+        17.25,
+        20.25,
+        18.375,
+        15.9375
+      ],
+      "latency_s": 0.02251605922356248
+    },
+    {
+      "id": "original-routing-04-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 3,
+      "pred_pos": 3,
+      "pred_code": "D",
+      "correct": true,
+      "code_logits": [
+        16.0,
+        15.375,
+        18.25,
+        18.5,
+        16.125,
+        15.9375
+      ],
+      "latency_s": 0.022420968860387802
+    },
+    {
+      "id": "original-routing-05-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 0,
+      "pred_pos": 0,
+      "pred_code": "A",
+      "correct": true,
+      "code_logits": [
+        20.5,
+        15.875,
+        18.25,
+        16.75,
+        16.625,
+        15.4375
+      ],
+      "latency_s": 0.022623981814831495
+    },
+    {
+      "id": "original-routing-05-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 0,
+      "pred_pos": 4,
+      "pred_code": "E",
+      "correct": false,
+      "code_logits": [
+        17.375,
+        16.25,
+        18.375,
+        17.25,
+        19.75,
+        15.5625
+      ],
+      "latency_s": 0.022698301821947098
+    },
+    {
+      "id": "original-routing-06-0",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        15.0625,
+        14.0,
+        20.625,
+        15.125,
+        14.625,
+        16.75
+      ],
+      "latency_s": 0.02302241837605834
+    },
+    {
+      "id": "original-routing-06-1",
+      "tier": "original",
+      "type": "choice",
+      "order": "reversed",
+      "n_options": 6,
+      "gold_pos": 2,
+      "pred_pos": 2,
+      "pred_code": "C",
+      "correct": true,
+      "code_logits": [
+        15.3125,
+        14.3125,
+        20.625,
+        15.4375,
+        14.8125,
+        17.0
+      ],
+      "latency_s": 0.02252537989988923
+    }
+  ]
+}

@@ -21,7 +21,7 @@ proposition in the question), so its read position is always ``answer``.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Iterable, Sequence
+from typing import Any, Sequence
 
 import torch
 import torch.nn as nn
@@ -30,9 +30,11 @@ import torch.nn.functional as F
 from model.evaluation.judgement_prompt import (
     candidates,
     polarity_gold,
-    render,
+    render_parts,
     render_polarity,
 )
+from model.src.feature_flags import feature_disabled
+from model.training.group_split import state_key
 
 #: The text that follows the option in ``JUDGEMENT_TEMPLATE``.  Its position
 #: marks one past the last character of the option.
@@ -57,6 +59,19 @@ class JudgementPrompt:
     #: Character offset one past the option text, or ``None`` when the row has
     #: no option span (a criteria-less noul).
     option_char_end: int | None
+    #: The row's shared prefix and this option's suffix; ``prefix + suffix``
+    #: equals ``text``.  The trainer encodes the prefix once per row and
+    #: batches the K suffixes (#299).
+    prefix: str = ""
+    suffix: str = ""
+    #: ``answerable=False`` rows are kept in the plan and masked in the loss,
+    #: never dropped (#254).
+    answerable: bool = True
+    #: Grouping keys for the internal split: the exact normalized state and the
+    #: item's own passage/family key.  Cluster ids come from the manifest at
+    #: split time.
+    state_key: str = ""
+    group: str | None = None
 
     @property
     def has_option_span(self) -> bool:
@@ -64,38 +79,56 @@ class JudgementPrompt:
 
 
 def build_prompts(
-    item: Any, row_id: str = "", source: str = "", split: str = ""
+    item: Any,
+    row_id: str = "",
+    source: str = "",
+    split: str = "",
+    answerable: bool | None = None,
 ) -> list[JudgementPrompt]:
     """Return one prompt per option for ``item``, or an empty list.
 
     Returns an empty list when the item has neither an option set nor a
     polarity label — the same two conditions under which the readout skips it.
+    ``answerable=False`` rows are built like any other; the trainer masks their
+    loss rather than dropping them (#254).  When the caller does not pass
+    ``answerable``, the item's own flag supplies it.
     """
+    if answerable is None:
+        answerable = getattr(item, "answerable", True) is not False
     instructions = item.question.get("instructions", "")
+    state_hash = state_key(item.state)
+    group = getattr(item, "group", None)
     prepared = candidates(item)
 
     if prepared is None:
         gold = polarity_gold(item)
         if gold is None:
             return []
+        text = render_polarity(item.state, instructions)
         return [
             JudgementPrompt(
                 row_id=row_id or item.id,
                 source=source,
                 split=split,
                 q_type=item.question.get("type", "noul"),
-                text=render_polarity(item.state, instructions),
+                text=text,
                 label=int(bool(gold)),
                 option_index=0,
                 n_options=1,
                 option_char_end=None,
+                prefix="",
+                suffix=text,
+                answerable=answerable,
+                state_key=state_hash,
+                group=group,
             )
         ]
 
     texts, gold = prepared
     prompts: list[JudgementPrompt] = []
     for index, option_text in enumerate(texts):
-        text = render(item.state, instructions, option_text)
+        prefix, suffix = render_parts(item.state, instructions, option_text)
+        text = prefix + suffix
         cut = text.find(OPTION_END_MARKER)
         end = len(text) if cut < 0 else cut
         prompts.append(
@@ -109,6 +142,11 @@ def build_prompts(
                 option_index=index,
                 n_options=len(texts),
                 option_char_end=end,
+                prefix=prefix,
+                suffix=suffix,
+                answerable=answerable,
+                state_key=state_hash,
+                group=group,
             )
         )
     return prompts
@@ -143,7 +181,9 @@ def full_attention_mask(attention_mask: torch.Tensor) -> torch.Tensor:
     rows, length = attention_mask.shape
     keep = keep.expand(rows, 1, length, length)
     zeros = torch.zeros((), dtype=torch.float32, device=attention_mask.device)
-    neg_inf = torch.full((), float("-inf"), dtype=torch.float32, device=attention_mask.device)
+    neg_inf = torch.full(
+        (), float("-inf"), dtype=torch.float32, device=attention_mask.device
+    )
     return torch.where(keep, zeros, neg_inf)
 
 
@@ -210,9 +250,7 @@ def row_normalised_loss(
     """
     if not rows:
         raise ValueError("row_normalised_loss needs at least one row")
-    per_row = [
-        F.cross_entropy(logits[index], labels[index]) for index in rows
-    ]
+    per_row = [F.cross_entropy(logits[index], labels[index]) for index in rows]
     return torch.stack(per_row).mean()
 
 
@@ -222,8 +260,140 @@ def contiguous_rows(row_ids: torch.Tensor) -> list[torch.Tensor]:
         return []
     boundaries = torch.nonzero(row_ids[1:] != row_ids[:-1]).flatten() + 1
     edges = torch.cat(
-        [torch.zeros(1, dtype=torch.long, device=row_ids.device), boundaries,
-         torch.tensor([row_ids.numel()], dtype=torch.long, device=row_ids.device)]
+        [
+            torch.zeros(1, dtype=torch.long, device=row_ids.device),
+            boundaries,
+            torch.tensor([row_ids.numel()], dtype=torch.long, device=row_ids.device),
+        ]
     )
-    return [torch.arange(edges[i], edges[i + 1], device=row_ids.device)
-            for i in range(len(edges) - 1)]
+    return [
+        torch.arange(edges[i], edges[i + 1], device=row_ids.device)
+        for i in range(len(edges) - 1)
+    ]
+
+
+# -- the run's objective: the margin, its scaling, and the answerable mask ----
+
+#: Kill switch for the answerable mask.  ``tests/conftest.py`` re-runs the mask
+#: test with this set and requires the test to fail; it is not a production
+#: option.
+ANSWERABLE_MASK_SWITCH = "KRINO_DISABLE_ANSWERABLE_MASK"
+
+
+def margin_from_logits(logits: torch.Tensor, yes_id: int, no_id: int) -> torch.Tensor:
+    """``log P(" yes") - log P(" no")`` from one next-token logit row.
+
+    The softmax normaliser cancels in the difference, so the raw logit
+    difference is the log-odds the objective trains on.
+    """
+    return logits[..., yes_id] - logits[..., no_id]
+
+
+def row_weights(answerable: Sequence[bool]) -> torch.Tensor:
+    """Per-row loss weight: 0 for an unanswerable row, 1 otherwise.
+
+    Masking is not dropping (#254).  The row stays in the batch, so the mixture
+    and the reported denominator are the ones the plan defines, but it adds no
+    gradient and does not dilute the mean.
+    """
+    weights = torch.tensor(
+        [0.0 if flag is False else 1.0 for flag in answerable], dtype=torch.float32
+    )
+    if feature_disabled(ANSWERABLE_MASK_SWITCH):
+        return torch.ones_like(weights)
+    return weights
+
+
+def row_bce(margins: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    """The per-row term: mean BCE over that row's options."""
+    return F.binary_cross_entropy_with_logits(
+        margins.float(), labels.float(), reduction="mean"
+    )
+
+
+def masked_row_normalised_loss(
+    margins: torch.Tensor,
+    labels: torch.Tensor,
+    rows: Sequence[torch.Tensor],
+    weights: torch.Tensor,
+) -> torch.Tensor:
+    """BCE on the margin, averaged within a row and then across rows.
+
+    ``weights`` is 0 for a row the answerable mask removes.  The denominator is
+    the sum of the weights, so a masked row contributes neither gradient nor
+    dilution.  An all-masked input returns a zero that still carries a graph, so
+    a caller may backpropagate it and observe zero gradients.
+
+    The trainer accumulates the same arithmetic one row at a time, so the
+    prefix graph of one row is freed before the next row's forward.
+    """
+    if not rows:
+        raise ValueError("masked_row_normalised_loss needs at least one row")
+    if len(rows) != len(weights):
+        raise ValueError(f"{len(rows)} rows but {len(weights)} weights")
+    per_row = torch.stack([row_bce(margins[index], labels[index]) for index in rows])
+    weights = weights.to(per_row.device).float()
+    return (per_row * weights).sum() / weights.sum().clamp_min(1.0)
+
+
+class ScaledMargin(nn.Module):
+    """The output scaling of the judgement objective: ``scale * raw + bias``.
+
+    ``raw`` is ``logit(" yes") - logit(" no")`` at the prompt's final position.
+    The positive base rate is about ``1/K``, so the bias starts positive
+    (``#299``); the gate is that some gold option reaches P(yes) > 0.5.
+    """
+
+    def __init__(self, scale: float = 1.0, bias: float = 2.0) -> None:
+        super().__init__()
+        self.scale = nn.Parameter(torch.tensor(float(scale)))
+        self.bias = nn.Parameter(torch.tensor(float(bias)))
+
+    def forward(self, raw: torch.Tensor) -> torch.Tensor:
+        return self.scale.to(raw.dtype) * raw + self.bias.to(raw.dtype)
+
+    @staticmethod
+    def probability(margin: torch.Tensor) -> torch.Tensor:
+        """P(yes) of a margin."""
+        return torch.sigmoid(margin)
+
+
+def positive_base_rate(
+    labels: torch.Tensor, rows: Sequence[torch.Tensor], weights: torch.Tensor
+) -> float:
+    """Positive fraction over the selected rows, masked rows excluded."""
+    positives = 0.0
+    total = 0.0
+    for row, weight in zip(rows, weights.tolist()):
+        if weight == 0.0:
+            continue
+        positives += float(labels[row].sum())
+        total += float(len(row))
+    if total == 0.0:
+        raise ValueError("positive_base_rate has no unmasked option")
+    return positives / total
+
+
+def fit_bias(
+    margins: torch.Tensor,
+    rows: Sequence[torch.Tensor],
+    target: float,
+    tolerance: float = 1e-7,
+) -> float:
+    """Additive yes-logit offset whose mean P(yes) equals ``target``.
+
+    Fits on the frozen model's margins, so it is the bias-only calibration pass
+    of ``#299``: no other parameter moves.
+    """
+    if not rows:
+        raise ValueError("fit_bias needs at least one row")
+    selected = torch.cat([margins[index] for index in rows]).detach().float()
+    low, high = -80.0, 80.0
+    while high - low > tolerance:
+        mid = (low + high) / 2
+        mean = float(torch.sigmoid(selected + mid).mean())
+        if mean > target:
+            high = mid
+        else:
+            low = mid
+    return (low + high) / 2

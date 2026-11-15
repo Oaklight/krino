@@ -40,6 +40,7 @@ JEVBENCH_FIELDS = (
     "method",
     "readout",
     "readout_detail",
+    "prompt_order",
     "accuracy",
     "correct",
     "n",
@@ -49,6 +50,16 @@ JEVBENCH_FIELDS = (
     "latency_ms",
 )
 EVAL_FIELDS = ("model", "method", "phase", "n_benchmarks", "results")
+PROBE_FIELDS = (
+    "instrument",
+    "dataset",
+    "n",
+    "metric",
+    "value",
+    "correct",
+    "total",
+    "detail",
+)
 
 
 def _compare_fields(
@@ -98,9 +109,9 @@ def check_jevbench_run(run: dict, tracked: set[str]) -> list[str]:
     if error:
         return [error]
 
-    expected = transform.build_jevbench_run(REPO_ROOT / run["source_file"])
+    expected = transform.find_jevbench_row(REPO_ROOT / run["source_file"], run_id)
     if expected is None:
-        return [f"{run_id}: {run['source_file']} yields no row"]
+        return [f"{run_id}: {run['source_file']} yields no such row"]
 
     errors = _compare_fields(run, expected, JEVBENCH_FIELDS, run_id, run["source_file"])
     if run.get("readout") == "trained-heads":
@@ -124,6 +135,21 @@ def check_eval_run(run: dict, tracked: set[str]) -> list[str]:
         return [f"{run_id}: {run['source_file']} yields no row"]
 
     return _compare_fields(run, expected, EVAL_FIELDS, run_id, run["source_file"])
+
+
+def check_probe_run(run: dict, tracked: set[str]) -> list[str]:
+    run_id = run.get("run_id", "<no run_id>")
+    error = _source_error(run_id, run.get("source_file"), tracked)
+    if error:
+        return [error]
+
+    expected = transform.build_probe_run(REPO_ROOT / run["source_file"])
+    if expected is None:
+        return [f"{run_id}: {run['source_file']} yields no probe row"]
+
+    return _compare_fields(
+        run, expected, PROBE_FIELDS, run_id, run["source_file"]
+    )
 
 
 def check_landing(data: dict, tracked: set[str]) -> list[str]:
@@ -161,6 +187,12 @@ def check_results(data: dict, tracked: set[str]) -> list[str]:
         seen.add(run_id)
     for run in data.get("eval_runs", []):
         errors.extend(check_eval_run(run, tracked))
+    for run in data.get("probe_runs", []):
+        errors.extend(check_probe_run(run, tracked))
+        run_id = run.get("run_id")
+        if run_id in seen:
+            errors.append(f"{run_id}: duplicate run_id")
+        seen.add(run_id)
     return errors
 
 
@@ -181,6 +213,7 @@ def main() -> int:
 
     print(
         f"OK: {len(data.get('jevbench_runs', []))} JevBench rows, "
+        f"{len(data.get('probe_runs', []))} probe rows, "
         f"{len(data.get('eval_runs', []))} eval rows and the landing block "
         f"trace to committed files"
     )

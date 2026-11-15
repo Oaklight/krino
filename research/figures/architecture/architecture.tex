@@ -136,6 +136,7 @@
    {\scriptsize Wired off: no committed measurement yet shows it clears the
     base-error floor}};
 \draw[dasharrow] (12.20,9.7) -- (anshead.north);
+\node[alabel, anchor=west] at (12.35,9.35) {wired off};
 
 % ================================================================ p_base cache
 \node[cylinder, draw=frozendraw, fill=frozenfill, line width=0.5pt,
@@ -180,8 +181,7 @@
 \draw[arrow] (13.35,4.15) -- (12.20,3.33);
 
 % ================================================================ right column
-\node[anchor=north west, font=\sffamily\scriptsize, text=black!65,
-      text width=4.9cm, align=flush left] at (15.25,14.55)
+\node[note, anchor=north west, text width=4.9cm] (metric) at (15.25,14.55)
   {\textbf{Metric.} \texttt{cc} = chance-corrected accuracy,
    $(\text{acc}-1/K)/(1-1/K)$, reported per type. Promotion reads the frozen
    held-out (6{,}254 scored of 6{,}424 rows); the 231-item JevBench public set
@@ -189,11 +189,15 @@
 
 \node[lossbox, anchor=north west, text width=4.9cm] (loss) at (15.25,12.45)
   {\textbf{Loss}\\[3pt]
-   $\mathcal{L}=1.0\cdot\mathrm{KL}\!\left(p^{base}\,\|\,p\right)$\\[1pt]
-   $\quad+0.2\cdot\mathrm{CE}(z,y)$\\[1pt]
-   $\quad+1.0\cdot\mathrm{KL}\!\left(p^{base}\,\|\,q\right)$\\[4pt]
-   {\scriptsize $q$ is the readout before fusion. Weights as recorded in the
-    canonical seed-0 checkpoint; the anchor weight defaults to $0$ in code.}};
+   $\begin{aligned}
+     \mathcal{L} &= 1.0\cdot\mathrm{KL}\!\left(p^{base}\,\|\,p\right)\\
+     &\quad+0.2\cdot\mathrm{CE}(z,y)\\
+     &\quad+1.0\cdot\mathrm{KL}\!\left(p^{base}\,\|\,q\right)
+   \end{aligned}$\\[4pt]
+   {\scriptsize $q$ is the readout before fusion.\\
+    Weights as recorded in the canonical\\
+    seed-0 checkpoint; the anchor weight\\
+    defaults to $0$ in code.}};
 
 \node[note, anchor=north west, text width=4.9cm] (infer) at ([yshift=-7pt]loss.south west)
   {\textbf{Inference.} LoRA folds into the base weights, so the shared-prefix
@@ -211,10 +215,16 @@
    against the $0.5187$ control; seed 1 misses by $0.58$\,pp.};
 
 \node[note, anchor=north west, text width=4.9cm] (data) at ([yshift=-7pt]results.south west)
-  {\textbf{Canonical corpus} \;243{,}366 rows, 35 sources\\
-   noul 113{,}594 \quad choice 100{,}257 \quad score 29{,}515\\
-   {\scriptsize label kind: option 98{,}257 / level 27{,}610 /
-    fractional 1{,}905 / withheld 2{,}000}};
+  {\textbf{Canonical corpus} \;243{,}366 rows\\[2pt]
+   \begin{tabular}{@{}lr@{\hspace{12pt}}lr@{}}
+     noul  & 113{,}594 & choice & 100{,}257\\
+     score & 29{,}515  & \multicolumn{2}{@{}l}{35 source groups}
+   \end{tabular}\\[3pt]
+   \begin{tabular}{@{}ll@{\hspace{12pt}}ll@{}}
+     \multicolumn{4}{@{}l}{label kind:}\\
+     option & 98{,}257 & fractional & 1{,}905\\
+     level  & 27{,}610 & withheld   & 2{,}000
+   \end{tabular}};
 
 \end{tikzpicture}
 \end{document}

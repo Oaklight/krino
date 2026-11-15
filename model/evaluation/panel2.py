@@ -42,7 +42,118 @@ PANEL2_TEMPLATE = (
     "Answer:"
 )
 
+#: Declared prompt orderings for #336.  ``shipped`` is ``PANEL2_TEMPLATE``.
+#: ``options_first`` moves the question block after the options block and
+#: changes nothing else; ``sandwich`` repeats the question block after the
+#: options, so it differs in content and token count as well as position and
+#: is a repetition treatment, not a third point on an order axis.
+ORDER_TEMPLATES = {
+    "shipped": PANEL2_TEMPLATE,
+    "options_first": (
+        "State: {state}\n"
+        "Options:\n"
+        "{options}\n"
+        "Question: {instructions}\n"
+        "Answer:"
+    ),
+    "sandwich": (
+        "State: {state}\n"
+        "Question: {instructions}\n"
+        "Options:\n"
+        "{options}\n"
+        "Question: {instructions}\n"
+        "Answer:"
+    ),
+}
+
 POSITION_DOMINATED_PP = 10.0
+
+
+def read_specs(n_layers: int) -> dict[str, tuple[str, int] | tuple[str]]:
+    """The five declared read configurations for #337.
+
+    ``n_layers`` is the backbone's block count.  The three middle reads are
+    one third, two thirds, and last-but-four *by integer division of the block
+    count*, so the declaration derives from the architecture rather than from a
+    hand-picked layer.  ``last`` is the shipped read and returns the model's
+    own next-token logits; ``mean_last_n=4`` averages the last four raw block
+    outputs the hidden-state tuple exposes, excluding the final normed entry.
+    """
+    if n_layers < 8:
+        raise ValueError(f"n_layers must be at least 8, got {n_layers}")
+    return {
+        "last": ("last",),
+        f"layer={n_layers // 3}": ("layer", n_layers // 3),
+        f"layer={2 * n_layers // 3}": ("layer", 2 * n_layers // 3),
+        f"layer={n_layers - 4}": ("layer", n_layers - 4),
+        "mean_last_n=4": ("mean_last_n", 4),
+    }
+
+
+def parse_read_spec(text: str, n_layers: int) -> tuple[str, int] | tuple[str]:
+    """One declared read configuration by name."""
+    specs = read_specs(n_layers)
+    if text not in specs:
+        raise ValueError(
+            f"unknown read config {text!r}; expected one of {sorted(specs)}"
+        )
+    return specs[text]
+
+
+def check_read_layout(model: Any, output: Any) -> None:
+    """Fail loudly if the hidden-state layout is not the one the reads assume.
+
+    Verified on transformers 5.21: the tuple has ``n_layers + 1`` entries,
+    index 0 is the embedding output, index k is the output of block k for
+    ``1 <= k <= n_layers - 1``, and the last entry is the final normed state
+    rather than block ``n_layers``'s raw output.  The last entry must be the
+    tensor the LM head reads; if a library change breaks that, a middle-layer
+    read would silently mean a different layer.
+    """
+    import torch
+
+    hidden_states = output.hidden_states
+    n_layers = int(model.config.num_hidden_layers)
+    if len(hidden_states) != n_layers + 1:
+        raise RuntimeError(
+            f"hidden-state tuple has {len(hidden_states)} entries for "
+            f"{n_layers} blocks; the read layout no longer matches read_specs"
+        )
+    if not torch.equal(model.lm_head(hidden_states[-1]), output.logits):
+        raise RuntimeError(
+            "the last hidden state is not the tensor the LM head reads; "
+            "hidden-state semantics changed"
+        )
+
+
+def read_logits(
+    model: Any,
+    hidden_states: Sequence[Any],
+    spec: tuple[str, int] | tuple[str],
+    last_logits: Any,
+) -> Any:
+    """Logits from one declared read of the final position's hidden states.
+
+    ``last`` returns the model's own next-token logits unchanged.  A
+    middle-layer read applies the final norm and the LM head to a
+    representation that norm was never trained for: the logit-lens caveat.
+    ``mean_last_n`` averages raw block outputs and excludes the final normed
+    entry, so the average is over the last n blocks the tuple exposes.
+    """
+    import torch
+
+    kind = spec[0]
+    if kind == "last":
+        return last_logits
+    if kind == "layer":
+        hidden = hidden_states[spec[1]][0, -1]
+    elif kind == "mean_last_n":
+        hidden = torch.stack(
+            [state[0, -1] for state in hidden_states[-(spec[1] + 1) : -1]]
+        ).mean(0)
+    else:
+        raise ValueError(f"unknown read spec {spec!r}")
+    return model.lm_head(model.model.norm(hidden)).float()
 
 
 def codes_for(n_options: int) -> list[str]:
@@ -66,10 +177,22 @@ def option_lines(texts: Sequence[str], codes: Sequence[str]) -> str:
 
 
 def render_panel2(
-    state: str, instructions: str, texts: Sequence[str], codes: Sequence[str]
+    state: str,
+    instructions: str,
+    texts: Sequence[str],
+    codes: Sequence[str],
+    order: str = "shipped",
 ) -> str:
-    """The single prompt form used by every checkpoint."""
-    return PANEL2_TEMPLATE.format(
+    """The prompt form for one declared ordering (#336).
+
+    ``order`` must be a key of :data:`ORDER_TEMPLATES`; the default is the
+    shipped order every panel-2 cell before #336 used.
+    """
+    if order not in ORDER_TEMPLATES:
+        raise ValueError(
+            f"unknown order {order!r}; expected one of {sorted(ORDER_TEMPLATES)}"
+        )
+    return ORDER_TEMPLATES[order].format(
         state=state,
         instructions=instructions,
         options=option_lines(texts, codes),

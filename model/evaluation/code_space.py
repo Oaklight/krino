@@ -78,23 +78,64 @@ def tier_of(ch: str) -> str:
 
 def code_forms(tokenizer: Any, ch: str) -> dict[str, Any]:
     """Every token-level fact about one candidate code character."""
-    bare = tokenizer.encode(ch, add_special_tokens=False)
-    spaced = tokenizer.encode(" " + ch, add_special_tokens=False)
+    forms = text_forms(tokenizer, ch)
+    forms["tier"] = tier_of(ch)
+    return forms
+
+
+def text_forms(tokenizer: Any, code: str) -> dict[str, Any]:
+    """Every token-level fact about one candidate code, of any length.
+
+    The same four questions as :func:`code_forms`, for a code that may be a
+    string rather than a single character: is it one token bare, is it one token
+    with a leading space, does the newline before it merge with it, and does the
+    ``". "`` after it merge with it.
+    """
+    bare = tokenizer.encode(code, add_special_tokens=False)
+    spaced = tokenizer.encode(" " + code, add_special_tokens=False)
     before = tokenizer.encode(LINE_BEFORE, add_special_tokens=False)
     after = tokenizer.encode(LINE_AFTER, add_special_tokens=False)
-    left = tokenizer.encode(LINE_BEFORE + ch, add_special_tokens=False)
-    right = tokenizer.encode(ch + LINE_AFTER, add_special_tokens=False)
+    left = tokenizer.encode(LINE_BEFORE + code, add_special_tokens=False)
+    right = tokenizer.encode(code + LINE_AFTER, add_special_tokens=False)
     bare_one = len(bare) == 1
     space_one = len(spaced) == 1
     return {
-        "char": ch,
-        "tier": tier_of(ch),
+        "char": code,
         "bare": bare_one,
         "space": space_one,
         "left_ok": bare_one and left == before + bare,
         "right_ok": bare_one and right == bare + after,
         "bare_id": bare[0] if bare_one else None,
         "space_id": spaced[0] if space_one else None,
+    }
+
+
+def candidate_strings(length: int, alphabet: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ") -> list[str]:
+    """Every code of ``length`` characters over ``alphabet``, in lexical order."""
+    if length < 1:
+        raise ValueError("length must be positive")
+    codes = [""]
+    for _ in range(length):
+        codes = [prefix + letter for prefix in codes for letter in alphabet]
+    return codes
+
+
+def string_survey(tokenizer: Any, length: int, alphabet: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ") -> dict:
+    """Token-level facts for every code of one length, plus the level's totals."""
+    rows = [text_forms(tokenizer, code) for code in candidate_strings(length, alphabet)]
+    both = [r for r in rows if r["bare"] and r["space"]]
+    stable = [r for r in both if r["left_ok"] and r["right_ok"]]
+    return {
+        "length": length,
+        "alphabet": len(alphabet),
+        "candidates": len(rows),
+        "bare": sum(1 for r in rows if r["bare"]),
+        "space": sum(1 for r in rows if r["space"]),
+        "both": len(both),
+        "stable": len(stable),
+        "stable_codes": [r["char"] for r in stable],
+        "glued_both": [r["char"] for r in both if not (r["left_ok"] and r["right_ok"])],
+        "space_ids_distinct": len({r["space_id"] for r in stable}) == len(stable),
     }
 
 
