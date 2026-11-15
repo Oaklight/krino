@@ -40,6 +40,7 @@ JEVBENCH_FIELDS = (
     "method",
     "readout",
     "readout_detail",
+    "prompt_order",
     "accuracy",
     "correct",
     "n",

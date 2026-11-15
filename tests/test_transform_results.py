@@ -294,6 +294,53 @@ class TestBuildJevbenchRun:
         path.write_text(json.dumps({"overall": {"accuracy": 0.5, "total": 231}}))
         assert transform.build_jevbench_run(path) is None
 
+    def test_prompt_order_is_carried_and_labelled(self, tmp_path):
+        payload = {
+            "_provenance": {
+                "model_id": "Qwen/Qwen3-Reranker-4B",
+                "strategy": "panel2_vocab_code",
+                "readout": "one forward at Answer:",
+            },
+            "config": {"prompt_order": "options_first"},
+            "n": 231,
+            "summary": {
+                "overall": {"accuracy": 0.632, "correct": 146, "total": 231},
+                "by_type": {},
+                "by_tier": {},
+            },
+        }
+        path = tmp_path / "panel2_Qwen_Qwen3-Reranker-4B_options_first.json"
+        path.write_text(json.dumps(payload))
+
+        run = transform.build_jevbench_run(path)
+
+        assert run["readout"] == "panel2"
+        assert run["prompt_order"] == "options_first"
+        assert "prompt order: options_first" in run["readout_detail"]
+
+    def test_shipped_prompt_order_is_not_labelled(self, tmp_path):
+        payload = {
+            "_provenance": {
+                "model_id": "Qwen/Qwen3-Reranker-4B",
+                "strategy": "panel2_vocab_code",
+                "readout": "one forward at Answer:",
+            },
+            "config": {"prompt_order": "shipped"},
+            "n": 231,
+            "summary": {
+                "overall": {"accuracy": 0.701, "correct": 162, "total": 231},
+                "by_type": {},
+                "by_tier": {},
+            },
+        }
+        path = tmp_path / "panel2_Qwen_Qwen3-Reranker-4B.json"
+        path.write_text(json.dumps(payload))
+
+        run = transform.build_jevbench_run(path)
+
+        assert run["prompt_order"] == "shipped"
+        assert "prompt order:" not in (run["readout_detail"] or "")
+
 
 class TestJevbenchSourceFiles:
     def test_every_row_has_a_readout_and_a_source_file(self):
@@ -409,7 +456,7 @@ class TestLanding:
         assert landing["resolution"]["dev_card_min_pp"] == 5
         assert landing["resolution"]["dev_card_max_pp"] == 6
 
-        assert landing["instrumented_rows"] == 61
+        assert landing["instrumented_rows"] == 65
         assert landing["banking77"]["trained_pp"] == 95.2
         assert landing["banking77"]["jev_pp"] == 75.0
 
@@ -433,6 +480,19 @@ class TestLanding:
         assert landing["banking77"]["jev_source_file"] in sources
         for section in ("judgement_vs_continuation", "post_trained_4b", "resolution"):
             assert set(landing[section]["source_files"]) <= set(sources)
+
+    def test_panel2_pairs_use_the_shipped_cell(self):
+        panel2 = self._data()["landing"]["panel2_vs_judgement"]
+        by_model = {pair["model_id"]: pair for pair in panel2["pairs"]}
+
+        assert by_model["Qwen/Qwen3-Reranker-4B"]["panel2_pp"] == 70.1
+        assert by_model["Qwen/Qwen3-32B"]["panel2_pp"] == 77.1
+        assert panel2["min_pp"] == 5.2
+        assert panel2["type_delta"]["choice"] == {
+            "items": 96,
+            "total": 1112,
+            "pp": 8.6,
+        }
 
 
 class TestThirdPartyCells:

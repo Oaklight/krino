@@ -427,6 +427,16 @@ def build_jevbench_run(filepath: Path) -> dict | None:
     if head_version:
         display_name = add_head_version(display_name, head_version)
 
+    config = raw.get("config") or {}
+    prompt_order = config.get("prompt_order")
+    readout_detail = provenance.get("readout")
+    if prompt_order and prompt_order not in ("shipped", "default"):
+        readout_detail = (
+            f"{readout_detail}; prompt order: {prompt_order}"
+            if readout_detail
+            else f"prompt order: {prompt_order}"
+        )
+
     return {
         "run_id": file_run_id or f"jevbench-{stem}",
         "model": {"name": display_name, "params": params, "type": model_type},
@@ -440,7 +450,8 @@ def build_jevbench_run(filepath: Path) -> dict | None:
             else "zero-shot"
         ),
         "readout": readout,
-        "readout_detail": provenance.get("readout"),
+        "readout_detail": readout_detail,
+        "prompt_order": prompt_order,
         "source_file": source_file_label(filepath),
         "benchmark": "jevbench",
         "n": raw.get("n") or overall.get("total", 0),
@@ -902,8 +913,17 @@ def build_landing(jevbench_runs: list[dict], eval_runs: list[dict], training_run
     cells: dict[str, dict[str, dict]] = {}
     for run in jevbench_runs:
         model_id = run.get("model_id")
-        if model_id:
-            cells.setdefault(model_id, {})[run["readout"]] = run
+        if not model_id:
+            continue
+        # The landing pairs the shipped panel-2 cell with judgement. The
+        # prompt-order variants are separate rows; they must not overwrite it.
+        if run["readout"] == "panel2" and run.get("prompt_order") not in (
+            None,
+            "shipped",
+            "default",
+        ):
+            continue
+        cells.setdefault(model_id, {})[run["readout"]] = run
 
     pairs: list[dict] = []
     tier_gaps: dict[str, list[float]] = {"easy": [], "hard": [], "original": []}
