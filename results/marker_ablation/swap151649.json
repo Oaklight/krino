@@ -1,0 +1,165 @@
+{
+  "arm": "swap151649",
+  "head": "m151645",
+  "marker_token_at_inference": 151649,
+  "jevbench": {
+    "arm": "swap151649",
+    "marker_token": 151649,
+    "residual_heads": "model/experiments/marker_ablation/m151645/residual.pt",
+    "residual_heads_sha256": "c62f574c8959b9727b73be95847004e68e383d8f9bf9681ede81fd65d896348a",
+    "checkpoint_config": {
+      "backbone": "Qwen/Qwen3-Reranker-4B",
+      "rank": 32,
+      "max_length": 2048,
+      "kl_weight": 1.0,
+      "ce_weight": 0.2,
+      "seed": 42,
+      "option_marker": true,
+      "noul_marker": false,
+      "option_chunk_size": 1,
+      "option_max_tokens": 64,
+      "option_batch": 16,
+      "train_safe_buckets": false,
+      "lora_layers": null,
+      "lora_rank": null,
+      "lora_alpha": null,
+      "answerable_head": false,
+      "answerable_pos_weight": 0.0
+    },
+    "backbone": "Qwen/Qwen3-Reranker-4B",
+    "jevbench_items": 231,
+    "jevbench_ids_sha256": "dcb90f876056ab65ffb2a5cdd606e1c42d98573dbfe794f122ab7a3c29e977fb",
+    "predictions_sha256": "2a2e8c128db0da09b51cd3f8aa80966a1b55e68cd67c64e9c57bbaaa20335f66",
+    "overall": {
+      "n": 231,
+      "accuracy": 0.658008658008658,
+      "ece": 0.1113727553324266,
+      "brier": 0.40367410594676806,
+      "bss": -0.048941142164182105,
+      "mean_confidence": 0.6580840639479748,
+      "qwk": 0.9029649595687331,
+      "rps": 0.07213122554501233,
+      "mae": 0.34956439228780156
+    },
+    "intelligence": {
+      "n": 231,
+      "accuracy": 0.658008658008658,
+      "chance": 0.31760461760461756,
+      "corrected": 0.48124098124098125,
+      "by_options": {
+        "2": {
+          "n": 74,
+          "correct": 51
+        },
+        "3": {
+          "n": 15,
+          "correct": 7
+        },
+        "4": {
+          "n": 70,
+          "correct": 42
+        },
+        "5": {
+          "n": 56,
+          "correct": 46
+        },
+        "6": {
+          "n": 16,
+          "correct": 6
+        }
+      }
+    },
+    "by_type": {
+      "choice": {
+        "n": 139,
+        "accuracy": 0.6258992805755396,
+        "ece": 0.11315699018162788,
+        "brier": 0.5098068073264171,
+        "bss": -0.23343207774998742,
+        "mean_confidence": 0.6255069272123652
+      },
+      "noul": {
+        "n": 74,
+        "accuracy": 0.6891891891891891,
+        "ece": 0.14580726784628792,
+        "brier": 0.2162334750555533,
+        "bss": 0.1325314949419707,
+        "mean_confidence": 0.7237131515064755
+      },
+      "score": {
+        "n": 18,
+        "accuracy": 0.7777777777777778,
+        "ece": 0.22911334534486136,
+        "brier": 0.3546830611789156,
+        "bss": 0.5089003768291938,
+        "mean_confidence": 0.6398434821102355,
+        "qwk": 0.9029649595687331,
+        "rps": 0.07213122554501233,
+        "mae": 0.34956439228780156
+      }
+    },
+    "scored": 231,
+    "latency_mean_s": 0.13302476788383155,
+    "elapsed_s": 65.01599502563477
+  },
+  "paired_vs_151645_marker": {
+    "n": 231,
+    "arm_correct": 152,
+    "baseline_correct": 148,
+    "arm_accuracy": 0.658008658008658,
+    "baseline_accuracy": 0.6406926406926406,
+    "delta_pp_raw": 1.7316017316017316,
+    "bootstrap_ci95_pp_raw": [
+      0.0,
+      3.896103896103896
+    ],
+    "discordant_arm_only": 5,
+    "discordant_baseline_only": 1,
+    "mcnemar_exact_p": 0.21875,
+    "gate_screen": {
+      "delta_pp_cc": 2.380952380952381,
+      "ci95_pp_cc": [
+        -0.44022985805362846,
+        5.20213461995839
+      ],
+      "states": [
+        "coarse safety screen passed",
+        "improvement suggested but unresolved"
+      ],
+      "action": "no objection from the coarse screen",
+      "detectable_pp": 2.4
+    },
+    "decision": "unresolved (below the 9.3 pp floor)"
+  },
+  "provenance": {
+    "experiment": "marker-token ablation (#362)",
+    "code_commit": "f7ec10061586e69625cf3dec3f8449793549ca70",
+    "code_tree_manifest_sha256": "b3719dc62837dc328afe2ed835ecb2ce93a51f88c5f0aac798b2df1a8ee16e82",
+    "tokenizer": {
+      "name": "Qwen/Qwen3-Reranker-4B",
+      "revision": "22e683669bc0f0bd69640a1354a6d0aebcfeede5"
+    },
+    "data": {
+      "items": "residual_train_20000.jsonl",
+      "items_sha256": "f2fe77ecd655109872c0976081165c97a2149ed041f79e9c3334e94d1df79f32",
+      "base_probs": "base_probs_20000.jsonl",
+      "base_probs_sha256": "6b020e1d0b11b35bae811353c822542cbb2289c95b41b6c7bbb1b4faf14d035f",
+      "validation_rows": 3999,
+      "validation_digest": "edca4993020997798948d425e67bc08083ab1619ad5ec92b856ddb5467580abf",
+      "split_rule": "split_items(items, val_fraction=0.2, seed=42), stratified by (type, min(K,8))"
+    },
+    "eval_harness": {
+      "driver": "eval_marker_arm.py",
+      "driver_sha256": "09493cde311da96d043dc57d4cfe7978e1e6320415a7173ac3ba94516408d618",
+      "analysis": "analyze_marker.py",
+      "analysis_sha256": "13cfadbdc5f0564cc2501bffa4a6f8fa4d7851cef5b5b04580a439becfdc415e",
+      "jevbench_public_items": 231,
+      "tiers": {
+        "easy": 48,
+        "hard": 111,
+        "original": 72
+      },
+      "note": "eval_gate.ResidualScorer rebuilt the arm, then marker_token_id was overridden; residual.pt does not store the marker id"
+    }
+  }
+}
