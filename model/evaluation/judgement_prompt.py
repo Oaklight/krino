@@ -30,6 +30,15 @@ POLARITY_TEMPLATE = "State: {state}\nQuestion: {instructions}\nAnswer:"
 YES = " yes"
 NO = " no"
 
+# The label vocabulary lives in model/evaluation/labels.py so every scorer that
+# reads a noul label shares one parser (#378).
+from model.evaluation.polarity import (  # noqa: E402,F401
+    FALSE_LABELS,
+    TRUE_LABELS,
+    label_polarity,
+    require_polarity,
+)
+
 
 def has_criteria(criteria: Any) -> bool:
     """Whether a noul item carries its own answer wording."""
@@ -49,15 +58,7 @@ def polarity_gold(item: Any) -> bool | None:
         return None
     if has_criteria(question.get("criteria")):
         return None
-    label = item.label
-    if isinstance(label, bool):
-        return label
-    text = str(label).strip().lower()
-    if text in ("true", "yes", "1", "y"):
-        return True
-    if text in ("false", "no", "0", "n"):
-        return False
-    return None
+    return label_polarity(item.label)
 
 
 def candidates(item: Any) -> tuple[list[str], int] | None:
@@ -79,11 +80,7 @@ def candidates(item: Any) -> tuple[list[str], int] | None:
             # No option text to judge; the caller reads polarity at ``Answer:``.
             return None
         texts = [text.strip() for text in noul_option_texts(criteria)]
-        positive = (
-            item.label
-            if isinstance(item.label, bool)
-            else str(item.label).lower() == "true"
-        )
+        positive = require_polarity(item.label, getattr(item, "id", "?"))
         return texts, 0 if positive else 1
 
     if q_type == "choice":

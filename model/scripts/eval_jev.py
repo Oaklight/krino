@@ -17,6 +17,7 @@ from jev_client import JevClient
 from data.pipeline import load_jsonl
 from model.evaluation.accuracy import noul_accuracy, choice_accuracy, score_mae
 from model.evaluation.calibration import expected_calibration_error, brier_score
+from model.evaluation.polarity import require_polarity  # noqa: E402
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -78,7 +79,7 @@ def evaluate_dataset(
         q_type = item.question["type"]
         if q_type == "noul":
             noul_val = answer.get("noul", 0.5)
-            label = item.label if isinstance(item.label, bool) else str(item.label).lower() == "true"
+            label = require_polarity(item.label, getattr(item, "id", "?"))
             noul_preds.append(noul_val)
             noul_labels.append(label)
             conf = noul_val if label else 1 - noul_val

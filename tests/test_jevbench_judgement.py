@@ -17,6 +17,7 @@ from model.evaluation.judgement_prompt import (
     POLARITY_TEMPLATE,
     YES,
     candidates,
+    label_polarity,
     polarity_gold,
     render,
     render_polarity,
@@ -43,6 +44,113 @@ def test_noul_without_criteria_is_not_an_option_set():
     # Answer: instead of asking whether the word "yes" answers the question.
     assert candidates(_item("noul", None, False)) is None
     assert candidates(_item("noul", {}, True)) is None
+
+
+def test_noul_string_label_picks_the_true_option():
+    # JevBench stores expected as the strings "yes" and "no". Comparing against
+    # "true" alone marked all 74 of its noul items negative (#299).
+    criteria = {"true": "Yes, it holds.", "false": "No, it does not."}
+    texts, gold = candidates(_item("noul", criteria, "yes"))
+    assert texts == ["Yes, it holds.", "No, it does not."]
+    assert gold == 0
+    assert candidates(_item("noul", criteria, "no"))[1] == 1
+    assert candidates(_item("noul", criteria, " YES "))[1] == 0
+    assert candidates(_item("noul", criteria, "False"))[1] == 1
+    assert candidates(_item("noul", criteria, 1))[1] == 0
+    assert candidates(_item("noul", criteria, 0))[1] == 1
+
+
+def test_noul_unknown_label_refuses_to_pick_a_gold_option():
+    # A silent default to negative is how the JevBench labels were inverted; an
+    # unrecognised form is a data error and must stop the run.
+    criteria = {"true": "Yes.", "false": "No."}
+    with pytest.raises(ValueError, match="is neither true nor false"):
+        candidates(_item("noul", criteria, "maybe"))
+
+
+def test_build_prompts_marks_the_true_option_for_a_string_yes_label():
+    # The plan builder and the scoring path both go through build_prompts, so
+    # the label has to survive the trip as a per-option 0/1 flag.
+    pytest.importorskip("torch")
+    from model.src.judgement_objective import build_prompts
+
+    prompts = build_prompts(_item("noul", {"true": "Yes.", "false": "No."}, "yes"))
+    assert [p.option_index for p in prompts] == [0, 1]
+    assert [p.label for p in prompts] == [1, 0]
+
+
+def test_label_polarity_names_the_forms_it_accepts():
+    for value in (True, "true", "yes", "1", "Y", " Yes "):
+        assert label_polarity(value) is True, value
+    for value in (False, "false", "no", "0", "N", " No "):
+        assert label_polarity(value) is False, value
+    assert label_polarity(1) is True
+    assert label_polarity(0) is False
+    for value in ("maybe", None, 2, 0.5, ""):
+        assert label_polarity(value) is None, value
+
+
+def test_no_scorer_carries_its_own_noul_label_parse():
+    # Milo's review on #378: six copies of the same rule in four spellings. The
+    # scan covers the whole repository rather than one spelling in one tree, so
+    # a seventh copy fails unless it is added to the allowlist on purpose.
+    import re
+    from pathlib import Path
+
+    pattern = re.compile(r"""\.lower\(\)\s*==\s*["']true["']""")
+    root = Path(__file__).resolve().parents[1]
+    found: dict[str, list[str]] = {}
+    for tree in ("model", "data", "scripts"):
+        base = root / tree
+        if not base.exists():
+            continue
+        for path in sorted(base.rglob("*.py")):
+            hits = [
+                line.strip()
+                for line in path.read_text(encoding="utf-8").splitlines()
+                if pattern.search(line)
+            ]
+            if hits:
+                found[path.relative_to(root).as_posix()] = hits
+
+    # Corpus-side sites with different semantics, kept out of #378 on purpose
+    # and tracked as follow-up on #299.
+    allowed = {
+        "model/scripts/build_unanswerable_pairs.py":
+            "`label is True or ... == \"true\"` variant, corpus-side, reads bools",
+        "model/scripts/train_residual.py":
+            "training target rather than a scorer polarity, reads bools",
+    }
+    unexpected = {name: hits for name, hits in found.items() if name not in allowed}
+    assert unexpected == {}, unexpected
+    # An allowlist entry that no longer matches is stale and must be removed.
+    assert set(found) == set(allowed), (sorted(found), sorted(allowed))
+
+
+def test_a_corpus_noul_label_of_either_form_resolves_through_the_parser(tmp_path):
+    # `load_jsonl` is TypedQuestion(**d) and coerces nothing, so the scorers
+    # must not depend on the label arriving as a bool. Both on-disk forms go
+    # through the shared parser to the same answer.
+    from data.format import TypedQuestion
+    from data.pipeline import load_jsonl, save_jsonl
+    from model.evaluation.polarity import require_polarity
+
+    def item(item_id, label):
+        return TypedQuestion(
+            id=item_id, state="A situation.", source="corpus", split="train",
+            label=label,
+            question={"type": "noul", "instructions": "Does it hold?",
+                      "criteria": {"true": "Yes.", "false": "No."}},
+        )
+
+    path = tmp_path / "corpus.jsonl"
+    save_jsonl([item("corpus:a", True), item("corpus:b", "yes")], path)
+    loaded = load_jsonl(path)
+    assert loaded[0].label is True
+    assert loaded[1].label == "yes"
+    assert [require_polarity(row.label, row.id) for row in loaded] == [True, True]
+    with pytest.raises(ValueError, match="is neither true nor false"):
+        require_polarity("maybe", "corpus:c")
 
 
 def test_polarity_gold_reads_a_boolean_label():
