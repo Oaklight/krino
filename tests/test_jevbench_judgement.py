@@ -17,6 +17,7 @@ from model.evaluation.judgement_prompt import (
     POLARITY_TEMPLATE,
     YES,
     candidates,
+    label_polarity,
     polarity_gold,
     render,
     render_polarity,
@@ -43,6 +44,50 @@ def test_noul_without_criteria_is_not_an_option_set():
     # Answer: instead of asking whether the word "yes" answers the question.
     assert candidates(_item("noul", None, False)) is None
     assert candidates(_item("noul", {}, True)) is None
+
+
+def test_noul_string_label_picks_the_true_option():
+    # JevBench stores expected as the strings "yes" and "no". Comparing against
+    # "true" alone marked all 74 of its noul items negative (#299).
+    criteria = {"true": "Yes, it holds.", "false": "No, it does not."}
+    texts, gold = candidates(_item("noul", criteria, "yes"))
+    assert texts == ["Yes, it holds.", "No, it does not."]
+    assert gold == 0
+    assert candidates(_item("noul", criteria, "no"))[1] == 1
+    assert candidates(_item("noul", criteria, " YES "))[1] == 0
+    assert candidates(_item("noul", criteria, "False"))[1] == 1
+    assert candidates(_item("noul", criteria, 1))[1] == 0
+    assert candidates(_item("noul", criteria, 0))[1] == 1
+
+
+def test_noul_unknown_label_refuses_to_pick_a_gold_option():
+    # A silent default to negative is how the JevBench labels were inverted; an
+    # unrecognised form is a data error and must stop the run.
+    criteria = {"true": "Yes.", "false": "No."}
+    with pytest.raises(ValueError, match="is neither true nor false"):
+        candidates(_item("noul", criteria, "maybe"))
+
+
+def test_build_prompts_marks_the_true_option_for_a_string_yes_label():
+    # The plan builder and the scoring path both go through build_prompts, so
+    # the label has to survive the trip as a per-option 0/1 flag.
+    pytest.importorskip("torch")
+    from model.src.judgement_objective import build_prompts
+
+    prompts = build_prompts(_item("noul", {"true": "Yes.", "false": "No."}, "yes"))
+    assert [p.option_index for p in prompts] == [0, 1]
+    assert [p.label for p in prompts] == [1, 0]
+
+
+def test_label_polarity_names_the_forms_it_accepts():
+    for value in (True, "true", "yes", "1", "Y", " Yes "):
+        assert label_polarity(value) is True, value
+    for value in (False, "false", "no", "0", "N", " No "):
+        assert label_polarity(value) is False, value
+    assert label_polarity(1) is True
+    assert label_polarity(0) is False
+    for value in ("maybe", None, 2, 0.5, ""):
+        assert label_polarity(value) is None, value
 
 
 def test_polarity_gold_reads_a_boolean_label():
