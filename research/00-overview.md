@@ -80,6 +80,8 @@ All three can be mixed in a single API call. Every question is evaluated in para
 ## Document Index
 
 - [00-overview.md](00-overview.md) — This document
+- [README.md](README.md) — Index of every research note by phase, with status
+- [00-work-history.md](00-work-history.md) — Every issue and pull request in creation order, with dependencies
 - [01-api-testing.md](01-api-testing.md) — API testing results with all three primitives
 - [02-architecture-analysis.md](02-architecture-analysis.md) — Architecture deep dive and reproduction analysis
 - [03-open-source-ecosystem.md](03-open-source-ecosystem.md) — Open-source projects and community ecosystem
