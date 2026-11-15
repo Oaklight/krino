@@ -116,6 +116,23 @@ class JudgementReadout:
             return False
         return max(len(self._ids(prompt.text)) for prompt in prompts) <= self.max_length
 
+    def lengths(self, rows: Sequence[Sequence[JudgementPrompt]]) -> list[int]:
+        """Longest prompt of each row in tokens, tokenised in one batch.
+
+        The chunk budget needs the real token length: a character estimate is
+        wrong by more than 2x on non-Latin text, and the difference is the
+        difference between a 20 GiB chunk and a 90 GiB one.
+        """
+        flat = [prompt.text for prompts in rows for prompt in prompts]
+        ids = self._ids_batch(flat)
+        out: list[int] = []
+        cursor = 0
+        for prompts in rows:
+            block = ids[cursor : cursor + len(prompts)]
+            cursor += len(prompts)
+            out.append(max((len(part) for part in block), default=0))
+        return out
+
     def row_margins(self, prompts: Sequence[JudgementPrompt]) -> torch.Tensor:
         """Raw yes-minus-no margins, ``[K]``, one per prompt of the row."""
         if not prompts:

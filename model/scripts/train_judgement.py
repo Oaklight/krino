@@ -183,20 +183,31 @@ def row_selection_sha256(rows: list[tuple[str, list[JudgementPrompt]]]) -> str:
 
 
 def trainable_rows(rows, readout: JudgementReadout):
-    """Drop rows the readout cannot score, reporting why.
+    """Drop rows the readout cannot score, reporting why and their lengths.
 
     A row over ``max_length`` is dropped, not truncated: a truncated state is a
     different question.  A tokenisation-drift error is not caught here; it
     propagates, because it means training and inference disagree.
+
+    Returns the kept rows, the dropped count, and ``row_id -> longest prompt
+    tokens``.  The lengths come from the same tokenisation the filter needs,
+    so they cost nothing extra and they are exact, which the chunk budget
+    relies on.
     """
     kept = []
+    lengths: dict[str, int] = {}
     dropped_long = 0
-    for row_id, prompts in rows:
-        if not readout.fits(prompts):
-            dropped_long += 1
-            continue
-        kept.append((row_id, prompts))
-    return kept, dropped_long
+    block_rows = 256
+    for start in range(0, len(rows), block_rows):
+        block = rows[start : start + block_rows]
+        row_lengths = readout.lengths([prompts for _, prompts in block])
+        for (row_id, prompts), length in zip(block, row_lengths):
+            if length > readout.max_length:
+                dropped_long += 1
+                continue
+            kept.append((row_id, prompts))
+            lengths[row_id] = length
+    return kept, dropped_long, lengths
 
 
 def build_parser(config: dict | None = None) -> argparse.ArgumentParser:
@@ -411,7 +422,7 @@ def reduce_step(loss: float, rows: int, device, world_size: int) -> tuple[float,
     return float(values[0] / values[1]), int(values[2])
 
 
-def step_chunks(rows, token_budget: int) -> list[tuple[int, int]]:
+def step_chunks(rows, token_budget: int, lengths: dict[str, int] | None = None):
     """Index ranges of rows whose prefixes together fit ``token_budget``.
 
     A step's graph memory is set by the padded prefix tokens of one forward,
@@ -420,12 +431,21 @@ def step_chunks(rows, token_budget: int) -> list[tuple[int, int]]:
     length: the readout pads every row of a bucket group to the same bucket, so
     a raw-length budget underestimates memory by up to two bucket steps.  A row
     whose own bucket exceeds the budget forms its own chunk.
+
+    ``lengths`` maps ``row_id`` to the measured prompt-token length, from
+    :func:`trainable_rows`; without it the length is estimated at four
+    characters per token, which is wrong by more than 2x on non-Latin text.
     """
     chunks: list[tuple[int, int]] = []
     start = 0
     total = 0
     for index, prompts in enumerate(rows):
-        tokens = max(len(prompt.prefix) for prompt in prompts) // 4
+        measured = lengths.get(prompts[0].row_id) if lengths else None
+        tokens = (
+            measured
+            if measured is not None
+            else max(len(prompt.prefix) for prompt in prompts) // 4
+        )
         cost = bucket_length(tokens, PREFIX_BUCKETS) + 16
         if index > start and total + cost > token_budget:
             chunks.append((start, index))
@@ -553,7 +573,7 @@ def _run(args, rank: int, world_size: int) -> int:
     readout = JudgementReadout(backbone, tokenizer, max_length=args.max_length)
     scaling = ScaledMargin(scale=args.scale_init, bias=args.yes_bias).to(readout.device)
 
-    train_rows, dropped_long = trainable_rows(train_rows, readout)
+    train_rows, dropped_long, row_token_lengths = trainable_rows(train_rows, readout)
     if dropped_long and main_process:
         print(f"dropped {dropped_long} train rows over max_length", flush=True)
     if not train_rows:
@@ -625,7 +645,9 @@ def _run(args, rank: int, world_size: int) -> int:
                 # step, and one backward covers the step's rows.  The per-row
                 # path launched a forward and a backward per row and left the
                 # card idle between them (#299 throughput).
-                for start, stop in step_chunks(chosen_rows, args.chunk_tokens):
+                for start, stop in step_chunks(
+                    chosen_rows, args.chunk_tokens, row_token_lengths
+                ):
                     chunk = chosen_rows[start:stop]
                     chunk_weights = weights[start:stop]
                     chunk_terms = []
