@@ -132,18 +132,11 @@ def internal_labels(args, entries):
     )
     if args.cap_per_template:
         train = cap_per_template(train, args.cap_per_template)
-    if args.subset_rows:
-        order = list(range(len(train)))
-        random.Random(args.subset_seed).shuffle(order)
-        keep = sorted(order[: args.subset_rows])
-        train = [train[index] for index in keep]
-        labels = {record[0]: "train" for record in train}
-    else:
-        labels = {record[0]: "train" for record in train}
-        labels.update({record[0]: "val" for record in val})
-        for record in records:
-            if record[4] != "train":
-                labels.setdefault(record[0], "external")
+    labels = {record[0]: "train" for record in train}
+    labels.update({record[0]: "val" for record in val})
+    for record in records:
+        if record[4] != "train":
+            labels.setdefault(record[0], "external")
     report = dict(report)
     report["train_after_cap"] = len(train)
     report["val_after_cap"] = len(val)
@@ -158,6 +151,13 @@ def internal_labels(args, entries):
             row_ids.sort(key=lambda rid: hashlib.sha256(rid.encode()).hexdigest())
             for rank, row_id in enumerate(row_ids):
                 gold_slots[row_id] = rank % k
+    if args.subset_rows:
+        order = list(range(len(train)))
+        random.Random(args.subset_seed).shuffle(order)
+        keep = sorted(order[: args.subset_rows])
+        train = [train[index] for index in keep]
+        labels = {record[0]: "train" for record in train}
+        report["train_after_subset"] = len(train)
     return labels, report, gold_slots
 
 
