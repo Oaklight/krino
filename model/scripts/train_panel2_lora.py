@@ -43,8 +43,11 @@ OPTION_MARK = "\nDoes this option correctly answer the question?"
 
 def parse_prompt_text(text: str) -> tuple[str, str]:
     """State and instructions from a rendered judgement prompt."""
-    assert text.startswith("State: "), text[:20]
-    head, _, rest = text[len("State: "):].rpartition(POLARITY_MARK)
+    if not text.startswith("State: "):
+        raise ValueError(f"not a judgement prompt: {text[:40]!r}")
+    head, sep, rest = text[len("State: "):].rpartition(POLARITY_MARK)
+    if not sep:
+        raise ValueError(f"prompt has no {POLARITY_MARK!r} marker: {text[:40]!r}")
     instructions = rest.split("\nAnswer:", 1)[0].rstrip("\n")
     return head, instructions
 
@@ -150,7 +153,12 @@ def build_rows(path: Path, noul_gold: str = "role") -> tuple[list[Row], str]:
                         gold = 1 if gold_record["option_index"] == 0 else 0
             else:
                 texts = [option_of(r["suffix"]) for r in records]
-                gold = next(i for i, r in enumerate(records) if r["label"] == 1)
+                golds = [i for i, r in enumerate(records) if r["label"] == 1]
+                if len(golds) != 1:
+                    raise ValueError(
+                        f"row {row_id!r} has {len(golds)} options labelled 1"
+                    )
+                gold = golds[0]
         codes = list(CODES[: len(texts)])
         split = first.get("internal_split") or first.get("split") or "train"
         rows.append(Row(row_id, split, q_type, state,
@@ -240,8 +248,9 @@ def main() -> int:
 
     if args.world > 1:
         dist.init_process_group("nccl")
-    torch.cuda.set_device(args.rank)
-    device = f"cuda:{args.rank}"
+    local_rank = int(os.environ.get("LOCAL_RANK", str(args.rank)))
+    torch.cuda.set_device(local_rank)
+    device = f"cuda:{local_rank}"
     torch.manual_seed(42)
 
     rows, split_field = build_rows(args.plan, args.noul_gold)
@@ -296,75 +305,97 @@ def main() -> int:
         print(f"rank {args.rank}: frozen sample CE {frozen_mean:.4f}", flush=True)
 
     history = []
+    stopped = False
     if not args.eval_only:
         shard = train_rows[args.rank :: args.world] if args.world > 1 else train_rows
         steps = math.ceil(len(shard) / args.batch_rows)
         if args.max_steps:
             steps = min(steps, args.max_steps)
-        print(f"rank {args.rank}: {len(shard)} rows, {steps} steps", flush=True)
-        started = time.time()
-        for step in range(1, steps + 1):
-            batch = shard[(step - 1) * args.batch_rows: step * args.batch_rows]
-            optimizer.zero_grad(set_to_none=True)
-            losses = []
-            for row in batch:
-                loss = loss_of(row) / len(batch)
-                loss.backward()
-                losses.append(float(loss))
+        print(f"rank {args.rank}: {len(shard)} rows, {steps} steps per epoch, "
+              f"{args.epochs} epoch(s)", flush=True)
+        for epoch in range(1, args.epochs + 1):
+            started = time.time()
+            for step in range(1, steps + 1):
+                batch = shard[(step - 1) * args.batch_rows: step * args.batch_rows]
+                optimizer.zero_grad(set_to_none=True)
+                losses = []
+                for row in batch:
+                    loss = loss_of(row) / len(batch)
+                    loss.backward()
+                    losses.append(float(loss))
+                if args.world > 1:
+                    for parameter in trainable:
+                        if parameter.grad is not None:
+                            dist.all_reduce(parameter.grad, op=dist.ReduceOp.SUM)
+                            parameter.grad /= args.world
+                torch.nn.utils.clip_grad_norm_(trainable, 1.0)
+                optimizer.step()
+                mean = sum(losses)
+                if not math.isfinite(mean):
+                    print(f"rank {args.rank}: NaN at step {step}", flush=True)
+                    raise SystemExit(2)
+                history.append(mean)
+                if step % args.log_every == 0 or step == steps:
+                    print(f"rank {args.rank}: epoch {epoch} step {step}/{steps} "
+                          f"loss {mean:.4f} elapsed {time.time() - started:.0f}s",
+                          flush=True)
+            epoch_mean = sum(history[-steps:]) / steps
             if args.world > 1:
-                for parameter in trainable:
-                    if parameter.grad is not None:
-                        dist.all_reduce(parameter.grad, op=dist.ReduceOp.SUM)
-                        parameter.grad /= args.world
-            torch.nn.utils.clip_grad_norm_(trainable, 1.0)
-            optimizer.step()
-            mean = sum(losses)
-            if not math.isfinite(mean):
-                print(f"rank {args.rank}: NaN at step {step}", flush=True)
-                raise SystemExit(2)
-            history.append(mean)
-            if step % args.log_every == 0 or step == steps:
-                print(f"rank {args.rank}: step {step}/{steps} loss {mean:.4f} "
-                      f"elapsed {time.time() - started:.0f}s", flush=True)
-        epoch_mean = sum(history) / len(history)
-        if args.world > 1:
-            # The stop decision must be identical on every rank, or the ones
-            # that keep going hang on the next collective.
-            stats = torch.tensor([epoch_mean, frozen_mean], device=device)
-            dist.all_reduce(stats, op=dist.ReduceOp.SUM)
-            stats = stats / args.world
-            epoch_mean, frozen_mean = float(stats[0]), float(stats[1])
-        print(f"rank {args.rank}: epoch mean loss {epoch_mean:.4f} "
-              f"frozen {frozen_mean:.4f}", flush=True)
-        if epoch_mean > frozen_mean:
-            print(f"rank {args.rank}: stop rule fired (loss above frozen)", flush=True)
-            if args.stop_on_loss_rise:
-                raise SystemExit(3)
+                # The stop decision must be identical on every rank, or the ones
+                # that keep going hang on the next collective.
+                stats = torch.tensor([epoch_mean, frozen_mean], device=device)
+                dist.all_reduce(stats, op=dist.ReduceOp.SUM)
+                stats = stats / args.world
+                epoch_mean, frozen_mean = float(stats[0]), float(stats[1])
+            print(f"rank {args.rank}: epoch {epoch} mean loss {epoch_mean:.4f} "
+                  f"frozen {frozen_mean:.4f}", flush=True)
+            if epoch_mean > frozen_mean and args.stop_on_loss_rise:
+                print(f"rank {args.rank}: stop rule fired (loss above frozen)",
+                      flush=True)
+                stopped = True
+                break
 
     # Validation on the rank's stride of the val split.
+    val_source = "val"
     val_shard = val_rows[args.rank :: args.world] if args.world > 1 else val_rows
     if not val_shard:
         # A plan without an internal split (the v2 authoritative plan) has no
         # val rows; an eval-only smoke then uses the head of the train rows.
+        # The payload says so, so the number cannot be read as an estimate.
+        val_source = "train_head"
         val_shard = train_rows[args.rank :: args.world]
     if args.val_limit:
         val_shard = val_shard[: args.val_limit]
     counts, per_item = evaluate(model, tokenizer, val_shard, code_ids, device)
     payload = {"rank": args.rank, "lr": args.lr, "val_counts": counts,
-               "val_items": per_item,
+               "val_items": per_item, "val_source": val_source,
+               "stopped": stopped,
+               "stop_reason": "epoch_mean_loss_above_frozen" if stopped else None,
                "plan": str(args.plan), "plan_sha256": plan_sha,
                "eval_plan": str(args.eval_plan) if args.eval_plan else None,
                "eval_plan_sha256": eval_plan_sha,
-               "split_field": split_field,
+               "split_field": split_field, "noul_gold": args.noul_gold,
+               "epochs": args.epochs,
                "epoch_mean_loss": (sum(history) / len(history)) if history else None,
                "frozen_sample_ce": frozen_mean}
+
+    args.output.mkdir(parents=True, exist_ok=True)
+    path = args.output / f"shard_{args.rank}.json"
+    if stopped:
+        # A fired stop rule ends the point, but the numbers it produced are
+        # still the evidence for stopping: write them before leaving.
+        with path.open("w", encoding="utf-8") as handle:
+            json.dump(payload, handle)
+        print(f"rank {args.rank}: wrote {path} (stopped)", flush=True)
+        if args.world > 1:
+            dist.barrier()
+            dist.destroy_process_group()
+        return 3
 
     if args.rank == 0:
         jev = evaluate_jevbench(model, tokenizer, code_ids, device)
         payload["jevbench"] = jev
 
-    args.output.mkdir(parents=True, exist_ok=True)
-    path = args.output / f"shard_{args.rank}.json"
     with path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle)
     print(f"rank {args.rank}: wrote {path}", flush=True)

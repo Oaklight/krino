@@ -90,6 +90,25 @@ def test_label_polarity_names_the_forms_it_accepts():
         assert label_polarity(value) is None, value
 
 
+def test_build_prompts_marks_each_noul_option_with_its_side():
+    # The side of the question an option states is independent of whether it is
+    # correct, and it is what a panel-2 re-render needs once options permute.
+    pytest.importorskip("torch")
+    from model.src.judgement_objective import build_prompts
+
+    criteria = {"true": "Yes.", "false": "No."}
+    positive = build_prompts(_item("noul", criteria, "yes"))
+    assert [p.polarity for p in positive] == ["true", "false"]
+    assert [p.label for p in positive] == [1, 0]
+
+    negated = build_prompts(_item("noul", criteria, False))
+    assert [p.polarity for p in negated] == ["true", "false"]
+    assert [p.label for p in negated] == [0, 1]
+
+    choice = build_prompts(_item("choice", {"a": "A.", "b": "B."}, "a"))
+    assert all(p.polarity is None for p in choice)
+
+
 def test_no_scorer_carries_its_own_noul_label_parse():
     # Milo's review on #378: six copies of the same rule in four spellings. The
     # scan covers the whole repository rather than one spelling in one tree, so
