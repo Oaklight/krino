@@ -169,6 +169,13 @@ def evaluate(model, tokenizer, rows, code_ids, device, limit=None):
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--plan", type=Path, required=True)
+    parser.add_argument(
+        "--eval-plan",
+        type=Path,
+        default=None,
+        help="score this plan's val rows instead of the training plan's",
+    )
+    parser.add_argument("--stop-on-loss-rise", action="store_true", default=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--epochs", type=int, default=1)
@@ -195,6 +202,13 @@ def main() -> int:
     train_rows = [r for r in rows if r.split == "train"]
     val_rows = [r for r in rows if r.split == "val"]
     plan_sha = hashlib.sha256(args.plan.read_bytes()).hexdigest()
+    eval_plan_sha = None
+    if args.eval_plan is not None:
+        eval_rows, eval_split_field = build_rows(args.eval_plan)
+        val_rows = [r for r in eval_rows if r.split == "val"]
+        eval_plan_sha = hashlib.sha256(args.eval_plan.read_bytes()).hexdigest()
+        print(f"rank {args.rank}: eval plan val rows {len(val_rows)} "
+              f"split_field {eval_split_field} sha {eval_plan_sha[:16]}", flush=True)
     print(f"rank {args.rank}: rows {len(rows)} train {len(train_rows)} "
           f"val {len(val_rows)} split_field {split_field} plan_sha {plan_sha[:16]}",
           flush=True)
@@ -267,10 +281,19 @@ def main() -> int:
                 print(f"rank {args.rank}: step {step}/{steps} loss {mean:.4f} "
                       f"elapsed {time.time() - started:.0f}s", flush=True)
         epoch_mean = sum(history) / len(history)
+        if args.world > 1:
+            # The stop decision must be identical on every rank, or the ones
+            # that keep going hang on the next collective.
+            stats = torch.tensor([epoch_mean, frozen_mean], device=device)
+            dist.all_reduce(stats, op=dist.ReduceOp.SUM)
+            stats = stats / args.world
+            epoch_mean, frozen_mean = float(stats[0]), float(stats[1])
         print(f"rank {args.rank}: epoch mean loss {epoch_mean:.4f} "
               f"frozen {frozen_mean:.4f}", flush=True)
         if epoch_mean > frozen_mean:
             print(f"rank {args.rank}: stop rule fired (loss above frozen)", flush=True)
+            if args.stop_on_loss_rise:
+                raise SystemExit(3)
 
     # Validation on the rank's stride of the val split.
     val_shard = val_rows[args.rank :: args.world] if args.world > 1 else val_rows
@@ -284,6 +307,8 @@ def main() -> int:
     payload = {"rank": args.rank, "lr": args.lr, "val_counts": counts,
                "val_items": per_item,
                "plan": str(args.plan), "plan_sha256": plan_sha,
+               "eval_plan": str(args.eval_plan) if args.eval_plan else None,
+               "eval_plan_sha256": eval_plan_sha,
                "split_field": split_field,
                "epoch_mean_loss": (sum(history) / len(history)) if history else None,
                "frozen_sample_ce": frozen_mean}
