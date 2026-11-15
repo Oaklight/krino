@@ -137,6 +137,5 @@ def test_a_plan_that_mixes_split_fields_is_an_error(tmp_path):
     first = _record("corpus:i", 0, 1, "choice", CHOICE_PREFIX, "Only.", 2)
     second = _record("corpus:j", 0, 1, "choice", CHOICE_PREFIX, "Only.", 2,
                      field="split")
-    del second["internal_split"]
     with pytest.raises(ValueError, match="mixes"):
         build_rows(_write(tmp_path, [first, second]))
