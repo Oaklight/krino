@@ -60,6 +60,7 @@ from model.src.backbone import (
     load_qwen35_base_with_head,
 )
 from model.src.decision_model import DecisionModel
+from model.src.marker import resolve_checkpoint_marker
 from model.src.gpu_config import GPUConfig
 from model.src.hybrid_cache import fork_prefix_cache
 from model.src.shape_buckets import (
@@ -558,6 +559,7 @@ class ResidualScorer:
         checkpoint_path: Path,
         loader_type: str | None = None,
         warmup: bool = True,
+        marker_token: int | None = None,
     ) -> None:
         from model.src.backbone import load_causal_lm
 
@@ -565,10 +567,17 @@ class ResidualScorer:
         self.base = RawReranker(base_model_name, device, loader_type=loader_type)
         checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
         config = checkpoint["config"]
+        #: The marker id the arm trained against.  A checkpoint records it;
+        #: legacy checkpoints predate the field, and rebuilding one at the
+        #: tokenizer default is silent, so a missing id raises unless the
+        #: caller passes it explicitly.
+        self.marker_token = resolve_checkpoint_marker(config, marker_token)
         #: The training config the scorer was rebuilt from.  The result JSON
         #: records it, because the CLI readout flags do not apply to a
         #: residual checkpoint and would mislabel what was evaluated.
         self.checkpoint_config = dict(config)
+        if self.marker_token is not None:
+            self.checkpoint_config["marker_token_resolved"] = self.marker_token
         # One 4B copy when the checkpoint was trained on the reranker itself.
         # Two copies of the same weights cost 8 GiB and buy nothing: the
         # heads read the same hidden states the base already computes.  The
@@ -606,6 +615,7 @@ class ResidualScorer:
             # A marker arm must be rebuilt with the same readout it trained
             # with, or the head's input and its saved weights disagree.
             option_marker=bool(config.get("option_marker", False)),
+            marker_token_id=self.marker_token,
             noul_marker=bool(config.get("noul_marker", False)),
             option_chunk_size=int(config.get("option_chunk_size") or 1),
             option_max_tokens=int(config.get("option_max_tokens") or 64),
@@ -1030,6 +1040,15 @@ def main() -> None:
         default=None,
         help="Override the checkpoint's option_batch (options scored per forward)",
     )
+    parser.add_argument(
+        "--marker-token",
+        type=int,
+        default=None,
+        help="Option-marker token id for a residual arm.  The checkpoint "
+        "records the id it trained with; pass this only for a legacy "
+        "checkpoint that predates the field, or it raises instead of "
+        "silently rebuilding at eos",
+    )
     parser.add_argument("--device", default=None)
     parser.add_argument("--dtype", choices=("bfloat16", "float32"), default="bfloat16")
     parser.add_argument("--jevbench", action="store_true", help="Evaluate the JevBench public suite")
@@ -1059,6 +1078,11 @@ def main() -> None:
 
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
+    if args.marker_token is not None and not args.residual_heads:
+        raise SystemExit(
+            "--marker-token applies to --residual-heads; a plain --model/--heads "
+            "checkpoint has no recorded marker to override"
+        )
     if args.residual_heads:
         raw_name = args.model or "Qwen/Qwen3-Reranker-4B"
         print(f"Residual arm on {raw_name}: {args.residual_heads}")
@@ -1068,6 +1092,7 @@ def main() -> None:
             args.residual_heads,
             loader_type="qwen35_base" if args.qwen35_base else None,
             warmup=not args.no_warmup,
+            marker_token=args.marker_token,
         )
         if args.option_batch:
             model.model.option_batch = args.option_batch
