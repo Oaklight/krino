@@ -128,6 +128,28 @@ def test_internal_split_is_group_aware_and_excludes_heldout():
     assert report["items"] == 4
 
 
+def test_batch_shard_partitions_every_global_batch():
+    from model.scripts.train_judgement import _batch_shard
+
+    rows = list(range(8))
+    left = _batch_shard(rows, 0, 2, 2)
+    right = _batch_shard(rows, 1, 2, 2)
+    assert left == [0, 1, 4, 5]
+    assert right == [2, 3, 6, 7]
+    assert sorted(left + right) == rows
+
+
+def test_batch_shard_pads_only_the_last_block():
+    from model.scripts.train_judgement import _batch_shard
+
+    rows = list(range(6))
+    left = _batch_shard(rows, 0, 2, 2)
+    right = _batch_shard(rows, 1, 2, 2)
+    # A short final block repeats its last row; the first block is exact.
+    assert left[:2] == [0, 1] and right[:2] == [2, 3]
+    assert len(left) == len(right) == 4
+
+
 # -- the row-normalised loss -------------------------------------------------
 
 

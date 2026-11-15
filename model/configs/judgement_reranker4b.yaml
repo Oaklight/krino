@@ -42,4 +42,7 @@ lora_alpha: 32
 lora_targets: q_proj,k_proj,v_proj,o_proj
 
 seed: 42
+# Every data-parallel replica must draw the same LoRA initialisation.  Without
+# this the ambient RNG differs per process and the replicas diverge on step 1.
+torch_seed: 42
 val_rows: 512

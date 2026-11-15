@@ -56,6 +56,7 @@ from model.src.judgement_readout import (  # noqa: E402
     subsample_prompts,
 )
 from model.src.lora import inject_lora  # noqa: E402
+from model.training import distributed  # noqa: E402
 from model.training.group_split import (  # noqa: E402
     load_cluster_manifest,
     split_items_by_group,
@@ -276,6 +277,14 @@ def build_parser(config: dict | None = None) -> argparse.ArgumentParser:
     parser.add_argument("--allow-collapse", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
+        "--log-every", type=int, default=20, help="Optimizer steps between log lines"
+    )
+    parser.add_argument(
+        "--log-steps",
+        action="store_true",
+        help="Rank 0 writes {step, loss, rows} per optimizer step to steps.jsonl",
+    )
+    parser.add_argument(
         "--profile", action="store_true", help="Per-phase timing breakdown"
     )
     parser.add_argument("--code-commit", default=None)
@@ -302,23 +311,21 @@ def load_config(path: Path | None) -> dict | None:
     return yaml.load(Path(path).read_text())
 
 
-def measure(
+def measure_sums(
     readout: JudgementReadout,
     scaling: ScaledMargin,
     rows,
     max_options: int,
     limit: int,
     rng: random.Random,
-    profile: bool = False,
 ) -> dict:
-    """Mean loss and P(yes) statistics on up to ``limit`` rows."""
+    """Loss and P(yes) sums on up to ``limit`` rows, for cross-rank reduction."""
     selected = rows[:limit]
-    if not selected:
-        return {"rows": 0, "loss": None, "gold_positive_yes": 0, "gold_options": 0}
-    total = 0.0
+    loss_sum = 0.0
+    unmasked_rows = 0
+    rows_scored = 0
     gold_positive = 0
     gold_total = 0
-    weights_total = 0.0
     with torch.no_grad():
         for _, prompts in selected:
             prompts = subsample_prompts(prompts, max_options, rng)
@@ -331,18 +338,86 @@ def measure(
             )
             per_row = row_bce(margin, labels)
             weight = 0.0 if prompts[0].answerable is False else 1.0
-            total += float(per_row) * weight
-            weights_total += weight
+            loss_sum += float(per_row) * weight
+            unmasked_rows += int(weight)
             probability = ScaledMargin.probability(margin)
             gold = labels == 1
             gold_total += int(gold.sum())
             gold_positive += int((probability[gold] > 0.5).sum())
+            rows_scored += 1
     return {
-        "rows": len(selected),
-        "loss": total / weights_total if weights_total else None,
+        "rows": rows_scored,
+        "loss_sum": loss_sum,
+        "unmasked_rows": unmasked_rows,
         "gold_positive_yes": gold_positive,
         "gold_options": gold_total,
     }
+
+
+def reduce_sums(sums: dict, world_size: int, device) -> dict:
+    """Sum the measure counters across ranks."""
+    if world_size <= 1:
+        return sums
+    keys = ("rows", "loss_sum", "unmasked_rows", "gold_positive_yes", "gold_options")
+    values = torch.tensor([float(sums[key]) for key in keys], device=device)
+    torch.distributed.all_reduce(values)
+    return {
+        key: (float(value) if key == "loss_sum" else int(value))
+        for key, value in zip(keys, values.tolist())
+    }
+
+
+def measure(
+    readout: JudgementReadout,
+    scaling: ScaledMargin,
+    rows,
+    max_options: int,
+    limit: int,
+    rng: random.Random,
+    world_size: int = 1,
+) -> dict:
+    """Mean loss and P(yes) statistics over the global row set."""
+    sums = reduce_sums(
+        measure_sums(readout, scaling, rows, max_options, limit, rng),
+        world_size,
+        readout.device,
+    )
+    unmasked = sums["unmasked_rows"]
+    return {
+        "rows": sums["rows"],
+        "loss": sums["loss_sum"] / unmasked if unmasked else None,
+        "gold_positive_yes": sums["gold_positive_yes"],
+        "gold_options": sums["gold_options"],
+    }
+
+
+def reduce_step(loss: float, rows: int, device, world_size: int) -> tuple[float, int]:
+    """Mean of the per-rank step losses, and the global row count."""
+    if world_size <= 1:
+        return loss, rows
+    values = torch.tensor([loss, 1.0, float(rows)], device=device)
+    torch.distributed.all_reduce(values)
+    return float(values[0] / values[1]), int(values[2])
+
+
+def _batch_shard(rows, rank: int, world_size: int, batch_rows: int):
+    """This rank's contiguous slice of every global batch.
+
+    The global batch is ``batch_rows * world_size`` rows of one identically
+    shuffled order.  Rank ``r`` takes positions ``[r*batch_rows, (r+1)*batch_rows)``
+    of each block, so the union of the ranks' steps is exactly the single-GPU
+    batch of the same size and the loss curves are comparable.
+    """
+    if world_size <= 1 or not rows:
+        return list(rows)
+    width = batch_rows * world_size
+    out = []
+    for start in range(0, len(rows), width):
+        block = list(rows[start : start + width])
+        while len(block) < width:
+            block.append(block[-1])
+        out.extend(block[rank * batch_rows : (rank + 1) * batch_rows])
+    return out
 
 
 def main() -> int:
@@ -351,8 +426,19 @@ def main() -> int:
     known, _ = pre.parse_known_args()
     config = load_config(known.config)
     args = build_parser(config).parse_args()
+    rank, world_size = distributed.init_process_group()
     if args.torch_seed is not None:
+        # Every replica starts from the same weights; only the data shard
+        # differs.  Seeding per rank would train different adapters.
         torch.manual_seed(args.torch_seed)
+    try:
+        return _run(args, rank, world_size)
+    finally:
+        distributed.shutdown()
+
+
+def _run(args, rank: int, world_size: int) -> int:
+    main_process = rank == 0
     args.output.mkdir(parents=True, exist_ok=True)
 
     holdout_ids = None
@@ -370,10 +456,12 @@ def main() -> int:
         train_rows = train_rows[: args.limit_rows]
     if not train_rows:
         raise SystemExit("the plan has no train rows")
-    print(f"split {json.dumps(split_report)}", flush=True)
+    if main_process:
+        print(f"split {json.dumps(split_report)}", flush=True)
     provenance = {
         "code_commit": args.code_commit or _git_commit(),
-        "plan_sha256": args.corpus_sha256 or _sha256(args.plan),
+        "plan_sha256": _sha256(args.plan),
+        "corpus_sha256": args.corpus_sha256,
         "train_selection_sha256": row_selection_sha256(train_rows),
         "train_rows": len(train_rows),
         "val_rows": len(val_rows),
@@ -398,15 +486,17 @@ def main() -> int:
             "calibrate_bias": args.calibrate_bias,
             "epochs": args.epochs,
             "batch_rows": args.batch_rows,
+            "world_size": world_size,
             "lr": args.lr,
             "head_lr": args.head_lr,
             "weight_decay": args.weight_decay,
         },
     }
-    (args.output / "provenance.json").write_text(
-        json.dumps(provenance, indent=1) + "\n"
-    )
-    print(f"provenance {json.dumps(provenance)}", flush=True)
+    if main_process:
+        (args.output / "provenance.json").write_text(
+            json.dumps(provenance, indent=1) + "\n"
+        )
+        print(f"provenance {json.dumps(provenance)}", flush=True)
     if args.dry_run:
         return 0
 
@@ -422,19 +512,24 @@ def main() -> int:
             alpha=args.lora_alpha,
             last_n_layers=args.lora_layers,
         )
-        print(f"adapted {adapted} linear layers", flush=True)
-    else:
-        adapted = 0
+        if main_process:
+            print(f"adapted {adapted} linear layers", flush=True)
     readout = JudgementReadout(backbone, tokenizer, max_length=args.max_length)
     scaling = ScaledMargin(scale=args.scale_init, bias=args.yes_bias).to(readout.device)
 
     train_rows, dropped_long = trainable_rows(train_rows, readout)
-    if dropped_long:
+    if dropped_long and main_process:
         print(f"dropped {dropped_long} train rows over max_length", flush=True)
     if not train_rows:
         raise SystemExit("no train row fits max_length")
+    rows_per_rank = _batch_shard(train_rows, rank, world_size, args.batch_rows)
+    print(
+        f"rank {rank}/{world_size}: {len(rows_per_rank)} rows per epoch",
+        flush=True,
+    )
 
     lora_params = [p for p in backbone.parameters() if p.requires_grad]
+    opt_params = lora_params + list(scaling.parameters())
     optimizer = torch.optim.AdamW(
         [
             {"params": lora_params, "lr": args.lr},
@@ -442,23 +537,31 @@ def main() -> int:
         ],
         weight_decay=args.weight_decay,
     )
-    print(
-        f"trainable backbone {sum(p.numel() for p in lora_params):,} "
-        f"scaling {sum(p.numel() for p in scaling.parameters())}",
-        flush=True,
-    )
+    if main_process:
+        print(
+            f"trainable backbone {sum(p.numel() for p in lora_params):,} "
+            f"scaling {sum(p.numel() for p in scaling.parameters())}",
+            flush=True,
+        )
 
+    step_log = (
+        (args.output / "steps.jsonl").open("w", encoding="utf-8")
+        if main_process and args.log_steps
+        else None
+    )
     history = []
     for epoch in range(1, args.epochs + 1):
         backbone.train()
         order = list(train_rows)
+        # One identical global order on every rank; then each rank takes its
+        # slice of every global batch.
         rng = random.Random(args.seed + epoch)
         rng.shuffle(order)
+        order = _batch_shard(order, rank, world_size, args.batch_rows)
         started = time.perf_counter()
         rows_done = prompts_done = masked = 0
         running = 0.0
         batches = 0
-        profile_totals = {"forward_s": 0.0, "backward_s": 0.0, "step_s": 0.0}
         for start in range(0, len(order), args.batch_rows):
             chosen_rows = []
             for _, prompts in order[start : start + args.batch_rows]:
@@ -466,142 +569,182 @@ def main() -> int:
                 if readout.fits(chosen):
                     chosen_rows.append(chosen)
             if not chosen_rows:
-                continue
-            weights = row_weights([prompts[0].answerable for prompts in chosen_rows])
-            if float(weights.sum()) == 0.0:
-                # Every row is masked: no gradient, and a step would move the
-                # parameters on weight decay alone.
+                # A shard can pad to an empty batch only if every row was
+                # filtered; keep the collective cadence anyway.
+                weights = torch.zeros(0)
+            else:
+                weights = row_weights(
+                    [prompts[0].answerable for prompts in chosen_rows]
+                )
+            all_masked = len(chosen_rows) == 0 or float(weights.sum()) == 0.0
+            if all_masked:
                 masked += len(chosen_rows)
                 rows_done += len(chosen_rows)
                 prompts_done += sum(len(prompts) for prompts in chosen_rows)
-                continue
-            denominator = weights.sum().clamp_min(1.0).to(readout.device)
             optimizer.zero_grad(set_to_none=True)
             batch_loss = 0.0
-            for prompts, weight in zip(chosen_rows, weights):
-                if args.profile:
-                    torch.cuda.synchronize()
-                    mark = time.perf_counter()
-                raw = readout.row_margins(prompts)
-                if args.profile:
-                    torch.cuda.synchronize()
-                    mid = time.perf_counter()
-                margin = scaling(raw)
-                labels = torch.tensor(
-                    [p.label for p in prompts],
-                    dtype=torch.float32,
-                    device=margin.device,
-                )
-                # Mean within the row (row_bce), then one over the number of
-                # unmasked rows (denominator).  Backward per row frees the
-                # prefix graph before the next row's forward.
-                term = row_bce(margin, labels) * weight.to(margin.device) / denominator
-                batch_loss += float(term.detach())
-                rows_done += 1
-                prompts_done += margin.numel()
-                if float(weight) == 0.0:
-                    # Masked, not dropped: the forward above still ran, but the
-                    # row adds no gradient.
-                    masked += 1
-                    continue
-                term.backward()
-                if args.profile:
-                    torch.cuda.synchronize()
-                    after_backward = time.perf_counter()
-                    profile_totals["forward_s"] += mid - mark
-                    profile_totals["backward_s"] += after_backward - mid
-            if args.profile:
-                torch.cuda.synchronize()
-                step_mark = time.perf_counter()
-            torch.nn.utils.clip_grad_norm_(
-                lora_params + list(scaling.parameters()), args.grad_clip
-            )
+            if not all_masked:
+                denominator = weights.sum().clamp_min(1.0).to(readout.device)
+                for prompts, weight in zip(chosen_rows, weights):
+                    raw = readout.row_margins(prompts)
+                    margin = scaling(raw)
+                    labels = torch.tensor(
+                        [p.label for p in prompts],
+                        dtype=torch.float32,
+                        device=margin.device,
+                    )
+                    # Mean within the row (row_bce), then one over the number of
+                    # unmasked rows (denominator).  Backward per row frees the
+                    # prefix graph before the next row's forward.
+                    term = (
+                        row_bce(margin, labels) * weight.to(margin.device) / denominator
+                    )
+                    batch_loss += float(term.detach())
+                    rows_done += 1
+                    prompts_done += margin.numel()
+                    if float(weight) == 0.0:
+                        # Masked, not dropped: the forward above still ran, but
+                        # the row adds no gradient.
+                        masked += 1
+                        continue
+                    term.backward()
+            # Data-parallel: every replica must reach the collective, so this
+            # runs even when a rank contributed no gradient.
+            distributed.average_gradients(opt_params, world_size)
+            torch.nn.utils.clip_grad_norm_(opt_params, args.grad_clip)
             optimizer.step()
-            if args.profile:
-                torch.cuda.synchronize()
-                profile_totals["step_s"] += time.perf_counter() - step_mark
-            running += batch_loss
+            global_loss, global_rows = reduce_step(
+                batch_loss, len(chosen_rows), readout.device, world_size
+            )
+            running += global_loss
             batches += 1
-            if batches % 20 == 0:
+            if step_log is not None:
+                step_log.write(
+                    json.dumps(
+                        {"step": batches, "loss": global_loss, "rows": global_rows}
+                    )
+                    + "\n"
+                )
+                step_log.flush()
+            if batches % args.log_every == 0 and main_process:
                 elapsed = time.perf_counter() - started
                 print(
-                    f"  epoch {epoch} rows {rows_done}/{len(order)} "
+                    f"  epoch {epoch} step {batches} "
                     f"loss={running / batches:.4f} "
-                    f"{prompts_done / elapsed:.1f} prompts/s "
-                    f"{rows_done / elapsed:.2f} rows/s",
+                    f"{global_rows * batches / elapsed:.2f} rows/s",
                     flush=True,
                 )
         elapsed = time.perf_counter() - started
+        expected_steps = distributed.steps_for(len(rows_per_rank), args.batch_rows)
+        if batches != expected_steps:
+            raise RuntimeError(
+                f"rank {rank} took {batches} steps, expected {expected_steps}; "
+                "the collective sequence is not aligned"
+            )
+        counts = torch.tensor(
+            [rows_done, prompts_done, masked],
+            dtype=torch.float64,
+            device=readout.device,
+        )
+        if world_size > 1:
+            torch.distributed.all_reduce(counts)
+        global_counts = [int(value) for value in counts.tolist()]
         metrics = {
             "epoch": epoch,
             "train_loss": running / max(batches, 1),
-            "rows": rows_done,
-            "prompts": prompts_done,
-            "masked_rows": masked,
-            "rows_per_s": rows_done / elapsed if elapsed else None,
-            "prompts_per_s": prompts_done / elapsed if elapsed else None,
-            "profile": profile_totals if args.profile else None,
+            "rows": global_counts[0],
+            "trainable_rows_per_rank": len(rows_per_rank),
+            "prompts": global_counts[1],
+            "masked_rows": global_counts[2],
+            "rows_per_s": global_counts[0] / elapsed if elapsed else None,
+            "world_size": world_size,
             "scale": float(scaling.scale.detach()),
             "bias": float(scaling.bias.detach()),
         }
-        eval_metrics = measure(
+        eval_pool = val_rows or eval_rows
+        if world_size > 1:
+            eval_pool = eval_pool[rank::world_size]
+            eval_limit = max(1, args.val_rows // world_size)
+        else:
+            eval_limit = args.val_rows
+        metrics["eval"] = measure(
             readout,
             scaling,
-            val_rows or eval_rows,
+            eval_pool,
             args.max_options,
-            args.val_rows,
+            eval_limit,
             random.Random(args.seed),
+            world_size,
         )
-        metrics["eval"] = eval_metrics
         history.append(metrics)
-        print(f"  eval {json.dumps(metrics)}", flush=True)
+        if main_process:
+            print(f"  eval {json.dumps(metrics)}", flush=True)
 
     calibration = None
     if args.calibrate_bias:
-        sample = train_rows[: args.calibration_rows]
-        raw_parts = []
-        label_parts = []
-        answerable = []
-        with torch.no_grad():
-            for _, prompts in sample:
-                chosen = subsample_prompts(
-                    prompts, args.max_options, random.Random(args.seed)
-                )
-                if not readout.fits(chosen):
-                    continue
-                raw_parts.append(scaling(readout.row_margins(chosen)))
-                label_parts.append(
-                    torch.tensor(
-                        [p.label for p in chosen],
-                        dtype=torch.float32,
-                        device=readout.device,
-                    )
-                )
-                answerable.append(bool(chosen[0].answerable))
-        if raw_parts:
-            offsets = [0]
-            for margins in raw_parts:
-                offsets.append(offsets[-1] + margins.numel())
-            row_index = [
-                torch.arange(offsets[i], offsets[i + 1], device=readout.device)
-                for i in range(len(raw_parts))
-            ]
-            labels = torch.cat(label_parts)
-            weights = row_weights(answerable)
-            target = positive_base_rate(labels, row_index, weights)
-            offset = fit_bias(torch.cat(raw_parts), row_index, target)
+        offset_value = torch.zeros((), device=readout.device)
+        if main_process:
+            sample = train_rows[: args.calibration_rows]
+            raw_parts = []
+            label_parts = []
+            answerable = []
             with torch.no_grad():
-                scaling.bias.add_(float(offset))
-            calibration = {"bias_offset": float(offset), "target_mean_yes": target}
-            print(f"calibrated {json.dumps(calibration)}", flush=True)
+                for _, prompts in sample:
+                    chosen = subsample_prompts(
+                        prompts, args.max_options, random.Random(args.seed)
+                    )
+                    if not readout.fits(chosen):
+                        continue
+                    raw_parts.append(scaling(readout.row_margins(chosen)))
+                    label_parts.append(
+                        torch.tensor(
+                            [p.label for p in chosen],
+                            dtype=torch.float32,
+                            device=readout.device,
+                        )
+                    )
+                    answerable.append(bool(chosen[0].answerable))
+            if raw_parts:
+                offsets = [0]
+                for margins in raw_parts:
+                    offsets.append(offsets[-1] + margins.numel())
+                row_index = [
+                    torch.arange(offsets[i], offsets[i + 1], device=readout.device)
+                    for i in range(len(raw_parts))
+                ]
+                labels = torch.cat(label_parts)
+                weights = row_weights(answerable)
+                target = positive_base_rate(labels, row_index, weights)
+                offset = fit_bias(torch.cat(raw_parts), row_index, target)
+                offset_value.fill_(float(offset))
+                calibration = {
+                    "bias_offset": float(offset),
+                    "target_mean_yes": target,
+                }
+        if world_size > 1:
+            torch.distributed.broadcast(offset_value, src=0)
+        if args.calibrate_bias:
+            # Every rank applies the broadcast offset; rank 0 is the only one
+            # with a calibration dict, so only it prints.
+            with torch.no_grad():
+                scaling.bias.add_(float(offset_value))
+            if main_process:
+                print(f"calibrated {json.dumps(calibration)}", flush=True)
 
+    final_pool = val_rows or eval_rows or train_rows
+    if world_size > 1:
+        final_pool = final_pool[rank::world_size]
+        final_limit = max(1, args.val_rows // world_size)
+    else:
+        final_limit = args.val_rows
     final = measure(
         readout,
         scaling,
-        val_rows or eval_rows or train_rows,
+        final_pool,
         args.max_options,
-        args.val_rows,
+        final_limit,
         random.Random(args.seed),
+        world_size,
     )
     if (
         final["gold_options"]
@@ -613,28 +756,32 @@ def main() -> int:
             "not readable (pass --allow-collapse to keep an unreadable arm)"
         )
 
-    state = {
-        "lora": {
-            name: value.detach().cpu()
-            for name, value in backbone.state_dict().items()
-            if "lora_" in name
-        },
-        "scaling": {
-            "scale": float(scaling.scale.detach()),
-            "bias": float(scaling.bias.detach()),
-        },
-        "config": provenance["config"],
-        "provenance": provenance,
-        "calibration": calibration,
-        "final": final,
-        "history": history,
-    }
-    torch.save(state, args.output / "judgement.pt")
-    (args.output / "history.json").write_text(json.dumps(history, indent=1))
-    print(f"saved {args.output / 'judgement.pt'}", flush=True)
-    if torch.cuda.is_available():
-        peak = torch.cuda.max_memory_allocated() / 2**30
-        print(f"max_memory_allocated {peak:.1f} GiB", flush=True)
+    if main_process:
+        state = {
+            "lora": {
+                name: value.detach().cpu()
+                for name, value in backbone.state_dict().items()
+                if "lora_" in name
+            },
+            "scaling": {
+                "scale": float(scaling.scale.detach()),
+                "bias": float(scaling.bias.detach()),
+            },
+            "config": provenance["config"],
+            "provenance": provenance,
+            "calibration": calibration,
+            "final": final,
+            "history": history,
+        }
+        torch.save(state, args.output / "judgement.pt")
+        (args.output / "history.json").write_text(json.dumps(history, indent=1))
+        print(f"saved {args.output / 'judgement.pt'}", flush=True)
+        if torch.cuda.is_available():
+            peak = torch.cuda.max_memory_allocated() / 2**30
+            print(f"max_memory_allocated {peak:.1f} GiB", flush=True)
+    if step_log is not None:
+        step_log.close()
+    distributed.barrier()
     return 0
 
 
