@@ -739,18 +739,30 @@ def _run(args, rank: int, world_size: int) -> int:
                     if torch.cuda.is_available()
                     else 0.0
                 )
+                reserved = (
+                    torch.cuda.memory_reserved() / 2**30
+                    if torch.cuda.is_available()
+                    else 0.0
+                )
+                peak_reserved = (
+                    torch.cuda.max_memory_reserved() / 2**30
+                    if torch.cuda.is_available()
+                    else 0.0
+                )
                 if main_process:
                     elapsed = time.perf_counter() - started
                     print(
                         f"  epoch {epoch} step {batches} "
                         f"loss={running / batches:.4f} "
                         f"{global_rows * batches / elapsed:.2f} rows/s "
-                        f"mem={allocated:.1f}GiB",
+                        f"mem={allocated:.1f} res={reserved:.1f} "
+                        f"maxres={peak_reserved:.1f} GiB",
                         flush=True,
                     )
                 elif torch.cuda.is_available():
                     print(
-                        f"  rank {rank} step {batches} mem={allocated:.1f}GiB",
+                        f"  rank {rank} step {batches} mem={allocated:.1f} "
+                        f"res={reserved:.1f} maxres={peak_reserved:.1f} GiB",
                         flush=True,
                     )
                 if allocated > args.mem_guard_gib:
