@@ -271,6 +271,42 @@ non-difference and `b = 26` is a significant margin that replicates under both
 assignments. At 150 forwards judgement is not a better point than a 4-forward
 blocked readout.
 
+## Figure
+
+`figures/long-list/long-list-readouts.pdf` puts the design and the frontier on
+one page; build it with `make -C research/figures/long-list`.
+
+> **Figure 1. Long-list readout strategies at K = 150.** Panel A: the 52-letter
+> working alphabet and blocking into 3, 5 or 6 blocks, with the forward cost of
+> each final-decision variant (A = blocks, B = blocks + 1, C = 2 x blocks);
+> single-pass panel 2 is shown as the K <= 52 case and full per-option
+> judgement as the K-forward reference, both separated from the frontier.
+> Panel B: accuracy against forwards per item on 200 CLINC150 items at K = 150.
+> Scheme B is best at every block size; the best measured point is B at
+> b = 26 (153/200 = 76.5% at 7 forwards), and full judgement is 127/200 = 63.5%
+> at 150 forwards. Scheme C is dominated by B everywhere, and scheme A is
+> 17.0-22.5 pp below B. The grey points are the single-pass cells at K = 52
+> (146/200) and K = 80 (125/200); they cover fewer options and are a different,
+> easier problem, so they are not frontier points at K = 150. Panel C:
+> end-to-end = P(gold wins its block) x P(final picks the gold | it won).
+> Smaller blocks raise the first factor (70.0 -> 83.0 -> 87.0%) and barely move
+> the second (92.9 -> 88.0 -> 87.9%), which is 88-93%, not the ~59% assumed
+> before the run. CLINC150 200-item diagnostic, not JevBench; blocking has not
+> been run on JevBench or on held-out data. The per-item shuffled assignment
+> reproduces the ranking (B 129/138/148 at b = 52/32/26), so the frontier is
+> not class-order luck. B at b = 26 against b = 32 is +5.0 pp, exact p = 0.0525
+> under the shuffle: unresolved, both points stand, and neither is the winner.
+> Within-block tail, first against last 20% of the block: b = 52 79.1% vs 59.1%,
+> b = 32 95.6% vs 60.5%, b = 26 85.2% vs 89.7%; the b = 32 tail is dead, so its
+> block is not 32 effective candidates.
+
+Every number in the figure is read from the committed result files:
+`clinc_blocking_Qwen_Qwen3-Reranker-4B.json`,
+`clinc_blocking_shuffle_Qwen_Qwen3-Reranker-4B.json`,
+`clinc_judgement_full_Qwen_Qwen3-Reranker-4B.json`,
+`clinc_k52_Qwen_Qwen3-Reranker-4B.json` and
+`clinc_k80_Qwen_Qwen3-Reranker-4B.json`, all in `results/jevbench/`.
+
 ## What this does not show
 
 - **Generalisation of blocking.** Every blocking cell is on CLINC150. Banking77
