@@ -47,6 +47,12 @@ class JudgementReadout:
             silently changes a prompt.
     """
 
+    #: Suffix rows per forward.  Attention memory grows with the suffix rows
+    #: times the padded prefix length, so a step's rows are scored in blocks of
+    #: this size; a row with more options than this is split, and its margins
+    #: are concatenated in option order.
+    SUFFIX_ROWS_PER_FORWARD = 8
+
     def __init__(
         self, model, tokenizer, max_length: int = 4096, bucket_shapes: bool = True
     ) -> None:
@@ -325,59 +331,67 @@ class JudgementReadout:
                 f"a row of this step needs more than {self.max_length} tokens"
             )
         cache = self._prefix_batch(prefixes, prefix_bucket)
-        counts = [bucket_rows(len(row)) for row in suffixes]
-        owners = [index for index, count in enumerate(counts) for _ in range(count)]
-        combined = self._broadcast_cache(cache, owners)
-
-        pad_id = self._pad_id()
-        total = len(owners)
-        ids = torch.full((total, width), pad_id, dtype=torch.long, device=self.device)
-        mask = torch.zeros(
-            (total, prefix_bucket + width), dtype=torch.long, device=self.device
-        )
-        positions = torch.zeros((total, width), dtype=torch.long, device=self.device)
-        offset = 0
-        for index, row in enumerate(suffixes):
-            prefix_len = len(prefixes[index])
-            for position in range(counts[index]):
-                suffix = row[position] if position < len(row) else row[0]
-                length = len(suffix)
-                ids[offset, :length] = torch.tensor(suffix, device=self.device)
-                mask[offset, :prefix_len] = 1
-                mask[offset, prefix_bucket : prefix_bucket + length] = 1
-                positions[offset, :length] = torch.arange(
-                    prefix_len, prefix_len + length, device=self.device
-                )
-                offset += 1
-        cache_position = torch.arange(
-            prefix_bucket, prefix_bucket + width, device=self.device
-        )
-        outputs = self.model(
-            input_ids=ids,
-            attention_mask=mask,
-            position_ids=positions,
-            past_key_values=combined,
-            cache_position=cache_position,
-            use_cache=True,
-        )
-        logits = outputs.logits
-        margins: list[torch.Tensor] = []
-        offset = 0
-        for index, row in enumerate(suffixes):
-            margins.append(
-                torch.stack(
-                    [
-                        margin_from_logits(
-                            logits[offset + position, len(suffix) - 1],
-                            self.yes_id,
-                            self.no_id,
-                        )
-                        for position, suffix in enumerate(row)
-                    ]
-                )
+        pairs = [
+            (index, suffix)
+            for index, row in enumerate(suffixes)
+            for suffix in row
+        ]
+        margins: list[list[torch.Tensor]] = [[] for _ in suffixes]
+        for start in range(0, len(pairs), self.SUFFIX_ROWS_PER_FORWARD):
+            block = pairs[start : start + self.SUFFIX_ROWS_PER_FORWARD]
+            real = len(block)
+            # Pad to a fixed shape so the kernel sees one width per bucket; the
+            # repeated trailing pair is never read.
+            block = block + [block[-1]] * (self.SUFFIX_ROWS_PER_FORWARD - real)
+            combined = self._broadcast_cache(cache, [index for index, _ in block])
+            ids, mask, positions = self._suffix_block_inputs(
+                prefixes, block, prefix_bucket, width
             )
-            offset += counts[index]
-        return margins
+            cache_position = torch.arange(
+                prefix_bucket, prefix_bucket + width, device=self.device
+            )
+            outputs = self.model(
+                input_ids=ids,
+                attention_mask=mask,
+                position_ids=positions,
+                past_key_values=combined,
+                cache_position=cache_position,
+                use_cache=True,
+            )
+            logits = outputs.logits
+            for offset in range(real):
+                index, suffix = block[offset]
+                margins[index].append(
+                    margin_from_logits(
+                        logits[offset, len(suffix) - 1], self.yes_id, self.no_id
+                    )
+                )
+        return [torch.stack(parts) for parts in margins]
+
+    def _suffix_block_inputs(
+        self,
+        prefixes: list[list[int]],
+        block: list[tuple[int, list[int]]],
+        prefix_bucket: int,
+        width: int,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        pad_id = self._pad_id()
+        rows = len(block)
+        ids = torch.full((rows, width), pad_id, dtype=torch.long, device=self.device)
+        mask = torch.zeros(
+            (rows, prefix_bucket + width), dtype=torch.long, device=self.device
+        )
+        positions = torch.zeros((rows, width), dtype=torch.long, device=self.device)
+        for offset, (index, suffix) in enumerate(block):
+            prefix_len = len(prefixes[index])
+            length = len(suffix)
+            ids[offset, :length] = torch.tensor(suffix, device=self.device)
+            mask[offset, :prefix_len] = 1
+            mask[offset, prefix_bucket : prefix_bucket + length] = 1
+            positions[offset, :length] = torch.arange(
+                prefix_len, prefix_len + length, device=self.device
+            )
+        return ids, mask, positions
 
     def _prefix_batch(self, prefixes: list[list[int]], bucket: int):
         """One prefix forward for a batch of row prefixes, right-padded."""
