@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-15T09:52:52.753043+00:00",
+  "generated_at": "2026-11-15T10:34:49.591923+00:00",
   "eval_runs": [
     {
       "run_id": "cross-encoder-bert",
@@ -4157,6 +4157,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-14B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4213,6 +4214,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-32B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4269,6 +4271,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4325,6 +4328,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-Reranker-0.6B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4381,6 +4385,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-Reranker-4B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4437,6 +4442,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "results/jevbench/continuation_Qwen_Qwen3-Reranker-8B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4493,6 +4499,7 @@
       "method": "third-party",
       "readout": "native-decision-oneway",
       "readout_detail": "one forward; the LM head's next-token read on the label tokens at the answer slot; causal (one-way) attention",
+      "prompt_order": null,
       "source_file": "results/jevbench/h2o-lightning-4b-oneway.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4549,6 +4556,7 @@
       "method": "third-party",
       "readout": "native-decision",
       "readout_detail": "one forward; the LM head's next-token read on the label tokens at the answer slot; two-way (bidirectional) attention over the whole prompt",
+      "prompt_order": null,
       "source_file": "results/jevbench/h2o-lightning-4b.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4605,6 +4613,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; log P(\" no\") recorded but not ranked; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record",
+      "prompt_order": null,
       "source_file": "results/jevbench/judgement_Qwen_Qwen3-14B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4661,6 +4670,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; log P(\" no\") recorded but not ranked; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record",
+      "prompt_order": null,
       "source_file": "results/jevbench/judgement_Qwen_Qwen3-32B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4717,6 +4727,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; log P(\" no\") recorded but not ranked; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record",
+      "prompt_order": null,
       "source_file": "results/jevbench/judgement_Qwen_Qwen3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4773,6 +4784,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; log P(\" no\") recorded but not ranked; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record",
+      "prompt_order": null,
       "source_file": "results/jevbench/judgement_Qwen_Qwen3-Reranker-8B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4829,6 +4841,7 @@
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
+      "prompt_order": null,
       "source_file": "results/jevbench/krino-ettin-150m-heads.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4885,6 +4898,7 @@
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
+      "prompt_order": null,
       "source_file": "results/jevbench/krino-modernbert-base-heads.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4941,6 +4955,7 @@
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
+      "prompt_order": null,
       "source_file": "results/jevbench/krino-qwen3-0.6b-heads.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -4997,6 +5012,7 @@
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
+      "prompt_order": null,
       "source_file": "results/jevbench/krino-qwen3-reranker-0.6b-heads.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5053,6 +5069,7 @@
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
+      "prompt_order": null,
       "source_file": "results/jevbench/krino-qwen3-reranker-4b-heads.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5109,6 +5126,7 @@
       "method": "trained-heads",
       "readout": "trained-heads",
       "readout_detail": null,
+      "prompt_order": null,
       "source_file": "results/jevbench/krino-qwen3.5-4b-heads.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5165,6 +5183,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "results/jevbench/logit_mistralai_Ministral-3-3B-Base-2512.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5221,6 +5240,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "results/jevbench/logit_openbmb_MiniCPM3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5277,6 +5297,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "results/jevbench/logit_openbmb_MiniCPM5-2B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5445,6 +5466,7 @@
       "method": "zero-shot",
       "readout": "panel2",
       "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "prompt_order": null,
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-14B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5501,6 +5523,7 @@
       "method": "zero-shot",
       "readout": "panel2",
       "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "prompt_order": null,
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-32B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5544,6 +5567,120 @@
       "latency_ms": null
     },
     {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-32B_options_first",
+      "model": {
+        "name": "Qwen/Qwen3-32B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-32B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'; prompt order: options_first",
+      "prompt_order": "options_first",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-32B_options_first.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.701299,
+      "correct": 162,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.7266,
+          "correct": 101,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6622,
+          "correct": 49,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6667,
+          "correct": 12,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4595,
+          "correct": 51,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.875,
+          "correct": 63,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-32B_sandwich",
+      "model": {
+        "name": "Qwen/Qwen3-32B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-32B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'; prompt order: sandwich",
+      "prompt_order": "sandwich",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-32B_sandwich.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.731602,
+      "correct": 169,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.741,
+          "correct": 103,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.7162,
+          "correct": 53,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.7222,
+          "correct": 13,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.5586,
+          "correct": 62,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.8194,
+          "correct": 59,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
       "run_id": "jevbench-panel2_Qwen_Qwen3-4B-Base",
       "model": {
         "name": "Qwen/Qwen3-4B-Base",
@@ -5557,6 +5694,7 @@
       "method": "zero-shot",
       "readout": "panel2",
       "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "prompt_order": null,
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-4B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5613,6 +5751,7 @@
       "method": "zero-shot",
       "readout": "panel2",
       "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "prompt_order": null,
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-4B-Instruct-2507.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5669,6 +5808,7 @@
       "method": "zero-shot",
       "readout": "panel2",
       "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "prompt_order": null,
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5725,6 +5865,7 @@
       "method": "zero-shot",
       "readout": "panel2",
       "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "prompt_order": null,
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-Reranker-0.6B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5781,6 +5922,7 @@
       "method": "zero-shot",
       "readout": "panel2",
       "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "prompt_order": null,
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5824,6 +5966,120 @@
       "latency_ms": null
     },
     {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-Reranker-4B_options_first",
+      "model": {
+        "name": "Qwen/Qwen3-Reranker-4B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-Reranker-4B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'; prompt order: options_first",
+      "prompt_order": "options_first",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B_options_first.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.632035,
+      "correct": 146,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.6906,
+          "correct": 96,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.5135,
+          "correct": 38,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6667,
+          "correct": 12,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 0.9792,
+          "correct": 47,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4054,
+          "correct": 45,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.75,
+          "correct": 54,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
+      "run_id": "jevbench-panel2_Qwen_Qwen3-Reranker-4B_sandwich",
+      "model": {
+        "name": "Qwen/Qwen3-Reranker-4B",
+        "params": "—",
+        "type": "unknown"
+      },
+      "model_id": "Qwen/Qwen3-Reranker-4B",
+      "head_version": null,
+      "backbone_model_id": null,
+      "code_commit": null,
+      "method": "zero-shot",
+      "readout": "panel2",
+      "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'; prompt order: sandwich",
+      "prompt_order": "sandwich",
+      "source_file": "results/jevbench/panel2_Qwen_Qwen3-Reranker-4B_sandwich.json",
+      "benchmark": "jevbench",
+      "n": 231,
+      "accuracy": 0.670996,
+      "correct": 155,
+      "total": 231,
+      "by_type": {
+        "choice": {
+          "accuracy": 0.705,
+          "correct": 98,
+          "total": 139
+        },
+        "noul": {
+          "accuracy": 0.6081,
+          "correct": 45,
+          "total": 74
+        },
+        "score": {
+          "accuracy": 0.6667,
+          "correct": 12,
+          "total": 18
+        }
+      },
+      "by_tier": {
+        "easy": {
+          "accuracy": 1.0,
+          "correct": 48,
+          "total": 48
+        },
+        "hard": {
+          "accuracy": 0.4414,
+          "correct": 49,
+          "total": 111
+        },
+        "original": {
+          "accuracy": 0.8056,
+          "correct": 58,
+          "total": 72
+        }
+      },
+      "latency_ms": null
+    },
+    {
       "run_id": "jevbench-panel2_Qwen_Qwen3-Reranker-8B",
       "model": {
         "name": "Qwen/Qwen3-Reranker-8B",
@@ -5837,6 +6093,7 @@
       "method": "zero-shot",
       "readout": "panel2",
       "readout_detail": "one forward; argmax over the K code token ids at the final position after 'Answer:'",
+      "prompt_order": null,
       "source_file": "results/jevbench/panel2_Qwen_Qwen3-Reranker-8B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -5893,6 +6150,7 @@
       "method": "zero-shot",
       "readout": "native-reranker",
       "readout_detail": null,
+      "prompt_order": null,
       "source_file": "results/jevbench/raw-qwen3-reranker-4b.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6005,6 +6263,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen2.5-1.5B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6061,6 +6320,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen2.5-3B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6117,6 +6377,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-1.7B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6173,6 +6434,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-1.7B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6229,6 +6491,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6285,6 +6548,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Instruct-2507.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6341,6 +6605,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B-Thinking-2507.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6397,6 +6662,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6453,6 +6719,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; log P(\" no\") recorded but not ranked; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-0.6B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6509,6 +6776,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; log P(\" no\") recorded but not ranked; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-4B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6565,6 +6833,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; log P(\" no\") recorded but not ranked; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_Qwen_Qwen3-Reranker-8B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6621,6 +6890,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_microsoft_Phi-4-mini-instruct.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6677,6 +6947,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_mistralai_Ministral-3-3B-Base-2512.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6733,6 +7004,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_openbmb_MiniCPM3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6789,6 +7061,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_openbmb_MiniCPM5-2B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6845,6 +7118,7 @@
       "method": "zero-shot",
       "readout": "judgement",
       "readout_detail": "per-option judgement, each option ranked on log P(\" yes\") at \"Answer:\", options ranked independently; logp_yes holds that key on every row; ranking on the difference was checked on Qwen3-4B (138/231 against 143/231, exact McNemar p = 0.4731, #310) and stays out of the record; this run predates the log P(\" no\") array and stores none",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_judgement_zeroentropy_zerank-2-reranker.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6901,6 +7175,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen2.5-1.5B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -6957,6 +7232,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen2.5-3B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -7013,6 +7289,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Base.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -7069,6 +7346,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Instruct-2507.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -7125,6 +7403,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B-Thinking-2507.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -7181,6 +7460,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-4B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -7237,6 +7517,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-0.6B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -7293,6 +7574,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-4B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -7349,6 +7631,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_logit_Qwen_Qwen3-Reranker-8B.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -7405,6 +7688,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_logit_microsoft_Phi-4-mini-instruct.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -7461,6 +7745,7 @@
       "method": "zero-shot",
       "readout": "continuation",
       "readout_detail": "option-text continuation, mean-normalised log-prob",
+      "prompt_order": null,
       "source_file": "model/experiments/logit_prov/jevbench_logit_zeroentropy_zerank-2-reranker.json",
       "benchmark": "jevbench",
       "n": 231,
@@ -7922,7 +8207,7 @@
         "model/experiments/resolution_inputs.json"
       ]
     },
-    "instrumented_rows": 61,
+    "instrumented_rows": 65,
     "banking77": {
       "trained_pp": 95.2,
       "trained_model": "Ettin-150m r128",

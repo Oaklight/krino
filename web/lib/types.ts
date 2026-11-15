@@ -164,6 +164,7 @@ export interface JevBenchRun {
   method: string;
   readout: string;
   readout_detail: string | null;
+  prompt_order: string | null;
   source_file: string;
   benchmark: string;
   n: number;
