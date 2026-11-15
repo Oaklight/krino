@@ -124,7 +124,7 @@ The marker-token ablation (#362, merged as #372) trains six heads identical exce
 
 ## Throughput
 
-The per-row loop was launch-bound: 3.36 rows/s cold and 9.54 rows/s warm. Batching the chunked forwards raised the full-corpus epoch to 52.6 rows/s at 8 ranks over the 166,208 rows and 2,597 steps. A separate warm fixed-row scaling probe, not the epoch run, gives 7.8x from one rank to eight (9.54 to 74.37 rows/s, with per-step cost near 0.86 s at every world size); the earlier 1.0x reading was cold-shape compilation per process, not a scaling limit. A 20.7% mean card utilisation with 57% of samples at zero was reported outside the run and is unverified, so it is not used. Units are rows per second, one row being one judgement item with its option set.
+The per-row loop was launch-bound: 3.36 rows/s cold and 11.23 rows/s warm on the same leg, against 9.54 rows/s in a steady fixed-row probe. Batching the chunked forwards raised the full-corpus epoch to 52.6 rows/s at 8 ranks over the 166,208 rows and 2,597 steps. A separate warm fixed-row scaling probe, not the epoch run, gives 7.8x from one rank to eight (9.54 to 74.37 rows/s, with per-step cost near 0.86 s at every world size); the earlier 1.0x reading was cold-shape compilation per process, not a scaling limit. On one card over 50 steps and 399 rows, with nvidia-smi sampled at 1 Hz during the loaded window, mean utilisation was 20.7%, with 57% of samples at zero and 25% at or above 50%, and memory between 15.9 and 25.3 GiB. That is the one-card per-row leg, not the 8-rank epoch. Units are rows per second, one row being one judgement item with its option set.
 
 ## 20k subset against the full corpus
 
