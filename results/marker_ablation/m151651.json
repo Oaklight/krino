@@ -164,7 +164,10 @@
     ],
     "discordant_arm_only": 5,
     "discordant_baseline_only": 2,
+    "discordance": 0.030303030303030304,
     "mcnemar_exact_p": 0.453125,
+    "realized_mde_pp_raw": 2.8000000000000003,
+    "resolution": "no-detectable-difference",
     "gate_screen": {
       "delta_pp_cc": 1.7099567099567097,
       "ci95_pp_cc": [
@@ -176,7 +179,8 @@
         "improvement suggested but unresolved"
       ],
       "action": "no objection from the coarse screen",
-      "detectable_pp": 2.8000000000000003
+      "detectable_pp": 2.8000000000000003,
+      "detectable_cc_pp": 4.103193064072743
     },
     "decision": "unresolved (below the 9.3 pp floor)"
   },
@@ -201,7 +205,7 @@
       "driver": "eval_marker_arm.py",
       "driver_sha256": "09493cde311da96d043dc57d4cfe7978e1e6320415a7173ac3ba94516408d618",
       "analysis": "analyze_marker.py",
-      "analysis_sha256": "13cfadbdc5f0564cc2501bffa4a6f8fa4d7851cef5b5b04580a439becfdc415e",
+      "analysis_sha256": "fb46ed858eca20d04333f4299ab688bb2c958a00498aa03875305b14c184b714",
       "jevbench_public_items": 231,
       "tiers": {
         "easy": 48,

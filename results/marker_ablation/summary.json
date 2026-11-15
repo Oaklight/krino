@@ -21,7 +21,7 @@
       "driver": "eval_marker_arm.py",
       "driver_sha256": "09493cde311da96d043dc57d4cfe7978e1e6320415a7173ac3ba94516408d618",
       "analysis": "analyze_marker.py",
-      "analysis_sha256": "13cfadbdc5f0564cc2501bffa4a6f8fa4d7851cef5b5b04580a439becfdc415e",
+      "analysis_sha256": "fb46ed858eca20d04333f4299ab688bb2c958a00498aa03875305b14c184b714",
       "jevbench_public_items": 231,
       "tiers": {
         "easy": 48,
@@ -57,7 +57,10 @@
         ],
         "discordant_arm_only": 4,
         "discordant_baseline_only": 5,
+        "discordance": 0.03896103896103896,
         "mcnemar_exact_p": 1.0,
+        "realized_mde_pp_raw": 3.2,
+        "resolution": "no-detectable-difference",
         "gate_screen": {
           "delta_pp_cc": -1.2842712842712842,
           "ci95_pp_cc": [
@@ -68,7 +71,8 @@
             "coarse safety screen passed"
           ],
           "action": "no objection from the coarse screen",
-          "detectable_pp": 3.2
+          "detectable_pp": 3.2,
+          "detectable_cc_pp": 4.68936350179742
         },
         "decision": "unresolved (below the 9.3 pp floor)"
       }
@@ -91,7 +95,10 @@
         ],
         "discordant_arm_only": 4,
         "discordant_baseline_only": 5,
+        "discordance": 0.03896103896103896,
         "mcnemar_exact_p": 1.0,
+        "realized_mde_pp_raw": 3.2,
+        "resolution": "no-detectable-difference",
         "gate_screen": {
           "delta_pp_cc": -0.9018759018759018,
           "ci95_pp_cc": [
@@ -102,7 +109,8 @@
             "coarse safety screen passed"
           ],
           "action": "no objection from the coarse screen",
-          "detectable_pp": 3.2
+          "detectable_pp": 3.2,
+          "detectable_cc_pp": 4.68936350179742
         },
         "decision": "unresolved (below the 9.3 pp floor)"
       }
@@ -125,7 +133,10 @@
         ],
         "discordant_arm_only": 5,
         "discordant_baseline_only": 2,
+        "discordance": 0.030303030303030304,
         "mcnemar_exact_p": 0.453125,
+        "realized_mde_pp_raw": 2.8000000000000003,
+        "resolution": "no-detectable-difference",
         "gate_screen": {
           "delta_pp_cc": 1.7099567099567097,
           "ci95_pp_cc": [
@@ -137,7 +148,8 @@
             "improvement suggested but unresolved"
           ],
           "action": "no objection from the coarse screen",
-          "detectable_pp": 2.8000000000000003
+          "detectable_pp": 2.8000000000000003,
+          "detectable_cc_pp": 4.103193064072743
         },
         "decision": "unresolved (below the 9.3 pp floor)"
       }
@@ -160,7 +172,10 @@
         ],
         "discordant_arm_only": 7,
         "discordant_baseline_only": 6,
+        "discordance": 0.05627705627705628,
         "mcnemar_exact_p": 1.0,
+        "realized_mde_pp_raw": 4.300000000000001,
+        "resolution": "no-detectable-difference",
         "gate_screen": {
           "delta_pp_cc": -0.562770562770563,
           "ci95_pp_cc": [
@@ -171,7 +186,8 @@
             "coarse safety screen passed"
           ],
           "action": "no objection from the coarse screen",
-          "detectable_pp": 4.300000000000001
+          "detectable_pp": 4.300000000000001,
+          "detectable_cc_pp": 6.301332205540284
         },
         "decision": "unresolved (below the 9.3 pp floor)"
       }
@@ -194,7 +210,10 @@
         ],
         "discordant_arm_only": 5,
         "discordant_baseline_only": 4,
+        "discordance": 0.03896103896103896,
         "mcnemar_exact_p": 1.0,
+        "realized_mde_pp_raw": 3.2,
+        "resolution": "no-detectable-difference",
         "gate_screen": {
           "delta_pp_cc": -0.3463203463203465,
           "ci95_pp_cc": [
@@ -205,7 +224,8 @@
             "coarse safety screen passed"
           ],
           "action": "no objection from the coarse screen",
-          "detectable_pp": 3.2
+          "detectable_pp": 3.2,
+          "detectable_cc_pp": 4.68936350179742
         },
         "decision": "unresolved (below the 9.3 pp floor)"
       }
@@ -225,7 +245,10 @@
       ],
       "discordant_arm_only": 4,
       "discordant_baseline_only": 2,
+      "discordance": 0.025974025974025976,
       "mcnemar_exact_p": 0.6875,
+      "realized_mde_pp_raw": 2.4,
+      "resolution": "no-detectable-difference",
       "gate_screen": {
         "delta_pp_cc": 1.1904761904761905,
         "ci95_pp_cc": [
@@ -237,7 +260,8 @@
           "improvement suggested but unresolved"
         ],
         "action": "no objection from the coarse screen",
-        "detectable_pp": 2.4
+        "detectable_pp": 2.4,
+        "detectable_cc_pp": 3.517022626348065
       },
       "decision": "unresolved (below the 9.3 pp floor)"
     },
@@ -254,7 +278,10 @@
       ],
       "discordant_arm_only": 5,
       "discordant_baseline_only": 1,
+      "discordance": 0.025974025974025976,
       "mcnemar_exact_p": 0.21875,
+      "realized_mde_pp_raw": 2.4,
+      "resolution": "no-detectable-difference",
       "gate_screen": {
         "delta_pp_cc": 2.380952380952381,
         "ci95_pp_cc": [
@@ -266,7 +293,8 @@
           "improvement suggested but unresolved"
         ],
         "action": "no objection from the coarse screen",
-        "detectable_pp": 2.4
+        "detectable_pp": 2.4,
+        "detectable_cc_pp": 3.517022626348065
       },
       "decision": "unresolved (below the 9.3 pp floor)"
     },
@@ -283,7 +311,10 @@
       ],
       "discordant_arm_only": 4,
       "discordant_baseline_only": 2,
+      "discordance": 0.025974025974025976,
       "mcnemar_exact_p": 0.6875,
+      "realized_mde_pp_raw": 2.4,
+      "resolution": "no-detectable-difference",
       "gate_screen": {
         "delta_pp_cc": 1.1904761904761905,
         "ci95_pp_cc": [
@@ -295,7 +326,8 @@
           "improvement suggested but unresolved"
         ],
         "action": "no objection from the coarse screen",
-        "detectable_pp": 2.4
+        "detectable_pp": 2.4,
+        "detectable_cc_pp": 3.517022626348065
       },
       "decision": "unresolved (below the 9.3 pp floor)"
     },
@@ -312,7 +344,10 @@
       ],
       "discordant_arm_only": 3,
       "discordant_baseline_only": 3,
+      "discordance": 0.025974025974025976,
       "mcnemar_exact_p": 1.0,
+      "realized_mde_pp_raw": 2.4,
+      "resolution": "no-detectable-difference",
       "gate_screen": {
         "delta_pp_cc": -0.036075036075036045,
         "ci95_pp_cc": [
@@ -323,7 +358,8 @@
           "coarse safety screen passed"
         ],
         "action": "no objection from the coarse screen",
-        "detectable_pp": 2.4
+        "detectable_pp": 2.4,
+        "detectable_cc_pp": 3.517022626348065
       },
       "decision": "unresolved (below the 9.3 pp floor)"
     },
@@ -340,7 +376,10 @@
       ],
       "discordant_arm_only": 4,
       "discordant_baseline_only": 3,
+      "discordance": 0.030303030303030304,
       "mcnemar_exact_p": 1.0,
+      "realized_mde_pp_raw": 2.8000000000000003,
+      "resolution": "no-detectable-difference",
       "gate_screen": {
         "delta_pp_cc": 0.5411255411255411,
         "ci95_pp_cc": [
@@ -352,7 +391,8 @@
           "improvement suggested but unresolved"
         ],
         "action": "no objection from the coarse screen",
-        "detectable_pp": 2.8000000000000003
+        "detectable_pp": 2.8000000000000003,
+        "detectable_cc_pp": 4.103193064072743
       },
       "decision": "unresolved (below the 9.3 pp floor)"
     }

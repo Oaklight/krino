@@ -164,7 +164,10 @@
     ],
     "discordant_arm_only": 5,
     "discordant_baseline_only": 4,
+    "discordance": 0.03896103896103896,
     "mcnemar_exact_p": 1.0,
+    "realized_mde_pp_raw": 3.2,
+    "resolution": "no-detectable-difference",
     "gate_screen": {
       "delta_pp_cc": -0.3463203463203465,
       "ci95_pp_cc": [
@@ -175,7 +178,8 @@
         "coarse safety screen passed"
       ],
       "action": "no objection from the coarse screen",
-      "detectable_pp": 3.2
+      "detectable_pp": 3.2,
+      "detectable_cc_pp": 4.68936350179742
     },
     "decision": "unresolved (below the 9.3 pp floor)"
   },
@@ -200,7 +204,7 @@
       "driver": "eval_marker_arm.py",
       "driver_sha256": "09493cde311da96d043dc57d4cfe7978e1e6320415a7173ac3ba94516408d618",
       "analysis": "analyze_marker.py",
-      "analysis_sha256": "13cfadbdc5f0564cc2501bffa4a6f8fa4d7851cef5b5b04580a439becfdc415e",
+      "analysis_sha256": "fb46ed858eca20d04333f4299ab688bb2c958a00498aa03875305b14c184b714",
       "jevbench_public_items": 231,
       "tiers": {
         "easy": 48,

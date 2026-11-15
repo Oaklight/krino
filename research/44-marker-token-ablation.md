@@ -51,10 +51,14 @@ Future arms should store the marker id in the checkpoint config.
 JevBench public 231 items (easy 48, hard 111, original 72), paired per item.
 The pre-registered rule from #362: a non-default marker is adoptable only if it
 exceeds 151645 by at least 9.3 pp raw accuracy with a paired 95% CI excluding
-0; below that it is unresolved. The 9.3 pp is the instrument's detectable raw
-difference at n=231 (`research/37-gate-policy.md`). Exact two-sided McNemar is
-reported beside each comparison, with both discordant counts. The paired CI is
-a 10,000-resample item-level bootstrap over the raw accuracy difference.
+0; below that it is unresolved. The 9.3 pp is the adoption bar, and it is the
+minimum detectable effect at the discordance of the #263 pair (0.229), not at
+these arms'. Resolution is a function of `(n, discordance)`: these arms
+disagree on 7 of 231 items (discordance 0.0303), and the per-arm realized 80%
+MDEs are 2.8-4.3 pp. The bar and the resolution are different quantities;
+neither substitutes for the other. Exact two-sided McNemar is reported beside
+each comparison, with both discordant counts. The paired CI is a
+10,000-resample item-level bootstrap over the raw accuracy difference.
 
 ## Primary result
 
@@ -75,7 +79,11 @@ epoch 4 on the synthetic validation split.
 151651 [−0.87, +3.46], 151662 [−2.60, +3.46], 151664 [−2.16, +3.03]. The
 chance-corrected gate screen passes the coarse safety screen for all five;
 151651 alone additionally shows "improvement suggested but unresolved" (cc
-+1.71 pp, CI [−1.72, +5.14]). No marker comes within 7 pp of the floor.
++1.71 pp, CI [−1.72, +5.14]). No marker comes within 7 pp of the 9.3 pp
+adoption bar, and the realized 80% MDE at these arms' discordance is 2.8 pp
+(151651) to 4.3 pp (151662), so a raw difference above roughly 3 pp is
+excluded. Every cell's `resolution` field is `no-detectable-difference`; no
+cell is `below-adoption-bar`.
 
 ## Swapping the marker under the default head
 
@@ -99,18 +107,31 @@ the option boundary position rather than the token's identity.
 
 By the pre-registered rule, all five non-default markers are unresolved, so
 `<|im_end|>` 151645 stays. The largest raw difference is +1.30 pp (three
-items), and the five-arm spread is 1.73 pp, both far inside the instrument's
-9.3 pp resolution. The swap experiment points the same way: the 151645 head
-scores within noise at five other markers, so the marker id is not doing
-measurable work at this resolution.
+items), and the five-arm spread is 1.73 pp. The realized 80% MDE at these
+arms' discordance is 2.8 pp (151651) to 4.3 pp (151662), so a raw difference
+above roughly 3 pp is excluded. That MDE is not the 9.3 pp in
+`research/37-gate-policy.md`, which is the MDE at the #263 pair's discordance
+of 0.229. The 9.3 pp adoption bar and the 2.8-4.3 pp resolution are different
+quantities, and neither is a substitute for the other.
 
-This is a null at 9.3 pp, not a proof of identity. The swap CIs reach about
-+3.9 pp, so a token effect smaller than roughly 4 pp is not excluded. The
-correct sentence is "no measurable marker effect at JevBench resolution", not
-"the marker is irrelevant".
+This is a null at 2.8-4.3 pp, not a proof of identity. The primary arms
+exclude a raw token effect above roughly 3 pp; the swaps have a realized MDE
+of 2.4-2.8 pp, and their CIs reach about +3.9 pp, so the swap alone does not
+exclude an effect up to about 4 pp. The correct sentence is "no measurable
+marker effect at JevBench resolution", not "the marker is irrelevant".
 
 ## Caveats
 
+- The interval covers item sampling only. The six arms are separate training
+  runs with one seed each; the bootstrap holds each arm's predictions fixed,
+  so run-to-run training variance is not in the CI. With a realized MDE of
+  2.8-4.3 pp, training noise of 1-2 pp is the same size as the effects the
+  primary arms exclude; the null sits at training-noise scale, and one seed
+  cannot separate a small token effect from run variance.
+- The easy tier saturates: all six arms score 48/48, so easy carries no
+  information about any difference and the effective discriminating set is
+  183 items (111 hard + 72 original). Hard also has the widest per-arm spread
+  (0.4414-0.4775, 3.6 pp).
 - The runs used `f7ec100`. `main` has since adopted the group-aware
   `split_items` from #364: on the same data, seed and fraction it yields
   15,931 train / 4,069 validation rows with digest `43498054...`, so a rerun
