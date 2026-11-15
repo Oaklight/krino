@@ -59,6 +59,12 @@ class JudgementPrompt:
     #: Character offset one past the option text, or ``None`` when the row has
     #: no option span (a criteria-less noul).
     option_char_end: int | None
+    #: Which side of the question this option states, for a noul row:
+    #: ``"true"`` or ``"false"``.  ``None`` for choice and score, where the
+    #: option is its own label.  A consumer that re-renders the row as a fixed
+    #: no/yes pair needs it once options can be permuted, because position then
+    #: says nothing about which wording is the true one (#380).
+    polarity: str | None = None
     #: The row's shared prefix and this option's suffix; ``prefix + suffix``
     #: equals ``text``.  The trainer encodes the prefix once per row and
     #: batches the K suffixes (#299).
@@ -116,6 +122,7 @@ def build_prompts(
                 option_index=0,
                 n_options=1,
                 option_char_end=None,
+                polarity="true" if gold else "false",
                 prefix="",
                 suffix=text,
                 answerable=answerable,
@@ -125,23 +132,30 @@ def build_prompts(
         ]
 
     texts, gold = prepared
+    q_type = item.question.get("type", "noul")
     prompts: list[JudgementPrompt] = []
     for index, option_text in enumerate(texts):
         prefix, suffix = render_parts(item.state, instructions, option_text)
         text = prefix + suffix
         cut = text.find(OPTION_END_MARKER)
         end = len(text) if cut < 0 else cut
+        # noul_option_texts() returns the true wording first, so the option's
+        # side is its index, not its label: label says which is correct.
+        polarity = None
+        if q_type == "noul" and len(texts) == 2:
+            polarity = "true" if index == 0 else "false"
         prompts.append(
             JudgementPrompt(
                 row_id=row_id or item.id,
                 source=source,
                 split=split,
-                q_type=item.question.get("type", "noul"),
+                q_type=q_type,
                 text=text,
                 label=int(index == gold),
                 option_index=index,
                 n_options=len(texts),
                 option_char_end=end,
+                polarity=polarity,
                 prefix=prefix,
                 suffix=suffix,
                 answerable=answerable,
