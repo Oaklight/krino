@@ -173,6 +173,22 @@ def split_rows(
     return train, val, external, report
 
 
+def draw_subset(rows, count: int, seed: int):
+    """Draw ``count`` rows once, deterministically, keeping plan order.
+
+    The draw is a seeded shuffle of the row indices; the kept indices are then
+    sorted, so the epoch walks the subset in the same order it walks the full
+    split.  A prefix or a stride would take whatever the plan happens to put
+    first, which is a source-composition bias rather than a sample.
+    """
+    if count >= len(rows):
+        return list(rows)
+    order = list(range(len(rows)))
+    random.Random(seed).shuffle(order)
+    keep = sorted(order[:count])
+    return [rows[index] for index in keep]
+
+
 def row_selection_sha256(rows: list[tuple[str, list[JudgementPrompt]]]) -> str:
     """Stable hash of the training rows: id, option count, positive index."""
     lines = []
@@ -298,6 +314,18 @@ def build_parser(config: dict | None = None) -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--torch-seed", type=int, default=None)
     parser.add_argument("--limit-rows", type=int, default=None)
+    parser.add_argument(
+        "--subset-rows",
+        type=int,
+        default=None,
+        help="draw this many train rows once with --subset-seed, in plan order",
+    )
+    parser.add_argument(
+        "--subset-seed",
+        type=int,
+        default=None,
+        help="seed of the subset draw; defaults to --seed",
+    )
     parser.add_argument("--val-rows", type=int, default=256)
     parser.add_argument(
         "--val-fraction",
@@ -538,6 +566,11 @@ def _run(args, rank: int, world_size: int) -> int:
     )
     if args.limit_rows:
         train_rows = train_rows[: args.limit_rows]
+    if args.subset_rows:
+        subset_seed = args.subset_seed if args.subset_seed is not None else args.seed
+        train_rows = draw_subset(train_rows, args.subset_rows, subset_seed)
+        if main_process:
+            print(f"subset rows {len(train_rows)} seed {subset_seed}", flush=True)
     if not train_rows:
         raise SystemExit("the plan has no train rows")
     if main_process:
@@ -550,6 +583,10 @@ def _run(args, rank: int, world_size: int) -> int:
         "train_rows": len(train_rows),
         "val_rows": len(val_rows),
         "eval_rows": len(eval_rows),
+        "subset_rows": args.subset_rows,
+        "subset_seed": (
+            args.subset_seed if args.subset_seed is not None else args.seed
+        ),
         "split_report": split_report,
         "train_prompts": sum(len(p) for _, p in train_rows),
         "masked_train_rows": sum(1 for _, p in train_rows if p[0].answerable is False),

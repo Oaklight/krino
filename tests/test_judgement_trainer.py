@@ -20,7 +20,21 @@ from model.src.judgement_objective import (  # noqa: E402
 )
 from model.src.judgement_readout import subsample_prompts  # noqa: E402
 from model.scripts.train_judgement import _record_to_prompt  # noqa: E402
+from model.scripts.train_judgement import draw_subset  # noqa: E402
 from model.scripts.train_judgement import step_chunks  # noqa: E402
+
+
+def test_subset_draw_is_seeded_nested_and_in_plan_order():
+    rows = [(f"row-{index}", []) for index in range(100)]
+    first = draw_subset(rows, 20, 42)
+    again = draw_subset(rows, 20, 42)
+    assert [row[0] for row in first] == [row[0] for row in again]
+    assert len(first) == 20
+    assert {row[0] for row in first} <= {row[0] for row in rows}
+    indices = [int(row[0].split("-")[1]) for row in first]
+    assert indices == sorted(indices)
+    assert draw_subset(rows, 20, 43) != first
+    assert draw_subset(rows, 100, 42) == rows
 
 
 def _item(
