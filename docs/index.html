@@ -471,6 +471,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#jevbench-status-v173-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JevBench status (v1.7.3 snapshot)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -883,6 +894,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#jevbench-status-v173-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JevBench status (v1.7.3 snapshot)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1012,6 +1034,9 @@
 </tbody>
 </table>
 <p>The average is the unweighted mean over the 16 <code>choice</code> and <code>noul</code> benchmarks, computed by <code>scripts/transform_results.py::get_accuracy_for_aggregate</code> from the committed <code>model/experiments/phaseA_*.json</code> files. The three <code>score</code> benchmarks are reported as MAE and are not folded into this column. The values previously quoted here (68.5 / 59.4 / 59.2) were not reproducible from any committed file.</p>
+<h3 id="jevbench-status-v173-snapshot">JevBench status (v1.7.3 snapshot)<a class="headerlink" href="#jevbench-status-v173-snapshot" title="Permanent link">&para;</a></h3>
+<p>The official board (protocol <code>jevbench::v1.7</code>, 270 ranked rows; snapshot fetched 2026-10-30, source sha256 <code>95251a6582156ce62f01ffd8810eda48c034f52420ba17ea6d378952f03b88fd</code>) places Jev 1.13.0 at rank 21 with Intelligence 65.60 and composite 71.45. The best open-weights entry is H2O-Lightning-4B at rank 11 with Intelligence 61.05 and composite 73.78; the leader is singularity-super-decider at composite 78.48.</p>
+<p>All local numbers are JevBench-public-231 scores under our own harness, not official JevBench scores. Official reference (v1.7.3 snapshot): Jev 1.13.0 Intelligence 65.60 / composite 71.45.</p>
 <h2 id="what-is-jev">What is Jev?<a class="headerlink" href="#what-is-jev" title="Permanent link">&para;</a></h2>
 <p>Jev is a "System One" model that returns typed, probabilistic decisions instead of generated text. It evaluates a <code>state</code> against typed <code>questions</code> and returns structured <code>answers</code> with calibrated probabilities.</p>
 <table>
