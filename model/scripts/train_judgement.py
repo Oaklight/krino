@@ -182,21 +182,28 @@ def row_selection_sha256(rows: list[tuple[str, list[JudgementPrompt]]]) -> str:
     return hashlib.sha256("\n".join(sorted(lines)).encode()).hexdigest()
 
 
-def trainable_rows(rows, readout: JudgementReadout):
+def trainable_rows(rows, readout: JudgementReadout, max_row_tokens: int | None = None):
     """Drop rows the readout cannot score, reporting why and their lengths.
 
     A row over ``max_length`` is dropped, not truncated: a truncated state is a
     different question.  A tokenisation-drift error is not caught here; it
     propagates, because it means training and inference disagree.
 
-    Returns the kept rows, the dropped count, and ``row_id -> longest prompt
-    tokens``.  The lengths come from the same tokenisation the filter needs,
-    so they cost nothing extra and they are exact, which the chunk budget
-    relies on.
+    ``max_row_tokens`` is a memory guard: a row longer than it is skipped and
+    counted, so one pathological row cannot take a rank to the ceiling.  It is
+    never below ``max_length`` in practice, which means it skips nothing unless
+    the caller sets it deliberately.
+
+    Returns the kept rows, the long-row count, the guard-skipped count, and
+    ``row_id -> longest prompt tokens``.  The lengths come from the same
+    tokenisation the filter needs, so they cost nothing extra and they are
+    exact, which the chunk budget relies on.
     """
     kept = []
     lengths: dict[str, int] = {}
     dropped_long = 0
+    skipped_over = 0
+    limit = readout.max_length if max_row_tokens is None else max_row_tokens
     block_rows = 256
     for start in range(0, len(rows), block_rows):
         block = rows[start : start + block_rows]
@@ -205,9 +212,12 @@ def trainable_rows(rows, readout: JudgementReadout):
             if length > readout.max_length:
                 dropped_long += 1
                 continue
+            if length > limit:
+                skipped_over += 1
+                continue
             kept.append((row_id, prompts))
             lengths[row_id] = length
-    return kept, dropped_long, lengths
+    return kept, dropped_long, skipped_over, lengths
 
 
 def build_parser(config: dict | None = None) -> argparse.ArgumentParser:
@@ -229,6 +239,15 @@ def build_parser(config: dict | None = None) -> argparse.ArgumentParser:
     )
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--batch-rows", type=int, default=8)
+    parser.add_argument(
+        "--max-row-tokens",
+        type=int,
+        default=None,
+        help=(
+            "memory guard: train rows longer than this many prompt tokens are "
+            "skipped and counted; default is max_length, which skips none"
+        ),
+    )
     parser.add_argument(
         "--chunk-tokens",
         type=int,
@@ -573,9 +592,17 @@ def _run(args, rank: int, world_size: int) -> int:
     readout = JudgementReadout(backbone, tokenizer, max_length=args.max_length)
     scaling = ScaledMargin(scale=args.scale_init, bias=args.yes_bias).to(readout.device)
 
-    train_rows, dropped_long, row_token_lengths = trainable_rows(train_rows, readout)
+    train_rows, dropped_long, skipped_over, row_token_lengths = trainable_rows(
+        train_rows, readout, args.max_row_tokens
+    )
     if dropped_long and main_process:
         print(f"dropped {dropped_long} train rows over max_length", flush=True)
+    if skipped_over and main_process:
+        print(
+            f"skipped {skipped_over} train rows over max_row_tokens "
+            f"({args.max_row_tokens})",
+            flush=True,
+        )
     if not train_rows:
         raise SystemExit("no train row fits max_length")
     rows_per_rank = _batch_shard(train_rows, rank, world_size, args.batch_rows)
@@ -727,6 +754,7 @@ def _run(args, rank: int, world_size: int) -> int:
             "trainable_rows_per_rank": len(rows_per_rank),
             "prompts": global_counts[1],
             "masked_rows": global_counts[2],
+            "skipped_over_tokens": skipped_over,
             "rows_per_s": global_counts[0] / elapsed if elapsed else None,
             "world_size": world_size,
             "scale": float(scaling.scale.detach()),
