@@ -1,0 +1,45 @@
+# Judgement-objective arm on a full-attention reranker backbone (#299).
+#
+# One prompt per option, one shared prefix per row, loss on
+# log P(" yes") - log P(" no") through a learned scale and bias.  The loss is
+# averaged within a row and then across rows, so every row weighs the same
+# regardless of option count.  answerable=false rows are masked, not dropped
+# (#254).  The backbone is frozen; the LoRA adapters and the two scaling
+# parameters are the only trainable tensors.
+#
+# usage:
+#   python model/scripts/train_judgement.py \
+#     --plan data/benchmarks/judgement_plan.jsonl \
+#     --config model/configs/judgement_reranker4b.yaml \
+#     --output model/experiments/judgement_lora_s42
+
+model: Qwen/Qwen3-Reranker-4B
+stage: judgement
+readout: per-option yes/no margin
+loss: row-normalised BCE on log P(yes) - log P(no)
+
+# A row above max_options is negative-subsampled, gold kept (#299).
+max_length: 4096
+max_options: 20
+
+epochs: 1
+batch_rows: 8
+lr: 0.001
+head_lr: 0.01
+weight_decay: 0.0001
+grad_clip: 1.0
+
+# Positive-base-rate treatment: the bias starts positive, and the optional
+# post-fit pass matches the train split's positive rate.
+scale_init: 1.0
+yes_bias: 2.0
+calibrate_bias: true
+calibration_rows: 512
+
+lora_layers: 8
+lora_rank: 16
+lora_alpha: 32
+lora_targets: q_proj,k_proj,v_proj,o_proj
+
+seed: 42
+val_rows: 512
