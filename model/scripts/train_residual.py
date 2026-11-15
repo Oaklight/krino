@@ -236,6 +236,37 @@ def config_hash(config: dict) -> str:
     ).hexdigest()
 
 
+def checkpoint_config(args, answerable_pos_weight: float) -> dict:
+    """The config stored beside the heads in ``residual.pt``.
+
+    This is the checkpoint's own record, not the recipe hash.  ``marker_token``
+    lives here so a consumer never falls back to the tokenizer default, which
+    is silent and would evaluate a non-default arm at eos.  The key is
+    deliberately excluded from :func:`recipe_config`, so the six arm hashes
+    are unchanged.
+    """
+    return {
+        "backbone": args.model,
+        "rank": args.rank,
+        "max_length": args.max_length,
+        "kl_weight": args.kl_weight,
+        "ce_weight": args.ce_weight,
+        "seed": args.seed,
+        "option_marker": args.option_marker,
+        "noul_marker": args.noul_marker,
+        "marker_token": args.marker_token,
+        "option_chunk_size": args.option_chunk_size if args.option_marker else None,
+        "option_max_tokens": args.option_max_tokens if args.option_marker else None,
+        "option_batch": args.option_batch if args.option_marker else None,
+        "train_safe_buckets": args.train_safe_buckets,
+        "lora_layers": args.lora_layers,
+        "lora_rank": args.lora_rank if args.lora_layers is not None else None,
+        "lora_alpha": args.lora_alpha if args.lora_layers is not None else None,
+        "answerable_head": args.answerable_head,
+        "answerable_pos_weight": answerable_pos_weight,
+    }
+
+
 def dedup_by_id(
     items: list, seen: set[tuple[str, str]] | None = None
 ) -> tuple[list, int]:
@@ -770,29 +801,7 @@ def main() -> int:
         {
             "heads": best_state["heads"],
             "alpha": best_state["alpha"],
-            "config": {
-                "backbone": args.model,
-                "rank": args.rank,
-                "max_length": args.max_length,
-                "kl_weight": args.kl_weight,
-                "ce_weight": args.ce_weight,
-                "seed": args.seed,
-                "option_marker": args.option_marker,
-                "noul_marker": args.noul_marker,
-                "option_chunk_size": args.option_chunk_size
-                if args.option_marker
-                else None,
-                "option_max_tokens": args.option_max_tokens
-                if args.option_marker
-                else None,
-                "option_batch": args.option_batch if args.option_marker else None,
-                "train_safe_buckets": args.train_safe_buckets,
-                "lora_layers": args.lora_layers,
-                "lora_rank": args.lora_rank if args.lora_layers is not None else None,
-                "lora_alpha": args.lora_alpha if args.lora_layers is not None else None,
-                "answerable_head": args.answerable_head,
-                "answerable_pos_weight": answerable_pos_weight,
-            },
+            "config": checkpoint_config(args, answerable_pos_weight),
             "history": history,
         },
         args.output / "residual.pt",
