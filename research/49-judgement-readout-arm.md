@@ -110,11 +110,9 @@ The numbers separate by pass. On the deterministic re-score, the buggy labels pu
 
 ## Mechanism: sharper margins, worse ranking
 
-The adapter raises the decision margin without improving the ordering. The claim rests on three measurements: median raw top-two gap 1.188 to 3.938; hard accuracy 0.4324 to 0.3514; and the learned scale 0.7418 to 0.2028 at comparable calibration targets. Together they show confidence rising while accuracy falls.
+The adapter raises the decision margin without improving the ordering. The claim rests on two measurements on the same 231 items in C: median raw top-two gap 1.188 in the frozen pass against 3.938 in the adapted pass, and hard accuracy 0.4324 against 0.3514. Confidence rises while accuracy falls.
 
 The fixed-threshold count points the same way but is not evidence. On the hard tier, items with an effective gap above 0.5 go from 10/111 to 42/111, and that count is scale-dependent: the adapted arm's median raw gap is 3.3x larger, so more items cross a fixed threshold mechanically. The scale-free version splits each arm at its own gap quartiles: the most confident quarter is wrong on 2/58 items in the frozen arm and 3/58 in the adapted arm, 3.4% against 5.2%. That is itself evidence that the damage is in the ordering, not in overconfidence: the arm is not more wrong where it is most sure, it is more sure everywhere.
-
-The learned scale on the same readout is 0.7418 in A against 0.2028 in C, from each run directory's `history.json`. Both arms calibrate toward the same targets, so a scale 3.7x smaller implies C's raw margins are about 3.7x larger than A's. That is independent evidence for the sharpening, computed without the JevBench items.
 
 The attribution is the objective, not the data: per-option BCE rewards the magnitude of the correct log-odds margin, and a larger margin on a wrong option still lowers the per-option loss even when the argmax over options stays wrong. The adapter therefore learns to be decisive without learning to rank, which is the opposite of a calibrated transfer.
 
@@ -145,7 +143,9 @@ By question type the advantage is in choice: A is choice 92/139, noul 48/74, sco
 
 The confound is explicit: 312 versus 2,597 optimizer steps, so the difference is data volume confounded with step count and does not isolate a data effect. What the comparison shows is the direction: the smaller, shorter arm is 15 items better, and it is the only one of the two not below its own frozen baseline. More data and more steps together made the result worse, which is evidence against a pure training-length artefact but is not proof.
 
-On distribution, A fits the training distribution worse (validation loss 0.51037 against 0.47426) and still transfers better, so the effect is not explained by fit. Status: measured; neither run log is committed.
+On distribution, A fits the training distribution worse (validation loss 0.51037 against 0.47426) and still transfers better, so the effect is not explained by fit.
+
+The learned scale is 0.7418 in A against 0.2028 in C, from each run directory's `history.json`. Both are adapted arms, so this is not a frozen-to-adapted comparison. At comparable calibration targets a scale 3.7x smaller implies C's raw margins are about 3.7x larger than A's, which makes this part of the 20k-versus-full contrast, tied to data volume together with the step count, and not part of the frozen-to-adapted mechanism. Status: measured; neither run log is committed.
 
 ## Provenance
 
