@@ -41,6 +41,29 @@ POLARITY_MARK = "\nQuestion: "
 OPTION_MARK = "\nDoes this option correctly answer the question?"
 
 
+def require_sha(path: Path, expected: str | None, label: str) -> str:
+    """The file's sha256, after checking it against ``expected`` when given.
+
+    A plan that is replaced or repointed while a run starts changes the
+    training distribution without changing anything the run prints, so an
+    explicit digest turns that into a startup failure. The check runs before
+    any row is read. An expected value may be a prefix (the run logs print the
+    first 16 characters) but not shorter than 16.
+    """
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    if expected is None:
+        return digest
+    wanted = expected.strip().lower()
+    if len(wanted) < 16:
+        raise SystemExit(f"--{label}-sha256 {expected!r} is shorter than 16 hex characters")
+    if not digest.startswith(wanted):
+        raise SystemExit(
+            f"{path}: sha256 {digest} does not match the expected {wanted}; "
+            "refusing to read a plan that is not the one this run pinned"
+        )
+    return digest
+
+
 def parse_prompt_text(text: str) -> tuple[str, str]:
     """State and instructions from a rendered judgement prompt."""
     if not text.startswith("State: "):
@@ -228,11 +251,20 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--plan", type=Path, required=True)
     parser.add_argument(
+        "--plan-sha256",
+        default=None,
+        help=(
+            "abort unless the plan hashes to this value (prefix of at least 16 "
+            "hex characters); the computed digest is recorded either way"
+        ),
+    )
+    parser.add_argument(
         "--eval-plan",
         type=Path,
         default=None,
         help="score this plan's val rows instead of the training plan's",
     )
+    parser.add_argument("--eval-plan-sha256", default=None)
     parser.add_argument(
         "--noul-gold",
         choices=["role", "position"],
@@ -279,19 +311,22 @@ def main() -> int:
     device = f"cuda:{local_rank}"
     torch.manual_seed(42)
 
+    # Pin the inputs before reading them: a swapped plan must stop the run at
+    # startup, not train a distribution nobody can name.
+    plan_sha = require_sha(args.plan, args.plan_sha256, "plan")
+    eval_plan_sha = None
+    if args.eval_plan is not None:
+        eval_plan_sha = require_sha(args.eval_plan, args.eval_plan_sha256, "eval-plan")
     rows, split_field, masked = build_rows(
         args.plan, args.noul_gold, args.plan_unpermuted_noul
     )
     train_rows = [r for r in rows if r.split == "train"]
     val_rows = [r for r in rows if r.split == "val"]
-    plan_sha = hashlib.sha256(args.plan.read_bytes()).hexdigest()
-    eval_plan_sha = None
     if args.eval_plan is not None:
         eval_rows, eval_split_field, _ = build_rows(
             args.eval_plan, args.noul_gold, args.plan_unpermuted_noul
         )
         val_rows = [r for r in eval_rows if r.split == "val"]
-        eval_plan_sha = hashlib.sha256(args.eval_plan.read_bytes()).hexdigest()
         print(f"rank {args.rank}: eval plan val rows {len(val_rows)} "
               f"split_field {eval_split_field} sha {eval_plan_sha[:16]}", flush=True)
     print(f"rank {args.rank}: rows {len(rows)} train {len(train_rows)} "
@@ -402,8 +437,10 @@ def main() -> int:
                "stopped": stopped,
                "stop_reason": "epoch_mean_loss_above_frozen" if stopped else None,
                "plan": str(args.plan), "plan_sha256": plan_sha,
+               "plan_sha256_expected": args.plan_sha256,
                "eval_plan": str(args.eval_plan) if args.eval_plan else None,
                "eval_plan_sha256": eval_plan_sha,
+               "eval_plan_sha256_expected": args.eval_plan_sha256,
                "split_field": split_field, "noul_gold": args.noul_gold,
                "plan_unpermuted_noul": args.plan_unpermuted_noul,
                "masked_rows": masked, "epochs": args.epochs,

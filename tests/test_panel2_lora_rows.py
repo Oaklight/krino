@@ -11,6 +11,7 @@ torch = pytest.importorskip("torch")
 from model.scripts.train_panel2_lora import (  # noqa: E402
     build_rows,
     parse_prompt_text,
+    require_sha,
 )
 
 PREFIX = "State: A situation.\nQuestion: Is it true?\n"
@@ -170,3 +171,25 @@ def test_a_plan_that_mixes_split_fields_is_an_error(tmp_path):
     with pytest.raises(ValueError, match="mixes"):
         build_rows(_write(tmp_path, [first, second]),
                    plan_unpermuted_noul=True)
+def test_the_pinned_digest_accepts_the_real_file(tmp_path):
+    path = _write(tmp_path, [_record("corpus:k", 0, 1, "choice", CHOICE_PREFIX,
+                                     "Only.", 2)])
+    digest = require_sha(path, None, "plan")
+    assert len(digest) == 64
+    # The run logs print the first 16 characters; that form must also match.
+    assert require_sha(path, digest[:16], "plan") == digest
+    assert require_sha(path, digest, "plan") == digest
+
+
+def test_a_different_digest_stops_before_any_row_is_read(tmp_path):
+    path = _write(tmp_path, [_record("corpus:l", 0, 1, "choice", CHOICE_PREFIX,
+                                     "Only.", 2)])
+    with pytest.raises(SystemExit, match="does not match the expected"):
+        require_sha(path, "0" * 64, "plan")
+
+
+def test_a_fragment_too_short_to_identify_a_file_is_refused(tmp_path):
+    path = _write(tmp_path, [_record("corpus:m", 0, 1, "choice", CHOICE_PREFIX,
+                                     "Only.", 2)])
+    with pytest.raises(SystemExit, match="shorter than 16"):
+        require_sha(path, "abc", "plan")
