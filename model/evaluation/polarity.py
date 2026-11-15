@@ -2,13 +2,16 @@
 
 The label reaches the scorers in several forms: a bool from the pipeline
 loaders, the integers 0 and 1, and the words ``true``/``yes``/``false``/``no``
-from the public JevBench files.  Six scorers each carried their own
-``str(label).lower() == "true"`` copy, which marked the string ``"yes"`` as
+from the public JevBench files.  Six scorers each lowered the label and compared
+it against the single word "true", which marked the string ``"yes"`` as
 negative and so inverted every JevBench noul label (#299, #378).
 
 Keep the vocabulary here rather than in any one scorer, and let the caller
 decide what an unknown form means: :func:`label_polarity` returns ``None`` and
 the caller either treats it as "not a polarity item" or raises.
+
+The module is named ``polarity`` rather than ``labels`` because
+``data/labels.py`` already means "label kinds" in this repository.
 """
 
 from __future__ import annotations

@@ -91,36 +91,66 @@ def test_label_polarity_names_the_forms_it_accepts():
 
 
 def test_no_scorer_carries_its_own_noul_label_parse():
-    # Milo's review on #378: six copies of the same expression, five of them in
-    # the eval scripts. One parser now, and a seventh copy fails here.
+    # Milo's review on #378: six copies of the same rule in four spellings. The
+    # scan covers the whole repository rather than one spelling in one tree, so
+    # a seventh copy fails unless it is added to the allowlist on purpose.
+    import re
     from pathlib import Path
 
+    pattern = re.compile(r"""\.lower\(\)\s*==\s*["']true["']""")
     root = Path(__file__).resolve().parents[1]
-    offenders = [
-        path.relative_to(root).as_posix()
-        for path in sorted((root / "model").rglob("*.py"))
-        if 'str(item.label).lower() == "true"' in path.read_text(encoding="utf-8")
-    ]
-    assert offenders == []
+    found: dict[str, list[str]] = {}
+    for tree in ("model", "data", "scripts"):
+        base = root / tree
+        if not base.exists():
+            continue
+        for path in sorted(base.rglob("*.py")):
+            hits = [
+                line.strip()
+                for line in path.read_text(encoding="utf-8").splitlines()
+                if pattern.search(line)
+            ]
+            if hits:
+                found[path.relative_to(root).as_posix()] = hits
+
+    # Corpus-side sites with different semantics, kept out of #378 on purpose
+    # and tracked as follow-up on #299.
+    allowed = {
+        "model/scripts/build_unanswerable_pairs.py":
+            "`label is True or ... == \"true\"` variant, corpus-side, reads bools",
+        "model/scripts/train_residual.py":
+            "training target rather than a scorer polarity, reads bools",
+    }
+    unexpected = {name: hits for name, hits in found.items() if name not in allowed}
+    assert unexpected == {}, unexpected
+    # An allowlist entry that no longer matches is stale and must be removed.
+    assert set(found) == set(allowed), (sorted(found), sorted(allowed))
 
 
-def test_a_corpus_noul_label_survives_the_jsonl_round_trip_as_a_bool(tmp_path):
-    # Four scorers read noul labels straight from load_jsonl. That the label
-    # arrives as a bool is the invariant the shared parser is written against.
+def test_a_corpus_noul_label_of_either_form_resolves_through_the_parser(tmp_path):
+    # `load_jsonl` is TypedQuestion(**d) and coerces nothing, so the scorers
+    # must not depend on the label arriving as a bool. Both on-disk forms go
+    # through the shared parser to the same answer.
     from data.format import TypedQuestion
     from data.pipeline import load_jsonl, save_jsonl
+    from model.evaluation.polarity import require_polarity
 
-    item = TypedQuestion(
-        id="corpus:probe-00001", state="A situation.", source="corpus",
-        split="train", label=True,
-        question={"type": "noul", "instructions": "Does it hold?",
-                  "criteria": {"true": "Yes.", "false": "No."}},
-    )
+    def item(item_id, label):
+        return TypedQuestion(
+            id=item_id, state="A situation.", source="corpus", split="train",
+            label=label,
+            question={"type": "noul", "instructions": "Does it hold?",
+                      "criteria": {"true": "Yes.", "false": "No."}},
+        )
+
     path = tmp_path / "corpus.jsonl"
-    save_jsonl([item], path)
-    (loaded,) = load_jsonl(path)
-    assert loaded.label is True
-    assert label_polarity(loaded.label) is True
+    save_jsonl([item("corpus:a", True), item("corpus:b", "yes")], path)
+    loaded = load_jsonl(path)
+    assert loaded[0].label is True
+    assert loaded[1].label == "yes"
+    assert [require_polarity(row.label, row.id) for row in loaded] == [True, True]
+    with pytest.raises(ValueError, match="is neither true nor false"):
+        require_polarity("maybe", "corpus:c")
 
 
 def test_polarity_gold_reads_a_boolean_label():

@@ -17,7 +17,7 @@ from jev_client import JevClient
 from data.pipeline import load_jsonl
 from model.evaluation.accuracy import noul_accuracy, choice_accuracy, score_mae
 from model.evaluation.calibration import expected_calibration_error, brier_score
-from model.evaluation.labels import require_polarity  # noqa: E402
+from model.evaluation.polarity import require_polarity  # noqa: E402
 
 
 def load_env(path: Path) -> dict[str, str]:

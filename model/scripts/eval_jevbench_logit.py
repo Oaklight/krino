@@ -41,7 +41,7 @@ from data.pipeline import load_jevbench  # noqa: E402
 from model.evaluation.dev_set import load_dev_set  # noqa: E402
 from model.evaluation.jevbench import summarize  # noqa: E402
 from model.evaluation.prompt_options import noul_option_texts  # noqa: E402
-from model.evaluation.labels import require_polarity  # noqa: E402
+from model.evaluation.polarity import require_polarity  # noqa: E402
 from model.evaluation.run_provenance import build_run_provenance  # noqa: E402
 from model.src.backbone import load_causal_lm  # noqa: E402
 from model.src.logit_scorer import LogitScorer  # noqa: E402

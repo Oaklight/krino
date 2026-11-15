@@ -32,7 +32,7 @@ NO = " no"
 
 # The label vocabulary lives in model/evaluation/labels.py so every scorer that
 # reads a noul label shares one parser (#378).
-from model.evaluation.labels import (  # noqa: E402,F401
+from model.evaluation.polarity import (  # noqa: E402,F401
     FALSE_LABELS,
     TRUE_LABELS,
     label_polarity,
