@@ -32,6 +32,12 @@ Probing, analysis, and open replication of [TypeSafe.ai](https://typesafe.ai)'s 
 
 The average is the unweighted mean over the 16 `choice` and `noul` benchmarks, computed by `scripts/transform_results.py::get_accuracy_for_aggregate` from the committed `model/experiments/phaseA_*.json` files. The three `score` benchmarks are reported as MAE and are not folded into this column. The values previously quoted here (68.5 / 59.4 / 59.2) were not reproducible from any committed file.
 
+### JevBench status (v1.7.3 snapshot)
+
+The official board (protocol `jevbench::v1.7`, 270 ranked rows; snapshot fetched 2026-10-30, source sha256 `95251a6582156ce62f01ffd8810eda48c034f52420ba17ea6d378952f03b88fd`) places Jev 1.13.0 at rank 21 with Intelligence 65.60 and composite 71.45. The best open-weights entry is H2O-Lightning-4B at rank 11 with Intelligence 61.05 and composite 73.78; the leader is singularity-super-decider at composite 78.48.
+
+All local numbers are JevBench-public-231 scores under our own harness, not official JevBench scores. Official reference (v1.7.3 snapshot): Jev 1.13.0 Intelligence 65.60 / composite 71.45.
+
 ## What is Jev?
 
 Jev is a "System One" model that returns typed, probabilistic decisions instead of generated text. It evaluates a `state` against typed `questions` and returns structured `answers` with calibrated probabilities.

@@ -302,7 +302,8 @@ class TestJevbenchSourceFiles:
         for run in runs:
             assert run["readout"] in {
                 "trained-heads", "continuation", "judgement", "native-reranker", "panel2",
-                "native-decision", "native-decision-oneway",
+                "native-decision", "native-decision-oneway", "set-head",
+                "attention-mass", "attention-mass+code", "cascade",
             }
             assert run["source_file"]
 
@@ -408,9 +409,18 @@ class TestLanding:
         assert landing["resolution"]["dev_card_min_pp"] == 5
         assert landing["resolution"]["dev_card_max_pp"] == 6
 
-        assert landing["instrumented_rows"] == 57
+        assert landing["instrumented_rows"] == 61
         assert landing["banking77"]["trained_pp"] == 95.2
         assert landing["banking77"]["jev_pp"] == 75.0
+
+        panel2 = landing["panel2_vs_judgement"]
+        assert panel2["resolution_pp"] == 9.3
+        assert panel2["clears_floor_count"] == 2
+        assert panel2["below_floor_count"] == 6
+        assert sum(
+            1 for pair in panel2["pairs"]
+            if pair["state"] == "improvement suggested but unresolved"
+        ) == 6
 
     def test_source_list_is_one_deduplicated_union(self):
         landing = self._data()["landing"]
@@ -448,3 +458,43 @@ class TestThirdPartyCells:
         assert two_way["readout"] == "native-decision"
         assert one_way["readout"] == "native-decision-oneway"
         assert two_way["latency_ms"] is not None
+
+
+class TestExtraInstruments:
+    """The set head, attention mass and cascade are 231-item cells."""
+
+    def test_rows_carry_the_counts_the_files_recorded(self):
+        runs = {run["run_id"]: run for run in transform.transform_jevbench()}
+        assert runs["jevbench-set_head_jevbench_Qwen_Qwen3-Reranker-4B"]["correct"] == 138
+        assert runs["jevbench-mass_mass_Qwen_Qwen3-Reranker-4B"]["correct"] == 131
+        assert runs["jevbench-combined_mass_Qwen_Qwen3-Reranker-4B"]["correct"] == 161
+        assert runs["jevbench-cascade_F_Qwen_Qwen3-Reranker-4B"]["correct"] == 162
+
+    def test_cascade_row_names_the_selected_threshold(self):
+        path = REPO_ROOT / "results/jevbench/cascade_F_Qwen_Qwen3-Reranker-4B.json"
+        row = transform.find_jevbench_row(path, "jevbench-cascade_F_Qwen_Qwen3-Reranker-4B")
+        assert row is not None
+        assert "threshold 0.0" in row["readout_detail"]
+        assert "0 items triggered" in row["readout_detail"]
+
+
+class TestProbeRows:
+    """Probes on their own item sets are not JevBench rows."""
+
+    def test_probe_rows_name_their_dataset_and_count(self):
+        probes = transform.transform_probes()
+        assert len(probes) == 8
+        for row in probes:
+            assert row["dataset"] in {"Banking77", "CLINC150"}
+            assert row["n"] == row["total"]
+            assert row["source_file"].startswith("results/jevbench/")
+
+    def test_blocking_row_is_the_best_scheme_b_cell(self):
+        path = REPO_ROOT / "results/jevbench/clinc_blocking_Qwen_Qwen3-Reranker-4B.json"
+        row = transform.build_probe_run(path)
+        assert row["correct"] == 153
+        assert row["total"] == 200
+
+    def test_shuffle_control_is_not_a_frontier_row(self):
+        path = REPO_ROOT / "results/jevbench/clinc_blocking_shuffle_Qwen_Qwen3-Reranker-4B.json"
+        assert transform.build_probe_run(path) is None

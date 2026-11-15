@@ -80,12 +80,16 @@ export interface Landing {
     wins: number;
     min_pp: number | null;
     max_pp: number | null;
+    resolution_pp: number;
+    clears_floor_count: number;
+    below_floor_count: number;
     pairs: {
       model_id: string;
       name: string;
       judgement_pp: number;
       panel2_pp: number;
       gap_pp: number;
+      state: string;
     }[];
     source_files: string[];
   };
@@ -122,11 +126,25 @@ export interface Landing {
   source_files: string[];
 }
 
+export interface ProbeRun {
+  run_id: string;
+  instrument: string;
+  dataset: string;
+  n: number;
+  metric: string;
+  value: number;
+  correct: number;
+  total: number;
+  detail: string;
+  source_file: string;
+}
+
 export interface DashboardData {
   generated_at: string | null;
   eval_runs: EvalRun[];
   training_runs: TrainingRun[];
   jevbench_runs: JevBenchRun[];
+  probe_runs: ProbeRun[];
   jev_comparison: Record<string, JevComparison>;
   landing: Landing;
   benchmarks: Record<string, string>;
