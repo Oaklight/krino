@@ -26,16 +26,16 @@ The key differentiator: these probabilities are designed to be **calibrated** �
 |---|---|---|
 | [`probing/`](probing/) | Black-box API probing of Jev | 21 probes, 5,620 API calls; 5 preregistered controlled experiments |
 | [`model/`](model/) | Open decision model replication | 95.2% on Banking77 (vs Jev's 75%); 10 backbones × 19 benchmarks |
-| [`data/`](data/) | Data pipeline + synthetic generation | 26 benchmark loaders; synthetic data with counterfactuals and paraphrases |
+| [`data/`](data/) | Data pipeline + synthetic generation | 19 benchmark loaders; synthetic data with counterfactuals and paraphrases |
 | [`research/`](research/) | Analysis writeups + ecosystem survey | Architecture fingerprinting; reproduction landscape |
 
 ## Key findings
 
 1. **Reranker pretraining transfers to decision scoring.** A 150M cross-encoder reranker (Ettin-150m) with trained decision heads achieves 95.2% on Banking77 — beating a vanilla encoder at identical params by +4.8pp, and outperforming Jev itself (75.0%).
 
-2. **Zero-training logit readout works surprisingly well.** Reading option probabilities directly from frozen LLM logits (no training, no text generation) reaches 68.5% average accuracy across 19 benchmarks with Qwen2.5-7B — within 19pp of Jev's 87.2%.
+2. **Zero-training logit readout works surprisingly well.** Reading option probabilities directly from frozen LLM logits (no training, no text generation) reaches 67.1% average accuracy over the 16 `choice` and `noul` benchmarks with Qwen2.5-7B. The three `score` benchmarks are reported as MAE and are not folded into that average. The previously quoted 68.5% was not reproducible from a committed file, and Jev's 87.2% does not appear on the current board: the official v1.7.3 reference is Jev 1.13.0, Intelligence 65.60 / composite 71.45. These are different quantities; the local number is not an official JevBench score.
 
-3. **The decision model ecosystem is rapidly forming.** JevBench tracks 52 systems across proprietary, open-trained, and zero-training approaches. Multiple independent projects (SemIf, djev, Decider) demonstrate that decision-making capability is latent in pretrained LLMs and can be extracted through structured logit readout.
+3. **The decision model ecosystem is rapidly forming.** The current JevBench board (protocol v1.7.3) ranks 270 rows across proprietary, open-trained, and zero-training approaches. Multiple independent projects (SemIf, djev, Decider) demonstrate that decision-making capability is latent in pretrained LLMs and can be extracted through structured logit readout.
 
 ## Getting started
 

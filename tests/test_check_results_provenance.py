@@ -145,3 +145,27 @@ class TestLandingGuard:
     def test_untracked_landing_source_fails(self):
         errors = guard.check_landing(self._data(), set())
         assert any("not a committed file" in error for error in errors)
+
+
+PROBE_SOURCE = "results/jevbench/clinc_blocking_Qwen_Qwen3-Reranker-4B.json"
+
+
+def probe_row() -> dict:
+    row = guard.transform.build_probe_run(REPO_ROOT / PROBE_SOURCE)
+    assert row is not None
+    return row
+
+
+class TestProbeGuard:
+    def test_committed_row_passes(self):
+        assert guard.check_results({"probe_runs": [probe_row()]}, {PROBE_SOURCE}) == []
+
+    def test_published_value_must_recompute(self):
+        row = probe_row()
+        row["value"] = 0.999
+        errors = guard.check_results({"probe_runs": [row]}, {PROBE_SOURCE})
+        assert any("value" in error for error in errors)
+
+    def test_untracked_source_file_fails(self):
+        errors = guard.check_results({"probe_runs": [probe_row()]}, set())
+        assert any("not a committed file" in error for error in errors)

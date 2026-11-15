@@ -22,6 +22,10 @@ const READOUT_LABELS: Record<string, string> = {
   panel2: "vocab code",
   "native-decision": "native decision",
   "native-decision-oneway": "native decision, one-way",
+  "set-head": "set head",
+  "attention-mass": "attention mass",
+  "attention-mass+code": "attention mass + code",
+  cascade: "cascade",
 };
 
 interface Props {

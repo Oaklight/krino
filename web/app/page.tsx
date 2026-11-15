@@ -89,6 +89,11 @@ export default function HomePage() {
       {/* The finding */}
       <section className="mb-12">
         <h2 className="text-xl font-semibold mb-4">What we have established</h2>
+        <p className="text-xs text-text-muted mb-4 max-w-3xl">
+          All local numbers are JevBench-public-231 scores under our own harness,
+          not official JevBench scores. Official reference (v1.7.3 snapshot): Jev
+          1.13.0 Intelligence 65.60 / composite 71.45.
+        </p>
         <ul className="space-y-4 text-text-dim max-w-3xl">
           <li>
             On JevBench public, the per-option judgement readout beats option-text
@@ -107,10 +112,14 @@ export default function HomePage() {
           </li>
           <li>
             Reading one code token per option at a single answer position
-            (panel 2) beats per-option judgement on {p2.wins} of {p2.measured}{" "}
+            (panel 2) is above per-option judgement on {p2.wins} of {p2.measured}{" "}
             checkpoints where both exist, by {ppRange(p2.min_pp, p2.max_pp)}, and
-            it costs one forward per item instead of one per option. The gain is
-            largest on <code className="font-mono text-text">choice</code> (
+            it costs one forward per item instead of one per option. JevBench
+            public resolves about {p2.resolution_pp.toFixed(1)} pp at this item
+            count, so only {p2.clears_floor_count} of {p2.measured} gaps clear
+            that floor; the other {p2.below_floor_count} are improvement suggested
+            but unresolved, not wins. The gain is largest on{" "}
+            <code className="font-mono text-text">choice</code> (
             {p2.type_delta.choice.pp} pp across the set);{" "}
             <code className="font-mono text-text">noul</code> and{" "}
             <code className="font-mono text-text">score</code> move too, by{" "}
