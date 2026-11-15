@@ -68,7 +68,7 @@
   \draw[arrow] ([yshift=-0.40cm]o1.south) -- (s1.north);
 
   \node[lbl, text width=6.4cm] at (3.80,4.05) {repeat for every option, then normalise the $K$ sums};
-  \draw[arrow] (s1.south) -- ++(0,-0.26);
+  \draw[arrow] (s1.south) -- ++(0,-0.44);
 
   \node[lbl] at (1.42,3.05) {scores};
   \node[bar] at (2.30,3.05) {$x_1$};
@@ -101,7 +101,7 @@
   \draw[arrow] ([yshift=-0.38cm]a2.south) -- (v2.north);
 
   \node[lbl, text width=6.4cm] at (3.80,4.20) {keep the $K$ code rows only, softmax over them};
-  \draw[arrow] (v2.south) -- ++(0,-0.26);
+  \draw[arrow] (v2.south) -- ++(0,-0.62);
 
   \node[lbl] at (1.50,3.05) {scores};
   \node[bar] at (2.30,3.05) {A};
@@ -171,10 +171,11 @@
   \draw[arrow] ([yshift=-0.38cm]x42.south) -- (h42.north);
   \draw[arrow] ([yshift=-0.38cm]x43.south) -- (h43.north);
 
-  \draw[darrow] (q4b.south) -- ++(0,-0.55) -| (h41.south);
-  \draw[darrow] (q4b.south) -- ++(0,-0.55) -| (h42.south);
-  \draw[darrow] (q4b.south) -- ++(0,-0.55) -| (h43.south);
-  \node[lbl, fill=white, inner sep=1pt] at (2.48,4.75) {$\cdot$};
+  \draw[dashed, line width=0.5pt, draw=black!70] (h41.south) -- (h41.south |- 0,4.62);
+  \draw[dashed, line width=0.5pt, draw=black!70] (h42.south) -- (h42.south |- 0,4.62);
+  \draw[dashed, line width=0.5pt, draw=black!70] (h43.south) -- (h43.south |- 0,4.62);
+  \draw[dashed, line width=0.5pt, draw=black!70] (h41.south |- 0,4.62) -- (q4b.south |- 0,4.62);
+  \draw[darrow] (q4b.south |- 0,4.62) -- (q4b.south);
 
   \node[lbl, text width=6.3cm] at (3.85,4.05)
     {each match $q^{\top}h_k$ is one option's score};
@@ -219,7 +220,7 @@
   \node[trainbox, minimum width=4.75cm] (mh) at (3.95,4.28)
     {one shared linear $\rightarrow$ one logit per marker};
   \draw[arrow] (h31.south) -- (h31.south |- mh.north);
-  \draw[arrow] (h32.south) -- (mh.north);
+  \draw[arrow] (h32.south) -- (h32.south |- mh.north);
   \draw[arrow] (h33.south) -- (h33.south |- mh.north);
 
   \node[lbl] at (3.95,3.68) {softmax over the $K$ marker logits};
@@ -254,10 +255,11 @@
   \draw[arrow] (dlm.north) -- (z62.south);
   \draw[arrow] (dlm.north east) -- (z63.south);
 
-  \node[lbl, text width=2.6cm] at (5.55,5.00) {$T$ denoising\\steps};
-  \draw[arrow] (dlm.south) -- ++(0,-0.34);
-
   \node[vocabbox, minimum width=2.1cm] (o6) at (2.20,3.70) {the filled code at each slot};
+  \node[lbl, text width=2.6cm] at (5.55,5.00) {$T$ denoising\\steps};
+  \draw[darrow] (4.22,5.00) -- (dlm.east);
+  \draw[arrow] (dlm.south) -- (o6.north);
+  \draw[arrow] (o6.south) -- (o6.south |- 0,3.24);
 
   \node[lbl] at (1.50,3.05) {scores};
   \node[bar] at (2.30,3.05) {A};
@@ -340,7 +342,7 @@
   \node[lbl, anchor=west] at (0.45,3.62)
     {$K$ independent forwards \quad$\cdot$\quad prefix cacheable, but the saving needs a long shared prefix \quad$\cdot$\quad option $k$ never sees option $j$};
 
-  \draw[arrow] (rv.south) -- ++(0,-1.05);
+  \draw[arrow] (rv.south) -- (rv.south |- 0,2.82);
 
   \node[note, anchor=west, text width=11.2cm, align=left] at (0.45,2.55)
     {\hyphenpenalty=10000\exhyphenpenalty=10000\textbf{the rerank task itself:} retrieval returns $K$ candidates, each is scored on its own against the query, then the $K$ scores are sorted. No candidate is ever scored in the presence of another, so the ordering is a sort of independent judgements rather than a joint decision over the set.};
