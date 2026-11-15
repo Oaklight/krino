@@ -27,7 +27,9 @@ Every number below belongs to this arm unless the table names the frozen control
 | val, choice | 15,660 | 0.3860 | 0.6691 | 0.1366 | 0.4683 | 0.1896 |
 | val, score | 5,882 | 0.4315 | 0.5184 | 0.0826 | 0.3610 | 0.2278 |
 
-The train loss is the mean over the 2,608 steps; 2,947 rows were masked by the answerable flag and 0 were skipped. Accuracy is argmax over each item's options. The noul cell is above its 0.5 chance level. The score cell is not interpretable against chance without the level count. The run's by-source breakdown is not reported: the id parsing in that pass produced per-row source keys, so its source cells are unusable.
+The train loss is the mean over the 2,608 steps; 2,947 rows were masked by the answerable flag and 0 were skipped. Accuracy is argmax over each item's options. The noul cell is above its 0.5 chance level. The score cell is not interpretable against chance without the level count. The run's by-source breakdown needs a pooling step before it can be read. The row id carries the exact source only for ids ending in `-<split>-<digits>`; synthetic, `typed_decisions` and apigen rows are identified only by prefix, so their cells are prefix pools. The pooling is additive over the run's shards, so the pooled cells reproduce.
+
+Two caveats apply to any table built this way. The families shown are those with at least 90 rows: 2,633 families in all, of which 2,597 fall under 90 rows and cover 2,745 rows between them. And banking77's 0.289 is confounded with its 80-option set, so it is not a pure source effect.
 
 ## JevBench public 231: frozen against adapted
 
@@ -88,7 +90,7 @@ Not measured. The 20k arm draws a deterministic 20,000-row subset and runs one e
 
 | number group | status | source |
 |---|---|---|
-| arm definition, train loss, validation table, mechanism gaps, ECE, throughput | measured; run log not committed | training run of 2026-11-15, seed 42 |
+| arm definition, train loss, validation table, by-source pools, mechanism gaps, ECE, throughput | measured; run log not committed | training run of 2026-11-15, seed 42 |
 | JevBench corrected cells, flips, decisive subset, by-type cells | measured; correction committed, per-item records not committed | #378, recomputed from the run's per-item records |
 | marker-token ablation | measured; committed | #372 and `research/44-marker-token-ablation.md` |
 | 20k against full | pending | not measured |
