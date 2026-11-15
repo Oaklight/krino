@@ -124,18 +124,18 @@ The marker-token ablation (#362, merged as #372) trains six heads identical exce
 
 ## Throughput
 
-The per-row loop was launch-bound: 3.36 rows/s cold and 11.23 rows/s warm on the same leg, against 9.54 rows/s in a steady fixed-row probe. Batching the chunked forwards raised the full-corpus epoch to 52.6 rows/s at 8 ranks over the 166,208 rows and 2,597 steps. A separate warm fixed-row scaling probe, not the epoch run, gives 7.8x from one rank to eight (9.54 to 74.37 rows/s, with per-step cost near 0.86 s at every world size); the earlier 1.0x reading was cold-shape compilation per process, not a scaling limit. On one card over 50 steps and 399 rows, with nvidia-smi sampled at 1 Hz during the loaded window, mean utilisation was 20.7%, with 57% of samples at zero and 25% at or above 50%, and memory between 15.9 and 25.3 GiB. That is the one-card per-row leg, not the 8-rank epoch. Units are rows per second, one row being one judgement item with its option set.
+The per-row loop was launch-bound: a sweep script reported 3.36 rows/s cold and 9.54 rows/s warm, but its output was not retained, so both cells are unverified. Batching the chunked forwards raised the full-corpus epoch to 52.6 rows/s at 8 ranks over the 166,208 rows and 2,597 steps. A warm fixed-row scaling probe, not the epoch run, gives 7.8x from one rank to eight (9.54 to 74.37 rows/s, with per-step cost near 0.86 s at every world size); the earlier 1.0x reading was cold-shape compilation per process, not a scaling limit. Card utilisation is not settled: one trace reports 20.7% mean on one card over 399 rows without a retained file, another reports 41.1% mean over 176 one-Hz samples of all eight cards reaching 95,253 MiB, and the memory ranges show different legs. No utilisation cell is used. Units are rows per second, one row being one judgement item with its option set.
 
 ## 20k subset against the full corpus
 
 Arm A draws a deterministic 20,000-row subset and runs one epoch in 312 logged steps; arm C is the full corpus at 2,597 steps. Labels are corrected throughout, and both arms are scored against the same frozen baseline.
 
-| arm | JevBench correct | accuracy | cc | easy | hard | original | val loss | val accuracy |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| A, 20k | 150/231 | 0.6494 | 0.4862 | 47/48 | 48/111 | 55/72 | 0.51037 | 0.62730 |
-| C, full | 135/231 | 0.5844 | 0.3910 | 48/48 | 39/111 | 48/72 | 0.47426 | 0.66750 |
+| arm | JevBench correct | accuracy | cc | easy | hard | original | val loss | val accuracy | val ECE |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A, 20k | 150/231 | 0.6494 | 0.4862 | 47/48 | 48/111 | 55/72 | 0.51037 | 0.62730 | 0.1681 |
+| C, full | 135/231 | 0.5844 | 0.3910 | 48/48 | 39/111 | 48/72 | 0.47426 | 0.66750 | 0.1662 |
 
-A's own frozen pass reproduces 149/231 exactly, so the contrast is not a scoring artefact. Paired against the frozen arm, A is net +1 with exact McNemar p = 1.0; C is net -14 with p = 0.0161.
+A's own frozen pass reproduces 149/231 exactly, so the contrast is not a scoring artefact. Paired against the frozen arm, A is net +1 (10 lost against 11 gained) with exact McNemar p = 1.0; C is net -14 with p = 0.0161.
 
 By question type the advantage is in choice: A is choice 92/139, noul 48/74, score 10/18; C is choice 80/139, noul 45/74, score 10/18; the frozen readout is choice 89/139, noul 47/74, score 13/18 in both runs. The adapter therefore damages the score head at either data size, 10/18 against 13/18, and that is a separate finding.
 
