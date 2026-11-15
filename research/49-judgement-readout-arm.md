@@ -112,6 +112,8 @@ The correction changes the frozen arm's cc from 0.3212 to 0.4798. The noul cells
 
 The adapter raises the decision margin without improving the ordering. Median raw top-two gap 1.188 to 3.938; median effective gap (after the scale and bias) 0.241 to 0.798, and mean effective gap 0.472 to 1.525, about 3.2x. On the hard tier, items that are confident and wrong (effective gap above 0.5) go from 10/111 to 42/111, while hard accuracy falls from 0.4324 to 0.3514.
 
+The learned scale on the same readout is 0.7418 in A against 0.2028 in C, from each run directory's `history.json`. Both arms calibrate toward the same targets, so a scale 3.7x smaller implies C's raw margins are about 3.7x larger than A's. That is independent evidence for the sharpening, computed without the JevBench items.
+
 The attribution is the objective, not the data: per-option BCE rewards the magnitude of the correct log-odds margin, and a larger margin on a wrong option still lowers the per-option loss even when the argmax over options stays wrong. The adapter therefore learns to be decisive without learning to rank, which is the opposite of a calibrated transfer.
 
 ## Calibration is not the explanation
@@ -124,11 +126,11 @@ The marker-token ablation (#362, merged as #372) trains six heads identical exce
 
 ## Throughput
 
-The run logs give 52.62 rows/s for C over 166,208 rows and 2,597 steps, and 28.4 rows/s for A over 312 steps. A warm fixed-row scaling probe reported 7.8x from one rank to eight (9.54 to 74.37 rows/s, with per-step cost near 0.86 s at every world size), but its output was not retained, so that figure is unverified; an earlier 1.0x reading was cold-shape compilation per process, not a scaling limit. No utilisation cell is reported: the per-card traces were not retained, and the two reported traces come from different legs, 399 rows on one card against 176 one-Hz samples of all eight cards. Units are rows per second, one row being one judgement item with its option set.
+The run logs give 52.62 rows/s for C over 166,208 rows and 2,597 steps, and 28.4 rows/s for A over 19,968 rows and 312 steps. A warm fixed-row scaling probe reported 7.8x from one rank to eight (9.54 to 74.37 rows/s, with per-step cost near 0.86 s at every world size), but its output was not retained, so that figure is unverified; an earlier 1.0x reading was cold-shape compilation per process, not a scaling limit. No utilisation cell is reported: the per-card traces were not retained, and the two reported traces come from different legs, 399 rows on one card against 176 one-Hz samples of all eight cards. Units are rows per second, one row being one judgement item with its option set.
 
 ## 20k subset against the full corpus
 
-Arm A draws a deterministic 20,000-row subset and runs one epoch in 312 logged steps; arm C is the full corpus at 2,597 steps. Labels are corrected throughout, and both arms are scored against the same frozen baseline.
+Arm A draws a deterministic 20,000-row subset and runs one epoch in 312 logged steps, 19,968 rows in whole steps; arm C is the full corpus at 2,597 steps. Labels are corrected throughout, and both arms are scored against the same frozen baseline.
 
 | arm | JevBench correct | accuracy | cc | easy | hard | original | val loss | val accuracy | val ECE |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -150,7 +152,7 @@ On distribution, A fits the training distribution worse (validation loss 0.51037
 | arm definition, train loss, validation table, by-source table, mechanism gaps, ECE, throughput | measured; run directory and eight eval shards on the run host, not committed | C, 2026-11-15, seed 42: 166,208 rows, 2,597 steps, mean train loss 0.48022 |
 | JevBench corrected cells, flips, decisive subset, by-type cells | measured; correction committed, per-item margins retained on the run host, not committed | #378, recomputed from the run's per-item records |
 | marker-token ablation | measured; committed | #372 and `research/44-marker-token-ablation.md` |
-| arm A, 20k subset | measured; run directory on the run host, not committed | A, 2026-11-15, seed 42: 20,000 rows, 312 steps |
+| arm A, 20k subset | measured; run directory on the run host, not committed | A, 2026-11-15, seed 42: 20,000 rows (19,968 in 312 whole steps), mean train loss 0.5128, final logged step loss 0.5134 at step 310 |
 
 The merged validation report is about 8 MB. JevBench per-item margins are retained; validation per-item margins are not. Committing the validation JSON and the merged report in a follow-up would give the first two rows artifact provenance. The repository currently holds the method for the correction, not the run's own records.
 
