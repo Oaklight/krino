@@ -33,8 +33,9 @@ import argparse
 import dataclasses
 import json
 import random
+import re
 import sys
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -45,6 +46,13 @@ from _vendor import yaml  # noqa: E402
 from data.pipeline import load_jsonl  # noqa: E402
 from data.sources import load_source_items  # noqa: E402
 from model.src.judgement_objective import build_prompts  # noqa: E402
+from model.training.group_split import (  # noqa: E402
+    load_cluster_manifest,
+    split_items_by_group,
+    state_key,
+)
+
+SYNTHETIC_TEMPLATE = re.compile(r"^synthetic-(.+)-(\d{4})-")
 
 
 def load_yaml(path: Path) -> dict:
@@ -57,6 +65,146 @@ def load_ids(path: Path | None) -> set[str]:
     payload = json.loads(Path(path).read_text())
     values = payload["ids"] if isinstance(payload, dict) else payload
     return {str(value) for value in values}
+
+
+def source_of(item, fallback: str) -> str:
+    """The item's own source; ``corpus`` is a mode name, not a source."""
+    value = getattr(item, "source", None)
+    return value if isinstance(value, str) and value else fallback
+
+
+def synthetic_family(item) -> str | None:
+    """The family embedded in a synthetic group key (``synthetic-<family>-NNNN``)."""
+    if source_of(item, "") != "synthetic":
+        return None
+    group = getattr(item, "group", "") or ""
+    parts = group.split("-")
+    if len(parts) > 1 and parts[0] == "synthetic":
+        return parts[1]
+    return None
+
+
+def synthetic_template(item) -> tuple[str, str] | None:
+    """The generated item behind a synthetic row: ``(family, 4-digit item id)``."""
+    if source_of(item, "") != "synthetic":
+        return None
+    match = SYNTHETIC_TEMPLATE.match(str(getattr(item, "id", "")))
+    return (match.group(1), match.group(2)) if match else None
+
+
+def namespace_of(item) -> str:
+    """Split namespace: source, or source+family for synthetic rows."""
+    source = source_of(item, "")
+    family = synthetic_family(item)
+    return f"synthetic/{family}" if source == "synthetic" and family else source
+
+
+def plan_items(args, entries):
+    """Yield ``(name, item, row_id, split, answerable, prompts)`` for one plan row."""
+    for name, items in entries:
+        for item in items:
+            split = getattr(item, "split", "train")
+            row_id = f"{name}:{item.id}"
+            answerable = getattr(item, "answerable", True) is not False
+            built = build_prompts(
+                item,
+                row_id=row_id,
+                source=source_of(item, name),
+                split=split,
+                answerable=answerable,
+            )
+            yield name, item, row_id, split, answerable, built
+
+
+def internal_labels(args, entries) -> tuple[dict[str, str], dict] | tuple[None, None]:
+    """Compute the corrected split and the per-row ``internal_split`` labels."""
+    if not args.internal_split:
+        return None, None
+    clusters = load_cluster_manifest(args.clusters) if args.clusters else None
+    records: list[tuple[str, object, int, str, str]] = []
+    for _name, item, row_id, split, _answerable, built in plan_items(args, entries):
+        if not built:
+            continue
+        q_type = item.question.get("type", "noul")
+        records.append((row_id, item, len(built), q_type, split))
+
+    def cluster_of(record):
+        if clusters is None:
+            return None
+        item = record[1]
+        return clusters.get(f"id:{item.id}") or clusters.get(
+            f"state:{state_key(item.state)}"
+        )
+
+    pool = [record for record in records if record[4] == "train"]
+    train, val, report = split_items_by_group(
+        pool,
+        args.val_fraction,
+        args.split_seed,
+        id_of=lambda record: record[0],
+        state_of=lambda record: state_key(record[1].state),
+        group_of=lambda record: getattr(record[1], "group", None),
+        cluster_of=cluster_of,
+        stratum_of=lambda record: (record[3], min(record[2], 8)),
+        namespace_of=lambda record: namespace_of(record[1]),
+        use_group=False,
+        force_train_clusters=args.force_train_cluster,
+    )
+    if args.cap_per_template:
+        train = cap_per_template(train, args.cap_per_template)
+    if args.subset_rows:
+        order = list(range(len(train)))
+        random.Random(args.subset_seed).shuffle(order)
+        keep = sorted(order[: args.subset_rows])
+        train = [train[index] for index in keep]
+        labels = {record[0]: "train" for record in train}
+    else:
+        labels = {record[0]: "train" for record in train}
+        labels.update({record[0]: "val" for record in val})
+        for record in records:
+            if record[4] != "train":
+                labels.setdefault(record[0], "external")
+    report = dict(report)
+    report["train_after_cap"] = len(train)
+    report["val_after_cap"] = len(val)
+    return labels, report
+
+
+def cap_per_template(records, cap: int):
+    """Keep at most ``cap`` rows per synthetic template, round-robin over q_type.
+
+    The kept rows are the lexicographically smallest row ids per q_type, so the
+    result is deterministic and keeps every question type the template has.
+    """
+    groups: dict[tuple[str, str], dict[str, list]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    keep = []
+    for record in records:
+        template = synthetic_template(record[1])
+        if template is None:
+            keep.append(record)
+        else:
+            groups[template][record[3]].append(record)
+    for by_type in groups.values():
+        for q_type in by_type:
+            by_type[q_type].sort(key=lambda record: record[0])
+        picked = []
+        index = 0
+        while len(picked) < cap:
+            added = False
+            for q_type in sorted(by_type):
+                if index < len(by_type[q_type]):
+                    picked.append(by_type[q_type][index])
+                    added = True
+                    if len(picked) == cap:
+                        break
+            if not added:
+                break
+            index += 1
+        keep.extend(picked)
+    kept = {record[0] for record in keep}
+    return [record for record in records if record[0] in kept]
 
 
 def corpus_items(args, rng: random.Random) -> list[tuple[str, list]]:
@@ -126,7 +274,43 @@ def main() -> int:
         default=None,
         help="debug aid: keep at most this many rows per source",
     )
+    parser.add_argument(
+        "--clusters",
+        type=Path,
+        default=None,
+        help="near-duplicate cluster manifest for --internal-split",
+    )
+    parser.add_argument(
+        "--internal-split",
+        action="store_true",
+        help="compute the corrected train/val split and write internal_split on every row",
+    )
+    parser.add_argument("--val-fraction", type=float, default=0.2)
+    parser.add_argument("--split-seed", type=int, default=42)
+    parser.add_argument(
+        "--force-train-cluster",
+        action="append",
+        default=[],
+        help="cluster id whose component must stay in train (repeatable)",
+    )
+    parser.add_argument(
+        "--cap-per-template",
+        type=int,
+        default=None,
+        help="keep at most this many train rows per synthetic template",
+    )
+    parser.add_argument(
+        "--subset-rows",
+        type=int,
+        default=None,
+        help="draw this many rows once from the capped train set and keep only those",
+    )
+    parser.add_argument("--subset-seed", type=int, default=42)
     args = parser.parse_args()
+    if args.cap_per_template and not args.internal_split:
+        parser.error("--cap-per-template requires --internal-split")
+    if args.subset_rows and not args.internal_split:
+        parser.error("--subset-rows requires --internal-split")
 
     rng = random.Random(args.seed)
     counts: Counter[str] = Counter()
@@ -137,40 +321,46 @@ def main() -> int:
     skipped_items = 0
     masked_rows = 0
 
+    entries = corpus_items(args, rng)
+    labels, split_report = internal_labels(args, entries)
+    if split_report is not None:
+        print(f"internal split {json.dumps(split_report, sort_keys=True)}", flush=True)
+
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", encoding="utf-8") as handle:
-        for name, items in corpus_items(args, rng):
-            kept = 0
-            for item in items:
-                split = getattr(item, "split", "train")
-                row_id = f"{name}:{item.id}"
-                answerable = getattr(item, "answerable", True) is not False
-                built = build_prompts(
-                    item,
-                    row_id=row_id,
-                    source=name,
-                    split=split,
-                    answerable=answerable,
-                )
-                if not built:
-                    skipped_items += 1
-                    continue
-                kept += 1
-                rows += 1
-                k_hist[len(built)] += 1
-                if not answerable:
-                    masked_rows += 1
-                    counts[f"{split}:masked"] += 1
-                counts[f"{split}:{item.question.get('type', 'noul')}"] += 1
-                if len(built) == 1 and not built[0].has_option_span:
-                    counts[f"{split}:polarity"] += 1
-                for prompt in built:
-                    record = dataclasses.asdict(prompt)
-                    record["label"] = prompt.label
-                    handle.write(json.dumps(record, ensure_ascii=False) + "\n")
-                    prompts += 1
-                    lengths.append(len(prompt.text))
-            print(f"{name:22} rows {kept:7,}", flush=True)
+        current = None
+        kept = 0
+        for name, item, row_id, split, answerable, built in plan_items(args, entries):
+            if name != current:
+                if current is not None:
+                    print(f"{current:22} rows {kept:7,}", flush=True)
+                current = name
+                kept = 0
+            if labels is not None and row_id not in labels:
+                continue
+            if not built:
+                skipped_items += 1
+                continue
+            kept += 1
+            rows += 1
+            k_hist[len(built)] += 1
+            if not answerable:
+                masked_rows += 1
+                counts[f"{split}:masked"] += 1
+            counts[f"{split}:{item.question.get('type', 'noul')}"] += 1
+            if len(built) == 1 and not built[0].has_option_span:
+                counts[f"{split}:polarity"] += 1
+            for prompt in built:
+                record = dataclasses.asdict(prompt)
+                record["label"] = prompt.label
+                record["family"] = synthetic_family(item)
+                if labels is not None:
+                    record["internal_split"] = labels[row_id]
+                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+                prompts += 1
+                lengths.append(len(prompt.text))
+        if current is not None:
+            print(f"{current:22} rows {kept:7,}", flush=True)
 
     print(f"wrote {args.out}")
     print(

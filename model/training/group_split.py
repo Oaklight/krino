@@ -122,6 +122,8 @@ def build_group_keys(
     state_of: Callable[[Any], str],
     group_of: Callable[[Any], str | None],
     cluster_of: Callable[[Any], str | None] | None = None,
+    namespace_of: Callable[[Any], str | None] | None = None,
+    use_group: bool = True,
 ) -> tuple[list[str], int]:
     """Return ``(group key per item, number of groups)``.
 
@@ -129,6 +131,14 @@ def build_group_keys(
     or existing group key.  A group key is unique per group even when two items
     share an id (RACE carries several questions over one passage id), so the
     result is parallel to ``items`` and never keyed by id.
+
+    ``namespace_of`` scopes the state and group relations (for example by
+    source, or by source+family for synthetic rows) so two unrelated rows that
+    happen to share a short state do not chain across sources.  Cluster ids
+    stay global: a near-duplicate cluster is one unit even when the manifest
+    spans sources.  ``use_group=False`` drops the row's own group key from the
+    union; a coarse group value (``race-high``) otherwise chains tens of
+    thousands of unrelated rows into one key.
     """
     if not items:
         return [], 0
@@ -136,18 +146,24 @@ def build_group_keys(
     seen: dict[tuple[str, str], int] = {}
     relations: list[tuple[str, Callable[[Any], str | None]]] = [
         ("state", lambda item: normalise_state(state_of(item))),
-        ("group", group_of),
     ]
+    if use_group:
+        relations.append(("group", group_of))
     if cluster_of is not None:
         relations.append(("cluster", cluster_of))
     for index, item in enumerate(items):
         if feature_disabled(GROUP_SPLIT_SWITCH):
             continue
+        namespace = ""
+        if namespace_of is not None:
+            namespace = str(namespace_of(item) or "")
         for name, accessor in relations:
             value = accessor(item)
             if not value:
                 continue
             relation = (name, str(value))
+            if namespace and name != "cluster":
+                relation = (name, f"{namespace}\x1f{value}")
             first = seen.setdefault(relation, index)
             union.union(first, index)
 
@@ -168,6 +184,9 @@ def split_items_by_group(
     group_of: Callable[[Any], str | None],
     cluster_of: Callable[[Any], str | None] | None = None,
     stratum_of: Callable[[Any], Any] | None = None,
+    namespace_of: Callable[[Any], str | None] | None = None,
+    use_group: bool = True,
+    force_train_clusters: Sequence[str] = (),
 ) -> tuple[list[Any], list[Any], dict[str, Any]]:
     """Split items into train and val by whole groups.
 
@@ -175,6 +194,12 @@ def split_items_by_group(
     the corpus by assigning whole groups per stratum.  A group's stratum is the
     stratum of its first item in input order; a group that spans strata is not
     broken apart.
+
+    ``force_train_clusters`` names cluster ids whose component must stay in
+    train; those groups are skipped when val candidates are drawn.  It exists
+    for clusters the manifest over-merges and that cannot be split without
+    leaking: a component that lands wholly in val would otherwise remove a
+    source from training.
 
     Returns:
         ``(train, val, report)``.  Both lists keep the input order.
@@ -185,9 +210,19 @@ def split_items_by_group(
         state_of=state_of,
         group_of=group_of,
         cluster_of=cluster_of,
+        namespace_of=namespace_of,
+        use_group=use_group,
     )
     if not items:
         return [], [], {"items": 0, "groups": 0, "clusters": 0, "train": 0, "val": 0}
+
+    forced_keys: set[str] = set()
+    forced = {str(value) for value in force_train_clusters}
+    if forced and cluster_of is not None:
+        for index, item in enumerate(items):
+            value = cluster_of(item)
+            if value is not None and str(value) in forced:
+                forced_keys.add(keys[index])
 
     members: dict[str, list[int]] = defaultdict(list)
     for index, key in enumerate(keys):
@@ -212,6 +247,8 @@ def split_items_by_group(
         for group_key in group_keys:
             if taken >= target:
                 break
+            if group_key in forced_keys:
+                continue
             val_groups.add(group_key)
             taken += len(members[group_key])
 
