@@ -240,6 +240,15 @@ def build_parser(config: dict | None = None) -> argparse.ArgumentParser:
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--batch-rows", type=int, default=8)
     parser.add_argument(
+        "--mem-guard-gib",
+        type=float,
+        default=88.0,
+        help=(
+            "stop the run cleanly when a rank's allocated memory passes this, "
+            "instead of letting the allocator abort and the collective time out"
+        ),
+    )
+    parser.add_argument(
         "--max-row-tokens",
         type=int,
         default=None,
@@ -724,14 +733,34 @@ def _run(args, rank: int, world_size: int) -> int:
                     + "\n"
                 )
                 step_log.flush()
-            if batches % args.log_every == 0 and main_process:
-                elapsed = time.perf_counter() - started
-                print(
-                    f"  epoch {epoch} step {batches} "
-                    f"loss={running / batches:.4f} "
-                    f"{global_rows * batches / elapsed:.2f} rows/s",
-                    flush=True,
+            if batches % args.log_every == 0:
+                allocated = (
+                    torch.cuda.memory_allocated() / 2**30
+                    if torch.cuda.is_available()
+                    else 0.0
                 )
+                if main_process:
+                    elapsed = time.perf_counter() - started
+                    print(
+                        f"  epoch {epoch} step {batches} "
+                        f"loss={running / batches:.4f} "
+                        f"{global_rows * batches / elapsed:.2f} rows/s "
+                        f"mem={allocated:.1f}GiB",
+                        flush=True,
+                    )
+                elif torch.cuda.is_available():
+                    print(
+                        f"  rank {rank} step {batches} mem={allocated:.1f}GiB",
+                        flush=True,
+                    )
+                if allocated > args.mem_guard_gib:
+                    print(
+                        f"rank {rank} hit the memory guard: {allocated:.1f} GiB "
+                        f"> {args.mem_guard_gib} GiB at step {batches}; stopping "
+                        "before the allocator does",
+                        flush=True,
+                    )
+                    raise SystemExit(3)
         elapsed = time.perf_counter() - started
         expected_steps = distributed.steps_for(len(rows_per_rank), args.batch_rows)
         if batches != expected_steps:
