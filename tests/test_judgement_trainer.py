@@ -20,6 +20,7 @@ from model.src.judgement_objective import (  # noqa: E402
 )
 from model.src.judgement_readout import subsample_prompts  # noqa: E402
 from model.scripts.train_judgement import _record_to_prompt  # noqa: E402
+from model.scripts.train_judgement import step_chunks  # noqa: E402
 
 
 def _item(
@@ -266,6 +267,46 @@ def test_positive_base_rate_excludes_masked_rows():
 
 
 # -- option subsampling ------------------------------------------------------
+
+
+def test_step_chunks_cover_every_row_exactly_once():
+    rows = [
+        build_prompts(_item(criteria={"a": "alpha", "b": "beta"}, label="a"))
+        for _ in range(40)
+    ]
+    chunks = step_chunks(rows, 512)
+    assert chunks[0][0] == 0
+    assert chunks[-1][1] == len(rows)
+    for (_, stop), (start, _) in zip(chunks, chunks[1:]):
+        assert stop == start
+    assert all(start < stop for start, stop in chunks)
+
+
+def test_step_chunks_charge_the_padded_bucket():
+    # A 4000-character state is about 1000 tokens, which pads to the 1024
+    # bucket, so a 4096-token budget holds three rows, not four by raw length.
+    rows = [
+        build_prompts(
+            _item(criteria={"a": "alpha", "b": "beta"}, label="a", state="x" * 4000)
+        )
+        for _ in range(8)
+    ]
+    assert [stop - start for start, stop in step_chunks(rows, 4096)] == [3, 3, 2]
+
+
+def test_step_chunks_keep_a_long_row_whole():
+    long_row = build_prompts(
+        _item(criteria={"a": "alpha", "b": "beta"}, label="a", state="y" * 16000)
+    )
+    short_rows = [
+        build_prompts(
+            _item(criteria={"a": "alpha", "b": "beta"}, label="a", state="z" * 40)
+        )
+        for _ in range(5)
+    ]
+    chunks = step_chunks([long_row] + short_rows, 512)
+    assert chunks[0] == (0, 1)
+    assert all(start >= 1 for start, _ in chunks[1:])
 
 
 def test_subsampling_keeps_the_positive_and_caps_the_row():
