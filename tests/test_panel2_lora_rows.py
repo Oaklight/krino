@@ -319,6 +319,30 @@ def test_ranks_that_hash_different_bytes_stop_the_run(tmp_path, monkeypatch):
                        plan_unpermuted_noul=True)
 
 
+def test_a_pin_mismatch_is_judged_after_the_gather(tmp_path, monkeypatch):
+    """A mismatched pin must not exit one rank before the collective.
+
+    Every rank reaches the gather whatever its pin says; only then does the
+    comparison run, on a digest all ranks share. The patched gather records
+    its call, so a comparison moved above ``agree_plan`` leaves the record
+    empty and this test goes red.
+    """
+    import torch.distributed as dist
+
+    path = _choice_plan(tmp_path)
+    calls = []
+
+    def gather(output, value):
+        calls.append(value)
+        output[:] = [value] * len(output)
+
+    monkeypatch.setattr(dist, "all_gather_object", gather)
+    with pytest.raises(SystemExit, match="does not match the expected"):
+        load_plan_rows(path, "0" * 64, "plan", world=2, rank=0,
+                       plan_unpermuted_noul=True)
+    assert len(calls) == 1, "the gather must run before the pin is judged"
+
+
 def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
     import torch.distributed as dist
 
