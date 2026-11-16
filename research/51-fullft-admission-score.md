@@ -4,7 +4,7 @@ Status: measured, one seed, one short schedule. Full-parameter training at 1e-5 
 
 **PRs:** #387, open at the time of writing and not yet merged.
 
-Every arm here uses Qwen3-Reranker-4B, at most 4,096 tokens per row, the panel-2 readout with listwise cross-entropy over the K code logits, the v3 a20k plan, 303 steps and seed 42 unless a cell says otherwise. JevBench is the local 231-item public proxy, reported as natural order, reversed order and their average; the frozen average is 159.0. Benchmark validation is 9,923 rows, and the frozen reference there is 5,652/9,923 = 0.5696, the same figure the previous note uses. Paired tests are exact two-sided McNemar, and the paired n is given with each p.
+Every arm here uses Qwen3-Reranker-4B, at most 4,096 tokens per row, the panel-2 readout with listwise cross-entropy over the K code logits, the v3 a20k plan, 303 steps and seed 42 unless a cell says otherwise. JevBench is the local 231-item public proxy, reported as natural order, reversed order and their average; the frozen average is 159.0. "Benchmark val" in this note means every non-synthetic validation row, 9,923 after the 639-row `answerable:false` drop; that set includes typed and apigen rows, not only the benchmark-named sources. The frozen reference there is 5,652/9,923 = 0.5696, the same figure the previous note uses. Paired tests are exact two-sided McNemar, and the paired n is given with each p.
 
 ## 1. Full-parameter arms
 
@@ -16,9 +16,13 @@ LoRA is off and every parameter is trainable, with activation checkpointing on.
 | 2e-5 | 0.6845 | 163 | 159 | 161.0 | 0.9048 | 1 | 0.3596 | 0.1286 / 0.1253 / 0.3691 |
 | 5e-5 | 0.5536 | 131 | 128 | 129.5 | 0.7835 | 0 | 0.1348 | +0.127 / +0.148 over frozen |
 
+In the table, agreement is order self-consistency: the count of items whose natural-order and reversed-order choices name the same option, over the 231 items, with ties included. It is not agreement with any teacher.
+
 The ECE column is absolute for the first two arms and a change over frozen for 5e-5, where the deltas are noul +0.127 (0.2679 against 0.1406) and score +0.148 (0.3752 against 0.2269). The choice cell is 0.0770 against frozen 0.2787, a 0.202 improvement, so it is the one ECE cell that improves and it is not a positive delta. The frozen ECE on the same rows is noul 0.1406, choice 0.2787 and score 0.2269. Every ECE cell rests on the 9,923-row benchmark comparator: the frozen and LoRA cells come from a separate pass over exactly those rows, and each of the four full-parameter runs has in-run bins that sum to exactly 9,923 rows, noul 3,482, choice 5,330 and score 1,111, identical to the comparator per type. The four runs are 1e-5, 1e-5_w, 2e-5 and 5e-5; 1e-5 and 1e-5_w are the same arm under two loss settings, which is why the table lists three arms and the bin count names four runs. The filter concern raised in #387's review does not change these cells.
 
 The sweet spot is narrow. 1e-5 and 2e-5 both beat frozen on benchmark val by more than 11 pp and on JevBench by 2 to 4 items averaged; 5e-5 collapses on val, averaged JevBench and K = 80, while it still passes the agreement floor at 0.7835 against 0.7206 and improves the choice ECE at 0.0770 against 0.2787. Between the two good arms the choice is not made by val, which is 0.0012 apart, but by the per-cell ECE: 1e-5 is better on all three cells than both 2e-5 and frozen, and 2e-5 is worse than frozen on score.
+
+The 1e-5 cells above are from the `p2_fullft_lr1e-5` launch, which saved no weights. Its re-scorable twin, `p2_fullft_lr1e-5_w`, runs the same configuration with weights saved: val 6,821/9,923 = 0.6874 and averaged JevBench 163.5, natural 166/231 and reversed 161/231, against 0.6833 and 163.0 here. Both pairs are inside the measured band, and both launches pass every gate, so the admission verdict does not depend on which one is read. From here the `_w` launch is the canonical artifact for later comparisons, because it carries weights and can be re-scored; the score-loss arms use it as their control.
 
 ## 2. Admission suite outcomes
 
@@ -84,13 +88,13 @@ The reading is pre-registered: exact accuracy on the 1,111 rows improves at p < 
 
 The step time is not constant and is not a property of the row mix. Leg 1 on rank 0 records cumulative elapsed 315 s at step 25, 578 s at 50, 807 s at 75 and 1,013 s at 100, which gives window rates of 12.60, 10.52, 9.16 and 8.24 s per step. The rate drifts down as start-up amortises, the last window matches the a20k weights run at 8.17 s, and an earlier killed run shows the same shape, 311 s and 573 s at steps 25 and 50. The earlier 11.3 s figure was start-up amortisation, not a longer row mix.
 
-The epoch is a range, with the basis named. At the cumulative rate at step 100, 10.1 s per step, 1,086 steps is 10,969 s = 3.05 h, so 3.1 h. If the last window, 8.24 s per step, is the steady state, the same count is 8,949 s = 2.49 h, so 2.6 h.
+The epoch is not projected from the step time here. The projection this note previously carried, 3.96 to 4.52 h, was low because the plan is length-ordered: the rows are ordered by length, so the later steps carry the longer rows and the length concentration sits in the second half of the epoch. The first 125 steps hold 2,483,933 tokens, 7.50% of the plan's 33,098,619, measured from the pinned plan. Steps 1-543 hold 10,319,786 tokens, 31.18% of the epoch's tokens over 50.0% of its steps, so leg 1 measures a third of the epoch's tokens and not the epoch; its wall time is a measured third. Per step, leg 1 averages 19,005 tokens and leg 2 averages 41,949, so the second half carries 2.2x the tokens per step. The epoch wall time is not measured. It stays open until leg 2, or it is integrated from measured tokens per second on the long-row windows and labelled an integration rather than a measurement.
 
-Checkpoint evaluation is added separately, and the weights run decomposes it. That run took 54.0 min, ran 303 steps at 8.17 s (41.4 min), and had no checkpoint evaluations: it was launched with `--save-weights` and without `--eval-every`. Its remainder is one 1.8-minute model load and one 10.8-minute final evaluation. A checkpoint evaluation does the same work as that final one, so it costs 10.8 min = 0.18 h each, and the load happens once per run at 1.8 min = 0.03 h.
+Leg 1 itself is measured: 79.2 min of launcher wall for 543 steps and 10,319,786 tokens, 31.18% of the epoch, from 16:57:47Z to 18:16:57Z. About 2 min of that is start-up before the first step and about 3 min is the final validation pass, JevBench, weights write and payload; the trainer's in-step clock at step 543 reads 4,426 s = 73.8 min. That measures the first half, not the epoch.
 
-The epoch is steps + 8 x 0.18 h + 0.03 h, four terms and no fifth number: at the cumulative 10.1 s per step, 3.05 + 1.44 + 0.03 = 4.52 h; at the 8.24 s last window, 2.49 + 1.44 + 0.03 = 3.96 h. Both totals are estimates until the first evaluation, which lands at step 125 and will replace the 0.18 h figure with a measurement.
+The checkpoint cost is 3.2 to 3.8 min: 192 s at step 250, 223 s at 375 and 230 s at 500. The first checkpoint, at step 125, took about 700 s and is an outlier whose cause is not established; a cold page cache for the first 8.8 GB weights write and the first evaluation's allocator warm-up are the candidates, and that is an inference, not a measurement. Every checkpoint did the full work: eight rank files covering the 41,232 scored validation rows, JevBench on rank 0, and an 8.8 GB weights file. The 13.6-min figure that circulated earlier was not a cost: it was the wall interval between checkpoint files, 931 s between steps 125 and 250 and 803 s between 250 and 375, which contains the training steps in between.
 
-The row cap skips 180 of 69,644 train rows, 0.26%, and 2,169 train rows are masked as `answerable:false`. Every evaluation forwards the 41,232 scored validation rows; 41,871 is the plan's val split before the 639-row `answerable:false` drop, so the two counts are the same population at different stages. The run is executed in two legs of 543 steps with checkpoint evaluation every 125 steps and a resume path. No result exists yet, and every figure in this section is unverified.
+The row cap skips 180 of 69,644 train rows, 0.26%, and 2,169 train rows are masked as `answerable:false`. Every evaluation forwards the 41,232 scored validation rows; 41,871 is the plan's val split before the 639-row `answerable:false` drop, so the two counts are the same population at different stages. The run is executed in two legs of 543 steps with checkpoint evaluation every 125 steps and a resume path. The legs are separate processes: `optimizer_state: fresh`, because `--load-weights` starts AdamW cold and step 544 is not a continuation of step 543. No epoch result exists yet; the epoch wall time remains unverified, while leg 1's 79.2 min, the row-cap counts and the checkpoint cost are measured.
 
 ## 8. Mechanism
 
@@ -106,7 +110,7 @@ Four pieces landed in the working tree in this stretch: checkpoint evaluation, w
 |---|---|---|
 | full-parameter arms, admission outcomes, noise floor, score ceiling, decode | measured; run logs, eval shards and `SUITE_CELLS.json` on the run host, not committed | runs of 2026-11-16, seed 42 |
 | pre-registered score-target reading | unrun; code in the working tree, no result | section 6 |
-| full-corpus scaling | unverified; projection from a step-time measurement, no epoch run | section 7 |
+| full-corpus scaling | partially measured; leg 1 wall time, token shares and checkpoint cost measured, epoch wall time unverified | section 7 |
 | engineering record | in the working tree; not merged at the time of writing | section 9 |
 
 ## Scope
