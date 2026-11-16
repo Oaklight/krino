@@ -41,10 +41,25 @@ from model.training.losses import rps_loss
 FACTOR = 0.25
 
 
+def row_logits(model, tokenizer, row, code_ids, device):
+    """The row's own K code logits, which is what the training loss sees.
+
+    ``code_logits`` scores every code it is given. Passing the global map
+    would score all of them and normalise CE and RPS over a distribution the
+    model is never trained on, which inflates both and the ratio with them.
+    """
+    return code_logits(model, tokenizer, prompt_of(row),
+                       {code: code_ids[code] for code in row.codes}, device)
+
+
 def block(rows, factor: float = FACTOR) -> dict:
     """One population's means and the lambda it implies."""
     ce = sum(row["ce"] for row in rows) / len(rows)
     rps = sum(row["rps"] for row in rows) / len(rows)
+    if rps <= 0:
+        raise SystemExit(
+            f"mean RPS is {rps}; the CE/RPS ratio and lambda are undefined"
+        )
     lam = factor * ce / rps
     return {"n": len(rows), "mean_ce": ce, "mean_rps": rps,
             "ce_over_rps": ce / rps, "lambda": lam,
@@ -55,13 +70,19 @@ def summarise(per_row, factor: float = FACTOR) -> dict:
     return {"overall": block(per_row, factor),
             "by_k": {str(k): block([row for row in per_row if row["k"] == k],
                                    factor)
-                     for k in sorted({row["k"] for row in per_row})}}
+                     for k in sorted({row["k"] for row in per_row})},
+            "by_gold": {str(g): block([row for row in per_row
+                                       if row["gold"] == g], factor)
+                        for g in sorted({row["gold"] for row in per_row})}}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--plan", type=Path, required=True,
-                        help="the plan whose benchmark val score rows to use")
+                        help="the plan whose non-synthetic val score rows to "
+                             "use: every val score row whose source is not "
+                             "synthetic, which includes the typed_decisions "
+                             "and apigen families, not only bench")
     parser.add_argument("--output", type=Path, required=True,
                         help="where to write the probe JSON")
     parser.add_argument("--weights", type=str, default="-",
@@ -89,7 +110,8 @@ def main() -> int:
         freeze=True, flash_attention=False,
     )
     if args.weights != "-":
-        state = torch.load(args.weights, map_location="cpu")
+        state = torch.load(args.weights, map_location="cpu",
+                           weights_only=True)
         model.load_state_dict(state, strict=True)
         print(f"loaded {args.weights}", flush=True)
     code_ids, multi = code_token_ids(tokenizer, CODES, "space")
@@ -101,8 +123,7 @@ def main() -> int:
     per_row = []
     with torch.inference_mode():
         for index, row in enumerate(selected):
-            values = code_logits(model, tokenizer, prompt_of(row), code_ids,
-                                 args.device)
+            values = row_logits(model, tokenizer, row, code_ids, args.device)
             logits = torch.tensor(values, dtype=torch.float32,
                                   device=args.device)
             gold = int(row.gold)

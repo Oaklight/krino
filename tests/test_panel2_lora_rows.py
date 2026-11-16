@@ -941,17 +941,25 @@ def test_the_score_loss_flags_refuse_unmeasured_combinations(tmp_path, monkeypat
     """
     module = importlib.import_module("model.scripts.train_panel2_lora")
     probe = tmp_path / "probe.json"
-    probe.write_text(json.dumps({"overall": {
+    probe.write_text(json.dumps({"factor": 0.25, "overall": {
         "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
         "lambda": 1.25}}))
     bad_ratio = tmp_path / "bad_ratio.json"
-    bad_ratio.write_text(json.dumps({"overall": {
+    bad_ratio.write_text(json.dumps({"factor": 0.25, "overall": {
         "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 6.0,
         "lambda": 1.5}}))
     bad_lambda = tmp_path / "bad_lambda.json"
-    bad_lambda.write_text(json.dumps({"overall": {
+    bad_lambda.write_text(json.dumps({"factor": 0.25, "overall": {
         "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
         "lambda": 1.0}}))
+    no_factor = tmp_path / "no_factor.json"
+    no_factor.write_text(json.dumps({"overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
+        "lambda": 1.25}}))
+    zero_rps = tmp_path / "zero_rps.json"
+    zero_rps.write_text(json.dumps({"factor": 0.25, "overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.0, "ce_over_rps": 0.0,
+        "lambda": 1.25}}))
     base = [
         "train_panel2_lora.py", "--plan", str(tmp_path / "plan.jsonl"),
         "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
@@ -981,6 +989,12 @@ def test_the_score_loss_flags_refuse_unmeasured_combinations(tmp_path, monkeypat
         (["--score-loss", "mix", "--score-cramer-weight", "1.0",
           "--score-cramer-weight-source", str(bad_lambda)],
          "internally inconsistent"),
+        (["--score-loss", "mix", "--score-cramer-weight", "1.25",
+          "--score-cramer-weight-source", str(no_factor)],
+         "records no factor"),
+        (["--score-loss", "mix", "--score-cramer-weight", "1.25",
+          "--score-cramer-weight-source", str(zero_rps)],
+         "mean RPS is"),
     ]
     for extra, match in cases:
         monkeypatch.setattr(sys, "argv", base + extra)
@@ -1004,7 +1018,10 @@ def test_the_lambda_provenance_says_whether_it_was_measured(tmp_path, monkeypatc
     ]
     plan = _write(tmp_path, records)
     probe = tmp_path / "probe.json"
-    probe.write_text(json.dumps({"plan": str(plan), "weights": "-", "overall": {
+    probe.write_text(json.dumps({"plan": str(plan), "weights": "-",
+                                 "factor": 0.25,
+                                 "by_gold": {"0": {"lambda": 0.5}},
+                                 "overall": {
         "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
         "lambda": 1.25}}))
 
@@ -1026,6 +1043,8 @@ def test_the_lambda_provenance_says_whether_it_was_measured(tmp_path, monkeypatc
             "score_cramer_weight_provenance"]
     assert measured["measured"] is True
     assert measured["rows"] == 1111
+    assert measured["factor"] == 0.25
+    assert measured["by_gold"] == {"0": {"lambda": 0.5}}
     assert measured["mean_ce"] == 2.0 and measured["mean_rps"] == 0.4
     assert measured["lambda"] == 1.25
     assert measured["source_sha256"] == module.file_sha256(probe)
@@ -1187,9 +1206,9 @@ def test_the_probe_summarise_reports_the_ratio_and_the_term_share():
 
     from model.scripts.measure_score_cramer import summarise
 
-    rows = [{"k": 5, "ce": 2.0, "rps": 0.5},
-            {"k": 5, "ce": 4.0, "rps": 0.5},
-            {"k": 4, "ce": 3.0, "rps": 1.0}]
+    rows = [{"k": 5, "gold": 0, "ce": 2.0, "rps": 0.5},
+            {"k": 5, "gold": 1, "ce": 4.0, "rps": 0.5},
+            {"k": 4, "gold": 1, "ce": 3.0, "rps": 1.0}]
     summary = summarise(rows)
     overall = summary["overall"]
     assert overall["n"] == 3
@@ -1200,6 +1219,45 @@ def test_the_probe_summarise_reports_the_ratio_and_the_term_share():
     assert overall["rps_term_fraction_of_score_loss"] == pytest.approx(0.2)
     assert summary["by_k"]["5"]["n"] == 2
     assert summary["by_k"]["4"]["lambda"] == pytest.approx(0.75)
+    # The share is heterogeneous by gold position, so the probe reports it
+    # there too: one global lambda cannot make it uniform.
+    assert summary["by_gold"]["0"]["n"] == 1
+    assert summary["by_gold"]["1"]["n"] == 2
+    assert summary["by_gold"]["0"]["ce_over_rps"] == pytest.approx(4.0)
+    assert summary["by_gold"]["1"]["ce_over_rps"] == pytest.approx(14.0 / 3.0)
+
+
+def test_the_probe_scores_only_the_rows_own_codes(tmp_path):
+    """A row's logits must span its own K codes, not the global code list.
+
+    The training loss sees K levels; scoring all codes would normalise CE and
+    RPS over a distribution the model is never trained on and inflate the
+    ratio. The plan here has a 2-option item while the code map holds every
+    code, so passing the global map returns far more than 2 values.
+    """
+    import torch
+
+    from model.scripts.measure_score_cramer import row_logits
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [_record("corpus:k2", option, 1 if option == 0 else 0, "choice",
+                       CHOICE_PREFIX, f"Option {option}.", 2)
+               for option in (0, 1)]
+    rows, _, _ = build_rows(_bytes(tmp_path, records),
+                            plan_unpermuted_noul=True)
+
+    class FakeTokenizer:
+        def __call__(self, text, return_tensors=None, add_special_tokens=False):
+            return {"input_ids": torch.zeros(1, 2, dtype=torch.long)}
+
+    class FakeModel(torch.nn.Module):
+        def forward(self, input_ids=None, **kwargs):
+            return types.SimpleNamespace(logits=torch.zeros(1, 1, 200))
+
+    code_ids = {code: index for index, code in enumerate(module.CODES)}
+    values = row_logits(FakeModel(), FakeTokenizer(), rows[0], code_ids, "cpu")
+    assert len(rows[0].codes) == 2
+    assert len(values) == 2, "the probe must score the row's own K codes"
 
 
 def test_a_resume_without_weights_is_refused(tmp_path, monkeypatch):

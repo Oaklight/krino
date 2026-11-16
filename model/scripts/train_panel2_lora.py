@@ -947,6 +947,23 @@ def main() -> int:
                         f"--score-cramer-weight-source has no overall.{key}; "
                         "it is not a lambda probe output"
                     )
+            factor = probe.get("factor")
+            if factor is None:
+                raise SystemExit(
+                    "--score-cramer-weight-source records no factor; it is "
+                    "what relates its ratio to its lambda"
+                )
+            if not (isinstance(factor, (int, float)) and 0 < factor):
+                raise SystemExit(
+                    f"--score-cramer-weight-source has factor {factor!r}; "
+                    "it must be finite and greater than zero"
+                )
+            if overall["mean_rps"] <= 0:
+                raise SystemExit(
+                    "the probe's mean RPS is "
+                    f"{overall['mean_rps']}; the CE/RPS ratio and lambda are "
+                    "undefined, so the weight was not measured"
+                )
 
             def agrees(left, right):
                 return abs(left - right) <= 1e-6 * max(
@@ -961,11 +978,11 @@ def main() -> int:
                     f"ce_over_rps {overall['ce_over_rps']} is not "
                     f"mean_ce/mean_rps {overall['mean_ce'] / overall['mean_rps']}"
                 )
-            if not agrees(overall["lambda"], 0.25 * overall["ce_over_rps"]):
+            if not agrees(overall["lambda"], factor * overall["ce_over_rps"]):
                 raise SystemExit(
                     "--score-cramer-weight-source is internally inconsistent: "
-                    f"lambda {overall['lambda']} is not 0.25 * ce_over_rps "
-                    f"{0.25 * overall['ce_over_rps']}"
+                    f"lambda {overall['lambda']} is not factor {factor} * "
+                    f"ce_over_rps {overall['ce_over_rps']}"
                 )
             if not agrees(overall["lambda"], args.score_cramer_weight):
                 raise SystemExit(
@@ -980,10 +997,18 @@ def main() -> int:
                 "plan": probe.get("plan"),
                 "weights": probe.get("weights"),
                 "rows": overall["n"],
+                "factor": factor,
                 "mean_ce": overall["mean_ce"],
                 "mean_rps": overall["mean_rps"],
                 "ce_over_rps": overall["ce_over_rps"],
                 "lambda": overall["lambda"],
+                "by_k": probe.get("by_k"),
+                "by_gold": probe.get("by_gold"),
+                "share_note": "the RPS term's share of the score-row loss is "
+                              "lambda*mean_rps/(mean_ce+lambda*mean_rps); it "
+                              "is heterogeneous by gold position, which is a "
+                              "property of mixing CE with a bounded proper "
+                              "scoring rule",
             }
     elif args.score_cramer_weight_source is not None:
         raise SystemExit(
@@ -1070,7 +1095,8 @@ def main() -> int:
         # Only weights are restored. AdamW starts cold, so a resumed leg is
         # not a continuation of the first leg's optimizer state; the payload
         # records optimizer_state: fresh rather than claiming a continuation.
-        state = torch.load(args.load_weights, map_location=device)
+        state = torch.load(args.load_weights, map_location=device,
+                           weights_only=True)
         model.load_state_dict(state, strict=True)
         weights_loaded_sha = file_sha256(args.load_weights)
         print(f"rank {args.rank}: loaded weights {args.load_weights} "
