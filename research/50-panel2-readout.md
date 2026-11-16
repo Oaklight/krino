@@ -72,7 +72,7 @@ The judgement plan of record is built in-repo. Each row carries its true source 
 
 The noul K = 2 stratum is the exception: its deviation stays at 6.7 pp because criteria-bearing noul rows are excluded from the permutation, 1,599 in the full plan and 251 in the a20k sample. The exclusion is deliberate and is recorded here so the residual deviation is not read as a bug.
 
-The plan directory carries `PROVENANCE.json` with the plan shas and their equivalence pairs. Plans are immutable once used, and the handoff between people, hosts and sessions is the versioned path plus its sha. A plan that is edited after use is a new plan and needs a new sha.
+The plan directory on the run host carries `PROVENANCE.json` with the plan shas and their equivalence pairs. It is not in the repository and is not reproducible from main. Plans are immutable once used, and the handoff between people, hosts and sessions is the versioned path plus its sha. A plan that is edited after use is a new plan and needs a new sha.
 
 ## 8. Full fine-tuning status (unverified)
 
@@ -97,7 +97,7 @@ The derived rule is general: nothing that can fail on one rank may run before a 
 | number group | status | source |
 |---|---|---|
 | frozen panel-2 comparison, learning-rate sweep, 2x2, benchmark-only arm, interference, order robustness | measured; run logs and eval shards on the run host, not committed | panel-2 runs of 2026-11-15 and 2026-11-16, seed 42 |
-| data state (source, split, cap, permutation) | measured; plan artifacts in the plan directory with `PROVENANCE.json`, not committed | #381 |
+| data state (source, split, cap, permutation) | measured; plan artifacts and `PROVENANCE.json` sit in the plan directory on the run host, not in the repository and not reproducible from main | #381 |
 | full fine-tuning memory figures | unverified; probe output not retained | single-node memory probe |
 | engineering record | committed | #378 through #384 |
 
