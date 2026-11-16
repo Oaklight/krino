@@ -1854,15 +1854,15 @@ def test_the_payload_records_the_tokens_the_chunks_carried(tmp_path,
     assert len(chunking["real_tokens_per_step"]) == payload["steps_run"]
     assert len(chunking["padded_cost_this_rank"]) == payload["steps_run"]
     pairs = list(zip(chunking["real_tokens_per_step"],
-                     chunking["padded_tokens_per_step"]))
+                     chunking["padded_cost_this_rank"]))
     assert all(padded >= real for real, padded in pairs)
     assert any(padded > real for real, padded in pairs), (
         "the fake tokenizer's uneven lengths must produce some padding")
-    assert chunking["padded_cost_this_rank"] == chunking["padded_tokens_per_step"]
     assert len(chunking["forwards_per_step"]) == payload["steps_run"]
     assert all(count >= 1 for count in chunking["forwards_per_step"])
     assert all(sum(sizes) == 2 for sizes in chunking["chunk_sizes"]), (
         "each step holds two rows, so its chunks must account for two")
+    assert all(rows == 2 for rows in chunking["rows_per_step"])
     assert payload["row_assignment"]["rule"] == "balanced_by_length"
     assert payload["row_assignment"]["digest_this_rank"] is not None
 
@@ -1876,3 +1876,106 @@ def test_chunk_rows_fixes_the_forwards_per_rank():
     assert len(chunk_by_length(rows, counts, 10 ** 6, 1.0)) == 1
     assert len(chunk_by_length(rows, counts, 10 ** 6, 1.0, max_rows=2)) == 4
     assert len(chunk_by_length(rows, counts, 10 ** 6, 1.0, max_rows=1)) == 8
+
+
+def test_the_ratio_branch_splits_a_short_row_from_a_long_one():
+    """100/90/60 at ratio 1.25: 60 splits, 90 stays with 100; 1.0 cannot fire."""
+    from model.scripts.train_panel2_lora import chunk_by_length
+
+    rows = _batch_rows(3, growth=1)
+    counts = {id(rows[0]): 100, id(rows[1]): 90, id(rows[2]): 60}
+    chunks = chunk_by_length(rows, counts, 10 ** 6, 1.25)
+    assert [[counts[id(row)] for row in chunk] for chunk in chunks] == [
+        [100, 90], [60]]
+    assert len(chunk_by_length(rows, counts, 10 ** 6, 1.0)) == 1
+
+
+def test_a_balanced_step_trains_the_strided_batches_union():
+    """The deal's rows are the strided step's rows, wrapped the same way.
+
+    Ten rows over four ranks: shards of 3, 3, 2 and 2. On step 2 the shards
+    wrap by their own lengths, so the union holds rows the global slice of the
+    same size would not; a balanced run that trained a global window would be
+    a different step on the wrapped step and nowhere else.
+    """
+    from model.scripts.train_panel2_lora import balanced_step_batch, batch_indices
+
+    rows = _batch_rows(10, growth=3)
+    counts = {id(row): len(row.texts[0]) + len(row.texts[1]) for row in rows}
+    for step in (1, 2):
+        expected = []
+        for other in range(4):
+            shard = rows[other::4]
+            expected.extend(shard[index] for index in
+                            batch_indices(step, 2, len(shard)))
+        union = []
+        for rank in range(4):
+            union.extend(balanced_step_batch(step, rows, rank, 4, 2, counts))
+        assert len(union) == 8
+        assert sorted(row.row_id for row in union) == sorted(
+            row.row_id for row in expected)
+
+
+def test_the_recorded_step_loss_uses_the_gradient_divisor(tmp_path,
+                                                          monkeypatch):
+    """One step, two ranks, an uneven deal: the loss divides by nominal rows.
+
+    Rank 0 is dealt one long row and rank 1 the three short ones. Divided by
+    the nominal two rows the recorded losses are ln2/2 and 3*ln2/2; divided by
+    each rank's own row count they would both be ln2, the mean of per-rank
+    means that the fixed divisor exists to avoid.
+    """
+    import torch
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    specs = [("long", CHOICE_PREFIX + "x" * 600), ("s1", CHOICE_PREFIX),
+             ("s2", CHOICE_PREFIX), ("s3", CHOICE_PREFIX)]
+    records = [
+        _record(f"corpus:{name}", option, 1 if option == 0 else 0, "choice",
+                prefix, f"Option {option}.", 2)
+        for name, prefix in specs for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    class WidthTokenizer:
+        """One token per character, so the long prefix is a long prompt."""
+
+        def __call__(self, text, return_tensors=None, padding=False,
+                     add_special_tokens=False):
+            texts = [text] if isinstance(text, str) else list(text)
+            width = max(len(item) for item in texts)
+            ids = [[1] * len(item) + [0] * (width - len(item)) for item in texts]
+            mask = [[1] * len(item) + [0] * (width - len(item)) for item in texts]
+            if return_tensors is None:
+                single = isinstance(text, str)
+                return {"input_ids": ids[0] if single else ids,
+                        "attention_mask": mask[0] if single else mask}
+            return {"input_ids": torch.tensor(ids),
+                    "attention_mask": torch.tensor(mask)}
+
+    fake, _ = module.load_causal_lm("unused", device="cpu", dtype=None)
+    monkeypatch.setattr(module, "load_causal_lm",
+                        lambda *a, **k: (fake, WidthTokenizer()))
+
+    def run(rank, balance):
+        argv = [
+            "train_panel2_lora.py", "--plan", str(plan),
+            "--output", str(tmp_path / f"out{rank}{balance}"), "--world", "2",
+            "--rank", str(rank), "--device", "cpu", "--lr", "0", "--epochs", "1",
+            "--batch-rows", "2", "--plan-unpermuted-noul",
+            "--frozen-loss-sample", "1",
+        ]
+        if balance:
+            argv.append("--balance-rows")
+        monkeypatch.setattr(sys, "argv", argv)
+        assert module.main() == 0
+        payload = json.loads(
+            (tmp_path / f"out{rank}{balance}" / f"shard_{rank}.json").read_text())
+        return payload["epoch_mean_loss"]
+
+    value = math.log(2.0)
+    paired = sorted(run(rank, True) for rank in (0, 1))
+    assert paired == pytest.approx([value / 2, 3 * value / 2], rel=1e-6)
+    strided = [run(rank, False) for rank in (0, 1)]
+    assert strided == pytest.approx([value, value], rel=1e-6)

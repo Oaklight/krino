@@ -375,13 +375,16 @@ def chunk_by_length(rows, token_counts, budget: int,
 
     ``max_rows`` caps the rows in a chunk independently of the token budget,
     which is the knob a cost fit needs: it fixes the forwards per rank while
-    the rows' tokens stay where they were.
+    the rows' tokens stay where they were. ``ratio`` must exceed 1 to split at
+    all; at 1.0 the test can never fire, so 1.0 leaves only the budget and the
+    row cap to decide the chunks.
     """
     ordered = sorted(rows, key=lambda row: (-token_counts[id(row)], row.row_id))
     chunks, current, total, longest = [], [], 0, 0
     for row in ordered:
         width = token_counts[id(row)]
-        if current and (total + width > budget or width * ratio < longest
+        if current and (total + width > budget
+                        or (ratio > 1.0 and width * ratio < longest)
                         or (max_rows and len(current) >= max_rows)):
             chunks.append(current)
             current, total, longest = [], 0, 0
@@ -428,6 +431,24 @@ def chunk_code_logits(model, tokenizer, rows, code_ids, device, encoded=None):
     picked = logits[torch.arange(len(rows), device=device), last].float()
     return [torch.stack([picked[index][code_ids[code]] for code in row.codes])
             for index, row in enumerate(rows)]
+
+
+def balanced_step_batch(step, train_rows, rank, world, batch_rows,
+                        token_counts):
+    """The rows this rank trains at ``step`` under the balanced rule.
+
+    The union is built from the ranks' strided batches, so the step trains
+    exactly the rows the strided loop would and only the placement changes. A
+    global slice would wrap the last step differently: ``batch_indices`` wraps
+    each shard by its own length, and the shards differ by a row when the plan
+    is not divisible by the world.
+    """
+    union = []
+    for other in range(world):
+        other_shard = train_rows[other::world] if world > 1 else train_rows
+        union.extend(other_shard[index] for index in
+                     batch_indices(step, batch_rows, len(other_shard)))
+    return deal_rows(union, token_counts, world)[rank]
 
 
 def chunk_loss(chunk, values, row_loss_of, nominal_rows: int):
@@ -1394,10 +1415,10 @@ def main() -> int:
     # dealt. They are per-step lists so a reader can see the distribution, not
     # only a total.
     real_tokens: list = []
-    padded_tokens: list = []
     padded_cost: list = []
     forwards_per_step: list = []
     chunk_sizes: list = []
+    rows_per_step: list = []
     assignment_ids: list = []
     if not args.eval_only:
         if (args.max_row_tokens or args.balance_rows or args.chunk_tokens
@@ -1466,13 +1487,9 @@ def main() -> int:
                     synchronise(device)
                     step_started = time.perf_counter()
                 if args.balance_rows:
-                    # The step's rows are the same 64 whether they are dealt
-                    # or strided; the deal only decides who holds them.
-                    window = [
-                        train_rows[((step - 1) * args.world * args.batch_rows
-                                    + index) % len(train_rows)]
-                        for index in range(args.world * args.batch_rows)]
-                    batch = deal_rows(window, token_counts, args.world)[args.rank]
+                    batch = balanced_step_batch(step, train_rows, args.rank,
+                                                args.world, args.batch_rows,
+                                                token_counts)
                     assignment_ids.extend(row.row_id for row in batch)
                 else:
                     batch = [shard[index]
@@ -1484,6 +1501,13 @@ def main() -> int:
                 optimizer.zero_grad(set_to_none=True)
                 losses = []
                 chunked = bool(args.chunk_tokens or args.chunk_rows)
+                # The divisor is the step's nominal rows per rank, so a balanced
+                # step is the mean over all 64 rows rather than the mean of the
+                # ranks' means: the deal gives ranks unequal row counts on a
+                # step, and averaging per-rank means would weight a rank with
+                # more rows as much as one with fewer.
+                divisor = args.batch_rows if args.balance_rows else len(batch)
+                step_terms = 0.0
                 if chunked:
                     chunks = chunk_by_length(batch, token_counts,
                                              args.chunk_tokens,
@@ -1517,20 +1541,17 @@ def main() -> int:
                             synchronise(device)
                             profile["forward"] += (time.perf_counter()
                                                    - started_phase)
-                        total = None
                         for row, row_values in zip(chunk, values):
                             term = row_loss(row, row_values)
                             entry = epoch_block.setdefault(row.q_type,
                                                            [0.0, 0])
                             entry[0] += float(term.detach())
                             entry[1] += 1
-                            losses.append(float(term.detach()))
+                            step_terms += float(term.detach())
                         # One backward per chunk: its summed row losses over
-                        # the step's nominal rows per rank. The divisor is
-                        # fixed, so moving a row between chunks or between
-                        # ranks cannot change the step's gradient.
-                        loss = chunk_loss(chunk, values, row_loss,
-                                          args.batch_rows)
+                        # the fixed divisor, so moving a row between chunks or
+                        # between ranks cannot change the step's gradient.
+                        loss = chunk_loss(chunk, values, row_loss, divisor)
                         if profile is None:
                             loss.backward()
                         else:
@@ -1541,21 +1562,17 @@ def main() -> int:
                             profile["backward"] += (time.perf_counter()
                                                     - started_phase)
                     real_tokens.append(real_this_step)
-                    padded_tokens.append(padded_this_step)
                     padded_cost.append(padded_this_step)
                     forwards_per_step.append(forwards_this_step)
                 else:
                     for chunk in chunks:
                         for row in chunk:
                             term = loss_of(row, profile)
-                            loss = term / len(batch)
-                            # Per-type sums, unscaled: the same loss scaled by
-                            # the batch size, so the block means are per-row
-                            # means and the reweighting compares like with like.
+                            loss = term / divisor
                             entry = epoch_block.setdefault(row.q_type, [0.0, 0])
                             entry[0] += float(term.detach())
                             entry[1] += 1
-                            losses.append(float(term.detach()))
+                            step_terms += float(term.detach())
                             if profile is None:
                                 loss.backward()
                             else:
@@ -1565,6 +1582,11 @@ def main() -> int:
                                 synchronise(device)
                                 profile["backward"] += (time.perf_counter()
                                                         - started_phase)
+                # The recorded step loss is the same quantity the gradient was
+                # formed from, on the same divisor, so the log and the stop
+                # rule cannot disagree with what was optimised.
+                losses.append(step_terms / divisor)
+                rows_per_step.append(len(batch))
                 if args.world > 1:
                     if profile is not None:
                         synchronise(device)
@@ -1722,6 +1744,19 @@ def main() -> int:
             "unaccounted_covers": "batch gather, warmup lr update, zero_grad, "
                                   "chunk split, per-row loss bookkeeping",
             "skipped_rows_this_rank": skipped_over_cap,
+            # The per-step records and the chunk accounting, so a cost fit can
+            # take both regressors from the same artifact as the timings.
+            "steps": phase_records,
+            "chunking_this_rank": ({
+                "tokens": args.chunk_tokens,
+                "rows": args.chunk_rows,
+                "length_ratio": args.chunk_ratio,
+                "real_tokens_per_step": real_tokens,
+                "padded_cost_this_rank": padded_cost,
+                "forwards_per_step": forwards_per_step,
+                "chunk_sizes": chunk_sizes,
+                "rows_per_step": rows_per_step,
+            } if (args.chunk_tokens or args.chunk_rows) else {"tokens": 0}),
         }
         # One file per rank: every rank runs this block, and a shared name let
         # them overwrite each other, leaving a torn file that parses as neither.
@@ -1787,13 +1822,15 @@ def main() -> int:
                    "rows": args.chunk_rows,
                    "length_ratio": args.chunk_ratio,
                    "real_tokens_per_step": real_tokens,
-                   "padded_tokens_per_step": padded_tokens,
                    "padded_cost_this_rank": padded_cost,
                    "forwards_per_step": forwards_per_step,
                    "chunk_sizes": chunk_sizes,
-                   "padding_note": ("padded_tokens counts every row of a chunk at "
-                                    "the chunk's longest; the pads are masked out "
-                                    "of the loss but paid for in the forward"),
+                   "rows_per_step": rows_per_step,
+                   "padding_note": ("padded_cost_this_rank counts every row of a "
+                                    "chunk at the chunk's longest; the pads are "
+                                    "masked out of the loss but paid for in the "
+                                    "forward. A cross-rank total is formed from "
+                                    "the eight payloads, not by a collective."),
                } if (args.chunk_tokens or args.chunk_rows) else {"tokens": 0},
                "eval_every": args.eval_every,
                "phase_profile_steps": args.phase_profile,
