@@ -16,13 +16,13 @@ LoRA is off and every parameter is trainable, with activation checkpointing on.
 | 2e-5 | 0.6845 | 163 | 159 | 161.0 | 0.9048 | 1 | 0.3596 | 0.1286 / 0.1253 / 0.3691 |
 | 5e-5 | 0.5536 | 131 | 128 | 129.5 | 0.7835 | 0 | 0.1348 | +0.127 / +0.148 over frozen |
 
-The ECE column is absolute for the first two arms and a change over frozen for 5e-5, where the deltas are noul +0.127 (0.2679 against 0.1406) and score +0.148 (0.3752 against 0.2269). The choice cell is 0.0770 against frozen 0.2787, a 0.202 improvement, so it is the one ECE cell that improves and it is not a positive delta. The frozen ECE on the same rows is noul 0.1406, choice 0.2787 and score 0.2269.
+The ECE column is absolute for the first two arms and a change over frozen for 5e-5, where the deltas are noul +0.127 (0.2679 against 0.1406) and score +0.148 (0.3752 against 0.2269). The choice cell is 0.0770 against frozen 0.2787, a 0.202 improvement, so it is the one ECE cell that improves and it is not a positive delta. The frozen ECE on the same rows is noul 0.1406, choice 0.2787 and score 0.2269. Every ECE cell in this note is held unverified: the calibration-bin filter on #387 is `source != "synthetic"`, which covers roughly 10,540 rows against the 9,923-row comparator, and the run owner has not yet confirmed which path produced these cells. If they came through the filter, they are recomputed or withdrawn.
 
 The sweet spot is narrow. 1e-5 and 2e-5 both beat frozen on benchmark val by more than 11 pp and on JevBench by 2 to 4 items averaged; 5e-5 is a collapse on every measure. Between the two good arms the choice is not made by val, which is 0.0012 apart, but by the per-cell ECE: 1e-5 is better on all three cells than both 2e-5 and frozen, and 2e-5 is worse than frozen on score.
 
 ## 2. Admission suite outcomes
 
-The suite now has measured floors, all taken from the frozen readout on the same rows.
+The suite now has measured floors, all taken from the frozen readout on the same rows. The frozen row is natural 162/231, reversed 156/231, averaged 159.0; val 5,652/9,923 = 0.5696; agreement 178/231 = 0.7706 with 3 exact ties; K = 80 at 116/445 = 0.2607; ECE noul / choice / score at 0.1406 / 0.2787 / 0.2269.
 
 | measure | frozen | floor |
 |---|---:|---:|
@@ -30,7 +30,7 @@ The suite now has measured floors, all taken from the frozen readout on the same
 | natural-versus-reversed agreement | 0.7706 (178/231) | at least 0.7206 |
 | benchmark val, 9,923 rows | 0.5696 (5,652) | at least 0.5596 |
 | K = 80 exact | 0.2607 (116/445) | at least 0.2407 |
-| ECE, per cell | 0.1406 / 0.2787 / 0.2269 | at most frozen + 0.02 |
+| ECE, per cell | 0.1406 / 0.2787 / 0.2269 | at most 0.1606 / 0.2987 / 0.2469 |
 
 The val gate is applied against 5,652/9,923 = 0.5696, the frozen cell count. The 0.5697 quoted as a reference elsewhere is that cell rounded up, not a second measurement, and this note uses the count; the floor is therefore 0.5596.
 
@@ -43,10 +43,10 @@ Seven are rejected, each for the gate that ended it.
 | LoRA v3, 1e-4 | averaged JevBench 149.0 against 156.0; agreement 0.6104 against 0.7206 |
 | benchmark-only, 3e-5 | averaged JevBench 155.5 against 156.0 |
 | benchmark-only, 1e-4 | averaged JevBench 154.5 against 156.0 |
-| LoRA old plan, 3e-5 | val 0.5510 against 0.5596 |
-| LoRA v3, 3e-4 | JevBench, val, agreement, and K = 80 at 0.0382 |
-| full FT, 2e-5 | score ECE 0.3691, 0.142 over frozen |
-| full FT, 5e-5 | every gate |
+| LoRA old plan, 3e-5 | val 0.5510 against 0.5596; agreement 0.7186 against 0.7206 |
+| LoRA v3, 3e-4 | averaged JevBench 150.0, val 0.4956, agreement 0.5498, K = 80 0.0382; ECE unmeasured |
+| full FT, 2e-5 | score ECE 0.3691, 0.142 over frozen, and nothing else |
+| full FT, 5e-5 | averaged 129.5, val 0.5536, noul ECE 0.2679, score ECE 0.3752, K = 80 0.1348 |
 
 The rejections are the useful half of the suite: each names the measure that ended the arm, so a later recipe can be aimed at a specific gate rather than at the aggregate.
 
@@ -62,7 +62,7 @@ On the 1,111 benchmark score rows, the panel-2 arms land between 0.4662 and 0.49
 
 The benchmark-only arm's lead over frozen on these rows is significant: 52 lost against 87 gained, exact McNemar p = 0.00377. Per K it is positive but not individually significant: K = 4 is 18 against 31 with p = 0.085, K = 5 is 19 against 31 with p = 0.119, K = 6 is 15 against 25 with p = 0.154.
 
-The direct data-version pair at the same learning rate sharpens the reading. v3 at 1e-4 against benchmark-only at 1e-4 on the same rows is 72 against 103, exact McNemar p = 0.0231; at 3e-5 it is 41 against 51, p = 0.348. Full fine-tuning at 1e-5 against frozen is 225 against 237, p = 0.609, so the full-parameter score movement is noise. On score rows the significant effect is the data version, not capacity.
+The direct data-version pair at the same learning rate sharpens the reading. v3 at 1e-4 against benchmark-only at 1e-4 on the same rows is 72 against 103, exact McNemar p = 0.0231; at 3e-5 it is 41 against 51, p = 0.348. Full fine-tuning at 1e-5 against frozen is 225 against 237, p = 0.609, so the full-parameter score movement is noise. On score rows the significant effect is the data version, not capacity: capacity does not move score, and the synthetic share costs about 31 net items at 1e-4 (103 against 72).
 
 The caveat is that benchmark-only at 1e-4 is not an admissible arm: its averaged JevBench is 154.5 against the 156.0 floor. The finding is a mechanism result about synthetic rows, not a shippable arm.
 
@@ -82,7 +82,7 @@ The reading is pre-registered: exact accuracy on the 1,111 rows improves at p < 
 
 Step time is 11.5 s, the median of four measured windows over two 50-step runs on this row mix: the run averages are 11.46 and 11.56 s, the steady-state window from steps 25 to 50 is 10.5 s in both, and the first window is 12.5 s because it carries start-up. The 8.17 s figure measures the same trainer on the a20k plan in the weights run, a shorter row mix, and is not the cost of a full-corpus epoch step. One epoch is 1,086 steps, so 1,086 x 11.5 s = 12,489 s = 3.47 h of steps.
 
-A checkpoint evaluation costs 11.5 min. The weights run took 54 min, of which 303 steps at 8.17 s per step is 41.4 min, leaving 12.6 min for loading and the 41,871-row validation pass plus 462 JevBench forwards. Eight checkpoints therefore add 1.53 h, and the epoch projects to 5.0 h with eight evaluations, or 3.5 h with none.
+The three terms multiply out as follows. Steps: 1,086 x 11.5 s = 12,489 s = 3.47 h. Checkpoint evaluations: 8 x 11.5 min = 92 min = 1.53 h. Loading and resume overhead: about 0.03 h. Total 5.03 h, rounded to 5.0 h; with no checkpoint evaluations the epoch is 3.5 h. The 11.5 s figure is the measured step time over the two 50-step windows, not the steady-state 10.5 s, because the first window is part of a real epoch. A checkpoint evaluation's 11.5 min is derived from the weights run, which took 54 min: 303 steps at 8.17 s is 41.4 min, leaving 12.6 min for loading and the 41,871-row validation pass plus 462 JevBench forwards.
 
 The row cap skips 180 of 69,644 train rows, 0.26%, and 2,169 rows are masked as `answerable:false`. The run is executed in two legs of 543 steps with checkpoint evaluation every 125 steps and a resume path. No result exists yet, and every figure in this section is unverified.
 
