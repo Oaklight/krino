@@ -716,6 +716,40 @@ def test_a_pin_mismatch_is_judged_after_the_gather(tmp_path, monkeypatch):
     assert len(calls) == 1, "the gather must run before the pin is judged"
 
 
+def test_eval_every_writes_a_checkpoint_before_the_last_step(tmp_path, monkeypatch):
+    """A long run must produce a curve, not one number at the end.
+
+    Six rows at two per step is three steps; --eval-every 1 records steps 1
+    and 2 and leaves step 3 to the regular final payload, which scores the
+    same rows. Removing the call leaves no checkpoint file and this fails.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:c{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--eval-every", "1",
+    ])
+    assert module.main() == 0
+    out = tmp_path / "out"
+    assert (out / "checkpoint_1_shard_0.json").exists()
+    assert (out / "checkpoint_2_shard_0.json").exists()
+    assert not (out / "checkpoint_3_shard_0.json").exists(), (
+        "the last step is scored by the final payload, not a checkpoint")
+    record = json.loads((out / "checkpoint_1_shard_0.json").read_text())
+    assert record["step"] == 1
+    assert record["ece_bins_population"] == "benchmark"
+    assert "jevbench" in record
+
+
 def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
     import torch.distributed as dist
 

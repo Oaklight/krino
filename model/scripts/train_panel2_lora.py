@@ -626,6 +626,17 @@ def main() -> int:
             "use with --eval-only to score a saved arm"
         ),
     )
+    parser.add_argument(
+        "--eval-every",
+        type=int,
+        default=0,
+        help=(
+            "score benchmark val and the 231 items every N steps and write "
+            "checkpoint_<step>_shard_<rank>.json; with --save-weights the "
+            "weights at that step are saved too, so a longer run produces a "
+            "curve and its best point can be kept rather than the last"
+        ),
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--epochs", type=int, default=1)
@@ -737,6 +748,53 @@ def main() -> int:
             args.rank, args.world, device)
         print(f"rank {args.rank}: frozen sample CE {frozen_mean:.4f}", flush=True)
 
+    args.output.mkdir(parents=True, exist_ok=True)
+
+    # The rank's stride of the val split, fixed before training so a periodic
+    # checkpoint scores the same rows the final pass does.
+    val_source = "val"
+    val_shard = val_rows[args.rank :: args.world] if args.world > 1 else val_rows
+    if not val_shard:
+        # A plan without an internal split (the v2 authoritative plan) has no
+        # val rows; an eval-only smoke then uses the head of the train rows.
+        # The payload says so, so the number cannot be read as an estimate.
+        val_source = "train_head"
+        val_shard = train_rows[args.rank :: args.world]
+    if args.val_limit:
+        val_shard = val_shard[: args.val_limit]
+
+    def evaluate_checkpoint(step):
+        """Score one in-training checkpoint and record it with its weights.
+
+        A long run is not trusted to its last step: the same lr that helped at
+        303 LoRA steps destroyed a run at more, so the curve and the per-step
+        weights are what let the best point be kept instead of the last. Ranks
+        evaluate their own stride and no collective runs here; rank 0 also
+        scores the 231 items and writes the weights, and the other ranks wait
+        for it in the next step's gradient reduce.
+        """
+        counts, per_item, bins = evaluate(model, tokenizer, val_shard,
+                                          code_ids, device)
+        record = {"step": step, "rank": args.rank, "val_counts": counts,
+                  "val_items": per_item, "ece_bins": bins,
+                  "ece_bins_population": "benchmark", "val_source": val_source,
+                  "weights_path": None, "weights_sha256": None,
+                  "weights_bytes": None}
+        if args.rank == 0:
+            record["jevbench"] = evaluate_jevbench(model, tokenizer, code_ids,
+                                                   device)
+            if args.save_weights:
+                path = args.output / f"weights_step{step}.pt"
+                torch.save({key: value.detach().cpu()
+                            for key, value in model.state_dict().items()}, path)
+                record["weights_path"] = str(path)
+                record["weights_sha256"] = file_sha256(path)
+                record["weights_bytes"] = path.stat().st_size
+        out = args.output / f"checkpoint_{step}_shard_{args.rank}.json"
+        out.write_text(json.dumps(record))
+        print(f"rank {args.rank}: checkpoint step {step} "
+              f"benchmark {counts.get('all')}", flush=True)
+
     history = []
     reduce_seconds = 0.0
     skipped_over_cap = 0
@@ -805,6 +863,9 @@ def main() -> int:
                     print(f"rank {args.rank}: epoch {epoch} step {step}/{steps} "
                           f"loss {mean:.4f} elapsed {time.time() - started:.0f}s",
                           flush=True)
+                if (args.eval_every and step % args.eval_every == 0
+                        and step != steps):
+                    evaluate_checkpoint(step)
             epoch_mean = sum(history[-steps:]) / steps
             if args.world > 1:
                 # The stop decision must be identical on every rank, or the ones
@@ -830,17 +891,7 @@ def main() -> int:
                 stopped = True
                 break
 
-    # Validation on the rank's stride of the val split.
-    val_source = "val"
-    val_shard = val_rows[args.rank :: args.world] if args.world > 1 else val_rows
-    if not val_shard:
-        # A plan without an internal split (the v2 authoritative plan) has no
-        # val rows; an eval-only smoke then uses the head of the train rows.
-        # The payload says so, so the number cannot be read as an estimate.
-        val_source = "train_head"
-        val_shard = train_rows[args.rank :: args.world]
-    if args.val_limit:
-        val_shard = val_shard[: args.val_limit]
+    # Validation on the same stride the periodic checkpoints scored.
     counts, per_item, ece_bins = evaluate(model, tokenizer, val_shard,
                                           code_ids, device)
     payload = {"rank": args.rank, "lr": args.lr, "val_counts": counts,
@@ -855,6 +906,7 @@ def main() -> int:
                "eval_plan_sha256": eval_plan_sha,
                "eval_plan_sha256_expected": args.eval_plan_sha256,
                "full_ft": args.full_ft, "grad_bucket_mb": args.grad_bucket_mb,
+               "eval_every": args.eval_every,
                "max_batch_tokens": args.max_batch_tokens,
                "warmup_fraction": args.warmup_fraction,
                "gradient_checkpointing": args.gradient_checkpointing,
