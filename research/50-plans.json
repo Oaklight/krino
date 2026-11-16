@@ -1,0 +1,50 @@
+{
+  "note": "50-panel2-readout.md",
+  "description": "Plan versions used by the runs in note 50. Path-free: only the sha256 and a one-line description. Full plan records and PROVENANCE.json sit in the plan directory on the run host, outside the repository.",
+  "plans": [
+    {
+      "sha256": "f369be84ca3af9061a7f2188584d1a482f5a416e998fc64466f31fb1b4a2d858",
+      "description": "v3 cap-6 full plan, 130,701 rows / 677,369 prompts"
+    },
+    {
+      "sha256": "fa83a43f11d33518eddd60820a2c14a576ab9ad551145c7506c90a933f6d4abf",
+      "description": "v3 cap-6 a20k row subset of the full plan, permuted options, per-row gold slot"
+    },
+    {
+      "sha256": "6388641e49a6d034e06b52d9fb4feac4e2c0fdaacbcdfa0e055bdfae02c0f334",
+      "description": "v3 cap-6 full plan of record after the rebuild"
+    },
+    {
+      "sha256": "e191cd4cda93d25f8cb347902995377389decf285106813090be1b29edc1c844",
+      "description": "v3 cap-6 a20k of record after the rebuild"
+    },
+    {
+      "sha256": "6dd503cc97276921f7248ee64e624ab86d98df1857c2deaa212821fc7366e566",
+      "description": "v2 authoritative plan restricted to the v3 a20k's 20,000 row ids, pre-permutation option order and gold slot"
+    },
+    {
+      "sha256": "e5c8faeb631edd4b62c040a494fec92ce3bf741cbbc3689507d8f639aa18d001",
+      "description": "v2 authoritative full plan, parent of the restricted plan above"
+    },
+    {
+      "sha256": "e7f52e8b2cefac5d1b94085d20a1c4f87510e142096778c1c7298ed84f2aa630",
+      "description": "v3 a20k minus its synthetic-source rows"
+    }
+  ],
+  "equivalence_pairs": [
+    {
+      "pair": [
+        "f369be84ca3af9061a7f2188584d1a482f5a416e998fc64466f31fb1b4a2d858",
+        "6388641e49a6d034e06b52d9fb4feac4e2c0fdaacbcdfa0e055bdfae02c0f334"
+      ],
+      "reason": "identical on every field except the added polarity key"
+    },
+    {
+      "pair": [
+        "fa83a43f11d33518eddd60820a2c14a576ab9ad551145c7506c90a933f6d4abf",
+        "e191cd4cda93d25f8cb347902995377389decf285106813090be1b29edc1c844"
+      ],
+      "reason": "identical on every field except the added polarity key"
+    }
+  ]
+}

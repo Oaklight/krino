@@ -8,11 +8,11 @@ Every number below uses Qwen3-Reranker-4B as the backbone, at most 4,096 tokens 
 
 ## 1. Mainline switch
 
-The panel-2 vocabulary readout scores an item in one forward: the model reads the item once, and the decision is the argmax over the declared single-token code ids for the options. The judgement readout needs one plus K forwards per item, one per option, and contrasts the yes and no margins. On the same frozen backbone and the same 231 corrected-label items, panel-2 is 162/231, chance-corrected accuracy (cc) 0.5623, with easy 48/48, hard 52/111 and original 62/72, against judgement 149/231 and cc 0.4798. The paired difference is 13 items, exact McNemar p = 0.0725.
+The panel-2 vocabulary readout scores an item in one forward: the model reads the item once, and the decision is the argmax over the declared single-token code ids for the options. The judgement readout needs one plus K forwards per item, one per option, and contrasts the yes and no margins. On the same frozen backbone and the same 231 corrected-label items, panel-2 is 162/231, chance-corrected accuracy (cc) 0.5623, with easy 48/48, hard 52/111 and original 62/72, against judgement 149/231 and cc 0.4798. The paired difference is 13 items, exact McNemar p = 0.0725, with 29 discordant pairs in one direction and 16 in the other. The 149/231 judgement cell is the earlier note's re-score pass; the in-process pass inside the evaluator reads 150/231 on the same items, and section 3 pairs its judgement arms against that 150. Every cell in this note names the pass it comes from.
 
-The gain is entirely in choice items: panel-2 is 102/139 against judgement 80/139, a paired net of +13 with exact McNemar p = 0.0192. The noul and score cells are flat.
+The gain is entirely in choice items: panel-2 is 102/139 against frozen judgement 89/139, a paired net of +13 with exact McNemar p = 0.0192 on 20/7 discordant pairs. Non-choice is net-flat at 60 against 60: noul 48/74 against 47/74, a gain of 1, and score 12/18 against 13/18, a loss of 1. The per-type cells come from the same frozen judgement pass as the 149 total.
 
-Order robustness at the frozen readout is already imperfect. Scoring the same items with the option list natural and then reversed gives 162 and 156 correct, the same choice in 178/231 items, and 3 exact ties. Two of the three figures bear on the later sections: the 178 agreement is the frozen baseline for section 6, and the 3 ties are its starting point.
+Order robustness at the frozen readout is already imperfect. Scoring the same items with the option list natural and then reversed gives 162 and 156 correct, the same choice in 178/231 items, and 3 exact ties. The order average of the frozen panel-2 readout is 159/231. The reversed 156 and the 178 agreement come from the run report and have no committed per-item file behind them: the committed reverse-order artifact scores 157 and cannot yield the agreement cell, and the order-comparison file in the repository is shipped-versus-canonical, not natural-versus-reversed. Both cells are marked unverified, and the averaged 159 inherits that status. Two figures still bear on the later sections: the 178 agreement is the frozen baseline for section 6, and the 3 ties are its starting point.
 
 ## 2. Training recipe
 
@@ -28,20 +28,22 @@ Learning rate dominates every other choice, and the response is non-monotone.
 | 1e-3 | 96/231 | 4,083/9,923 = 0.4115 | 7.2e-127 |
 | 3e-3 | stopped by the loss rule | — | — |
 
-All p-values in the table are exact McNemar on the 9,923 paired rows. The sign change is the finding: at 3e-5 and 1e-4 the trained readout improves benchmark validation significantly while JevBench stays at its frozen level; at 3e-4 and above both collapse. A recipe that optimises on-distribution accuracy and a recipe that preserves the JevBench proxy are therefore not the same parameter region, and the frozen-to-trained comparison alone does not say which region an arm is in.
+All p-values in the table are exact McNemar on the 9,923 paired rows, with b the rows the frozen readout gets right and the trained readout gets wrong and c the reverse. The discordant pairs are b/c = 244/369 at 3e-5, 691/999 at 1e-4, 1,991/1,257 at 3e-4 and 2,974/1,405 at 1e-3. Only 3e-5 has c > b; the other three are losses with b well above c. The sign change is the finding. The two low learning rates part company on JevBench: 3e-5 scores 161 against the frozen 162, one item below and admissible; 1e-4 scores 152, ten below, and fails the veto despite having the best benchmark val of any arm at 0.6006. At 3e-4 and 1e-3 both measures collapse. That contrast is the case for the veto: the arm with the highest on-distribution accuracy is the one that loses the proxy by ten items, so a recipe that optimises on-distribution accuracy and a recipe that preserves the proxy are not the same parameter region, and the frozen-to-trained comparison alone does not say which region an arm is in.
 
 ## 3. The 2x2
 
-The readout and the data version were crossed at two learning rates, with 303 steps, the same seed and the same evaluation.
+The readout and the data version were crossed at two learning rates, with 303 steps, the same seed and the same evaluation. The frozen comparisons use the in-process pass, 150/231 for judgement and 162/231 for panel-2.
 
-| readout | data | 3e-5 | 1e-4 |
-|---|---|---:|---:|
-| judgement | v3 corrected | 149 | 148 |
-| judgement | old pre-permutation | 149 | 151 |
-| panel-2 | v3 corrected | 161 | 152 |
-| panel-2 | old pre-permutation | 160 | 158 |
+| readout | data | 3e-5 | 1e-4 | 3e-4 |
+|---|---|---:|---:|---:|
+| judgement | v3 corrected | 148 | 148 | 154 |
+| judgement | old pre-permutation | 149 | 151 | — |
+| panel-2 | v3 corrected | 161 | 152 | 152 |
+| panel-2 | old pre-permutation | 160 | 158 | — |
 
-Across the four matched cells the readout effect is +12, +4, +11 and +7 items, and the data effect is 0, -3, +1 and -6. The readout carries the gain; the data fixes carry none on these 231 items, although they move benchmark val by 3 to 4 pp in the same runs. A 231-item JevBench cell is therefore insensitive to data repairs that the 9,923-row validation set registers.
+Readout effect at matched data and learning rate: frozen +12, v3 +13 at 3e-5, +4 at 1e-4 and -2 at 3e-4, old +11 at 3e-5 and +7 at 1e-4. Data effect: judgement -1 and -3, panel-2 +1 and -6. The readout carries the gain; the data fixes carry none on these 231 items, although they move benchmark val by 3 to 4 pp in the same runs. A 231-item JevBench cell is therefore insensitive to data repairs that the 9,923-row validation set registers. At 3e-4 the readout effect reverses to -2, so the readout advantage belongs to the low-learning-rate region, not to the readout on its own.
+
+The three judgement cells at 3e-5 are three separate runs and they do not all read the same. The frozen in-process pass is 150; the judgement arm on v3 a20k (run judgement_v3_a20k_lr3e-5, plan fa83a43f) is 148; the judgement arm on old a20k (run judgement_old_a20k_lr3e-5, plan 6dd503cc) is 149. The committed 149/231 frozen cell from the earlier note is a separate re-score pass on the same items, not a trained arm, and is not one of these three.
 
 The comparison is readout plus objective, not a head swap. The judgement readout is trained with per-option BCE on yes/no margins, and the panel-2 readout with a listwise cross-entropy over K code logits. The two differ in objective by construction, so no cell here isolates the head from the loss.
 
@@ -68,11 +70,13 @@ Natural-versus-reversed agreement falls from 0.771 at the frozen readout to 0.55
 
 ## 7. Data state
 
-The judgement plan of record is built in-repo. Each row carries its true source and its synthetic family; the split is group-free and namespaced, with `internal_split`; the template cap is six rows (train templates 4,309 at 5.995 rows per template, down from 34.1); and the option order is a deterministic per-row permutation with a stratum-balanced gold slot, whose worst non-noul deviation is 0.63 pp, down from 25 to 78 pp.
+The judgement plan of record is built in-repo. Each row carries its true source and its synthetic family; the split is group-free and namespaced, with `internal_split`; the template cap is six rows. The cap is the reason for the row count: 4,309 train templates at 5.995 rows each give 25,833 train rows after the cap, against the same templates averaging 34.1 rows uncapped, about 146,900 rows. The option order is a deterministic per-row permutation with a stratum-balanced gold slot, whose worst non-noul deviation is 0.63 pp, down from 25 to 78 pp.
+
+The plans used by the runs in this note are `f369be84ca3af9061a7f2188584d1a482f5a416e998fc64466f31fb1b4a2d858` (v3 cap-6 full, 130,701 rows and 677,369 prompts), `fa83a43f11d33518eddd60820a2c14a576ab9ad551145c7506c90a933f6d4abf` (v3 cap-6 a20k subset) and `6dd503cc97276921f7248ee64e624ab86d98df1857c2deaa212821fc7366e566` (v2 restricted to the same 20,000 row ids). `fa83a43f` is equivalent to `e191cd4cda93d25f8cb347902995377389decf285106813090be1b29edc1c844`, and `f369be84` to `6388641e49a6d034e06b52d9fb4feac4e2c0fdaacbcdfa0e055bdfae02c0f334`: identical on every field except the added polarity key.
 
 The noul K = 2 stratum is the exception: its deviation stays at 6.7 pp because criteria-bearing noul rows are excluded from the permutation, 1,599 in the full plan and 251 in the a20k sample. The exclusion is deliberate and is recorded here so the residual deviation is not read as a bug.
 
-The plan directory on the run host carries `PROVENANCE.json` with the plan shas and their equivalence pairs. It is not in the repository and is not reproducible from main. Plans are immutable once used, and the handoff between people, hosts and sessions is the versioned path plus its sha. A plan that is edited after use is a new plan and needs a new sha.
+All seven shas and their one-line descriptions are in `research/50-plans.json`, which is path-free; the full plan records, including `PROVENANCE.json`, sit in the plan directory on the run host, outside this repository, and are not reproducible from main. Plans are immutable once used, and the handoff between people, hosts and sessions is the versioned path plus its sha. A plan that is edited after use is a new plan and needs a new sha.
 
 ## 8. Full fine-tuning status (unverified)
 
@@ -82,9 +86,9 @@ The first smoke exited at 93 GiB on a single 11,576-token row. The cause is stru
 
 ## 9. The admission rule
 
-JevBench is a veto, not the target. An arm may lose at most 3 items on the 231 local items. Benchmark-only validation is the primary measure. ECE, order agreement, the long-list K = 80 cell and cost are reported for every arm. Among arms that pass the veto, no single number decides; the combination is read together.
+JevBench is a veto, not the target. The veto is stated on order-averaged accuracy over the 231 local items, the mean of the natural-order and reversed-order scores. The instrument moves 6 items between the two orders at the frozen readout, so a 3-item threshold would sit inside its own noise. The frozen panel-2 readout averages 159/231 over the two orders, and half the measured swing is 3 items, so the veto threshold is an order-averaged cell of at least 156. The 3-item allowance is deliberately tied to the order noise: one binomial standard error at 0.70 on 231 items is sqrt(231 x 0.7 x 0.3) = 7.0 items, so the order-based threshold is tighter than a sampling-noise band, not looser. Benchmark-only validation is the primary measure. Averaged cells are printed only where a reversed pass exists; an arm without one has its averaged cell marked — rather than approximated. ECE, order agreement, the long-list K = 80 cell and cost are reported for every arm. Among arms that pass the veto, no single number decides; the combination is read together.
 
-The earlier statement that no arm improves on the frozen readout is a 231-only statement and does not survive this rule. At 3e-5 the trained panel-2 readout improves benchmark val from 0.5696 to 0.5822, 1.3 pp on 9,923 rows with exact McNemar p = 5e-7, while its JevBench cell stays at the frozen level. Under the veto the arm is admissible, and its improvement is real on the primary measure.
+A 231-only reading, that no arm improves on the frozen readout, does not survive this rule. At 3e-5 the trained panel-2 readout improves benchmark val from 0.5696 to 0.5822, 1.3 pp on 9,923 rows with exact McNemar p = 5e-7, while its JevBench cell is 161 against the frozen 162, one item below and inside the veto allowance. Under the veto the arm is admissible, and its improvement is real on the primary measure.
 
 ## 10. Engineering record
 
