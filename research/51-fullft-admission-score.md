@@ -1,6 +1,6 @@
 # Full-parameter fine-tuning, the admission suite, and the score ceiling — 2026-11-16
 
-Status: measured, one seed, one short schedule. Full-parameter training at 1e-5 is the first arm to clear every gate of the admission suite, and the suite now has measured floors and a measured noise band. On the score rows capacity does not move the result: the data version does, and the synthetic share costs about 31 net items at 1e-4. Full-corpus scaling has no result yet and is unverified.
+Status: measured, one seed, one short schedule. Full-parameter training at 1e-5 is the first arm to clear every gate of the admission suite, and the suite now has measured floors and a measured noise band. Every panel-2 arm sits between 0.4662 and 0.4977 on the 1,111 score rows while capacity moves choice by 12 pp and score by 12 items; the ceiling is high and flat, not untouched. Full-corpus scaling has no result yet and is unverified.
 
 **PRs:** #387, open at the time of writing and not yet merged.
 
@@ -32,7 +32,7 @@ The suite now has measured floors, all taken from the frozen readout on the same
 | K = 80 exact | 0.2607 (116/445) | at least 0.2407 |
 | ECE, per cell | 0.1406 / 0.2787 / 0.2269 | at most 0.1606 / 0.2987 / 0.2469 |
 
-The val gate is applied against 5,652/9,923 = 0.5696, the frozen cell count. The 0.5697 quoted as a reference elsewhere is that cell rounded up, not a second measurement, and this note uses the count; the floor is therefore 0.5596.
+The val gate is applied against 5,652/9,923 = 0.5696, the frozen cell count. The floor is therefore 0.5596.
 
 Three arms are admissible: full fine-tuning at 1e-5, LoRA panel-2 on v3 at 3e-5, and LoRA panel-2 on the old plan at 1e-4. The v3 3e-5 arm is provisional at this point of use. Its reversed pass was run, because every panel-2 arm's JevBench evaluation scores both orders in the same process, and it records 153/231 reversed, 157.0 averaged and 174/231 agreement with 21 exact ties, which clears the 156.0 floor on the average. The only record is the run-directory payload: it is uncommitted and not reproducible from the tree, so the values are unverified and 157.0 is not cited as a committed result. The verdict carries the previous note's proviso and is not a settled admission. The outcomes are unverified at point of use; the eval artifacts are on the run host and are not committed.
 
@@ -86,9 +86,11 @@ The step time is not constant and is not a property of the row mix. Leg 1 on ran
 
 The epoch is a range, with the basis named. At the cumulative rate at step 100, 10.1 s per step, 1,086 steps is 10,969 s = 3.05 h, so 3.1 h. If the last window, 8.24 s per step, is the steady state, the same count is 8,949 s = 2.49 h, so 2.6 h.
 
-Checkpoint evaluation is added separately at 12.6 min each, the figure derived from the weights run: 54.0 min minus 41.4 min of steps at 8.17 s over 303 steps. Eight evaluations are 100.8 min = 1.68 h. The epoch therefore projects to 4.7 h at the cumulative rate and 4.2 h if the last window is the steady state. Both totals are estimates until the first evaluation, which lands at step 125, measures the real cost.
+Checkpoint evaluation is added separately, and the weights run decomposes it. That run took 54.0 min, ran 303 steps at 8.17 s (41.4 min), and had no checkpoint evaluations: it was launched with `--save-weights` and without `--eval-every`. Its remainder is one 1.8-minute model load and one 10.8-minute final evaluation. A checkpoint evaluation does the same work as that final one, so it costs 10.8 min = 0.18 h each, and the load happens once per run at 1.8 min = 0.03 h.
 
-The row cap skips 180 of 69,644 train rows, 0.26%, and 2,169 rows are masked as `answerable:false`. The run is executed in two legs of 543 steps with checkpoint evaluation every 125 steps and a resume path. No result exists yet, and every figure in this section is unverified.
+The epoch is steps + 8 x 0.18 h + 0.03 h, four terms and no fifth number: at the cumulative 10.1 s per step, 3.05 + 1.44 + 0.03 = 4.52 h; at the 8.24 s last window, 2.49 + 1.44 + 0.03 = 3.96 h. Both totals are estimates until the first evaluation, which lands at step 125 and will replace the 0.18 h figure with a measurement.
+
+The row cap skips 180 of 69,644 train rows, 0.26%, and 2,169 train rows are masked as `answerable:false`. Every evaluation forwards the 41,232 scored validation rows; 41,871 is the plan's val split before the 639-row `answerable:false` drop, so the two counts are the same population at different stages. The run is executed in two legs of 543 steps with checkpoint evaluation every 125 steps and a resume path. No result exists yet, and every figure in this section is unverified.
 
 ## 8. Mechanism
 
