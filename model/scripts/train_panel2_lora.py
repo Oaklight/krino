@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import math
 import os
@@ -41,18 +42,22 @@ POLARITY_MARK = "\nQuestion: "
 OPTION_MARK = "\nDoes this option correctly answer the question?"
 
 
-def require_sha(path: Path, expected: str | None, label: str) -> str:
-    """The file's sha256, after checking it against ``expected`` when given.
+def read_pinned(path: Path, expected: str | None, label: str) -> tuple[bytes, str]:
+    """The file's bytes and sha256, checked against ``expected`` when given.
 
     A plan that is replaced or repointed while a run starts changes the
     training distribution without changing anything the run prints, so an
-    explicit digest turns that into a startup failure. The check runs before
-    any row is read. An expected value may be a prefix (the run logs print the
-    first 16 characters) but not shorter than 16.
+    explicit digest turns that into a startup failure. The returned bytes are
+    the bytes that were hashed *and* the bytes the caller parses: hashing a
+    path and then reopening it would pair one file's digest with another
+    file's rows, which is the failure this function exists to prevent. An
+    expected value may be a prefix (the run logs print the first 16
+    characters) but not shorter than 16.
     """
-    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    data = path.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
     if expected is None:
-        return digest
+        return data, digest
     wanted = expected.strip().lower()
     if len(wanted) < 16:
         raise SystemExit(f"--{label}-sha256 {expected!r} is shorter than 16 hex characters")
@@ -61,7 +66,41 @@ def require_sha(path: Path, expected: str | None, label: str) -> str:
             f"{path}: sha256 {digest} does not match the expected {wanted}; "
             "refusing to read a plan that is not the one this run pinned"
         )
+    return data, digest
+
+
+def agree_digest(digest: str, world: int, rank: int) -> str:
+    """The plan digest every rank agrees on, or an abort.
+
+    Each rank hashes the bytes it is about to parse. If the ranks disagree,
+    some rank is reading a different file -- possible on a shared filesystem
+    that changed under the launch -- and the run cannot be attributed to one
+    distribution. The whole value is gathered rather than reduced, so the
+    message names the divergent digest.
+    """
+    if world == 1:
+        return digest
+    gathered: list[str | None] = [None] * world
+    dist.all_gather_object(gathered, digest)
+    if len(set(gathered)) != 1:
+        raise SystemExit(
+            f"ranks disagree on the plan digest: {sorted(set(gathered))}"
+        )
     return digest
+
+
+def load_plan_rows(path: Path, expected: str | None, label: str,
+                   **reader_options) -> tuple[list[Row], str, int, str]:
+    """Read, check and parse one plan, returning its rows and verified digest.
+
+    One function so the check cannot drift below the parse: the bytes that
+    were hashed are the bytes ``build_rows`` reads. Moving the pin after the
+    parse makes the test that feeds a wrong pin and malformed bytes raise
+    ``JSONDecodeError`` instead of ``SystemExit``.
+    """
+    data, digest = read_pinned(path, expected, label)
+    rows, split_field, masked = build_rows(data, **reader_options)
+    return rows, split_field, masked, digest
 
 
 def parse_prompt_text(text: str) -> tuple[str, str]:
@@ -103,9 +142,12 @@ def source_class(row_id: str) -> str:
     return name.split("-", 1)[0] if "-" in name else name
 
 
-def build_rows(path: Path, noul_gold: str = "position",
+def build_rows(data: bytes, noul_gold: str = "position",
                plan_unpermuted_noul: bool = False) -> tuple[list[Row], str, int]:
-    """Rows from a plan, the field that supplied their split, and masks.
+    """Rows from plan bytes, the field that supplied their split, and masks.
+
+    ``data`` is the buffer that was hashed, not a path: the reader must not be
+    able to see bytes that the digest check did not cover.
 
     ``internal_split`` is the v3 field; the v2 plans predate it and carry only
     ``split``. The reader records which one it used, requires every record to
@@ -133,26 +175,27 @@ def build_rows(path: Path, noul_gold: str = "position",
     order: list[str] = []
     split_field: str | None = None
     masked = 0
-    with path.open(encoding="utf-8") as handle:
-        for line in handle:
-            if not line.strip():
-                continue
-            record = json.loads(line)
-            row_id = record["row_id"]
-            field = ("internal_split" if "internal_split" in record
-                     else "split" if "split" in record else None)
-            if field is None:
-                raise ValueError(f"record {row_id!r} carries neither split field")
-            if split_field is None:
-                split_field = field
-            elif field != split_field:
-                raise ValueError(
-                    f"plan mixes {split_field!r} and {field!r} split fields"
-                )
-            if row_id not in grouped:
-                grouped[row_id] = []
-                order.append(row_id)
-            grouped[row_id].append(record)
+    # BytesIO keeps the one copy of the buffer that was hashed; the reader
+    # never opens the path, so it cannot see a file the digest did not cover.
+    for line in io.BufferedReader(io.BytesIO(data)):
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        row_id = record["row_id"]
+        field = ("internal_split" if "internal_split" in record
+                 else "split" if "split" in record else None)
+        if field is None:
+            raise ValueError(f"record {row_id!r} carries neither split field")
+        if split_field is None:
+            split_field = field
+        elif field != split_field:
+            raise ValueError(
+                f"plan mixes {split_field!r} and {field!r} split fields"
+            )
+        if row_id not in grouped:
+            grouped[row_id] = []
+            order.append(row_id)
+        grouped[row_id].append(record)
 
     rows: list[Row] = []
     for row_id in order:
@@ -312,20 +355,24 @@ def main() -> int:
     torch.manual_seed(42)
 
     # Pin the inputs before reading them: a swapped plan must stop the run at
-    # startup, not train a distribution nobody can name.
-    plan_sha = require_sha(args.plan, args.plan_sha256, "plan")
-    eval_plan_sha = None
-    if args.eval_plan is not None:
-        eval_plan_sha = require_sha(args.eval_plan, args.eval_plan_sha256, "eval-plan")
-    rows, split_field, masked = build_rows(
-        args.plan, args.noul_gold, args.plan_unpermuted_noul
+    # startup, not train a distribution nobody can name. The bytes hashed are
+    # the bytes parsed, and every rank must agree on the digest before any of
+    # them trains.
+    rows, split_field, masked, plan_sha = load_plan_rows(
+        args.plan, args.plan_sha256, "plan",
+        noul_gold=args.noul_gold, plan_unpermuted_noul=args.plan_unpermuted_noul,
     )
+    plan_sha = agree_digest(plan_sha, args.world, args.rank)
     train_rows = [r for r in rows if r.split == "train"]
     val_rows = [r for r in rows if r.split == "val"]
+    eval_plan_sha = None
     if args.eval_plan is not None:
-        eval_rows, eval_split_field, _ = build_rows(
-            args.eval_plan, args.noul_gold, args.plan_unpermuted_noul
+        eval_rows, eval_split_field, _, eval_plan_sha = load_plan_rows(
+            args.eval_plan, args.eval_plan_sha256, "eval-plan",
+            noul_gold=args.noul_gold,
+            plan_unpermuted_noul=args.plan_unpermuted_noul,
         )
+        eval_plan_sha = agree_digest(eval_plan_sha, args.world, args.rank)
         val_rows = [r for r in eval_rows if r.split == "val"]
         print(f"rank {args.rank}: eval plan val rows {len(val_rows)} "
               f"split_field {eval_split_field} sha {eval_plan_sha[:16]}", flush=True)
