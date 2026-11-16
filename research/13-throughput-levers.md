@@ -67,6 +67,22 @@
 
 若第 1 条不成立，说明 mask/位置编码有误，不能替换。第 2、3 条只决定是否默认启用。
 
+## 实测步剖分与吞吐计划（2026-11-16）
+
+ce 臂、8 rank、每 rank 8 行、每行 478 token、4096 token 上限、64 MB bucket 的 20 步剖分，分项之和与墙钟一致（12.02 对 12.05 s/step），这是已交付路径的形状，不是 LoRA 的形状：
+
+| 相位 | s/step | 占比 |
+|---|---:|---:|
+| tokenise | 0.012 | 0.1% |
+| forward | 2.663 | 22.2% |
+| backward | 7.102 | 59.1% |
+| all-reduce | 2.116 | 17.6% |
+| clip | 0.014 | 0.1% |
+| optimizer | 0.108 | 0.9% |
+| 合计 | 12.02 | 100% |
+
+backward 占 59%，all-reduce 占 18%；tokenise 每行 1.5 ms，因此预分词方案排除。all-reduce 约为每个 64 MiB bucket 17.6 ms、共 120 个 bucket，折合每 rank 约 6.7 GB/s 的 ring 流量；已排队做尺寸缩放测试以区分启动次数与带宽，但 trainer 的 reduce 是 cat、collective 加 copy-back，本地拷贝可能才是杠杆。上限方面：forward 加 backward 为 9.765 s，算力部分改善 2.5x 得 6.16 s/step、端到端 1.95x，若要端到端 4x 则必须同时改 reduce；实验顺序为先把多行合成一次 forward，再改 reduce，packing 最后。
+
 ## 参考
 
 - https://github.com/unslothai/unsloth/releases/tag/v0.1.904-beta
