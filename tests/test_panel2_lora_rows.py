@@ -787,7 +787,8 @@ def test_eval_every_writes_a_checkpoint_before_the_last_step(tmp_path, monkeypat
     # them.
     final = json.loads((out / "shard_0.json").read_text())
     assert final["ece_bins_population_rule"] == 'source != "synthetic"'
-    assert final["ece_bins_rows"] == final["val_rows_non_synthetic"] == 6
+    assert final["ece_bins_rows_this_rank"] == \
+        final["val_rows_non_synthetic_this_rank"] == 6
     assert sum(final["ece_bins_sources"]["by_source"].values()) == 6
     assert final["ece_bins_sources"]["by_type"] == {"choice": 6}
 
@@ -887,6 +888,378 @@ def test_choice_rows_keep_the_one_hot_target_when_a_score_target_is_set(
     assert payload["score_target_tau"] == 1.0
 
 
+def test_score_loss_ce_is_the_shipped_target():
+    import torch
+
+    from model.scripts.train_panel2_lora import score_loss, target_loss
+
+    values = torch.tensor([0.5, 2.0, -1.0])
+    assert torch.isclose(score_loss(values, 1, "ce", None),
+                         target_loss(values, 1, "onehot"))
+
+
+def test_the_ranked_score_orders_its_mistakes_by_distance():
+    """RPS must charge a near miss less than a wrong-side miss.
+
+    With the gold on level 0, mass on level 1 is one level away and mass on
+    level 2 is two; the ordered score must price them in that order, which
+    cross-entropy cannot do. If the CDF sum is replaced by a plain squared
+    error over levels the second inequality still holds, but the first would
+    not: the test pins the ordering, not only the total.
+    """
+    import torch
+
+    from model.scripts.train_panel2_lora import score_loss
+
+    on_gold = float(score_loss(torch.tensor([4.0, 0.0, 0.0]), 0, "rps", None))
+    adjacent = float(score_loss(torch.tensor([0.0, 4.0, 0.0]), 0, "rps", None))
+    far = float(score_loss(torch.tensor([0.0, 0.0, 4.0]), 0, "rps", None))
+    assert on_gold < adjacent < far
+    assert far <= 1.0, "RPS is normalised to at most 1"
+
+
+def test_mix_is_the_cross_entropy_plus_the_weighted_ranked_score():
+    import pytest
+    import torch
+
+    from model.scripts.train_panel2_lora import score_loss
+
+    values = torch.tensor([0.3, 1.2, -0.4])
+    ce = float(score_loss(values, 2, "ce", None))
+    rps = float(score_loss(values, 2, "rps", None))
+    assert float(score_loss(values, 2, "mix", 0.7)) == pytest.approx(
+        ce + 0.7 * rps, rel=1e-6)
+
+
+def test_the_score_loss_flags_refuse_unmeasured_combinations(tmp_path, monkeypatch):
+    """A mix without a weight, or a weight nothing uses, must not launch.
+
+    CE is unbounded and RPS is at most 1, so an unmeasured lambda would
+    rescale score supervision; and rps with a soft target is a third axis
+    nobody pre-registered. Each case is refused at argument time, before the
+    plan is read.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    probe = tmp_path / "probe.json"
+    probe.write_text(json.dumps({"factor": 0.25, "overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
+        "lambda": 1.25}}))
+    bad_ratio = tmp_path / "bad_ratio.json"
+    bad_ratio.write_text(json.dumps({"factor": 0.25, "overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 6.0,
+        "lambda": 1.5}}))
+    bad_lambda = tmp_path / "bad_lambda.json"
+    bad_lambda.write_text(json.dumps({"factor": 0.25, "overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
+        "lambda": 1.0}}))
+    no_factor = tmp_path / "no_factor.json"
+    no_factor.write_text(json.dumps({"overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
+        "lambda": 1.25}}))
+    zero_rps = tmp_path / "zero_rps.json"
+    zero_rps.write_text(json.dumps({"factor": 0.25, "overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.0, "ce_over_rps": 0.0,
+        "lambda": 1.25}}))
+    base = [
+        "train_panel2_lora.py", "--plan", str(tmp_path / "plan.jsonl"),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+    ]
+    cases = [
+        (["--score-loss", "mix"], "needs --score-cramer-weight"),
+        (["--score-loss", "rps", "--score-cramer-weight", "1.0"],
+         "only with mix"),
+        (["--score-loss", "rps", "--score-target", "soft"],
+         "not pre-registered"),
+        (["--score-loss", "rps", "--score-cramer-weight-source", str(probe)],
+         "no effect under"),
+        (["--score-loss", "mix", "--score-cramer-weight", "1.5",
+          "--score-cramer-weight-source", str(probe)],
+         "is not the measured lambda"),
+        (["--score-loss", "mix", "--score-cramer-weight", "0"],
+         "greater than zero"),
+        (["--score-loss", "mix", "--score-cramer-weight", "-1"],
+         "greater than zero"),
+        (["--score-loss", "mix", "--score-cramer-weight", "inf"],
+         "greater than zero"),
+        (["--score-loss", "mix", "--score-cramer-weight", "nan"],
+         "greater than zero"),
+        (["--score-loss", "mix", "--score-cramer-weight", "1.5",
+          "--score-cramer-weight-source", str(bad_ratio)],
+         "internally inconsistent"),
+        (["--score-loss", "mix", "--score-cramer-weight", "1.0",
+          "--score-cramer-weight-source", str(bad_lambda)],
+         "internally inconsistent"),
+        (["--score-loss", "mix", "--score-cramer-weight", "1.25",
+          "--score-cramer-weight-source", str(no_factor)],
+         "records no factor"),
+        (["--score-loss", "mix", "--score-cramer-weight", "1.25",
+          "--score-cramer-weight-source", str(zero_rps)],
+         "mean RPS is"),
+    ]
+    for extra, match in cases:
+        monkeypatch.setattr(sys, "argv", base + extra)
+        with pytest.raises(SystemExit, match=match):
+            module.main()
+
+
+def test_the_lambda_provenance_says_whether_it_was_measured(tmp_path, monkeypatch):
+    """A weight passed by hand must not read as a measured one.
+
+    With a probe file the payload copies the measured means, the row count and
+    the file's digest, so the lambda claim is auditable; without one it says
+    the weight was passed by hand. Both runs pin the same number, so the only
+    difference is what the artifact can support.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:m{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(2) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    probe = tmp_path / "probe.json"
+    probe.write_text(json.dumps({"plan": str(plan), "weights": "-",
+                                 "factor": 0.25,
+                                 "by_gold": {"0": {"lambda": 0.5}},
+                                 "overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
+        "lambda": 1.25}}))
+
+    def run(out, extra):
+        _fake_training_modules(module, monkeypatch)
+        monkeypatch.setattr(sys, "argv", [
+            "train_panel2_lora.py", "--plan", str(plan),
+            "--output", str(out), "--world", "1", "--device", "cpu",
+            "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+            "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+            "--no-stop-on-loss-rise", "--score-loss", "mix",
+            "--score-cramer-weight", "1.25", *extra,
+        ])
+        assert module.main() == 0
+        return json.loads((out / "shard_0.json").read_text())
+
+    measured = run(tmp_path / "measured", [
+        "--score-cramer-weight-source", str(probe)])[
+            "score_cramer_weight_provenance"]
+    assert measured["measured"] is True
+    assert measured["rows"] == 1111
+    assert measured["factor"] == 0.25
+    assert measured["by_gold"] == {"0": {"lambda": 0.5}}
+    assert measured["mean_ce"] == 2.0 and measured["mean_rps"] == 0.4
+    assert measured["lambda"] == 1.25
+    assert measured["source_sha256"] == module.file_sha256(probe)
+
+    hand = run(tmp_path / "hand", [])["score_cramer_weight_provenance"]
+    assert hand["measured"] is False
+    assert "passed by hand" in hand["reason"]
+
+
+def test_score_rows_take_the_flagged_loss_and_choice_rows_keep_one_hot(
+    tmp_path, monkeypatch
+):
+    """--score-loss must reach score rows and only score rows.
+
+    Two choice rows and two score rows, one step each, with both loss
+    functions recorded as they are called. Under rps every score-row charge
+    must be rps and every other row the shipped one-hot cross-entropy; if the
+    flag leaks to choice or noul rows, the arm moves three heads at once and
+    the paired endpoint stops meaning what it says.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    for index in range(2):
+        for option in (0, 1):
+            records.append(_record(f"corpus:ch{index}", option,
+                                   1 if option == 0 else 0, "choice",
+                                   CHOICE_PREFIX, f"Option {option}.", 2))
+    for index in range(2):
+        for option in range(3):
+            records.append(_record(f"corpus:sc{index}", option,
+                                   1 if option == 1 else 0, "score",
+                                   CHOICE_PREFIX, f"Level {option}.", 3))
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    seen = []
+    real_score = module.score_loss
+
+    def recording(values, gold, loss, weight, target_mode="onehot", tau=1.0):
+        seen.append(("score", loss))
+        return real_score(values, gold, loss, weight, target_mode, tau)
+
+    real_target = module.target_loss
+
+    def recording_target(values, gold, mode, tau=1.0):
+        seen.append(("target", mode))
+        return real_target(values, gold, mode, tau)
+
+    monkeypatch.setattr(module, "score_loss", recording)
+    monkeypatch.setattr(module, "target_loss", recording_target)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--score-loss", "rps", "--no-stop-on-loss-rise",
+    ])
+    assert module.main() == 0
+    assert ("score", "rps") in seen, "the score rows must take the flagged loss"
+    assert ("target", "onehot") in seen, "other rows keep the shipped one-hot"
+    assert all(loss == "rps" for kind, loss in seen if kind == "score")
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    assert payload["score_loss"] == "rps"
+    assert payload["score_cramer_weight"] is None
+
+
+def test_the_stop_rule_compares_reweighted_references(tmp_path, monkeypatch):
+    """Both sides are reweighted to the plan's composition, not mixed.
+
+    Two choice items and four score items, interleaved so the two-row frozen
+    sample holds one of each while the plan is 1/3 and 2/3. Six rows at two
+    per step is three full batches, so no row wraps and the epoch block's own
+    mix is the plan's; the frozen block's mix is not. With zero logits a choice
+    row costs ln 2 and a score row ln 3, so the two differences separate.
+    """
+    import pytest
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    order = [("c0", "choice", 2), ("s0", "score", 3), ("c1", "choice", 2),
+             ("s1", "score", 3), ("s2", "score", 3), ("s3", "score", 3)]
+    for row_id, q_type, n_options in order:
+        for option in range(n_options):
+            gold = 1 if q_type == "score" else 0
+            records.append(_record(f"corpus:{row_id}", option,
+                                   1 if option == gold else 0, q_type,
+                                   CHOICE_PREFIX, f"Option {option}.",
+                                   n_options))
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+    ])
+    assert module.main() == 0
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    composition = payload["stop_composition"]
+    assert composition["counts"] == {"choice": 2, "score": 4}
+    assert composition["fractions"] == pytest.approx(
+        {"choice": 1 / 3, "score": 2 / 3})
+    reference = payload["stop_reference"]
+    ln2, ln3 = 0.693147, 1.098612
+    pinned = ln2 / 3 + 2 * ln3 / 3
+    assert reference["frozen"]["per_type"]["score"]["rows"] == 1
+    assert reference["frozen"]["mixed"] == pytest.approx((ln2 + ln3) / 2,
+                                                         abs=1e-5)
+    assert reference["frozen"]["reweighted"] == pytest.approx(pinned, abs=1e-5)
+    assert reference["epoch"]["per_type"]["score"]["rows"] == 4
+    assert reference["epoch"]["reweighted"] == pytest.approx(pinned, abs=1e-5)
+    assert reference["reweighted_difference"] == pytest.approx(0.0, abs=1e-9)
+    assert reference["mixed_difference"] == pytest.approx(
+        pinned - (ln2 + ln3) / 2, abs=1e-5)
+    assert payload["stop_rule"] == "armed_not_fired"
+    assert payload["stopped"] is False
+
+
+def test_a_frozen_sample_missing_a_weighted_type_does_not_default_to_no_stop(
+    tmp_path, monkeypatch
+):
+    """An unevaluable rule must say so, not read as "no stop".
+
+    The plan's first two rows are choice, so a two-row frozen sample has no
+    score rows while the pinned composition weights them. The payload must
+    record insufficient_sample_composition and name score; the run must not
+    stop and must not raise.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    order = [("c0", "choice", 2), ("c1", "choice", 2), ("s0", "score", 3),
+             ("s1", "score", 3)]
+    for row_id, q_type, n_options in order:
+        for option in range(n_options):
+            gold = 1 if q_type == "score" else 0
+            records.append(_record(f"corpus:{row_id}", option,
+                                   1 if option == gold else 0, q_type,
+                                   CHOICE_PREFIX, f"Option {option}.",
+                                   n_options))
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+    ])
+    assert module.main() == 0
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    assert payload["stop_rule"] == "insufficient_sample_composition"
+    assert payload["stop_rule_missing_types"] == ["score"]
+    assert payload["stop_reference"]["frozen"]["reweighted"] is None
+    assert payload["stopped"] is False
+
+
+def test_the_probe_summarise_reports_the_ratio_and_the_term_share():
+    """lambda = 0.25 * CE/RPS makes the rps term 20% of the score-row loss."""
+    import pytest
+
+    from model.scripts.measure_score_cramer import summarise
+
+    rows = [{"k": 5, "gold": 0, "ce": 2.0, "rps": 0.5},
+            {"k": 5, "gold": 1, "ce": 4.0, "rps": 0.5},
+            {"k": 4, "gold": 1, "ce": 3.0, "rps": 1.0}]
+    summary = summarise(rows)
+    overall = summary["overall"]
+    assert overall["n"] == 3
+    assert overall["mean_ce"] == pytest.approx(3.0)
+    assert overall["mean_rps"] == pytest.approx(2.0 / 3.0)
+    assert overall["ce_over_rps"] == pytest.approx(4.5)
+    assert overall["lambda"] == pytest.approx(1.125)
+    assert overall["rps_term_fraction_of_score_loss"] == pytest.approx(0.2)
+    assert summary["by_k"]["5"]["n"] == 2
+    assert summary["by_k"]["4"]["lambda"] == pytest.approx(0.75)
+    # The share is heterogeneous by gold position, so the probe reports it
+    # there too: one global lambda cannot make it uniform.
+    assert summary["by_gold"]["0"]["n"] == 1
+    assert summary["by_gold"]["1"]["n"] == 2
+    assert summary["by_gold"]["0"]["ce_over_rps"] == pytest.approx(4.0)
+    assert summary["by_gold"]["1"]["ce_over_rps"] == pytest.approx(14.0 / 3.0)
+
+
+def test_the_probe_scores_only_the_rows_own_codes(tmp_path):
+    """A row's logits must span its own K codes, not the global code list.
+
+    The training loss sees K levels; scoring all codes would normalise CE and
+    RPS over a distribution the model is never trained on and inflate the
+    ratio. The plan here has a 2-option item while the code map holds every
+    code, so passing the global map returns far more than 2 values.
+    """
+    import torch
+
+    from model.scripts.measure_score_cramer import row_logits
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [_record("corpus:k2", option, 1 if option == 0 else 0, "choice",
+                       CHOICE_PREFIX, f"Option {option}.", 2)
+               for option in (0, 1)]
+    rows, _, _ = build_rows(_bytes(tmp_path, records),
+                            plan_unpermuted_noul=True)
+
+    class FakeTokenizer:
+        def __call__(self, text, return_tensors=None, add_special_tokens=False):
+            return {"input_ids": torch.zeros(1, 2, dtype=torch.long)}
+
+    class FakeModel(torch.nn.Module):
+        def forward(self, input_ids=None, **kwargs):
+            return types.SimpleNamespace(logits=torch.zeros(1, 1, 200))
+
+    code_ids = {code: index for index, code in enumerate(module.CODES)}
+    values = row_logits(FakeModel(), FakeTokenizer(), rows[0], code_ids, "cpu")
+    assert len(rows[0].codes) == 2
+    assert len(values) == 2, "the probe must score the row's own K codes"
+
+
 def test_a_resume_without_weights_is_refused(tmp_path, monkeypatch):
     """--start-step alone would restart the schedule while claiming step 543."""
     module = importlib.import_module("model.scripts.train_panel2_lora")
@@ -958,8 +1331,17 @@ def test_a_resumed_leg_runs_only_the_remaining_steps(tmp_path, monkeypatch):
     assert fake.forwards == 6, "two frozen-sample rows plus steps 2 and 3"
     payload = json.loads((tmp_path / "leg2" / "shard_0.json").read_text())
     assert payload["start_step"] == 1
-    assert payload["step_range"] == [2, 3]
+    assert payload["planned_step_range"] == [2, 3]
+    assert payload["steps_run"] == 2, "two steps executed, not the planned three"
     assert payload["weights_loaded_sha256"] == module.file_sha256(weights)
+    # The two legs' frozen samples must be the same rows in the same order, or
+    # the stop rule's references are not comparable across arms.
+    leg1 = json.loads((tmp_path / "leg1" / "shard_0.json").read_text())
+    assert leg1["frozen_sample_rows"] == payload["frozen_sample_rows"] == 2
+    assert leg1["frozen_sample_row_ids_sha256"] == \
+        payload["frozen_sample_row_ids_sha256"]
+    assert "frozen_sample_ce" not in payload
+    assert "frozen_sample_loss" in payload
 
 
 def test_a_resume_past_the_last_step_is_refused(tmp_path, monkeypatch):

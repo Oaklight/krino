@@ -37,6 +37,7 @@ from model.evaluation.panel2 import (
 )
 from model.src.backbone import load_causal_lm
 from model.src.lora import inject_lora
+from model.training.losses import rps_loss
 
 POLARITY_MARK = "\nQuestion: "
 OPTION_MARK = "\nDoes this option correctly answer the question?"
@@ -505,10 +506,12 @@ def evaluate(model, tokenizer, rows, code_ids, device, limit=None):
     number computed after the fact would need the weights.
 
     Only non-synthetic rows enter the bins. The eval plan's val split is
-    mostly synthetic (31,948 of 41,871 rows), and the LoRA arms' ECE comes
-    from a later scoring pass over the 9,923 non-synthetic rows; binning every
-    row here would put the two families on different populations, and the
-    admission gate compares them. Accuracy still counts every row.
+    41,232 scored rows, 31,309 of them synthetic (the plan's 41,871 val rows
+    carry 639 rows with no gold; 41,232 = 31,309 + 9,923), and the LoRA arms'
+    ECE comes from a later scoring pass over the same 9,923 non-synthetic
+    rows; binning every row here would put the two families on different
+    populations, and the admission gate compares them. Accuracy still counts
+    every row.
 
     The fourth return value is the bins' composition, counted at the same
     place the bin slot is incremented. A composition recomputed from the bin
@@ -572,6 +575,56 @@ def target_loss(values, gold: int, mode: str, tau: float = 1.0):
         target = target / target.sum()
         return -(target * torch.log_softmax(values, dim=0)).sum()
     raise ValueError(f"unknown score target {mode!r}")
+
+
+def score_loss(values, gold: int, loss: str, cramer_weight: float | None,
+               target_mode: str = "onehot", tau: float = 1.0):
+    """One score row's loss under ``--score-loss``, so the arms differ only there.
+
+    ``ce`` is target_loss unchanged, which is what every earlier arm ran.
+    ``rps`` is the ranked probability score against the gold's one-hot
+    distribution: it sums the squared CDF differences over the level
+    thresholds, i.e. the squared Cramer distance on an ordered categorical,
+    normalised by K - 1. ``mix`` is ``ce + cramer_weight * rps``.
+
+    The two terms have different scales -- CE is unbounded, RPS is at most 1
+    -- so a mix weight is a weight change as much as a shape change. The
+    caller passes a measured lambda; the trainer refuses to guess one.
+    """
+    if loss == "ce":
+        return target_loss(values, gold, target_mode, tau)
+    target = F.one_hot(torch.tensor(gold, device=values.device),
+                       values.numel()).float()
+    rps = rps_loss(values.unsqueeze(0), target.unsqueeze(0))
+    if loss == "rps":
+        return rps
+    return target_loss(values, gold, target_mode, tau) + cramer_weight * rps
+
+
+def reweighted_mean(block, composition):
+    """A per-type mean block reweighted to one pinned composition.
+
+    ``block`` is ``{type: [sum, count]}``. Both the frozen reference and the
+    epoch mean are reweighted to the same ``composition``, taken from the
+    plan's train rows, so the comparison does not depend on which rows a shard
+    or a 64-row sample happened to contain. Returns the reweighted mean (None
+    if a weighted type is absent) and the missing types.
+    """
+    total = 0.0
+    missing = []
+    for kind, fraction in composition.items():
+        entry = block.get(kind)
+        if entry and entry[1]:
+            total += fraction * (entry[0] / entry[1])
+        elif fraction:
+            missing.append(kind)
+    return (None if missing else total), missing
+
+
+def per_type_means(block):
+    return {kind: {"rows": int(round(entry[1])),
+                   "mean": (entry[0] / entry[1]) if entry[1] else None}
+            for kind, entry in block.items()}
 
 
 def abort_if_any_failed(failed, what: str, world: int) -> None:
@@ -749,6 +802,43 @@ def main() -> int:
         help="decay of the soft target, in levels; pre-registered at 1.0",
     )
     parser.add_argument(
+        "--score-loss",
+        choices=["ce", "mix", "rps"],
+        default="ce",
+        help=(
+            "loss on the score rows: ce is the shipped target dispatch "
+            "(--score-target), rps is the ranked probability score alone, "
+            "mix is ce + cramer_weight * rps; noul and choice rows keep "
+            "one-hot CE in every mode, so only the score head moves"
+        ),
+    )
+    parser.add_argument(
+        "--score-cramer-weight",
+        type=float,
+        default=None,
+        help=(
+            "lambda of the rps term under --score-loss mix. Measure it with "
+            "model/scripts/measure_score_cramer.py on the pinned plan's "
+            "non-synthetic val score rows at step 0 and pin the value it "
+            "prints. lambda = 0.25 * the measured CE/RPS ratio, so the rps "
+            "term is 0.25 * the CE term: 20% of the score-row loss. Required "
+            "for mix, must be finite and greater than zero, and refused for "
+            "ce and rps"
+        ),
+    )
+    parser.add_argument(
+        "--score-cramer-weight-source",
+        type=Path,
+        default=None,
+        help=(
+            "the lambda probe JSON that measured --score-cramer-weight; its "
+            "digest and the measured mean CE, mean RPS, ratio and row count "
+            "are copied into the payload, and the pinned weight is checked "
+            "against it. Without this the payload says the weight was passed "
+            "by hand, so no artifact claims a measurement it does not have"
+        ),
+    )
+    parser.add_argument(
         "--start-step",
         type=int,
         default=0,
@@ -799,6 +889,132 @@ def main() -> int:
             "--start-step with --epochs > 1 is ambiguous: it can only skip "
             "steps in the first epoch; resume a single-epoch leg instead"
         )
+    if args.score_loss == "mix" and args.score_cramer_weight is None:
+        # CE is unbounded and RPS is at most 1, so an unmeasured weight would
+        # rescale score supervision and the arm would be a weight change
+        # wearing a loss-shape label.
+        raise SystemExit(
+            "--score-loss mix needs --score-cramer-weight, measured as "
+            "0.25 * mean CE / mean RPS on the score rows; it is not guessed"
+        )
+    if args.score_loss != "mix" and args.score_cramer_weight is not None:
+        raise SystemExit(
+            f"--score-cramer-weight has no effect under --score-loss "
+            f"{args.score_loss}; set it only with mix"
+        )
+    if (args.score_loss == "mix" and args.score_cramer_weight is not None
+            and not (math.isfinite(args.score_cramer_weight)
+                     and args.score_cramer_weight > 0)):
+        # A zero weight is a ce arm wearing a mix label, and a negative one
+        # rewards the inverse of the ranked score.
+        raise SystemExit(
+            "--score-cramer-weight must be finite and greater than zero under "
+            "mix; a zero or negative weight is not a mix arm"
+        )
+    if args.score_loss != "ce" and args.score_target != "onehot":
+        # RPS takes the gold's one-hot distribution. A soft or expected target
+        # alongside it is a third axis nobody has pre-registered, so refuse
+        # rather than silently drop one of the two flags.
+        raise SystemExit(
+            f"--score-loss {args.score_loss} uses the gold's one-hot target; "
+            f"--score-target {args.score_target} was not pre-registered with it"
+        )
+    cramer_provenance = None
+    if args.score_loss == "mix":
+        if args.score_cramer_weight_source is None:
+            # Allowed, but the payload must not imply a measurement that no
+            # artifact backs.
+            cramer_provenance = {
+                "measured": False,
+                "reason": "no --score-cramer-weight-source: the weight was "
+                          "passed by hand and no probe artifact supports it",
+            }
+        else:
+            if not args.score_cramer_weight_source.exists():
+                raise SystemExit(
+                    f"--score-cramer-weight-source does not exist: "
+                    f"{args.score_cramer_weight_source}"
+                )
+            # One read: the digest and the numbers must describe the same
+            # bytes, or `measured: true` pairs one version's hash with
+            # another version's means.
+            probe_bytes = args.score_cramer_weight_source.read_bytes()
+            probe = json.loads(probe_bytes)
+            overall = probe.get("overall") or {}
+            for key in ("mean_ce", "mean_rps", "ce_over_rps", "lambda", "n"):
+                if key not in overall:
+                    raise SystemExit(
+                        f"--score-cramer-weight-source has no overall.{key}; "
+                        "it is not a lambda probe output"
+                    )
+            factor = probe.get("factor")
+            if factor is None:
+                raise SystemExit(
+                    "--score-cramer-weight-source records no factor; it is "
+                    "what relates its ratio to its lambda"
+                )
+            if not (isinstance(factor, (int, float)) and 0 < factor):
+                raise SystemExit(
+                    f"--score-cramer-weight-source has factor {factor!r}; "
+                    "it must be finite and greater than zero"
+                )
+            if overall["mean_rps"] <= 0:
+                raise SystemExit(
+                    "the probe's mean RPS is "
+                    f"{overall['mean_rps']}; the CE/RPS ratio and lambda are "
+                    "undefined, so the weight was not measured"
+                )
+
+            def agrees(left, right):
+                return abs(left - right) <= 1e-6 * max(
+                    1.0, abs(left), abs(right))
+
+            # The probe's own arithmetic, so a file whose means, ratio and
+            # lambda do not relate cannot be stamped measured.
+            if not agrees(overall["ce_over_rps"],
+                          overall["mean_ce"] / overall["mean_rps"]):
+                raise SystemExit(
+                    "--score-cramer-weight-source is internally inconsistent: "
+                    f"ce_over_rps {overall['ce_over_rps']} is not "
+                    f"mean_ce/mean_rps {overall['mean_ce'] / overall['mean_rps']}"
+                )
+            if not agrees(overall["lambda"], factor * overall["ce_over_rps"]):
+                raise SystemExit(
+                    "--score-cramer-weight-source is internally inconsistent: "
+                    f"lambda {overall['lambda']} is not factor {factor} * "
+                    f"ce_over_rps {overall['ce_over_rps']}"
+                )
+            if not agrees(overall["lambda"], args.score_cramer_weight):
+                raise SystemExit(
+                    f"--score-cramer-weight {args.score_cramer_weight} is not "
+                    f"the measured lambda {overall['lambda']}; the pinned "
+                    "number must come from the probe"
+                )
+            cramer_provenance = {
+                "measured": True,
+                "source": str(args.score_cramer_weight_source),
+                "source_sha256": hashlib.sha256(probe_bytes).hexdigest(),
+                "plan": probe.get("plan"),
+                "weights": probe.get("weights"),
+                "rows": overall["n"],
+                "factor": factor,
+                "mean_ce": overall["mean_ce"],
+                "mean_rps": overall["mean_rps"],
+                "ce_over_rps": overall["ce_over_rps"],
+                "lambda": overall["lambda"],
+                "by_k": probe.get("by_k"),
+                "by_gold": probe.get("by_gold"),
+                "share_note": "the RPS term's share of the score-row loss is "
+                              "lambda*mean_rps/(mean_ce+lambda*mean_rps); it "
+                              "is heterogeneous by gold position, which is a "
+                              "property of mixing CE with a bounded proper "
+                              "scoring rule",
+            }
+    elif args.score_cramer_weight_source is not None:
+        raise SystemExit(
+            "--score-cramer-weight-source has no effect under --score-loss "
+            f"{args.score_loss}; set it only with mix"
+        )
     if args.max_row_tokens is None:
         # A cap is only a full-fine-tuning backstop: it would silently change
         # the LoRA ladder's row set, which is already on record.
@@ -834,6 +1050,19 @@ def main() -> int:
         val_rows = [r for r in eval_rows if r.split == "val"]
         print(f"rank {args.rank}: eval plan val rows {len(val_rows)} "
               f"split_field {eval_split_field} sha {eval_plan_sha[:16]}", flush=True)
+    if cramer_provenance and cramer_provenance.get("measured") and val_rows:
+        # The probe and the trainer must mean the same population, or the
+        # measured lambda was scaled on a different row set than the primary
+        # endpoint reads. Checked after the eval plan, which is the val split
+        # the trainer scores.
+        expected_rows = sum(1 for row in val_rows
+                            if row.q_type == "score"
+                            and row.source != "synthetic")
+        if cramer_provenance["rows"] != expected_rows:
+            raise SystemExit(
+                f"the probe measured {cramer_provenance['rows']} rows but the "
+                f"eval plan has {expected_rows} non-synthetic val score rows"
+            )
     print(f"rank {args.rank}: rows {len(rows)} train {len(train_rows)} "
           f"val {len(val_rows)} masked {masked} split_field {split_field} "
           f"plan_sha {plan_sha[:16]}", flush=True)
@@ -866,7 +1095,8 @@ def main() -> int:
         # Only weights are restored. AdamW starts cold, so a resumed leg is
         # not a continuation of the first leg's optimizer state; the payload
         # records optimizer_state: fresh rather than claiming a continuation.
-        state = torch.load(args.load_weights, map_location=device)
+        state = torch.load(args.load_weights, map_location=device,
+                           weights_only=True)
         model.load_state_dict(state, strict=True)
         weights_loaded_sha = file_sha256(args.load_weights)
         print(f"rank {args.rank}: loaded weights {args.load_weights} "
@@ -892,26 +1122,47 @@ def main() -> int:
                                  code_ids, device, encoded=encoded)
             synchronise(device)
             profile["forward"] += time.perf_counter() - started
-        # Only score rows take the alternative target; choice and noul rows
-        # keep the shipped listwise cross-entropy whatever the flag says.
-        mode = args.score_target if row.q_type == "score" else "onehot"
-        return target_loss(values, row.gold, mode, args.score_target_tau)
+        # Only score rows take an alternative target or loss; choice and noul
+        # rows keep the shipped one-hot cross-entropy whatever the flags say.
+        if row.q_type == "score":
+            return score_loss(values, row.gold, args.score_loss,
+                              args.score_cramer_weight, args.score_target,
+                              args.score_target_tau)
+        return target_loss(values, row.gold, "onehot")
 
-    # Frozen reference loss for the stop rule, on a fixed sample.
+    # Frozen reference loss for the stop rule, on a fixed sample. It is the
+    # training loss, not plain cross-entropy: under --score-loss rps the epoch
+    # mean is in RPS units, and a CE reference would make the stop rule fire
+    # on the scale change alone.
     frozen_mean = None
+    frozen_block = {}
+    frozen_sample_ids_sha = None
+    frozen_sample_rows = None
+    stop_rule = None
+    stop_rule_missing = []
+    stop_reference = None
+    stop_composition = None
+    composition_counts = {}
+    total_train = None
     if not args.eval_only:
         sample = train_rows[: args.frozen_loss_sample]
         frozen_losses = []
         for row in sample:
-            values = code_logits(model, tokenizer, prompt_of(row),
-                                 {c: code_ids[c] for c in row.codes}, device)
-            logits = torch.tensor(values, dtype=torch.float32, device=device)
-            frozen_losses.append(float(F.cross_entropy(
-                logits.unsqueeze(0), torch.tensor([row.gold], device=device))))
+            value = float(loss_of(row))
+            frozen_losses.append(value)
+            entry = frozen_block.setdefault(row.q_type, [0.0, 0])
+            entry[0] += value
+            entry[1] += 1
+        # The sample's identity, so the three arms' references can be shown
+        # comparable rather than assumed to be: same plan, same order, same
+        # row ids in the same sequence.
+        frozen_sample_ids_sha = hashlib.sha256(
+            "\n".join(row.row_id for row in sample).encode()).hexdigest()
+        frozen_sample_rows = len(sample)
         frozen_mean = check_shared_non_negative(
-            sum(frozen_losses) / len(frozen_losses), "frozen sample CE",
+            sum(frozen_losses) / len(frozen_losses), "frozen sample loss",
             args.rank, args.world, device)
-        print(f"rank {args.rank}: frozen sample CE {frozen_mean:.4f}", flush=True)
+        print(f"rank {args.rank}: frozen sample loss {frozen_mean:.4f}", flush=True)
 
     args.output.mkdir(parents=True, exist_ok=True)
 
@@ -1010,6 +1261,17 @@ def main() -> int:
         print(f"rank {args.rank}: {len(shard)} rows, steps "
               f"{args.start_step + 1}..{steps} of {steps}, "
               f"{args.epochs} epoch(s)", flush=True)
+        # The pinned composition both reference blocks are reweighted to. It
+        # comes from the plan's train rows, not from a shard or the frozen
+        # sample, so the stop comparison does not depend on which rows either
+        # side happened to contain.
+        composition_counts = {}
+        for row in train_rows:
+            composition_counts[row.q_type] = composition_counts.get(
+                row.q_type, 0) + 1
+        total_train = sum(composition_counts.values())
+        stop_composition = {kind: count / total_train
+                            for kind, count in composition_counts.items()}
         if args.max_batch_tokens:
             for row in shard:
                 if id(row) not in token_counts:
@@ -1024,6 +1286,7 @@ def main() -> int:
             # --start-step with more than one epoch is refused at argument
             # time, so this offset is nonzero only in a single-pass leg.
             first = args.start_step
+            epoch_block = {}
             started = time.time()
             for step in range(first + 1, steps + 1):
                 profile = None
@@ -1045,6 +1308,12 @@ def main() -> int:
                 for chunk in chunks:
                     for row in chunk:
                         loss = loss_of(row, profile) / len(batch)
+                        # Per-type sums, unscaled: the same loss scaled by the
+                        # batch size, so the block means are per-row means and
+                        # the reweighting compares like with like.
+                        entry = epoch_block.setdefault(row.q_type, [0.0, 0])
+                        entry[0] += float(loss.detach()) * len(batch)
+                        entry[1] += 1
                         if profile is None:
                             loss.backward()
                         else:
@@ -1097,9 +1366,69 @@ def main() -> int:
                     evaluate_checkpoint(step)
             ran_steps = steps - first
             epoch_mean = sum(history[-ran_steps:]) / ran_steps
+            # Both references are per-type blocks reweighted to the pinned
+            # composition. Under a non-CE score loss the two types sit on
+            # different scales, so a mixed mean on one side and a different mix
+            # on the other is not a comparison. The reduce carries sums and
+            # counts, not means, so the global ratio can be formed afterwards;
+            # every rank then computes the same decision.
+            kinds = sorted(set(stop_composition) | set(epoch_block)
+                           | set(frozen_block))
+            flat = []
+            for kind in kinds:
+                for block in (frozen_block, epoch_block):
+                    entry = block.get(kind, [0.0, 0])
+                    flat.extend([entry[0], float(entry[1])])
+            flat = torch.tensor(flat, device=device)
             if args.world > 1:
-                # The stop decision must be identical on every rank, or the ones
-                # that keep going hang on the next collective.
+                dist.all_reduce(flat, op=dist.ReduceOp.SUM)
+            values = flat.tolist()
+            reduced_frozen, reduced_epoch = {}, {}
+            for index, kind in enumerate(kinds):
+                # The frozen sample is the same rows on every rank, so its
+                # sums divide by the world size; the epoch block is a
+                # partition, so its sums are already the global totals.
+                reduced_frozen[kind] = [values[4 * index] / args.world,
+                                        values[4 * index + 1] / args.world]
+                reduced_epoch[kind] = [values[4 * index + 2],
+                                       values[4 * index + 3]]
+            frozen_weighted, frozen_missing = reweighted_mean(
+                reduced_frozen, stop_composition)
+            epoch_weighted, epoch_missing = reweighted_mean(
+                reduced_epoch, stop_composition)
+            stop_rule_missing = sorted(set(frozen_missing) | set(epoch_missing))
+            mixed_frozen = (sum(entry[0] for entry in reduced_frozen.values())
+                            / max(1.0, sum(entry[1]
+                                           for entry in reduced_frozen.values())))
+            mixed_epoch = (sum(entry[0] for entry in reduced_epoch.values())
+                           / max(1.0, sum(entry[1]
+                                          for entry in reduced_epoch.values())))
+            stop_reference = {
+                "frozen": {"per_type": per_type_means(reduced_frozen),
+                           "reweighted": frozen_weighted,
+                           "mixed": mixed_frozen},
+                "epoch": {"per_type": per_type_means(reduced_epoch),
+                          "reweighted": epoch_weighted,
+                          "mixed": mixed_epoch},
+                "reweighted_difference": (
+                    None if frozen_weighted is None or epoch_weighted is None
+                    else epoch_weighted - frozen_weighted),
+                "mixed_difference": mixed_epoch - mixed_frozen,
+                "note": "the stop decision uses the pair reweighted to "
+                        "stop_composition; the mixed pair is recorded for "
+                        "continuity and is not comparable across arms",
+            }
+            if stop_rule_missing:
+                # A rule that cannot be evaluated must not read as "no stop".
+                stop_rule = "insufficient_sample_composition"
+            elif not args.stop_on_loss_rise:
+                stop_rule = "disabled_by_flag"
+            elif epoch_weighted > frozen_weighted:
+                stop_rule = "fired"
+            else:
+                stop_rule = "armed_not_fired"
+            if args.world > 1:
+                # The printed epoch mean must be group-wide, as before.
                 stats = torch.tensor([epoch_mean, frozen_mean], device=device)
                 dist.all_reduce(stats, op=dist.ReduceOp.SUM)
                 stats = stats / args.world
@@ -1110,14 +1439,19 @@ def main() -> int:
             epoch_mean = check_shared_non_negative(
                 epoch_mean, "epoch mean loss", args.rank, 1, device)
             frozen_mean = check_shared_non_negative(
-                frozen_mean, "frozen sample CE", args.rank, 1, device)
+                frozen_mean, "frozen sample loss", args.rank, 1, device)
+            epoch_text = ("undefined" if epoch_weighted is None
+                          else f"{epoch_weighted:.4f}")
+            frozen_text = ("undefined" if frozen_weighted is None
+                           else f"{frozen_weighted:.4f}")
             print(f"rank {args.rank}: epoch {epoch} mean loss {epoch_mean:.4f} "
-                  f"frozen {frozen_mean:.4f}"
+                  f"frozen {frozen_mean:.4f} reweighted {epoch_text} vs "
+                  f"{frozen_text} stop_rule {stop_rule}"
                   + (f" collective {reduce_seconds / (ran_steps * epoch):.3f}s/step"
                      if args.world > 1 else ""), flush=True)
-            if epoch_mean > frozen_mean and args.stop_on_loss_rise:
-                print(f"rank {args.rank}: stop rule fired (loss above frozen)",
-                      flush=True)
+            if stop_rule == "fired":
+                print(f"rank {args.rank}: stop rule fired (reweighted epoch "
+                      f"{epoch_text} above frozen {frozen_text})", flush=True)
                 stopped = True
                 break
 
@@ -1170,7 +1504,20 @@ def main() -> int:
                "ece_bins_sources": bin_sources,
                "val_source": val_source,
                "stopped": stopped,
-               "stop_reason": "epoch_mean_loss_above_frozen" if stopped else None,
+               "stop_reason": "reweighted_epoch_above_frozen" if stopped else None,
+               "stop_rule": (stop_rule if stop_rule is not None
+                             else ("not_run_eval_only" if args.eval_only
+                                   else None)),
+               "stop_rule_missing_types": stop_rule_missing,
+               "stop_composition": (
+                   {"fractions": stop_composition,
+                    "counts": composition_counts,
+                    "n_train_rows": total_train,
+                    "source": "the plan's train rows after the row-token cap, "
+                              "counted on every rank; both references are "
+                              "reweighted to it"}
+                   if stop_composition else None),
+               "stop_reference": stop_reference,
                "plan": str(args.plan), "plan_sha256": plan_sha,
                "plan_sha256_expected": args.plan_sha256,
                "eval_plan": str(args.eval_plan) if args.eval_plan else None,
@@ -1179,8 +1526,8 @@ def main() -> int:
                "full_ft": args.full_ft, "grad_bucket_mb": args.grad_bucket_mb,
                "eval_every": args.eval_every,
                "phase_profile_steps": args.phase_profile,
-               "ece_bins_rows": ece_bins_rows,
-               "val_rows_non_synthetic": val_rows_non_synthetic,
+               "ece_bins_rows_this_rank": ece_bins_rows,
+               "val_rows_non_synthetic_this_rank": val_rows_non_synthetic,
                "optimizer_state": "fresh: the trainer never saves or restores "
                                   "Adam moments, so a resumed leg's optimizer "
                                   "starts cold",
@@ -1188,10 +1535,14 @@ def main() -> int:
                                    "this run holds the rows",
                "score_target": args.score_target,
                "score_target_tau": args.score_target_tau,
+               "score_loss": args.score_loss,
+               "score_cramer_weight": args.score_cramer_weight,
+               "score_cramer_weight_provenance": cramer_provenance,
                "start_step": args.start_step,
-               "step_range": ([args.start_step + 1, steps]
-                              if args.start_step and not args.eval_only
-                              else None),
+               "planned_step_range": ([args.start_step + 1, steps]
+                                      if args.start_step and not args.eval_only
+                                      else None),
+               "steps_run": len(history),
                "frozen_sample_measured_on": (
                    "loaded weights" if args.load_weights is not None
                    else "base weights"),
@@ -1213,7 +1564,9 @@ def main() -> int:
                    if history else None),
                "max_memory_gib": (torch.cuda.max_memory_allocated() / 2**30
                                   if device.startswith("cuda") else None),
-               "frozen_sample_ce": frozen_mean}
+               "frozen_sample_loss": frozen_mean,
+               "frozen_sample_rows": frozen_sample_rows,
+               "frozen_sample_row_ids_sha256": frozen_sample_ids_sha}
 
     args.output.mkdir(parents=True, exist_ok=True)
     payload["weights_path"] = None
