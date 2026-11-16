@@ -150,6 +150,72 @@ def source_class(row_id: str) -> str:
     return name.split("-", 1)[0] if "-" in name else name
 
 
+def step_plan(n_rows: int, world: int, batch_rows: int) -> tuple[int, int]:
+    """Steps per epoch and rows per rank, identical on every rank.
+
+    Ranks must take the same number of steps. A rank that finishes one step
+    early enters the epoch-end statistics all-reduce while its peers are still
+    in the per-step gradient all-reduces, so the two pair with each other: the
+    statistics come back as gradient sums and the collectives eventually time
+    out. ``n_rows`` is the plan's whole train count, never the calling rank's
+    shard, so every rank derives the same number from the same input.
+    """
+    shard_rows = math.ceil(n_rows / world) if world > 1 else n_rows
+    return math.ceil(shard_rows / batch_rows), shard_rows
+
+
+def check_shared_non_negative(value: float, what: str, rank: int, world: int,
+                              device: str, step: int | None = None) -> float:
+    """A cross-entropy mean cannot be negative; share the verdict, then exit.
+
+    A negative CE is not a bad model, it is a pairing bug: when ranks are one
+    collective out of step, an all-reduce returns another collective's
+    payload -- a gradient sum, say -- and that number gets printed as if it
+    were a loss. One run logged a mean loss of 0.0027 and a frozen CE of
+    -0.0018 this way before the NCCL watchdog killed it.
+
+    The verdict is reduced before anyone raises: a rank that exits on a local
+    check leaves the others blocked in the next collective, which is the
+    hang this file keeps having to avoid.
+    """
+    failed = torch.tensor(
+        [0.0 if math.isfinite(value) and value >= 0.0 else 1.0], device=device)
+    if world > 1:
+        dist.all_reduce(failed, op=dist.ReduceOp.SUM)
+    if failed.item() > 0:
+        where = f"rank {rank}" + (f" step {step}" if step is not None else "")
+        raise SystemExit(
+            f"{where}: {what} is {value!r}, which cannot be a cross-entropy "
+            f"mean; {int(failed.item())} rank(s) failed the non-negative check"
+        )
+    return value
+
+
+def shard_and_steps(train_rows: list, rank: int, world: int,
+                    batch_rows: int) -> tuple[list, int]:
+    """One rank's rows and the step count every rank shares.
+
+    The step count comes from the plan's total, not from this rank's shard:
+    that is the property that keeps the collectives aligned, and the only
+    place it is decided.
+    """
+    shard = train_rows[rank :: world] if world > 1 else train_rows
+    steps, _ = step_plan(len(train_rows), world, batch_rows)
+    return shard, steps
+
+
+def batch_indices(step: int, batch_rows: int, shard_rows: int) -> list[int]:
+    """Shard positions for one step; a short shard wraps its tail.
+
+    When the plan's train count is not divisible by the world size some
+    shards hold one row fewer. Wrapping repeats a few early rows on those
+    ranks instead of shortening their epoch, which would desynchronise the
+    collectives.
+    """
+    start = (step - 1) * batch_rows
+    return [index % shard_rows for index in range(start, start + batch_rows)]
+
+
 def build_rows(data: bytes, noul_gold: str = "position",
                plan_unpermuted_noul: bool = False) -> tuple[list[Row], str, int]:
     """Rows from plan bytes, the field that supplied their split, and masks.
@@ -428,14 +494,16 @@ def main() -> int:
             logits = torch.tensor(values, dtype=torch.float32, device=device)
             frozen_losses.append(float(F.cross_entropy(
                 logits.unsqueeze(0), torch.tensor([row.gold], device=device))))
-        frozen_mean = sum(frozen_losses) / len(frozen_losses)
+        frozen_mean = check_shared_non_negative(
+            sum(frozen_losses) / len(frozen_losses), "frozen sample CE",
+            args.rank, args.world, device)
         print(f"rank {args.rank}: frozen sample CE {frozen_mean:.4f}", flush=True)
 
     history = []
     stopped = False
     if not args.eval_only:
-        shard = train_rows[args.rank :: args.world] if args.world > 1 else train_rows
-        steps = math.ceil(len(shard) / args.batch_rows)
+        shard, steps = shard_and_steps(train_rows, args.rank, args.world,
+                                       args.batch_rows)
         if args.max_steps:
             steps = min(steps, args.max_steps)
         print(f"rank {args.rank}: {len(shard)} rows, {steps} steps per epoch, "
@@ -443,7 +511,8 @@ def main() -> int:
         for epoch in range(1, args.epochs + 1):
             started = time.time()
             for step in range(1, steps + 1):
-                batch = shard[(step - 1) * args.batch_rows: step * args.batch_rows]
+                batch = [shard[index]
+                         for index in batch_indices(step, args.batch_rows, len(shard))]
                 optimizer.zero_grad(set_to_none=True)
                 losses = []
                 for row in batch:
@@ -457,10 +526,9 @@ def main() -> int:
                             parameter.grad /= args.world
                 torch.nn.utils.clip_grad_norm_(trainable, 1.0)
                 optimizer.step()
-                mean = sum(losses)
-                if not math.isfinite(mean):
-                    print(f"rank {args.rank}: NaN at step {step}", flush=True)
-                    raise SystemExit(2)
+                mean = check_shared_non_negative(
+                    sum(losses), "mean loss", args.rank, args.world, device,
+                    step=step)
                 history.append(mean)
                 if step % args.log_every == 0 or step == steps:
                     print(f"rank {args.rank}: epoch {epoch} step {step}/{steps} "
@@ -474,6 +542,13 @@ def main() -> int:
                 dist.all_reduce(stats, op=dist.ReduceOp.SUM)
                 stats = stats / args.world
                 epoch_mean, frozen_mean = float(stats[0]), float(stats[1])
+            # Both values are already group-wide, so the check is local: the
+            # reduce above returned the same numbers on every rank, and a
+            # negative one means it paired with another collective.
+            epoch_mean = check_shared_non_negative(
+                epoch_mean, "epoch mean loss", args.rank, 1, device)
+            frozen_mean = check_shared_non_negative(
+                frozen_mean, "frozen sample CE", args.rank, 1, device)
             print(f"rank {args.rank}: epoch {epoch} mean loss {epoch_mean:.4f} "
                   f"frozen {frozen_mean:.4f}", flush=True)
             if epoch_mean > frozen_mean and args.stop_on_loss_rise:

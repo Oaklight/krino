@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import pathlib
 
 import pytest
@@ -11,10 +12,14 @@ torch = pytest.importorskip("torch")
 
 from model.scripts.train_panel2_lora import (  # noqa: E402
     agree_plan,
+    batch_indices,
+    check_shared_non_negative,
     build_rows,
     load_plan_rows,
     parse_prompt_text,
     read_plan,
+    shard_and_steps,
+    step_plan,
 )
 
 PREFIX = "State: A situation.\nQuestion: Is it true?\n"
@@ -179,6 +184,77 @@ def test_a_plan_that_mixes_split_fields_is_an_error(tmp_path):
     with pytest.raises(ValueError, match="mixes"):
         build_rows(_bytes(tmp_path, [first, second]),
                    plan_unpermuted_noul=True)
+
+
+def test_every_rank_takes_the_same_number_of_steps_on_an_uneven_plan():
+    """12,290 rows over 8 ranks: 1,537 and 1,536 rows must give one step count.
+
+    A rank that runs one step fewer enters the epoch-end statistics
+    all-reduce while its peers are still in a gradient all-reduce; the two
+    pair, and the run hangs for ten minutes before the watchdog kills it.
+    """
+    n_rows, world, batch_rows = 12290, 8, 8
+    steps, shard_rows = step_plan(n_rows, world, batch_rows)
+    assert (steps, shard_rows) == (193, 1537)
+    lengths = [len(range(rank, n_rows, world)) for rank in range(world)]
+    assert sorted(set(lengths)) == [1536, 1537]
+    # The shared step count must cover the longest shard, or the long ranks
+    # would still need a step the short ranks never take.
+    assert steps == max(math.ceil(length / batch_rows) for length in lengths)
+
+
+def test_a_negative_cross_entropy_is_refused_with_rank_and_step():
+    with pytest.raises(SystemExit, match=r"rank 3 step 7: mean loss is -0.0018"):
+        check_shared_non_negative(-0.0018, "mean loss", 3, 1, "cpu", step=7)
+    with pytest.raises(SystemExit, match="cannot be a cross-entropy mean"):
+        check_shared_non_negative(float("nan"), "frozen sample CE", 0, 1, "cpu")
+
+
+def test_a_zero_or_positive_cross_entropy_passes():
+    assert check_shared_non_negative(0.0, "mean loss", 0, 1, "cpu") == 0.0
+    assert check_shared_non_negative(2.5, "mean loss", 0, 1, "cpu") == 2.5
+
+
+def test_another_ranks_failure_stops_this_rank_too(monkeypatch):
+    """The verdict is reduced, so a rank with a healthy value still exits.
+
+    One rank's pairing bug must not leave seven ranks training on into the
+    next collective.
+    """
+    import torch.distributed as dist
+
+    def all_reduce(tensor, op=None):
+        tensor.add_(1.0)
+
+    monkeypatch.setattr(dist, "all_reduce", all_reduce)
+    with pytest.raises(SystemExit, match=r"1 rank\(s\) failed"):
+        check_shared_non_negative(1.0, "mean loss", 0, 2, "cpu", step=7)
+
+
+def test_every_rank_gets_the_same_steps_from_its_own_shard():
+    """The wiring, not just the helper: the count must not come from the shard.
+
+    This is the mutation check for the hang. If the step count is taken from
+    ``len(shard)`` the two long ranks get 193 steps and the six short ones
+    192, and the collectives desynchronise.
+    """
+    rows = list(range(12290))
+    counts = {shard_and_steps(rows, rank, 8, 8)[1] for rank in range(8)}
+    assert counts == {193}
+
+
+def test_step_plan_of_a_divisible_plan_matches_the_old_count():
+    assert step_plan(19392, 8, 8) == (303, 2424)
+    assert step_plan(19392, 1, 8) == (2424, 19392)
+
+
+def test_a_short_shard_wraps_its_last_batch_instead_of_dropping_it():
+    # The 193rd batch starts at position 1,536 in a 1,536-row shard, so it
+    # wraps to the first eight rows rather than being empty.
+    indices = batch_indices(193, 8, 1536)
+    assert indices == list(range(8))
+    assert all(index < 1536 for index in indices), "every index must address the shard"
+    assert batch_indices(1, 8, 1536) == list(range(8))
 
 
 def _choice_plan(tmp_path, name="plan.jsonl"):
