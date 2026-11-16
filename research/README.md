@@ -134,6 +134,7 @@ Clef analysis, later written up as `08-clef-analysis.md`.
 | `48-near-duplicate-remediation.md` | 2026-11-15 | the per-row near-duplicate policy and canonical corpus v2 (#235 follow-up) | current |
 | `49-judgement-readout-arm.md` | 2026-11-15 | the judgement-objective LoRA arm: a significant JevBench regression, calibration excluded | current |
 | `50-panel2-readout.md` | 2026-11-16 | the panel-2 readout replaces judgement: frozen +13 items, low-lr val gain, the 2x2 and the admission rule | current |
+| `51-fullft-admission-score.md` | 2026-11-16 | full-parameter arms clear the admission suite at 1e-5; the measured noise band; the score ceiling is high and flat, not untouched | current |
 
 ## Numbering collisions
 
