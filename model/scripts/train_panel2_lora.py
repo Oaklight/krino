@@ -1490,7 +1490,14 @@ def main() -> int:
         # them overwrite each other, leaving a torn file that parses as neither.
         profile_path = args.output / f"phase_profile_rank{args.rank}.json"
         profile_payload["path_this_rank"] = profile_path.name
-        profile_path.write_text(json.dumps(profile_payload))
+        failed = torch.tensor([0.0], device=device)
+        try:
+            profile_path.write_text(json.dumps(profile_payload))
+        except Exception as error:  # noqa: BLE001 - reported through the group
+            failed.fill_(1.0)
+            print(f"rank {args.rank}: phase profile write failed: {error!r}",
+                  flush=True)
+        abort_if_any_failed(failed, "phase profile write", args.world)
         print(f"rank {args.rank}: phase profile "
               f"{json.dumps(profile_payload['mean_seconds_this_rank'])}", flush=True)
 
