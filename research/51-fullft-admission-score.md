@@ -29,7 +29,9 @@ Two launches of the 1e-5 configuration exist. The no-weights launch is the one s
 | no weights | 6,780/9,923 = 0.6833 | 165 | 161 | 163.0 | 204/231 | 7 | 146/445 = 0.3281 | 0.0440 / 0.0560 / 0.1652 |
 | `_w` | 6,821/9,923 = 0.6874 | 166 | 161 | 163.5 | 204/231 | 2 | 142/445 = 0.3191 | 0.0462 / 0.0760 / 0.1817 |
 
-All five gates pass for both launches, so the admission verdict does not depend on which one is read. From here `_w` is the canonical artifact for later comparisons, because it carries weights and can be re-scored; the score-loss arms use it as their control. This note records the arm as launched, `_w`; the score-loss comparison uses the re-scored cells because all three arms must share one harness, and if the two differ beyond rounding the cell carries the harness it came from and the later note reports both rather than one silently.
+All five gates pass for both launches, so the admission verdict does not depend on which one is read. From here `_w` is the canonical artifact for later comparisons, because it carries weights and can be re-scored; the score-loss arms use it as their control.
+
+Decision: the artifact of record is `_w` as launched; the comparison artifact is the re-scored cells, because all three arms must share one harness; and if the two disagree beyond rounding, the cell carries the harness it came from and the later note reports both rather than one silently.
 
 The two rows are the only same-config pair here, so they give a rough two-run spread: 0.41 pp on val, at or inside the 0.5-item band edge on averaged JevBench, 4 K = 80 rows, identical agreement, and ECE differences of 0.22, 2.0 and 1.65 pp. ECE differences below about 2 pp between arms are not distinguishable at this n. That is a two-run estimate, not a measured band; under it, 375's noul at 0.0379 against 543's 0.0874, 5 pp apart, is outside the estimate, while 0.0440 against 0.0462 is not. The 375 and 543 cells themselves are reported in the companion note on leg 1, `research/52-leg1-half-epoch.md`.
 
