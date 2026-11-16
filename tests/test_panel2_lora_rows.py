@@ -725,3 +725,83 @@ def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
     monkeypatch.setattr(dist, "all_gather_object", agree)
     data, digest, error = agree_plan(b"x", "c" * 64, None, 8, 3)
     assert (data, digest, error) == (b"x", "c" * 64, None)
+
+
+def _weight_plan(tmp_path):
+    records = [
+        _record(f"corpus:w{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(2) for option in (0, 1)
+    ]
+    return _write(tmp_path, records)
+
+
+def test_save_weights_records_the_digest_of_the_saved_file(tmp_path, monkeypatch):
+    """A full fine-tune's arm is its weights; the payload must name them.
+
+    Without the file the cells cannot be re-scored on a later metric, and
+    without the digest the file cannot be tied to the cells it produced.
+    """
+    import hashlib
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    plan = _weight_plan(tmp_path)
+    _fake_training_modules(module, monkeypatch)
+    # ``module.torch`` is the torch module, whose ``save`` the fake seaming
+    # already replaced with a no-op; the real writer is still reachable here.
+    monkeypatch.setattr(module.torch, "save", torch.serialization.save)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2", "--full-ft",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2", "--save-weights",
+    ])
+    assert module.main() == 0
+    out = tmp_path / "out"
+    payload = json.loads((out / "shard_0.json").read_text())
+    saved = out / "weights.pt"
+    assert saved.exists()
+    assert payload["weights_sha256"] == hashlib.sha256(
+        saved.read_bytes()).hexdigest()
+    assert payload["weights_bytes"] == saved.stat().st_size
+
+
+def test_load_weights_puts_the_saved_values_into_the_model(tmp_path, monkeypatch):
+    """--load-weights must overwrite the loaded model, strictly.
+
+    The saved tensor is bumped by one before loading; the value the model
+    holds at evaluation time is the one this test reads.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    plan = _weight_plan(tmp_path)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(module.torch, "save", torch.serialization.save)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2", "--full-ft",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2", "--save-weights",
+    ])
+    assert module.main() == 0
+
+    saved = tmp_path / "out" / "weights.pt"
+    state = torch.load(saved)
+    state["weight"] = state["weight"] + 1.0
+    torch.serialization.save(state, saved)
+
+    seen = {}
+    monkeypatch.setattr(
+        module, "evaluate",
+        lambda model, *args, **kwargs: (
+            seen.update(weight=float(model.state_dict()["weight"])),
+            ({}, [], {}))[1])
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out2"), "--world", "1", "--device", "cpu",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--load-weights", str(saved), "--eval-only",
+    ])
+    assert module.main() == 0
+    assert seen["weight"] == 1.0
+    payload = json.loads((tmp_path / "out2" / "shard_0.json").read_text())
+    assert payload["weights_loaded_sha256"] == module.file_sha256(saved)

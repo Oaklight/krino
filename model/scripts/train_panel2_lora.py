@@ -42,6 +42,21 @@ POLARITY_MARK = "\nQuestion: "
 OPTION_MARK = "\nDoes this option correctly answer the question?"
 
 
+def file_sha256(path: Path, chunk: int = 1 << 22) -> str:
+    """The digest of a file, read in blocks so an 8 GB checkpoint is not held.
+
+    A full fine-tune's weights are the arm: without their digest recorded in
+    the payload, a later scoring pass cannot say which weights produced the
+    cells it is attached to.
+    """
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(chunk), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+
 def read_plan(path: Path, expected: str | None, label: str):
     """One rank's read outcome: bytes, digest, or an error string.
 
@@ -593,6 +608,24 @@ def main() -> int:
         default=0.0,
         help="linear warmup over this fraction of the first epoch's steps",
     )
+    parser.add_argument(
+        "--save-weights",
+        action="store_true",
+        help=(
+            "on rank 0, save the full final state dict to weights.pt and record "
+            "its sha256 and size in the payload; a full fine-tune leaves no "
+            "adapter, so without this the arm cannot be re-scored or shipped"
+        ),
+    )
+    parser.add_argument(
+        "--load-weights",
+        type=Path,
+        default=None,
+        help=(
+            "load a full state dict saved by --save-weights before evaluating; "
+            "use with --eval-only to score a saved arm"
+        ),
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--epochs", type=int, default=1)
@@ -668,6 +701,16 @@ def main() -> int:
         raise SystemExit(f"code ids unusable: {len(code_ids)} single-token, {multi[:5]}")
     trainable = [p for p in model.parameters() if p.requires_grad]
     print(f"rank {args.rank}: trainable {sum(p.numel() for p in trainable)}", flush=True)
+
+    weights_loaded_sha = None
+    if args.load_weights is not None:
+        # Strict load: a partial match would score a model nobody saved.
+        state = torch.load(args.load_weights, map_location=device)
+        model.load_state_dict(state, strict=True)
+        weights_loaded_sha = file_sha256(args.load_weights)
+        print(f"rank {args.rank}: loaded weights {args.load_weights} "
+              f"sha256 {weights_loaded_sha[:16]}", flush=True)
+
 
     model.train()
     optimizer = torch.optim.AdamW(trainable, lr=args.lr, weight_decay=0.01)
@@ -832,6 +875,10 @@ def main() -> int:
                "frozen_sample_ce": frozen_mean}
 
     args.output.mkdir(parents=True, exist_ok=True)
+    payload["weights_path"] = None
+    payload["weights_sha256"] = None
+    payload["weights_bytes"] = None
+    payload["weights_loaded_sha256"] = weights_loaded_sha
     path = args.output / f"shard_{args.rank}.json"
     if stopped:
         # A fired stop rule ends the point, but the numbers it produced are
@@ -847,6 +894,20 @@ def main() -> int:
     if args.rank == 0:
         jev = evaluate_jevbench(model, tokenizer, code_ids, device)
         payload["jevbench"] = jev
+        if args.save_weights:
+            # The full fine-tune's arm is its weights: without this file the
+            # cells cannot be re-scored on a later metric or shipped. Written
+            # before the payload so the digest it records covers these bytes.
+            weights_path = args.output / "weights.pt"
+            torch.save({key: value.detach().cpu()
+                        for key, value in model.state_dict().items()},
+                       weights_path)
+            payload["weights_path"] = str(weights_path)
+            payload["weights_sha256"] = file_sha256(weights_path)
+            payload["weights_bytes"] = weights_path.stat().st_size
+            print(f"rank 0: saved weights {weights_path} "
+                  f"sha256 {payload['weights_sha256'][:16]} "
+                  f"bytes {payload['weights_bytes']}", flush=True)
 
     with path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle)
