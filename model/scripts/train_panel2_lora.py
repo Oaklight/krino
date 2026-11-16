@@ -260,6 +260,13 @@ def reduce_gradients(params, world: int, bucket_bytes: int = 64 << 20) -> int:
     Parameters are grouped by dtype as well as by size: a flat buffer cannot
     mix bf16 and fp32, and the LoRA factors are fp32 while the weights are
     bf16.
+
+    A trainable parameter with no gradient gets zeros, so a rank that skipped
+    it contributes nothing to the sum and the mean stays right. Under full
+    fine-tuning every parameter takes a gradient in every step that uses it,
+    so the flat path and the per-parameter path agree; the zero row only
+    appears for a parameter that did not participate, and there its
+    contribution is zero either way.
     """
     if world <= 1:
         return 0
@@ -537,6 +544,25 @@ def target_loss(values, gold: int, mode: str, tau: float = 1.0):
     raise ValueError(f"unknown score target {mode!r}")
 
 
+def abort_if_any_failed(failed, what: str, world: int) -> None:
+    """Share a 0/1 failure flag, then abort every rank together.
+
+    A checkpoint's expensive work is local -- rank 0's JevBench pass and the
+    8.8 GB write -- so an exception there would leave the other ranks in the
+    next gradient all-reduce with no traceback: a silent stall at a checkpoint
+    step instead of a clean abort. The reduce is the one collective every rank
+    reaches, so the raise happens after it, on all of them.
+    """
+    if world > 1:
+        dist.all_reduce(failed, op=dist.ReduceOp.SUM)
+    if failed.item() > 0:
+        raise SystemExit(
+            f"{what}: {int(failed.item())} rank(s) failed; aborting the group "
+            "through the collective instead of leaving the others waiting in "
+            "the next all-reduce"
+        )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--plan", type=Path, required=True)
@@ -778,6 +804,9 @@ def main() -> int:
     weights_loaded_sha = None
     if args.load_weights is not None:
         # Strict load: a partial match would score a model nobody saved.
+        # Only weights are restored. AdamW starts cold, so a resumed leg is
+        # not a continuation of the first leg's optimizer state; the payload
+        # records optimizer_state: fresh rather than claiming a continuation.
         state = torch.load(args.load_weights, map_location=device)
         model.load_state_dict(state, strict=True)
         weights_loaded_sha = file_sha256(args.load_weights)
@@ -844,20 +873,28 @@ def main() -> int:
                   "ece_bins_population": "benchmark", "val_source": val_source,
                   "weights_path": None, "weights_sha256": None,
                   "weights_bytes": None}
-        if args.rank == 0:
-            record["jevbench"] = evaluate_jevbench(model, tokenizer, code_ids,
-                                                   device)
-            if args.save_weights:
-                path = args.output / f"weights_step{step}.pt"
-                torch.save({key: value.detach().cpu()
-                            for key, value in model.state_dict().items()}, path)
-                record["weights_path"] = str(path)
-                record["weights_sha256"] = file_sha256(path)
-                record["weights_bytes"] = path.stat().st_size
-        out = args.output / f"checkpoint_{step}_shard_{args.rank}.json"
-        out.write_text(json.dumps(record))
-        print(f"rank {args.rank}: checkpoint step {step} "
-              f"benchmark {counts.get('all')}", flush=True)
+        failed = torch.tensor([0.0], device=device)
+        try:
+            if args.rank == 0:
+                record["jevbench"] = evaluate_jevbench(model, tokenizer,
+                                                       code_ids, device)
+                if args.save_weights:
+                    path = args.output / f"weights_step{step}.pt"
+                    torch.save({key: value.detach().cpu()
+                                for key, value in model.state_dict().items()},
+                               path)
+                    record["weights_path"] = str(path)
+                    record["weights_sha256"] = file_sha256(path)
+                    record["weights_bytes"] = path.stat().st_size
+            out = args.output / f"checkpoint_{step}_shard_{args.rank}.json"
+            out.write_text(json.dumps(record))
+            print(f"rank {args.rank}: checkpoint step {step} "
+                  f"benchmark {counts.get('all')}", flush=True)
+        except Exception as error:  # noqa: BLE001 - reported through the group
+            failed.fill_(1.0)
+            print(f"rank {args.rank}: checkpoint step {step} failed: {error!r}",
+                  flush=True)
+        abort_if_any_failed(failed, f"checkpoint step {step}", args.world)
 
     history = []
     reduce_seconds = 0.0
@@ -964,6 +1001,11 @@ def main() -> int:
     # Validation on the same stride the periodic checkpoints scored.
     counts, per_item, ece_bins = evaluate(model, tokenizer, val_shard,
                                           code_ids, device)
+    # The two numbers a reader needs to see the bin population is the
+    # benchmark one: a mismatch here is the defect this filter exists to fix.
+    ece_bins_rows = sum(slot[0] for cell in ece_bins.values()
+                        for slot in cell.values())
+    benchmark_val_rows = sum(1 for row in per_item if row[3] != "synthetic")
     payload = {"rank": args.rank, "lr": args.lr, "val_counts": counts,
                "val_items": per_item, "ece_bins": ece_bins,
                "ece_bins_population": "benchmark",
@@ -977,6 +1019,12 @@ def main() -> int:
                "eval_plan_sha256_expected": args.eval_plan_sha256,
                "full_ft": args.full_ft, "grad_bucket_mb": args.grad_bucket_mb,
                "eval_every": args.eval_every,
+               "ece_bins_rows": ece_bins_rows,
+               "benchmark_val_rows": benchmark_val_rows,
+               "optimizer_state": "fresh",
+               "start_step_per_epoch": True,
+               "token_counts_key": "id(row), object identity, stable while "
+                                   "this run holds the rows",
                "score_target": args.score_target,
                "score_target_tau": args.score_target_tau,
                "start_step": args.start_step,

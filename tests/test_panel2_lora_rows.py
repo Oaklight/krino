@@ -477,13 +477,15 @@ def test_evaluate_reports_calibration_bins_that_add_up(tmp_path):
 
 
 def test_only_benchmark_rows_enter_the_calibration_bins(tmp_path):
-    """Synthetic rows count toward accuracy but not toward ECE.
+    """Benchmark rows from three families count; synthetic rows do not.
 
     The LoRA arms' ECE is scored later over the 9,923 benchmark val rows only;
-    the eval plan's val split is 31,948 synthetic rows on top of that. Binning
-    every row here would compare the two families on different populations.
+    the eval plan's val split is 31,948 synthetic rows on top of that. A test
+    with one benchmark family and one synthetic family would still pass if the
+    filter dropped every family but the first, so the plan here carries two
+    benchmark families and one synthetic one.
     This is the mutation check for the filter: with it removed the bin total
-    below becomes 4 and the test goes red.
+    becomes 6 and the test goes red.
     """
     import torch
 
@@ -496,12 +498,18 @@ def test_only_benchmark_rows_enter_the_calibration_bins(tmp_path):
                                    CHOICE_PREFIX, f"Option {option}.", 2))
     for index in range(2):
         for option in (0, 1):
+            records.append(_record(f"corpus:typed_decisions-t{index}", option,
+                                   1 if option == 0 else 0, "choice",
+                                   CHOICE_PREFIX, f"Option {option}.", 2))
+    for index in range(2):
+        for option in (0, 1):
             records.append(_record(f"corpus:synthetic-s{index}", option,
                                    1 if option == 0 else 0, "choice",
                                    CHOICE_PREFIX, f"Option {option}.", 2))
     rows, _, _ = build_rows(_bytes(tmp_path, records), plan_unpermuted_noul=True)
     sources = sorted({row.source for row in rows})
-    assert "synthetic" in sources and len(sources) == 3
+    assert "synthetic" in sources and "typed_decisions" in sources
+    assert len(sources) == 4
 
     class FakeTokenizer:
         def __call__(self, text, return_tensors=None, add_special_tokens=False):
@@ -523,9 +531,9 @@ def test_only_benchmark_rows_enter_the_calibration_bins(tmp_path):
     counts, per_item, bins = module.evaluate(
         FakeModel(), FakeTokenizer(), rows, code_ids, "cpu")
     total = sum(slot[0] for cell in bins.values() for slot in cell.values())
-    assert len(rows) == 4
-    assert counts["all"][1] == 4, "accuracy still counts every row"
-    assert total == 2, "only the two benchmark rows may enter the bins"
+    assert len(rows) == 6
+    assert counts["all"][1] == 6, "accuracy still counts every row"
+    assert total == 4, "both benchmark families may enter the bins, synthetic may not"
 
 
 def test_every_rank_gets_the_same_steps_from_its_own_shard():
@@ -922,6 +930,59 @@ def test_a_resume_past_the_last_step_is_refused(tmp_path, monkeypatch):
         "--max-steps", "3", "--start-step", "3", "--load-weights", str(weights),
     ])
     with pytest.raises(SystemExit, match="already cover this leg"):
+        module.main()
+
+
+def test_a_checkpoint_failure_aborts_every_rank_through_the_collective(monkeypatch):
+    """A rank-0 checkpoint failure must not leave the others in an all-reduce.
+
+    The patched reduce records its call and reports a failure from another
+    rank; this rank's own flag is healthy and it must still exit, after the
+    reduce and not before it.
+    """
+    import torch
+    import torch.distributed as dist
+
+    from model.scripts.train_panel2_lora import abort_if_any_failed
+
+    calls = []
+
+    def all_reduce(tensor, op=None):
+        calls.append(float(tensor.item()))
+        tensor.add_(1.0)
+
+    monkeypatch.setattr(dist, "all_reduce", all_reduce)
+    failed = torch.tensor([0.0])
+    with pytest.raises(SystemExit, match=r"checkpoint step 125: 1 rank"):
+        abort_if_any_failed(failed, "checkpoint step 125", 2)
+    assert calls == [0.0], "the reduce must run before the raise"
+
+
+def test_a_rank_zero_checkpoint_exception_raises_instead_of_stalling(
+    tmp_path, monkeypatch
+):
+    """main() must abort cleanly when rank 0's checkpoint work throws."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:w{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("disk full")
+
+    monkeypatch.setattr(module, "evaluate_jevbench", boom)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--eval-every", "1",
+    ])
+    with pytest.raises(SystemExit, match=r"checkpoint step 1: 1 rank\(s\) failed"):
         module.main()
 
 
