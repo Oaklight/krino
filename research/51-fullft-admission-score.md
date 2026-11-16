@@ -1,6 +1,6 @@
 # Full-parameter fine-tuning, the admission suite, and the score ceiling — 2026-11-16
 
-Status: measured, one seed, one short schedule. Full-parameter training at 1e-5 is the first arm to clear every gate of the admission suite, the suite itself now has measured floors and a measured noise band, and the score head is shown to sit on a ceiling that no arm in this stretch moves. Full-corpus scaling has no result yet and is unverified.
+Status: measured, one seed, one short schedule. Full-parameter training at 1e-5 is the first arm to clear every gate of the admission suite, and the suite now has measured floors and a measured noise band. On the score rows capacity does not move the result: the data version does, and the synthetic share costs about 31 net items at 1e-4. Full-corpus scaling has no result yet and is unverified.
 
 **PRs:** #387, open at the time of writing and not yet merged.
 
@@ -16,9 +16,9 @@ LoRA is off and every parameter is trainable, with activation checkpointing on.
 | 2e-5 | 0.6845 | 163 | 159 | 161.0 | 0.9048 | 1 | 0.3596 | 0.1286 / 0.1253 / 0.3691 |
 | 5e-5 | 0.5536 | 131 | 128 | 129.5 | 0.7835 | 0 | 0.1348 | +0.127 / +0.148 over frozen |
 
-The ECE column is absolute for the first two arms and a change over frozen for 5e-5, where the deltas are noul +0.127 (0.2679 against 0.1406) and score +0.148 (0.3752 against 0.2269). The choice cell is 0.0770 against frozen 0.2787, a 0.202 improvement, so it is the one ECE cell that improves and it is not a positive delta. The frozen ECE on the same rows is noul 0.1406, choice 0.2787 and score 0.2269. Every ECE cell in this note is held unverified: the calibration-bin filter on #387 is `source != "synthetic"`, which covers roughly 10,540 rows against the 9,923-row comparator, and the run owner has not yet confirmed which path produced these cells. If they came through the filter, they are recomputed or withdrawn.
+The ECE column is absolute for the first two arms and a change over frozen for 5e-5, where the deltas are noul +0.127 (0.2679 against 0.1406) and score +0.148 (0.3752 against 0.2269). The choice cell is 0.0770 against frozen 0.2787, a 0.202 improvement, so it is the one ECE cell that improves and it is not a positive delta. The frozen ECE on the same rows is noul 0.1406, choice 0.2787 and score 0.2269. Every ECE cell rests on the 9,923-row benchmark comparator: the frozen and LoRA cells come from a separate pass over exactly those rows, and each of the four full-parameter runs has in-run bins that sum to exactly 9,923 rows, noul 3,482, choice 5,330 and score 1,111, identical to the comparator per type. The filter concern raised in #387's review does not change these cells.
 
-The sweet spot is narrow. 1e-5 and 2e-5 both beat frozen on benchmark val by more than 11 pp and on JevBench by 2 to 4 items averaged; 5e-5 is a collapse on every measure. Between the two good arms the choice is not made by val, which is 0.0012 apart, but by the per-cell ECE: 1e-5 is better on all three cells than both 2e-5 and frozen, and 2e-5 is worse than frozen on score.
+The sweet spot is narrow. 1e-5 and 2e-5 both beat frozen on benchmark val by more than 11 pp and on JevBench by 2 to 4 items averaged; 5e-5 collapses on val, averaged JevBench and K = 80, while it still passes the agreement floor at 0.7835 against 0.7206 and improves the choice ECE at 0.0770 against 0.2787. Between the two good arms the choice is not made by val, which is 0.0012 apart, but by the per-cell ECE: 1e-5 is better on all three cells than both 2e-5 and frozen, and 2e-5 is worse than frozen on score.
 
 ## 2. Admission suite outcomes
 
@@ -30,7 +30,7 @@ The suite now has measured floors, all taken from the frozen readout on the same
 | natural-versus-reversed agreement | 0.7706 (178/231) | at least 0.7206 |
 | benchmark val, 9,923 rows | 0.5696 (5,652) | at least 0.5596 |
 | K = 80 exact | 0.2607 (116/445) | at least 0.2407 |
-| ECE, per cell | 0.1406 / 0.2787 / 0.2269 | at most 0.1606 / 0.2987 / 0.2469; all arms' ECE cells unverified, see section 1 |
+| ECE, per cell | 0.1406 / 0.2787 / 0.2269 | at most 0.1606 / 0.2987 / 0.2469 |
 
 The val gate is applied against 5,652/9,923 = 0.5696, the frozen cell count. The 0.5697 quoted as a reference elsewhere is that cell rounded up, not a second measurement, and this note uses the count; the floor is therefore 0.5596.
 
@@ -41,12 +41,14 @@ Seven are rejected, each for the gate that ended it.
 | arm | failing gate |
 |---|---|
 | LoRA v3, 1e-4 | averaged JevBench 149.0 against 156.0; agreement 0.6104 against 0.7206 |
-| benchmark-only, 3e-5 | averaged JevBench 155.5 against 156.0 |
+| benchmark-only, 3e-5 | averaged JevBench 155.5 against 156.0, half an item below and inside the 0.5-item noise band |
 | benchmark-only, 1e-4 | averaged JevBench 154.5 against 156.0 |
 | LoRA old plan, 3e-5 | val 0.5510 against 0.5596; agreement 0.7186 against 0.7206 |
 | LoRA v3, 3e-4 | averaged JevBench 150.0, val 0.4956, agreement 0.5498, K = 80 0.0382; ECE unmeasured |
-| full FT, 2e-5 | score ECE 0.3691, 0.142 over frozen, and nothing else; the ECE cell is unverified |
-| full FT, 5e-5 | averaged 129.5, val 0.5536, noul ECE 0.2679, score ECE 0.3752, K = 80 0.1348; the ECE cells are unverified |
+| full FT, 2e-5 | score ECE 0.3691 against the 0.2469 floor, a gap of 0.122, and nothing else |
+| full FT, 5e-5 | averaged 129.5, val 0.5536, noul ECE 0.2679, score ECE 0.3752, K = 80 0.1348 |
+
+Only the JevBench allowance has a basis in the measured band: 3 items is half the 6-item order swing, and the 0.5-item band is why the 155.5 rejection is reported as inside noise rather than as a clean miss. The other floors are policy choices, not band multiples: benchmark val within 1 pp, per-cell ECE within 0.02, and the agreement and K = 80 floors at the frozen values, each set wider than the measured band.
 
 The rejections are the useful half of the suite: each names the measure that ended the arm, so a later recipe can be aimed at a specific gate rather than at the aggregate.
 
@@ -80,9 +82,11 @@ The reading is pre-registered: exact accuracy on the 1,111 rows improves at p < 
 
 ## 7. Full-corpus scaling (unverified)
 
-Step time is 11.5 s, the median of four measured windows over two 50-step runs on this row mix: the run averages are 11.46 and 11.56 s, the steady-state window from steps 25 to 50 is 10.5 s in both, and the first window is 12.5 s because it carries start-up. The 8.17 s figure measures the same trainer on the a20k plan in the weights run, a shorter row mix, and is not the cost of a full-corpus epoch step. One epoch is 1,086 steps, so 1,086 x 11.5 s = 12,489 s = 3.47 h of steps.
+The step time is not constant and is not a property of the row mix. Leg 1 on rank 0 records cumulative elapsed 315 s at step 25, 578 s at 50, 807 s at 75 and 1,013 s at 100, which gives window rates of 12.60, 10.52, 9.16 and 8.24 s per step. The rate drifts down as start-up amortises, the last window matches the a20k weights run at 8.17 s, and an earlier killed run shows the same shape, 311 s and 573 s at steps 25 and 50. The earlier 11.3 s figure was start-up amortisation, not a longer row mix.
 
-The three terms multiply out as follows. Steps: 1,086 x 11.5 s = 12,489 s = 3.47 h. Checkpoint evaluations: 8 x 11.5 min = 92 min = 1.53 h. Loading and resume overhead: about 0.03 h. Total 5.03 h, rounded to 5.0 h; with no checkpoint evaluations the epoch is 3.5 h. The 11.5 s figure is the measured step time over the two 50-step windows, not the steady-state 10.5 s, because the first window is part of a real epoch. A checkpoint evaluation's 11.5 min is derived from the weights run, which took 54 min: 303 steps at 8.17 s is 41.4 min, leaving 12.6 min for loading and the 41,871-row validation pass plus 462 JevBench forwards.
+The epoch is a range, with the basis named. At the cumulative rate at step 100, 10.1 s per step, 1,086 steps is 10,969 s = 3.05 h, so 3.1 h. If the last window, 8.24 s per step, is the steady state, the same count is 8,949 s = 2.49 h, so 2.6 h.
+
+Checkpoint evaluation is added separately at 12.6 min each, the figure derived from the weights run: 54.0 min minus 41.4 min of steps at 8.17 s over 303 steps. Eight evaluations are 100.8 min = 1.68 h. The epoch therefore projects to 4.7 h at the cumulative rate and 4.2 h if the last window is the steady state. Both totals are estimates until the first evaluation, which lands at step 125, measures the real cost.
 
 The row cap skips 180 of 69,644 train rows, 0.26%, and 2,169 rows are masked as `answerable:false`. The run is executed in two legs of 543 steps with checkpoint evaluation every 125 steps and a resume path. No result exists yet, and every figure in this section is unverified.
 
