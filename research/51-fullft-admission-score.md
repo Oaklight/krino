@@ -30,11 +30,11 @@ The suite now has measured floors, all taken from the frozen readout on the same
 | natural-versus-reversed agreement | 0.7706 (178/231) | at least 0.7206 |
 | benchmark val, 9,923 rows | 0.5696 (5,652) | at least 0.5596 |
 | K = 80 exact | 0.2607 (116/445) | at least 0.2407 |
-| ECE, per cell | 0.1406 / 0.2787 / 0.2269 | at most 0.1606 / 0.2987 / 0.2469 |
+| ECE, per cell | 0.1406 / 0.2787 / 0.2269 | at most 0.1606 / 0.2987 / 0.2469; all arms' ECE cells unverified, see section 1 |
 
 The val gate is applied against 5,652/9,923 = 0.5696, the frozen cell count. The 0.5697 quoted as a reference elsewhere is that cell rounded up, not a second measurement, and this note uses the count; the floor is therefore 0.5596.
 
-Three arms are admissible: full fine-tuning at 1e-5, LoRA panel-2 on v3 at 3e-5, and LoRA panel-2 on the old plan at 1e-4. The v3 3e-5 arm is provisional at this point of use: the reversed pass behind its 157.0 average is not committed, so its verdict carries the proviso of the previous note and is not a settled admission. The outcomes are unverified at point of use; the eval artifacts are on the run host and are not committed.
+Three arms are admissible: full fine-tuning at 1e-5, LoRA panel-2 on v3 at 3e-5, and LoRA panel-2 on the old plan at 1e-4. The v3 3e-5 arm is provisional at this point of use. Its reversed pass was run, because every panel-2 arm's JevBench evaluation scores both orders in the same process, and it records 153/231 reversed, 157.0 averaged and 174/231 agreement with 21 exact ties, which clears the 156.0 floor on the average. The only record is the run-directory payload: it is uncommitted and not reproducible from the tree, so the values are unverified and 157.0 is not cited as a committed result. The verdict carries the previous note's proviso and is not a settled admission. The outcomes are unverified at point of use; the eval artifacts are on the run host and are not committed.
 
 Seven are rejected, each for the gate that ended it.
 
@@ -45,8 +45,8 @@ Seven are rejected, each for the gate that ended it.
 | benchmark-only, 1e-4 | averaged JevBench 154.5 against 156.0 |
 | LoRA old plan, 3e-5 | val 0.5510 against 0.5596; agreement 0.7186 against 0.7206 |
 | LoRA v3, 3e-4 | averaged JevBench 150.0, val 0.4956, agreement 0.5498, K = 80 0.0382; ECE unmeasured |
-| full FT, 2e-5 | score ECE 0.3691, 0.142 over frozen, and nothing else |
-| full FT, 5e-5 | averaged 129.5, val 0.5536, noul ECE 0.2679, score ECE 0.3752, K = 80 0.1348 |
+| full FT, 2e-5 | score ECE 0.3691, 0.142 over frozen, and nothing else; the ECE cell is unverified |
+| full FT, 5e-5 | averaged 129.5, val 0.5536, noul ECE 0.2679, score ECE 0.3752, K = 80 0.1348; the ECE cells are unverified |
 
 The rejections are the useful half of the suite: each names the measure that ended the arm, so a later recipe can be aimed at a specific gate rather than at the aggregate.
 
@@ -54,7 +54,7 @@ The rejections are the useful half of the suite: each names the measure that end
 
 Two runs of one configuration differed on 1,017 of 41,232 validation rows, on 6 of 231 JevBench items, and on the epoch mean loss, 0.9003 against 0.8942. The trajectories separate by step 25. The cause is training nondeterminism, suspected to be attention-backward atomics; that is unconfirmed. With a third run the band is 0.52 pp on benchmark val and 0.5 items on averaged JevBench.
 
-The band is measured on 41,232 validation rows. The epoch projection in section 7 uses 41,871 rows, and the 639-row difference is the rows masked by the answerable flag, so the band and the projection do not share a denominator. There is no seed axis in this loop: it has no shuffle, dropout or random draw, so changing the seed reproduces the same trajectory. Every comparison in this note is read against the measured band, not against zero.
+The band is measured on 41,232 scored validation rows. The plan's val split is 41,871 rows; the loader's `answerable:false` rule removes 639 of them, which is the only difference between the two counts. The `--max-row-tokens` cap applies to train rows and is not the cause of the 639: it skips 180 of 69,644 train rows. The band and the projection therefore do not share a denominator, and every band figure here is on the 41,232 scored rows. There is no seed axis in this loop: it has no shuffle, dropout or random draw, so changing the seed reproduces the same trajectory. Every comparison in this note is read against the measured band, not against zero.
 
 ## 4. The score ceiling
 
