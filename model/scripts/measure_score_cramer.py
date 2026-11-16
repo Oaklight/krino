@@ -53,7 +53,7 @@ def row_logits(model, tokenizer, row, code_ids, device):
 
 
 def block(rows, factor: float = FACTOR) -> dict:
-    """One population's means and the lambda it implies."""
+    """One population's means and the lambda its own ratio implies."""
     ce = sum(row["ce"] for row in rows) / len(rows)
     rps = sum(row["rps"] for row in rows) / len(rows)
     if rps <= 0:
@@ -63,17 +63,32 @@ def block(rows, factor: float = FACTOR) -> dict:
     lam = factor * ce / rps
     return {"n": len(rows), "mean_ce": ce, "mean_rps": rps,
             "ce_over_rps": ce / rps, "lambda": lam,
-            "rps_term_fraction_of_score_loss": lam * rps / (ce + lam * rps)}
+            "rps_term_fraction_at_block_lambda": lam * rps / (ce + lam * rps)}
 
 
 def summarise(per_row, factor: float = FACTOR) -> dict:
-    return {"overall": block(per_row, factor),
-            "by_k": {str(k): block([row for row in per_row if row["k"] == k],
-                                   factor)
-                     for k in sorted({row["k"] for row in per_row})},
-            "by_gold": {str(g): block([row for row in per_row
-                                       if row["gold"] == g], factor)
-                        for g in sorted({row["gold"] for row in per_row})}}
+    """Overall lambda, and every block's share under it.
+
+    A block's own lambda makes its share factor/(1+factor) = 0.2 by
+    construction, which is not a measurement. The number a reader needs is
+    each block's share when the overall lambda is applied, so that is what
+    every block carries beside its block-local value.
+    """
+    overall = block(per_row, factor)
+    lam = overall["lambda"]
+
+    def with_share(entry):
+        share = lam * entry["mean_rps"] / (entry["mean_ce"]
+                                           + lam * entry["mean_rps"])
+        return {**entry, "rps_term_fraction_at_overall_lambda": share}
+
+    return {"overall": with_share(overall),
+            "by_k": {str(k): with_share(block(
+                [row for row in per_row if row["k"] == k], factor))
+                for k in sorted({row["k"] for row in per_row})},
+            "by_gold": {str(g): with_share(block(
+                [row for row in per_row if row["gold"] == g], factor))
+                for g in sorted({row["gold"] for row in per_row})}}
 
 
 def main() -> int:

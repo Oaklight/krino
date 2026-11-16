@@ -777,7 +777,8 @@ def main() -> int:
         type=int,
         default=0,
         help=(
-            "score benchmark val and the 231 items every N steps and write "
+            "score the non-synthetic val rows and the 231 items every N steps "
+            "and write "
             "checkpoint_<step>_shard_<rank>.json; with --save-weights the "
             "weights at that step are saved too, so a longer run produces a "
             "curve and its best point can be kept rather than the last"
@@ -1004,11 +1005,14 @@ def main() -> int:
                 "lambda": overall["lambda"],
                 "by_k": probe.get("by_k"),
                 "by_gold": probe.get("by_gold"),
-                "share_note": "the RPS term's share of the score-row loss is "
-                              "lambda*mean_rps/(mean_ce+lambda*mean_rps); it "
-                              "is heterogeneous by gold position, which is a "
-                              "property of mixing CE with a bounded proper "
-                              "scoring rule",
+                "share_note": "the RPS term's share of the score-row loss at "
+                              "the overall lambda is lambda*mean_rps/"
+                              "(mean_ce+lambda*mean_rps), reported per block "
+                              "as rps_term_fraction_at_overall_lambda. It is "
+                              "heterogeneous by gold position, a property of "
+                              "mixing CE with a bounded proper scoring rule; "
+                              "each block's value at its own lambda is 0.2 by "
+                              "construction and is not a measurement",
             }
     elif args.score_cramer_weight_source is not None:
         raise SystemExit(
@@ -1221,7 +1225,7 @@ def main() -> int:
             out = args.output / f"checkpoint_{step}_shard_{args.rank}.json"
             out.write_text(json.dumps(record))
             print(f"rank {args.rank}: checkpoint step {step} "
-                  f"benchmark {counts.get('all')}", flush=True)
+                  f"non-synthetic {counts.get('all')}", flush=True)
         except Exception as error:  # noqa: BLE001 - reported through the group
             failed.fill_(1.0)
             print(f"rank {args.rank}: checkpoint step {step} failed: {error!r}",
@@ -1540,8 +1544,7 @@ def main() -> int:
                "score_cramer_weight_provenance": cramer_provenance,
                "start_step": args.start_step,
                "planned_step_range": ([args.start_step + 1, steps]
-                                      if args.start_step and not args.eval_only
-                                      else None),
+                                      if not args.eval_only else None),
                "steps_run": len(history),
                "frozen_sample_measured_on": (
                    "loaded weights" if args.load_weights is not None

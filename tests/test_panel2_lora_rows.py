@@ -1216,15 +1216,23 @@ def test_the_probe_summarise_reports_the_ratio_and_the_term_share():
     assert overall["mean_rps"] == pytest.approx(2.0 / 3.0)
     assert overall["ce_over_rps"] == pytest.approx(4.5)
     assert overall["lambda"] == pytest.approx(1.125)
-    assert overall["rps_term_fraction_of_score_loss"] == pytest.approx(0.2)
+    assert overall["rps_term_fraction_at_block_lambda"] == pytest.approx(0.2)
+    assert overall["rps_term_fraction_at_overall_lambda"] == pytest.approx(0.2)
     assert summary["by_k"]["5"]["n"] == 2
     assert summary["by_k"]["4"]["lambda"] == pytest.approx(0.75)
     # The share is heterogeneous by gold position, so the probe reports it
-    # there too: one global lambda cannot make it uniform.
+    # there too, computed at the overall lambda: one global lambda cannot make
+    # it uniform. The block-local value is 0.2 in every block by construction.
     assert summary["by_gold"]["0"]["n"] == 1
     assert summary["by_gold"]["1"]["n"] == 2
     assert summary["by_gold"]["0"]["ce_over_rps"] == pytest.approx(4.0)
     assert summary["by_gold"]["1"]["ce_over_rps"] == pytest.approx(14.0 / 3.0)
+    assert summary["by_gold"]["0"][
+        "rps_term_fraction_at_block_lambda"] == pytest.approx(0.2)
+    assert summary["by_gold"]["0"][
+        "rps_term_fraction_at_overall_lambda"] == pytest.approx(0.219512, abs=1e-5)
+    assert summary["by_gold"]["1"][
+        "rps_term_fraction_at_overall_lambda"] == pytest.approx(0.194245, abs=1e-5)
 
 
 def test_the_probe_scores_only_the_rows_own_codes(tmp_path):
