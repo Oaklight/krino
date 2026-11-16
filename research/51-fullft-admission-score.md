@@ -1,6 +1,6 @@
 # Full-parameter fine-tuning, the admission suite, and the score ceiling — 2026-11-16
 
-Status: measured, one seed, one short schedule. Full-parameter training at 1e-5 is the first arm to clear every gate of the admission suite, and the suite now has measured floors and a measured noise band. Every panel-2 arm sits between 0.4662 and 0.4977 on the 1,111 score rows while capacity moves choice by 12 pp and score by 12 items; the ceiling is high and flat, not untouched. Full-corpus scaling has no result yet and is unverified.
+Status: measured, one seed, one short schedule. Full-parameter training at 1e-5 is the first arm to clear every gate of the admission suite, and the suite now has measured floors and a measured noise band. Every panel-2 arm sits between 0.4662 and 0.4977 on the 1,111 score rows while capacity moves benchmark val by 11.4 pp and score by 12 items; the ceiling is high and flat, not untouched. Full-corpus scaling has no result yet and is unverified.
 
 **PRs:** #387, open at the time of writing and not yet merged.
 
@@ -16,7 +16,7 @@ LoRA is off and every parameter is trainable, with activation checkpointing on.
 | 2e-5 | 0.6845 | 163 | 159 | 161.0 | 0.9048 | 1 | 0.3596 | 0.1286 / 0.1253 / 0.3691 |
 | 5e-5 | 0.5536 | 131 | 128 | 129.5 | 0.7835 | 0 | 0.1348 | +0.127 / +0.148 over frozen |
 
-The ECE column is absolute for the first two arms and a change over frozen for 5e-5, where the deltas are noul +0.127 (0.2679 against 0.1406) and score +0.148 (0.3752 against 0.2269). The choice cell is 0.0770 against frozen 0.2787, a 0.202 improvement, so it is the one ECE cell that improves and it is not a positive delta. The frozen ECE on the same rows is noul 0.1406, choice 0.2787 and score 0.2269. Every ECE cell rests on the 9,923-row benchmark comparator: the frozen and LoRA cells come from a separate pass over exactly those rows, and each of the four full-parameter runs has in-run bins that sum to exactly 9,923 rows, noul 3,482, choice 5,330 and score 1,111, identical to the comparator per type. The filter concern raised in #387's review does not change these cells.
+The ECE column is absolute for the first two arms and a change over frozen for 5e-5, where the deltas are noul +0.127 (0.2679 against 0.1406) and score +0.148 (0.3752 against 0.2269). The choice cell is 0.0770 against frozen 0.2787, a 0.202 improvement, so it is the one ECE cell that improves and it is not a positive delta. The frozen ECE on the same rows is noul 0.1406, choice 0.2787 and score 0.2269. Every ECE cell rests on the 9,923-row benchmark comparator: the frozen and LoRA cells come from a separate pass over exactly those rows, and each of the four full-parameter runs has in-run bins that sum to exactly 9,923 rows, noul 3,482, choice 5,330 and score 1,111, identical to the comparator per type. The four runs are 1e-5, 1e-5_w, 2e-5 and 5e-5; 1e-5 and 1e-5_w are the same arm under two loss settings, which is why the table lists three arms and the bin count names four runs. The filter concern raised in #387's review does not change these cells.
 
 The sweet spot is narrow. 1e-5 and 2e-5 both beat frozen on benchmark val by more than 11 pp and on JevBench by 2 to 4 items averaged; 5e-5 collapses on val, averaged JevBench and K = 80, while it still passes the agreement floor at 0.7835 against 0.7206 and improves the choice ECE at 0.0770 against 0.2787. Between the two good arms the choice is not made by val, which is 0.0012 apart, but by the per-cell ECE: 1e-5 is better on all three cells than both 2e-5 and frozen, and 2e-5 is worse than frozen on score.
 
@@ -48,7 +48,7 @@ Seven are rejected, each for the gate that ended it.
 | full FT, 2e-5 | score ECE 0.3691 against the 0.2469 floor, a gap of 0.122, and nothing else |
 | full FT, 5e-5 | averaged 129.5, val 0.5536, noul ECE 0.2679, score ECE 0.3752, K = 80 0.1348 |
 
-Only the JevBench allowance has a basis in the measured band: 3 items is half the 6-item order swing, and the 0.5-item band is why the 155.5 rejection is reported as inside noise rather than as a clean miss. The other floors are policy choices, not band multiples: benchmark val within 1 pp, per-cell ECE within 0.02, and the agreement and K = 80 floors at the frozen values, each set wider than the measured band.
+Only the JevBench allowance has a basis in the measured band: 3 items is half the 6-item order swing, and the 0.5-item band is why the 155.5 rejection is reported as inside noise rather than as a clean miss. The other floors are policy choices, not band multiples: benchmark val within 1 pp, per-cell ECE within 0.02, and the agreement and K = 80 floors anchored at the frozen values and set 0.05 and 0.02 below them, both wider than the measured band.
 
 The rejections are the useful half of the suite: each names the measure that ended the arm, so a later recipe can be aimed at a specific gate rather than at the aggregate.
 
