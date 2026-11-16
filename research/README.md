@@ -135,6 +135,7 @@ Clef analysis, later written up as `08-clef-analysis.md`.
 | `49-judgement-readout-arm.md` | 2026-11-15 | the judgement-objective LoRA arm: a significant JevBench regression, calibration excluded | current |
 | `50-panel2-readout.md` | 2026-11-16 | the panel-2 readout replaces judgement: frozen +13 items, low-lr val gain, the 2x2 and the admission rule | current |
 | `51-fullft-admission-score.md` | 2026-11-16 | full-parameter arms clear the admission suite at 1e-5; the measured noise band; the score ceiling is high and flat, not untouched | current |
+| `52-leg1-half-epoch.md` | 2026-11-16 | leg 1 of the full-parameter epoch: 543 steps, 31.18% of tokens, admission passed at the exit, a transient agreement dip | current |
 
 ## Numbering collisions
 
