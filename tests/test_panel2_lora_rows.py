@@ -787,7 +787,8 @@ def test_eval_every_writes_a_checkpoint_before_the_last_step(tmp_path, monkeypat
     # them.
     final = json.loads((out / "shard_0.json").read_text())
     assert final["ece_bins_population_rule"] == 'source != "synthetic"'
-    assert final["ece_bins_rows"] == final["val_rows_non_synthetic"] == 6
+    assert final["ece_bins_rows_this_rank"] == \
+        final["val_rows_non_synthetic_this_rank"] == 6
     assert sum(final["ece_bins_sources"]["by_source"].values()) == 6
     assert final["ece_bins_sources"]["by_type"] == {"choice": 6}
 
@@ -885,6 +886,132 @@ def test_choice_rows_keep_the_one_hot_target_when_a_score_target_is_set(
     payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
     assert payload["score_target"] == "soft"
     assert payload["score_target_tau"] == 1.0
+
+
+def test_score_loss_ce_is_the_shipped_target():
+    import torch
+
+    from model.scripts.train_panel2_lora import score_loss, target_loss
+
+    values = torch.tensor([0.5, 2.0, -1.0])
+    assert torch.isclose(score_loss(values, 1, "ce", None),
+                         target_loss(values, 1, "onehot"))
+
+
+def test_the_ranked_score_orders_its_mistakes_by_distance():
+    """RPS must charge a near miss less than a wrong-side miss.
+
+    With the gold on level 0, mass on level 1 is one level away and mass on
+    level 2 is two; the ordered score must price them in that order, which
+    cross-entropy cannot do. If the CDF sum is replaced by a plain squared
+    error over levels the second inequality still holds, but the first would
+    not: the test pins the ordering, not only the total.
+    """
+    import torch
+
+    from model.scripts.train_panel2_lora import score_loss
+
+    on_gold = float(score_loss(torch.tensor([4.0, 0.0, 0.0]), 0, "rps", None))
+    adjacent = float(score_loss(torch.tensor([0.0, 4.0, 0.0]), 0, "rps", None))
+    far = float(score_loss(torch.tensor([0.0, 0.0, 4.0]), 0, "rps", None))
+    assert on_gold < adjacent < far
+    assert far <= 1.0, "RPS is normalised to at most 1"
+
+
+def test_mix_is_the_cross_entropy_plus_the_weighted_ranked_score():
+    import pytest
+    import torch
+
+    from model.scripts.train_panel2_lora import score_loss
+
+    values = torch.tensor([0.3, 1.2, -0.4])
+    ce = float(score_loss(values, 2, "ce", None))
+    rps = float(score_loss(values, 2, "rps", None))
+    assert float(score_loss(values, 2, "mix", 0.7)) == pytest.approx(
+        ce + 0.7 * rps, rel=1e-6)
+
+
+def test_the_score_loss_flags_refuse_unmeasured_combinations(tmp_path, monkeypatch):
+    """A mix without a weight, or a weight nothing uses, must not launch.
+
+    CE is unbounded and RPS is at most 1, so an unmeasured lambda would
+    rescale score supervision; and rps with a soft target is a third axis
+    nobody pre-registered. Each case is refused at argument time, before the
+    plan is read.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    base = [
+        "train_panel2_lora.py", "--plan", str(tmp_path / "plan.jsonl"),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+    ]
+    cases = [
+        (["--score-loss", "mix"], "needs --score-cramer-weight"),
+        (["--score-loss", "rps", "--score-cramer-weight", "1.0"],
+         "only with mix"),
+        (["--score-loss", "rps", "--score-target", "soft"],
+         "not pre-registered"),
+    ]
+    for extra, match in cases:
+        monkeypatch.setattr(sys, "argv", base + extra)
+        with pytest.raises(SystemExit, match=match):
+            module.main()
+
+
+def test_score_rows_take_the_flagged_loss_and_choice_rows_keep_one_hot(
+    tmp_path, monkeypatch
+):
+    """--score-loss must reach score rows and only score rows.
+
+    Two choice rows and two score rows, one step each, with both loss
+    functions recorded as they are called. Under rps every score-row charge
+    must be rps and every other row the shipped one-hot cross-entropy; if the
+    flag leaks to choice or noul rows, the arm moves three heads at once and
+    the paired endpoint stops meaning what it says.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    for index in range(2):
+        for option in (0, 1):
+            records.append(_record(f"corpus:ch{index}", option,
+                                   1 if option == 0 else 0, "choice",
+                                   CHOICE_PREFIX, f"Option {option}.", 2))
+    for index in range(2):
+        for option in range(3):
+            records.append(_record(f"corpus:sc{index}", option,
+                                   1 if option == 1 else 0, "score",
+                                   CHOICE_PREFIX, f"Level {option}.", 3))
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    seen = []
+    real_score = module.score_loss
+
+    def recording(values, gold, loss, weight, target_mode="onehot", tau=1.0):
+        seen.append(("score", loss))
+        return real_score(values, gold, loss, weight, target_mode, tau)
+
+    real_target = module.target_loss
+
+    def recording_target(values, gold, mode, tau=1.0):
+        seen.append(("target", mode))
+        return real_target(values, gold, mode, tau)
+
+    monkeypatch.setattr(module, "score_loss", recording)
+    monkeypatch.setattr(module, "target_loss", recording_target)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--score-loss", "rps", "--no-stop-on-loss-rise",
+    ])
+    assert module.main() == 0
+    assert ("score", "rps") in seen, "the score rows must take the flagged loss"
+    assert ("target", "onehot") in seen, "other rows keep the shipped one-hot"
+    assert all(loss == "rps" for kind, loss in seen if kind == "score")
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    assert payload["score_loss"] == "rps"
+    assert payload["score_cramer_weight"] is None
 
 
 def test_a_resume_without_weights_is_refused(tmp_path, monkeypatch):

@@ -37,6 +37,7 @@ from model.evaluation.panel2 import (
 )
 from model.src.backbone import load_causal_lm
 from model.src.lora import inject_lora
+from model.training.losses import rps_loss
 
 POLARITY_MARK = "\nQuestion: "
 OPTION_MARK = "\nDoes this option correctly answer the question?"
@@ -505,10 +506,12 @@ def evaluate(model, tokenizer, rows, code_ids, device, limit=None):
     number computed after the fact would need the weights.
 
     Only non-synthetic rows enter the bins. The eval plan's val split is
-    mostly synthetic (31,948 of 41,871 rows), and the LoRA arms' ECE comes
-    from a later scoring pass over the 9,923 non-synthetic rows; binning every
-    row here would put the two families on different populations, and the
-    admission gate compares them. Accuracy still counts every row.
+    41,232 scored rows, 31,309 of them synthetic (the plan's 41,871 val rows
+    carry 639 rows with no gold; 41,232 = 31,309 + 9,923), and the LoRA arms'
+    ECE comes from a later scoring pass over the same 9,923 non-synthetic
+    rows; binning every row here would put the two families on different
+    populations, and the admission gate compares them. Accuracy still counts
+    every row.
 
     The fourth return value is the bins' composition, counted at the same
     place the bin slot is incremented. A composition recomputed from the bin
@@ -572,6 +575,30 @@ def target_loss(values, gold: int, mode: str, tau: float = 1.0):
         target = target / target.sum()
         return -(target * torch.log_softmax(values, dim=0)).sum()
     raise ValueError(f"unknown score target {mode!r}")
+
+
+def score_loss(values, gold: int, loss: str, cramer_weight: float | None,
+               target_mode: str = "onehot", tau: float = 1.0):
+    """One score row's loss under ``--score-loss``, so the arms differ only there.
+
+    ``ce`` is target_loss unchanged, which is what every earlier arm ran.
+    ``rps`` is the ranked probability score against the gold's one-hot
+    distribution: it sums the squared CDF differences over the level
+    thresholds, i.e. the squared Cramer distance on an ordered categorical,
+    normalised by K - 1. ``mix`` is ``ce + cramer_weight * rps``.
+
+    The two terms have different scales -- CE is unbounded, RPS is at most 1
+    -- so a mix weight is a weight change as much as a shape change. The
+    caller passes a measured lambda; the trainer refuses to guess one.
+    """
+    if loss == "ce":
+        return target_loss(values, gold, target_mode, tau)
+    target = F.one_hot(torch.tensor(gold, device=values.device),
+                       values.numel()).float()
+    rps = rps_loss(values.unsqueeze(0), target.unsqueeze(0))
+    if loss == "rps":
+        return rps
+    return target_loss(values, gold, target_mode, tau) + cramer_weight * rps
 
 
 def abort_if_any_failed(failed, what: str, world: int) -> None:
@@ -749,6 +776,29 @@ def main() -> int:
         help="decay of the soft target, in levels; pre-registered at 1.0",
     )
     parser.add_argument(
+        "--score-loss",
+        choices=["ce", "mix", "rps"],
+        default="ce",
+        help=(
+            "loss on the score rows: ce is the shipped target dispatch "
+            "(--score-target), rps is the ranked probability score alone, "
+            "mix is ce + cramer_weight * rps; noul and choice rows keep "
+            "one-hot CE in every mode, so only the score head moves"
+        ),
+    )
+    parser.add_argument(
+        "--score-cramer-weight",
+        type=float,
+        default=None,
+        help=(
+            "lambda of the rps term under --score-loss mix. Not guessed: it "
+            "is 0.25 * mean per-row CE / mean per-row RPS measured on the "
+            "pinned plan's score rows at step 0, then pinned in the arm. "
+            "Required for mix and refused for ce and rps, so no run records "
+            "a weight the loss ignored"
+        ),
+    )
+    parser.add_argument(
         "--start-step",
         type=int,
         default=0,
@@ -798,6 +848,27 @@ def main() -> int:
         raise SystemExit(
             "--start-step with --epochs > 1 is ambiguous: it can only skip "
             "steps in the first epoch; resume a single-epoch leg instead"
+        )
+    if args.score_loss == "mix" and args.score_cramer_weight is None:
+        # CE is unbounded and RPS is at most 1, so an unmeasured weight would
+        # rescale score supervision and the arm would be a weight change
+        # wearing a loss-shape label.
+        raise SystemExit(
+            "--score-loss mix needs --score-cramer-weight, measured as "
+            "0.25 * mean CE / mean RPS on the score rows; it is not guessed"
+        )
+    if args.score_loss != "mix" and args.score_cramer_weight is not None:
+        raise SystemExit(
+            f"--score-cramer-weight has no effect under --score-loss "
+            f"{args.score_loss}; set it only with mix"
+        )
+    if args.score_loss != "ce" and args.score_target != "onehot":
+        # RPS takes the gold's one-hot distribution. A soft or expected target
+        # alongside it is a third axis nobody has pre-registered, so refuse
+        # rather than silently drop one of the two flags.
+        raise SystemExit(
+            f"--score-loss {args.score_loss} uses the gold's one-hot target; "
+            f"--score-target {args.score_target} was not pre-registered with it"
         )
     if args.max_row_tokens is None:
         # A cap is only a full-fine-tuning backstop: it would silently change
@@ -892,26 +963,28 @@ def main() -> int:
                                  code_ids, device, encoded=encoded)
             synchronise(device)
             profile["forward"] += time.perf_counter() - started
-        # Only score rows take the alternative target; choice and noul rows
-        # keep the shipped listwise cross-entropy whatever the flag says.
-        mode = args.score_target if row.q_type == "score" else "onehot"
-        return target_loss(values, row.gold, mode, args.score_target_tau)
+        # Only score rows take an alternative target or loss; choice and noul
+        # rows keep the shipped one-hot cross-entropy whatever the flags say.
+        if row.q_type == "score":
+            return score_loss(values, row.gold, args.score_loss,
+                              args.score_cramer_weight, args.score_target,
+                              args.score_target_tau)
+        return target_loss(values, row.gold, "onehot")
 
-    # Frozen reference loss for the stop rule, on a fixed sample.
+    # Frozen reference loss for the stop rule, on a fixed sample. It is the
+    # training loss, not plain cross-entropy: under --score-loss rps the epoch
+    # mean is in RPS units, and a CE reference would make the stop rule fire
+    # on the scale change alone.
     frozen_mean = None
     if not args.eval_only:
         sample = train_rows[: args.frozen_loss_sample]
         frozen_losses = []
         for row in sample:
-            values = code_logits(model, tokenizer, prompt_of(row),
-                                 {c: code_ids[c] for c in row.codes}, device)
-            logits = torch.tensor(values, dtype=torch.float32, device=device)
-            frozen_losses.append(float(F.cross_entropy(
-                logits.unsqueeze(0), torch.tensor([row.gold], device=device))))
+            frozen_losses.append(float(loss_of(row)))
         frozen_mean = check_shared_non_negative(
-            sum(frozen_losses) / len(frozen_losses), "frozen sample CE",
+            sum(frozen_losses) / len(frozen_losses), "frozen sample loss",
             args.rank, args.world, device)
-        print(f"rank {args.rank}: frozen sample CE {frozen_mean:.4f}", flush=True)
+        print(f"rank {args.rank}: frozen sample loss {frozen_mean:.4f}", flush=True)
 
     args.output.mkdir(parents=True, exist_ok=True)
 
@@ -1110,7 +1183,7 @@ def main() -> int:
             epoch_mean = check_shared_non_negative(
                 epoch_mean, "epoch mean loss", args.rank, 1, device)
             frozen_mean = check_shared_non_negative(
-                frozen_mean, "frozen sample CE", args.rank, 1, device)
+                frozen_mean, "frozen sample loss", args.rank, 1, device)
             print(f"rank {args.rank}: epoch {epoch} mean loss {epoch_mean:.4f} "
                   f"frozen {frozen_mean:.4f}"
                   + (f" collective {reduce_seconds / (ran_steps * epoch):.3f}s/step"
@@ -1179,8 +1252,8 @@ def main() -> int:
                "full_ft": args.full_ft, "grad_bucket_mb": args.grad_bucket_mb,
                "eval_every": args.eval_every,
                "phase_profile_steps": args.phase_profile,
-               "ece_bins_rows": ece_bins_rows,
-               "val_rows_non_synthetic": val_rows_non_synthetic,
+               "ece_bins_rows_this_rank": ece_bins_rows,
+               "val_rows_non_synthetic_this_rank": val_rows_non_synthetic,
                "optimizer_state": "fresh: the trainer never saves or restores "
                                   "Adam moments, so a resumed leg's optimizer "
                                   "starts cold",
@@ -1188,6 +1261,8 @@ def main() -> int:
                                    "this run holds the rows",
                "score_target": args.score_target,
                "score_target_tau": args.score_target_tau,
+               "score_loss": args.score_loss,
+               "score_cramer_weight": args.score_cramer_weight,
                "start_step": args.start_step,
                "step_range": ([args.start_step + 1, steps]
                               if args.start_step and not args.eval_only
