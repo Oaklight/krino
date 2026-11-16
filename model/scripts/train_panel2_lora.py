@@ -681,6 +681,17 @@ def main() -> int:
         default=1.0,
         help="decay of the soft target, in levels; pre-registered at 1.0",
     )
+    parser.add_argument(
+        "--start-step",
+        type=int,
+        default=0,
+        help=(
+            "global step the loaded weights already completed; the loop "
+            "continues at start_step + 1 and the warmup is read against the "
+            "global step, so a resumed leg does not warm up again. Requires "
+            "--load-weights"
+        ),
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--epochs", type=int, default=1)
@@ -696,6 +707,13 @@ def main() -> int:
     parser.add_argument("--frozen-loss-sample", type=int, default=512)
     parser.add_argument("--log-every", type=int, default=25)
     args = parser.parse_args()
+    if args.start_step and args.load_weights is None:
+        # A resumed leg that starts its schedule at step 1 but claims to be at
+        # step 543 would warm up again and overwrite the step accounting.
+        raise SystemExit(
+            "--start-step needs --load-weights: a resumed leg must load the "
+            "weights it continues from"
+        )
     if args.max_row_tokens is None:
         # A cap is only a full-fine-tuning backstop: it would silently change
         # the LoRA ladder's row set, which is already on record.
@@ -866,7 +884,12 @@ def main() -> int:
                                        args.batch_rows)
         if args.max_steps:
             steps = min(steps, args.max_steps)
-        print(f"rank {args.rank}: {len(shard)} rows, {steps} steps per epoch, "
+        if args.start_step >= steps:
+            raise SystemExit(
+                f"--start-step {args.start_step} leaves no steps to run of "
+                f"{steps}; the loaded weights already cover this leg")
+        print(f"rank {args.rank}: {len(shard)} rows, steps "
+              f"{args.start_step + 1}..{steps} of {steps}, "
               f"{args.epochs} epoch(s)", flush=True)
         if args.max_batch_tokens:
             for row in shard:
@@ -879,7 +902,7 @@ def main() -> int:
         warmup_steps = int(args.warmup_fraction * steps) if args.warmup_fraction else 0
         for epoch in range(1, args.epochs + 1):
             started = time.time()
-            for step in range(1, steps + 1):
+            for step in range(args.start_step + 1, steps + 1):
                 batch = [shard[index]
                          for index in batch_indices(step, args.batch_rows, len(shard))]
                 if epoch == 1 and warmup_steps and step <= warmup_steps:
@@ -912,7 +935,8 @@ def main() -> int:
                 if (args.eval_every and step % args.eval_every == 0
                         and step != steps):
                     evaluate_checkpoint(step)
-            epoch_mean = sum(history[-steps:]) / steps
+            ran_steps = steps - args.start_step
+            epoch_mean = sum(history[-ran_steps:]) / ran_steps
             if args.world > 1:
                 # The stop decision must be identical on every rank, or the ones
                 # that keep going hang on the next collective.
@@ -929,7 +953,7 @@ def main() -> int:
                 frozen_mean, "frozen sample CE", args.rank, 1, device)
             print(f"rank {args.rank}: epoch {epoch} mean loss {epoch_mean:.4f} "
                   f"frozen {frozen_mean:.4f}"
-                  + (f" collective {reduce_seconds / (steps * epoch):.3f}s/step"
+                  + (f" collective {reduce_seconds / (ran_steps * epoch):.3f}s/step"
                      if args.world > 1 else ""), flush=True)
             if epoch_mean > frozen_mean and args.stop_on_loss_rise:
                 print(f"rank {args.rank}: stop rule fired (loss above frozen)",
@@ -955,6 +979,13 @@ def main() -> int:
                "eval_every": args.eval_every,
                "score_target": args.score_target,
                "score_target_tau": args.score_target_tau,
+               "start_step": args.start_step,
+               "step_range": ([args.start_step + 1, steps]
+                              if args.start_step and not args.eval_only
+                              else None),
+               "frozen_sample_measured_on": (
+                   "loaded weights" if args.load_weights is not None
+                   else "base weights"),
                "max_batch_tokens": args.max_batch_tokens,
                "warmup_fraction": args.warmup_fraction,
                "gradient_checkpointing": args.gradient_checkpointing,
@@ -969,7 +1000,8 @@ def main() -> int:
                "masked_rows": masked, "epochs": args.epochs,
                "epoch_mean_loss": (sum(history) / len(history)) if history else None,
                "collective_seconds_per_step": (
-                   reduce_seconds / (steps * args.epochs) if history else None),
+                   reduce_seconds / ((steps - args.start_step) * args.epochs)
+                   if history else None),
                "max_memory_gib": (torch.cuda.max_memory_allocated() / 2**30
                                   if device.startswith("cuda") else None),
                "frozen_sample_ce": frozen_mean}

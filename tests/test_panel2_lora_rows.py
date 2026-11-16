@@ -845,6 +845,86 @@ def test_choice_rows_keep_the_one_hot_target_when_a_score_target_is_set(
     assert payload["score_target_tau"] == 1.0
 
 
+def test_a_resume_without_weights_is_refused(tmp_path, monkeypatch):
+    """--start-step alone would restart the schedule while claiming step 543."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    plan = _weight_plan(tmp_path)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--epochs", "1", "--batch-rows", "2", "--plan-unpermuted-noul",
+        "--start-step", "3",
+    ])
+    with pytest.raises(SystemExit, match="needs --load-weights"):
+        module.main()
+
+
+def test_a_resumed_leg_runs_only_the_remaining_steps(tmp_path, monkeypatch):
+    """The second leg must continue the schedule, not restart it.
+
+    Six rows at two per step is three steps. A leg that saved at step 1 and
+    resumes with --start-step 1 and --max-steps 3 runs steps 2 and 3 only:
+    three forwards for the frozen sample head plus two steps of two rows is
+    six forwards, and a restart would make it eight.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:w{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(module.torch, "save", torch.serialization.save)
+
+    def run(argv, out):
+        monkeypatch.setattr(sys, "argv", [
+            "train_panel2_lora.py", "--plan", str(plan), "--output", str(out),
+            "--world", "1", "--device", "cpu", "--lr", "0", "--epochs", "1",
+            "--batch-rows", "2", "--plan-unpermuted-noul",
+            "--frozen-loss-sample", "2", *argv,
+        ])
+        return module.main()
+
+    assert run(["--max-steps", "1", "--save-weights"], tmp_path / "leg1") == 0
+    weights = tmp_path / "leg1" / "weights.pt"
+    assert weights.exists()
+
+    fake = _fake_training_modules(module, monkeypatch)
+    assert run(["--max-steps", "3", "--start-step", "1",
+                "--load-weights", str(weights)], tmp_path / "leg2") == 0
+    assert fake.forwards == 6, "two frozen-sample rows plus steps 2 and 3"
+    payload = json.loads((tmp_path / "leg2" / "shard_0.json").read_text())
+    assert payload["start_step"] == 1
+    assert payload["step_range"] == [2, 3]
+    assert payload["weights_loaded_sha256"] == module.file_sha256(weights)
+
+
+def test_a_resume_past_the_last_step_is_refused(tmp_path, monkeypatch):
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    plan = _weight_plan(tmp_path)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(module.torch, "save", torch.serialization.save)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "leg1"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--max-steps", "1", "--save-weights",
+    ])
+    assert module.main() == 0
+    weights = tmp_path / "leg1" / "weights.pt"
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "leg2"), "--world", "1", "--device", "cpu",
+        "--epochs", "1", "--batch-rows", "2", "--plan-unpermuted-noul",
+        "--max-steps", "3", "--start-step", "3", "--load-weights", str(weights),
+    ])
+    with pytest.raises(SystemExit, match="already cover this leg"):
+        module.main()
+
+
 def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
     import torch.distributed as dist
 
