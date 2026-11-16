@@ -1845,26 +1845,124 @@ def test_the_payload_records_the_tokens_the_chunks_carried(tmp_path,
         "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
         "--lr", "0", "--epochs", "1", "--batch-rows", "2",
         "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
-        "--chunk-tokens", "4096", "--balance-rows",
+        "--chunk-tokens", "4096", "--balance-rows", "--phase-profile", "4",
     ])
     assert module.main() == 0
+    profile = json.loads(
+        (tmp_path / "out" / "phase_profile_rank0.json").read_text())
+    chunking = profile["chunking_this_rank"]
     payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
-    chunking = payload["chunking"]
+    steps = len(profile["steps"])
     assert chunking["tokens"] == 4096
-    assert len(chunking["real_tokens_per_step"]) == payload["steps_run"]
-    assert len(chunking["padded_cost_this_rank"]) == payload["steps_run"]
+    assert len(chunking["real_tokens_per_step"]) == steps
+    assert len(profile["padded_cost_this_rank"]) == steps
+    assert "padded_cost_this_rank" not in chunking, (
+        "the padded series is emitted once, at the profile payload's top level")
     pairs = list(zip(chunking["real_tokens_per_step"],
-                     chunking["padded_cost_this_rank"]))
+                     profile["padded_cost_this_rank"]))
     assert all(padded >= real for real, padded in pairs)
     assert any(padded > real for real, padded in pairs), (
         "the fake tokenizer's uneven lengths must produce some padding")
-    assert len(chunking["forwards_per_step"]) == payload["steps_run"]
+    assert len(chunking["forwards_per_step"]) == steps
     assert all(count >= 1 for count in chunking["forwards_per_step"])
     assert all(sum(sizes) == 2 for sizes in chunking["chunk_sizes"]), (
         "each step holds two rows, so its chunks must account for two")
     assert all(rows == 2 for rows in chunking["rows_per_step"])
+    assert sum(chunking["chunk_decision_counts"].values()) == steps
+    assert set(chunking["chunk_decision_counts"]) <= {
+        "chunk_tokens", "ratio", "chunk_rows", "budget_non_binding"}
+    assert len(chunking["chunk_decision_per_step"]) == steps
     assert payload["row_assignment"]["rule"] == "balanced_by_length"
     assert payload["row_assignment"]["digest_this_rank"] is not None
+
+
+def test_chunking_does_not_change_the_step_losses(tmp_path, monkeypatch):
+    """Same plan at lr 0: chunked and one-row forwards give the same history.
+
+    This pins the call site's divisor. With the chunk's own row count as the
+    divisor, a step of two one-row chunks records twice the loss of the same
+    step with one two-row forward.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:h{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(4) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    def history(chunk_rows):
+        argv = [
+            "train_panel2_lora.py", "--plan", str(plan),
+            "--output", str(tmp_path / f"out{chunk_rows}"), "--world", "1",
+            "--device", "cpu", "--lr", "0", "--epochs", "1",
+            "--batch-rows", "2", "--plan-unpermuted-noul",
+            "--frozen-loss-sample", "1",
+        ]
+        if chunk_rows:
+            argv.extend(["--chunk-rows", str(chunk_rows)])
+        monkeypatch.setattr(sys, "argv", argv)
+        assert module.main() == 0
+        payload = json.loads(
+            (tmp_path / f"out{chunk_rows}" / "shard_0.json").read_text())
+        return payload["step_losses"]
+
+    chunked = history(1)
+    whole = history(0)
+    assert len(chunked) == len(whole) == 2
+    assert chunked == pytest.approx(whole, rel=1e-9)
+
+
+def test_the_chunk_decision_reports_the_knob_that_bound():
+    """A step's label names the constraint that split its chunks, not the config."""
+    from model.scripts.train_panel2_lora import (chunk_by_length,
+                                                 chunk_decision_label)
+
+    rows = _batch_rows(3, growth=1)
+    counts = {id(rows[0]): 100, id(rows[1]): 90, id(rows[2]): 60}
+    decisions = []
+    chunk_by_length(rows, counts, 10 ** 6, 1.25, 0, decisions)
+    assert decisions == ["ratio"]
+    assert chunk_decision_label(decisions) == "ratio"
+    decisions = []
+    chunk_by_length(rows, counts, 120, 1.0, 0, decisions)
+    assert decisions == ["chunk_tokens", "chunk_tokens"]
+    assert chunk_decision_label(decisions) == "chunk_tokens"
+    assert chunk_decision_label([]) == "budget_non_binding"
+    rows = _batch_rows(4, growth=1)
+    counts = {id(row): 100 for row in rows}
+    decisions = []
+    chunk_by_length(rows, counts, 10 ** 6, 1.0, 2, decisions)
+    assert chunk_decision_label(decisions) == "chunk_rows"
+
+
+def test_the_memory_budget_is_reported_not_silently_outranked(tmp_path,
+                                                              monkeypatch):
+    """Both budgets may be passed; the payload names which one decided."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:m{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(4) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "1",
+        "--max-batch-tokens", "1000", "--chunk-rows", "1",
+        "--phase-profile", "2",
+    ])
+    assert module.main() == 0
+    profile = json.loads(
+        (tmp_path / "out" / "phase_profile_rank0.json").read_text())
+    counts = profile["chunking_this_rank"]["chunk_decision_counts"]
+    assert set(counts) <= {"chunk_tokens", "ratio", "chunk_rows",
+                           "budget_non_binding"}
+    assert sum(counts.values()) == len(profile["steps"])
 
 
 def test_chunk_rows_fixes_the_forwards_per_rank():

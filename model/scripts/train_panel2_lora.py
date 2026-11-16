@@ -364,7 +364,7 @@ def deal_rows(rows, token_counts, world: int) -> list:
 
 def chunk_by_length(rows, token_counts, budget: int,
                     ratio: float = CHUNK_LENGTH_RATIO,
-                    max_rows: int = 0) -> list:
+                    max_rows: int = 0, decisions=None) -> list:
     """Chunks of similar-length rows, each within ``budget`` prompt tokens.
 
     A forward pads every row to the chunk's longest, so a 30-token row in a
@@ -377,15 +377,25 @@ def chunk_by_length(rows, token_counts, budget: int,
     which is the knob a cost fit needs: it fixes the forwards per rank while
     the rows' tokens stay where they were. ``ratio`` must exceed 1 to split at
     all; at 1.0 the test can never fire, so 1.0 leaves only the budget and the
-    row cap to decide the chunks.
+    row cap to decide the chunks. When ``decisions`` is a list, the constraint
+    behind every split is appended to it, so a run can report which knob
+    actually bound rather than which was configured.
     """
     ordered = sorted(rows, key=lambda row: (-token_counts[id(row)], row.row_id))
     chunks, current, total, longest = [], [], 0, 0
     for row in ordered:
         width = token_counts[id(row)]
-        if current and (total + width > budget
-                        or (ratio > 1.0 and width * ratio < longest)
-                        or (max_rows and len(current) >= max_rows)):
+        over_budget = total + width > budget
+        too_short = ratio > 1.0 and width * ratio < longest
+        too_many = max_rows and len(current) >= max_rows
+        if current and (over_budget or too_short or too_many):
+            if decisions is not None:
+                if over_budget:
+                    decisions.append("chunk_tokens")
+                if too_short:
+                    decisions.append("ratio")
+                if too_many:
+                    decisions.append("chunk_rows")
             chunks.append(current)
             current, total, longest = [], 0, 0
         current.append(row)
@@ -394,6 +404,23 @@ def chunk_by_length(rows, token_counts, budget: int,
     if current:
         chunks.append(current)
     return chunks
+
+
+CHUNK_DECISIONS = ("chunk_tokens", "ratio", "chunk_rows")
+
+
+def chunk_decision_label(decisions) -> str:
+    """The constraint that bound this step, as one of the closed enum.
+
+    A step can hit more than one at different splits; the label is the one
+    that fired most often, ties broken in ``CHUNK_DECISIONS`` order. With no
+    split at all the budget never bound, which is its own label.
+    """
+    if not decisions:
+        return "budget_non_binding"
+    return max(CHUNK_DECISIONS,
+               key=lambda name: (decisions.count(name),
+                                 -CHUNK_DECISIONS.index(name)))
 
 
 def chunk_cost(chunk, token_counts) -> tuple[int, int]:
@@ -1419,6 +1446,7 @@ def main() -> int:
     forwards_per_step: list = []
     chunk_sizes: list = []
     rows_per_step: list = []
+    chunk_decisions: list = []
     assignment_ids: list = []
     if not args.eval_only:
         if (args.max_row_tokens or args.balance_rows or args.chunk_tokens
@@ -1507,12 +1535,15 @@ def main() -> int:
                 # step, and averaging per-rank means would weight a rank with
                 # more rows as much as one with fewer.
                 divisor = args.batch_rows if args.balance_rows else len(batch)
-                step_terms = 0.0
+                step_loss = None
                 if chunked:
+                    decisions = []
                     chunks = chunk_by_length(batch, token_counts,
                                              args.chunk_tokens,
                                              args.chunk_ratio,
-                                             args.chunk_rows)
+                                             args.chunk_rows,
+                                             decisions)
+                    chunk_decisions.append(chunk_decision_label(decisions))
                 else:
                     chunks = split_by_token_budget(batch, token_counts,
                                                    args.max_batch_tokens)
@@ -1547,11 +1578,12 @@ def main() -> int:
                                                            [0.0, 0])
                             entry[0] += float(term.detach())
                             entry[1] += 1
-                            step_terms += float(term.detach())
                         # One backward per chunk: its summed row losses over
                         # the fixed divisor, so moving a row between chunks or
                         # between ranks cannot change the step's gradient.
                         loss = chunk_loss(chunk, values, row_loss, divisor)
+                        step_loss = (float(loss.detach()) if step_loss is None
+                                     else step_loss + float(loss.detach()))
                         if profile is None:
                             loss.backward()
                         else:
@@ -1569,10 +1601,12 @@ def main() -> int:
                         for row in chunk:
                             term = loss_of(row, profile)
                             loss = term / divisor
+                            step_loss = (float(loss.detach())
+                                         if step_loss is None
+                                         else step_loss + float(loss.detach()))
                             entry = epoch_block.setdefault(row.q_type, [0.0, 0])
                             entry[0] += float(term.detach())
                             entry[1] += 1
-                            step_terms += float(term.detach())
                             if profile is None:
                                 loss.backward()
                             else:
@@ -1582,10 +1616,10 @@ def main() -> int:
                                 synchronise(device)
                                 profile["backward"] += (time.perf_counter()
                                                         - started_phase)
-                # The recorded step loss is the same quantity the gradient was
-                # formed from, on the same divisor, so the log and the stop
-                # rule cannot disagree with what was optimised.
-                losses.append(step_terms / divisor)
+                # The recorded step loss is the loss that was backpropagated,
+                # on the same divisor, so the log and the stop rule cannot
+                # disagree with what was optimised.
+                losses.append(step_loss)
                 rows_per_step.append(len(batch))
                 if args.world > 1:
                     if profile is not None:
@@ -1712,6 +1746,11 @@ def main() -> int:
                   f"{frozen_text} stop_rule {stop_rule}"
                   + (f" collective {reduce_seconds / (ran_steps * epoch):.3f}s/step"
                      if args.world > 1 else ""), flush=True)
+            if chunk_decisions:
+                counts = ", ".join(f"{label} {chunk_decisions.count(label)}"
+                                   for label in sorted(set(chunk_decisions)))
+                print(f"rank {args.rank}: chunk decisions over "
+                      f"{len(chunk_decisions)} steps: {counts}", flush=True)
             if stop_rule == "fired":
                 print(f"rank {args.rank}: stop rule fired (reweighted epoch "
                       f"{epoch_text} above frozen {frozen_text})", flush=True)
@@ -1752,11 +1791,17 @@ def main() -> int:
                 "rows": args.chunk_rows,
                 "length_ratio": args.chunk_ratio,
                 "real_tokens_per_step": real_tokens,
-                "padded_cost_this_rank": padded_cost,
                 "forwards_per_step": forwards_per_step,
                 "chunk_sizes": chunk_sizes,
                 "rows_per_step": rows_per_step,
+                "chunk_decision_per_step": chunk_decisions,
+                "chunk_decision_counts": {
+                    label: chunk_decisions.count(label)
+                    for label in sorted(set(chunk_decisions))},
             } if (args.chunk_tokens or args.chunk_rows) else {"tokens": 0}),
+            "padded_cost_this_rank": (padded_cost
+                                      if (args.chunk_tokens or args.chunk_rows)
+                                      else None),
         }
         # One file per rank: every rank runs this block, and a shared name let
         # them overwrite each other, leaving a torn file that parses as neither.
@@ -1817,21 +1862,7 @@ def main() -> int:
                        "\n".join(assignment_ids).encode()).hexdigest()
                        if args.balance_rows else None),
                },
-               "chunking": {
-                   "tokens": args.chunk_tokens,
-                   "rows": args.chunk_rows,
-                   "length_ratio": args.chunk_ratio,
-                   "real_tokens_per_step": real_tokens,
-                   "padded_cost_this_rank": padded_cost,
-                   "forwards_per_step": forwards_per_step,
-                   "chunk_sizes": chunk_sizes,
-                   "rows_per_step": rows_per_step,
-                   "padding_note": ("padded_cost_this_rank counts every row of a "
-                                    "chunk at the chunk's longest; the pads are "
-                                    "masked out of the loss but paid for in the "
-                                    "forward. A cross-rank total is formed from "
-                                    "the eight payloads, not by a collective."),
-               } if (args.chunk_tokens or args.chunk_rows) else {"tokens": 0},
+               "step_losses": history,
                "eval_every": args.eval_every,
                "phase_profile_steps": args.phase_profile,
                "ece_bins_rows_this_rank": ece_bins_rows,
