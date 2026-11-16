@@ -959,6 +959,10 @@ def test_the_score_loss_flags_refuse_unmeasured_combinations(tmp_path, monkeypat
         (["--score-loss", "mix", "--score-cramer-weight", "1.5",
           "--score-cramer-weight-source", str(probe)],
          "is not the measured lambda"),
+        (["--score-loss", "mix", "--score-cramer-weight", "0"],
+         "greater than zero"),
+        (["--score-loss", "mix", "--score-cramer-weight", "-1"],
+         "greater than zero"),
     ]
     for extra, match in cases:
         monkeypatch.setattr(sys, "argv", base + extra)
@@ -1068,6 +1072,116 @@ def test_score_rows_take_the_flagged_loss_and_choice_rows_keep_one_hot(
     payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
     assert payload["score_loss"] == "rps"
     assert payload["score_cramer_weight"] is None
+
+
+def test_the_stop_rule_compares_reweighted_references(tmp_path, monkeypatch):
+    """Both sides are reweighted to the plan's composition, not mixed.
+
+    Two choice items and four score items, interleaved so the two-row frozen
+    sample holds one of each while the plan is 1/3 and 2/3. Six rows at two
+    per step is three full batches, so no row wraps and the epoch block's own
+    mix is the plan's; the frozen block's mix is not. With zero logits a choice
+    row costs ln 2 and a score row ln 3, so the two differences separate.
+    """
+    import pytest
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    order = [("c0", "choice", 2), ("s0", "score", 3), ("c1", "choice", 2),
+             ("s1", "score", 3), ("s2", "score", 3), ("s3", "score", 3)]
+    for row_id, q_type, n_options in order:
+        for option in range(n_options):
+            gold = 1 if q_type == "score" else 0
+            records.append(_record(f"corpus:{row_id}", option,
+                                   1 if option == gold else 0, q_type,
+                                   CHOICE_PREFIX, f"Option {option}.",
+                                   n_options))
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+    ])
+    assert module.main() == 0
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    composition = payload["stop_composition"]
+    assert composition["counts"] == {"choice": 2, "score": 4}
+    assert composition["fractions"] == pytest.approx(
+        {"choice": 1 / 3, "score": 2 / 3})
+    reference = payload["stop_reference"]
+    ln2, ln3 = 0.693147, 1.098612
+    pinned = ln2 / 3 + 2 * ln3 / 3
+    assert reference["frozen"]["per_type"]["score"]["rows"] == 1
+    assert reference["frozen"]["mixed"] == pytest.approx((ln2 + ln3) / 2,
+                                                         abs=1e-5)
+    assert reference["frozen"]["reweighted"] == pytest.approx(pinned, abs=1e-5)
+    assert reference["epoch"]["per_type"]["score"]["rows"] == 4
+    assert reference["epoch"]["reweighted"] == pytest.approx(pinned, abs=1e-5)
+    assert reference["reweighted_difference"] == pytest.approx(0.0, abs=1e-9)
+    assert reference["mixed_difference"] == pytest.approx(
+        pinned - (ln2 + ln3) / 2, abs=1e-5)
+    assert payload["stop_rule"] == "armed_not_fired"
+    assert payload["stopped"] is False
+
+
+def test_a_frozen_sample_missing_a_weighted_type_does_not_default_to_no_stop(
+    tmp_path, monkeypatch
+):
+    """An unevaluable rule must say so, not read as "no stop".
+
+    The plan's first two rows are choice, so a two-row frozen sample has no
+    score rows while the pinned composition weights them. The payload must
+    record insufficient_sample_composition and name score; the run must not
+    stop and must not raise.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    order = [("c0", "choice", 2), ("c1", "choice", 2), ("s0", "score", 3),
+             ("s1", "score", 3)]
+    for row_id, q_type, n_options in order:
+        for option in range(n_options):
+            gold = 1 if q_type == "score" else 0
+            records.append(_record(f"corpus:{row_id}", option,
+                                   1 if option == gold else 0, q_type,
+                                   CHOICE_PREFIX, f"Option {option}.",
+                                   n_options))
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+    ])
+    assert module.main() == 0
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    assert payload["stop_rule"] == "insufficient_sample_composition"
+    assert payload["stop_rule_missing_types"] == ["score"]
+    assert payload["stop_reference"]["frozen"]["reweighted"] is None
+    assert payload["stopped"] is False
+
+
+def test_the_probe_summarise_reports_the_ratio_and_the_term_share():
+    """lambda = 0.25 * CE/RPS makes the rps term 20% of the score-row loss."""
+    import pytest
+
+    from model.scripts.measure_score_cramer import summarise
+
+    rows = [{"k": 5, "ce": 2.0, "rps": 0.5},
+            {"k": 5, "ce": 4.0, "rps": 0.5},
+            {"k": 4, "ce": 3.0, "rps": 1.0}]
+    summary = summarise(rows)
+    overall = summary["overall"]
+    assert overall["n"] == 3
+    assert overall["mean_ce"] == pytest.approx(3.0)
+    assert overall["mean_rps"] == pytest.approx(2.0 / 3.0)
+    assert overall["ce_over_rps"] == pytest.approx(4.5)
+    assert overall["lambda"] == pytest.approx(1.125)
+    assert overall["rps_term_fraction_of_score_loss"] == pytest.approx(0.2)
+    assert summary["by_k"]["5"]["n"] == 2
+    assert summary["by_k"]["4"]["lambda"] == pytest.approx(0.75)
 
 
 def test_a_resume_without_weights_is_refused(tmp_path, monkeypatch):

@@ -601,6 +601,32 @@ def score_loss(values, gold: int, loss: str, cramer_weight: float | None,
     return target_loss(values, gold, target_mode, tau) + cramer_weight * rps
 
 
+def reweighted_mean(block, composition):
+    """A per-type mean block reweighted to one pinned composition.
+
+    ``block`` is ``{type: [sum, count]}``. Both the frozen reference and the
+    epoch mean are reweighted to the same ``composition``, taken from the
+    plan's train rows, so the comparison does not depend on which rows a shard
+    or a 64-row sample happened to contain. Returns the reweighted mean (None
+    if a weighted type is absent) and the missing types.
+    """
+    total = 0.0
+    missing = []
+    for kind, fraction in composition.items():
+        entry = block.get(kind)
+        if entry and entry[1]:
+            total += fraction * (entry[0] / entry[1])
+        elif fraction:
+            missing.append(kind)
+    return (None if missing else total), missing
+
+
+def per_type_means(block):
+    return {kind: {"rows": int(round(entry[1])),
+                   "mean": (entry[0] / entry[1]) if entry[1] else None}
+            for kind, entry in block.items()}
+
+
 def abort_if_any_failed(failed, what: str, world: int) -> None:
     """Share a 0/1 failure flag, then abort every rank together.
 
@@ -791,11 +817,12 @@ def main() -> int:
         type=float,
         default=None,
         help=(
-            "lambda of the rps term under --score-loss mix. Not guessed: it "
-            "is 0.25 * mean per-row CE / mean per-row RPS measured on the "
-            "pinned plan's score rows at step 0, then pinned in the arm. "
-            "Required for mix and refused for ce and rps, so no run records "
-            "a weight the loss ignored"
+            "lambda of the rps term under --score-loss mix. Measure it with "
+            "model/scripts/measure_score_cramer.py on the pinned plan's score "
+            "rows at step 0 and pin the value it prints. lambda = 0.25 * the "
+            "measured CE/RPS ratio, so the rps term is 0.25 * the CE term: "
+            "20% of the score-row loss. Required for mix, must be finite and "
+            "greater than zero, and refused for ce and rps"
         ),
     )
     parser.add_argument(
@@ -873,6 +900,15 @@ def main() -> int:
         raise SystemExit(
             f"--score-cramer-weight has no effect under --score-loss "
             f"{args.score_loss}; set it only with mix"
+        )
+    if (args.score_loss == "mix" and args.score_cramer_weight is not None
+            and not (math.isfinite(args.score_cramer_weight)
+                     and args.score_cramer_weight > 0)):
+        # A zero weight is a ce arm wearing a mix label, and a negative one
+        # rewards the inverse of the ranked score.
+        raise SystemExit(
+            "--score-cramer-weight must be finite and greater than zero under "
+            "mix; a zero or negative weight is not a mix arm"
         )
     if args.score_loss != "ce" and args.score_target != "onehot":
         # RPS takes the gold's one-hot distribution. A soft or expected target
@@ -1037,13 +1073,24 @@ def main() -> int:
     # mean is in RPS units, and a CE reference would make the stop rule fire
     # on the scale change alone.
     frozen_mean = None
+    frozen_block = {}
     frozen_sample_ids_sha = None
     frozen_sample_rows = None
+    stop_rule = None
+    stop_rule_missing = []
+    stop_reference = None
+    stop_composition = None
+    composition_counts = {}
+    total_train = None
     if not args.eval_only:
         sample = train_rows[: args.frozen_loss_sample]
         frozen_losses = []
         for row in sample:
-            frozen_losses.append(float(loss_of(row)))
+            value = float(loss_of(row))
+            frozen_losses.append(value)
+            entry = frozen_block.setdefault(row.q_type, [0.0, 0])
+            entry[0] += value
+            entry[1] += 1
         # The sample's identity, so the three arms' references can be shown
         # comparable rather than assumed to be: same plan, same order, same
         # row ids in the same sequence.
@@ -1152,6 +1199,17 @@ def main() -> int:
         print(f"rank {args.rank}: {len(shard)} rows, steps "
               f"{args.start_step + 1}..{steps} of {steps}, "
               f"{args.epochs} epoch(s)", flush=True)
+        # The pinned composition both reference blocks are reweighted to. It
+        # comes from the plan's train rows, not from a shard or the frozen
+        # sample, so the stop comparison does not depend on which rows either
+        # side happened to contain.
+        composition_counts = {}
+        for row in train_rows:
+            composition_counts[row.q_type] = composition_counts.get(
+                row.q_type, 0) + 1
+        total_train = sum(composition_counts.values())
+        stop_composition = {kind: count / total_train
+                            for kind, count in composition_counts.items()}
         if args.max_batch_tokens:
             for row in shard:
                 if id(row) not in token_counts:
@@ -1166,6 +1224,7 @@ def main() -> int:
             # --start-step with more than one epoch is refused at argument
             # time, so this offset is nonzero only in a single-pass leg.
             first = args.start_step
+            epoch_block = {}
             started = time.time()
             for step in range(first + 1, steps + 1):
                 profile = None
@@ -1187,6 +1246,12 @@ def main() -> int:
                 for chunk in chunks:
                     for row in chunk:
                         loss = loss_of(row, profile) / len(batch)
+                        # Per-type sums, unscaled: the same loss scaled by the
+                        # batch size, so the block means are per-row means and
+                        # the reweighting compares like with like.
+                        entry = epoch_block.setdefault(row.q_type, [0.0, 0])
+                        entry[0] += float(loss.detach()) * len(batch)
+                        entry[1] += 1
                         if profile is None:
                             loss.backward()
                         else:
@@ -1239,9 +1304,69 @@ def main() -> int:
                     evaluate_checkpoint(step)
             ran_steps = steps - first
             epoch_mean = sum(history[-ran_steps:]) / ran_steps
+            # Both references are per-type blocks reweighted to the pinned
+            # composition. Under a non-CE score loss the two types sit on
+            # different scales, so a mixed mean on one side and a different mix
+            # on the other is not a comparison. The reduce carries sums and
+            # counts, not means, so the global ratio can be formed afterwards;
+            # every rank then computes the same decision.
+            kinds = sorted(set(stop_composition) | set(epoch_block)
+                           | set(frozen_block))
+            flat = []
+            for kind in kinds:
+                for block in (frozen_block, epoch_block):
+                    entry = block.get(kind, [0.0, 0])
+                    flat.extend([entry[0], float(entry[1])])
+            flat = torch.tensor(flat, device=device)
             if args.world > 1:
-                # The stop decision must be identical on every rank, or the ones
-                # that keep going hang on the next collective.
+                dist.all_reduce(flat, op=dist.ReduceOp.SUM)
+            values = flat.tolist()
+            reduced_frozen, reduced_epoch = {}, {}
+            for index, kind in enumerate(kinds):
+                # The frozen sample is the same rows on every rank, so its
+                # sums divide by the world size; the epoch block is a
+                # partition, so its sums are already the global totals.
+                reduced_frozen[kind] = [values[4 * index] / args.world,
+                                        values[4 * index + 1] / args.world]
+                reduced_epoch[kind] = [values[4 * index + 2],
+                                       values[4 * index + 3]]
+            frozen_weighted, frozen_missing = reweighted_mean(
+                reduced_frozen, stop_composition)
+            epoch_weighted, epoch_missing = reweighted_mean(
+                reduced_epoch, stop_composition)
+            stop_rule_missing = sorted(set(frozen_missing) | set(epoch_missing))
+            mixed_frozen = (sum(entry[0] for entry in reduced_frozen.values())
+                            / max(1.0, sum(entry[1]
+                                           for entry in reduced_frozen.values())))
+            mixed_epoch = (sum(entry[0] for entry in reduced_epoch.values())
+                           / max(1.0, sum(entry[1]
+                                          for entry in reduced_epoch.values())))
+            stop_reference = {
+                "frozen": {"per_type": per_type_means(reduced_frozen),
+                           "reweighted": frozen_weighted,
+                           "mixed": mixed_frozen},
+                "epoch": {"per_type": per_type_means(reduced_epoch),
+                          "reweighted": epoch_weighted,
+                          "mixed": mixed_epoch},
+                "reweighted_difference": (
+                    None if frozen_weighted is None or epoch_weighted is None
+                    else epoch_weighted - frozen_weighted),
+                "mixed_difference": mixed_epoch - mixed_frozen,
+                "note": "the stop decision uses the pair reweighted to "
+                        "stop_composition; the mixed pair is recorded for "
+                        "continuity and is not comparable across arms",
+            }
+            if stop_rule_missing:
+                # A rule that cannot be evaluated must not read as "no stop".
+                stop_rule = "insufficient_sample_composition"
+            elif not args.stop_on_loss_rise:
+                stop_rule = "disabled_by_flag"
+            elif epoch_weighted > frozen_weighted:
+                stop_rule = "fired"
+            else:
+                stop_rule = "armed_not_fired"
+            if args.world > 1:
+                # The printed epoch mean must be group-wide, as before.
                 stats = torch.tensor([epoch_mean, frozen_mean], device=device)
                 dist.all_reduce(stats, op=dist.ReduceOp.SUM)
                 stats = stats / args.world
@@ -1253,13 +1378,18 @@ def main() -> int:
                 epoch_mean, "epoch mean loss", args.rank, 1, device)
             frozen_mean = check_shared_non_negative(
                 frozen_mean, "frozen sample loss", args.rank, 1, device)
+            epoch_text = ("undefined" if epoch_weighted is None
+                          else f"{epoch_weighted:.4f}")
+            frozen_text = ("undefined" if frozen_weighted is None
+                           else f"{frozen_weighted:.4f}")
             print(f"rank {args.rank}: epoch {epoch} mean loss {epoch_mean:.4f} "
-                  f"frozen {frozen_mean:.4f}"
+                  f"frozen {frozen_mean:.4f} reweighted {epoch_text} vs "
+                  f"{frozen_text} stop_rule {stop_rule}"
                   + (f" collective {reduce_seconds / (ran_steps * epoch):.3f}s/step"
                      if args.world > 1 else ""), flush=True)
-            if epoch_mean > frozen_mean and args.stop_on_loss_rise:
-                print(f"rank {args.rank}: stop rule fired (loss above frozen)",
-                      flush=True)
+            if stop_rule == "fired":
+                print(f"rank {args.rank}: stop rule fired (reweighted epoch "
+                      f"{epoch_text} above frozen {frozen_text})", flush=True)
                 stopped = True
                 break
 
@@ -1312,7 +1442,20 @@ def main() -> int:
                "ece_bins_sources": bin_sources,
                "val_source": val_source,
                "stopped": stopped,
-               "stop_reason": "epoch_mean_loss_above_frozen" if stopped else None,
+               "stop_reason": "reweighted_epoch_above_frozen" if stopped else None,
+               "stop_rule": (stop_rule if stop_rule is not None
+                             else ("not_run_eval_only" if args.eval_only
+                                   else None)),
+               "stop_rule_missing_types": stop_rule_missing,
+               "stop_composition": (
+                   {"fractions": stop_composition,
+                    "counts": composition_counts,
+                    "n_train_rows": total_train,
+                    "source": "the plan's train rows after the row-token cap, "
+                              "counted on every rank; both references are "
+                              "reweighted to it"}
+                   if stop_composition else None),
+               "stop_reference": stop_reference,
                "plan": str(args.plan), "plan_sha256": plan_sha,
                "plan_sha256_expected": args.plan_sha256,
                "eval_plan": str(args.eval_plan) if args.eval_plan else None,
