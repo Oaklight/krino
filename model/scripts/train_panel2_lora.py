@@ -41,6 +41,14 @@ from model.src.lora import inject_lora
 POLARITY_MARK = "\nQuestion: "
 OPTION_MARK = "\nDoes this option correctly answer the question?"
 
+# The population the calibration bins and every ECE cell are defined on:
+# every val row whose source is not synthetic. That is wider than "benchmark":
+# it includes typed_decisions and apigen rows, and it is the 9,923-row
+# comparator the LoRA arms' ECE was scored on. The name states the rule, and
+# the payload repeats the rule verbatim so no reader has to guess the coverage.
+BIN_POPULATION = "non_synthetic"
+BIN_POPULATION_RULE = 'source != "synthetic"'
+
 
 def file_sha256(path: Path, chunk: int = 1 << 22) -> str:
     """The digest of a file, read in blocks so an 8 GB checkpoint is not held.
@@ -496,16 +504,23 @@ def evaluate(model, tokenizer, rows, code_ids, device, limit=None):
     recorded here because a full fine-tune leaves no adapter behind, and a
     number computed after the fact would need the weights.
 
-    Only benchmark rows enter the bins. The eval plan's val split is mostly
-    synthetic (31,948 of 41,871 rows), and the LoRA arms' ECE comes from a
-    later scoring pass over the 9,923 benchmark rows; binning every row here
-    would put the two families on different populations, and the admission
-    gate compares them. Accuracy still counts every row.
+    Only non-synthetic rows enter the bins. The eval plan's val split is
+    mostly synthetic (31,948 of 41,871 rows), and the LoRA arms' ECE comes
+    from a later scoring pass over the 9,923 non-synthetic rows; binning every
+    row here would put the two families on different populations, and the
+    admission gate compares them. Accuracy still counts every row.
+
+    The fourth return value is the bins' composition, counted at the same
+    place the bin slot is incremented. A composition recomputed from the bin
+    totals afterwards would be a second spelling of one sum and could not
+    disagree with it; this one is the evidence that the filter admitted the
+    families it was meant to.
     """
     model.eval()
     counts = {}
     per_item = []
     bins = {}
+    bin_sources = {"by_source": {}, "by_type": {}}
     with torch.inference_mode():
         for row in (rows[:limit] if limit else rows):
             values = code_logits(model, tokenizer, prompt_of(row),
@@ -520,13 +535,17 @@ def evaluate(model, tokenizer, rows, code_ids, device, limit=None):
                 slot = cell.setdefault(str(decile), [0, 0])
                 slot[0] += 1
                 slot[1] += int(ok)
+                bin_sources["by_source"][row.source] = (
+                    bin_sources["by_source"].get(row.source, 0) + 1)
+                bin_sources["by_type"][row.q_type] = (
+                    bin_sources["by_type"].get(row.q_type, 0) + 1)
             for key in ("all", f"type:{row.q_type}", f"source:{row.source}"):
                 cell = counts.setdefault(key, [0, 0])
                 cell[0] += int(ok)
                 cell[1] += 1
             per_item.append([row.row_id, int(ok), row.q_type, row.source])
     model.train()
-    return counts, per_item, bins
+    return counts, per_item, bins, bin_sources
 
 
 def target_loss(values, gold: int, mode: str, tau: float = 1.0):
@@ -558,11 +577,12 @@ def target_loss(values, gold: int, mode: str, tau: float = 1.0):
 def abort_if_any_failed(failed, what: str, world: int) -> None:
     """Share a 0/1 failure flag, then abort every rank together.
 
-    A checkpoint's expensive work is local -- rank 0's JevBench pass and the
-    8.8 GB write -- so an exception there would leave the other ranks in the
-    next gradient all-reduce with no traceback: a silent stall at a checkpoint
-    step instead of a clean abort. The reduce is the one collective every rank
-    reaches, so the raise happens after it, on all of them.
+    The expensive work a checkpoint and the final payload do is local -- rank
+    0's JevBench pass and the 8.8 GB write -- so an exception there would
+    leave the other ranks in the next gradient all-reduce or at the final
+    barrier with no traceback: a silent stall instead of a clean abort. The
+    reduce is the one collective every rank reaches, so the raise happens
+    after it, on all of them.
     """
     if world > 1:
         dist.all_reduce(failed, op=dist.ReduceOp.SUM)
@@ -771,6 +791,14 @@ def main() -> int:
             "--start-step needs --load-weights: a resumed leg must load the "
             "weights it continues from"
         )
+    if args.start_step and args.epochs > 1:
+        # --start-step names steps of one pass. With a second pass it cannot
+        # say whether the later epochs start at 1 or at start_step + 1, so the
+        # combination is refused rather than recorded as one of the readings.
+        raise SystemExit(
+            "--start-step with --epochs > 1 is ambiguous: it can only skip "
+            "steps in the first epoch; resume a single-epoch leg instead"
+        )
     if args.max_row_tokens is None:
         # A cap is only a full-fine-tuning backstop: it would silently change
         # the LoRA ladder's row set, which is already on record.
@@ -905,20 +933,29 @@ def main() -> int:
 
         A long run is not trusted to its last step: the same lr that helped at
         303 LoRA steps destroyed a run at more, so the curve and the per-step
-        weights are what let the best point be kept instead of the last. Ranks
-        evaluate their own stride and no collective runs here; rank 0 also
-        scores the 231 items and writes the weights, and the other ranks wait
-        for it in the next step's gradient reduce.
+        weights are what let the best point be kept instead of the last.
+
+        Everything this function does is bracketed by a 0/1 flag and one
+        all-reduce (abort_if_any_failed), which every rank reaches
+        unconditionally whatever its own work did. The evaluation itself is
+        inside that bracket because it is the allocation-heaviest call here
+        and it runs on rows the training cap never filtered; rank 0's JevBench
+        pass and the 8.8 GB write are inside it for the same reason. The raise
+        happens after the reduce, so a failure on one rank surfaces as a group
+        abort and its peers no longer wait in the next gradient all-reduce.
         """
-        counts, per_item, bins = evaluate(model, tokenizer, val_shard,
-                                          code_ids, device)
-        record = {"step": step, "rank": args.rank, "val_counts": counts,
-                  "val_items": per_item, "ece_bins": bins,
-                  "ece_bins_population": "benchmark", "val_source": val_source,
-                  "weights_path": None, "weights_sha256": None,
-                  "weights_bytes": None}
         failed = torch.tensor([0.0], device=device)
         try:
+            counts, per_item, bins, bin_sources = evaluate(
+                model, tokenizer, val_shard, code_ids, device)
+            record = {"step": step, "rank": args.rank, "val_counts": counts,
+                      "val_items": per_item, "ece_bins": bins,
+                      "ece_bins_population": BIN_POPULATION,
+                      "ece_bins_population_rule": BIN_POPULATION_RULE,
+                      "ece_bins_sources": bin_sources,
+                      "val_source": val_source,
+                      "weights_path": None, "weights_sha256": None,
+                      "weights_bytes": None}
             if args.rank == 0:
                 record["jevbench"] = evaluate_jevbench(model, tokenizer,
                                                        code_ids, device)
@@ -983,19 +1020,25 @@ def main() -> int:
                   flush=True)
         warmup_steps = int(args.warmup_fraction * steps) if args.warmup_fraction else 0
         for epoch in range(1, args.epochs + 1):
+            # A resumed run skips the steps the loaded weights already cover.
+            # --start-step with more than one epoch is refused at argument
+            # time, so this offset is nonzero only in a single-pass leg.
+            first = args.start_step
             started = time.time()
-            for step in range(args.start_step + 1, steps + 1):
+            for step in range(first + 1, steps + 1):
+                profile = None
+                if args.phase_profile and step <= args.phase_profile:
+                    profile = {key: 0.0 for key in
+                               ("tokenise", "forward", "backward", "allreduce",
+                                "clip", "optimizer")}
+                    synchronise(device)
+                    step_started = time.perf_counter()
                 batch = [shard[index]
                          for index in batch_indices(step, args.batch_rows, len(shard))]
                 if epoch == 1 and warmup_steps and step <= warmup_steps:
                     for group in optimizer.param_groups:
                         group["lr"] = args.lr * step / warmup_steps
                 optimizer.zero_grad(set_to_none=True)
-                profile = None
-                if args.phase_profile and step <= args.phase_profile:
-                    profile = {key: 0.0 for key in
-                               ("tokenise", "forward", "backward", "allreduce",
-                                "clip", "optimizer")}
                 losses = []
                 chunks = split_by_token_budget(batch, token_counts,
                                                args.max_batch_tokens)
@@ -1013,9 +1056,13 @@ def main() -> int:
                                                     - started_phase)
                         losses.append(float(loss))
                 if args.world > 1:
+                    if profile is not None:
+                        synchronise(device)
                     reduce_started = time.perf_counter()
                     reduce_gradients(trainable, args.world,
                                      args.grad_bucket_mb << 20)
+                    if profile is not None:
+                        synchronise(device)
                     reduce_elapsed = time.perf_counter() - reduce_started
                     reduce_seconds += reduce_elapsed
                     if profile is not None:
@@ -1032,6 +1079,10 @@ def main() -> int:
                 if profile is not None:
                     synchronise(device)
                     profile["optimizer"] += time.perf_counter() - started_phase
+                    measured = sum(profile.values())
+                    profile["unaccounted"] = (time.perf_counter()
+                                              - step_started) - measured
+                    profile["step"] = step
                     phase_records.append(profile)
                 mean = check_shared_non_negative(
                     sum(losses), "mean loss", args.rank, args.world, device,
@@ -1044,7 +1095,7 @@ def main() -> int:
                 if (args.eval_every and step % args.eval_every == 0
                         and step != steps):
                     evaluate_checkpoint(step)
-            ran_steps = steps - args.start_step
+            ran_steps = steps - first
             epoch_mean = sum(history[-ran_steps:]) / ran_steps
             if args.world > 1:
                 # The stop decision must be identical on every rank, or the ones
@@ -1071,34 +1122,52 @@ def main() -> int:
                 break
 
     if args.phase_profile and phase_records:
-        keys = list(phase_records[0])
-        totals = {key: sum(record[key] for record in phase_records)
-                  for key in keys}
+        phases = [key for key in phase_records[0] if key not in ("step", "unaccounted")]
         recorded = len(phase_records)
+        totals = {key: sum(record[key] for record in phase_records)
+                  for key in phases}
+        unaccounted = sum(record["unaccounted"] for record in phase_records)
         profile_payload = {
-            "rank": args.rank, "steps": recorded,
-            "totals_seconds": totals,
-            "mean_seconds": {key: value / recorded
-                             for key, value in totals.items()},
-            "mean_step_seconds": sum(totals.values()) / recorded,
-            "skipped_rows": skipped_over_cap,
+            "rank_this_process": args.rank,
+            "steps_this_rank": recorded,
+            "first_step": phase_records[0]["step"],
+            "includes_startup": phase_records[0]["step"] == 1,
+            "totals_seconds_this_rank": totals,
+            "mean_seconds_this_rank": {key: value / recorded
+                                       for key, value in totals.items()},
+            "mean_measured_phases_seconds": sum(totals.values()) / recorded,
+            "mean_unaccounted_seconds": unaccounted / recorded,
+            "mean_profiled_seconds": (sum(totals.values())
+                                      + unaccounted) / recorded,
+            "profiled_seconds_excludes": (
+                "the per-step loss all-reduce and stop check, logging, "
+                "checkpoint evaluation and weight writes, and every step "
+                "after the first --phase-profile; the batch gather and "
+                "zero_grad are inside the window"),
+            "unaccounted_covers": "batch gather, warmup lr update, zero_grad, "
+                                  "chunk split, per-row loss bookkeeping",
+            "skipped_rows_this_rank": skipped_over_cap,
         }
         (args.output / "phase_profile.json").write_text(
             json.dumps(profile_payload))
         print(f"rank {args.rank}: phase profile "
-              f"{json.dumps(profile_payload['mean_seconds'])}", flush=True)
+              f"{json.dumps(profile_payload['mean_seconds_this_rank'])}", flush=True)
 
     # Validation on the same stride the periodic checkpoints scored.
-    counts, per_item, ece_bins = evaluate(model, tokenizer, val_shard,
-                                          code_ids, device)
-    # The two numbers a reader needs to see the bin population is the
-    # benchmark one: a mismatch here is the defect this filter exists to fix.
+    counts, per_item, ece_bins, bin_sources = evaluate(
+        model, tokenizer, val_shard, code_ids, device)
+    # Two counts that can disagree, because one comes from the rows handed to
+    # evaluate and the other from the rows it binned. If the filter drops or
+    # admits the wrong family, the payload carries both numbers and a mismatch.
     ece_bins_rows = sum(slot[0] for cell in ece_bins.values()
                         for slot in cell.values())
-    benchmark_val_rows = sum(1 for row in per_item if row[3] != "synthetic")
+    val_rows_non_synthetic = sum(1 for row in val_shard
+                                 if row.source != "synthetic")
     payload = {"rank": args.rank, "lr": args.lr, "val_counts": counts,
                "val_items": per_item, "ece_bins": ece_bins,
-               "ece_bins_population": "benchmark",
+               "ece_bins_population": BIN_POPULATION,
+               "ece_bins_population_rule": BIN_POPULATION_RULE,
+               "ece_bins_sources": bin_sources,
                "val_source": val_source,
                "stopped": stopped,
                "stop_reason": "epoch_mean_loss_above_frozen" if stopped else None,
@@ -1111,9 +1180,10 @@ def main() -> int:
                "eval_every": args.eval_every,
                "phase_profile_steps": args.phase_profile,
                "ece_bins_rows": ece_bins_rows,
-               "benchmark_val_rows": benchmark_val_rows,
-               "optimizer_state": "fresh",
-               "start_step_per_epoch": True,
+               "val_rows_non_synthetic": val_rows_non_synthetic,
+               "optimizer_state": "fresh: the trainer never saves or restores "
+                                  "Adam moments, so a resumed leg's optimizer "
+                                  "starts cold",
                "token_counts_key": "id(row), object identity, stable while "
                                    "this run holds the rows",
                "score_target": args.score_target,
@@ -1162,23 +1232,34 @@ def main() -> int:
             dist.destroy_process_group()
         return 3
 
+    # The last rank-0 work before the barrier is bracketed like a checkpoint:
+    # a disk-full or a failed JevBench read must reach every rank as an abort,
+    # not leave the peers waiting for the launcher to notice.
+    failed = torch.tensor([0.0], device=device)
     if args.rank == 0:
-        jev = evaluate_jevbench(model, tokenizer, code_ids, device)
-        payload["jevbench"] = jev
-        if args.save_weights:
-            # The full fine-tune's arm is its weights: without this file the
-            # cells cannot be re-scored on a later metric or shipped. Written
-            # before the payload so the digest it records covers these bytes.
-            weights_path = args.output / "weights.pt"
-            torch.save({key: value.detach().cpu()
-                        for key, value in model.state_dict().items()},
-                       weights_path)
-            payload["weights_path"] = str(weights_path)
-            payload["weights_sha256"] = file_sha256(weights_path)
-            payload["weights_bytes"] = weights_path.stat().st_size
-            print(f"rank 0: saved weights {weights_path} "
-                  f"sha256 {payload['weights_sha256'][:16]} "
-                  f"bytes {payload['weights_bytes']}", flush=True)
+        try:
+            payload["jevbench"] = evaluate_jevbench(model, tokenizer,
+                                                    code_ids, device)
+            if args.save_weights:
+                # The full fine-tune's arm is its weights: without this file
+                # the cells cannot be re-scored on a later metric or shipped.
+                # Written before the payload so the digest it records covers
+                # these bytes.
+                weights_path = args.output / "weights.pt"
+                torch.save({key: value.detach().cpu()
+                            for key, value in model.state_dict().items()},
+                           weights_path)
+                payload["weights_path"] = str(weights_path)
+                payload["weights_sha256"] = file_sha256(weights_path)
+                payload["weights_bytes"] = weights_path.stat().st_size
+                print(f"rank 0: saved weights {weights_path} "
+                      f"sha256 {payload['weights_sha256'][:16]} "
+                      f"bytes {payload['weights_bytes']}", flush=True)
+        except Exception as error:
+            failed.fill_(1.0)
+            print(f"rank 0: final evaluation or weight write failed: {error}",
+                  flush=True)
+    abort_if_any_failed(failed, "final evaluation or weight write", args.world)
 
     with path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle)

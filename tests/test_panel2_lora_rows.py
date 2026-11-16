@@ -297,7 +297,24 @@ def _fake_training_modules(module, monkeypatch):
     monkeypatch.setattr(
         module, "code_token_ids",
         lambda tokenizer, codes, form: ({code: index for index, code in enumerate(codes)}, []))
-    monkeypatch.setattr(module, "evaluate", lambda *a, **k: ({}, [], {}))
+    def fake_evaluate(model, tokenizer, rows, code_ids, device, limit=None):
+        # The same shape as the real evaluate, without a forward: the bins and
+        # their composition over the non-synthetic rows, so the payload wiring
+        # is exercised. The filter itself is tested directly, on the real
+        # evaluate, above.
+        bins, bin_sources = {}, {"by_source": {}, "by_type": {}}
+        for row in (rows[:limit] if limit else rows):
+            if row.source == "synthetic":
+                continue
+            bins.setdefault(f"{row.q_type}|2", {}).setdefault(
+                "5", [0, 0])[0] += 1
+            by_source = bin_sources["by_source"]
+            by_source[row.source] = by_source.get(row.source, 0) + 1
+            by_type = bin_sources["by_type"]
+            by_type[row.q_type] = by_type.get(row.q_type, 0) + 1
+        return {"all": [0, 0]}, [], bins, bin_sources
+
+    monkeypatch.setattr(module, "evaluate", fake_evaluate)
     monkeypatch.setattr(module, "evaluate_jevbench",
                         lambda *a, **k: {"items": [], "by_tier_natural": {}})
     monkeypatch.setattr(module.torch, "save", lambda *a, **k: None)
@@ -468,12 +485,13 @@ def test_evaluate_reports_calibration_bins_that_add_up(tmp_path):
     from model.scripts.train_panel2_lora import CODES
 
     code_ids = {code: index for index, code in enumerate(CODES)}
-    counts, per_item, bins = module.evaluate(
+    counts, per_item, bins, bin_sources = module.evaluate(
         FakeModel(), FakeTokenizer(), rows, code_ids, "cpu")
     total = sum(slot[0] for cell in bins.values() for slot in cell.values())
     correct = sum(slot[1] for cell in bins.values() for slot in cell.values())
     assert total == len(rows) == 2
     assert correct == counts["all"][0]
+    assert sum(bin_sources["by_source"].values()) == total
 
 
 def test_only_benchmark_rows_enter_the_calibration_bins(tmp_path):
@@ -528,12 +546,19 @@ def test_only_benchmark_rows_enter_the_calibration_bins(tmp_path):
     from model.scripts.train_panel2_lora import CODES
 
     code_ids = {code: index for index, code in enumerate(CODES)}
-    counts, per_item, bins = module.evaluate(
+    counts, per_item, bins, bin_sources = module.evaluate(
         FakeModel(), FakeTokenizer(), rows, code_ids, "cpu")
     total = sum(slot[0] for cell in bins.values() for slot in cell.values())
     assert len(rows) == 6
     assert counts["all"][1] == 6, "accuracy still counts every row"
     assert total == 4, "both benchmark families may enter the bins, synthetic may not"
+    # The composition is the evidence for that total: it names the families
+    # that entered. bench0 and bench1 are two families under the row-id rule,
+    # so each contributes its one row.
+    assert bin_sources["by_source"] == {"bench0": 1, "bench1": 1,
+                                        "typed_decisions": 2}
+    assert bin_sources["by_type"] == {"choice": 4}
+    assert "synthetic" not in bin_sources["by_source"]
 
 
 def test_every_rank_gets_the_same_steps_from_its_own_shard():
@@ -754,8 +779,17 @@ def test_eval_every_writes_a_checkpoint_before_the_last_step(tmp_path, monkeypat
         "the last step is scored by the final payload, not a checkpoint")
     record = json.loads((out / "checkpoint_1_shard_0.json").read_text())
     assert record["step"] == 1
-    assert record["ece_bins_population"] == "benchmark"
+    assert record["ece_bins_population"] == "non_synthetic"
     assert "jevbench" in record
+    # The final payload carries two counts that can disagree: the rows binned
+    # and the non-synthetic rows handed to evaluate. Six rows, none synthetic,
+    # so a filter that admitted synthetic rows or dropped a family separates
+    # them.
+    final = json.loads((out / "shard_0.json").read_text())
+    assert final["ece_bins_population_rule"] == 'source != "synthetic"'
+    assert final["ece_bins_rows"] == final["val_rows_non_synthetic"] == 6
+    assert sum(final["ece_bins_sources"]["by_source"].values()) == 6
+    assert final["ece_bins_sources"]["by_type"] == {"choice": 6}
 
 
 def test_the_one_hot_target_is_the_shipped_cross_entropy():
@@ -865,6 +899,25 @@ def test_a_resume_without_weights_is_refused(tmp_path, monkeypatch):
         "--start-step", "3",
     ])
     with pytest.raises(SystemExit, match="needs --load-weights"):
+        module.main()
+
+
+def test_a_resume_with_more_than_one_epoch_is_refused(tmp_path, monkeypatch):
+    """--start-step names steps of one pass; two passes have no reading.
+
+    The check runs at argument time, before any weights or plan are read, so
+    the path need not exist. Without the refusal the run would either skip
+    only epoch 1's steps or repeat the skip, and the payload could not say
+    which.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(tmp_path / "plan.jsonl"),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--epochs", "2", "--start-step", "1",
+        "--load-weights", str(tmp_path / "weights.pt"),
+    ])
+    with pytest.raises(SystemExit, match="ambiguous"):
         module.main()
 
 
@@ -986,6 +1039,41 @@ def test_a_rank_zero_checkpoint_exception_raises_instead_of_stalling(
         module.main()
 
 
+def test_a_rank_zero_final_exception_aborts_through_the_collective(
+    tmp_path, monkeypatch
+):
+    """The final JevBench read and weight write sit inside the same bracket.
+
+    With no --eval-every, the only JevBench call is the final one, which is
+    exactly the work that used to run before the barrier with nothing around
+    it. The failure must come out as a group abort, so a peer never waits.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:w{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    def boom(*args, **kwargs):
+        raise OSError("no space left on device")
+
+    monkeypatch.setattr(module, "evaluate_jevbench", boom)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+    ])
+    with pytest.raises(SystemExit,
+                       match=r"final evaluation or weight write: 1 rank\(s\) failed"):
+        module.main()
+    assert not (tmp_path / "out" / "shard_0.json").exists(), (
+        "a failed final write must not be recorded as a completed payload")
+
+
 def test_phase_profile_times_every_phase_of_the_first_steps(tmp_path, monkeypatch):
     """--phase-profile N writes one record per timed step, with all six phases."""
     module = importlib.import_module("model.scripts.train_panel2_lora")
@@ -1005,11 +1093,14 @@ def test_phase_profile_times_every_phase_of_the_first_steps(tmp_path, monkeypatc
     ])
     assert module.main() == 0
     profile = json.loads((tmp_path / "out" / "phase_profile.json").read_text())
-    assert profile["steps"] == 1
-    assert set(profile["mean_seconds"]) == {
+    assert profile["steps_this_rank"] == 1
+    assert profile["first_step"] == 1
+    assert profile["includes_startup"] is True
+    assert set(profile["mean_seconds_this_rank"]) == {
         "tokenise", "forward", "backward", "allreduce", "clip", "optimizer"}
-    assert profile["mean_step_seconds"] > 0
-    assert all(value >= 0 for value in profile["mean_seconds"].values())
+    assert profile["mean_profiled_seconds"] > 0
+    assert profile["mean_profiled_seconds"] >= profile["mean_measured_phases_seconds"]
+    assert all(value >= 0 for value in profile["mean_seconds_this_rank"].values())
 
 
 def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
@@ -1090,7 +1181,7 @@ def test_load_weights_puts_the_saved_values_into_the_model(tmp_path, monkeypatch
         module, "evaluate",
         lambda model, *args, **kwargs: (
             seen.update(weight=float(model.state_dict()["weight"])),
-            ({}, [], {}))[1])
+            ({}, [], {}, {}))[1])
     monkeypatch.setattr(sys, "argv", [
         "train_panel2_lora.py", "--plan", str(plan),
         "--output", str(tmp_path / "out2"), "--world", "1", "--device", "cpu",
