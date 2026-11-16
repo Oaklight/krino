@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import math
 import pathlib
+import sys
+import types
 
 import pytest
 
@@ -229,6 +232,107 @@ def test_another_ranks_failure_stops_this_rank_too(monkeypatch):
     monkeypatch.setattr(dist, "all_reduce", all_reduce)
     with pytest.raises(SystemExit, match=r"1 rank\(s\) failed"):
         check_shared_non_negative(1.0, "mean loss", 0, 2, "cpu", step=7)
+
+
+def test_fewer_rows_than_ranks_is_refused_before_the_loop():
+    """4 rows over 8 ranks: some shards are empty, so every rank refuses.
+
+    Both inputs are identical on every rank, so this check fails the same way
+    everywhere instead of leaving one rank dividing by zero while the rest
+    wait in a collective.
+    """
+    with pytest.raises(SystemExit, match="cannot be spread over 8 ranks"):
+        shard_and_steps(list(range(4)), 0, 8, 2)
+
+
+def test_a_healthy_rank_does_not_name_its_own_value_as_the_offender(monkeypatch):
+    """The abort must not claim this rank's value is bad when it is not."""
+    import torch.distributed as dist
+
+    def all_reduce(tensor, op=None):
+        tensor.add_(1.0)
+
+    monkeypatch.setattr(dist, "all_reduce", all_reduce)
+    with pytest.raises(SystemExit) as raised:
+        check_shared_non_negative(1.25, "mean loss", 0, 2, "cpu", step=7)
+    message = str(raised.value)
+    assert "healthy here (1.2500)" in message
+    assert "another rank" in message
+    assert "1 rank(s) failed" in message
+
+
+def _fake_training_modules(module, monkeypatch):
+    """Patch every seam main touches so its own loop runs on CPU."""
+    import torch
+
+    class FakeTokenizer:
+        def __call__(self, text, return_tensors=None, add_special_tokens=False):
+            return {"input_ids": torch.zeros(1, 2, dtype=torch.long)}
+
+    class FakeModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.zeros(1))
+            self.forwards = 0
+
+        def forward(self, input_ids=None, **kwargs):
+            self.forwards += 1
+            # Must depend on a parameter or backward has nothing to do.
+            logits = torch.zeros(1, 1, 200) + self.weight * 0.0
+            return types.SimpleNamespace(logits=logits)
+
+        def train(self, mode=True):
+            return self
+
+        def eval(self):
+            return self
+
+    fake = FakeModel()
+    monkeypatch.setattr(module, "load_causal_lm",
+                        lambda *a, **k: (fake, FakeTokenizer()))
+    monkeypatch.setattr(module, "inject_lora", lambda *a, **k: 0)
+    monkeypatch.setattr(
+        module, "code_token_ids",
+        lambda tokenizer, codes, form: ({code: index for index, code in enumerate(codes)}, []))
+    monkeypatch.setattr(module, "evaluate", lambda *a, **k: ({}, []))
+    monkeypatch.setattr(module, "evaluate_jevbench",
+                        lambda *a, **k: {"items": [], "by_tier_natural": {}})
+    monkeypatch.setattr(module.torch, "save", lambda *a, **k: None)
+    monkeypatch.setattr(module.dist, "init_process_group", lambda *a, **k: None)
+    monkeypatch.setattr(module.dist, "all_reduce", lambda *a, **k: None)
+    monkeypatch.setattr(module.dist, "barrier", lambda *a, **k: None)
+    monkeypatch.setattr(module.dist, "destroy_process_group", lambda *a, **k: None)
+    monkeypatch.setattr(
+        module.dist, "all_gather_object",
+        lambda output, value: output.__setitem__(slice(None), [value] * len(output)))
+    return fake
+
+
+def test_main_takes_the_shared_step_count_from_its_own_loop(tmp_path, monkeypatch):
+    """Runs main() itself at a rank whose shard is short.
+
+    10 rows over 4 ranks: rank 2 holds 2 rows. The shared count is 2 steps;
+    a count derived from ``len(shard)`` would be 1. The fake model counts
+    forwards (2 frozen-sample rows + 2 steps x 2 rows), so a reversion changes
+    the number this test sees.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:r{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(10) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    fake = _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "4", "--rank", "2",
+        "--device", "cpu", "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+    ])
+    assert module.main() == 0
+    assert fake.forwards == 6, (
+        "two frozen-sample rows plus two steps of two rows")
 
 
 def test_every_rank_gets_the_same_steps_from_its_own_shard():

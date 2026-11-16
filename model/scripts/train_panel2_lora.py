@@ -184,9 +184,17 @@ def check_shared_non_negative(value: float, what: str, rank: int, world: int,
         dist.all_reduce(failed, op=dist.ReduceOp.SUM)
     if failed.item() > 0:
         where = f"rank {rank}" + (f" step {step}" if step is not None else "")
+        bad_here = not (math.isfinite(value) and value >= 0.0)
+        if bad_here:
+            detail = f"{what} is {value!r}, which cannot be a cross-entropy mean"
+        else:
+            # This rank's value is fine; naming it as the offender would send
+            # whoever reads the abort to the wrong rank.
+            detail = (f"{what} is healthy here ({value:.4f}); the failure is "
+                      "on another rank")
         raise SystemExit(
-            f"{where}: {what} is {value!r}, which cannot be a cross-entropy "
-            f"mean; {int(failed.item())} rank(s) failed the non-negative check"
+            f"{where}: {detail}; {int(failed.item())} rank(s) failed the "
+            "non-negative check"
         )
     return value
 
@@ -199,6 +207,15 @@ def shard_and_steps(train_rows: list, rank: int, world: int,
     that is the property that keeps the collectives aligned, and the only
     place it is decided.
     """
+    if world > 1 and len(train_rows) < world:
+        # Fewer rows than ranks leaves some shards empty; an empty shard makes
+        # batch_indices divide by zero while the other ranks wait in the next
+        # collective. Both inputs are identical on every rank, so every rank
+        # refuses here, in the same way, and none is left blocking.
+        raise SystemExit(
+            f"{len(train_rows)} train rows cannot be spread over {world} ranks; "
+            "no rank would have a full shard"
+        )
     shard = train_rows[rank :: world] if world > 1 else train_rows
     steps, _ = step_plan(len(train_rows), world, batch_rows)
     return shard, steps
@@ -412,6 +429,11 @@ def main() -> int:
         action=argparse.BooleanOptionalAction,
         default=True,
     )
+    parser.add_argument(
+        "--device",
+        default=None,
+        help="compute device; defaults to cuda:<local_rank>",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--epochs", type=int, default=1)
@@ -431,8 +453,9 @@ def main() -> int:
     if args.world > 1:
         dist.init_process_group("nccl")
     local_rank = int(os.environ.get("LOCAL_RANK", str(args.rank)))
-    torch.cuda.set_device(local_rank)
-    device = f"cuda:{local_rank}"
+    device = args.device or f"cuda:{local_rank}"
+    if device.startswith("cuda"):
+        torch.cuda.set_device(local_rank)
     torch.manual_seed(42)
 
     # Pin the inputs before reading them: a swapped plan must stop the run at
