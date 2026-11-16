@@ -6,7 +6,7 @@ Every row here uses Qwen3-Reranker-4B with every parameter trainable (LoRA off),
 
 ## 1. Run and schedule
 
-Leg 1 ran steps 1 to 543 of 1,086, from 16:57:47Z to 18:16:57Z: 79.2 min of launcher wall time, of which the trainer's in-step clock at step 543 reads 4,426 s = 73.8 min. The leg covers 10,319,786 tokens, 31.18% of the epoch's 33,098,619, over 50.0% of its steps. The plan orders rows by length, so the second half carries 2.2x the tokens per step, 41,949 against 19,005, and leg 1 is by construction the cheap half. Leg 2 was skipped, so no epoch result exists.
+Leg 1 ran steps 1 to 543 of 1,086, from 16:57:47Z to 18:16:57Z: 79.2 min of launcher wall time, of which the trainer's in-step clock at step 543 reads 4,426 s = 73.8 min. The leg covers 10,319,786 tokens, 31.18% of the epoch's 33,098,619, over 50.0% of its steps. The plan orders rows by length, so the second half carries 2.2x the tokens per step, 41,949 against 19,005, and leg 1 is by construction the cheap half. Leg 2 was skipped, so no epoch result exists. The leg trained on 4,366 score rows, 12.6% of its rows and 8.7% of its tokens, against 18.7% of the epoch's rows and 13.1% of its tokens; the remaining 8,660 score rows sit in leg 2. It was also noul-heavy: noul took 51.6% of its tokens against 26.1% for the epoch, while choice and score were under-represented at 39.6% and 8.7% against 60.7% and 13.1%, and the ordering is not monotone by type, with noul early and token-heavy and score late. The score cells in section 4 therefore come from training on a third of the epoch's score rows, and "training does not move score" must be read as "training on 4,366 score rows did not" - a statement about this leg's exposure, not about the objective's ceiling.
 
 ## 2. Checkpoints
 
