@@ -28,7 +28,7 @@ The 375-against-543 paired test on the 9,923 validation rows is b = 729 (375 rig
 
 ## 4. Admission at the exit
 
-At step 543 the arm clears all five floors: averaged JevBench 165.5 against 156.0; val 0.6725 against 0.5596; agreement 0.8442 against 0.7206; K = 80 0.3820 against 0.2407; ECE 0.0874 / 0.1197 / 0.0633 against 0.1606 / 0.2987 / 0.2469. The half epoch is therefore a new admissible arm. Step 375 clears the same five floors, with val 0.6781 and agreement 0.8485.
+At step 543 the arm clears all five floors: averaged JevBench 165.5 against 156.0; val 0.6725 against 0.5596; agreement 0.8442 against 0.7206; K = 80 0.3820 against 0.2407; ECE 0.0874 / 0.1197 / 0.0633 against 0.1606 / 0.2987 / 0.2469. The half epoch is therefore a new admissible arm. Step 375 also clears all five: averaged JevBench 165.5, val 0.6781, agreement 0.8485, K = 80 0.3798, and ECE 0.0379 / 0.1077 / 0.0756 against 0.1606 / 0.2987 / 0.2469. Both checkpoints would therefore be admissible, not only the exit. Step 250 does not: it fails on agreement alone, 142/231 = 0.6147 against 0.7206, while passing the other four.
 
 Admission is not the internal calibration gate. The working target inside the calibration work is ECE at or below 0.05 per cell, and that target is not met here.
 
