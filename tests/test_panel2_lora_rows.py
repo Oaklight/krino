@@ -269,8 +269,28 @@ def _fake_training_modules(module, monkeypatch):
     import torch
 
     class FakeTokenizer:
-        def __call__(self, text, return_tensors=None, add_special_tokens=False):
-            return {"input_ids": torch.zeros(1, 2, dtype=torch.long)}
+        def __call__(self, text, return_tensors=None, add_special_tokens=False,
+                     padding=False):
+            texts = [text] if isinstance(text, str) else list(text)
+            # Width depends on the text, so a chunk of unequal rows pads; the
+            # 8-token floor keeps the spread inside the chunker's 1.25 ratio
+            # for rows two apart, which the payload test relies on.
+            widths = [8 + len(item) % 3 for item in texts]
+            width = max(widths)
+            ids = torch.zeros(len(texts), width, dtype=torch.long)
+            mask = torch.zeros(len(texts), width, dtype=torch.long)
+            for index, item_width in enumerate(widths):
+                ids[index, width - item_width:] = 1
+                mask[index, width - item_width:] = 1
+            if return_tensors is None:
+                # The trainer counts a prompt with len(input_ids), so the
+                # tensor-free call must return the id list, as a real
+                # tokenizer does.
+                single = isinstance(text, str)
+                return {"input_ids": ids[0].tolist() if single else ids.tolist(),
+                        "attention_mask": (mask[0].tolist() if single
+                                           else mask.tolist())}
+            return {"input_ids": ids, "attention_mask": mask}
 
     class FakeModel(torch.nn.Module):
         def __init__(self):
@@ -278,10 +298,12 @@ def _fake_training_modules(module, monkeypatch):
             self.weight = torch.nn.Parameter(torch.zeros(1))
             self.forwards = 0
 
-        def forward(self, input_ids=None, **kwargs):
+        def forward(self, input_ids=None, attention_mask=None,
+                    position_ids=None, **kwargs):
             self.forwards += 1
             # Must depend on a parameter or backward has nothing to do.
-            logits = torch.zeros(1, 1, 200) + self.weight * 0.0
+            batch, width = input_ids.shape
+            logits = torch.zeros(batch, width, 200) + self.weight * 0.0
             return types.SimpleNamespace(logits=logits)
 
         def train(self, mode=True):
@@ -1659,3 +1681,198 @@ def test_load_weights_puts_the_saved_values_into_the_model(tmp_path, monkeypatch
     assert seen["weight"] == 1.0
     payload = json.loads((tmp_path / "out2" / "shard_0.json").read_text())
     assert payload["weights_loaded_sha256"] == module.file_sha256(saved)
+
+
+def _tiny_lm(vocab=64, hidden=16, intermediate=32, layers=1, seed=0):
+    """A real attention stack, small enough to run on CPU in a test."""
+    import torch
+    from transformers import Qwen2Config, Qwen2ForCausalLM
+
+    torch.manual_seed(seed)
+    config = Qwen2Config(
+        vocab_size=vocab, hidden_size=hidden, intermediate_size=intermediate,
+        num_hidden_layers=layers, num_attention_heads=2,
+        num_key_value_heads=1, max_position_embeddings=128)
+    return Qwen2ForCausalLM(config)
+
+
+class _CharTokenizer:
+    """One token per character, deterministic, with the padding side selectable."""
+
+    def __init__(self, pad_side="right"):
+        self.pad_side = pad_side
+
+    def __call__(self, text, return_tensors=None, padding=False,
+                 add_special_tokens=False):
+        import torch
+
+        texts = [text] if isinstance(text, str) else list(text)
+        sequences = [[1 + (ord(char) % 60) for char in item] for item in texts]
+        width = max(len(sequence) for sequence in sequences)
+        ids, mask = [], []
+        for sequence in sequences:
+            pad = [0] * (width - len(sequence))
+            ones = [1] * len(sequence)
+            if self.pad_side == "left":
+                ids.append(pad + sequence)
+                mask.append([0] * len(pad) + ones)
+            else:
+                ids.append(sequence + pad)
+                mask.append(ones + [0] * len(pad))
+        return {"input_ids": torch.tensor(ids),
+                "attention_mask": torch.tensor(mask)}
+
+
+def _batch_rows(count=6, growth=3):
+    from model.scripts.train_panel2_lora import Row
+
+    rows = []
+    for index in range(count):
+        texts = [f"Option {option} " + "x" * (index * growth + option + 1)
+                 for option in range(2)]
+        rows.append(Row(f"corpus:b{index}", "train", "choice", "State: s",
+                        "Question: q", texts, 0, ["+", "-"], "corpus"))
+    return rows
+
+
+def test_deal_rows_partitions_the_step_and_balances_its_token_sums():
+    """Every row goes to exactly one rank, and no rank trails by a whole row."""
+    from model.scripts.train_panel2_lora import deal_rows
+
+    rows = _batch_rows(8, growth=7)
+    counts = {id(row): len(row.texts[0]) + len(row.texts[1]) for row in rows}
+    loads = deal_rows(rows, counts, 4)
+    assert sorted(row.row_id for load in loads for row in load) == sorted(
+        row.row_id for row in rows)
+    totals = [sum(counts[id(row)] for row in load) for load in loads]
+    assert max(totals) - min(totals) <= max(counts.values())
+
+
+def test_the_step_gradient_does_not_depend_on_chunking():
+    """Same six rows, one per forward versus three chunks: the same gradient.
+
+    The loop divides each chunk's summed row losses by the step's nominal rows
+    per rank. A mean over the chunk instead would give a one-row chunk the
+    same weight as a four-row chunk and change the gradient, so this is the
+    precondition for any chunked arm.
+    """
+    import torch
+    from model.scripts.train_panel2_lora import (
+        chunk_code_logits, chunk_loss, target_loss,
+    )
+
+    model = _tiny_lm()
+    tokenizer = _CharTokenizer()
+    rows = _batch_rows(6)
+    code_ids = {"+": 0, "-": 1}
+    nominal = 6
+
+    def gradients(chunks):
+        model.zero_grad(set_to_none=True)
+        for chunk in chunks:
+            values = chunk_code_logits(model, tokenizer, chunk, code_ids, "cpu")
+            loss = chunk_loss(
+                chunk, values,
+                lambda row, value: target_loss(value, row.gold, "onehot"),
+                nominal)
+            loss.backward()
+        return {name: parameter.grad.clone()
+                for name, parameter in model.named_parameters()}
+
+    singles = gradients([[row] for row in rows])
+    grouped = gradients([rows[:1], rows[1:4], rows[4:]])
+    for name in singles:
+        assert torch.allclose(singles[name], grouped[name], atol=1e-7,
+                              rtol=1e-5), name
+
+
+def test_a_later_row_cannot_change_an_earlier_rows_logits():
+    """Perturb the chunk's last row; the earlier rows must not move at all.
+
+    A mask-shaped check can pass while a concatenated sequence still leaks, so
+    this asserts equality of the logits themselves.
+    """
+    import torch
+    from model.scripts.train_panel2_lora import chunk_code_logits
+
+    model = _tiny_lm().eval()
+    tokenizer = _CharTokenizer()
+    rows = _batch_rows(3)
+    code_ids = {"+": 0, "-": 1}
+    with torch.no_grad():
+        before = chunk_code_logits(model, tokenizer, rows, code_ids, "cpu")
+        # Same length, different tokens: a length change would alter the
+        # batch's padding width and with it the kernel tiling, which moves
+        # other rows' logits in the last bits without any attention leak.
+        rows[-1].texts = [text.replace("x", "y") for text in rows[-1].texts]
+        after = chunk_code_logits(model, tokenizer, rows, code_ids, "cpu")
+    for index in (0, 1):
+        assert torch.equal(before[index], after[index]), (
+            f"row {index}'s logits moved when the last row's tokens changed")
+    assert not torch.equal(before[2], after[2]), (
+        "the perturbation must reach its own row, or the test proves nothing")
+
+
+def test_position_ids_restart_at_zero_for_every_row():
+    """A chunked forward must not inherit the previous row's positions."""
+    import torch
+    from model.scripts.train_panel2_lora import chunk_inputs
+
+    rows = _batch_rows(3, growth=5)
+    _, attention, positions = chunk_inputs(_CharTokenizer("left"), rows, "cpu")
+    for index in range(len(rows)):
+        real = attention[index].bool()
+        count = int(real.sum())
+        first = int(torch.argmax(real.long()))
+        assert positions[index][first].item() == 0
+        assert positions[index][first:first + count].tolist() == list(range(count))
+
+
+def test_the_payload_records_the_tokens_the_chunks_carried(tmp_path,
+                                                           monkeypatch):
+    """Real and padded tokens per step, and the assignment rule, are recorded."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:c{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX,
+                f"Option {option}.{'z' * (2 * index + 2 * option)}", 2)
+        for index in range(8) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--chunk-tokens", "4096", "--balance-rows",
+    ])
+    assert module.main() == 0
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    chunking = payload["chunking"]
+    assert chunking["tokens"] == 4096
+    assert len(chunking["real_tokens_per_step"]) == payload["steps_run"]
+    assert len(chunking["padded_cost_this_rank"]) == payload["steps_run"]
+    pairs = list(zip(chunking["real_tokens_per_step"],
+                     chunking["padded_tokens_per_step"]))
+    assert all(padded >= real for real, padded in pairs)
+    assert any(padded > real for real, padded in pairs), (
+        "the fake tokenizer's uneven lengths must produce some padding")
+    assert chunking["padded_cost_this_rank"] == chunking["padded_tokens_per_step"]
+    assert len(chunking["forwards_per_step"]) == payload["steps_run"]
+    assert all(count >= 1 for count in chunking["forwards_per_step"])
+    assert all(sum(sizes) == 2 for sizes in chunking["chunk_sizes"]), (
+        "each step holds two rows, so its chunks must account for two")
+    assert payload["row_assignment"]["rule"] == "balanced_by_length"
+    assert payload["row_assignment"]["digest_this_rank"] is not None
+
+
+def test_chunk_rows_fixes_the_forwards_per_rank():
+    """--chunk-rows splits by row count whatever the token budget would allow."""
+    from model.scripts.train_panel2_lora import chunk_by_length
+
+    rows = _batch_rows(8, growth=1)
+    counts = {id(row): 100 for row in rows}
+    assert len(chunk_by_length(rows, counts, 10 ** 6, 1.0)) == 1
+    assert len(chunk_by_length(rows, counts, 10 ** 6, 1.0, max_rows=2)) == 4
+    assert len(chunk_by_length(rows, counts, 10 ** 6, 1.0, max_rows=1)) == 8
