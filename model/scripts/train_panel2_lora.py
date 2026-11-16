@@ -150,6 +150,45 @@ def source_class(row_id: str) -> str:
     return name.split("-", 1)[0] if "-" in name else name
 
 
+def step_plan(n_rows: int, world: int, batch_rows: int) -> tuple[int, int]:
+    """Steps per epoch and rows per rank, identical on every rank.
+
+    Ranks must take the same number of steps. A rank that finishes one step
+    early enters the epoch-end statistics all-reduce while its peers are still
+    in the per-step gradient all-reduces, so the two pair with each other: the
+    statistics come back as gradient sums and the collectives eventually time
+    out. ``n_rows`` is the plan's whole train count, never the calling rank's
+    shard, so every rank derives the same number from the same input.
+    """
+    shard_rows = math.ceil(n_rows / world) if world > 1 else n_rows
+    return math.ceil(shard_rows / batch_rows), shard_rows
+
+
+def shard_and_steps(train_rows: list, rank: int, world: int,
+                    batch_rows: int) -> tuple[list, int]:
+    """One rank's rows and the step count every rank shares.
+
+    The step count comes from the plan's total, not from this rank's shard:
+    that is the property that keeps the collectives aligned, and the only
+    place it is decided.
+    """
+    shard = train_rows[rank :: world] if world > 1 else train_rows
+    steps, _ = step_plan(len(train_rows), world, batch_rows)
+    return shard, steps
+
+
+def batch_indices(step: int, batch_rows: int, shard_rows: int) -> list[int]:
+    """Shard positions for one step; a short shard wraps its tail.
+
+    When the plan's train count is not divisible by the world size some
+    shards hold one row fewer. Wrapping repeats a few early rows on those
+    ranks instead of shortening their epoch, which would desynchronise the
+    collectives.
+    """
+    start = (step - 1) * batch_rows
+    return [index % shard_rows for index in range(start, start + batch_rows)]
+
+
 def build_rows(data: bytes, noul_gold: str = "position",
                plan_unpermuted_noul: bool = False) -> tuple[list[Row], str, int]:
     """Rows from plan bytes, the field that supplied their split, and masks.
@@ -434,8 +473,8 @@ def main() -> int:
     history = []
     stopped = False
     if not args.eval_only:
-        shard = train_rows[args.rank :: args.world] if args.world > 1 else train_rows
-        steps = math.ceil(len(shard) / args.batch_rows)
+        shard, steps = shard_and_steps(train_rows, args.rank, args.world,
+                                       args.batch_rows)
         if args.max_steps:
             steps = min(steps, args.max_steps)
         print(f"rank {args.rank}: {len(shard)} rows, {steps} steps per epoch, "
@@ -443,7 +482,8 @@ def main() -> int:
         for epoch in range(1, args.epochs + 1):
             started = time.time()
             for step in range(1, steps + 1):
-                batch = shard[(step - 1) * args.batch_rows: step * args.batch_rows]
+                batch = [shard[index]
+                         for index in batch_indices(step, args.batch_rows, len(shard))]
                 optimizer.zero_grad(set_to_none=True)
                 losses = []
                 for row in batch:
