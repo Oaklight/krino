@@ -21,7 +21,9 @@ from model.scripts.train_panel2_lora import (  # noqa: E402
     load_plan_rows,
     parse_prompt_text,
     read_plan,
+    reduce_gradients,
     shard_and_steps,
+    split_by_token_budget,
     step_plan,
 )
 
@@ -308,6 +310,31 @@ def _fake_training_modules(module, monkeypatch):
     return fake
 
 
+def test_full_ft_main_adapts_nothing_and_still_steps(tmp_path, monkeypatch):
+    """--full-ft must skip the adapter and train the model it loaded."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:f{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    fake = _fake_training_modules(module, monkeypatch)
+    adapted = []
+    monkeypatch.setattr(module, "inject_lora",
+                        lambda *a, **k: adapted.append(1) or 0)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2", "--full-ft",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+    ])
+    assert module.main() == 0
+    assert adapted == [], "full fine-tuning must not inject a LoRA adapter"
+    # 2 frozen-sample rows + 3 steps of 2 rows on a 6-row plan.
+    assert fake.forwards == 8
+
+
 def test_main_takes_the_shared_step_count_from_its_own_loop(tmp_path, monkeypatch):
     """Runs main() itself at a rank whose shard is short.
 
@@ -333,6 +360,73 @@ def test_main_takes_the_shared_step_count_from_its_own_loop(tmp_path, monkeypatc
     assert module.main() == 0
     assert fake.forwards == 6, (
         "two frozen-sample rows plus two steps of two rows")
+
+
+def test_gradients_are_reduced_in_buckets_and_averaged(monkeypatch):
+    """Two replicas, two parameters, one bucket: the mean, not the sum."""
+    import torch
+    import torch.distributed as dist
+
+    calls = []
+
+    def all_reduce(tensor, op=None):
+        calls.append(tensor.numel())
+        tensor.mul_(2)  # the other replica holds identical gradients
+
+    monkeypatch.setattr(dist, "all_reduce", all_reduce)
+    first = torch.nn.Parameter(torch.zeros(4))
+    first.grad = torch.full((4,), 3.0)
+    second = torch.nn.Parameter(torch.zeros(2))
+    second.grad = torch.full((2,), -1.5)
+
+    count = reduce_gradients([first, second], 2, bucket_bytes=1 << 20)
+
+    assert count == 1, "both parameters fit one bucket"
+    assert calls == [6], "one collective over the flat buffer"
+    assert torch.equal(first.grad, torch.full((4,), 3.0))
+    assert torch.equal(second.grad, torch.full((2,), -1.5))
+
+
+def test_a_small_bucket_makes_one_collective_per_group_of_parameters(monkeypatch):
+    import torch
+    import torch.distributed as dist
+
+    calls = []
+
+    def all_reduce(tensor, op=None):
+        calls.append(tensor.numel())
+
+    monkeypatch.setattr(dist, "all_reduce", all_reduce)
+    params = []
+    for _ in range(3):
+        param = torch.nn.Parameter(torch.zeros(8))
+        param.grad = torch.ones(8)
+        params.append(param)
+
+    count = reduce_gradients(params, 2, bucket_bytes=1)
+    assert count == len(calls) == 3
+    assert calls == [8, 8, 8]
+
+
+def test_a_rank_with_one_replica_reduces_nothing(monkeypatch):
+    import torch
+    import torch.distributed as dist
+
+    calls = []
+    monkeypatch.setattr(dist, "all_reduce", lambda *a, **k: calls.append(1))
+    param = torch.nn.Parameter(torch.zeros(2))
+    param.grad = torch.ones(2)
+    assert reduce_gradients([param], 1) == 0
+    assert calls == []
+
+
+def test_the_token_budget_splits_a_step_without_dropping_rows():
+    rows = [object() for _ in range(4)]
+    counts = {id(rows[0]): 300, id(rows[1]): 300, id(rows[2]): 100, id(rows[3]): 400}
+    chunks = split_by_token_budget(rows, counts, 500)
+    assert [len(chunk) for chunk in chunks] == [1, 2, 1]
+    assert sum(len(chunk) for chunk in chunks) == 4
+    assert split_by_token_budget(rows, counts, 0) == [rows]
 
 
 def test_every_rank_gets_the_same_steps_from_its_own_shard():

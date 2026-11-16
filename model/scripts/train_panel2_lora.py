@@ -233,6 +233,80 @@ def batch_indices(step: int, batch_rows: int, shard_rows: int) -> list[int]:
     return [index % shard_rows for index in range(start, start + batch_rows)]
 
 
+def reduce_gradients(params, world: int, bucket_bytes: int = 64 << 20) -> int:
+    """All-reduce gradients in flat buckets; returns the collective count.
+
+    Two shapes are wrong at 4B parameters. Concatenating every gradient first
+    needs an 8 GB cat plus an 8 GB destination per step, and one all-reduce
+    per parameter is hundreds of latency-bound calls per step. Bucketing keeps
+    one flat buffer per group of parameters of about ``bucket_bytes`` and one
+    collective per bucket.
+
+    Parameters are grouped by dtype as well as by size: a flat buffer cannot
+    mix bf16 and fp32, and the LoRA factors are fp32 while the weights are
+    bf16.
+    """
+    if world <= 1:
+        return 0
+    by_dtype: dict = {}
+    for param in params:
+        if param.grad is None:
+            param.grad = torch.zeros_like(param)
+        by_dtype.setdefault(param.grad.dtype, []).append(param)
+
+    collectives = 0
+    for dtype, group in by_dtype.items():
+        bucket: list = []
+        size = 0
+        for param in group:
+            width = param.grad.numel() * param.grad.element_size()
+            if bucket and size + width > bucket_bytes:
+                _reduce_bucket(bucket, world)
+                collectives += 1
+                bucket, size = [], 0
+            bucket.append(param)
+            size += width
+        if bucket:
+            _reduce_bucket(bucket, world)
+            collectives += 1
+    return collectives
+
+
+def _reduce_bucket(bucket, world: int) -> None:
+    grads = [param.grad for param in bucket]
+    flat = torch.cat([grad.reshape(-1) for grad in grads])
+    dist.all_reduce(flat, op=dist.ReduceOp.SUM)
+    flat /= world
+    offset = 0
+    for grad in grads:
+        count = grad.numel()
+        grad.copy_(flat[offset: offset + count].view_as(grad))
+        offset += count
+
+
+def split_by_token_budget(rows, token_counts, budget: int) -> list:
+    """Chunks of rows whose summed prompt tokens stay at or under ``budget``.
+
+    The memory model was measured at 8 rows of 486-token prefixes; a batch of
+    rows whose prefixes are longer would exceed it. Splitting the step by the
+    tokens it actually carries keeps the per-step peak bounded without
+    changing the rows per step, which would change the optimisation.
+    """
+    if not budget:
+        return [rows] if rows else []
+    chunks, current, total = [], [], 0
+    for row in rows:
+        width = token_counts[id(row)]
+        if current and total + width > budget:
+            chunks.append(current)
+            current, total = [], 0
+        current.append(row)
+        total += width
+    if current:
+        chunks.append(current)
+    return chunks
+
+
 def build_rows(data: bytes, noul_gold: str = "position",
                plan_unpermuted_noul: bool = False) -> tuple[list[Row], str, int]:
     """Rows from plan bytes, the field that supplied their split, and masks.
@@ -434,6 +508,32 @@ def main() -> int:
         default=None,
         help="compute device; defaults to cuda:<local_rank>",
     )
+    parser.add_argument(
+        "--full-ft",
+        action="store_true",
+        help="train every parameter with no LoRA adapter",
+    )
+    parser.add_argument(
+        "--max-batch-tokens",
+        type=int,
+        default=0,
+        help=(
+            "split each step's rows into chunks whose summed prompt tokens stay "
+            "under this budget; 0 keeps the row batch whole"
+        ),
+    )
+    parser.add_argument(
+        "--grad-bucket-mb",
+        type=int,
+        default=64,
+        help="size of the flat buffer per gradient all-reduce",
+    )
+    parser.add_argument(
+        "--warmup-fraction",
+        type=float,
+        default=0.0,
+        help="linear warmup over this fraction of the first epoch's steps",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--epochs", type=int, default=1)
@@ -486,11 +586,12 @@ def main() -> int:
 
     model, tokenizer = load_causal_lm(
         "Qwen/Qwen3-Reranker-4B", device=device, dtype=torch.bfloat16,
-        freeze=True, flash_attention=False,
+        freeze=not args.full_ft, flash_attention=False,
     )
-    inject_lora(model, targets=("q_proj", "k_proj", "v_proj", "o_proj"),
-                rank=args.lora_rank, alpha=args.lora_alpha,
-                last_n_layers=args.lora_layers)
+    if not args.full_ft:
+        inject_lora(model, targets=("q_proj", "k_proj", "v_proj", "o_proj"),
+                    rank=args.lora_rank, alpha=args.lora_alpha,
+                    last_n_layers=args.lora_layers)
     code_ids, multi = code_token_ids(tokenizer, CODES, "space")
     if len(code_ids) < 26 or multi:
         raise SystemExit(f"code ids unusable: {len(code_ids)} single-token, {multi[:5]}")
@@ -523,6 +624,7 @@ def main() -> int:
         print(f"rank {args.rank}: frozen sample CE {frozen_mean:.4f}", flush=True)
 
     history = []
+    reduce_seconds = 0.0
     stopped = False
     if not args.eval_only:
         shard, steps = shard_and_steps(train_rows, args.rank, args.world,
@@ -531,22 +633,37 @@ def main() -> int:
             steps = min(steps, args.max_steps)
         print(f"rank {args.rank}: {len(shard)} rows, {steps} steps per epoch, "
               f"{args.epochs} epoch(s)", flush=True)
+        token_counts = {}
+        if args.max_batch_tokens:
+            for row in shard:
+                token_counts[id(row)] = len(tokenizer(
+                    prompt_of(row), add_special_tokens=False)["input_ids"])
+            print(f"rank {args.rank}: token budget {args.max_batch_tokens} per "
+                  f"step, longest row {max(token_counts.values(), default=0)}",
+                  flush=True)
+        warmup_steps = int(args.warmup_fraction * steps) if args.warmup_fraction else 0
         for epoch in range(1, args.epochs + 1):
             started = time.time()
             for step in range(1, steps + 1):
                 batch = [shard[index]
                          for index in batch_indices(step, args.batch_rows, len(shard))]
+                if epoch == 1 and warmup_steps and step <= warmup_steps:
+                    for group in optimizer.param_groups:
+                        group["lr"] = args.lr * step / warmup_steps
                 optimizer.zero_grad(set_to_none=True)
                 losses = []
-                for row in batch:
-                    loss = loss_of(row) / len(batch)
-                    loss.backward()
-                    losses.append(float(loss))
+                chunks = split_by_token_budget(batch, token_counts,
+                                               args.max_batch_tokens)
+                for chunk in chunks:
+                    for row in chunk:
+                        loss = loss_of(row) / len(batch)
+                        loss.backward()
+                        losses.append(float(loss))
                 if args.world > 1:
-                    for parameter in trainable:
-                        if parameter.grad is not None:
-                            dist.all_reduce(parameter.grad, op=dist.ReduceOp.SUM)
-                            parameter.grad /= args.world
+                    reduce_started = time.perf_counter()
+                    reduce_gradients(trainable, args.world,
+                                     args.grad_bucket_mb << 20)
+                    reduce_seconds += time.perf_counter() - reduce_started
                 torch.nn.utils.clip_grad_norm_(trainable, 1.0)
                 optimizer.step()
                 mean = check_shared_non_negative(
@@ -573,7 +690,9 @@ def main() -> int:
             frozen_mean = check_shared_non_negative(
                 frozen_mean, "frozen sample CE", args.rank, 1, device)
             print(f"rank {args.rank}: epoch {epoch} mean loss {epoch_mean:.4f} "
-                  f"frozen {frozen_mean:.4f}", flush=True)
+                  f"frozen {frozen_mean:.4f}"
+                  + (f" collective {reduce_seconds / (steps * epoch):.3f}s/step"
+                     if args.world > 1 else ""), flush=True)
             if epoch_mean > frozen_mean and args.stop_on_loss_rise:
                 print(f"rank {args.rank}: stop rule fired (loss above frozen)",
                       flush=True)
@@ -601,10 +720,21 @@ def main() -> int:
                "eval_plan": str(args.eval_plan) if args.eval_plan else None,
                "eval_plan_sha256": eval_plan_sha,
                "eval_plan_sha256_expected": args.eval_plan_sha256,
+               "full_ft": args.full_ft, "grad_bucket_mb": args.grad_bucket_mb,
+               "max_batch_tokens": args.max_batch_tokens,
+               "warmup_fraction": args.warmup_fraction,
+               "lora": None if args.full_ft else {
+                   "rank": args.lora_rank, "alpha": args.lora_alpha,
+                   "layers": args.lora_layers,
+                   "targets": ["q_proj", "k_proj", "v_proj", "o_proj"]},
                "split_field": split_field, "noul_gold": args.noul_gold,
                "plan_unpermuted_noul": args.plan_unpermuted_noul,
                "masked_rows": masked, "epochs": args.epochs,
                "epoch_mean_loss": (sum(history) / len(history)) if history else None,
+               "collective_seconds_per_step": (
+                   reduce_seconds / (steps * args.epochs) if history else None),
+               "max_memory_gib": (torch.cuda.max_memory_allocated() / 2**30
+                                  if device.startswith("cuda") else None),
                "frozen_sample_ce": frozen_mean}
 
     args.output.mkdir(parents=True, exist_ok=True)
