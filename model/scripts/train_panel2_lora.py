@@ -460,10 +460,21 @@ def prompt_of(row: Row) -> str:
     return render_panel2(row.state, row.instructions, row.texts, row.codes)
 
 
-def code_tensor(model, tokenizer, prompt, codes, code_ids, device):
-    """The K code logits at the final position, differentiable."""
+def encode_prompt(tokenizer, prompt, device):
+    """One prompt's ids, moved to the device; the step's tokenisation cost."""
     encoded = tokenizer(prompt, return_tensors="pt", add_special_tokens=False)
-    encoded = {key: value.to(device) for key, value in encoded.items()}
+    return {key: value.to(device) for key, value in encoded.items()}
+
+
+def code_tensor(model, tokenizer, prompt, codes, code_ids, device,
+                encoded=None):
+    """The K code logits at the final position, differentiable.
+
+    ``encoded`` lets a caller that has already timed the tokenisation pass the
+    ids in, so a phase profile can separate the two.
+    """
+    if encoded is None:
+        encoded = encode_prompt(tokenizer, prompt, device)
     output = model(**encoded)
     last = output.logits[0, -1].float()
     return torch.stack([last[code_ids[code]] for code in codes])
@@ -561,6 +572,16 @@ def abort_if_any_failed(failed, what: str, world: int) -> None:
             "through the collective instead of leaving the others waiting in "
             "the next all-reduce"
         )
+
+
+def synchronise(device: str) -> None:
+    """Wait for queued device work.
+
+    A phase timer without this measures kernel launches, not the work: CUDA
+    returns from a call as soon as it is queued.
+    """
+    if device.startswith("cuda") and torch.cuda.is_available():
+        torch.cuda.synchronize()
 
 
 def main() -> int:
@@ -718,6 +739,16 @@ def main() -> int:
             "--load-weights"
         ),
     )
+    parser.add_argument(
+        "--phase-profile",
+        type=int,
+        default=0,
+        help=(
+            "time tokenise, forward, backward, all-reduce, clip and optimizer "
+            "for the first N steps and write phase_profile.json; the phases "
+            "are synchronised, so the numbers include device work"
+        ),
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--epochs", type=int, default=1)
@@ -817,9 +848,22 @@ def main() -> int:
     model.train()
     optimizer = torch.optim.AdamW(trainable, lr=args.lr, weight_decay=0.01)
 
-    def loss_of(row):
-        values = code_tensor(model, tokenizer, prompt_of(row), row.codes,
-                             code_ids, device)
+    def loss_of(row, profile=None):
+        prompt = prompt_of(row)
+        if profile is None:
+            values = code_tensor(model, tokenizer, prompt, row.codes,
+                                 code_ids, device)
+        else:
+            synchronise(device)
+            started = time.perf_counter()
+            encoded = encode_prompt(tokenizer, prompt, device)
+            synchronise(device)
+            profile["tokenise"] += time.perf_counter() - started
+            started = time.perf_counter()
+            values = code_tensor(model, tokenizer, prompt, row.codes,
+                                 code_ids, device, encoded=encoded)
+            synchronise(device)
+            profile["forward"] += time.perf_counter() - started
         # Only score rows take the alternative target; choice and noul rows
         # keep the shipped listwise cross-entropy whatever the flag says.
         mode = args.score_target if row.q_type == "score" else "onehot"
@@ -897,6 +941,7 @@ def main() -> int:
         abort_if_any_failed(failed, f"checkpoint step {step}", args.world)
 
     history = []
+    phase_records = []
     reduce_seconds = 0.0
     skipped_over_cap = 0
     token_counts: dict = {}
@@ -946,21 +991,48 @@ def main() -> int:
                     for group in optimizer.param_groups:
                         group["lr"] = args.lr * step / warmup_steps
                 optimizer.zero_grad(set_to_none=True)
+                profile = None
+                if args.phase_profile and step <= args.phase_profile:
+                    profile = {key: 0.0 for key in
+                               ("tokenise", "forward", "backward", "allreduce",
+                                "clip", "optimizer")}
                 losses = []
                 chunks = split_by_token_budget(batch, token_counts,
                                                args.max_batch_tokens)
                 for chunk in chunks:
                     for row in chunk:
-                        loss = loss_of(row) / len(batch)
-                        loss.backward()
+                        loss = loss_of(row, profile) / len(batch)
+                        if profile is None:
+                            loss.backward()
+                        else:
+                            synchronise(device)
+                            started_phase = time.perf_counter()
+                            loss.backward()
+                            synchronise(device)
+                            profile["backward"] += (time.perf_counter()
+                                                    - started_phase)
                         losses.append(float(loss))
                 if args.world > 1:
                     reduce_started = time.perf_counter()
                     reduce_gradients(trainable, args.world,
                                      args.grad_bucket_mb << 20)
-                    reduce_seconds += time.perf_counter() - reduce_started
+                    reduce_elapsed = time.perf_counter() - reduce_started
+                    reduce_seconds += reduce_elapsed
+                    if profile is not None:
+                        profile["allreduce"] += reduce_elapsed
+                if profile is not None:
+                    synchronise(device)
+                    started_phase = time.perf_counter()
                 torch.nn.utils.clip_grad_norm_(trainable, 1.0)
+                if profile is not None:
+                    synchronise(device)
+                    profile["clip"] += time.perf_counter() - started_phase
+                    started_phase = time.perf_counter()
                 optimizer.step()
+                if profile is not None:
+                    synchronise(device)
+                    profile["optimizer"] += time.perf_counter() - started_phase
+                    phase_records.append(profile)
                 mean = check_shared_non_negative(
                     sum(losses), "mean loss", args.rank, args.world, device,
                     step=step)
@@ -998,6 +1070,24 @@ def main() -> int:
                 stopped = True
                 break
 
+    if args.phase_profile and phase_records:
+        keys = list(phase_records[0])
+        totals = {key: sum(record[key] for record in phase_records)
+                  for key in keys}
+        recorded = len(phase_records)
+        profile_payload = {
+            "rank": args.rank, "steps": recorded,
+            "totals_seconds": totals,
+            "mean_seconds": {key: value / recorded
+                             for key, value in totals.items()},
+            "mean_step_seconds": sum(totals.values()) / recorded,
+            "skipped_rows": skipped_over_cap,
+        }
+        (args.output / "phase_profile.json").write_text(
+            json.dumps(profile_payload))
+        print(f"rank {args.rank}: phase profile "
+              f"{json.dumps(profile_payload['mean_seconds'])}", flush=True)
+
     # Validation on the same stride the periodic checkpoints scored.
     counts, per_item, ece_bins = evaluate(model, tokenizer, val_shard,
                                           code_ids, device)
@@ -1019,6 +1109,7 @@ def main() -> int:
                "eval_plan_sha256_expected": args.eval_plan_sha256,
                "full_ft": args.full_ft, "grad_bucket_mb": args.grad_bucket_mb,
                "eval_every": args.eval_every,
+               "phase_profile_steps": args.phase_profile,
                "ece_bins_rows": ece_bins_rows,
                "benchmark_val_rows": benchmark_val_rows,
                "optimizer_state": "fresh",

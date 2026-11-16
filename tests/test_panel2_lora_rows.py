@@ -986,6 +986,32 @@ def test_a_rank_zero_checkpoint_exception_raises_instead_of_stalling(
         module.main()
 
 
+def test_phase_profile_times_every_phase_of_the_first_steps(tmp_path, monkeypatch):
+    """--phase-profile N writes one record per timed step, with all six phases."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:w{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--phase-profile", "1",
+    ])
+    assert module.main() == 0
+    profile = json.loads((tmp_path / "out" / "phase_profile.json").read_text())
+    assert profile["steps"] == 1
+    assert set(profile["mean_seconds"]) == {
+        "tokenise", "forward", "backward", "allreduce", "clip", "optimizer"}
+    assert profile["mean_step_seconds"] > 0
+    assert all(value >= 0 for value in profile["mean_seconds"].values())
+
+
 def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
     import torch.distributed as dist
 
