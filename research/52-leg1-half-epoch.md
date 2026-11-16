@@ -50,7 +50,7 @@ The mid-run dip is therefore transient, not a persistent failure: the arm recove
 
 ## 7. Checkpoint cost
 
-A checkpoint evaluation costs 3.2 to 3.8 min: 192 s at step 250, 223 s at 375 and 230 s at 500. The first checkpoint, at step 125, took about 700 s and is an outlier whose cause is not established; a cold page cache for the first 8.8 GB weights write and the first evaluation's allocator warm-up are the candidates, and that is an inference. Every checkpoint did the full work: eight rank files covering the 41,232 scored validation rows, JevBench on rank 0, and an 8.8 GB weights file. The 13.6-min figure that circulated earlier was not a cost; it was the wall interval between checkpoint files, 931 s between steps 125 and 250 and 803 s between 250 and 375, which contains the training steps in between.
+A checkpoint evaluation costs 3.2 to 3.8 min: 192 s at step 250, 223 s at 375 and 230 s at 500. The first checkpoint, at step 125, took about 700 s and is an outlier whose cause is not established; a cold page cache for the first 8.8 GB weights write and the first evaluation's allocator warm-up are the candidates, and that is an inference. Every checkpoint did the full work: eight rank files covering the 41,232 scored validation rows, JevBench on rank 0, and an 8.8 GB weights file. The 13.6-minute figure was an inter-file gap; the three checkpoint-to-checkpoint gaps are 11.1, 13.4 and 15.5 min, 666 s, 803 s and 931 s, and the measured checkpoint cost is 192 to 230 s. The fourth gap, from step 500 to the final payload, is 5.7 min but covers only 43 steps plus the final validation pass, JevBench, the 8.8 GB write and the payload, so it is not a checkpoint-to-checkpoint interval and is excluded from the span.
 
 ## Provenance
 
