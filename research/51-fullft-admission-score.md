@@ -4,7 +4,7 @@ Status: measured, one seed, one short schedule. Full-parameter training at 1e-5 
 
 **PRs:** none confirmed for this note; the engineering items in section 9 were not merged when the note was written.
 
-Every arm here uses Qwen3-Reranker-4B, at most 4,096 tokens per row, the panel-2 readout with listwise cross-entropy over the K code logits, the v3 a20k plan, 303 steps and seed 42 unless a cell says otherwise. JevBench is the local 231-item public proxy, reported as natural order, reversed order and their average; the frozen average is 159.0. Benchmark validation is 9,923 rows, and the frozen reference there is 0.5697. Paired tests are exact two-sided McNemar, and the paired n is given with each p.
+Every arm here uses Qwen3-Reranker-4B, at most 4,096 tokens per row, the panel-2 readout with listwise cross-entropy over the K code logits, the v3 a20k plan, 303 steps and seed 42 unless a cell says otherwise. JevBench is the local 231-item public proxy, reported as natural order, reversed order and their average; the frozen average is 159.0. Benchmark validation is 9,923 rows, and the frozen reference there is 0.5697. The previous note quotes 0.5696 for the same config; the two are separate frozen runs and the difference is inside the noise band of section 3, so each note keeps its own figure rather than a reconciled one. Paired tests are exact two-sided McNemar, and the paired n is given with each p.
 
 ## 1. Full-parameter arms
 
@@ -16,7 +16,7 @@ LoRA is off and every parameter is trainable, with activation checkpointing on.
 | 2e-5 | 0.6845 | 163 | 159 | 161.0 | 0.9048 | 1 | 0.3596 | 0.1286 / 0.1253 / 0.3691 |
 | 5e-5 | 0.5536 | 131 | 128 | 129.5 | 0.7835 | 0 | 0.1348 | +0.127 / +0.148 over frozen |
 
-The ECE column is absolute for the first two arms and a change over frozen for 5e-5, where the run report gives two deltas and not the third cell. The frozen ECE on the same rows is noul 0.1406, choice 0.2787 and score 0.2269.
+The ECE column is absolute for the first two arms and a change over frozen for 5e-5, where the deltas are noul +0.127 and score +0.148; the choice cell was not quoted. The frozen ECE on the same rows is noul 0.1406, choice 0.2787 and score 0.2269.
 
 The sweet spot is narrow. 1e-5 and 2e-5 both beat frozen on benchmark val by more than 11 pp and on JevBench by 2 to 4 items averaged; 5e-5 is a collapse on every measure. Between the two good arms the choice is not made by val, which is 0.0012 apart, but by the per-cell ECE, where 1e-5 is better on two cells and 2e-5 is worse on score than frozen.
 
@@ -36,7 +36,7 @@ There is no seed axis in this loop: it has no shuffle, dropout or random draw, s
 
 ## 4. The score ceiling
 
-On the 1,111 benchmark score rows, every arm lands between 0.45 and 0.50 exact. Frozen panel-2 is 0.4662, the best LoRA arm is 0.4977 (benchmark-only at 1e-4) and full fine-tuning at 1e-5 is 0.4770. The judgement readout is behind everywhere on the same rows: frozen 0.4455, best arm 0.4518, and two arms are significantly worse with exact McNemar p = 0.007 and 0.001.
+On the 1,111 benchmark score rows, every arm lands between 0.45 and 0.50 exact. Frozen panel-2 is 0.4662, the best LoRA arm is 0.4977 (benchmark-only at 1e-4) and full fine-tuning at 1e-5 is 0.4770. The judgement readout is behind everywhere on the same rows: frozen 0.4455, best arm 0.4518, and two arms are significantly worse with exact McNemar on the 1,111 rows: p = 0.007 for v3 at 1e-4, which lost 121 and gained 82, and p = 0.001 for the old plan at 1e-4, which lost 133 and gained 83. Both come from the judgement per-K validation pass.
 
 Full fine-tuning moves exact by +1.1 pp and within-one by +1.9 pp, and it does not reshape the errors. Adjacent misses are 23.6 pp and 28.7% of predictions are two or more levels away, against 22.8 pp and 30.6% for frozen. K = 6 is the worst cell in every arm. The ceiling is therefore a property of the score formulation or the labels, not of the readout: full fine-tuning, which moves every other measure, moves this one by about a point.
 
@@ -62,7 +62,7 @@ Full-parameter training needs activation checkpointing because a single oversize
 
 ## 9. Engineering record
 
-Four pieces landed in the working tree in this stretch: checkpoint evaluation, weight saving with a streamed sha256, resume with a global warmup step, and plan immutability with versioned paths. No PR numbers are recorded here because none could be confirmed against the repository at the time of writing; the note names the behaviour and not a merge.
+Four pieces landed in the working tree in this stretch: checkpoint evaluation, weight saving with a streamed sha256, resume with a global warmup step, and plan immutability with versioned paths. The code backing them, including the score-target flag of section 6, is on the trainer branch and not yet on main. No PR numbers are recorded here because none could be confirmed against the repository at the time of writing; the note names the behaviour and not a merge.
 
 ## Provenance
 
