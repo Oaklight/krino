@@ -16,12 +16,15 @@ torch = pytest.importorskip("torch")
 from model.scripts.train_panel2_lora import (  # noqa: E402
     agree_plan,
     batch_indices,
+    cap_rows,
     check_shared_non_negative,
     build_rows,
     load_plan_rows,
     parse_prompt_text,
     read_plan,
+    reduce_gradients,
     shard_and_steps,
+    split_by_token_budget,
     step_plan,
 )
 
@@ -294,7 +297,24 @@ def _fake_training_modules(module, monkeypatch):
     monkeypatch.setattr(
         module, "code_token_ids",
         lambda tokenizer, codes, form: ({code: index for index, code in enumerate(codes)}, []))
-    monkeypatch.setattr(module, "evaluate", lambda *a, **k: ({}, []))
+    def fake_evaluate(model, tokenizer, rows, code_ids, device, limit=None):
+        # The same shape as the real evaluate, without a forward: the bins and
+        # their composition over the non-synthetic rows, so the payload wiring
+        # is exercised. The filter itself is tested directly, on the real
+        # evaluate, above.
+        bins, bin_sources = {}, {"by_source": {}, "by_type": {}}
+        for row in (rows[:limit] if limit else rows):
+            if row.source == "synthetic":
+                continue
+            bins.setdefault(f"{row.q_type}|2", {}).setdefault(
+                "5", [0, 0])[0] += 1
+            by_source = bin_sources["by_source"]
+            by_source[row.source] = by_source.get(row.source, 0) + 1
+            by_type = bin_sources["by_type"]
+            by_type[row.q_type] = by_type.get(row.q_type, 0) + 1
+        return {"all": [0, 0]}, [], bins, bin_sources
+
+    monkeypatch.setattr(module, "evaluate", fake_evaluate)
     monkeypatch.setattr(module, "evaluate_jevbench",
                         lambda *a, **k: {"items": [], "by_tier_natural": {}})
     monkeypatch.setattr(module.torch, "save", lambda *a, **k: None)
@@ -306,6 +326,31 @@ def _fake_training_modules(module, monkeypatch):
         module.dist, "all_gather_object",
         lambda output, value: output.__setitem__(slice(None), [value] * len(output)))
     return fake
+
+
+def test_full_ft_main_adapts_nothing_and_still_steps(tmp_path, monkeypatch):
+    """--full-ft must skip the adapter and train the model it loaded."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:f{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    fake = _fake_training_modules(module, monkeypatch)
+    adapted = []
+    monkeypatch.setattr(module, "inject_lora",
+                        lambda *a, **k: adapted.append(1) or 0)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2", "--full-ft",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+    ])
+    assert module.main() == 0
+    assert adapted == [], "full fine-tuning must not inject a LoRA adapter"
+    # 2 frozen-sample rows + 3 steps of 2 rows on a 6-row plan.
+    assert fake.forwards == 8
 
 
 def test_main_takes_the_shared_step_count_from_its_own_loop(tmp_path, monkeypatch):
@@ -333,6 +378,187 @@ def test_main_takes_the_shared_step_count_from_its_own_loop(tmp_path, monkeypatc
     assert module.main() == 0
     assert fake.forwards == 6, (
         "two frozen-sample rows plus two steps of two rows")
+
+
+def test_gradients_are_reduced_in_buckets_and_averaged(monkeypatch):
+    """Two replicas, two parameters, one bucket: the mean, not the sum."""
+    import torch
+    import torch.distributed as dist
+
+    calls = []
+
+    def all_reduce(tensor, op=None):
+        calls.append(tensor.numel())
+        tensor.mul_(2)  # the other replica holds identical gradients
+
+    monkeypatch.setattr(dist, "all_reduce", all_reduce)
+    first = torch.nn.Parameter(torch.zeros(4))
+    first.grad = torch.full((4,), 3.0)
+    second = torch.nn.Parameter(torch.zeros(2))
+    second.grad = torch.full((2,), -1.5)
+
+    count = reduce_gradients([first, second], 2, bucket_bytes=1 << 20)
+
+    assert count == 1, "both parameters fit one bucket"
+    assert calls == [6], "one collective over the flat buffer"
+    assert torch.equal(first.grad, torch.full((4,), 3.0))
+    assert torch.equal(second.grad, torch.full((2,), -1.5))
+
+
+def test_a_small_bucket_makes_one_collective_per_group_of_parameters(monkeypatch):
+    import torch
+    import torch.distributed as dist
+
+    calls = []
+
+    def all_reduce(tensor, op=None):
+        calls.append(tensor.numel())
+
+    monkeypatch.setattr(dist, "all_reduce", all_reduce)
+    params = []
+    for _ in range(3):
+        param = torch.nn.Parameter(torch.zeros(8))
+        param.grad = torch.ones(8)
+        params.append(param)
+
+    count = reduce_gradients(params, 2, bucket_bytes=1)
+    assert count == len(calls) == 3
+    assert calls == [8, 8, 8]
+
+
+def test_a_rank_with_one_replica_reduces_nothing(monkeypatch):
+    import torch
+    import torch.distributed as dist
+
+    calls = []
+    monkeypatch.setattr(dist, "all_reduce", lambda *a, **k: calls.append(1))
+    param = torch.nn.Parameter(torch.zeros(2))
+    param.grad = torch.ones(2)
+    assert reduce_gradients([param], 1) == 0
+    assert calls == []
+
+
+def test_the_token_budget_splits_a_step_without_dropping_rows():
+    rows = [object() for _ in range(4)]
+    counts = {id(rows[0]): 300, id(rows[1]): 300, id(rows[2]): 100, id(rows[3]): 400}
+    chunks = split_by_token_budget(rows, counts, 500)
+    assert [len(chunk) for chunk in chunks] == [1, 2, 1]
+    assert sum(len(chunk) for chunk in chunks) == 4
+    assert split_by_token_budget(rows, counts, 0) == [rows]
+
+
+def test_the_row_cap_skips_and_counts_the_long_rows():
+    rows = [object() for _ in range(4)]
+    counts = {id(rows[0]): 100, id(rows[1]): 5000, id(rows[2]): 4096, id(rows[3]): 8000}
+    kept, skipped, longest = cap_rows(rows, counts, 4096)
+    assert kept == [rows[0], rows[2]], "the cap is inclusive"
+    assert skipped == 2
+    assert longest == 8000, "the report names the longest row it dropped"
+
+
+def test_evaluate_reports_calibration_bins_that_add_up(tmp_path):
+    """Every scored row lands in exactly one (type, K, decile) bin."""
+    import torch
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:e{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(2) for option in (0, 1)
+    ]
+    rows, _, _ = build_rows(_bytes(tmp_path, records), plan_unpermuted_noul=True)
+
+    class FakeTokenizer:
+        def __call__(self, text, return_tensors=None, add_special_tokens=False):
+            return {"input_ids": torch.zeros(1, 2, dtype=torch.long)}
+
+    class FakeModel(torch.nn.Module):
+        def forward(self, input_ids=None, **kwargs):
+            return types.SimpleNamespace(logits=torch.zeros(1, 1, 200))
+
+        def train(self, mode=True):
+            return self
+
+        def eval(self):
+            return self
+
+    from model.scripts.train_panel2_lora import CODES
+
+    code_ids = {code: index for index, code in enumerate(CODES)}
+    counts, per_item, bins, bin_sources = module.evaluate(
+        FakeModel(), FakeTokenizer(), rows, code_ids, "cpu")
+    total = sum(slot[0] for cell in bins.values() for slot in cell.values())
+    correct = sum(slot[1] for cell in bins.values() for slot in cell.values())
+    assert total == len(rows) == 2
+    assert correct == counts["all"][0]
+    assert sum(bin_sources["by_source"].values()) == total
+
+
+def test_only_benchmark_rows_enter_the_calibration_bins(tmp_path):
+    """Benchmark rows from three families count; synthetic rows do not.
+
+    The LoRA arms' ECE is scored later over the 9,923 benchmark val rows only;
+    the eval plan's val split is 31,948 synthetic rows on top of that. A test
+    with one benchmark family and one synthetic family would still pass if the
+    filter dropped every family but the first, so the plan here carries two
+    benchmark families and one synthetic one.
+    This is the mutation check for the filter: with it removed the bin total
+    becomes 6 and the test goes red.
+    """
+    import torch
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    for index in range(2):
+        for option in (0, 1):
+            records.append(_record(f"corpus:bench{index}", option,
+                                   1 if option == 0 else 0, "choice",
+                                   CHOICE_PREFIX, f"Option {option}.", 2))
+    for index in range(2):
+        for option in (0, 1):
+            records.append(_record(f"corpus:typed_decisions-t{index}", option,
+                                   1 if option == 0 else 0, "choice",
+                                   CHOICE_PREFIX, f"Option {option}.", 2))
+    for index in range(2):
+        for option in (0, 1):
+            records.append(_record(f"corpus:synthetic-s{index}", option,
+                                   1 if option == 0 else 0, "choice",
+                                   CHOICE_PREFIX, f"Option {option}.", 2))
+    rows, _, _ = build_rows(_bytes(tmp_path, records), plan_unpermuted_noul=True)
+    sources = sorted({row.source for row in rows})
+    assert "synthetic" in sources and "typed_decisions" in sources
+    assert len(sources) == 4
+
+    class FakeTokenizer:
+        def __call__(self, text, return_tensors=None, add_special_tokens=False):
+            return {"input_ids": torch.zeros(1, 2, dtype=torch.long)}
+
+    class FakeModel(torch.nn.Module):
+        def forward(self, input_ids=None, **kwargs):
+            return types.SimpleNamespace(logits=torch.zeros(1, 1, 200))
+
+        def train(self, mode=True):
+            return self
+
+        def eval(self):
+            return self
+
+    from model.scripts.train_panel2_lora import CODES
+
+    code_ids = {code: index for index, code in enumerate(CODES)}
+    counts, per_item, bins, bin_sources = module.evaluate(
+        FakeModel(), FakeTokenizer(), rows, code_ids, "cpu")
+    total = sum(slot[0] for cell in bins.values() for slot in cell.values())
+    assert len(rows) == 6
+    assert counts["all"][1] == 6, "accuracy still counts every row"
+    assert total == 4, "both benchmark families may enter the bins, synthetic may not"
+    # The composition is the evidence for that total: it names the families
+    # that entered. bench0 and bench1 are two families under the row-id rule,
+    # so each contributes its one row.
+    assert bin_sources["by_source"] == {"bench0": 1, "bench1": 1,
+                                        "typed_decisions": 2}
+    assert bin_sources["by_type"] == {"choice": 4}
+    assert "synthetic" not in bin_sources["by_source"]
 
 
 def test_every_rank_gets_the_same_steps_from_its_own_shard():
@@ -523,6 +749,360 @@ def test_a_pin_mismatch_is_judged_after_the_gather(tmp_path, monkeypatch):
     assert len(calls) == 1, "the gather must run before the pin is judged"
 
 
+def test_eval_every_writes_a_checkpoint_before_the_last_step(tmp_path, monkeypatch):
+    """A long run must produce a curve, not one number at the end.
+
+    Six rows at two per step is three steps; --eval-every 1 records steps 1
+    and 2 and leaves step 3 to the regular final payload, which scores the
+    same rows. Removing the call leaves no checkpoint file and this fails.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:c{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--eval-every", "1",
+    ])
+    assert module.main() == 0
+    out = tmp_path / "out"
+    assert (out / "checkpoint_1_shard_0.json").exists()
+    assert (out / "checkpoint_2_shard_0.json").exists()
+    assert not (out / "checkpoint_3_shard_0.json").exists(), (
+        "the last step is scored by the final payload, not a checkpoint")
+    record = json.loads((out / "checkpoint_1_shard_0.json").read_text())
+    assert record["step"] == 1
+    assert record["ece_bins_population"] == "non_synthetic"
+    assert "jevbench" in record
+    # The final payload carries two counts that can disagree: the rows binned
+    # and the non-synthetic rows handed to evaluate. Six rows, none synthetic,
+    # so a filter that admitted synthetic rows or dropped a family separates
+    # them.
+    final = json.loads((out / "shard_0.json").read_text())
+    assert final["ece_bins_population_rule"] == 'source != "synthetic"'
+    assert final["ece_bins_rows"] == final["val_rows_non_synthetic"] == 6
+    assert sum(final["ece_bins_sources"]["by_source"].values()) == 6
+    assert final["ece_bins_sources"]["by_type"] == {"choice": 6}
+
+
+def test_the_one_hot_target_is_the_shipped_cross_entropy():
+    import torch
+    import torch.nn.functional as F
+
+    from model.scripts.train_panel2_lora import target_loss
+
+    values = torch.tensor([0.0, 2.0, -1.0])
+    assert torch.isclose(target_loss(values, 1, "onehot"),
+                         F.cross_entropy(values.unsqueeze(0),
+                                         torch.tensor([1])))
+
+
+def test_the_soft_target_charges_less_for_an_adjacent_miss():
+    """The soft target must reward a near miss and still prefer the gold.
+
+    With logits [0, 4, 0] and gold 0, one-hot charges the whole margin to the
+    wrong level. Soft charges 0.37 of it to that level, so its loss is lower;
+    and between two rows, the one whose mass sits on the gold must still be
+    the cheaper. If the decay is removed the two losses coincide.
+    """
+    import torch
+
+    from model.scripts.train_panel2_lora import target_loss
+
+    near_miss = torch.tensor([0.0, 4.0, 0.0])
+    on_gold = torch.tensor([4.0, 0.0, 0.0])
+    onehot_near = float(target_loss(near_miss, 0, "onehot"))
+    soft_near = float(target_loss(near_miss, 0, "soft"))
+    assert soft_near < onehot_near, "a near miss must be cheaper under soft"
+    assert float(target_loss(on_gold, 0, "soft")) < soft_near, (
+        "the gold level must still be cheaper than its neighbour")
+
+
+def test_the_expected_target_charges_a_far_miss_more_than_a_near_one():
+    """Linear in level distance: the property the soft target lacks."""
+    import torch
+
+    from model.scripts.train_panel2_lora import target_loss
+
+    # Gold 0 on K=4: mass on level 1 costs ~1, mass on level 3 costs ~3.
+    near = torch.tensor([0.0, 6.0, 0.0, 0.0])
+    far = torch.tensor([0.0, 0.0, 0.0, 6.0])
+    near_loss = float(target_loss(near, 0, "expected"))
+    far_loss = float(target_loss(far, 0, "expected"))
+    assert 0.9 < near_loss < 1.1
+    assert 2.9 < far_loss < 3.1
+    assert far_loss > 2 * near_loss
+
+
+def test_choice_rows_keep_the_one_hot_target_when_a_score_target_is_set(
+    tmp_path, monkeypatch
+):
+    """--score-target must reach score rows and only score rows.
+
+    Two choice rows and two score rows, one step each; the patched target
+    function records the mode each row was charged under.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    for index in range(2):
+        for option in (0, 1):
+            records.append(_record(f"corpus:ch{index}", option,
+                                   1 if option == 0 else 0, "choice",
+                                   CHOICE_PREFIX, f"Option {option}.", 2))
+    for index in range(2):
+        for option in range(3):
+            records.append(_record(f"corpus:sc{index}", option,
+                                   1 if option == 1 else 0, "score",
+                                   CHOICE_PREFIX, f"Level {option}.", 3))
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    seen = []
+    real = module.target_loss
+
+    def recording(values, gold, mode, tau=1.0):
+        seen.append(mode)
+        return real(values, gold, mode, tau)
+
+    monkeypatch.setattr(module, "target_loss", recording)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--score-target", "soft", "--no-stop-on-loss-rise",
+    ])
+    assert module.main() == 0
+    assert "soft" in seen, "the score rows must take the flagged target"
+    assert "onehot" in seen, "the choice rows must keep the shipped target"
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    assert payload["score_target"] == "soft"
+    assert payload["score_target_tau"] == 1.0
+
+
+def test_a_resume_without_weights_is_refused(tmp_path, monkeypatch):
+    """--start-step alone would restart the schedule while claiming step 543."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    plan = _weight_plan(tmp_path)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--epochs", "1", "--batch-rows", "2", "--plan-unpermuted-noul",
+        "--start-step", "3",
+    ])
+    with pytest.raises(SystemExit, match="needs --load-weights"):
+        module.main()
+
+
+def test_a_resume_with_more_than_one_epoch_is_refused(tmp_path, monkeypatch):
+    """--start-step names steps of one pass; two passes have no reading.
+
+    The check runs at argument time, before any weights or plan are read, so
+    the path need not exist. Without the refusal the run would either skip
+    only epoch 1's steps or repeat the skip, and the payload could not say
+    which.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(tmp_path / "plan.jsonl"),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--epochs", "2", "--start-step", "1",
+        "--load-weights", str(tmp_path / "weights.pt"),
+    ])
+    with pytest.raises(SystemExit, match="ambiguous"):
+        module.main()
+
+
+def test_a_resumed_leg_runs_only_the_remaining_steps(tmp_path, monkeypatch):
+    """The second leg must continue the schedule, not restart it.
+
+    Six rows at two per step is three steps. A leg that saved at step 1 and
+    resumes with --start-step 1 and --max-steps 3 runs steps 2 and 3 only:
+    three forwards for the frozen sample head plus two steps of two rows is
+    six forwards, and a restart would make it eight.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:w{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(module.torch, "save", torch.serialization.save)
+
+    def run(argv, out):
+        monkeypatch.setattr(sys, "argv", [
+            "train_panel2_lora.py", "--plan", str(plan), "--output", str(out),
+            "--world", "1", "--device", "cpu", "--lr", "0", "--epochs", "1",
+            "--batch-rows", "2", "--plan-unpermuted-noul",
+            "--frozen-loss-sample", "2", *argv,
+        ])
+        return module.main()
+
+    assert run(["--max-steps", "1", "--save-weights"], tmp_path / "leg1") == 0
+    weights = tmp_path / "leg1" / "weights.pt"
+    assert weights.exists()
+
+    fake = _fake_training_modules(module, monkeypatch)
+    assert run(["--max-steps", "3", "--start-step", "1",
+                "--load-weights", str(weights)], tmp_path / "leg2") == 0
+    assert fake.forwards == 6, "two frozen-sample rows plus steps 2 and 3"
+    payload = json.loads((tmp_path / "leg2" / "shard_0.json").read_text())
+    assert payload["start_step"] == 1
+    assert payload["step_range"] == [2, 3]
+    assert payload["weights_loaded_sha256"] == module.file_sha256(weights)
+
+
+def test_a_resume_past_the_last_step_is_refused(tmp_path, monkeypatch):
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    plan = _weight_plan(tmp_path)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(module.torch, "save", torch.serialization.save)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "leg1"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--max-steps", "1", "--save-weights",
+    ])
+    assert module.main() == 0
+    weights = tmp_path / "leg1" / "weights.pt"
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "leg2"), "--world", "1", "--device", "cpu",
+        "--epochs", "1", "--batch-rows", "2", "--plan-unpermuted-noul",
+        "--max-steps", "3", "--start-step", "3", "--load-weights", str(weights),
+    ])
+    with pytest.raises(SystemExit, match="already cover this leg"):
+        module.main()
+
+
+def test_a_checkpoint_failure_aborts_every_rank_through_the_collective(monkeypatch):
+    """A rank-0 checkpoint failure must not leave the others in an all-reduce.
+
+    The patched reduce records its call and reports a failure from another
+    rank; this rank's own flag is healthy and it must still exit, after the
+    reduce and not before it.
+    """
+    import torch
+    import torch.distributed as dist
+
+    from model.scripts.train_panel2_lora import abort_if_any_failed
+
+    calls = []
+
+    def all_reduce(tensor, op=None):
+        calls.append(float(tensor.item()))
+        tensor.add_(1.0)
+
+    monkeypatch.setattr(dist, "all_reduce", all_reduce)
+    failed = torch.tensor([0.0])
+    with pytest.raises(SystemExit, match=r"checkpoint step 125: 1 rank"):
+        abort_if_any_failed(failed, "checkpoint step 125", 2)
+    assert calls == [0.0], "the reduce must run before the raise"
+
+
+def test_a_rank_zero_checkpoint_exception_raises_instead_of_stalling(
+    tmp_path, monkeypatch
+):
+    """main() must abort cleanly when rank 0's checkpoint work throws."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:w{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("disk full")
+
+    monkeypatch.setattr(module, "evaluate_jevbench", boom)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--eval-every", "1",
+    ])
+    with pytest.raises(SystemExit, match=r"checkpoint step 1: 1 rank\(s\) failed"):
+        module.main()
+
+
+def test_a_rank_zero_final_exception_aborts_through_the_collective(
+    tmp_path, monkeypatch
+):
+    """The final JevBench read and weight write sit inside the same bracket.
+
+    With no --eval-every, the only JevBench call is the final one, which is
+    exactly the work that used to run before the barrier with nothing around
+    it. The failure must come out as a group abort, so a peer never waits.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:w{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    def boom(*args, **kwargs):
+        raise OSError("no space left on device")
+
+    monkeypatch.setattr(module, "evaluate_jevbench", boom)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+    ])
+    with pytest.raises(SystemExit,
+                       match=r"final evaluation or weight write: 1 rank\(s\) failed"):
+        module.main()
+    assert not (tmp_path / "out" / "shard_0.json").exists(), (
+        "a failed final write must not be recorded as a completed payload")
+
+
+def test_phase_profile_times_every_phase_of_the_first_steps(tmp_path, monkeypatch):
+    """--phase-profile N writes one record per timed step, with all six phases."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:w{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--phase-profile", "1",
+    ])
+    assert module.main() == 0
+    profile = json.loads((tmp_path / "out" / "phase_profile.json").read_text())
+    assert profile["steps_this_rank"] == 1
+    assert profile["first_step"] == 1
+    assert profile["includes_startup"] is True
+    assert set(profile["mean_seconds_this_rank"]) == {
+        "tokenise", "forward", "backward", "allreduce", "clip", "optimizer"}
+    assert profile["mean_profiled_seconds"] > 0
+    assert profile["mean_profiled_seconds"] >= profile["mean_measured_phases_seconds"]
+    assert all(value >= 0 for value in profile["mean_seconds_this_rank"].values())
+
+
 def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
     import torch.distributed as dist
 
@@ -532,3 +1112,83 @@ def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
     monkeypatch.setattr(dist, "all_gather_object", agree)
     data, digest, error = agree_plan(b"x", "c" * 64, None, 8, 3)
     assert (data, digest, error) == (b"x", "c" * 64, None)
+
+
+def _weight_plan(tmp_path):
+    records = [
+        _record(f"corpus:w{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(2) for option in (0, 1)
+    ]
+    return _write(tmp_path, records)
+
+
+def test_save_weights_records_the_digest_of_the_saved_file(tmp_path, monkeypatch):
+    """A full fine-tune's arm is its weights; the payload must name them.
+
+    Without the file the cells cannot be re-scored on a later metric, and
+    without the digest the file cannot be tied to the cells it produced.
+    """
+    import hashlib
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    plan = _weight_plan(tmp_path)
+    _fake_training_modules(module, monkeypatch)
+    # ``module.torch`` is the torch module, whose ``save`` the fake seaming
+    # already replaced with a no-op; the real writer is still reachable here.
+    monkeypatch.setattr(module.torch, "save", torch.serialization.save)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2", "--full-ft",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2", "--save-weights",
+    ])
+    assert module.main() == 0
+    out = tmp_path / "out"
+    payload = json.loads((out / "shard_0.json").read_text())
+    saved = out / "weights.pt"
+    assert saved.exists()
+    assert payload["weights_sha256"] == hashlib.sha256(
+        saved.read_bytes()).hexdigest()
+    assert payload["weights_bytes"] == saved.stat().st_size
+
+
+def test_load_weights_puts_the_saved_values_into_the_model(tmp_path, monkeypatch):
+    """--load-weights must overwrite the loaded model, strictly.
+
+    The saved tensor is bumped by one before loading; the value the model
+    holds at evaluation time is the one this test reads.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    plan = _weight_plan(tmp_path)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(module.torch, "save", torch.serialization.save)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2", "--full-ft",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2", "--save-weights",
+    ])
+    assert module.main() == 0
+
+    saved = tmp_path / "out" / "weights.pt"
+    state = torch.load(saved)
+    state["weight"] = state["weight"] + 1.0
+    torch.serialization.save(state, saved)
+
+    seen = {}
+    monkeypatch.setattr(
+        module, "evaluate",
+        lambda model, *args, **kwargs: (
+            seen.update(weight=float(model.state_dict()["weight"])),
+            ({}, [], {}, {}))[1])
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out2"), "--world", "1", "--device", "cpu",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--load-weights", str(saved), "--eval-only",
+    ])
+    assert module.main() == 0
+    assert seen["weight"] == 1.0
+    payload = json.loads((tmp_path / "out2" / "shard_0.json").read_text())
+    assert payload["weights_loaded_sha256"] == module.file_sha256(saved)
