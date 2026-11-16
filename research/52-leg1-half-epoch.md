@@ -1,6 +1,6 @@
 # The first half of a full-parameter epoch on the panel-2 readout — 2026-11-16
 
-Status: measured, one leg of a planned two-leg run. Leg 2 was skipped, so this is the first 543 of 1,086 steps and 31.18% of the epoch's tokens. At the exit checkpoint the arm passes all five admission floors while still missing the internal calibration target, and the order-consistency dip seen at the first checkpoint recovers by the middle of the leg.
+Status: measured, one leg of a planned two-leg run. Leg 2 was skipped, so this is the first 543 of 1,086 steps and 31.18% of the epoch's tokens. At the exit checkpoint the arm passes all five admission floors while still missing the internal calibration target, and the order-consistency trough at step 250 recovers by step 375.
 
 Every row here uses Qwen3-Reranker-4B with every parameter trainable (LoRA off), the panel-2 readout with listwise cross-entropy, the v3 a20k plan, seed 42, activation checkpointing on, and at most 4,096 tokens per row. JevBench is the local 231-item public proxy, reported as natural, reversed and their average; the frozen average is 159.0. "Benchmark val" means every non-synthetic validation row, 9,923 after the 639-row `answerable:false` drop, including typed and apigen rows. Agreement is order self-consistency: the count of items whose natural-order and reversed-order choices name the same option, over 231, ties included, not agreement with any teacher. The frozen reference is val 0.5696, averaged JevBench 159.0, agreement 178/231 = 0.7706, K = 80 at 116/445 = 0.2607, and ECE 0.1406 / 0.2787 / 0.2269.
 
@@ -22,7 +22,7 @@ Natural and reversed are printed separately because the averaged JevBench is fla
 
 The discordant counts tell the sharper story. They are 65 and 78 at steps 125 and 250, then 27, 27 and 29 from step 375 on. The mid-run period therefore had far more items whose correctness changed with order, which is the same phenomenon as the 142/231 agreement at step 250, but the changes were balanced between the two directions, so a natural-order advantage never appeared. That is why the agreement dip and the flat average can coexist.
 
-Both orders are printed because the average alone would hide this discordance, and the gap is not monotone across the leg, 9, 12, 1, 3 and 5 items, so nothing here supports an order-asymmetry trend. The 6-item agreement allowance for future arms is a no-worse-than-frozen bar rather than a drift detector: at 231 items the test cannot resolve drift of this size. The average is the admission metric, so no admission verdict moves.
+Both orders are printed because the average alone would hide this discordance, and the gap is not monotone across the leg, 9, 12, 1, 3 and 5 items, so nothing here supports an order-asymmetry trend. The order-gap allowance for future arms is 6 items because the frozen row's own natural-minus-reversed gap is 6, 162 against 156. The agreement floor is a different bar: 0.7206 is the frozen 0.7706 minus 0.05, about 11.6 items on 231. Neither is a drift detector at this n. The average is the admission metric, so no admission verdict moves.
 
 ## 3. Best checkpoint and exit
 
@@ -32,7 +32,7 @@ The 375-against-543 paired test on the 9,923 validation rows is b = 729 (375 rig
 
 ## 4. Admission at the exit
 
-At step 543 the arm clears all five floors: averaged JevBench 165.5 against 156.0; val 0.6725 against 0.5596; agreement 0.8442 against 0.7206; K = 80 0.3820 against 0.2407; ECE 0.0874 / 0.1197 / 0.0633 against 0.1606 / 0.2987 / 0.2469. The half epoch is therefore a new admissible arm. Step 375 also clears all five: averaged JevBench 165.5, val 0.6781, agreement 0.8485, K = 80 0.3798, and ECE 0.0379 / 0.1077 / 0.0756 against 0.1606 / 0.2987 / 0.2469. Both checkpoints would therefore be admissible, not only the exit. Step 250 does not: it fails on agreement alone, 142/231 = 0.6147 against 0.7206, while passing the other four.
+At step 543 the arm clears all five floors: averaged JevBench 165.5 against 156.0; val 0.6725 against 0.5596; agreement 0.8442 against 0.7206; K = 80 0.3820 against 0.2407; ECE 0.0874 / 0.1197 / 0.0633 against 0.1606 / 0.2987 / 0.2469. The half epoch is therefore a new admissible arm. Step 375 also clears all five: averaged JevBench 165.5, val 0.6781, agreement 0.8485, K = 80 0.3798, and ECE 0.0379 / 0.1077 / 0.0756 against 0.1606 / 0.2987 / 0.2469. Both checkpoints would therefore be admissible, not only the exit. Step 250 does not: it fails on agreement alone, 142/231 = 0.6147 against 0.7206, while passing the other four. Step 125 fails on the same gate, 156/231 = 0.6753, and passes the other four.
 
 Admission is not the internal calibration gate. The working target inside the calibration work is ECE at or below 0.05 per cell, and that target is not met here.
 
@@ -44,9 +44,9 @@ Both statements can hold at once: the arm passes the admission floors, which are
 
 ## 6. The agreement dip is transient
 
-Order self-consistency falls to 156/231 = 0.6753 at step 125, below the 0.7206 floor, then recovers to 196/231 = 0.8485 at step 375 and holds at 195/231 = 0.8442 at the exit. Exact ties move 14, 17, 12, 7 and 12 across the five checkpoints.
+Order self-consistency registers 156/231 = 0.6753 at step 125, falls to its trough at 142/231 = 0.6147 at step 250, then recovers to 196/231 = 0.8485 at step 375 and holds at 195/231 = 0.8442 at the exit. Exact ties move 14, 17, 12, 7 and 12 across the five checkpoints.
 
-The mid-run dip is therefore transient, not a persistent failure: the arm recovers 40 items of self-consistency within the leg and finishes 17 above the frozen baseline of 178/231. The first checkpoint alone would have supported the opposite reading.
+The mid-run dip is therefore transient, not a persistent failure: the arm recovers 54 items from the trough within the leg and finishes 17 above the frozen baseline of 178/231. The first checkpoint alone would have shown 156 and supported the opposite reading; the trough would have shown less.
 
 ## 7. Checkpoint cost
 
