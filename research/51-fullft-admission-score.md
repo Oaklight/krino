@@ -32,15 +32,29 @@ The suite now has measured floors, all taken from the frozen readout on the same
 | K = 80 exact | 0.2607 (116/445) | at least 0.2407 |
 | ECE, per cell | 0.1406 / 0.2787 / 0.2269 | at most frozen + 0.02 |
 
-Three arms are admissible: full fine-tuning at 1e-5, LoRA panel-2 on v3 at 3e-5, and LoRA panel-2 on the old plan at 1e-4.
+The val gate is applied against 5,652/9,923 = 0.5696, the frozen cell count. The 0.5697 quoted as a reference elsewhere is that cell rounded up, not a second measurement, and this note uses the count; the floor is therefore 0.5596.
 
-Seven are rejected, each for a named reason. LoRA v3 at 1e-4 fails on averaged JevBench, 149.0 against the 156.0 floor, and on agreement, 0.6104 against 0.7206. The benchmark-only arms at 3e-5 and 1e-4 fail on averaged JevBench, 155.5 and 154.5. The old plan at 3e-5 fails on val, 0.5510 against the 0.5596 floor. v3 at 3e-4 fails on JevBench, val, agreement and K = 80, which is 0.0382. Full fine-tuning at 2e-5 fails on the score ECE, 0.3691, which is 0.142 over frozen. Full fine-tuning at 5e-5 fails everything. The rejections are the useful half of the suite: each names the one measure that ended the arm, so a later recipe can be aimed at a specific gate rather than at the aggregate.
+Three arms are admissible: full fine-tuning at 1e-5, LoRA panel-2 on v3 at 3e-5, and LoRA panel-2 on the old plan at 1e-4. The v3 3e-5 arm is provisional at this point of use: the reversed pass behind its 157.0 average is not committed, so its verdict carries the proviso of the previous note and is not a settled admission. The outcomes are unverified at point of use; the eval artifacts are on the run host and are not committed.
+
+Seven are rejected, each for the gate that ended it.
+
+| arm | failing gate |
+|---|---|
+| LoRA v3, 1e-4 | averaged JevBench 149.0 against 156.0; agreement 0.6104 against 0.7206 |
+| benchmark-only, 3e-5 | averaged JevBench 155.5 against 156.0 |
+| benchmark-only, 1e-4 | averaged JevBench 154.5 against 156.0 |
+| LoRA old plan, 3e-5 | val 0.5510 against 0.5596 |
+| LoRA v3, 3e-4 | JevBench, val, agreement, and K = 80 at 0.0382 |
+| full FT, 2e-5 | score ECE 0.3691, 0.142 over frozen |
+| full FT, 5e-5 | every gate |
+
+The rejections are the useful half of the suite: each names the measure that ended the arm, so a later recipe can be aimed at a specific gate rather than at the aggregate.
 
 ## 3. Noise floor, measured
 
 Two runs of one configuration differed on 1,017 of 41,232 validation rows, on 6 of 231 JevBench items, and on the epoch mean loss, 0.9003 against 0.8942. The trajectories separate by step 25. The cause is training nondeterminism, suspected to be attention-backward atomics; that is unconfirmed. With a third run the band is 0.52 pp on benchmark val and 0.5 items on averaged JevBench.
 
-There is no seed axis in this loop: it has no shuffle, dropout or random draw, so changing the seed reproduces the same trajectory. Every comparison in this note is read against the measured band, not against zero.
+The band is measured on 41,232 validation rows. The epoch projection in section 7 uses 41,871 rows, and the 639-row difference is the rows masked by the answerable flag, so the band and the projection do not share a denominator. There is no seed axis in this loop: it has no shuffle, dropout or random draw, so changing the seed reproduces the same trajectory. Every comparison in this note is read against the measured band, not against zero.
 
 ## 4. The score ceiling
 
@@ -52,7 +66,7 @@ The direct data-version pair at the same learning rate sharpens the reading. v3 
 
 The caveat is that benchmark-only at 1e-4 is not an admissible arm: its averaged JevBench is 154.5 against the 156.0 floor. The finding is a mechanism result about synthetic rows, not a shippable arm.
 
-Full fine-tuning moves exact by +1.1 pp, which its own pair puts at p = 0.609, and within-one by +1.9 pp; it does not reshape the errors. Adjacent misses are 23.6 pp and 28.7% of predictions are two or more levels away, against 22.8 pp and 30.6% for frozen. K = 6 is the worst cell in every arm.
+Full fine-tuning moves exact by +1.1 pp, which its own pair puts at p = 0.609, and within-one by +1.9 pp. It moves the mass by under two points rather than reshaping it: 1.9 pp of predictions leave the two-or-more-levels group, and adjacent misses go from 22.8 to 23.6 pp. The score cells are unverified at point of use, as the artifacts sit on the run host. K = 6 is the worst cell in every arm.
 
 ## 5. Decode
 
@@ -66,7 +80,7 @@ The reading is pre-registered: exact accuracy on the 1,111 rows improves at p < 
 
 ## 7. Full-corpus scaling (unverified)
 
-Step time is 11.5 s, the median of four measured windows over two 50-step runs: the run averages are 11.46 and 11.56 s, the steady-state window from steps 25 to 50 is 10.5 s in both, and the first window is 12.5 s because it carries start-up. One epoch is 1,086 steps, so 1,086 x 11.5 s = 12,489 s = 3.47 h of steps.
+Step time is 11.5 s, the median of four measured windows over two 50-step runs on this row mix: the run averages are 11.46 and 11.56 s, the steady-state window from steps 25 to 50 is 10.5 s in both, and the first window is 12.5 s because it carries start-up. The 8.17 s figure measures the same trainer on the a20k plan in the weights run, a shorter row mix, and is not the cost of a full-corpus epoch step. One epoch is 1,086 steps, so 1,086 x 11.5 s = 12,489 s = 3.47 h of steps.
 
 A checkpoint evaluation costs 11.5 min. The weights run took 54 min, of which 303 steps at 8.17 s per step is 41.4 min, leaving 12.6 min for loading and the 41,871-row validation pass plus 462 JevBench forwards. Eight checkpoints therefore add 1.53 h, and the epoch projects to 5.0 h with eight evaluations, or 3.5 h with none.
 
