@@ -2,7 +2,7 @@
 
 Status: measured, one seed, one short schedule. Full-parameter training at 1e-5 is the first arm to clear every gate of the admission suite, the suite itself now has measured floors and a measured noise band, and the score head is shown to sit on a ceiling that no arm in this stretch moves. Full-corpus scaling has no result yet and is unverified.
 
-**PRs:** none confirmed for this note; the engineering items in section 9 were not merged when the note was written.
+**PRs:** #387, open at the time of writing and not yet merged.
 
 Every arm here uses Qwen3-Reranker-4B, at most 4,096 tokens per row, the panel-2 readout with listwise cross-entropy over the K code logits, the v3 a20k plan, 303 steps and seed 42 unless a cell says otherwise. JevBench is the local 231-item public proxy, reported as natural order, reversed order and their average; the frozen average is 159.0. Benchmark validation is 9,923 rows, and the frozen reference there is 0.5697. The previous note quotes 0.5696 for the same config; the two are separate frozen runs and the difference is inside the noise band of section 3, so each note keeps its own figure rather than a reconciled one. Paired tests are exact two-sided McNemar, and the paired n is given with each p.
 
@@ -62,7 +62,7 @@ Full-parameter training needs activation checkpointing because a single oversize
 
 ## 9. Engineering record
 
-Four pieces landed in the working tree in this stretch: checkpoint evaluation, weight saving with a streamed sha256, resume with a global warmup step, and plan immutability with versioned paths. The code backing them, including the score-target flag of section 6, is on the trainer branch and not yet on main. No PR numbers are recorded here because none could be confirmed against the repository at the time of writing; the note names the behaviour and not a merge.
+Four pieces landed in the working tree in this stretch: checkpoint evaluation, weight saving with a streamed sha256, resume with a global warmup step, and plan immutability with versioned paths. The code backing them, including the score-target flag of section 6, is PR #387, open at the time of writing and not yet on main.
 
 ## Provenance
 
