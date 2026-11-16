@@ -3,17 +3,18 @@
 from __future__ import annotations
 
 import json
+import pathlib
 
 import pytest
 
 torch = pytest.importorskip("torch")
 
 from model.scripts.train_panel2_lora import (  # noqa: E402
-    agree_digest,
+    agree_plan,
     build_rows,
     load_plan_rows,
     parse_prompt_text,
-    read_pinned,
+    read_plan,
 )
 
 PREFIX = "State: A situation.\nQuestion: Is it true?\n"
@@ -185,26 +186,45 @@ def _choice_plan(tmp_path, name="plan.jsonl"):
                                      "Only.", 2)])
 
 
-def test_the_pinned_digest_accepts_the_real_file(tmp_path):
+def test_the_plan_reads_to_its_own_bytes_and_digest(tmp_path):
     path = _choice_plan(tmp_path)
-    data, digest = read_pinned(path, None, "plan")
+    data, digest, error = read_plan(path, None, "plan")
+    assert error is None
     assert data == path.read_bytes()
     assert len(digest) == 64
+
+
+def test_the_pinned_digest_accepts_the_real_file(tmp_path):
+    path = _choice_plan(tmp_path)
+    digest = read_plan(path, None, "plan")[1]
     # The run logs print the first 16 characters; that form must also match.
-    assert read_pinned(path, digest[:16], "plan") == (data, digest)
-    assert read_pinned(path, digest, "plan") == (data, digest)
+    for pinned in (digest[:16], digest):
+        rows, split_field, masked, seen = load_plan_rows(
+            path, pinned, "plan", plan_unpermuted_noul=True
+        )
+        assert seen == digest
+        assert len(rows) == 1 and split_field == "internal_split" and masked == 0
 
 
 def test_a_different_digest_stops_before_any_row_is_read(tmp_path):
     path = _choice_plan(tmp_path)
     with pytest.raises(SystemExit, match="does not match the expected"):
-        read_pinned(path, "0" * 64, "plan")
+        load_plan_rows(path, "0" * 64, "plan", plan_unpermuted_noul=True)
 
 
-def test_a_fragment_too_short_to_identify_a_file_is_refused(tmp_path):
+def test_a_fragment_too_short_is_refused_before_the_file_is_read(tmp_path, monkeypatch):
     path = _choice_plan(tmp_path)
+    reads = []
+    real_read_bytes = pathlib.Path.read_bytes
+
+    def counting_read_bytes(self):
+        reads.append(self)
+        return real_read_bytes(self)
+
+    monkeypatch.setattr(pathlib.Path, "read_bytes", counting_read_bytes)
     with pytest.raises(SystemExit, match="shorter than 16"):
-        read_pinned(path, "abc", "plan")
+        load_plan_rows(path, "abc", "plan", plan_unpermuted_noul=True)
+    assert reads == [], "the fragment must be rejected without opening the file"
 
 
 def test_the_pin_fails_before_the_bytes_are_parsed(tmp_path):
@@ -225,10 +245,8 @@ def test_the_plan_is_read_once_and_parsed_from_the_hashed_bytes(tmp_path, monkey
     Counting reads and opens catches a reader that takes a path and reopens
     it, which would let the two see different files.
     """
-    import pathlib
-
     path = _choice_plan(tmp_path)
-    digest = read_pinned(path, None, "plan")[1]
+    digest = read_plan(path, None, "plan")[1]
     reads = []
     opens = []
 
@@ -256,15 +274,49 @@ def test_the_plan_is_read_once_and_parsed_from_the_hashed_bytes(tmp_path, monkey
     assert len(opens) == 1, "the plan path must be opened once, by the read"
 
 
-def test_ranks_that_hash_different_bytes_stop_the_run(monkeypatch):
+def test_a_read_failure_reaches_the_collective_instead_of_exiting_alone(
+    tmp_path, monkeypatch
+):
+    """An unreadable file must be carried to the gather, not raised locally.
+
+    A rank that exits before the collective leaves the other ranks blocked in
+    it; the failure has to travel through the gather so every rank raises.
+    """
     import torch.distributed as dist
 
+    path = _choice_plan(tmp_path)
+
+    def unreadable(self):
+        raise OSError("disk gone")
+
+    seen = []
+
+    def gather(output, value):
+        seen.append(value)
+        output[:] = [value] * len(output)
+
+    monkeypatch.setattr(pathlib.Path, "read_bytes", unreadable)
+    monkeypatch.setattr(dist, "all_gather_object", gather)
+    with pytest.raises(SystemExit, match="cannot read the plan"):
+        load_plan_rows(path, None, "plan", world=2, rank=1,
+                       plan_unpermuted_noul=True)
+    assert seen, "the gather must run before the failure is raised"
+    digest, error = seen[0]
+    assert digest is None and "cannot read the plan" in error
+
+
+def test_ranks_that_hash_different_bytes_stop_the_run(tmp_path, monkeypatch):
+    import torch.distributed as dist
+
+    path = _choice_plan(tmp_path)
+
     def disagree(output, value):
-        output[:] = ["a" * 64, "b" * 64]
+        output[:] = [("a" * 64, None), ("b" * 64, None)]
 
     monkeypatch.setattr(dist, "all_gather_object", disagree)
     with pytest.raises(SystemExit, match="ranks disagree on the plan digest"):
-        agree_digest("a" * 64, 2, 0)
+        load_plan_rows(path, None, "plan", world=2, rank=0,
+                       plan_unpermuted_noul=True)
 
 
 def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
@@ -274,4 +326,5 @@ def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
         output[:] = [value] * len(output)
 
     monkeypatch.setattr(dist, "all_gather_object", agree)
-    assert agree_digest("c" * 64, 8, 3) == "c" * 64
+    data, digest, error = agree_plan(b"x", "c" * 64, None, 8, 3)
+    assert (data, digest, error) == (b"x", "c" * 64, None)

@@ -42,63 +42,71 @@ POLARITY_MARK = "\nQuestion: "
 OPTION_MARK = "\nDoes this option correctly answer the question?"
 
 
-def read_pinned(path: Path, expected: str | None, label: str) -> tuple[bytes, str]:
-    """The file's bytes and sha256, checked against ``expected`` when given.
+def read_plan(path: Path, expected: str | None, label: str):
+    """One rank's read outcome: bytes, digest, or an error string.
 
-    A plan that is replaced or repointed while a run starts changes the
-    training distribution without changing anything the run prints, so an
-    explicit digest turns that into a startup failure. The returned bytes are
-    the bytes that were hashed *and* the bytes the caller parses: hashing a
-    path and then reopening it would pair one file's digest with another
-    file's rows, which is the failure this function exists to prevent. An
-    expected value may be a prefix (the run logs print the first 16
-    characters) but not shorter than 16.
+    This function never raises. A rank that exits on its own failure before
+    the collective below turns a detected mismatch into a hang on every other
+    rank, which is worse than the failure it detects. Every per-rank problem
+    -- an unreadable file, a pin too short to identify one -- is returned and
+    carried through the gather so that all ranks fail together.
+
+    The bytes returned are the bytes hashed *and* the bytes the caller
+    parses: hashing a path and then reopening it would pair one file's digest
+    with another file's rows.
     """
-    data = path.read_bytes()
-    digest = hashlib.sha256(data).hexdigest()
-    if expected is None:
-        return data, digest
-    wanted = expected.strip().lower()
-    if len(wanted) < 16:
-        raise SystemExit(f"--{label}-sha256 {expected!r} is shorter than 16 hex characters")
-    if not digest.startswith(wanted):
+    if expected is not None:
+        wanted = expected.strip()
+        if len(wanted) < 16:
+            return None, None, (
+                f"--{label}-sha256 {expected!r} is shorter than 16 hex "
+                "characters; refusing before reading the file"
+            )
+    try:
+        data = path.read_bytes()
+    except OSError as error:
+        return None, None, f"{path}: cannot read the plan: {error}"
+    return data, hashlib.sha256(data).hexdigest(), None
+
+
+def agree_plan(data, digest, error, world: int, rank: int):
+    """The outcome every rank agrees on, or one error for all of them.
+
+    The gather is the first thing that can fail collectively, and every rank
+    reaches it whatever its own read returned. The whole (digest, error) pair
+    is gathered rather than a reduced value, so the message names the
+    divergent digest instead of only reporting inequality.
+    """
+    if world == 1:
+        return data, digest, error
+    gathered: list = [None] * world
+    dist.all_gather_object(gathered, (digest, error))
+    distinct = sorted({tuple(item) for item in gathered}, key=str)
+    if len(distinct) != 1:
+        return None, None, f"ranks disagree on the plan digest: {distinct}"
+    return data, digest, error
+
+
+def load_plan_rows(path: Path, expected: str | None, label: str,
+                   world: int = 1, rank: int = 0,
+                   **reader_options) -> tuple[list[Row], str, int, str]:
+    """Read, agree, check and parse one plan, returning rows and digest.
+
+    Order matters: nothing that can raise on one rank alone may run before
+    the gather. The pin comparison runs after it, on a digest every rank now
+    shares, so a mismatch raises on all ranks at once; the parse runs after
+    that, on the bytes that were hashed.
+    """
+    data, digest, error = read_plan(path, expected, label)
+    data, digest, error = agree_plan(data, digest, error, world, rank)
+    if error is not None:
+        raise SystemExit(error)
+    wanted = expected.strip().lower() if expected is not None else None
+    if wanted is not None and not digest.startswith(wanted):
         raise SystemExit(
             f"{path}: sha256 {digest} does not match the expected {wanted}; "
             "refusing to read a plan that is not the one this run pinned"
         )
-    return data, digest
-
-
-def agree_digest(digest: str, world: int, rank: int) -> str:
-    """The plan digest every rank agrees on, or an abort.
-
-    Each rank hashes the bytes it is about to parse. If the ranks disagree,
-    some rank is reading a different file -- possible on a shared filesystem
-    that changed under the launch -- and the run cannot be attributed to one
-    distribution. The whole value is gathered rather than reduced, so the
-    message names the divergent digest.
-    """
-    if world == 1:
-        return digest
-    gathered: list[str | None] = [None] * world
-    dist.all_gather_object(gathered, digest)
-    if len(set(gathered)) != 1:
-        raise SystemExit(
-            f"ranks disagree on the plan digest: {sorted(set(gathered))}"
-        )
-    return digest
-
-
-def load_plan_rows(path: Path, expected: str | None, label: str,
-                   **reader_options) -> tuple[list[Row], str, int, str]:
-    """Read, check and parse one plan, returning its rows and verified digest.
-
-    One function so the check cannot drift below the parse: the bytes that
-    were hashed are the bytes ``build_rows`` reads. Moving the pin after the
-    parse makes the test that feeds a wrong pin and malformed bytes raise
-    ``JSONDecodeError`` instead of ``SystemExit``.
-    """
-    data, digest = read_pinned(path, expected, label)
     rows, split_field, masked = build_rows(data, **reader_options)
     return rows, split_field, masked, digest
 
@@ -307,7 +315,14 @@ def main() -> int:
         default=None,
         help="score this plan's val rows instead of the training plan's",
     )
-    parser.add_argument("--eval-plan-sha256", default=None)
+    parser.add_argument(
+        "--eval-plan-sha256",
+        default=None,
+        help=(
+            "abort unless the eval plan hashes to this value (prefix of at "
+            "least 16 hex characters); the computed digest is recorded either way"
+        ),
+    )
     parser.add_argument(
         "--noul-gold",
         choices=["role", "position"],
@@ -360,19 +375,19 @@ def main() -> int:
     # them trains.
     rows, split_field, masked, plan_sha = load_plan_rows(
         args.plan, args.plan_sha256, "plan",
+        world=args.world, rank=args.rank,
         noul_gold=args.noul_gold, plan_unpermuted_noul=args.plan_unpermuted_noul,
     )
-    plan_sha = agree_digest(plan_sha, args.world, args.rank)
     train_rows = [r for r in rows if r.split == "train"]
     val_rows = [r for r in rows if r.split == "val"]
     eval_plan_sha = None
     if args.eval_plan is not None:
         eval_rows, eval_split_field, _, eval_plan_sha = load_plan_rows(
             args.eval_plan, args.eval_plan_sha256, "eval-plan",
+            world=args.world, rank=args.rank,
             noul_gold=args.noul_gold,
             plan_unpermuted_noul=args.plan_unpermuted_noul,
         )
-        eval_plan_sha = agree_digest(eval_plan_sha, args.world, args.rank)
         val_rows = [r for r in eval_rows if r.split == "val"]
         print(f"rank {args.rank}: eval plan val rows {len(val_rows)} "
               f"split_field {eval_split_field} sha {eval_plan_sha[:16]}", flush=True)
