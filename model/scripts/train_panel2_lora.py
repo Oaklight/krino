@@ -307,6 +307,25 @@ def split_by_token_budget(rows, token_counts, budget: int) -> list:
     return chunks
 
 
+def cap_rows(rows, token_counts, cap: int) -> tuple[list, int, int]:
+    """Rows at or under ``cap`` tokens, how many were skipped, the longest skip.
+
+    A row is one forward, so a single row above the memory the device can hold
+    kills the step whatever the batch budget says. The cap is a backstop and
+    it is counted rather than silent: the caller reports the number and the
+    longest skipped length.
+    """
+    kept, skipped, longest = [], 0, 0
+    for row in rows:
+        width = token_counts[id(row)]
+        if width > cap:
+            skipped += 1
+            longest = max(longest, width)
+        else:
+            kept.append(row)
+    return kept, skipped, longest
+
+
 def build_rows(data: bytes, noul_gold: str = "position",
                plan_unpermuted_noul: bool = False) -> tuple[list[Row], str, int]:
     """Rows from plan bytes, the field that supplied their split, and masks.
@@ -529,6 +548,24 @@ def main() -> int:
         help="size of the flat buffer per gradient all-reduce",
     )
     parser.add_argument(
+        "--max-row-tokens",
+        type=int,
+        default=None,
+        help=(
+            "skip a train row whose prompt exceeds this many tokens; rows are "
+            "one forward each, so the longest row sets the peak. Defaults to "
+            "4096 under --full-ft and 0 (no cap) otherwise"
+        ),
+    )
+    parser.add_argument(
+        "--gradient-checkpointing",
+        action="store_true",
+        help=(
+            "recompute activations in backward; needed for full fine-tuning, "
+            "where one long row alone exceeds the device memory budget"
+        ),
+    )
+    parser.add_argument(
         "--warmup-fraction",
         type=float,
         default=0.0,
@@ -549,6 +586,10 @@ def main() -> int:
     parser.add_argument("--frozen-loss-sample", type=int, default=512)
     parser.add_argument("--log-every", type=int, default=25)
     args = parser.parse_args()
+    if args.max_row_tokens is None:
+        # A cap is only a full-fine-tuning backstop: it would silently change
+        # the LoRA ladder's row set, which is already on record.
+        args.max_row_tokens = 4096 if args.full_ft else 0
 
     if args.world > 1:
         dist.init_process_group("nccl")
@@ -592,6 +633,14 @@ def main() -> int:
         inject_lora(model, targets=("q_proj", "k_proj", "v_proj", "o_proj"),
                     rank=args.lora_rank, alpha=args.lora_alpha,
                     last_n_layers=args.lora_layers)
+    if args.gradient_checkpointing:
+        # Rows are processed one at a time and their graphs are freed at
+        # backward, so peak memory is one row's stored activations. With full
+        # fine-tuning that is more than the device holds at these prompt
+        # lengths; recomputing them in backward trades about a third of the
+        # step time for the difference.
+        model.gradient_checkpointing_enable(
+            gradient_checkpointing_kwargs={"use_reentrant": False})
     code_ids, multi = code_token_ids(tokenizer, CODES, "space")
     if len(code_ids) < 26 or multi:
         raise SystemExit(f"code ids unusable: {len(code_ids)} single-token, {multi[:5]}")
@@ -625,19 +674,36 @@ def main() -> int:
 
     history = []
     reduce_seconds = 0.0
+    skipped_over_cap = 0
+    token_counts: dict = {}
     stopped = False
     if not args.eval_only:
+        if args.max_row_tokens:
+            # The cap is a backstop, and it is counted: a row longer than the
+            # cap is its own forward and would set the peak by itself. The
+            # whole train set is measured on every rank so the retained count,
+            # and therefore the step count, is identical everywhere.
+            for row in train_rows:
+                token_counts[id(row)] = len(tokenizer(
+                    prompt_of(row), add_special_tokens=False)["input_ids"])
+            train_rows, skipped_over_cap, longest = cap_rows(
+                train_rows, token_counts, args.max_row_tokens)
+            print(f"rank {args.rank}: max_row_tokens {args.max_row_tokens} "
+                  f"skips {skipped_over_cap} of {len(train_rows) + skipped_over_cap} "
+                  f"train rows (longest skipped {longest} tokens)", flush=True)
+            if not train_rows:
+                raise SystemExit("every train row is over --max-row-tokens")
         shard, steps = shard_and_steps(train_rows, args.rank, args.world,
                                        args.batch_rows)
         if args.max_steps:
             steps = min(steps, args.max_steps)
         print(f"rank {args.rank}: {len(shard)} rows, {steps} steps per epoch, "
               f"{args.epochs} epoch(s)", flush=True)
-        token_counts = {}
         if args.max_batch_tokens:
             for row in shard:
-                token_counts[id(row)] = len(tokenizer(
-                    prompt_of(row), add_special_tokens=False)["input_ids"])
+                if id(row) not in token_counts:
+                    token_counts[id(row)] = len(tokenizer(
+                        prompt_of(row), add_special_tokens=False)["input_ids"])
             print(f"rank {args.rank}: token budget {args.max_batch_tokens} per "
                   f"step, longest row {max(token_counts.values(), default=0)}",
                   flush=True)
@@ -723,6 +789,9 @@ def main() -> int:
                "full_ft": args.full_ft, "grad_bucket_mb": args.grad_bucket_mb,
                "max_batch_tokens": args.max_batch_tokens,
                "warmup_fraction": args.warmup_fraction,
+               "gradient_checkpointing": args.gradient_checkpointing,
+               "max_row_tokens": args.max_row_tokens,
+               "skipped_over_cap_rows": skipped_over_cap,
                "lora": None if args.full_ft else {
                    "rank": args.lora_rank, "alpha": args.lora_alpha,
                    "layers": args.lora_layers,

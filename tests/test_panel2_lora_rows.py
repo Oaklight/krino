@@ -16,6 +16,7 @@ torch = pytest.importorskip("torch")
 from model.scripts.train_panel2_lora import (  # noqa: E402
     agree_plan,
     batch_indices,
+    cap_rows,
     check_shared_non_negative,
     build_rows,
     load_plan_rows,
@@ -427,6 +428,15 @@ def test_the_token_budget_splits_a_step_without_dropping_rows():
     assert [len(chunk) for chunk in chunks] == [1, 2, 1]
     assert sum(len(chunk) for chunk in chunks) == 4
     assert split_by_token_budget(rows, counts, 0) == [rows]
+
+
+def test_the_row_cap_skips_and_counts_the_long_rows():
+    rows = [object() for _ in range(4)]
+    counts = {id(rows[0]): 100, id(rows[1]): 5000, id(rows[2]): 4096, id(rows[3]): 8000}
+    kept, skipped, longest = cap_rows(rows, counts, 4096)
+    assert kept == [rows[0], rows[2]], "the cap is inclusive"
+    assert skipped == 2
+    assert longest == 8000, "the report names the longest row it dropped"
 
 
 def test_every_rank_gets_the_same_steps_from_its_own_shard():
