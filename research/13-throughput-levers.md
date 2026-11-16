@@ -69,19 +69,19 @@
 
 ## 实测步剖分与吞吐计划（2026-11-16）
 
-ce 臂、8 rank、每 rank 8 行、每行 478 token、4096 token 上限、64 MB bucket 的 20 步剖分，分项之和与墙钟一致（12.02 对 12.05 s/step），这是已交付路径的形状，不是 LoRA 的形状：
+ce 臂、8 rank、每 rank 8 行、每行 478 token、4096 token 上限、64 MB bucket 的 20 步剖分，分项之和与墙钟一致（12.016 对 12.05 s/step；mix 剖面同为 11.970，逐项相差不超过 0.05 s），这是已交付路径的形状，不是 LoRA 的形状：
 
 | 相位 | s/step | 占比 |
 |---|---:|---:|
 | tokenise | 0.012 | 0.1% |
-| forward | 2.663 | 22.2% |
-| backward | 7.102 | 59.1% |
-| all-reduce | 2.116 | 17.6% |
+| forward | 2.656 | 22.1% |
+| backward | 7.065 | 58.8% |
+| all-reduce | 2.161 | 18.0% |
 | clip | 0.014 | 0.1% |
 | optimizer | 0.108 | 0.9% |
-| 合计 | 12.02 | 100% |
+| 合计 | 12.016 | 100% |
 
-backward 占 59%，all-reduce 占 18%；tokenise 每行 1.5 ms，因此预分词方案排除。尺寸扫描（1 MiB 0.15 ms、4 MiB 0.28、16 MiB 0.83、64 MiB 3.08、256 MiB 12.26 ms）拟合出 0.07 ms 的延迟截距与 38.6 GB/s 的渐近带宽，64 MiB 已在渐近值的 0.5% 以内，所以增大 bucket 没有收益，120 次调用的启动开销合计约 8 ms。正确的分母是可训练梯度量 6.78 GB，而不是含未训练参数的 8.04 GB checkpoint；它装在 120 个约 56 MB 的 bucket 里，原位追踪给出整步的 torch.cat 0.007 s 与 copy-back 0.011 s，而 collective 本身跨 rank 为 0.327 到 0.820 s，本地拷贝只占 bucket 路径的约 5%，因此分配与拷贝都不是杠杆。2.116 s 是在等待而不是在搬运：backward 加 all-reduce 在各 rank 上几乎恒定，9.14 到 9.37 s，两项却分别有 0.66 s 与 0.89 s 的离散并互相抵消，同一批字节在 step 1 到 2 运行 0.52 到 1.65 s、在 step 15 到 20 运行 1.67 到 2.56 s；各 rank 拥有不同行，每次 collective 等最后一个 rank 到齐，因此该相位随行长方差增大。所以杠杆是把一步内的行在各 rank 之间配平，这与合批是同一项改动，应并入该工作而不是给 reduce 单独立项；1.95x 的上限不变，但算力部分与等待部分会一起移动，这比单看 MFU 更有理由先做合批。追踪 caveat：原位追踪在 cat 之后、collective 之后和 copy-back 之后各加一次 synchronise，因此它只用于分解各段，不给绝对步时。
+backward 占 58.8%，all-reduce 占 18.0%；tokenise 每行 1.5 ms，因此预分词方案排除。尺寸扫描（1 MiB 0.15 ms、4 MiB 0.28、16 MiB 0.83、64 MiB 3.08、256 MiB 12.26 ms，对应 ring 带宽 12.1、26.0、35.2、38.1、38.3 GB/s）拟合出约 0.07 ms 的延迟截距，64 MiB 处已接近 38.3 GB/s 的渐近值，再增大 bucket 收益不足 1%，120 次调用的启动开销合计约 8 ms。正确的分母是可训练梯度量 6.78 GB（6,782,576,640 字节），而不是含未训练参数的 8.04 GB checkpoint；它装在 120 个约 56 MB 的 bucket 里，bucket 路径整步 0.345 到 0.838 s，其中 torch.cat 0.007 s、copy-back 0.011 s，collective 跨 rank 0.327 到 0.820 s；最快的 rank 为每 bucket 2.7 ms，与独立扫描同速，因此本地拷贝约占 5%，分配与拷贝都不是杠杆。2.116 s 是在等待而不是在搬运：backward 加 all-reduce 在各 rank 上几乎恒定，9.14 到 9.37 s，两项却分别有 0.66 s 与 0.89 s 的离散并互相抵消，同一批字节在 step 1 到 2 运行 0.52 到 1.65 s、在 step 15 到 20 运行 1.67 到 2.56 s；各 rank 拥有不同行，每次 collective 等最后一个 rank 到齐，因此该相位随行长方差增大。所以杠杆是把一步内的行在各 rank 之间配平，这与合批是同一项改动，应并入该工作而不是给 reduce 单独立项；按计划测算，把每步 64 行按 token 数分给各 rank 可把最忙 rank 与均值之比从 1.363 降到 1.05，这是尚未上机验证的开放问题。上限方面：forward 加 backward 为 9.765 s（mix 剖面，ce 为 9.721 s），算力部分改善 2.5x 得 6.16 s/step、端到端 1.95x，若要端到端 4x 则必须同时改 reduce；算力与等待会一起移动，这比单看 MFU 更有理由先做合批。追踪 caveat：原位追踪在 cat 之后、collective 之后和 copy-back 之后各加一次 synchronise，因此它只用于分解各段，不给绝对步时。
 
 ## 参考
 
