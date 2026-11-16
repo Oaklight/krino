@@ -133,6 +133,7 @@ Clef analysis, later written up as `08-clef-analysis.md`.
 | `47-h2o-lightning.md` | 2026-11-15 | H2O-Lightning-4B scored on our instruments (#327) | current |
 | `48-near-duplicate-remediation.md` | 2026-11-15 | the per-row near-duplicate policy and canonical corpus v2 (#235 follow-up) | current |
 | `49-judgement-readout-arm.md` | 2026-11-15 | the judgement-objective LoRA arm: a significant JevBench regression, calibration excluded | current |
+| `50-panel2-readout.md` | 2026-11-16 | the panel-2 readout replaces judgement: frozen +13 items, low-lr val gain, the 2x2 and the admission rule | current |
 
 ## Numbering collisions
 
