@@ -4,7 +4,7 @@ Status: measured, one seed, one short schedule. Full-parameter training at 1e-5 
 
 **PRs:** #387, open at the time of writing and not yet merged.
 
-Every arm here uses Qwen3-Reranker-4B, at most 4,096 tokens per row, the panel-2 readout with listwise cross-entropy over the K code logits, the v3 a20k plan, 303 steps and seed 42 unless a cell says otherwise. JevBench is the local 231-item public proxy, reported as natural order, reversed order and their average; the frozen average is 159.0. Benchmark validation is 9,923 rows, and the frozen reference there is 0.5697. The previous note quotes 0.5696 for the same config; the two are separate frozen runs and the difference is inside the noise band of section 3, so each note keeps its own figure rather than a reconciled one. Paired tests are exact two-sided McNemar, and the paired n is given with each p.
+Every arm here uses Qwen3-Reranker-4B, at most 4,096 tokens per row, the panel-2 readout with listwise cross-entropy over the K code logits, the v3 a20k plan, 303 steps and seed 42 unless a cell says otherwise. JevBench is the local 231-item public proxy, reported as natural order, reversed order and their average; the frozen average is 159.0. Benchmark validation is 9,923 rows, and the frozen reference there is 5,652/9,923 = 0.5696, the same figure the previous note uses. Paired tests are exact two-sided McNemar, and the paired n is given with each p.
 
 ## 1. Full-parameter arms
 
@@ -27,14 +27,14 @@ The suite now has measured floors, all taken from the frozen readout on the same
 | measure | frozen | floor |
 |---|---:|---:|
 | averaged JevBench | 159.0 | at least 156.0 |
-| natural-versus-reversed agreement | 0.7206 | at least 0.7206 |
-| benchmark val, 9,923 rows | 0.5697 | at least 0.5597 |
-| K = 80 exact | 0.2407 | at least 0.2407 |
+| natural-versus-reversed agreement | 0.7706 (178/231) | at least 0.7206 |
+| benchmark val, 9,923 rows | 0.5696 (5,652) | at least 0.5596 |
+| K = 80 exact | 0.2607 (116/445) | at least 0.2407 |
 | ECE, per cell | 0.1406 / 0.2787 / 0.2269 | at most frozen + 0.02 |
 
 Three arms are admissible: full fine-tuning at 1e-5, LoRA panel-2 on v3 at 3e-5, and LoRA panel-2 on the old plan at 1e-4.
 
-Seven are rejected, each for a named reason. LoRA v3 at 1e-4 fails on averaged JevBench, 149.0 against the 156.0 floor, and on agreement, 0.6104 against 0.7206. The benchmark-only arms at 3e-5 and 1e-4 fail on averaged JevBench, 155.5 and 154.5. The old plan at 3e-5 fails on val, 0.5510 against the 0.5597 floor. v3 at 3e-4 fails on JevBench, val, agreement and K = 80, which is 0.0382. Full fine-tuning at 2e-5 fails on the score ECE, 0.3691, which is 0.142 over frozen. Full fine-tuning at 5e-5 fails everything. The rejections are the useful half of the suite: each names the one measure that ended the arm, so a later recipe can be aimed at a specific gate rather than at the aggregate.
+Seven are rejected, each for a named reason. LoRA v3 at 1e-4 fails on averaged JevBench, 149.0 against the 156.0 floor, and on agreement, 0.6104 against 0.7206. The benchmark-only arms at 3e-5 and 1e-4 fail on averaged JevBench, 155.5 and 154.5. The old plan at 3e-5 fails on val, 0.5510 against the 0.5596 floor. v3 at 3e-4 fails on JevBench, val, agreement and K = 80, which is 0.0382. Full fine-tuning at 2e-5 fails on the score ECE, 0.3691, which is 0.142 over frozen. Full fine-tuning at 5e-5 fails everything. The rejections are the useful half of the suite: each names the one measure that ended the arm, so a later recipe can be aimed at a specific gate rather than at the aggregate.
 
 ## 3. Noise floor, measured
 
@@ -44,9 +44,15 @@ There is no seed axis in this loop: it has no shuffle, dropout or random draw, s
 
 ## 4. The score ceiling
 
-On the 1,111 benchmark score rows, the panel-2 arms land between 0.4662 and 0.4977 exact. Frozen panel-2 is 0.4662, the best LoRA arm is 0.4977 (benchmark-only at 1e-4) and full fine-tuning at 1e-5 is 0.4770. The judgement readout sits below that band on the same rows: frozen 0.4455, best arm 0.4518, and two arms are significantly worse with exact McNemar on the 1,111 rows: p = 0.00750 for v3 at 1e-4, which lost 121 and gained 82, and p = 0.00082 for the old plan at 1e-4, which lost 133 and gained 83. Both come from the judgement per-K validation pass.
+On the 1,111 benchmark score rows, the panel-2 arms land between 0.4662 and 0.4977 exact. Frozen panel-2 is 518/1,111 = 0.4662, the best LoRA arm is 553/1,111 = 0.4977 (benchmark-only at 1e-4) and full fine-tuning at 1e-5 is 0.4770. The judgement readout sits below that band on the same rows: frozen 0.4455, best arm 0.4518, and two arms are significantly worse with exact McNemar on the 1,111 rows: p = 0.00750 for v3 at 1e-4, which lost 121 and gained 82, and p = 0.00082 for the old plan at 1e-4, which lost 133 and gained 83. Both come from the judgement per-K validation pass.
 
-Full fine-tuning moves exact by +1.1 pp and within-one by +1.9 pp, and it does not reshape the errors. Adjacent misses are 23.6 pp and 28.7% of predictions are two or more levels away, against 22.8 pp and 30.6% for frozen. K = 6 is the worst cell in every arm. The ceiling is therefore a property of the score formulation or the labels, not of the readout: full fine-tuning, which moves every other measure, moves this one by about a point.
+The benchmark-only arm's lead over frozen on these rows is significant: 52 lost against 87 gained, exact McNemar p = 0.00377. Per K it is positive but not individually significant: K = 4 is 18 against 31 with p = 0.085, K = 5 is 19 against 31 with p = 0.119, K = 6 is 15 against 25 with p = 0.154.
+
+The direct data-version pair at the same learning rate sharpens the reading. v3 at 1e-4 against benchmark-only at 1e-4 on the same rows is 72 against 103, exact McNemar p = 0.0231; at 3e-5 it is 41 against 51, p = 0.348. Full fine-tuning at 1e-5 against frozen is 225 against 237, p = 0.609, so the full-parameter score movement is noise. On score rows the significant effect is the data version, not capacity.
+
+The caveat is that benchmark-only at 1e-4 is not an admissible arm: its averaged JevBench is 154.5 against the 156.0 floor. The finding is a mechanism result about synthetic rows, not a shippable arm.
+
+Full fine-tuning moves exact by +1.1 pp, which its own pair puts at p = 0.609, and within-one by +1.9 pp; it does not reshape the errors. Adjacent misses are 23.6 pp and 28.7% of predictions are two or more levels away, against 22.8 pp and 30.6% for frozen. K = 6 is the worst cell in every arm.
 
 ## 5. Decode
 
@@ -60,9 +66,11 @@ The reading is pre-registered: exact accuracy on the 1,111 rows improves at p < 
 
 ## 7. Full-corpus scaling (unverified)
 
-The measured cost is 11.3 s per step on this row mix against 8.17 on the a20k, over 1,086 steps, so the epoch projects to 2.9 to 3.2 hours of steps and 4 to 4.5 hours with eight checkpoint evaluations. The row cap skips 180 of 69,644 train rows, 0.26%, and 2,169 rows are masked as `answerable:false`.
+Step time is 11.5 s, the median of four measured windows over two 50-step runs: the run averages are 11.46 and 11.56 s, the steady-state window from steps 25 to 50 is 10.5 s in both, and the first window is 12.5 s because it carries start-up. One epoch is 1,086 steps, so 1,086 x 11.5 s = 12,489 s = 3.47 h of steps.
 
-The run is executed in two legs of 543 steps with checkpoint evaluation every 125 steps and a resume path. No result exists yet, and every figure in this section is unverified.
+A checkpoint evaluation costs 11.5 min. The weights run took 54 min, of which 303 steps at 8.17 s per step is 41.4 min, leaving 12.6 min for loading and the 41,871-row validation pass plus 462 JevBench forwards. Eight checkpoints therefore add 1.53 h, and the epoch projects to 5.0 h with eight evaluations, or 3.5 h with none.
+
+The row cap skips 180 of 69,644 train rows, 0.26%, and 2,169 rows are masked as `answerable:false`. The run is executed in two legs of 543 steps with checkpoint evaluation every 125 steps and a resume path. No result exists yet, and every figure in this section is unverified.
 
 ## 8. Mechanism
 
