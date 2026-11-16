@@ -455,23 +455,38 @@ def code_logits(model, tokenizer, prompt: str, code_ids, device) -> list[float]:
 
 
 def evaluate(model, tokenizer, rows, code_ids, device, limit=None):
-    """Accuracy per row, with the natural-order option index chosen."""
+    """Accuracy and calibration bins per row, natural-order index chosen.
+
+    The bins are keyed by question type and option count and hold
+    ``[rows, correct]`` per confidence decile. They are counts, so shards add:
+    the report sums them across ranks and computes ECE once. Calibration is
+    recorded here because a full fine-tune leaves no adapter behind, and a
+    number computed after the fact would need the weights.
+    """
     model.eval()
     counts = {}
     per_item = []
+    bins = {}
     with torch.inference_mode():
         for row in (rows[:limit] if limit else rows):
             values = code_logits(model, tokenizer, prompt_of(row),
                                  {c: code_ids[c] for c in row.codes}, device)
             chosen = choose_option(values, list(range(len(values))))
             ok = chosen == row.gold
+            confidence = float(torch.softmax(
+                torch.tensor(values, dtype=torch.float32), dim=0).max())
+            decile = min(9, int(confidence * 10))
+            cell = bins.setdefault(f"{row.q_type}|{len(values)}", {})
+            slot = cell.setdefault(str(decile), [0, 0])
+            slot[0] += 1
+            slot[1] += int(ok)
             for key in ("all", f"type:{row.q_type}", f"source:{row.source}"):
                 cell = counts.setdefault(key, [0, 0])
                 cell[0] += int(ok)
                 cell[1] += 1
             per_item.append([row.row_id, int(ok), row.q_type, row.source])
     model.train()
-    return counts, per_item
+    return counts, per_item, bins
 
 
 def main() -> int:
@@ -776,9 +791,11 @@ def main() -> int:
         val_shard = train_rows[args.rank :: args.world]
     if args.val_limit:
         val_shard = val_shard[: args.val_limit]
-    counts, per_item = evaluate(model, tokenizer, val_shard, code_ids, device)
+    counts, per_item, ece_bins = evaluate(model, tokenizer, val_shard,
+                                          code_ids, device)
     payload = {"rank": args.rank, "lr": args.lr, "val_counts": counts,
-               "val_items": per_item, "val_source": val_source,
+               "val_items": per_item, "ece_bins": ece_bins,
+               "val_source": val_source,
                "stopped": stopped,
                "stop_reason": "epoch_mean_loss_above_frozen" if stopped else None,
                "plan": str(args.plan), "plan_sha256": plan_sha,

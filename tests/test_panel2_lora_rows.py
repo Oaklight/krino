@@ -297,7 +297,7 @@ def _fake_training_modules(module, monkeypatch):
     monkeypatch.setattr(
         module, "code_token_ids",
         lambda tokenizer, codes, form: ({code: index for index, code in enumerate(codes)}, []))
-    monkeypatch.setattr(module, "evaluate", lambda *a, **k: ({}, []))
+    monkeypatch.setattr(module, "evaluate", lambda *a, **k: ({}, [], {}))
     monkeypatch.setattr(module, "evaluate_jevbench",
                         lambda *a, **k: {"items": [], "by_tier_natural": {}})
     monkeypatch.setattr(module.torch, "save", lambda *a, **k: None)
@@ -437,6 +437,43 @@ def test_the_row_cap_skips_and_counts_the_long_rows():
     assert kept == [rows[0], rows[2]], "the cap is inclusive"
     assert skipped == 2
     assert longest == 8000, "the report names the longest row it dropped"
+
+
+def test_evaluate_reports_calibration_bins_that_add_up(tmp_path):
+    """Every scored row lands in exactly one (type, K, decile) bin."""
+    import torch
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:e{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(2) for option in (0, 1)
+    ]
+    rows, _, _ = build_rows(_bytes(tmp_path, records), plan_unpermuted_noul=True)
+
+    class FakeTokenizer:
+        def __call__(self, text, return_tensors=None, add_special_tokens=False):
+            return {"input_ids": torch.zeros(1, 2, dtype=torch.long)}
+
+    class FakeModel(torch.nn.Module):
+        def forward(self, input_ids=None, **kwargs):
+            return types.SimpleNamespace(logits=torch.zeros(1, 1, 200))
+
+        def train(self, mode=True):
+            return self
+
+        def eval(self):
+            return self
+
+    from model.scripts.train_panel2_lora import CODES
+
+    code_ids = {code: index for index, code in enumerate(CODES)}
+    counts, per_item, bins = module.evaluate(
+        FakeModel(), FakeTokenizer(), rows, code_ids, "cpu")
+    total = sum(slot[0] for cell in bins.values() for slot in cell.values())
+    correct = sum(slot[1] for cell in bins.values() for slot in cell.values())
+    assert total == len(rows) == 2
+    assert correct == counts["all"][0]
 
 
 def test_every_rank_gets_the_same_steps_from_its_own_shard():
