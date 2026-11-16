@@ -799,6 +799,18 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--score-cramer-weight-source",
+        type=Path,
+        default=None,
+        help=(
+            "the lambda probe JSON that measured --score-cramer-weight; its "
+            "digest and the measured mean CE, mean RPS, ratio and row count "
+            "are copied into the payload, and the pinned weight is checked "
+            "against it. Without this the payload says the weight was passed "
+            "by hand, so no artifact claims a measurement it does not have"
+        ),
+    )
+    parser.add_argument(
         "--start-step",
         type=int,
         default=0,
@@ -869,6 +881,55 @@ def main() -> int:
         raise SystemExit(
             f"--score-loss {args.score_loss} uses the gold's one-hot target; "
             f"--score-target {args.score_target} was not pre-registered with it"
+        )
+    cramer_provenance = None
+    if args.score_loss == "mix":
+        if args.score_cramer_weight_source is None:
+            # Allowed, but the payload must not imply a measurement that no
+            # artifact backs.
+            cramer_provenance = {
+                "measured": False,
+                "reason": "no --score-cramer-weight-source: the weight was "
+                          "passed by hand and no probe artifact supports it",
+            }
+        else:
+            if not args.score_cramer_weight_source.exists():
+                raise SystemExit(
+                    f"--score-cramer-weight-source does not exist: "
+                    f"{args.score_cramer_weight_source}"
+                )
+            probe = json.loads(args.score_cramer_weight_source.read_text())
+            overall = probe.get("overall") or {}
+            for key in ("mean_ce", "mean_rps", "ce_over_rps", "lambda", "n"):
+                if key not in overall:
+                    raise SystemExit(
+                        f"--score-cramer-weight-source has no overall.{key}; "
+                        "it is not a lambda probe output"
+                    )
+            if abs(overall["lambda"] - args.score_cramer_weight) > 1e-9 * max(
+                    1.0, abs(args.score_cramer_weight)):
+                raise SystemExit(
+                    f"--score-cramer-weight {args.score_cramer_weight} is not "
+                    f"the measured lambda {overall['lambda']}; the pinned "
+                    "number must come from the probe"
+                )
+            cramer_provenance = {
+                "measured": True,
+                "source": str(args.score_cramer_weight_source),
+                "source_sha256": file_sha256(
+                    args.score_cramer_weight_source),
+                "plan": probe.get("plan"),
+                "weights": probe.get("weights"),
+                "rows": overall["n"],
+                "mean_ce": overall["mean_ce"],
+                "mean_rps": overall["mean_rps"],
+                "ce_over_rps": overall["ce_over_rps"],
+                "lambda": overall["lambda"],
+            }
+    elif args.score_cramer_weight_source is not None:
+        raise SystemExit(
+            "--score-cramer-weight-source has no effect under --score-loss "
+            f"{args.score_loss}; set it only with mix"
         )
     if args.max_row_tokens is None:
         # A cap is only a full-fine-tuning backstop: it would silently change
@@ -976,11 +1037,19 @@ def main() -> int:
     # mean is in RPS units, and a CE reference would make the stop rule fire
     # on the scale change alone.
     frozen_mean = None
+    frozen_sample_ids_sha = None
+    frozen_sample_rows = None
     if not args.eval_only:
         sample = train_rows[: args.frozen_loss_sample]
         frozen_losses = []
         for row in sample:
             frozen_losses.append(float(loss_of(row)))
+        # The sample's identity, so the three arms' references can be shown
+        # comparable rather than assumed to be: same plan, same order, same
+        # row ids in the same sequence.
+        frozen_sample_ids_sha = hashlib.sha256(
+            "\n".join(row.row_id for row in sample).encode()).hexdigest()
+        frozen_sample_rows = len(sample)
         frozen_mean = check_shared_non_negative(
             sum(frozen_losses) / len(frozen_losses), "frozen sample loss",
             args.rank, args.world, device)
@@ -1263,10 +1332,12 @@ def main() -> int:
                "score_target_tau": args.score_target_tau,
                "score_loss": args.score_loss,
                "score_cramer_weight": args.score_cramer_weight,
+               "score_cramer_weight_provenance": cramer_provenance,
                "start_step": args.start_step,
-               "step_range": ([args.start_step + 1, steps]
-                              if args.start_step and not args.eval_only
-                              else None),
+               "planned_step_range": ([args.start_step + 1, steps]
+                                      if args.start_step and not args.eval_only
+                                      else None),
+               "steps_run": len(history),
                "frozen_sample_measured_on": (
                    "loaded weights" if args.load_weights is not None
                    else "base weights"),
@@ -1288,7 +1359,9 @@ def main() -> int:
                    if history else None),
                "max_memory_gib": (torch.cuda.max_memory_allocated() / 2**30
                                   if device.startswith("cuda") else None),
-               "frozen_sample_ce": frozen_mean}
+               "frozen_sample_loss": frozen_mean,
+               "frozen_sample_rows": frozen_sample_rows,
+               "frozen_sample_row_ids_sha256": frozen_sample_ids_sha}
 
     args.output.mkdir(parents=True, exist_ok=True)
     payload["weights_path"] = None

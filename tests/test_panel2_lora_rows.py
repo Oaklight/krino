@@ -940,6 +940,10 @@ def test_the_score_loss_flags_refuse_unmeasured_combinations(tmp_path, monkeypat
     plan is read.
     """
     module = importlib.import_module("model.scripts.train_panel2_lora")
+    probe = tmp_path / "probe.json"
+    probe.write_text(json.dumps({"overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
+        "lambda": 1.25}}))
     base = [
         "train_panel2_lora.py", "--plan", str(tmp_path / "plan.jsonl"),
         "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
@@ -950,11 +954,63 @@ def test_the_score_loss_flags_refuse_unmeasured_combinations(tmp_path, monkeypat
          "only with mix"),
         (["--score-loss", "rps", "--score-target", "soft"],
          "not pre-registered"),
+        (["--score-loss", "rps", "--score-cramer-weight-source", str(probe)],
+         "no effect under"),
+        (["--score-loss", "mix", "--score-cramer-weight", "1.5",
+          "--score-cramer-weight-source", str(probe)],
+         "is not the measured lambda"),
     ]
     for extra, match in cases:
         monkeypatch.setattr(sys, "argv", base + extra)
         with pytest.raises(SystemExit, match=match):
             module.main()
+
+
+def test_the_lambda_provenance_says_whether_it_was_measured(tmp_path, monkeypatch):
+    """A weight passed by hand must not read as a measured one.
+
+    With a probe file the payload copies the measured means, the row count and
+    the file's digest, so the lambda claim is auditable; without one it says
+    the weight was passed by hand. Both runs pin the same number, so the only
+    difference is what the artifact can support.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:m{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(2) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    probe = tmp_path / "probe.json"
+    probe.write_text(json.dumps({"plan": str(plan), "weights": "-", "overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
+        "lambda": 1.25}}))
+
+    def run(out, extra):
+        _fake_training_modules(module, monkeypatch)
+        monkeypatch.setattr(sys, "argv", [
+            "train_panel2_lora.py", "--plan", str(plan),
+            "--output", str(out), "--world", "1", "--device", "cpu",
+            "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+            "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+            "--no-stop-on-loss-rise", "--score-loss", "mix",
+            "--score-cramer-weight", "1.25", *extra,
+        ])
+        assert module.main() == 0
+        return json.loads((out / "shard_0.json").read_text())
+
+    measured = run(tmp_path / "measured", [
+        "--score-cramer-weight-source", str(probe)])[
+            "score_cramer_weight_provenance"]
+    assert measured["measured"] is True
+    assert measured["rows"] == 1111
+    assert measured["mean_ce"] == 2.0 and measured["mean_rps"] == 0.4
+    assert measured["lambda"] == 1.25
+    assert measured["source_sha256"] == module.file_sha256(probe)
+
+    hand = run(tmp_path / "hand", [])["score_cramer_weight_provenance"]
+    assert hand["measured"] is False
+    assert "passed by hand" in hand["reason"]
 
 
 def test_score_rows_take_the_flagged_loss_and_choice_rows_keep_one_hot(
@@ -1085,8 +1141,17 @@ def test_a_resumed_leg_runs_only_the_remaining_steps(tmp_path, monkeypatch):
     assert fake.forwards == 6, "two frozen-sample rows plus steps 2 and 3"
     payload = json.loads((tmp_path / "leg2" / "shard_0.json").read_text())
     assert payload["start_step"] == 1
-    assert payload["step_range"] == [2, 3]
+    assert payload["planned_step_range"] == [2, 3]
+    assert payload["steps_run"] == 2, "two steps executed, not the planned three"
     assert payload["weights_loaded_sha256"] == module.file_sha256(weights)
+    # The two legs' frozen samples must be the same rows in the same order, or
+    # the stop rule's references are not comparable across arms.
+    leg1 = json.loads((tmp_path / "leg1" / "shard_0.json").read_text())
+    assert leg1["frozen_sample_rows"] == payload["frozen_sample_rows"] == 2
+    assert leg1["frozen_sample_row_ids_sha256"] == \
+        payload["frozen_sample_row_ids_sha256"]
+    assert "frozen_sample_ce" not in payload
+    assert "frozen_sample_loss" in payload
 
 
 def test_a_resume_past_the_last_step_is_refused(tmp_path, monkeypatch):
