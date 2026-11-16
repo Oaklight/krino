@@ -1954,11 +1954,12 @@ def test_the_memory_budget_is_reported_not_silently_outranked(tmp_path,
         "--lr", "0", "--epochs", "1", "--batch-rows", "2",
         "--plan-unpermuted-noul", "--frozen-loss-sample", "1",
         "--max-batch-tokens", "1000", "--chunk-rows", "1",
-        "--phase-profile", "2",
+        "--chunk-ratio", "1.0", "--phase-profile", "2",
     ])
     assert module.main() == 0
     profile = json.loads(
         (tmp_path / "out" / "phase_profile_rank0.json").read_text())
+    assert profile["chunking_this_rank"]["length_ratio"] == 1.0
     counts = profile["chunking_this_rank"]["chunk_decision_counts"]
     assert set(counts) <= {"chunk_tokens", "ratio", "chunk_rows",
                            "budget_non_binding"}
