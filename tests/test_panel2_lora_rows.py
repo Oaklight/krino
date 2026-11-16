@@ -1482,7 +1482,11 @@ def test_phase_profile_times_every_phase_of_the_first_steps(tmp_path, monkeypatc
         "--phase-profile", "1",
     ])
     assert module.main() == 0
-    profile = json.loads((tmp_path / "out" / "phase_profile.json").read_text())
+    profile = json.loads(
+        (tmp_path / "out" / "phase_profile_rank0.json").read_text())
+    assert profile["path_this_rank"] == "phase_profile_rank0.json"
+    assert not (tmp_path / "out" / "phase_profile.json").exists(), (
+        "a shared filename is what let eight ranks tear the file")
     assert profile["steps_this_rank"] == 1
     assert profile["first_step"] == 1
     assert profile["includes_startup"] is True

@@ -856,8 +856,8 @@ def main() -> int:
         default=0,
         help=(
             "time tokenise, forward, backward, all-reduce, clip and optimizer "
-            "for the first N steps and write phase_profile.json; the phases "
-            "are synchronised, so the numbers include device work"
+            "for the first N steps and write phase_profile_rank<N>.json; "
+            "the phases are synchronised, so the numbers include device work"
         ),
     )
     parser.add_argument("--output", type=Path, required=True)
@@ -1486,8 +1486,11 @@ def main() -> int:
                                   "chunk split, per-row loss bookkeeping",
             "skipped_rows_this_rank": skipped_over_cap,
         }
-        (args.output / "phase_profile.json").write_text(
-            json.dumps(profile_payload))
+        # One file per rank: every rank runs this block, and a shared name let
+        # them overwrite each other, leaving a torn file that parses as neither.
+        profile_path = args.output / f"phase_profile_rank{args.rank}.json"
+        profile_payload["path_this_rank"] = profile_path.name
+        profile_path.write_text(json.dumps(profile_payload))
         print(f"rank {args.rank}: phase profile "
               f"{json.dumps(profile_payload['mean_seconds_this_rank'])}", flush=True)
 
