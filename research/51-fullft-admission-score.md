@@ -18,15 +18,23 @@ LoRA is off and every parameter is trainable, with activation checkpointing on.
 
 The ECE column is absolute for the first two arms and a change over frozen for 5e-5, where the deltas are noul +0.127 (0.2679 against 0.1406) and score +0.148 (0.3752 against 0.2269). The choice cell is 0.0770 against frozen 0.2787, a 0.202 improvement, so it is the one ECE cell that improves and it is not a positive delta. The frozen ECE on the same rows is noul 0.1406, choice 0.2787 and score 0.2269.
 
-The sweet spot is narrow. 1e-5 and 2e-5 both beat frozen on benchmark val by more than 11 pp and on JevBench by 2 to 4 items averaged; 5e-5 is a collapse on every measure. Between the two good arms the choice is not made by val, which is 0.0012 apart, but by the per-cell ECE, where 1e-5 is better on two cells and 2e-5 is worse on score than frozen.
+The sweet spot is narrow. 1e-5 and 2e-5 both beat frozen on benchmark val by more than 11 pp and on JevBench by 2 to 4 items averaged; 5e-5 is a collapse on every measure. Between the two good arms the choice is not made by val, which is 0.0012 apart, but by the per-cell ECE: 1e-5 is better on all three cells than both 2e-5 and frozen, and 2e-5 is worse than frozen on score.
 
 ## 2. Admission suite outcomes
 
-The suite now has measured floors, all taken from the frozen readout on the same rows: averaged JevBench at least 156.0, natural-versus-reversed agreement at least 0.7206, benchmark val within 1 pp of frozen, the long-list K = 80 cell at least 0.2407, and every ECE cell within 0.02 of its frozen value.
+The suite now has measured floors, all taken from the frozen readout on the same rows.
+
+| measure | frozen | floor |
+|---|---:|---:|
+| averaged JevBench | 159.0 | at least 156.0 |
+| natural-versus-reversed agreement | 0.7206 | at least 0.7206 |
+| benchmark val, 9,923 rows | 0.5697 | at least 0.5597 |
+| K = 80 exact | 0.2407 | at least 0.2407 |
+| ECE, per cell | 0.1406 / 0.2787 / 0.2269 | at most frozen + 0.02 |
 
 Three arms are admissible: full fine-tuning at 1e-5, LoRA panel-2 on v3 at 3e-5, and LoRA panel-2 on the old plan at 1e-4.
 
-Seven are rejected, each for a named reason. LoRA v3 at 1e-4 fails on averaged JevBench, 149.0 against the 156.0 floor, and on agreement, 0.6104 against 0.7206. The benchmark-only arms at 3e-5 and 1e-4 fail on averaged JevBench, 155.5 and 154.5. The old plan at 3e-5 fails on val, 0.5510 against 0.5596. v3 at 3e-4 fails on JevBench, val, agreement and K = 80, which is 0.0382. Full fine-tuning at 2e-5 fails on the score ECE, 0.3691, which is 0.142 over frozen. Full fine-tuning at 5e-5 fails everything. The rejections are the useful half of the suite: each names the one measure that ended the arm, so a later recipe can be aimed at a specific gate rather than at the aggregate.
+Seven are rejected, each for a named reason. LoRA v3 at 1e-4 fails on averaged JevBench, 149.0 against the 156.0 floor, and on agreement, 0.6104 against 0.7206. The benchmark-only arms at 3e-5 and 1e-4 fail on averaged JevBench, 155.5 and 154.5. The old plan at 3e-5 fails on val, 0.5510 against the 0.5597 floor. v3 at 3e-4 fails on JevBench, val, agreement and K = 80, which is 0.0382. Full fine-tuning at 2e-5 fails on the score ECE, 0.3691, which is 0.142 over frozen. Full fine-tuning at 5e-5 fails everything. The rejections are the useful half of the suite: each names the one measure that ended the arm, so a later recipe can be aimed at a specific gate rather than at the aggregate.
 
 ## 3. Noise floor, measured
 
@@ -36,7 +44,7 @@ There is no seed axis in this loop: it has no shuffle, dropout or random draw, s
 
 ## 4. The score ceiling
 
-On the 1,111 benchmark score rows, every arm lands between 0.45 and 0.50 exact. Frozen panel-2 is 0.4662, the best LoRA arm is 0.4977 (benchmark-only at 1e-4) and full fine-tuning at 1e-5 is 0.4770. The judgement readout is behind everywhere on the same rows: frozen 0.4455, best arm 0.4518, and two arms are significantly worse with exact McNemar on the 1,111 rows: p = 0.00750 for v3 at 1e-4, which lost 121 and gained 82, and p = 0.00082 for the old plan at 1e-4, which lost 133 and gained 83. Both come from the judgement per-K validation pass.
+On the 1,111 benchmark score rows, the panel-2 arms land between 0.4662 and 0.4977 exact. Frozen panel-2 is 0.4662, the best LoRA arm is 0.4977 (benchmark-only at 1e-4) and full fine-tuning at 1e-5 is 0.4770. The judgement readout sits below that band on the same rows: frozen 0.4455, best arm 0.4518, and two arms are significantly worse with exact McNemar on the 1,111 rows: p = 0.00750 for v3 at 1e-4, which lost 121 and gained 82, and p = 0.00082 for the old plan at 1e-4, which lost 133 and gained 83. Both come from the judgement per-K validation pass.
 
 Full fine-tuning moves exact by +1.1 pp and within-one by +1.9 pp, and it does not reshape the errors. Adjacent misses are 23.6 pp and 28.7% of predictions are two or more levels away, against 22.8 pp and 30.6% for frozen. K = 6 is the worst cell in every arm. The ceiling is therefore a property of the score formulation or the labels, not of the readout: full fine-tuning, which moves every other measure, moves this one by about a point.
 
