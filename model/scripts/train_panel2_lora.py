@@ -511,6 +511,32 @@ def evaluate(model, tokenizer, rows, code_ids, device, limit=None):
     return counts, per_item, bins
 
 
+def target_loss(values, gold: int, mode: str, tau: float = 1.0):
+    """One row's training loss over its K code logits.
+
+    ``onehot`` is the shipped listwise cross-entropy: every level but the gold
+    is treated as equally wrong. ``soft`` gives the adjacent level
+    ``exp(-1)`` of the gold's weight and two levels away ``exp(-2)``, so a
+    near miss costs less; it cannot reach an error further than that.
+    ``expected`` penalises the distance between the gold level and the
+    distribution's mean level linearly, so a far miss costs more than a near
+    one. The decode stays argmax in every mode: the target is a training
+    change, not a decode change.
+    """
+    if mode == "onehot":
+        return F.cross_entropy(values.unsqueeze(0),
+                               torch.tensor([gold], device=values.device))
+    index = torch.arange(len(values), dtype=torch.float32, device=values.device)
+    if mode == "expected":
+        probabilities = torch.softmax(values, dim=0)
+        return (probabilities * index).sum().sub(float(gold)).abs()
+    if mode == "soft":
+        target = torch.exp(-(index - float(gold)).abs() / tau)
+        target = target / target.sum()
+        return -(target * torch.log_softmax(values, dim=0)).sum()
+    raise ValueError(f"unknown score target {mode!r}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--plan", type=Path, required=True)
@@ -637,6 +663,24 @@ def main() -> int:
             "curve and its best point can be kept rather than the last"
         ),
     )
+    parser.add_argument(
+        "--score-target",
+        choices=["onehot", "soft", "expected"],
+        default="onehot",
+        help=(
+            "training target for score rows only: onehot is the shipped "
+            "listwise cross-entropy, soft weights adjacent levels by distance, "
+            "expected penalises the distance between the gold and the mean "
+            "level; choice and noul rows always keep onehot, and the decode "
+            "stays argmax"
+        ),
+    )
+    parser.add_argument(
+        "--score-target-tau",
+        type=float,
+        default=1.0,
+        help="decay of the soft target, in levels; pre-registered at 1.0",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--epochs", type=int, default=1)
@@ -729,8 +773,10 @@ def main() -> int:
     def loss_of(row):
         values = code_tensor(model, tokenizer, prompt_of(row), row.codes,
                              code_ids, device)
-        return F.cross_entropy(values.unsqueeze(0),
-                               torch.tensor([row.gold], device=device))
+        # Only score rows take the alternative target; choice and noul rows
+        # keep the shipped listwise cross-entropy whatever the flag says.
+        mode = args.score_target if row.q_type == "score" else "onehot"
+        return target_loss(values, row.gold, mode, args.score_target_tau)
 
     # Frozen reference loss for the stop rule, on a fixed sample.
     frozen_mean = None
@@ -907,6 +953,8 @@ def main() -> int:
                "eval_plan_sha256_expected": args.eval_plan_sha256,
                "full_ft": args.full_ft, "grad_bucket_mb": args.grad_bucket_mb,
                "eval_every": args.eval_every,
+               "score_target": args.score_target,
+               "score_target_tau": args.score_target_tau,
                "max_batch_tokens": args.max_batch_tokens,
                "warmup_fraction": args.warmup_fraction,
                "gradient_checkpointing": args.gradient_checkpointing,

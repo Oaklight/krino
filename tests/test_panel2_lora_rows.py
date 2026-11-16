@@ -750,6 +750,101 @@ def test_eval_every_writes_a_checkpoint_before_the_last_step(tmp_path, monkeypat
     assert "jevbench" in record
 
 
+def test_the_one_hot_target_is_the_shipped_cross_entropy():
+    import torch
+    import torch.nn.functional as F
+
+    from model.scripts.train_panel2_lora import target_loss
+
+    values = torch.tensor([0.0, 2.0, -1.0])
+    assert torch.isclose(target_loss(values, 1, "onehot"),
+                         F.cross_entropy(values.unsqueeze(0),
+                                         torch.tensor([1])))
+
+
+def test_the_soft_target_charges_less_for_an_adjacent_miss():
+    """The soft target must reward a near miss and still prefer the gold.
+
+    With logits [0, 4, 0] and gold 0, one-hot charges the whole margin to the
+    wrong level. Soft charges 0.37 of it to that level, so its loss is lower;
+    and between two rows, the one whose mass sits on the gold must still be
+    the cheaper. If the decay is removed the two losses coincide.
+    """
+    import torch
+
+    from model.scripts.train_panel2_lora import target_loss
+
+    near_miss = torch.tensor([0.0, 4.0, 0.0])
+    on_gold = torch.tensor([4.0, 0.0, 0.0])
+    onehot_near = float(target_loss(near_miss, 0, "onehot"))
+    soft_near = float(target_loss(near_miss, 0, "soft"))
+    assert soft_near < onehot_near, "a near miss must be cheaper under soft"
+    assert float(target_loss(on_gold, 0, "soft")) < soft_near, (
+        "the gold level must still be cheaper than its neighbour")
+
+
+def test_the_expected_target_charges_a_far_miss_more_than_a_near_one():
+    """Linear in level distance: the property the soft target lacks."""
+    import torch
+
+    from model.scripts.train_panel2_lora import target_loss
+
+    # Gold 0 on K=4: mass on level 1 costs ~1, mass on level 3 costs ~3.
+    near = torch.tensor([0.0, 6.0, 0.0, 0.0])
+    far = torch.tensor([0.0, 0.0, 0.0, 6.0])
+    near_loss = float(target_loss(near, 0, "expected"))
+    far_loss = float(target_loss(far, 0, "expected"))
+    assert 0.9 < near_loss < 1.1
+    assert 2.9 < far_loss < 3.1
+    assert far_loss > 2 * near_loss
+
+
+def test_choice_rows_keep_the_one_hot_target_when_a_score_target_is_set(
+    tmp_path, monkeypatch
+):
+    """--score-target must reach score rows and only score rows.
+
+    Two choice rows and two score rows, one step each; the patched target
+    function records the mode each row was charged under.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    for index in range(2):
+        for option in (0, 1):
+            records.append(_record(f"corpus:ch{index}", option,
+                                   1 if option == 0 else 0, "choice",
+                                   CHOICE_PREFIX, f"Option {option}.", 2))
+    for index in range(2):
+        for option in range(3):
+            records.append(_record(f"corpus:sc{index}", option,
+                                   1 if option == 1 else 0, "score",
+                                   CHOICE_PREFIX, f"Level {option}.", 3))
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    seen = []
+    real = module.target_loss
+
+    def recording(values, gold, mode, tau=1.0):
+        seen.append(mode)
+        return real(values, gold, mode, tau)
+
+    monkeypatch.setattr(module, "target_loss", recording)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--score-target", "soft", "--no-stop-on-loss-rise",
+    ])
+    assert module.main() == 0
+    assert "soft" in seen, "the score rows must take the flagged target"
+    assert "onehot" in seen, "the choice rows must keep the shipped target"
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    assert payload["score_target"] == "soft"
+    assert payload["score_target_tau"] == 1.0
+
+
 def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
     import torch.distributed as dist
 
