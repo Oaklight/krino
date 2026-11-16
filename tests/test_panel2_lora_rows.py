@@ -476,6 +476,58 @@ def test_evaluate_reports_calibration_bins_that_add_up(tmp_path):
     assert correct == counts["all"][0]
 
 
+def test_only_benchmark_rows_enter_the_calibration_bins(tmp_path):
+    """Synthetic rows count toward accuracy but not toward ECE.
+
+    The LoRA arms' ECE is scored later over the 9,923 benchmark val rows only;
+    the eval plan's val split is 31,948 synthetic rows on top of that. Binning
+    every row here would compare the two families on different populations.
+    This is the mutation check for the filter: with it removed the bin total
+    below becomes 4 and the test goes red.
+    """
+    import torch
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    for index in range(2):
+        for option in (0, 1):
+            records.append(_record(f"corpus:bench{index}", option,
+                                   1 if option == 0 else 0, "choice",
+                                   CHOICE_PREFIX, f"Option {option}.", 2))
+    for index in range(2):
+        for option in (0, 1):
+            records.append(_record(f"corpus:synthetic-s{index}", option,
+                                   1 if option == 0 else 0, "choice",
+                                   CHOICE_PREFIX, f"Option {option}.", 2))
+    rows, _, _ = build_rows(_bytes(tmp_path, records), plan_unpermuted_noul=True)
+    sources = sorted({row.source for row in rows})
+    assert "synthetic" in sources and len(sources) == 3
+
+    class FakeTokenizer:
+        def __call__(self, text, return_tensors=None, add_special_tokens=False):
+            return {"input_ids": torch.zeros(1, 2, dtype=torch.long)}
+
+    class FakeModel(torch.nn.Module):
+        def forward(self, input_ids=None, **kwargs):
+            return types.SimpleNamespace(logits=torch.zeros(1, 1, 200))
+
+        def train(self, mode=True):
+            return self
+
+        def eval(self):
+            return self
+
+    from model.scripts.train_panel2_lora import CODES
+
+    code_ids = {code: index for index, code in enumerate(CODES)}
+    counts, per_item, bins = module.evaluate(
+        FakeModel(), FakeTokenizer(), rows, code_ids, "cpu")
+    total = sum(slot[0] for cell in bins.values() for slot in cell.values())
+    assert len(rows) == 4
+    assert counts["all"][1] == 4, "accuracy still counts every row"
+    assert total == 2, "only the two benchmark rows may enter the bins"
+
+
 def test_every_rank_gets_the_same_steps_from_its_own_shard():
     """The wiring, not just the helper: the count must not come from the shard.
 

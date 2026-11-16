@@ -462,6 +462,12 @@ def evaluate(model, tokenizer, rows, code_ids, device, limit=None):
     the report sums them across ranks and computes ECE once. Calibration is
     recorded here because a full fine-tune leaves no adapter behind, and a
     number computed after the fact would need the weights.
+
+    Only benchmark rows enter the bins. The eval plan's val split is mostly
+    synthetic (31,948 of 41,871 rows), and the LoRA arms' ECE comes from a
+    later scoring pass over the 9,923 benchmark rows; binning every row here
+    would put the two families on different populations, and the admission
+    gate compares them. Accuracy still counts every row.
     """
     model.eval()
     counts = {}
@@ -476,10 +482,11 @@ def evaluate(model, tokenizer, rows, code_ids, device, limit=None):
             confidence = float(torch.softmax(
                 torch.tensor(values, dtype=torch.float32), dim=0).max())
             decile = min(9, int(confidence * 10))
-            cell = bins.setdefault(f"{row.q_type}|{len(values)}", {})
-            slot = cell.setdefault(str(decile), [0, 0])
-            slot[0] += 1
-            slot[1] += int(ok)
+            if row.source != "synthetic":
+                cell = bins.setdefault(f"{row.q_type}|{len(values)}", {})
+                slot = cell.setdefault(str(decile), [0, 0])
+                slot[0] += 1
+                slot[1] += int(ok)
             for key in ("all", f"type:{row.q_type}", f"source:{row.source}"):
                 cell = counts.setdefault(key, [0, 0])
                 cell[0] += int(ok)
@@ -795,6 +802,7 @@ def main() -> int:
                                           code_ids, device)
     payload = {"rank": args.rank, "lr": args.lr, "val_counts": counts,
                "val_items": per_item, "ece_bins": ece_bins,
+               "ece_bins_population": "benchmark",
                "val_source": val_source,
                "stopped": stopped,
                "stop_reason": "epoch_mean_loss_above_frozen" if stopped else None,
