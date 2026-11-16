@@ -1,18 +1,24 @@
 """Measure the per-row CE and RPS that set ``--score-cramer-weight``.
 
 The mix arm's two terms sit on different scales: CE is unbounded, RPS is at
-most 1. The weight is therefore measured, not chosen. On the pinned plan's
-benchmark score rows, one forward per row, this prints the mean per-row CE,
-the mean per-row RPS, their ratio, and
+most 1. The weight is therefore measured, not chosen. On the plan's
+non-synthetic val score rows -- the population the primary endpoint reads --
+one forward per row, this prints the mean per-row CE, the mean per-row RPS,
+their ratio, and
 
     lambda = 0.25 * mean CE / mean RPS
 
 which makes the RPS term ``0.25 *`` the CE term, i.e. 20% of the score-row
-loss. Per-level-count blocks are printed as well, because a ratio that differs
-by more than about 2x between K would make one global lambda indefensible.
+loss.
+
+Per-level-count blocks are printed as well. The train split's level-count mix
+need not match the val split's, and the ratio is K-dependent, so the by-K
+lambdas are the check on whether one global lambda is defensible: if they
+agree within about 2x, it is.
 
 The resulting JSON is what ``--score-cramer-weight-source`` copies into the
-training payload; the trainer checks the pinned weight against its lambda.
+training payload; the trainer checks the pinned weight against its lambda and
+re-checks the file's internal arithmetic.
 
 Usage:
     python -m model.scripts.measure_score_cramer --plan PLAN --output OUT
@@ -74,9 +80,9 @@ def main() -> int:
     if args.limit:
         selected = selected[: args.limit]
     print(f"plan {args.plan} split_field {field} masked {masked}; "
-          f"{len(selected)} benchmark val score rows", flush=True)
+          f"{len(selected)} non-synthetic val score rows", flush=True)
     if not selected:
-        raise SystemExit("no benchmark val score rows in this plan")
+        raise SystemExit("no non-synthetic val score rows in this plan")
 
     model, tokenizer = load_causal_lm(
         "Qwen/Qwen3-Reranker-4B", device=args.device, dtype=torch.bfloat16,

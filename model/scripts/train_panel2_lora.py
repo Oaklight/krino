@@ -818,11 +818,12 @@ def main() -> int:
         default=None,
         help=(
             "lambda of the rps term under --score-loss mix. Measure it with "
-            "model/scripts/measure_score_cramer.py on the pinned plan's score "
-            "rows at step 0 and pin the value it prints. lambda = 0.25 * the "
-            "measured CE/RPS ratio, so the rps term is 0.25 * the CE term: "
-            "20% of the score-row loss. Required for mix, must be finite and "
-            "greater than zero, and refused for ce and rps"
+            "model/scripts/measure_score_cramer.py on the pinned plan's "
+            "non-synthetic val score rows at step 0 and pin the value it "
+            "prints. lambda = 0.25 * the measured CE/RPS ratio, so the rps "
+            "term is 0.25 * the CE term: 20% of the score-row loss. Required "
+            "for mix, must be finite and greater than zero, and refused for "
+            "ce and rps"
         ),
     )
     parser.add_argument(
@@ -934,7 +935,11 @@ def main() -> int:
                     f"--score-cramer-weight-source does not exist: "
                     f"{args.score_cramer_weight_source}"
                 )
-            probe = json.loads(args.score_cramer_weight_source.read_text())
+            # One read: the digest and the numbers must describe the same
+            # bytes, or `measured: true` pairs one version's hash with
+            # another version's means.
+            probe_bytes = args.score_cramer_weight_source.read_bytes()
+            probe = json.loads(probe_bytes)
             overall = probe.get("overall") or {}
             for key in ("mean_ce", "mean_rps", "ce_over_rps", "lambda", "n"):
                 if key not in overall:
@@ -942,8 +947,27 @@ def main() -> int:
                         f"--score-cramer-weight-source has no overall.{key}; "
                         "it is not a lambda probe output"
                     )
-            if abs(overall["lambda"] - args.score_cramer_weight) > 1e-9 * max(
-                    1.0, abs(args.score_cramer_weight)):
+
+            def agrees(left, right):
+                return abs(left - right) <= 1e-6 * max(
+                    1.0, abs(left), abs(right))
+
+            # The probe's own arithmetic, so a file whose means, ratio and
+            # lambda do not relate cannot be stamped measured.
+            if not agrees(overall["ce_over_rps"],
+                          overall["mean_ce"] / overall["mean_rps"]):
+                raise SystemExit(
+                    "--score-cramer-weight-source is internally inconsistent: "
+                    f"ce_over_rps {overall['ce_over_rps']} is not "
+                    f"mean_ce/mean_rps {overall['mean_ce'] / overall['mean_rps']}"
+                )
+            if not agrees(overall["lambda"], 0.25 * overall["ce_over_rps"]):
+                raise SystemExit(
+                    "--score-cramer-weight-source is internally inconsistent: "
+                    f"lambda {overall['lambda']} is not 0.25 * ce_over_rps "
+                    f"{0.25 * overall['ce_over_rps']}"
+                )
+            if not agrees(overall["lambda"], args.score_cramer_weight):
                 raise SystemExit(
                     f"--score-cramer-weight {args.score_cramer_weight} is not "
                     f"the measured lambda {overall['lambda']}; the pinned "
@@ -952,8 +976,7 @@ def main() -> int:
             cramer_provenance = {
                 "measured": True,
                 "source": str(args.score_cramer_weight_source),
-                "source_sha256": file_sha256(
-                    args.score_cramer_weight_source),
+                "source_sha256": hashlib.sha256(probe_bytes).hexdigest(),
                 "plan": probe.get("plan"),
                 "weights": probe.get("weights"),
                 "rows": overall["n"],
@@ -1002,6 +1025,19 @@ def main() -> int:
         val_rows = [r for r in eval_rows if r.split == "val"]
         print(f"rank {args.rank}: eval plan val rows {len(val_rows)} "
               f"split_field {eval_split_field} sha {eval_plan_sha[:16]}", flush=True)
+    if cramer_provenance and cramer_provenance.get("measured") and val_rows:
+        # The probe and the trainer must mean the same population, or the
+        # measured lambda was scaled on a different row set than the primary
+        # endpoint reads. Checked after the eval plan, which is the val split
+        # the trainer scores.
+        expected_rows = sum(1 for row in val_rows
+                            if row.q_type == "score"
+                            and row.source != "synthetic")
+        if cramer_provenance["rows"] != expected_rows:
+            raise SystemExit(
+                f"the probe measured {cramer_provenance['rows']} rows but the "
+                f"eval plan has {expected_rows} non-synthetic val score rows"
+            )
     print(f"rank {args.rank}: rows {len(rows)} train {len(train_rows)} "
           f"val {len(val_rows)} masked {masked} split_field {split_field} "
           f"plan_sha {plan_sha[:16]}", flush=True)

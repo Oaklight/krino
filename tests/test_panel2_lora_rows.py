@@ -944,6 +944,14 @@ def test_the_score_loss_flags_refuse_unmeasured_combinations(tmp_path, monkeypat
     probe.write_text(json.dumps({"overall": {
         "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
         "lambda": 1.25}}))
+    bad_ratio = tmp_path / "bad_ratio.json"
+    bad_ratio.write_text(json.dumps({"overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 6.0,
+        "lambda": 1.5}}))
+    bad_lambda = tmp_path / "bad_lambda.json"
+    bad_lambda.write_text(json.dumps({"overall": {
+        "n": 1111, "mean_ce": 2.0, "mean_rps": 0.4, "ce_over_rps": 5.0,
+        "lambda": 1.0}}))
     base = [
         "train_panel2_lora.py", "--plan", str(tmp_path / "plan.jsonl"),
         "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
@@ -963,6 +971,16 @@ def test_the_score_loss_flags_refuse_unmeasured_combinations(tmp_path, monkeypat
          "greater than zero"),
         (["--score-loss", "mix", "--score-cramer-weight", "-1"],
          "greater than zero"),
+        (["--score-loss", "mix", "--score-cramer-weight", "inf"],
+         "greater than zero"),
+        (["--score-loss", "mix", "--score-cramer-weight", "nan"],
+         "greater than zero"),
+        (["--score-loss", "mix", "--score-cramer-weight", "1.5",
+          "--score-cramer-weight-source", str(bad_ratio)],
+         "internally inconsistent"),
+        (["--score-loss", "mix", "--score-cramer-weight", "1.0",
+          "--score-cramer-weight-source", str(bad_lambda)],
+         "internally inconsistent"),
     ]
     for extra, match in cases:
         monkeypatch.setattr(sys, "argv", base + extra)
