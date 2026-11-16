@@ -1482,7 +1482,11 @@ def test_phase_profile_times_every_phase_of_the_first_steps(tmp_path, monkeypatc
         "--phase-profile", "1",
     ])
     assert module.main() == 0
-    profile = json.loads((tmp_path / "out" / "phase_profile.json").read_text())
+    profile = json.loads(
+        (tmp_path / "out" / "phase_profile_rank0.json").read_text())
+    assert profile["path_this_rank"] == "phase_profile_rank0.json"
+    assert not (tmp_path / "out" / "phase_profile.json").exists(), (
+        "a shared filename is what let eight ranks tear the file")
     assert profile["steps_this_rank"] == 1
     assert profile["first_step"] == 1
     assert profile["includes_startup"] is True
@@ -1491,6 +1495,79 @@ def test_phase_profile_times_every_phase_of_the_first_steps(tmp_path, monkeypatc
     assert profile["mean_profiled_seconds"] > 0
     assert profile["mean_profiled_seconds"] >= profile["mean_measured_phases_seconds"]
     assert all(value >= 0 for value in profile["mean_seconds_this_rank"].values())
+
+
+def test_a_second_rank_writes_its_own_file_and_leaves_rank0_alone(tmp_path,
+                                                                  monkeypatch):
+    """The filename must carry the writing rank, not a constant.
+
+    One rank proves nothing: with a constant rank in the name, rank 1 would
+    overwrite rank 0's file and a rank-0-only test would still pass.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:p{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(8) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    out = tmp_path / "out"
+
+    def run(rank):
+        monkeypatch.setattr(sys, "argv", [
+            "train_panel2_lora.py", "--plan", str(plan), "--output", str(out),
+            "--world", "2", "--rank", str(rank), "--device", "cpu", "--lr", "0",
+            "--epochs", "1", "--batch-rows", "2", "--plan-unpermuted-noul",
+            "--frozen-loss-sample", "2", "--phase-profile", "1",
+        ])
+        assert module.main() == 0
+
+    run(0)
+    zero_path = out / "phase_profile_rank0.json"
+    zero_before = zero_path.read_bytes()
+    run(1)
+    one_path = out / "phase_profile_rank1.json"
+    assert one_path.exists()
+    body = json.loads(one_path.read_text())
+    assert body["rank_this_process"] == 1
+    assert body["path_this_rank"] == one_path.name
+    assert zero_path.read_bytes() == zero_before, (
+        "a rank-1 run must not touch rank 0's file")
+
+
+def test_a_failed_phase_profile_write_aborts_the_group(tmp_path, monkeypatch):
+    """A local write failure must reach the group, not vanish in a traceback.
+
+    Rank 0's write is local, so an exception there would leave the other ranks
+    at the next collective with nothing to see.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:f{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    real_write = pathlib.Path.write_text
+
+    def refuse(self, *args, **kwargs):
+        if self.name.startswith("phase_profile_rank"):
+            raise OSError("no space left on device")
+        return real_write(self, *args, **kwargs)
+
+    monkeypatch.setattr(pathlib.Path, "write_text", refuse)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--phase-profile", "1",
+    ])
+    with pytest.raises(SystemExit,
+                       match=r"phase profile write: 1 rank\(s\) failed"):
+        module.main()
 
 
 def test_ranks_that_agree_on_the_digest_proceed(monkeypatch):
