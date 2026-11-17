@@ -2211,9 +2211,10 @@ def test_bucketed_and_shipped_paths_record_the_same_history(tmp_path,
     The two arms must be shown to have run differently in this same test, or
     "they agreed on the losses" is satisfied by both taking the shipped path.
     The assertion is strict: a bucket forward pads to a fixed width that
-    exceeds these rows and to a full batch, while the shipped path pads each
-    row only to its own chunk's longest, so the bucketed arm's padded total is
-    strictly larger. Equality is reachable only if every row exactly fills its
+    exceeds these rows and to a full batch, while the shipped path encodes one
+    row per forward, so it pads nothing across rows and its padded total is
+    exactly its real token count. That is what makes the two totals
+    comparable. Equality is reachable only if every row exactly fills its
     bucket at a full batch, which this fixture does not do — so if someone
     later changes the fixture to make rows fill their buckets, the fixture is
     wrong for this test rather than the assertion too strong.
