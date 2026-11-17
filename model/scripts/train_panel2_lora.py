@@ -2110,6 +2110,17 @@ def main() -> int:
                                       if (args.chunk_tokens or args.chunk_rows
                                           or args.bucket_list)
                                       else None),
+            # The bucketing measurements live here as well as in the shard
+            # payload: this file is written before the epoch-end evaluation,
+            # so a measurement run stopped after the profiles exists does not
+            # lose the per-bucket costs it was run for.
+            "bucketing_this_rank": ({
+                "widths": list(args.bucket_list),
+                "prewarm_seconds_this_rank": prewarm_seconds,
+                "actuals_per_forward": bucket_actuals,
+                "cost_model": {"call_seconds": BUCKET_CALL_SECONDS,
+                               "token_seconds": BUCKET_TOKEN_SECONDS},
+            } if args.bucket_list else {"widths": []}),
         }
         # One file per rank: every rank runs this block, and a shared name let
         # them overwrite each other, leaving a torn file that parses as neither.

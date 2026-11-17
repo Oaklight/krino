@@ -2264,6 +2264,9 @@ def test_the_bucketed_profile_records_each_forwards_actuals(tmp_path,
 
     recorded, profile = payload(1)
     actuals = recorded["bucketing"]["actuals_per_forward"]
+    # The phase profile is written before the epoch-end evaluation, so the
+    # per-bucket cost a measurement run was made for must be in it too.
+    assert profile["bucketing_this_rank"]["actuals_per_forward"] == actuals
     assert len(actuals) == (
         profile["chunking_this_rank"]["forwards_per_step"][0]) == len(
         [item for item in actuals if item["step"] == 1])
