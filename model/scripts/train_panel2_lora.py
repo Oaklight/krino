@@ -429,7 +429,84 @@ def chunk_cost(chunk, token_counts) -> tuple[int, int]:
     return real, len(chunk) * max(token_counts[id(row)] for row in chunk)
 
 
-def chunk_inputs(tokenizer, rows, device):
+BUCKET_WIDTHS = (512, 1024, 2048, 4096)
+# Steady-state cost model for balancing: a warm forward costs a fixed call
+# term plus a term per padded token. The constants come from the bucket8 probe
+# (0.158 s forward and 0.388 s backward for one call over 4,048 padded tokens)
+# with the per-call term taken as the warm one-row forward of 0.10 s.
+BUCKET_CALL_SECONDS = 0.10
+BUCKET_TOKEN_SECONDS = 0.00011
+
+
+def bucket_width(width: int, buckets=BUCKET_WIDTHS):
+    """The smallest fixed bucket that holds a row of ``width`` tokens."""
+    for size in buckets:
+        if width <= size:
+            return size
+    return None
+
+
+def bucket_rows(rows, token_counts, buckets=BUCKET_WIDTHS) -> list:
+    """Rows grouped by bucket, in fixed width order.
+
+    The widths are fixed rather than derived from the plan: a shape is warm
+    only if it has been seen, so a stable set of widths is what makes every
+    step after the first pay warm costs. Returns ``(width, rows)`` pairs for
+    the non-empty buckets.
+    """
+    grouped = {size: [] for size in buckets}
+    for row in rows:
+        size = bucket_width(token_counts[id(row)], buckets)
+        if size is None:
+            raise ValueError(
+                f"row {row.row_id} needs {token_counts[id(row)]} tokens, above "
+                f"the largest bucket {max(buckets)}")
+        grouped[size].append(row)
+    return [(size, grouped[size]) for size in buckets if grouped[size]]
+
+
+def bucket_cost(groups, batch_rows: int) -> float:
+    """Steady-state seconds for a rank holding these bucket groups.
+
+    Each forward is padded to ``batch_rows`` rows at the bucket's width, so a
+    bucket with fewer than a full batch still pays a full batch's tokens. That
+    is deliberate: the batch dimension is part of the shape, and a shape is
+    warm only if its size does not vary.
+    """
+    total = 0.0
+    for width, rows in groups:
+        forwards = -(-len(rows) // batch_rows)
+        padded = forwards * batch_rows * width
+        total += forwards * BUCKET_CALL_SECONDS + padded * BUCKET_TOKEN_SECONDS
+    return total
+
+
+def deal_rows_by_bucket_cost(rows, token_counts, world: int, batch_rows: int,
+                             buckets=BUCKET_WIDTHS) -> list:
+    """Deal rows to ranks to level the steady-state bucket cost.
+
+    Longest first, each row to the rank whose cost rises least; opening a
+    bucket on a rank costs its call term, so the deal also avoids spreading a
+    step's rows over more buckets than it must. Deterministic: ties break on
+    rank index and rows are ordered by (tokens, row id).
+    """
+    if world <= 1:
+        return [list(rows)]
+    loads = [[] for _ in range(world)]
+    ordered = sorted(rows, key=lambda row: (-token_counts[id(row)], row.row_id))
+    for row in ordered:
+        best_rank, best_cost = 0, None
+        for rank in range(world):
+            candidate = loads[rank] + [row]
+            cost = bucket_cost(bucket_rows(candidate, token_counts, buckets),
+                               batch_rows)
+            if best_cost is None or cost < best_cost:
+                best_rank, best_cost = rank, cost
+        loads[best_rank].append(row)
+    return loads
+
+
+def chunk_inputs(tokenizer, rows, device, width=None, pad_rows=None):
     """Padded ids, attention mask and per-row position ids for one chunk.
 
     Rows are separate batch elements, so no row can attend to another; the
@@ -437,12 +514,28 @@ def chunk_inputs(tokenizer, rows, device):
     to the chunk's longest and the mask excludes the pads. Position ids are
     built from the mask rather than from the padding's side, so a row's first
     token is position 0 whether the padding sits before or after it.
+
+    ``width`` and ``pad_rows`` fix the two shape dimensions: the ids are padded
+    to that width and filled out with masked dummy rows to that batch size, so
+    a bucket's forward always presents the same shape and stays warm.
     """
     prompts = [prompt_of(row) for row in rows]
     encoded = tokenizer(prompts, return_tensors="pt", padding=True,
                         add_special_tokens=False)
-    input_ids = encoded["input_ids"].to(device)
-    attention = encoded["attention_mask"].to(device)
+    input_ids = encoded["input_ids"]
+    attention = encoded["attention_mask"]
+    target_width = max(input_ids.shape[1], width or 0)
+    target_rows = max(input_ids.shape[0], pad_rows or 0)
+    if (target_width, target_rows) != tuple(input_ids.shape):
+        ids = torch.zeros((target_rows, target_width), dtype=input_ids.dtype,
+                          device=input_ids.device)
+        mask = torch.zeros((target_rows, target_width), dtype=attention.dtype,
+                           device=attention.device)
+        ids[:input_ids.shape[0], :input_ids.shape[1]] = input_ids
+        mask[:attention.shape[0], :attention.shape[1]] = attention
+        input_ids, attention = ids, mask
+    input_ids = input_ids.to(device)
+    attention = attention.to(device)
     positions = (attention.cumsum(-1) - 1).clamp(min=0)
     return input_ids, attention, positions
 
@@ -454,28 +547,35 @@ def chunk_code_logits(model, tokenizer, rows, code_ids, device, encoded=None):
     input_ids, attention, positions = encoded
     logits = model(input_ids=input_ids, attention_mask=attention,
                    position_ids=positions).logits
+    if attention.shape[0] != len(rows):
+        # A bucket pads the batch with dummy rows to fix the shape; only the
+        # real rows' last positions are read.
+        attention = attention[:len(rows)]
     last = attention.sum(-1) - 1
     picked = logits[torch.arange(len(rows), device=device), last].float()
     return [torch.stack([picked[index][code_ids[code]] for code in row.codes])
             for index, row in enumerate(rows)]
 
 
-def balanced_step_batch(step, train_rows, rank, world, batch_rows,
-                        token_counts):
-    """The rows this rank trains at ``step`` under the balanced rule.
+def step_union(step, train_rows, world, batch_rows) -> list:
+    """The step's rows: the ranks' strided batches, wrapped per shard.
 
-    The union is built from the ranks' strided batches, so the step trains
-    exactly the rows the strided loop would and only the placement changes. A
-    global slice would wrap the last step differently: ``batch_indices`` wraps
-    each shard by its own length, and the shards differ by a row when the plan
-    is not divisible by the world.
+    Building from ``batch_indices`` per shard keeps the wrapped last step the
+    same rows the strided loop would train; a global slice wraps differently.
     """
     union = []
     for other in range(world):
         other_shard = train_rows[other::world] if world > 1 else train_rows
         union.extend(other_shard[index] for index in
                      batch_indices(step, batch_rows, len(other_shard)))
-    return deal_rows(union, token_counts, world)[rank]
+    return union
+
+
+def balanced_step_batch(step, train_rows, rank, world, batch_rows,
+                        token_counts):
+    """The rows this rank trains at ``step`` under the balanced rule."""
+    return deal_rows(step_union(step, train_rows, world, batch_rows),
+                     token_counts, world)[rank]
 
 
 def chunk_loss(chunk, values, row_loss_of, nominal_rows: int):
@@ -950,6 +1050,16 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--bucket-tokens",
+        default="",
+        help=(
+            "comma-separated fixed widths, e.g. 512,1024,2048,4096: rows are "
+            "grouped into the smallest width that holds them, padded up to it "
+            "and forwarded together with the batch padded to --batch-rows, so "
+            "the shapes are fixed and stay warm after the first appearance"
+        ),
+    )
+    parser.add_argument(
         "--grad-bucket-mb",
         type=int,
         default=64,
@@ -1100,6 +1210,18 @@ def main() -> int:
     parser.add_argument("--frozen-loss-sample", type=int, default=512)
     parser.add_argument("--log-every", type=int, default=25)
     args = parser.parse_args()
+    args.bucket_list = tuple(
+        int(value) for value in args.bucket_tokens.split(",") if value.strip()
+    ) if args.bucket_tokens else ()
+    if args.bucket_list and (args.chunk_tokens or args.chunk_rows):
+        raise SystemExit(
+            "--bucket-tokens sets the grouping and padding; drop "
+            "--chunk-tokens and --chunk-rows when it is set"
+        )
+    if args.bucket_list and any(
+            later <= earlier for earlier, later
+            in zip(args.bucket_list, args.bucket_list[1:])):
+        raise SystemExit("--bucket-tokens must be strictly increasing")
     if args.start_step and args.load_weights is None:
         # A resumed leg that starts its schedule at step 1 but claims to be at
         # step 543 would warm up again and overwrite the step accounting.
@@ -1335,6 +1457,28 @@ def main() -> int:
     model.train()
     optimizer = torch.optim.AdamW(trainable, lr=args.lr, weight_decay=0.01)
 
+    prewarm_seconds = 0.0
+    if args.bucket_list and not args.eval_only:
+        # A shape is cheap only after it has been seen, and that first cost is
+        # per process, not per step. One forward and backward per bucket at the
+        # exact shape the step will use pays it here, where it can be timed and
+        # recorded, instead of inside step 1 where it would look like per-step
+        # cost. The gradients are dropped before any optimizer step.
+        warm_row = train_rows[0]
+        synchronise(device)
+        started = time.perf_counter()
+        for width in args.bucket_list:
+            encoded = chunk_inputs(tokenizer, [warm_row], device, width=width,
+                                   pad_rows=args.batch_rows)
+            values = chunk_code_logits(model, tokenizer, [warm_row], code_ids,
+                                       device, encoded=encoded)
+            target_loss(values[0], warm_row.gold, "onehot").backward()
+            optimizer.zero_grad(set_to_none=True)
+        synchronise(device)
+        prewarm_seconds = time.perf_counter() - started
+        print(f"rank {args.rank}: prewarmed buckets {list(args.bucket_list)} "
+              f"in {prewarm_seconds:.2f}s", flush=True)
+
     def row_loss(row, values):
         # Only score rows take an alternative target or loss; choice and noul
         # rows keep the shipped one-hot cross-entropy whatever the flags say.
@@ -1484,14 +1628,15 @@ def main() -> int:
     chunk_sizes: list = []
     rows_per_step: list = []
     chunk_decisions: list = []
-    # The rows and tokens each step trained on, by type, on this rank. The
-    # stop rule's composition is the plan's and cannot show a step whose mix
-    # is not the plan's; this is the step's own.
+    # The mix each step trained on, per rank: the stop rule's composition is
+    # the plan's, so this is the step's own, summed over every bucket the
+    # step's rows were spread across.
     composition_per_step: list = []
+    bucket_groups: list = []
     assignment_ids: list = []
     if not args.eval_only:
         if (args.max_row_tokens or args.balance_rows or args.chunk_tokens
-                or args.chunk_rows):
+                or args.chunk_rows or args.bucket_list):
             # The cap is a backstop, and it is counted: a row longer than the
             # cap is its own forward and would set the peak by itself. The
             # whole train set is measured on every rank so the retained count,
@@ -1559,7 +1704,14 @@ def main() -> int:
                                 "clip", "optimizer")}
                     synchronise(device)
                     step_started = time.perf_counter()
-                if args.balance_rows:
+                if args.bucket_list:
+                    batch = deal_rows_by_bucket_cost(
+                        step_union(step, train_rows, args.world,
+                                   args.batch_rows),
+                        token_counts, args.world, args.batch_rows,
+                        args.bucket_list)[args.rank]
+                    assignment_ids.extend(row.row_id for row in batch)
+                elif args.balance_rows:
                     batch = balanced_step_batch(step, train_rows, args.rank,
                                                 args.world, args.batch_rows,
                                                 token_counts)
@@ -1581,15 +1733,33 @@ def main() -> int:
                         row.q_type, 0) + 1
                 optimizer.zero_grad(set_to_none=True)
                 losses = []
-                chunked = bool(args.chunk_tokens or args.chunk_rows)
+                chunked = bool(args.chunk_tokens or args.chunk_rows
+                               or args.bucket_list)
                 # The divisor is the step's nominal rows per rank, so a balanced
                 # step is the mean over all 64 rows rather than the mean of the
                 # ranks' means: the deal gives ranks unequal row counts on a
                 # step, and averaging per-rank means would weight a rank with
                 # more rows as much as one with fewer.
-                divisor = args.batch_rows if args.balance_rows else len(batch)
+                divisor = (args.batch_rows
+                           if (args.balance_rows or args.bucket_list)
+                           else len(batch))
                 step_loss = None
-                if chunked:
+                widths = None
+                if args.bucket_list:
+                    # Fixed-width sub-batches, each padded to the bucket width
+                    # and to a full batch, so every forward presents a shape
+                    # that was warmed at startup.
+                    chunks, widths = [], []
+                    bucket_groups.append(
+                        {str(width): len(rows) for width, rows in
+                         bucket_rows(batch, token_counts, args.bucket_list)})
+                    for width, group_rows in bucket_rows(batch, token_counts,
+                                                         args.bucket_list):
+                        for start in range(0, len(group_rows),
+                                           args.batch_rows):
+                            chunks.append(group_rows[start:start + args.batch_rows])
+                            widths.append(width)
+                elif chunked:
                     decisions = []
                     chunks = chunk_by_length(batch, token_counts,
                                              args.chunk_tokens,
@@ -1604,19 +1774,34 @@ def main() -> int:
                     real_this_step = padded_this_step = 0
                     forwards_this_step = len(chunks)
                     chunk_sizes.append([len(chunk) for chunk in chunks])
-                    for chunk in chunks:
+                    for index, chunk in enumerate(chunks):
                         real, padded = chunk_cost(chunk, token_counts)
+                        if widths:
+                            # A bucketed forward pays a full batch at the
+                            # bucket width, whatever its real rows.
+                            padded = args.batch_rows * widths[index]
                         real_this_step += real
                         padded_this_step += padded
+                        # One encode per forward serves both features: the
+                        # bucket's width and padded batch for the shapes, and
+                        # the same mask for the step's composition. Counting
+                        # from a second tokenisation would be the double pass
+                        # this branch and the mix log were split to avoid.
                         if profile is None:
-                            encoded = chunk_inputs(tokenizer, chunk, device)
+                            encoded = chunk_inputs(
+                                tokenizer, chunk, device,
+                                width=widths[index] if widths else None,
+                                pad_rows=args.batch_rows if widths else None)
                             values = chunk_code_logits(model, tokenizer, chunk,
                                                        code_ids, device,
                                                        encoded=encoded)
                         else:
                             synchronise(device)
                             started_phase = time.perf_counter()
-                            encoded = chunk_inputs(tokenizer, chunk, device)
+                            encoded = chunk_inputs(
+                                tokenizer, chunk, device,
+                                width=widths[index] if widths else None,
+                                pad_rows=args.batch_rows if widths else None)
                             synchronise(device)
                             profile["tokenise"] += (time.perf_counter()
                                                     - started_phase)
@@ -1942,11 +2127,18 @@ def main() -> int:
                        if args.balance_rows else None),
                },
                "step_losses": history,
-               # The mix each step actually trained on, per rank. The stop
-               # rule's composition is the plan's, so a plan-level check
-               # cannot see a step that trained a different one; this is the
-               # step's own count, and the global step is the sum over ranks.
+               # The mix each step actually trained on, per rank, summed
+               # over every bucket the step's rows were spread across. The
+               # stop rule's composition is the plan's, so this is the only
+               # record of what a step really carried.
                "composition_per_step": composition_per_step,
+               "bucketing": ({
+                   "widths": list(args.bucket_list),
+                   "prewarm_seconds_this_rank": prewarm_seconds,
+                   "groups_per_step": bucket_groups,
+                   "cost_model": {"call_seconds": BUCKET_CALL_SECONDS,
+                                  "token_seconds": BUCKET_TOKEN_SECONDS},
+               } if args.bucket_list else {"widths": []}),
                "eval_every": args.eval_every,
                "phase_profile_steps": args.phase_profile,
                "ece_bins_rows_this_rank": ece_bins_rows,
