@@ -29,21 +29,48 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-TSV = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / "bucket_cost_fit.tsv"
+DEFAULT_TSV = HERE / "bucket_cost_fit.tsv"
 TRAINER = HERE / "train_panel2_lora.py"
 K = 5
 
 
 def load(path):
+    """Read the pairs in the file's order, and check that order.
+
+    The rows are the run's: rank, then step, then bucket width. The folds are
+    assigned over that order, so a file in another order would produce a
+    cross-validation of something the run did not record. This verifies the
+    order instead of sorting it, because a sort would silently repair such a
+    file and hide the fact.
+    """
+    lines = path.read_text(encoding="utf-8").splitlines()
+    header = lines[0].split("\t")
+    needed = ("rank", "step", "width", "padded_tokens", "seconds",
+              "excluded_by_1_5x_rule")
+    missing = [name for name in needed if name not in header]
+    if missing:
+        raise SystemExit(f"{path.name} lacks {', '.join(missing)}")
+    column = {name: header.index(name) for name in needed}
     records = []
-    for index, line in enumerate(path.read_text(encoding="utf-8").splitlines()):
-        if index == 0 or not line.strip():
+    previous = None
+    for number, line in enumerate(lines[1:], start=2):
+        if not line.strip():
             continue
-        width, padded, seconds, excluded = line.split("\t")
-        records.append({"width": int(width),
-                        "padded": int(padded),
-                        "seconds": float(seconds),
-                        "excluded": int(excluded)})
+        fields = line.split("\t")
+        rank = int(fields[column["rank"]])
+        step = int(fields[column["step"]])
+        width = int(fields[column["width"]])
+        key = (rank, step, width)
+        if previous is not None and key < previous:
+            raise SystemExit(
+                f"{path.name} line {number}: {key} follows {previous}; the "
+                f"file must be in run order (rank, step, width) and is not "
+                f"sorted here, because sorting would move the folds")
+        previous = key
+        records.append({"rank": rank, "step": step, "width": width,
+                        "padded": int(fields[column["padded_tokens"]]),
+                        "seconds": float(fields[column["seconds"]]),
+                        "excluded": int(fields[column["excluded_by_1_5x_rule"]])})
     return records
 
 
@@ -122,8 +149,8 @@ def cross_validate(records, filtered_training, quadratic=True):
     return coefficients, held
 
 
-def main():
-    records = load(TSV)
+def main(path=None):
+    records = load(Path(path) if path else DEFAULT_TSV)
     kept = [record for record in records if not record["excluded"]]
     fitted = solve([features(record) for record in kept],
                    [record["seconds"] for record in kept])
@@ -201,4 +228,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # The path is read here, not at import: a test process's argv[1] is the
+    # test file, and binding it at import would aim the loader at that.
+    main(sys.argv[1] if len(sys.argv) > 1 else None)
