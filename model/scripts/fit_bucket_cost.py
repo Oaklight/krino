@@ -88,8 +88,13 @@ def written_constants(path):
                       ("BUCKET_TOKEN_SECONDS", "token_seconds"),
                       ("BUCKET_TOKEN_SQUARED_SECONDS", "token_squared_seconds")):
         match = re.search(rf"^{name} = ([\d.eE+-]+)$", text, re.MULTILINE)
-        if match:
-            values[key] = float(match.group(1))
+        if match is None:
+            # A partial report would diff clean while dropping the one check
+            # that ties the artifact to the code, so this is fatal.
+            raise SystemExit(
+                f"cannot read {name} from {path.name}; the report would not "
+                f"carry the constants the trainer uses")
+        values[key] = float(match.group(1))
     return values
 
 
