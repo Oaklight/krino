@@ -1914,45 +1914,74 @@ def test_chunking_does_not_change_the_step_losses(tmp_path, monkeypatch):
     assert chunked == pytest.approx(whole, rel=1e-9)
 
 
-def test_type_composition_counts_the_steps_own_mix():
-    """The counts and token sums come from the rows handed in, not the plan."""
-    from model.scripts.train_panel2_lora import type_composition
+def test_the_mask_sum_is_the_rows_own_tokenisation():
+    """The count the step carries is the mask's sum, row by row.
 
-    rows = [types.SimpleNamespace(q_type=kind)
-            for kind in ("noul", "choice", "choice", "score")]
-    token_counts = {id(row): tokens for row, tokens
-                    in zip(rows, (100, 10, 12, 5))}
-    counts, tokens, total = type_composition(
-        rows, token_counts, ["choice", "noul", "score"])
-    assert counts == {"choice": 2, "noul": 1, "score": 1}
-    assert tokens == {"choice": 22, "noul": 100, "score": 5}
-    assert total == 127
-    # A type the step did not carry is present as zero, so the log shows the
-    # absence instead of dropping the type from the line.
-    counts, tokens, total = type_composition(
-        rows[:3], token_counts, ["choice", "noul", "score"])
-    assert counts["score"] == 0 and tokens["score"] == 0
-    assert total == 122
+    The mask is what defines "tokens" here: it excludes the pads that
+    chunk_inputs adds and follows a wrapped step's repeated rows. This test
+    tokenises a second time on purpose; production must not, and the assertion
+    that the two agree is what makes the mask the definition rather than a
+    coincidence of one fixture.
+    """
+    from model.scripts.train_panel2_lora import add_mask_tokens, chunk_inputs
+
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    rows = _batch_rows(3, growth=1)
+    rows[1].q_type = "score"
+    # A tokenizer whose width follows the text, so the rows differ in length
+    # and the padding is real.
+    class Tokenizer:
+        def __call__(self, text, return_tensors=None, add_special_tokens=False,
+                     padding=False):
+            import torch
+
+            texts = [text] if isinstance(text, str) else list(text)
+            widths = [len(item) for item in texts]
+            width = max(widths)
+            ids = torch.zeros(len(texts), width, dtype=torch.long)
+            mask = torch.zeros(len(texts), width, dtype=torch.long)
+            for index, item_width in enumerate(widths):
+                ids[index, :item_width] = 1
+                mask[index, :item_width] = 1
+            return {"input_ids": ids, "attention_mask": mask}
+
+    tokenizer = Tokenizer()
+    encoded = chunk_inputs(tokenizer, rows, "cpu")
+    tokens = {}
+    add_mask_tokens(tokens, rows, encoded)
+    expected = {}
+    for row in rows:
+        fresh = tokenizer(module.prompt_of(row),
+                          add_special_tokens=False)["input_ids"]
+        count = int(fresh.shape[-1])
+        expected[row.q_type] = expected.get(row.q_type, 0) + count
+    assert tokens == expected
+    assert tokens["score"] > 0 and tokens["choice"] > 0
 
 
 def test_the_step_log_states_its_own_type_mix(tmp_path, monkeypatch, capsys):
     """A step whose mix is not the plan's must say so in its own line.
 
-    The plan is 2 choice rows to 4 score rows, at two rows per step. Step 3
-    is both score rows, so it carries no choice row at all while the plan's
-    pinned mix is a third choice. The payload keeps the same count per step,
-    which is what a run with --log-every above one relies on.
+    The plan is 2 choice rows to 4 score rows, at two rows per step, and the
+    choice prompts are longer than the score prompts, so a type's token share
+    is not its row share. Step 3 is both score rows, so it carries no choice
+    row at all while the plan's pinned mix is a third choice. The payload
+    keeps the same count per step, which is what a run with --log-every above
+    one relies on.
     """
     module = importlib.import_module("model.scripts.train_panel2_lora")
     records = []
     order = [("c0", "choice", 2), ("s0", "score", 3), ("c1", "choice", 2),
              ("s1", "score", 3), ("s2", "score", 3), ("s3", "score", 3)]
     for row_id, q_type, n_options in order:
+        # The fake tokenizer's width varies with the text's length modulo
+        # three, so two extra characters make a score prompt shorter.
+        pad = "" if q_type == "choice" else "yy"
         for option in range(n_options):
             gold = 1 if q_type == "score" else 0
             records.append(_record(f"corpus:{row_id}", option,
                                    1 if option == gold else 0, q_type,
-                                   CHOICE_PREFIX, f"Option {option}.",
+                                   CHOICE_PREFIX, f"Option {option}." + pad,
                                    n_options))
     plan = _write(tmp_path, records)
     _fake_training_modules(module, monkeypatch)
@@ -1961,26 +1990,48 @@ def test_the_step_log_states_its_own_type_mix(tmp_path, monkeypatch, capsys):
         "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
         "--lr", "0", "--epochs", "1", "--batch-rows", "2",
         "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
-        "--log-every", "1",
+        "--log-every", "1", "--phase-profile", "1",
     ])
     assert module.main() == 0
     printed = [line for line in capsys.readouterr().out.splitlines()
                if "step " in line]
-    step_lines = [line for line in printed if "types " in line]
+    step_lines = [line for line in printed if "types_this_rank" in line]
     assert len(step_lines) == 3, "every logged step states its own mix"
 
     payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
     recorded = payload["composition_per_step"]
+    assert [entry["epoch"] for entry in recorded] == [1, 1, 1]
     assert [entry["step"] for entry in recorded] == [1, 2, 3]
     assert recorded[2]["rows"] == {"choice": 0, "score": 2}
     for entry in recorded:
         assert sum(entry["rows"].values()) == 2
         assert entry["tokens_total"] == sum(entry["tokens"].values())
 
-    third = [line for line in step_lines if "step 3/3" in line][0]
-    share = 100.0 * recorded[2]["tokens"]["score"] / recorded[2]["tokens_total"]
-    assert f"score 2r {share:.1f}%" in third
+    # Step 1 is one choice row and one score row: the same row share, but the
+    # choice prompt is longer, so its token share is not 50%.
+    first = recorded[0]
+    share = 100.0 * first["tokens"]["choice"] / first["tokens_total"]
+    row_share = 100.0 * first["rows"]["choice"] / 2
+    assert share != pytest.approx(row_share, abs=1.0), (
+        "the fixture must give one type a materially longer prompt, or the "
+        "token share cannot be distinguished from the row share")
+    line = [entry for entry in step_lines if "step 1/3" in entry][0]
+    assert f"choice 1r {share:.1f}%" in line
+    assert f"choice 1r {row_share:.1f}%" not in line
+
+    third = [entry for entry in step_lines if "step 3/3" in entry][0]
     assert "choice 0r 0.0%" in third
+    assert "score 2r 100.0%" in third
+
+    # The phase profile carries the run's totals, not a second per-step list.
+    profile = json.loads(
+        (tmp_path / "out" / "phase_profile_rank0.json").read_text())
+    totals = profile["composition_totals_this_rank"]
+    assert totals["choice"]["rows"] == 2
+    assert totals["score"]["rows"] == 4
+    assert totals["choice"]["tokens"] == sum(
+        entry["tokens"]["choice"] for entry in recorded)
+    assert "composition_per_step" not in profile
 
 
 def test_the_chunk_decision_reports_the_knob_that_bound():

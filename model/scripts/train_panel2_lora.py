@@ -783,20 +783,18 @@ def per_type_means(block):
             for kind, entry in block.items()}
 
 
-def type_composition(rows, token_counts, order):
-    """The rows and tokens this step carried, by question type.
+def add_mask_tokens(type_tokens, chunk, encoded):
+    """Add each row's real token count, from the mask the model was given.
 
-    The pinned composition is the plan's, computed once, so a whole-plan
-    check is blind to a step that trained a different mix. This is what the
-    step's own rows contain, on this rank; the step's global composition is
-    the sum over ranks. Returns counts, tokens and the token total.
+    The mask is the honest measure: it excludes the pads chunk_inputs adds and
+    it follows a wrapped step's repeated rows, which a count keyed by row id
+    could not. Reads the same tensor the forward used, so no row is tokenised
+    twice.
     """
-    counts = {kind: 0 for kind in order}
-    tokens = {kind: 0 for kind in order}
-    for row in rows:
-        counts[row.q_type] = counts.get(row.q_type, 0) + 1
-        tokens[row.q_type] = tokens.get(row.q_type, 0) + token_counts[id(row)]
-    return counts, tokens, sum(tokens.values())
+    for row, count in zip(chunk, encoded[1].sum(dim=1).tolist()):
+        type_tokens[row.q_type] = type_tokens.get(row.q_type, 0) + int(count)
+
+
 
 
 def abort_if_any_failed(failed, what: str, world: int) -> None:
@@ -1331,11 +1329,17 @@ def main() -> int:
                               args.score_target_tau)
         return target_loss(values, row.gold, "onehot")
 
+    # The token count each row presented, taken from the mask of the encode
+    # that fed its forward. Filled here because the plain path encodes per row
+    # inside loss_of and must not encode a second time to be counted.
+    encoded_tokens: dict = {}
+
     def loss_of(row, profile=None):
         prompt = prompt_of(row)
         if profile is None:
+            encoded = encode_prompt(tokenizer, prompt, device)
             values = code_tensor(model, tokenizer, prompt, row.codes,
-                                 code_ids, device)
+                                 code_ids, device, encoded=encoded)
         else:
             synchronise(device)
             started = time.perf_counter()
@@ -1347,6 +1351,7 @@ def main() -> int:
                                  code_ids, device, encoded=encoded)
             synchronise(device)
             profile["forward"] += time.perf_counter() - started
+        encoded_tokens[id(row)] = int(encoded["attention_mask"].sum())
         return row_loss(row, values)
 
     # Frozen reference loss for the stop rule, on a fixed sample. It is the
@@ -1550,23 +1555,14 @@ def main() -> int:
                 if epoch == 1 and warmup_steps and step <= warmup_steps:
                     for group in optimizer.param_groups:
                         group["lr"] = args.lr * step / warmup_steps
-                # The step's own mix, taken before any forward: what these
-                # rows are, not what the plan says the epoch's mix is. The
-                # plain path never counted tokens, so count the rows this
-                # step carries; the counts are cached for later epochs.
+                # The step's own mix: rows counted here, tokens added where
+                # each forward's mask is available, so the count is the tensor
+                # the model saw rather than a second tokenisation.
+                step_counts = {kind: 0 for kind in type_order}
+                step_tokens = {kind: 0 for kind in type_order}
                 for row in batch:
-                    if id(row) not in token_counts:
-                        token_counts[id(row)] = len(tokenizer(
-                            prompt_of(row),
-                            add_special_tokens=False)["input_ids"])
-                step_counts, step_tokens, step_type_tokens = type_composition(
-                    batch, token_counts, type_order)
-                composition_per_step.append({
-                    "step": step,
-                    "rows": step_counts,
-                    "tokens": step_tokens,
-                    "tokens_total": step_type_tokens,
-                })
+                    step_counts[row.q_type] = step_counts.get(
+                        row.q_type, 0) + 1
                 optimizer.zero_grad(set_to_none=True)
                 losses = []
                 chunked = bool(args.chunk_tokens or args.chunk_rows)
@@ -1597,8 +1593,10 @@ def main() -> int:
                         real_this_step += real
                         padded_this_step += padded
                         if profile is None:
+                            encoded = chunk_inputs(tokenizer, chunk, device)
                             values = chunk_code_logits(model, tokenizer, chunk,
-                                                       code_ids, device)
+                                                       code_ids, device,
+                                                       encoded=encoded)
                         else:
                             synchronise(device)
                             started_phase = time.perf_counter()
@@ -1613,6 +1611,7 @@ def main() -> int:
                             synchronise(device)
                             profile["forward"] += (time.perf_counter()
                                                    - started_phase)
+                        add_mask_tokens(step_tokens, chunk, encoded)
                         for row, row_values in zip(chunk, values):
                             term = row_loss(row, row_values)
                             entry = epoch_block.setdefault(row.q_type,
@@ -1641,6 +1640,8 @@ def main() -> int:
                     for chunk in chunks:
                         for row in chunk:
                             term = loss_of(row, profile)
+                            step_tokens[row.q_type] = step_tokens.get(
+                                row.q_type, 0) + encoded_tokens[id(row)]
                             loss = term / divisor
                             step_loss = (float(loss.detach())
                                          if step_loss is None
@@ -1691,22 +1692,36 @@ def main() -> int:
                                               - step_started) - measured
                     profile["step"] = step
                     phase_records.append(profile)
+                composition_per_step.append({
+                    "epoch": epoch,
+                    "step": step,
+                    "rows": step_counts,
+                    "tokens": step_tokens,
+                    "tokens_total": sum(step_tokens.values()),
+                })
                 mean = check_shared_non_negative(
                     sum(losses) / max(1, len(losses)), "mean loss", args.rank,
                     args.world, device, step=step)
                 history.append(mean)
                 if step % args.log_every == 0 or step == steps:
-                    # The step's own mix, stated rather than inferred from
-                    # the plan: per type, the rows trained on and that
-                    # type's share of this rank's tokens.
+                    # The step's own mix, stated rather than inferred from the
+                    # plan: per type, the rows trained on and that type's
+                    # share of this rank's tokens. The order is the union of
+                    # the plan's types and the step's, so a type either side
+                    # knows is printed instead of being dropped by the other.
+                    step_total = sum(step_tokens.values())
+                    log_order = sorted(set(type_order) | set(step_counts)
+                                       | set(step_tokens))
+                    shares = {kind: (100.0 * step_tokens.get(kind, 0)
+                                     / step_total if step_total else 0.0)
+                              for kind in log_order}
                     mix_text = " ".join(
-                        f"{kind} {step_counts[kind]}r "
-                        f"{100.0 * step_tokens[kind] / step_type_tokens
-                           if step_type_tokens else 0.0:.1f}%"
-                        for kind in type_order)
+                        f"{kind} {step_counts.get(kind, 0)}r "
+                        f"{shares[kind]:.1f}%"
+                        for kind in log_order)
                     print(f"rank {args.rank}: epoch {epoch} step {step}/{steps} "
                           f"loss {mean:.4f} elapsed {time.time() - started:.0f}s "
-                          f"types {mix_text}", flush=True)
+                          f"types_this_rank {mix_text}", flush=True)
                 if (args.eval_every and step % args.eval_every == 0
                         and step != steps):
                     evaluate_checkpoint(step)
@@ -1822,6 +1837,16 @@ def main() -> int:
                                        for key, value in totals.items()},
             "mean_measured_phases_seconds": sum(totals.values()) / recorded,
             "mean_unaccounted_seconds": unaccounted / recorded,
+            # The run's per-type totals on this rank. The per-step list stays
+            # in the shard payload; this is the compact form a reader can use
+            # if the payload write never happens.
+            "composition_totals_this_rank": {
+                kind: {"rows": sum(entry["rows"].get(kind, 0)
+                                   for entry in composition_per_step),
+                       "tokens": sum(entry["tokens"].get(kind, 0)
+                                     for entry in composition_per_step)}
+                for kind in sorted({kind for entry in composition_per_step
+                                    for kind in entry["rows"]})},
             "mean_profiled_seconds": (sum(totals.values())
                                       + unaccounted) / recorded,
             "profiled_seconds_excludes": (
@@ -1830,7 +1855,9 @@ def main() -> int:
                 "after the first --phase-profile; the batch gather and "
                 "zero_grad are inside the window"),
             "unaccounted_covers": "batch gather, warmup lr update, zero_grad, "
-                                  "chunk split, per-row loss bookkeeping",
+                                  "chunk split, per-row loss bookkeeping, and "
+                                  "the per-row mask sums on any path that does "
+                                  "not time its own tokenisation",
             "skipped_rows_this_rank": skipped_over_cap,
             # The per-step records and the chunk accounting, so a cost fit can
             # take both regressors from the same artifact as the timings.
