@@ -12,8 +12,11 @@ import importlib
 
 import pytest
 
+# The fit script imports nothing heavier than the standard library, so it can
+# be imported at collection time. The trainer pulls in torch, so it is imported
+# inside the one test that reads its constants; importing it here would make
+# collection fail on an interpreter without torch.
 FIT = importlib.import_module("model.scripts.fit_bucket_cost")
-TRAINER = importlib.import_module("model.scripts.train_panel2_lora")
 
 
 def test_the_fit_pairs_carry_their_provenance_columns():
@@ -35,15 +38,16 @@ def test_the_fit_pairs_carry_their_provenance_columns():
 
 def test_the_pairs_reproduce_the_trainers_constants():
     """The committed pairs, refitted, are the constants the trainer uses."""
+    trainer = pytest.importorskip("model.scripts.train_panel2_lora")
     records = FIT.load(FIT.DEFAULT_TSV)
     kept = [record for record in records if not record["excluded"]]
     fitted = FIT.solve([FIT.features(record) for record in kept],
                        [record["seconds"] for record in kept])
     # The trainer stores four significant figures, so the comparison tolerates
     # that rounding rather than demanding the full fit's digits.
-    assert fitted[0] == pytest.approx(TRAINER.BUCKET_CALL_SECONDS, rel=5e-3)
-    assert fitted[1] == pytest.approx(TRAINER.BUCKET_TOKEN_SECONDS, rel=5e-3)
-    assert fitted[2] == pytest.approx(TRAINER.BUCKET_TOKEN_SQUARED_SECONDS,
+    assert fitted[0] == pytest.approx(trainer.BUCKET_CALL_SECONDS, rel=5e-3)
+    assert fitted[1] == pytest.approx(trainer.BUCKET_TOKEN_SECONDS, rel=5e-3)
+    assert fitted[2] == pytest.approx(trainer.BUCKET_TOKEN_SQUARED_SECONDS,
                                       rel=5e-3)
 
 
