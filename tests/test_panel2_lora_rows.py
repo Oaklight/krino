@@ -2210,24 +2210,60 @@ def test_bucketed_and_shipped_paths_record_the_same_history(tmp_path,
 
     The two arms must be shown to have run differently in this same test, or
     "they agreed on the losses" is satisfied by both taking the shipped path.
-    The assertion is strict: a bucket forward pads to a fixed width that
-    exceeds these rows and to a full batch, while the shipped path encodes one
-    row per forward, so it pads nothing across rows and its padded total is
-    exactly its real token count. That is what makes the two totals
-    comparable. Equality is reachable only if every row exactly fills its
-    bucket at a full batch, which this fixture does not do — so if someone
-    later changes the fixture to make rows fill their buckets, the fixture is
-    wrong for this test rather than the assertion too strong.
+    The fixture is stated so the shapes can be checked against it: a local
+    tokenizer of width 4 + len(prompt) % 7 gives rows of 10, 5, 7 and 6 tokens
+    in that order, two rows per step, and the ladder is 6 and 11. Step 1 is
+    the 10 and 5, step 2 the 7 and 6, so each step presents (2, 11) and (2, 6):
+    22 and 12 padded tokens against 15 and 13 real. Bucket 6 holds a row that
+    fills it exactly and one that does not; bucket 11 holds two rows shorter
+    than its width, so both buckets carry visible excess.
+
+    The assertion is strict because the shipped path encodes one row per
+    forward and pads nothing across rows, so its padded total is exactly its
+    real token count — that is what makes the two totals comparable — while
+    every bucket forward here pads both the width and the batch. If someone
+    later changes the fixture so that padded equals real on both arms, the
+    fixture is wrong for this test rather than the assertion too strong.
     """
     module = importlib.import_module("model.scripts.train_panel2_lora")
+
+    class WideTokenizer:
+        """Widths of 4 to 10, so a ladder of 6 and 11 separates the rows."""
+
+        def __call__(self, text, return_tensors=None, add_special_tokens=False,
+                     padding=False):
+            import torch
+
+            texts = [text] if isinstance(text, str) else list(text)
+            widths = [4 + len(item) % 7 for item in texts]
+            width = max(widths)
+            ids = torch.zeros(len(texts), width, dtype=torch.long)
+            mask = torch.zeros(len(texts), width, dtype=torch.long)
+            for index, item_width in enumerate(widths):
+                ids[index, width - item_width:] = 1
+                mask[index, width - item_width:] = 1
+            if return_tensors is None:
+                # The trainer counts a prompt with len(input_ids), so the
+                # tensor-free call must return the id list, as the real
+                # tokenizer does.
+                single = isinstance(text, str)
+                return {"input_ids": ids[0].tolist() if single else ids.tolist(),
+                        "attention_mask": (mask[0].tolist() if single
+                                           else mask.tolist())}
+            return {"input_ids": ids, "attention_mask": mask}
+
+    # Rows of 10, 5, 7 and 6 tokens in plan order.
     records = [
         _record(f"corpus:b{index}", option, 1 if option == 0 else 0, "choice",
                 CHOICE_PREFIX + "z" * (index % 3),
                 f"Option {option}." + "y" * (index % 2), 2)
-        for index in range(4) for option in (0, 1)
+        for index in (0, 3, 1, 2) for option in (0, 1)
     ]
     plan = _write(tmp_path, records)
-    _fake_training_modules(module, monkeypatch)
+    fake = _fake_training_modules(module, monkeypatch)
+    fake.tokenizer = WideTokenizer()
+    monkeypatch.setattr(module, "load_causal_lm",
+                        lambda *a, **k: (fake, fake.tokenizer))
 
     def history(bucket):
         out = tmp_path / f"out{bucket}"
@@ -2247,7 +2283,10 @@ def test_bucketed_and_shipped_paths_record_the_same_history(tmp_path,
         return payload, profile
 
     shipped, shipped_profile = history("")
-    bucketed, bucketed_profile = history("9,10")
+    # Buckets of 6 and 11 against rows of 10, 5, 7 and 6: bucket 6 takes the
+    # 5 and the 6, bucket 11 the 10 and the 7, so both buckets open and both
+    # pad.
+    bucketed, bucketed_profile = history("6,11")
     assert bucketed["step_losses"] == pytest.approx(shipped["step_losses"],
                                                     rel=1e-6)
 
@@ -2256,15 +2295,17 @@ def test_bucketed_and_shipped_paths_record_the_same_history(tmp_path,
     # rows-per-forward, the shipped arm pads each row only to its chunk's
     # longest, so the bucketed total is strictly larger unless every row
     # exactly fills its bucket — which these rows do not.
-    assert (sum(bucketed_profile["padded_cost_this_rank"])
-            > sum(shipped_profile["padded_cost_this_rank"])), (
-        "the arms must not have padded identically, or the equivalence "
-        "certifies one path twice")
-    assert bucketed["bucketing"]["widths"] == [9, 10]
+    bucketed_padded = sum(bucketed_profile["padded_cost_this_rank"])
+    shipped_padded = sum(shipped_profile["padded_cost_this_rank"])
+    assert bucketed_padded > shipped_padded, (
+        f"the arms must not have padded identically, or the equivalence "
+        f"certifies one path twice: bucketed {bucketed_padded} against "
+        f"shipped {shipped_padded}")
+    assert bucketed["bucketing"]["widths"] == [6, 11]
     assert bucketed["bucketing"]["prewarm_seconds_this_rank"] > 0
     assert len(bucketed["bucketing"]["groups_per_step"]) == 2
-    assert bucketed["bucketing"]["prewarm_shapes_this_rank"] == [[2, 9],
-                                                                 [2, 10]]
+    assert bucketed["bucketing"]["prewarm_shapes_this_rank"] == [[2, 6],
+                                                                 [2, 11]]
 
 
 def test_the_bucketed_profile_records_each_forwards_actuals(tmp_path,
