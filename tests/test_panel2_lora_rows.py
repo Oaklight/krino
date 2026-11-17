@@ -1914,6 +1914,75 @@ def test_chunking_does_not_change_the_step_losses(tmp_path, monkeypatch):
     assert chunked == pytest.approx(whole, rel=1e-9)
 
 
+def test_type_composition_counts_the_steps_own_mix():
+    """The counts and token sums come from the rows handed in, not the plan."""
+    from model.scripts.train_panel2_lora import type_composition
+
+    rows = [types.SimpleNamespace(q_type=kind)
+            for kind in ("noul", "choice", "choice", "score")]
+    token_counts = {id(row): tokens for row, tokens
+                    in zip(rows, (100, 10, 12, 5))}
+    counts, tokens, total = type_composition(
+        rows, token_counts, ["choice", "noul", "score"])
+    assert counts == {"choice": 2, "noul": 1, "score": 1}
+    assert tokens == {"choice": 22, "noul": 100, "score": 5}
+    assert total == 127
+    # A type the step did not carry is present as zero, so the log shows the
+    # absence instead of dropping the type from the line.
+    counts, tokens, total = type_composition(
+        rows[:3], token_counts, ["choice", "noul", "score"])
+    assert counts["score"] == 0 and tokens["score"] == 0
+    assert total == 122
+
+
+def test_the_step_log_states_its_own_type_mix(tmp_path, monkeypatch, capsys):
+    """A step whose mix is not the plan's must say so in its own line.
+
+    The plan is 2 choice rows to 4 score rows, at two rows per step. Step 3
+    is both score rows, so it carries no choice row at all while the plan's
+    pinned mix is a third choice. The payload keeps the same count per step,
+    which is what a run with --log-every above one relies on.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    order = [("c0", "choice", 2), ("s0", "score", 3), ("c1", "choice", 2),
+             ("s1", "score", 3), ("s2", "score", 3), ("s3", "score", 3)]
+    for row_id, q_type, n_options in order:
+        for option in range(n_options):
+            gold = 1 if q_type == "score" else 0
+            records.append(_record(f"corpus:{row_id}", option,
+                                   1 if option == gold else 0, q_type,
+                                   CHOICE_PREFIX, f"Option {option}.",
+                                   n_options))
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "2",
+        "--log-every", "1",
+    ])
+    assert module.main() == 0
+    printed = [line for line in capsys.readouterr().out.splitlines()
+               if "step " in line]
+    step_lines = [line for line in printed if "types " in line]
+    assert len(step_lines) == 3, "every logged step states its own mix"
+
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    recorded = payload["composition_per_step"]
+    assert [entry["step"] for entry in recorded] == [1, 2, 3]
+    assert recorded[2]["rows"] == {"choice": 0, "score": 2}
+    for entry in recorded:
+        assert sum(entry["rows"].values()) == 2
+        assert entry["tokens_total"] == sum(entry["tokens"].values())
+
+    third = [line for line in step_lines if "step 3/3" in line][0]
+    share = 100.0 * recorded[2]["tokens"]["score"] / recorded[2]["tokens_total"]
+    assert f"score 2r {share:.1f}%" in third
+    assert "choice 0r 0.0%" in third
+
+
 def test_the_chunk_decision_reports_the_knob_that_bound():
     """A step's label names the constraint that split its chunks, not the config."""
     from model.scripts.train_panel2_lora import (chunk_by_length,

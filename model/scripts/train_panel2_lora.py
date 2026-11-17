@@ -783,6 +783,22 @@ def per_type_means(block):
             for kind, entry in block.items()}
 
 
+def type_composition(rows, token_counts, order):
+    """The rows and tokens this step carried, by question type.
+
+    The pinned composition is the plan's, computed once, so a whole-plan
+    check is blind to a step that trained a different mix. This is what the
+    step's own rows contain, on this rank; the step's global composition is
+    the sum over ranks. Returns counts, tokens and the token total.
+    """
+    counts = {kind: 0 for kind in order}
+    tokens = {kind: 0 for kind in order}
+    for row in rows:
+        counts[row.q_type] = counts.get(row.q_type, 0) + 1
+        tokens[row.q_type] = tokens.get(row.q_type, 0) + token_counts[id(row)]
+    return counts, tokens, sum(tokens.values())
+
+
 def abort_if_any_failed(failed, what: str, world: int) -> None:
     """Share a 0/1 failure flag, then abort every rank together.
 
@@ -1447,6 +1463,10 @@ def main() -> int:
     chunk_sizes: list = []
     rows_per_step: list = []
     chunk_decisions: list = []
+    # The rows and tokens each step trained on, by type, on this rank. The
+    # stop rule's composition is the plan's and cannot show a step whose mix
+    # is not the plan's; this is the step's own.
+    composition_per_step: list = []
     assignment_ids: list = []
     if not args.eval_only:
         if (args.max_row_tokens or args.balance_rows or args.chunk_tokens
@@ -1490,6 +1510,10 @@ def main() -> int:
         total_train = sum(composition_counts.values())
         stop_composition = {kind: count / total_train
                             for kind, count in composition_counts.items()}
+        # The order the step's own composition is logged in: every type the
+        # plan has, so a step that carries none of one shows it as zero
+        # rather than by omission.
+        type_order = sorted(composition_counts)
         if args.max_batch_tokens:
             for row in shard:
                 if id(row) not in token_counts:
@@ -1526,6 +1550,23 @@ def main() -> int:
                 if epoch == 1 and warmup_steps and step <= warmup_steps:
                     for group in optimizer.param_groups:
                         group["lr"] = args.lr * step / warmup_steps
+                # The step's own mix, taken before any forward: what these
+                # rows are, not what the plan says the epoch's mix is. The
+                # plain path never counted tokens, so count the rows this
+                # step carries; the counts are cached for later epochs.
+                for row in batch:
+                    if id(row) not in token_counts:
+                        token_counts[id(row)] = len(tokenizer(
+                            prompt_of(row),
+                            add_special_tokens=False)["input_ids"])
+                step_counts, step_tokens, step_type_tokens = type_composition(
+                    batch, token_counts, type_order)
+                composition_per_step.append({
+                    "step": step,
+                    "rows": step_counts,
+                    "tokens": step_tokens,
+                    "tokens_total": step_type_tokens,
+                })
                 optimizer.zero_grad(set_to_none=True)
                 losses = []
                 chunked = bool(args.chunk_tokens or args.chunk_rows)
@@ -1655,9 +1696,17 @@ def main() -> int:
                     args.world, device, step=step)
                 history.append(mean)
                 if step % args.log_every == 0 or step == steps:
+                    # The step's own mix, stated rather than inferred from
+                    # the plan: per type, the rows trained on and that
+                    # type's share of this rank's tokens.
+                    mix_text = " ".join(
+                        f"{kind} {step_counts[kind]}r "
+                        f"{100.0 * step_tokens[kind] / step_type_tokens
+                           if step_type_tokens else 0.0:.1f}%"
+                        for kind in type_order)
                     print(f"rank {args.rank}: epoch {epoch} step {step}/{steps} "
-                          f"loss {mean:.4f} elapsed {time.time() - started:.0f}s",
-                          flush=True)
+                          f"loss {mean:.4f} elapsed {time.time() - started:.0f}s "
+                          f"types {mix_text}", flush=True)
                 if (args.eval_every and step % args.eval_every == 0
                         and step != steps):
                     evaluate_checkpoint(step)
@@ -1863,6 +1912,11 @@ def main() -> int:
                        if args.balance_rows else None),
                },
                "step_losses": history,
+               # The mix each step actually trained on, per rank. The stop
+               # rule's composition is the plan's, so a plan-level check
+               # cannot see a step that trained a different one; this is the
+               # step's own count, and the global step is the sum over ranks.
+               "composition_per_step": composition_per_step,
                "eval_every": args.eval_every,
                "phase_profile_steps": args.phase_profile,
                "ece_bins_rows_this_rank": ece_bins_rows,
