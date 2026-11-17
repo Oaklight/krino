@@ -81,7 +81,7 @@ Clef analysis, later written up as `08-clef-analysis.md`.
 | `10-v3-redesign.md` | 2026-11-02 | the v3 plan; supersedes the 19/73/106 roadmaps | superseded by v4 |
 | `11-4b-primary-arm.md` | 2026-11-03 | the 4B primary arm: B1 is killed; no arm meets the gate | current |
 | `12-marker-readout-result.md` | 2026-11-03 | the 150M encoder's failure was mostly the pooled readout | current |
-| `13-throughput-levers.md` | 2026-11-03 | throughput levers surveyed across comparable repositories | reference |
+| `13-throughput-levers.md` | 2026-11-17 | throughput levers, plus the shape-driven step cost and the bucketing plan | current |
 | `14-jev-highk-probe.md` | 2026-11-04 | Jev's latency is flat in K and 80-way accuracy is far above chance | current |
 | `23-public-tier-power.md` | 2026-11-03 | the public tier can see a deficit but not a gain | current |
 | `24-v3-closeout.md` | 2026-11-04 | v3 misses the acceptance proxy; what the residual line taught | current |
