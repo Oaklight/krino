@@ -84,7 +84,7 @@
 
 算力塌缩后 all-reduce 成为最大项，且仍在等待而非搬运：其传输下界是 6.78 GB 乘 1.75 的 ring 因子除以 38.6 GB/s（拟合渐近值，与同一扫描在 256 MiB 处实测的 38.32 GB/s 在其精度内一致），约 0.31 s，即便好的一步也是下界的五倍；ring 扫描给出 1 / 4 / 16 / 64 / 256 MiB 的 0.15 / 0.28 / 0.83 / 3.08 / 12.26 ms，即 12.23 / 26.21 / 35.37 / 38.13 / 38.32 GB/s，1.75 倍因子已计入；deal 的成本模型（每次调用 0.10 s 加每个 padded token 0.00011 s）与各 rank 到达离散仍是开放问题，因此不能声称偏斜已解决。
 
-设计规则因此改为：固定桶宽 512 / 1024 / 2048 / 4096，把每行放进能容纳它的最小宽度，桶内补齐，每 rank 每桶一次 forward，启动时预热这些形状并记录 `prewarm_seconds_this_rank`，按建模的 bucket-seconds 配平。1.25 长度比规则作废，因为混合长度会最大化冷形状数，而这一点在形状探针之前不可见；不过 main 上 `CHUNK_LENGTH_RATIO` 仍默认 1.25、`--chunk-ratio` 也仍默认为 1.25，所以在分桶路径落地前，被撤回的规则仍是 trainer 的默认行为；上一版的每 token 模型、1.94x 上限与 1.363 到 1.05 的配平估计一并作废，原因相同。等价性方面，`--lr 0` 下分桶与交付路径记录的步损失相对差在 1e-6 以内，所以这项改动只改变速度、不改变训练；机制仍未确认。来源：分桶剖面读自八个 per-rank 的 `phase_profile_rank<N>.json`；形状表来自树外的形状探针脚本输出；预热时间按次运行记录为 `prewarm_seconds_this_rank`；`--lr 0` 的等价性由 PR #400 的 `tests/test_panel2_lora_rows.py` 中的测试覆盖。
+设计规则因此改为：固定桶宽 512 / 1024 / 2048 / 4096，把每行放进能容纳它的最小宽度，桶内补齐，每 rank 每桶一次 forward，启动时预热这些形状并记录 `prewarm_seconds_this_rank`，按建模的 bucket-seconds 配平。1.25 长度比规则作废，因为混合长度会最大化冷形状数，而这一点在形状探针之前不可见；不过 main 上 `CHUNK_LENGTH_RATIO` 仍默认 1.25、`--chunk-ratio` 也仍默认为 1.25，所以在分桶路径落地前，被撤回的规则仍是 trainer 的默认行为；上一版的每 token 模型、1.94x 上限与 1.363 到 1.05 的配平估计一并作废，原因相同。等价性方面，`--lr 0` 下分桶与交付路径记录的步损失相对差在 1e-6 以内，所以这项改动只改变速度、不改变训练；机制仍未确认。来源：分桶剖面读自八个 per-rank 的 `phase_profile_rank<N>.json`；形状表来自树外的形状探针脚本输出；预热时间按次运行记录为 `prewarm_seconds_this_rank`；`--lr 0` 的等价性由 PR #400 在 `tests/test_panel2_lora_rows.py` 中新增的 `test_bucketed_and_shipped_paths_record_the_same_history` 覆盖；同文件已有的 `test_chunking_does_not_change_the_step_losses` 是另一项检查。
 
 ## 参考
 
