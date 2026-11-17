@@ -21,6 +21,17 @@ jobs:
       - name: Install dependencies
         run: pip install --no-deps -e . && pip install pytest pytest-asyncio
 
+      # A syntax error is invisible to the tests below when the file is only
+      # imported behind pytest.importorskip("torch"): the skip happens before
+      # the import, so an unparseable trainer passed this lane while the one
+      # job that imports it runs 3.12, which accepts syntax newer than the
+      # declared floor. py_compile parses every tracked module without
+      # importing anything, so this catches that class in seconds and needs no
+      # dependencies. It checks syntax only, not import-time errors, so it
+      # does not make the torch lane redundant.
+      - name: Parse every tracked module on this interpreter
+        run: git ls-files '*.py' | xargs -r python -m py_compile
+
       - name: Run tests
         run: pytest tests/ -v
 
