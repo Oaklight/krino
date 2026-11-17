@@ -1633,6 +1633,9 @@ def main() -> int:
     # step's rows were spread across.
     composition_per_step: list = []
     bucket_groups: list = []
+    # Per-forward actuals for the bucketed path, so the deal's cost model can
+    # be checked against what each bucket really cost on this rank.
+    bucket_actuals: list = []
     assignment_ids: list = []
     if not args.eval_only:
         if (args.max_row_tokens or args.balance_rows or args.chunk_tokens
@@ -1773,6 +1776,7 @@ def main() -> int:
                 if chunked:
                     real_this_step = padded_this_step = 0
                     forwards_this_step = len(chunks)
+                    bucket_actuals_this_step = []
                     chunk_sizes.append([len(chunk) for chunk in chunks])
                     for index, chunk in enumerate(chunks):
                         real, padded = chunk_cost(chunk, token_counts)
@@ -1810,8 +1814,19 @@ def main() -> int:
                                                        code_ids, device,
                                                        encoded=encoded)
                             synchronise(device)
-                            profile["forward"] += (time.perf_counter()
-                                                   - started_phase)
+                            forward_elapsed = (time.perf_counter()
+                                               - started_phase)
+                            profile["forward"] += forward_elapsed
+                            if widths:
+                                bucket_actuals_this_step.append(
+                                    {"step": step, "width": widths[index],
+                                     "rows": len(chunk),
+                                     "padded_tokens": (args.batch_rows
+                                                       * widths[index]),
+                                     "forward": forward_elapsed,
+                                     "backward": None})
+                        # The step's mix is accumulated across every bucket
+                        # this step presented, from each forward's own mask.
                         add_mask_tokens(step_tokens, chunk, encoded)
                         for row, row_values in zip(chunk, values):
                             term = row_loss(row, row_values)
@@ -1832,11 +1847,16 @@ def main() -> int:
                             started_phase = time.perf_counter()
                             loss.backward()
                             synchronise(device)
-                            profile["backward"] += (time.perf_counter()
-                                                    - started_phase)
+                            backward_elapsed = (time.perf_counter()
+                                                - started_phase)
+                            profile["backward"] += backward_elapsed
+                            if widths:
+                                bucket_actuals_this_step[-1]["backward"] = (
+                                    backward_elapsed)
                     real_tokens.append(real_this_step)
                     padded_cost.append(padded_this_step)
                     forwards_per_step.append(forwards_this_step)
+                    bucket_actuals.extend(bucket_actuals_this_step)
                 else:
                     for chunk in chunks:
                         for row in chunk:
@@ -1864,9 +1884,11 @@ def main() -> int:
                 # disagree with what was optimised.
                 losses.append(step_loss)
                 rows_per_step.append(len(batch))
+                arrival = None
                 if args.world > 1:
                     if profile is not None:
                         synchronise(device)
+                        arrival = time.perf_counter()
                     reduce_started = time.perf_counter()
                     reduce_gradients(trainable, args.world,
                                      args.grad_bucket_mb << 20)
@@ -1876,6 +1898,19 @@ def main() -> int:
                     reduce_seconds += reduce_elapsed
                     if profile is not None:
                         profile["allreduce"] += reduce_elapsed
+                        # Each rank's arrival at the collective, gathered once
+                        # the collective has finished so the gather itself
+                        # cannot affect the timestamps. The spread is the skew
+                        # the reduce waits out; the transfer floor is fixed.
+                        gathered = [torch.zeros(1, device=device)
+                                    for _ in range(args.world)]
+                        dist.all_gather(
+                            gathered,
+                            torch.tensor([arrival], device=device))
+                        profile["arrivals"] = [float(item.item())
+                                               for item in gathered]
+                        profile["arrival_spread"] = (max(profile["arrivals"])
+                                                     - min(profile["arrivals"]))
                 if profile is not None:
                     synchronise(device)
                     started_phase = time.perf_counter()
@@ -1888,7 +1923,12 @@ def main() -> int:
                 if profile is not None:
                     synchronise(device)
                     profile["optimizer"] += time.perf_counter() - started_phase
-                    measured = sum(profile.values())
+                    # arrivals is a list of timestamps and its spread is
+                    # derived from it, not a phase: summing every value would
+                    # count the clock reading as elapsed time.
+                    measured = sum(value for key, value in profile.items()
+                                   if key not in ("arrivals",
+                                                  "arrival_spread"))
                     profile["unaccounted"] = (time.perf_counter()
                                               - step_started) - measured
                     profile["step"] = step
@@ -2010,7 +2050,9 @@ def main() -> int:
                 break
 
     if args.phase_profile and phase_records:
-        phases = [key for key in phase_records[0] if key not in ("step", "unaccounted")]
+        phases = [key for key in phase_records[0]
+                  if key not in ("step", "unaccounted", "arrivals",
+                                 "arrival_spread")]
         recorded = len(phase_records)
         totals = {key: sum(record[key] for record in phase_records)
                   for key in phases}
@@ -2062,9 +2104,11 @@ def main() -> int:
                 "chunk_decision_counts": {
                     label: chunk_decisions.count(label)
                     for label in sorted(set(chunk_decisions))},
-            } if (args.chunk_tokens or args.chunk_rows) else {"tokens": 0}),
+            } if (args.chunk_tokens or args.chunk_rows
+                  or args.bucket_list) else {"tokens": 0}),
             "padded_cost_this_rank": (padded_cost
-                                      if (args.chunk_tokens or args.chunk_rows)
+                                      if (args.chunk_tokens or args.chunk_rows
+                                          or args.bucket_list)
                                       else None),
         }
         # One file per rank: every rank runs this block, and a shared name let
@@ -2136,6 +2180,12 @@ def main() -> int:
                    "widths": list(args.bucket_list),
                    "prewarm_seconds_this_rank": prewarm_seconds,
                    "groups_per_step": bucket_groups,
+                   # One record per padded forward on this rank, with the
+                   # width and row count it actually presented and its
+                   # forward and backward seconds. Empty unless
+                   # --phase-profile is set: the timings carry a device
+                   # synchronise, which a timed run must not pay silently.
+                   "actuals_per_forward": bucket_actuals,
                    "cost_model": {"call_seconds": BUCKET_CALL_SECONDS,
                                   "token_seconds": BUCKET_TOKEN_SECONDS},
                } if args.bucket_list else {"widths": []}),

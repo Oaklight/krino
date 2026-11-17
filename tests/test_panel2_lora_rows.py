@@ -348,6 +348,12 @@ def _fake_training_modules(module, monkeypatch):
     monkeypatch.setattr(
         module.dist, "all_gather_object",
         lambda output, value: output.__setitem__(slice(None), [value] * len(output)))
+    # One process standing in for the whole world: every gathered slot holds
+    # this rank's own value, which is what that rank would read for itself.
+    monkeypatch.setattr(
+        module.dist, "all_gather",
+        lambda output, tensor, *a, **k: [item.fill_(float(tensor.item()))
+                                         for item in output])
     return fake
 
 
@@ -1555,6 +1561,15 @@ def test_a_second_rank_writes_its_own_file_and_leaves_rank0_alone(tmp_path,
     body = json.loads(one_path.read_text())
     assert body["rank_this_process"] == 1
     assert body["path_this_rank"] == one_path.name
+    # The collective records every rank's arrival and their spread. The fake
+    # world is this one process, so the gathered slots agree by construction.
+    step = body["steps"][0]
+    assert len(step["arrivals"]) == 2
+    assert step["arrival_spread"] == pytest.approx(0.0)
+    assert isinstance(step["unaccounted"], float), (
+        "the timestamp list must not be summed into the phase total")
+    assert "arrivals" not in body["mean_seconds_this_rank"], (
+        "a timestamp is not a phase; it must not enter the phase means")
     assert zero_path.read_bytes() == zero_before, (
         "a rank-1 run must not touch rank 0's file")
 
@@ -2202,6 +2217,66 @@ def test_bucketed_and_shipped_paths_record_the_same_history(tmp_path,
     assert bucketed["bucketing"]["widths"] == [512, 1024]
     assert bucketed["bucketing"]["prewarm_seconds_this_rank"] > 0
     assert len(bucketed["bucketing"]["groups_per_step"]) == 2
+
+
+def test_the_bucketed_profile_records_each_forwards_actuals(tmp_path,
+                                                            monkeypatch):
+    """One timed record per padded forward, and only under --phase-profile.
+
+    The deal's cost model is only checkable if the run states what each
+    bucket really cost on that rank: the width and rows it presented, and
+    its own forward and backward seconds. The sum of the recorded forwards
+    must be the profile's forward phase for that step, or the records do
+    not describe the step they are attached to.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:b{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(4) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    def payload(profile_steps):
+        out = tmp_path / f"out{profile_steps}"
+        argv = [
+            "train_panel2_lora.py", "--plan", str(plan),
+            "--output", str(out), "--world", "1", "--device", "cpu",
+            "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+            "--plan-unpermuted-noul", "--frozen-loss-sample", "1",
+            "--bucket-tokens", "512,1024",
+        ]
+        if profile_steps:
+            argv.extend(["--phase-profile", str(profile_steps)])
+        monkeypatch.setattr(sys, "argv", argv)
+        assert module.main() == 0
+        payload_data = json.loads((out / "shard_0.json").read_text())
+        if not profile_steps:
+            return payload_data, None
+        return (payload_data,
+                json.loads((out / "phase_profile_rank0.json").read_text()))
+
+    unprofiled, _ = payload(0)
+    assert unprofiled["bucketing"]["actuals_per_forward"] == [], (
+        "timing carries a synchronise; it must not appear on a run that "
+        "did not ask for it")
+
+    recorded, profile = payload(1)
+    actuals = recorded["bucketing"]["actuals_per_forward"]
+    assert len(actuals) == (
+        profile["chunking_this_rank"]["forwards_per_step"][0]) == len(
+        [item for item in actuals if item["step"] == 1])
+    for item in actuals:
+        assert item["width"] in (512, 1024)
+        assert 1 <= item["rows"] <= 2
+        assert item["padded_tokens"] == 2 * item["width"]
+        assert item["forward"] > 0 and item["backward"] > 0
+    first = [item for item in actuals if item["step"] == 1]
+    assert sum(item["forward"] for item in first) == pytest.approx(
+        profile["steps"][0]["forward"], rel=1e-6)
+    assert sum(item["backward"] for item in first) == pytest.approx(
+        profile["steps"][0]["backward"], rel=1e-6)
 
 
 def test_the_chunk_decision_reports_the_knob_that_bound():
