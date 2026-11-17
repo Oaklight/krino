@@ -430,12 +430,18 @@ def chunk_cost(chunk, token_counts) -> tuple[int, int]:
 
 
 BUCKET_WIDTHS = (512, 1024, 2048, 4096)
-# Steady-state cost model for balancing: a warm forward costs a fixed call
-# term plus a term per padded token. The constants come from the bucket8 probe
-# (0.158 s forward and 0.388 s backward for one call over 4,048 padded tokens)
-# with the per-call term taken as the warm one-row forward of 0.10 s.
-BUCKET_CALL_SECONDS = 0.10
-BUCKET_TOKEN_SECONDS = 0.00011
+# Steady-state cost model for balancing: one padded forward costs an intercept
+# plus a term per padded token plus a quadratic term. The coefficients are a
+# least-squares fit to 199 measured padded forwards of the a20k twenty-step
+# bucket run at 8 rows per rank (four forwards above 1.5x their bucket mean
+# excluded; rms residual 0.026 s over forwards from 0.45 s to 5.4 s). A fit
+# with no quadratic term is biased by width: -0.21 s at 2048 and +0.13 s at
+# 4096, and its intercept goes negative, which is the model saying the form is
+# wrong. The quadratic is the attention and checkpoint-recompute cost that
+# grows with width; it is why a 4096 forward costs 9.8x a 512 one, not 8x.
+BUCKET_CALL_SECONDS = 0.0219
+BUCKET_TOKEN_SECONDS = 0.0001134
+BUCKET_TOKEN_SQUARED_SECONDS = 1.358e-9
 
 
 def bucket_width(width: int, buckets=BUCKET_WIDTHS):
@@ -471,13 +477,17 @@ def bucket_cost(groups, batch_rows: int) -> float:
     Each forward is padded to ``batch_rows`` rows at the bucket's width, so a
     bucket with fewer than a full batch still pays a full batch's tokens. That
     is deliberate: the batch dimension is part of the shape, and a shape is
-    warm only if its size does not vary.
+    warm only if its size does not vary. The quadratic term is per forward,
+    not on the rank's summed padded tokens: two warm forwards cost twice one,
+    and squaring the sum would charge a rank for forwards it does not make.
     """
     total = 0.0
     for width, rows in groups:
         forwards = -(-len(rows) // batch_rows)
-        padded = forwards * batch_rows * width
-        total += forwards * BUCKET_CALL_SECONDS + padded * BUCKET_TOKEN_SECONDS
+        padded = batch_rows * width
+        total += forwards * (BUCKET_CALL_SECONDS
+                             + padded * BUCKET_TOKEN_SECONDS
+                             + padded * padded * BUCKET_TOKEN_SQUARED_SECONDS)
     return total
 
 
@@ -1218,6 +1228,14 @@ def main() -> int:
             "--bucket-tokens sets the grouping and padding; drop "
             "--chunk-tokens and --chunk-rows when it is set"
         )
+    if args.bucket_list and args.balance_rows:
+        # The bucket deal is itself a balanced deal, and it runs first; the
+        # payload would then report balanced_by_length for a deal it did not
+        # run. Two balancers need one of them named.
+        raise SystemExit(
+            "--bucket-tokens deals the rows by bucket cost; drop "
+            "--balance-rows when it is set"
+        )
     if args.bucket_list and any(
             later <= earlier for earlier, later
             in zip(args.bucket_list, args.bucket_list[1:])):
@@ -1458,18 +1476,73 @@ def main() -> int:
     optimizer = torch.optim.AdamW(trainable, lr=args.lr, weight_decay=0.01)
 
     prewarm_seconds = 0.0
+    prewarm_shapes: list = []
+    # Prompt tokens by row id, filled lazily: the prewarm needs one to pick a
+    # row that fits each width, and the batched paths need all of them.
+    token_counts: dict = {}
+    if not args.eval_only:
+        if (args.max_row_tokens or args.balance_rows or args.chunk_tokens
+                or args.chunk_rows or args.bucket_list):
+            # The cap is a backstop, and it is counted: a row longer than the
+            # cap is its own forward and would set the peak by itself. The
+            # whole train set is measured on every rank so the retained count,
+            # and therefore the step count, is identical everywhere. The
+            # length-balanced rule and the chunker need the same counts even
+            # when no cap is set.
+            for row in train_rows:
+                token_counts[id(row)] = len(tokenizer(
+                    prompt_of(row), add_special_tokens=False)["input_ids"])
+        if args.max_row_tokens:
+            train_rows, skipped_over_cap, longest = cap_rows(
+                train_rows, token_counts, args.max_row_tokens)
+            print(f"rank {args.rank}: max_row_tokens {args.max_row_tokens} "
+                  f"skips {skipped_over_cap} of {len(train_rows) + skipped_over_cap} "
+                  f"train rows (longest skipped {longest} tokens)", flush=True)
+            if not train_rows:
+                raise SystemExit("every train row is over --max-row-tokens")
+        if args.bucket_list:
+            # bucket_rows raises inside the step loop, which would take the
+            # group down by timeout one rank at a time. The longest retained
+            # row is known here, so the refusal happens before the loop.
+            longest_kept = max(token_counts.values(), default=0)
+            if longest_kept > max(args.bucket_list):
+                raise SystemExit(
+                    f"a train row of {longest_kept} tokens is above the "
+                    f"largest bucket {max(args.bucket_list)}; raise "
+                    f"--bucket-tokens or lower --max-row-tokens")
     if args.bucket_list and not args.eval_only:
         # A shape is cheap only after it has been seen, and that first cost is
         # per process, not per step. One forward and backward per bucket at the
         # exact shape the step will use pays it here, where it can be timed and
         # recorded, instead of inside step 1 where it would look like per-step
         # cost. The gradients are dropped before any optimizer step.
-        warm_row = train_rows[0]
+        #
+        # chunk_inputs treats the width as a floor, not a request, so a warm
+        # row longer than a narrow bucket would present the row's own length
+        # and leave that width cold while the record said it was warmed. Take a
+        # row that fits each width and check the tensor that comes back.
+        prewarm_shapes = []
         synchronise(device)
         started = time.perf_counter()
         for width in args.bucket_list:
+            warm_row, warm_count = None, None
+            for row in train_rows:
+                if token_counts[id(row)] <= width:
+                    warm_row, warm_count = row, token_counts[id(row)]
+                    break
+            if warm_row is None:
+                # No row falls in this bucket, so no step presents it and
+                # there is no shape to warm.
+                continue
             encoded = chunk_inputs(tokenizer, [warm_row], device, width=width,
                                    pad_rows=args.batch_rows)
+            shape = tuple(encoded[0].shape)
+            if shape != (args.batch_rows, width):
+                raise SystemExit(
+                    f"prewarm asked for {(args.batch_rows, width)} and was "
+                    f"given {shape}; the width is a floor, so a row of "
+                    f"{warm_count} tokens is not what presents it")
+            prewarm_shapes.append(list(shape))
             values = chunk_code_logits(model, tokenizer, [warm_row], code_ids,
                                        device, encoded=encoded)
             target_loss(values[0], warm_row.gold, "onehot").backward()
@@ -1616,7 +1689,7 @@ def main() -> int:
     phase_records = []
     reduce_seconds = 0.0
     skipped_over_cap = 0
-    token_counts: dict = {}
+    # token_counts is declared before the prewarm, which reads it first.
     stopped = False
     # Batching accounting: the tokens a step's forwards really carried, the
     # tokens they paid for after padding, and, on this rank, which rows it was
@@ -1638,25 +1711,6 @@ def main() -> int:
     bucket_actuals: list = []
     assignment_ids: list = []
     if not args.eval_only:
-        if (args.max_row_tokens or args.balance_rows or args.chunk_tokens
-                or args.chunk_rows or args.bucket_list):
-            # The cap is a backstop, and it is counted: a row longer than the
-            # cap is its own forward and would set the peak by itself. The
-            # whole train set is measured on every rank so the retained count,
-            # and therefore the step count, is identical everywhere. The
-            # length-balanced rule and the chunker need the same counts even
-            # when no cap is set.
-            for row in train_rows:
-                token_counts[id(row)] = len(tokenizer(
-                    prompt_of(row), add_special_tokens=False)["input_ids"])
-        if args.max_row_tokens:
-            train_rows, skipped_over_cap, longest = cap_rows(
-                train_rows, token_counts, args.max_row_tokens)
-            print(f"rank {args.rank}: max_row_tokens {args.max_row_tokens} "
-                  f"skips {skipped_over_cap} of {len(train_rows) + skipped_over_cap} "
-                  f"train rows (longest skipped {longest} tokens)", flush=True)
-            if not train_rows:
-                raise SystemExit("every train row is over --max-row-tokens")
         shard, steps = shard_and_steps(train_rows, args.rank, args.world,
                                        args.batch_rows)
         if args.max_steps:
@@ -1781,11 +1835,15 @@ def main() -> int:
                     for index, chunk in enumerate(chunks):
                         real, padded = chunk_cost(chunk, token_counts)
                         if widths:
-                            # A bucketed forward pays a full batch at the
-                            # bucket width, whatever its real rows.
-                            padded = args.batch_rows * widths[index]
+                            # A bucketed forward pays for the shape it
+                            # presents, which is read from the tensor after
+                            # encoding rather than recomputed from the
+                            # arguments: the record must describe the batch
+                            # that ran, not the one the flags intended.
+                            padded = None
                         real_this_step += real
-                        padded_this_step += padded
+                        if padded is not None:
+                            padded_this_step += padded
                         # One encode per forward serves both features: the
                         # bucket's width and padded batch for the shapes, and
                         # the same mask for the step's composition. Counting
@@ -1796,6 +1854,10 @@ def main() -> int:
                                 tokenizer, chunk, device,
                                 width=widths[index] if widths else None,
                                 pad_rows=args.batch_rows if widths else None)
+                            if widths:
+                                presented = tuple(int(size) for size
+                                                  in chunk_encoded[0].shape)
+                                padded_this_step += presented[0] * presented[1]
                             values = chunk_code_logits(model, tokenizer, chunk,
                                                        code_ids, device,
                                                        encoded=encoded)
@@ -1809,6 +1871,10 @@ def main() -> int:
                             synchronise(device)
                             profile["tokenise"] += (time.perf_counter()
                                                     - started_phase)
+                            if widths:
+                                presented = tuple(int(size) for size
+                                                  in chunk_encoded[0].shape)
+                                padded_this_step += presented[0] * presented[1]
                             started_phase = time.perf_counter()
                             values = chunk_code_logits(model, tokenizer, chunk,
                                                        code_ids, device,
@@ -1821,8 +1887,9 @@ def main() -> int:
                                 bucket_actuals_this_step.append(
                                     {"step": step, "width": widths[index],
                                      "rows": len(chunk),
-                                     "padded_tokens": (args.batch_rows
-                                                       * widths[index]),
+                                     "shape": list(presented),
+                                     "padded_tokens": (presented[0]
+                                                       * presented[1]),
                                      "forward": forward_elapsed,
                                      "backward": None})
                         # The step's mix is accumulated across every bucket
@@ -2117,9 +2184,16 @@ def main() -> int:
             "bucketing_this_rank": ({
                 "widths": list(args.bucket_list),
                 "prewarm_seconds_this_rank": prewarm_seconds,
+                "prewarm_shapes_this_rank": prewarm_shapes,
                 "actuals_per_forward": bucket_actuals,
-                "cost_model": {"call_seconds": BUCKET_CALL_SECONDS,
-                               "token_seconds": BUCKET_TOKEN_SECONDS},
+                "cost_model": {
+                    "call_seconds": BUCKET_CALL_SECONDS,
+                    "token_seconds": BUCKET_TOKEN_SECONDS,
+                    "token_squared_seconds": BUCKET_TOKEN_SQUARED_SECONDS,
+                    "fitted_on": ("199 padded forwards of the a20k twenty-step "
+                                  "bucket run, 8 rows per rank, four slow "
+                                  "forwards excluded, rms 0.026 s"),
+                },
             } if args.bucket_list else {"widths": []}),
         }
         # One file per rank: every rank runs this block, and a shared name let
@@ -2190,6 +2264,7 @@ def main() -> int:
                "bucketing": ({
                    "widths": list(args.bucket_list),
                    "prewarm_seconds_this_rank": prewarm_seconds,
+                   "prewarm_shapes_this_rank": prewarm_shapes,
                    "groups_per_step": bucket_groups,
                    # One record per padded forward on this rank, with the
                    # width and row count it actually presented and its
@@ -2197,8 +2272,14 @@ def main() -> int:
                    # --phase-profile is set: the timings carry a device
                    # synchronise, which a timed run must not pay silently.
                    "actuals_per_forward": bucket_actuals,
-                   "cost_model": {"call_seconds": BUCKET_CALL_SECONDS,
-                                  "token_seconds": BUCKET_TOKEN_SECONDS},
+                   "cost_model": {
+                       "call_seconds": BUCKET_CALL_SECONDS,
+                       "token_seconds": BUCKET_TOKEN_SECONDS,
+                       "token_squared_seconds": BUCKET_TOKEN_SQUARED_SECONDS,
+                       "fitted_on": ("199 padded forwards of the a20k "
+                                     "twenty-step bucket run, 8 rows per rank, "
+                                     "four slow forwards excluded, rms 0.026 s"),
+                   },
                } if args.bucket_list else {"widths": []}),
                "eval_every": args.eval_every,
                "phase_profile_steps": args.phase_profile,
