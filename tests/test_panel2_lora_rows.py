@@ -2128,6 +2128,80 @@ def test_the_mix_line_prints_a_type_the_plan_does_not_have():
     assert "noul 1r 66.7%" in text
     assert "choice 1r 33.3%" in text
     assert "score 0r 0.0%" in text
+def test_bucket_rows_uses_the_smallest_fixed_width():
+    """A row lands in the smallest bucket that holds it, and only there."""
+    from model.scripts.train_panel2_lora import bucket_rows, bucket_width
+
+    rows = _batch_rows(5, growth=1)
+    counts = {id(row): width for row, width
+              in zip(rows, [100, 600, 512, 3000, 4096])}
+    groups = bucket_rows(rows, counts, (512, 1024, 2048, 4096))
+    assert [(width, len(group)) for width, group in groups] == [
+        (512, 2), (1024, 1), (4096, 2)]
+    assert bucket_width(5000, (512, 4096)) is None
+
+
+def test_the_bucket_deal_partitions_the_step_and_levels_the_cost():
+    """Every row on one rank, and the busiest rank no worse than the token deal."""
+    from model.scripts.train_panel2_lora import (
+        bucket_cost, bucket_rows, deal_rows, deal_rows_by_bucket_cost,
+    )
+
+    rows = _batch_rows(12, growth=9)
+    counts = {id(row): 40 + index * 37 for index, row in enumerate(rows)}
+    widths = (256, 512, 1024, 2048)
+    tokens = deal_rows(rows, counts, 4)
+    bucketed = deal_rows_by_bucket_cost(rows, counts, 4, 2, widths)
+    assert sorted(row.row_id for load in bucketed for row in load) == sorted(
+        row.row_id for row in rows)
+
+    def busiest(loads):
+        return max(bucket_cost(bucket_rows(load, counts, widths), 2)
+                   for load in loads)
+
+    assert busiest(bucketed) <= busiest(tokens)
+
+
+def test_bucketed_and_shipped_paths_record_the_same_history(tmp_path,
+                                                           monkeypatch):
+    """lr 0, one plan, bucketed against the shipped path: the same step losses.
+
+    The bucket pads to a fixed width and a full batch, which changes the
+    kernel tiling but not the computation; the history is the check that the
+    masks and position ids still describe the same problem.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:b{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(4) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+
+    def history(bucket):
+        argv = [
+            "train_panel2_lora.py", "--plan", str(plan),
+            "--output", str(tmp_path / f"out{bucket}"), "--world", "1",
+            "--device", "cpu", "--lr", "0", "--epochs", "1",
+            "--batch-rows", "2", "--plan-unpermuted-noul",
+            "--frozen-loss-sample", "1",
+        ]
+        if bucket:
+            argv.extend(["--bucket-tokens", bucket])
+        monkeypatch.setattr(sys, "argv", argv)
+        assert module.main() == 0
+        payload = json.loads(
+            (tmp_path / f"out{bucket}" / "shard_0.json").read_text())
+        return payload
+
+    shipped = history("")
+    bucketed = history("512,1024")
+    assert bucketed["step_losses"] == pytest.approx(shipped["step_losses"],
+                                                    rel=1e-6)
+    assert bucketed["bucketing"]["widths"] == [512, 1024]
+    assert bucketed["bucketing"]["prewarm_seconds_this_rank"] > 0
+    assert len(bucketed["bucketing"]["groups_per_step"]) == 2
 
 
 def test_the_chunk_decision_reports_the_knob_that_bound():
