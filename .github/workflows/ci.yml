@@ -28,9 +28,11 @@ jobs:
       # declared floor. py_compile parses every tracked module without
       # importing anything, so this catches that class in seconds and needs no
       # dependencies. It checks syntax only, not import-time errors, so it
-      # does not make the torch lane redundant.
+      # does not make the torch lane redundant. -z/-0 so a tracked path with a
+      # space cannot be split into two bogus arguments and fail for the wrong
+      # reason.
       - name: Parse every tracked module on this interpreter
-        run: git ls-files '*.py' | xargs -r python -m py_compile
+        run: git ls-files -z '*.py' | xargs -0 -r python -m py_compile
 
       - name: Run tests
         run: pytest tests/ -v
