@@ -348,12 +348,14 @@ def _fake_training_modules(module, monkeypatch):
     monkeypatch.setattr(
         module.dist, "all_gather_object",
         lambda output, value: output.__setitem__(slice(None), [value] * len(output)))
-    # One process standing in for the whole world: every gathered slot holds
-    # this rank's own value, which is what that rank would read for itself.
+    # One process standing in for the whole world. The slots differ by rank
+    # index, so the spread a test sees is non-zero: a fake that agreed with
+    # itself would let a derived value slip into the phase totals unnoticed.
     monkeypatch.setattr(
         module.dist, "all_gather",
-        lambda output, tensor, *a, **k: [item.fill_(float(tensor.item()))
-                                         for item in output])
+        lambda output, tensor, *a, **k: [
+            item.fill_(float(tensor.item()) + index)
+            for index, item in enumerate(output)])
     return fake
 
 
@@ -1565,11 +1567,16 @@ def test_a_second_rank_writes_its_own_file_and_leaves_rank0_alone(tmp_path,
     # world is this one process, so the gathered slots agree by construction.
     step = body["steps"][0]
     assert len(step["arrivals"]) == 2
-    assert step["arrival_spread"] == pytest.approx(0.0)
+    # The fake world's slots differ by one second per rank index, so the
+    # spread is 1.0 rather than 0.0: a zero spread would make the exclusion of
+    # the derived value from the phase totals unobservable.
+    assert step["arrival_spread"] == pytest.approx(1.0)
     assert isinstance(step["unaccounted"], float), (
         "the timestamp list must not be summed into the phase total")
     assert "arrivals" not in body["mean_seconds_this_rank"], (
         "a timestamp is not a phase; it must not enter the phase means")
+    assert "arrival_spread" not in body["mean_seconds_this_rank"], (
+        "the derived spread is not a phase either")
     assert zero_path.read_bytes() == zero_before, (
         "a rank-1 run must not touch rank 0's file")
 
@@ -2157,24 +2164,50 @@ def test_bucket_rows_uses_the_smallest_fixed_width():
 
 
 def test_the_bucket_deal_partitions_the_step_and_levels_the_cost():
-    """Every row on one rank, and the busiest rank no worse than the token deal."""
+    """The deal beats the token deal and reaches the best partition's cost.
+
+    The earlier fixture tied: the token deal's split happened to cost the same
+    as the bucket deal's, so asserting ``<=`` passed whether or not the bucket
+    cost was used. Here one rank must take two wide rows and the other the six
+    narrow ones, which the token deal's split does not do: it sends rows by
+    token count and pays three buckets on one rank where two suffice. The best
+    achievable busiest cost is enumerated, so the assertion is against the
+    optimum rather than against a second heuristic.
+    """
+    import itertools
+
     from model.scripts.train_panel2_lora import (
         bucket_cost, bucket_rows, deal_rows, deal_rows_by_bucket_cost,
     )
 
-    rows = _batch_rows(12, growth=9)
-    counts = {id(row): 40 + index * 37 for index, row in enumerate(rows)}
-    widths = (256, 512, 1024, 2048)
-    tokens = deal_rows(rows, counts, 4)
-    bucketed = deal_rows_by_bucket_cost(rows, counts, 4, 2, widths)
+    lengths = [1500, 1600, 400, 400, 400, 400, 400, 400]
+    rows = _batch_rows(len(lengths))
+    counts = {id(row): length for row, length in zip(rows, lengths)}
+    widths = (512, 1024, 2048)
+    tokens = deal_rows(rows, counts, 2)
+    bucketed = deal_rows_by_bucket_cost(rows, counts, 2, 2, widths)
     assert sorted(row.row_id for load in bucketed for row in load) == sorted(
         row.row_id for row in rows)
 
     def busiest(loads):
         return max(bucket_cost(bucket_rows(load, counts, widths), 2)
-                   for load in loads)
+                   for load in loads if load)
 
-    assert busiest(bucketed) <= busiest(tokens)
+    best = None
+    for assignment in itertools.product(range(2), repeat=len(rows) - 1):
+        loads = [[rows[0]], []]
+        for row, rank in zip(rows[1:], assignment):
+            loads[rank].append(row)
+        if not all(loads):
+            continue
+        value = busiest(loads)
+        best = value if best is None else min(best, value)
+
+    assert busiest(bucketed) == pytest.approx(best), (
+        "the deal must reach the best partition's busiest rank")
+    assert busiest(bucketed) < busiest(tokens), (
+        "on this fixture the token deal must be strictly worse, or the test "
+        "cannot see which cost the deal used")
 
 
 def test_bucketed_and_shipped_paths_record_the_same_history(tmp_path,
@@ -2183,12 +2216,16 @@ def test_bucketed_and_shipped_paths_record_the_same_history(tmp_path,
 
     The bucket pads to a fixed width and a full batch, which changes the
     kernel tiling but not the computation; the history is the check that the
-    masks and position ids still describe the same problem.
+    masks and position ids still describe the same problem. The rows differ in
+    length so that two buckets are presented within one step: a uniform batch
+    is the easy case, and padding a bucket that holds one row at a narrow
+    bucket is the one this exists to protect.
     """
     module = importlib.import_module("model.scripts.train_panel2_lora")
     records = [
         _record(f"corpus:b{index}", option, 1 if option == 0 else 0, "choice",
-                CHOICE_PREFIX, f"Option {option}.", 2)
+                CHOICE_PREFIX + "z" * (index % 3),
+                f"Option {option}." + "y" * (index % 2), 2)
         for index in range(4) for option in (0, 1)
     ]
     plan = _write(tmp_path, records)
@@ -2211,12 +2248,14 @@ def test_bucketed_and_shipped_paths_record_the_same_history(tmp_path,
         return payload
 
     shipped = history("")
-    bucketed = history("512,1024")
+    bucketed = history("9,10")
     assert bucketed["step_losses"] == pytest.approx(shipped["step_losses"],
                                                     rel=1e-6)
-    assert bucketed["bucketing"]["widths"] == [512, 1024]
+    assert bucketed["bucketing"]["widths"] == [9, 10]
     assert bucketed["bucketing"]["prewarm_seconds_this_rank"] > 0
     assert len(bucketed["bucketing"]["groups_per_step"]) == 2
+    assert bucketed["bucketing"]["prewarm_shapes_this_rank"] == [[2, 9],
+                                                                 [2, 10]]
 
 
 def test_the_bucketed_profile_records_each_forwards_actuals(tmp_path,
@@ -2230,9 +2269,14 @@ def test_the_bucketed_profile_records_each_forwards_actuals(tmp_path,
     not describe the step they are attached to.
     """
     module = importlib.import_module("model.scripts.train_panel2_lora")
+    # Four rows, one long, two ranks at two rows each: the wide row is dealt
+    # to one rank alone, so that rank presents one real row padded to two. A
+    # fixture whose every forward is full cannot tell whether pad_rows was
+    # passed at all.
     records = [
         _record(f"corpus:b{index}", option, 1 if option == 0 else 0, "choice",
-                CHOICE_PREFIX, f"Option {option}.", 2)
+                CHOICE_PREFIX,
+                f"Option {option}." + ("y" * (2 if index else 0)), 2)
         for index in range(4) for option in (0, 1)
     ]
     plan = _write(tmp_path, records)
@@ -2242,10 +2286,10 @@ def test_the_bucketed_profile_records_each_forwards_actuals(tmp_path,
         out = tmp_path / f"out{profile_steps}"
         argv = [
             "train_panel2_lora.py", "--plan", str(plan),
-            "--output", str(out), "--world", "1", "--device", "cpu",
-            "--lr", "0", "--epochs", "1", "--batch-rows", "2",
-            "--plan-unpermuted-noul", "--frozen-loss-sample", "1",
-            "--bucket-tokens", "512,1024",
+            "--output", str(out), "--world", "2", "--rank", "0",
+            "--device", "cpu", "--lr", "0", "--epochs", "1",
+            "--batch-rows", "2", "--plan-unpermuted-noul",
+            "--frozen-loss-sample", "1", "--bucket-tokens", "9,10",
         ]
         if profile_steps:
             argv.extend(["--phase-profile", str(profile_steps)])
@@ -2270,16 +2314,135 @@ def test_the_bucketed_profile_records_each_forwards_actuals(tmp_path,
     assert len(actuals) == (
         profile["chunking_this_rank"]["forwards_per_step"][0]) == len(
         [item for item in actuals if item["step"] == 1])
+    assert any(item["rows"] == 1 for item in actuals), (
+        "the fixture must present a partly filled bucket, or the padded batch "
+        "dimension is not under test")
     for item in actuals:
-        assert item["width"] in (512, 1024)
+        assert item["width"] in (9, 10)
         assert 1 <= item["rows"] <= 2
-        assert item["padded_tokens"] == 2 * item["width"]
+        # The shape is read from the tensor that was presented, so this pins
+        # the padded batch dimension as well as the width: dropping pad_rows
+        # would present (rows, width) and fail here.
+        assert item["shape"] == [2, item["width"]]
+        assert item["padded_tokens"] == item["shape"][0] * item["shape"][1]
         assert item["forward"] > 0 and item["backward"] > 0
+    assert recorded["bucketing"]["prewarm_shapes_this_rank"] == [[2, 9],
+                                                                 [2, 10]]
+    assert profile["bucketing_this_rank"]["prewarm_shapes_this_rank"] == [
+        [2, 9], [2, 10]]
     first = [item for item in actuals if item["step"] == 1]
     assert sum(item["forward"] for item in first) == pytest.approx(
         profile["steps"][0]["forward"], rel=1e-6)
     assert sum(item["backward"] for item in first) == pytest.approx(
         profile["steps"][0]["backward"], rel=1e-6)
+
+
+def test_bucket_cost_charges_each_forward_the_fitted_model():
+    """The cost is per forward, and the quadratic term does not compound.
+
+    The fitted model is `call + token x padded + squared x padded^2` for one
+    padded forward. A rank with two forwards of the same width pays twice one
+    forward, not one forward of the summed tokens: squaring the rank's total
+    would bill it for forwards it never makes.
+    """
+    from model.scripts.train_panel2_lora import (
+        BUCKET_CALL_SECONDS, BUCKET_TOKEN_SECONDS,
+        BUCKET_TOKEN_SQUARED_SECONDS, bucket_cost,
+    )
+
+    width, batch = 1024, 8
+    padded = batch * width
+    one = (BUCKET_CALL_SECONDS + padded * BUCKET_TOKEN_SECONDS
+           + padded * padded * BUCKET_TOKEN_SQUARED_SECONDS)
+    assert one > 0
+    assert bucket_cost([(width, [None] * 8)], batch) == pytest.approx(one)
+    assert bucket_cost([(width, [None] * 9)], batch) == pytest.approx(2 * one)
+    assert bucket_cost([(width, [None] * 16)], batch) == pytest.approx(2 * one)
+    # Two widths pay their own terms, and the widths differ in price.
+    other = 2048
+    other_padded = batch * other
+    one_wide = (BUCKET_CALL_SECONDS + other_padded * BUCKET_TOKEN_SECONDS
+                + other_padded * other_padded * BUCKET_TOKEN_SQUARED_SECONDS)
+    assert bucket_cost([(width, [None] * 8), (other, [None] * 8)],
+                       batch) == pytest.approx(one + one_wide)
+    assert one_wide > 2 * one, "the fitted model is superlinear in width"
+
+
+def test_a_row_above_the_largest_bucket_is_refused_before_the_loop(tmp_path,
+                                                                  monkeypatch):
+    """The refusal is at startup, not an exception that takes ranks down."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:r{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX + "x" * (index % 3), f"Option {option}.", 2)
+        for index in range(4) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "1",
+        "--bucket-tokens", "8",
+    ])
+    with pytest.raises(SystemExit) as failure:
+        module.main()
+    assert "above the largest bucket" in str(failure.value)
+
+
+def test_the_bucket_flags_refuse_incompatible_combinations(tmp_path,
+                                                           monkeypatch):
+    """Each refusal is argument-time, and each one is a stated contract.
+
+    A repeated width, a chunk flag and the other balancer each contradict the
+    bucket path's own definition of the step, so each is refused rather than
+    silently preferring one of the two.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:o{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(2) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    base = [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "1",
+    ]
+    for extra in (["--bucket-tokens", "512,512"],
+                  ["--bucket-tokens", "2048,1024"],
+                  ["--bucket-tokens", "512", "--chunk-tokens", "1024"],
+                  ["--bucket-tokens", "512", "--chunk-rows", "2"],
+                  ["--bucket-tokens", "512", "--balance-rows"]):
+        monkeypatch.setattr(sys, "argv", base + extra)
+        with pytest.raises(SystemExit):
+            module.main()
+
+
+def test_eval_only_skips_the_prewarm(tmp_path, monkeypatch):
+    """The prewarm is a training cost; an eval-only run must not pay it."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:e{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(4) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--eval-only", "--batch-rows", "2", "--plan-unpermuted-noul",
+        "--bucket-tokens", "512,1024",
+    ])
+    assert module.main() == 0
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    assert payload["bucketing"]["prewarm_seconds_this_rank"] == 0
+    assert payload["bucketing"]["prewarm_shapes_this_rank"] == []
 
 
 def test_the_chunk_decision_reports_the_knob_that_bound():
