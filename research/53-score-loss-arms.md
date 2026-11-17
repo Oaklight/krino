@@ -29,13 +29,13 @@ Order self-consistency falls for C by 14 items, with 31 discordant items against
 | quadratic-weighted kappa | 0.3922 | 0.3885 | 0.3577 |
 | mean cross-entropy | 1.3018 | 1.2967 | 1.2446 |
 
-A and B have identical exact counts on different rows, exact McNemar p = 1.0. C is -9 exact against A, p = 0.58. The A-to-C rank probability score gain is +0.006195 with a bootstrap interval of [0.000555, 0.011881] and p = 0.0328. C loses 0.035 on quadratic-weighted kappa.
+A and B have identical exact counts on different rows: b = 25, c = 25, exact McNemar p = 1.0. C is -9 exact against A, b = 109 and c = 100, exact McNemar p = 0.5801. The A-to-C rank probability score gain is +0.006195 with a bootstrap interval of [0.000555, 0.011881] and p = 0.0328. C loses 0.035 on quadratic-weighted kappa.
 
 ## 4. Verdicts against the pre-registration
 
 B is null on every endpoint with a stated resolution: its exact pair is b = 25, c = 25, 50 discordant, exact McNemar p = 1.0, and the minimum detectable effect at that discordance is about 14 items, so the finding is no measurable effect at this resolution. Rank probability score, kappa and cross-entropy sit inside the bands as well.
 
-C is real but different, not a pass. Its rank probability score improves with an interval that excludes zero, its exact accuracy is flat within noise, and its kappa is worse by 0.035. The repeat trigger was registered on the 1,111 score rows as a 12-item exact gain; at that size the paired minimum detectable effect is 41 to 47 items, so the trigger was under-powered. C's non-confirmation therefore rests on its exact p = 0.58 and on being a single run, not on the trigger failing to fire.
+C is real but different, not a pass. Its rank probability score improves with an interval that excludes zero, its exact accuracy is flat within noise, and its kappa is worse by 0.035. The repeat trigger was registered on the 1,111 score rows as a 12-item exact gain; at that size the paired minimum detectable effect is 41 to 47 items, so the trigger was under-powered. C's non-confirmation therefore rests on its exact p = 0.5801 and on being a single run, not on the trigger failing to fire.
 
 ## 5. Calibration, by definition
 
