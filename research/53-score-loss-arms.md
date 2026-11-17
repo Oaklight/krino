@@ -58,7 +58,7 @@ The reweighted stop reference rests on a frozen sample that carries 5 score rows
 | number group | status | source |
 |---|---|---|
 | design, lambda pin, realised shares | measured; probe output on the run host, not committed | step-0 measurement on the 1,111 score rows, plan df32899 |
-| payload cells, paired endpoints, verdicts, ECE, per-K moves | measured; run payloads on the run host, not committed | arms A, B and C of 2026-11-16, seed 42 |
+| payload cells, paired endpoints, verdicts, ECE, per-K moves | measured; summarised in `research/53-score-loss-arms.json`, with the run payloads on the run host | arms A, B and C of 2026-11-16, seed 42 |
 | K restriction and renormalisation | measured; probe output on the run host, not committed | 9,923 val rows plus 231 JevBench natural items |
 | frozen-sample caveat | measured; run payload on the run host, not committed | frozen-loss sample |
 
