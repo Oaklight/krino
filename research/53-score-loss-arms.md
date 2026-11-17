@@ -8,7 +8,7 @@ Every arm uses Qwen3-Reranker-4B with every parameter trainable (LoRA off), the 
 
 The three arms are A, B and C, in the order of the loss modes: A is `--score-loss ce`, B is `mix` with the lambda below, and C is `rps`. All three ran the same score target, the default one-hot; the soft-target arm (scoreB2) was held behind these three and did not run. Choice and noul keep the shipped loss bit for bit; only score rows change, and all arms decode by argmax.
 
-The rank probability score term is weighted by a single global lambda, pinned at 1.902434173498492. The pin comes from step 0 on the 1,111 non-synthetic validation score rows: mean cross-entropy 1.403504, mean rank probability score 0.184435, ratio 7.609737. A's final weights give 1.866514, a ratio of 7.466057, within 2% of the pin, so it is not a step-0 artefact.
+The rank probability score term is weighted by a single global lambda, a pinned constant at 1.90243, quoted here to five decimals. The pin comes from step 0 on the 1,111 non-synthetic validation score rows: mean cross-entropy 1.403504, mean rank probability score 0.184435, ratio 7.609737. A's final weights give 1.866514, a ratio of 7.466057, within 2% of the pin, so it is not a step-0 artefact.
 
 The realised share is not uniform. By gold position the RPS term is 26.3% (gold 0, n = 227), 17.7%, 14.1%, 18.7%, 20.8% and 21.2% (gold 5, n = 35) of the score-row loss, so 14.1 to 26.3% rather than a flat 20%. By K it is 21.7% at K = 4, 19.7% at K = 5 and 17.4% at K = 6. A per-row weight that equalises the share was rejected: it would make the loss depend on the gold's position, which is the confound the plan-level permutation exists to remove.
 
@@ -16,7 +16,7 @@ The realised share is not uniform. By gold position the RPS term is 26.3% (gold 
 
 Validation differences sit inside the 0.52 pp band measured in the noise-floor work: B is +38 rows and C is -7 of 9,923. JevBench differences sit inside 1 to 2 items. Neither is a result, and no cell in this section is read as one.
 
-ECE is reported only where it clears the two-run spread of up to 2.0 pp. C's score payload ECE moves from 0.1817 to 0.1110, which does clear it; B's 0.1723 does not. Every ECE sentence in this note names its definition, because the two definitions disagree in sign on C's score rows: the payload definition improves to 0.1110 while the p(gold) definition worsens to 0.2024.
+ECE is reported only where it clears the two-run spread of up to 2.0 pp. C's score-row ECE starts at 0.1817 under both definitions: the payload definition improves to 0.1110, which clears the spread, while the p(gold) definition worsens to 0.2024 on the same baseline, so the sign disagreement is established on both sides. B's baseline is 0.1723, and it does not clear. Every ECE sentence in this note names its definition.
 
 Order self-consistency falls for C by 14 items, with 31 discordant items against A's 17, so the natural-minus-reversed gap shrinks because the flips grew rather than because the orders agree more.
 
@@ -33,9 +33,9 @@ A and B have identical exact counts on different rows, exact McNemar p = 1.0. C 
 
 ## 4. Verdicts against the pre-registration
 
-B is null on every endpoint: exact, rank probability score, kappa and cross-entropy all sit inside the bands, so the mixed loss does nothing measurable here.
+B is null on every endpoint with a stated resolution: its exact pair is b = 25, c = 25, 50 discordant, exact McNemar p = 1.0, and the minimum detectable effect at that discordance is about 14 items, so the finding is no measurable effect at this resolution. Rank probability score, kappa and cross-entropy sit inside the bands as well.
 
-C is real but different, not a pass. Its rank probability score improves with an interval that excludes zero, its exact accuracy is flat within noise, and its kappa is worse by 0.035. The pre-registered trigger required a 12-item exact gain; that trigger did not fire, so C is a single-run observation and not a confirmed arm.
+C is real but different, not a pass. Its rank probability score improves with an interval that excludes zero, its exact accuracy is flat within noise, and its kappa is worse by 0.035. The repeat trigger was registered on the 1,111 score rows as a 12-item exact gain; at that size the paired minimum detectable effect is 41 to 47 items, so the trigger was under-powered. C's non-confirmation therefore rests on its exact p = 0.58 and on being a single run, not on the trigger failing to fire.
 
 ## 5. Calibration, by definition
 
@@ -51,7 +51,7 @@ Every reported probability is renormalised over the offered codes, p_reported = 
 
 ## 7. The frozen-sample caveat
 
-The reweighted stop reference rests on a frozen sample that carries 5 score rows of 64, against a target weight of 18.45%, so its score component is n = 5 and `stopped` is not a score-quality check in practice. Raising `--frozen-loss-sample` to 512 buys n = 31, since the first 512 rows are 6.1% score, at about 90 s per rank with no change to step counts; that is pre-registered for a future arm family, and the three arms here keep 64 so their references stay identical.
+The reweighted stop reference rests on a frozen sample that carries 5 score rows of 64, against a target weight of 18.45%, which is 3,569 of 19,348 rows on the a20k plan rather than the canonical plan's 13,024 of 69,464 distinct rows at 18.7%, so its score component is n = 5 and `stopped` is not a score-quality check in practice. Raising `--frozen-loss-sample` to 512 buys n = 31, since the first 512 rows are 6.1% score, at about 90 s per rank with no change to step counts; that is pre-registered for a future arm family, and the three arms here keep 64 so their references stay identical.
 
 ## Provenance
 
