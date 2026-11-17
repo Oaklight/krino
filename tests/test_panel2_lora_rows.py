@@ -2207,6 +2207,16 @@ def test_bucketed_and_shipped_paths_record_the_same_history(tmp_path,
     length so that two buckets are presented within one step: a uniform batch
     is the easy case, and padding a bucket that holds one row at a narrow
     bucket is the one this exists to protect.
+
+    The two arms must be shown to have run differently in this same test, or
+    "they agreed on the losses" is satisfied by both taking the shipped path.
+    The assertion is strict: a bucket forward pads to a fixed width that
+    exceeds these rows and to a full batch, while the shipped path pads each
+    row only to its own chunk's longest, so the bucketed arm's padded total is
+    strictly larger. Equality is reachable only if every row exactly fills its
+    bucket at a full batch, which this fixture does not do — so if someone
+    later changes the fixture to make rows fill their buckets, the fixture is
+    wrong for this test rather than the assertion too strong.
     """
     module = importlib.import_module("model.scripts.train_panel2_lora")
     records = [
@@ -2219,25 +2229,36 @@ def test_bucketed_and_shipped_paths_record_the_same_history(tmp_path,
     _fake_training_modules(module, monkeypatch)
 
     def history(bucket):
+        out = tmp_path / f"out{bucket}"
         argv = [
             "train_panel2_lora.py", "--plan", str(plan),
-            "--output", str(tmp_path / f"out{bucket}"), "--world", "1",
+            "--output", str(out), "--world", "1",
             "--device", "cpu", "--lr", "0", "--epochs", "1",
             "--batch-rows", "2", "--plan-unpermuted-noul",
-            "--frozen-loss-sample", "1",
+            "--frozen-loss-sample", "1", "--phase-profile", "1",
         ]
         if bucket:
             argv.extend(["--bucket-tokens", bucket])
         monkeypatch.setattr(sys, "argv", argv)
         assert module.main() == 0
-        payload = json.loads(
-            (tmp_path / f"out{bucket}" / "shard_0.json").read_text())
-        return payload
+        payload = json.loads((out / "shard_0.json").read_text())
+        profile = json.loads((out / "phase_profile_rank0.json").read_text())
+        return payload, profile
 
-    shipped = history("")
-    bucketed = history("9,10")
+    shipped, shipped_profile = history("")
+    bucketed, bucketed_profile = history("9,10")
     assert bucketed["step_losses"] == pytest.approx(shipped["step_losses"],
                                                     rel=1e-6)
+
+    # The arms ran differently in this same test. Strict, per the fixture:
+    # the bucketed arm pads each row to its bucket's width and the batch to
+    # rows-per-forward, the shipped arm pads each row only to its chunk's
+    # longest, so the bucketed total is strictly larger unless every row
+    # exactly fills its bucket — which these rows do not.
+    assert (sum(bucketed_profile["padded_cost_this_rank"])
+            > sum(shipped_profile["padded_cost_this_rank"])), (
+        "the arms must not have padded identically, or the equivalence "
+        "certifies one path twice")
     assert bucketed["bucketing"]["widths"] == [9, 10]
     assert bucketed["bucketing"]["prewarm_seconds_this_rank"] > 0
     assert len(bucketed["bucketing"]["groups_per_step"]) == 2

@@ -1925,8 +1925,14 @@ def main() -> int:
                     forwards_per_step.append(forwards_this_step)
                     bucket_actuals.extend(bucket_actuals_this_step)
                 else:
+                    # One forward per row, so nothing is padded across rows:
+                    # the step's padded cost is its real token count, and it
+                    # is recorded so both paths report the same quantity.
+                    forwards_this_step = 0
+                    real_this_step = 0
                     for chunk in chunks:
                         for row in chunk:
+                            forwards_this_step += 1
                             term = loss_of(row, profile)
                             step_tokens[row.q_type] = step_tokens.get(
                                 row.q_type, 0) + encoded_tokens[id(row)]
@@ -1946,6 +1952,10 @@ def main() -> int:
                                 synchronise(device)
                                 profile["backward"] += (time.perf_counter()
                                                         - started_phase)
+                    real_this_step = sum(step_tokens.values())
+                    real_tokens.append(real_this_step)
+                    padded_cost.append(real_this_step)
+                    forwards_per_step.append(forwards_this_step)
                 # The recorded step loss is the loss that was backpropagated,
                 # on the same divisor, so the log and the stop rule cannot
                 # disagree with what was optimised.
@@ -2159,7 +2169,7 @@ def main() -> int:
             # The per-step records and the chunk accounting, so a cost fit can
             # take both regressors from the same artifact as the timings.
             "steps": phase_records,
-            "chunking_this_rank": ({
+            "chunking_this_rank": {
                 "tokens": args.chunk_tokens,
                 "rows": args.chunk_rows,
                 "length_ratio": args.chunk_ratio,
@@ -2171,12 +2181,8 @@ def main() -> int:
                 "chunk_decision_counts": {
                     label: chunk_decisions.count(label)
                     for label in sorted(set(chunk_decisions))},
-            } if (args.chunk_tokens or args.chunk_rows
-                  or args.bucket_list) else {"tokens": 0}),
-            "padded_cost_this_rank": (padded_cost
-                                      if (args.chunk_tokens or args.chunk_rows
-                                          or args.bucket_list)
-                                      else None),
+            },
+            "padded_cost_this_rank": padded_cost,
             # The bucketing measurements live here as well as in the shard
             # payload: this file is written before the epoch-end evaluation,
             # so a measurement run stopped after the profiles exists does not
