@@ -434,11 +434,15 @@ BUCKET_WIDTHS = (512, 1024, 2048, 4096)
 # plus a term per padded token plus a quadratic term. The coefficients are a
 # least-squares fit to 199 measured padded forwards of the a20k twenty-step
 # bucket run at 8 rows per rank (four forwards above 1.5x their bucket mean
-# excluded; rms residual 0.026 s over forwards from 0.45 s to 5.4 s). A fit
+# excluded; rms residual 0.026 s over forwards from 0.45 s to 5.4 s). The
+# pairs are committed at model/scripts/bucket_cost_fit.tsv and
+# model/scripts/fit_bucket_cost.py refits them and prints the
+# cross-validation, so the constants can be re-derived without the run. A fit
 # with no quadratic term is biased by width: -0.21 s at 2048 and +0.13 s at
 # 4096, and its intercept goes negative, which is the model saying the form is
 # wrong. The quadratic is the attention and checkpoint-recompute cost that
-# grows with width; it is why a 4096 forward costs 9.8x a 512 one, not 8x.
+# grows with width: 5.1962 s / 0.5092 s = 10.2x for a 4096 forward against a
+# 512 one, where padded tokens alone would give 8x.
 BUCKET_CALL_SECONDS = 0.0219
 BUCKET_TOKEN_SECONDS = 0.0001134
 BUCKET_TOKEN_SQUARED_SECONDS = 1.358e-9
@@ -2255,11 +2259,17 @@ def main() -> int:
                "eval_plan_sha256_expected": args.eval_plan_sha256,
                "full_ft": args.full_ft, "grad_bucket_mb": args.grad_bucket_mb,
                "row_assignment": {
-                   "rule": "balanced_by_length" if args.balance_rows else "rank_stride",
+                   # Which rows this rank trained on. A digest is written
+                   # whenever a deal chose them, so a run that bypassed the
+                   # deal and used the strided window would leave a different
+                   # digest, or none.
+                   "rule": ("bucket_cost" if args.bucket_list
+                            else "balanced_by_length" if args.balance_rows
+                            else "rank_stride"),
                    "rows_per_step": args.world * args.batch_rows,
                    "digest_this_rank": (hashlib.sha256(
                        "\n".join(assignment_ids).encode()).hexdigest()
-                       if args.balance_rows else None),
+                       if (args.balance_rows or args.bucket_list) else None),
                },
                "step_losses": history,
                # The mix each step actually trained on, per rank, summed

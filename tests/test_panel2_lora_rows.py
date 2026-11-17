@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import importlib
 import json
 import math
@@ -2380,6 +2381,24 @@ def test_the_bucketed_profile_records_each_forwards_actuals(tmp_path,
                                                                  [2, 10]]
     assert profile["bucketing_this_rank"]["prewarm_shapes_this_rank"] == [
         [2, 9], [2, 10]]
+
+    # The deal chose this rank's rows, so the payload names the rule and
+    # records a digest over them. The strided window's digest is computed here
+    # from the plan: if the deal were bypassed and the forwarding kept, the
+    # digest would be the strided one and this assertion would fail.
+    assignment = recorded["row_assignment"]
+    assert assignment["rule"] == "bucket_cost"
+    assert assignment["digest_this_rank"] is not None
+    rows_for_digest, _, _ = module.build_rows(
+        plan.read_bytes(), noul_gold="position", plan_unpermuted_noul=True)
+    train = [row for row in rows_for_digest if row.split == "train"]
+    shard = train[0::2]
+    strided_ids = [shard[position]
+                   for position in module.batch_indices(1, 2, len(shard))]
+    strided = hashlib.sha256(
+        "\n".join(row.row_id for row in strided_ids).encode()).hexdigest()
+    assert assignment["digest_this_rank"] != strided, (
+        "the recorded assignment must be the deal's, not the strided window")
     first = [item for item in actuals if item["step"] == 1]
     assert sum(item["forward"] for item in first) == pytest.approx(
         profile["steps"][0]["forward"], rel=1e-6)
@@ -2416,6 +2435,25 @@ def test_bucket_cost_charges_each_forward_the_fitted_model():
     assert bucket_cost([(width, [None] * 8), (other, [None] * 8)],
                        batch) == pytest.approx(one + one_wide)
     assert one_wide > 2 * one, "the fitted model is superlinear in width"
+
+
+def test_the_cost_model_constants_are_pinned_literally():
+    """The three constants are quoted in the PR body and in note 13.
+
+    A retune that leaves the form correct would keep the cost-model test green,
+    because that test derives its expectation from the constants. These three
+    numbers decide how the deal ranks buckets, and they appear in text outside
+    this repository's tests, so a silent change would make both false. If this
+    fails, check the note and the body as well as the test.
+    """
+    from model.scripts.train_panel2_lora import (
+        BUCKET_CALL_SECONDS, BUCKET_TOKEN_SECONDS,
+        BUCKET_TOKEN_SQUARED_SECONDS,
+    )
+
+    assert BUCKET_CALL_SECONDS == pytest.approx(0.0219)
+    assert BUCKET_TOKEN_SECONDS == pytest.approx(0.0001134)
+    assert BUCKET_TOKEN_SQUARED_SECONDS == pytest.approx(1.358e-9)
 
 
 def test_a_row_above_the_largest_bucket_is_refused_before_the_loop(tmp_path,
