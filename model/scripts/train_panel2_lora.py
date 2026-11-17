@@ -791,10 +791,25 @@ def add_mask_tokens(type_tokens, chunk, encoded):
     could not. Reads the same tensor the forward used, so no row is tokenised
     twice.
     """
-    for row, count in zip(chunk, encoded[1].sum(dim=1).tolist()):
+    _, mask, _ = encoded
+    for row, count in zip(chunk, mask.sum(dim=1).tolist()):
         type_tokens[row.q_type] = type_tokens.get(row.q_type, 0) + int(count)
 
 
+def step_mix_text(step_rows, step_tokens, type_order):
+    """The step's own mix, per type: rows trained on and token share.
+
+    The order is the union of the plan's types and the step's. A step row's
+    type is drawn from the plan today, so the union is defensive for the
+    record's totals; naming it here keeps the promise in one place, and the
+    share is this rank's, which is what the label on the line says.
+    """
+    total = sum(step_tokens.values())
+    order = sorted(set(type_order) | set(step_rows) | set(step_tokens))
+    shares = {kind: (100.0 * step_tokens.get(kind, 0) / total if total else 0.0)
+              for kind in order}
+    return " ".join(f"{kind} {step_rows.get(kind, 0)}r {shares[kind]:.1f}%"
+                    for kind in order)
 
 
 def abort_if_any_failed(failed, what: str, world: int) -> None:
@@ -1329,9 +1344,10 @@ def main() -> int:
                               args.score_target_tau)
         return target_loss(values, row.gold, "onehot")
 
-    # The token count each row presented, taken from the mask of the encode
-    # that fed its forward. Filled here because the plain path encodes per row
-    # inside loss_of and must not encode a second time to be counted.
+    # The token count each row presented, cached from the mask of the encode
+    # that fed its forward. Filled in loss_of because the plain path encodes
+    # per row there, and re-encoding to count would be the second pass this
+    # head exists to remove.
     encoded_tokens: dict = {}
 
     def loss_of(row, profile=None):
@@ -1704,24 +1720,11 @@ def main() -> int:
                     args.world, device, step=step)
                 history.append(mean)
                 if step % args.log_every == 0 or step == steps:
-                    # The step's own mix, stated rather than inferred from the
-                    # plan: per type, the rows trained on and that type's
-                    # share of this rank's tokens. The order is the union of
-                    # the plan's types and the step's, so a type either side
-                    # knows is printed instead of being dropped by the other.
-                    step_total = sum(step_tokens.values())
-                    log_order = sorted(set(type_order) | set(step_counts)
-                                       | set(step_tokens))
-                    shares = {kind: (100.0 * step_tokens.get(kind, 0)
-                                     / step_total if step_total else 0.0)
-                              for kind in log_order}
-                    mix_text = " ".join(
-                        f"{kind} {step_counts.get(kind, 0)}r "
-                        f"{shares[kind]:.1f}%"
-                        for kind in log_order)
                     print(f"rank {args.rank}: epoch {epoch} step {step}/{steps} "
                           f"loss {mean:.4f} elapsed {time.time() - started:.0f}s "
-                          f"types_this_rank {mix_text}", flush=True)
+                          f"types_this_rank "
+                          f"{step_mix_text(step_counts, step_tokens, type_order)}",
+                          flush=True)
                 if (args.eval_every and step % args.eval_every == 0
                         and step != steps):
                     evaluate_checkpoint(step)

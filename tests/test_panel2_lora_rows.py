@@ -313,8 +313,9 @@ def _fake_training_modules(module, monkeypatch):
             return self
 
     fake = FakeModel()
+    fake.tokenizer = FakeTokenizer()
     monkeypatch.setattr(module, "load_causal_lm",
-                        lambda *a, **k: (fake, FakeTokenizer()))
+                        lambda *a, **k: (fake, fake.tokenizer))
     monkeypatch.setattr(module, "inject_lora", lambda *a, **k: 0)
     monkeypatch.setattr(
         module, "code_token_ids",
@@ -1963,11 +1964,12 @@ def test_the_step_log_states_its_own_type_mix(tmp_path, monkeypatch, capsys):
     """A step whose mix is not the plan's must say so in its own line.
 
     The plan is 2 choice rows to 4 score rows, at two rows per step, and the
-    choice prompts are longer than the score prompts, so a type's token share
-    is not its row share. Step 3 is both score rows, so it carries no choice
-    row at all while the plan's pinned mix is a third choice. The payload
-    keeps the same count per step, which is what a run with --log-every above
-    one relies on.
+    score prompts carry two extra characters, which wraps the fake tokenizer's
+    width rule down by one: the score rows take fewer tokens than the choice
+    rows, so a type's token share is not its row share. Step 3 is both score
+    rows, so it carries no choice row at all while the plan's pinned mix is a
+    third choice. The payload keeps the same count per step, which is what a
+    run with --log-every above one relies on.
     """
     module = importlib.import_module("model.scripts.train_panel2_lora")
     records = []
@@ -1984,7 +1986,7 @@ def test_the_step_log_states_its_own_type_mix(tmp_path, monkeypatch, capsys):
                                    CHOICE_PREFIX, f"Option {option}." + pad,
                                    n_options))
     plan = _write(tmp_path, records)
-    _fake_training_modules(module, monkeypatch)
+    fake = _fake_training_modules(module, monkeypatch)
     monkeypatch.setattr(sys, "argv", [
         "train_panel2_lora.py", "--plan", str(plan),
         "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
@@ -2023,6 +2025,19 @@ def test_the_step_log_states_its_own_type_mix(tmp_path, monkeypatch, capsys):
     assert "choice 0r 0.0%" in third
     assert "score 2r 100.0%" in third
 
+    # The plain path's counts, checked against a fresh tokenisation of the
+    # rows that step actually carried. Without this the recorded numbers are
+    # only ever compared with themselves.
+    rows, _, _ = module.build_rows(plan.read_bytes(), noul_gold="position",
+                                   plan_unpermuted_noul=True)
+    train = [row for row in rows if row.split == "train"]
+    expected = {}
+    for row in train[:2]:
+        width = len(fake.tokenizer(module.prompt_of(row),
+                                   add_special_tokens=False)["input_ids"])
+        expected[row.q_type] = expected.get(row.q_type, 0) + width
+    assert recorded[0]["tokens"] == expected
+
     # The phase profile carries the run's totals, not a second per-step list.
     profile = json.loads(
         (tmp_path / "out" / "phase_profile_rank0.json").read_text())
@@ -2032,6 +2047,87 @@ def test_the_step_log_states_its_own_type_mix(tmp_path, monkeypatch, capsys):
     assert totals["choice"]["tokens"] == sum(
         entry["tokens"]["choice"] for entry in recorded)
     assert "composition_per_step" not in profile
+
+
+def test_a_chunked_step_records_the_mask_sum_of_its_rows(tmp_path,
+                                                        monkeypatch):
+    """The chunked path's counts are the masks of the chunks it presents.
+
+    --chunk-tokens 4096 never splits rows this short, so the chunked branch is
+    taken with one chunk per step: the point here is that a run with chunking
+    on reads the composition at all, from the tensors chunk_inputs built.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    # Unequal prompt lengths within each pair, so a chunk's padded width
+    # differs from its rows' own token counts: a count that took the width
+    # would be wrong for every row but the longest.
+    records = [
+        _record(f"corpus:c{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX,
+                f"Option {option}." + ("yy" if index % 2 else ""), 2)
+        for index in range(4) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    fake = _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "1",
+        "--log-every", "1", "--chunk-tokens", "4096",
+    ])
+    assert module.main() == 0
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    recorded = payload["composition_per_step"]
+    rows, _, _ = module.build_rows(plan.read_bytes(), noul_gold="position",
+                                   plan_unpermuted_noul=True)
+    train = [row for row in rows if row.split == "train"]
+    assert recorded, "a chunked run must record a mix"
+    for entry, pair in zip(recorded, (train[0:2], train[2:4])):
+        expected = {}
+        for row in pair:
+            width = len(fake.tokenizer(module.prompt_of(row),
+                                       add_special_tokens=False)["input_ids"])
+            expected[row.q_type] = expected.get(row.q_type, 0) + width
+        assert entry["tokens"] == expected
+
+
+def test_a_second_epoch_is_recorded_as_a_second_epoch(tmp_path, monkeypatch):
+    """Two passes write (2, step) entries, not step 1 twice."""
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = [
+        _record(f"corpus:g{index}", option, 1 if option == 0 else 0, "choice",
+                CHOICE_PREFIX, f"Option {option}.", 2)
+        for index in range(6) for option in (0, 1)
+    ]
+    plan = _write(tmp_path, records)
+    _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "2", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "1",
+    ])
+    assert module.main() == 0
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    recorded = payload["composition_per_step"]
+    assert [entry["epoch"] for entry in recorded] == [1, 1, 1, 2, 2, 2]
+    assert [entry["step"] for entry in recorded] == [1, 2, 3, 1, 2, 3]
+
+
+def test_the_mix_line_prints_a_type_the_plan_does_not_have():
+    """A type outside the plan's order is printed, not dropped.
+
+    A plan-derived fixture cannot produce one, since a step's rows come from
+    the plan; the union is defensive, so the formatter is tested directly.
+    """
+    from model.scripts.train_panel2_lora import step_mix_text
+
+    text = step_mix_text({"noul": 1, "choice": 1}, {"noul": 10, "choice": 5},
+                         ["choice", "score"])
+    assert "noul 1r 66.7%" in text
+    assert "choice 1r 33.3%" in text
+    assert "score 0r 0.0%" in text
 
 
 def test_the_chunk_decision_reports_the_knob_that_bound():
