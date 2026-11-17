@@ -1856,7 +1856,7 @@ def main() -> int:
                                 pad_rows=args.batch_rows if widths else None)
                             if widths:
                                 presented = tuple(int(size) for size
-                                                  in chunk_encoded[0].shape)
+                                                  in encoded[0].shape)
                                 padded_this_step += presented[0] * presented[1]
                             values = chunk_code_logits(model, tokenizer, chunk,
                                                        code_ids, device,
@@ -1873,7 +1873,7 @@ def main() -> int:
                                                     - started_phase)
                             if widths:
                                 presented = tuple(int(size) for size
-                                                  in chunk_encoded[0].shape)
+                                                  in encoded[0].shape)
                                 padded_this_step += presented[0] * presented[1]
                             started_phase = time.perf_counter()
                             values = chunk_code_logits(model, tokenizer, chunk,

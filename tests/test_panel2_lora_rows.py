@@ -2432,6 +2432,58 @@ def test_eval_only_skips_the_prewarm(tmp_path, monkeypatch):
     assert payload["bucketing"]["prewarm_shapes_this_rank"] == []
 
 
+def test_a_bucketed_step_sums_its_mix_over_every_bucket(tmp_path,
+                                                         monkeypatch):
+    """A step spread over two buckets reports the step's mix, not one bucket's.
+
+    Two choice rows take ten tokens and two score rows eight, so with buckets
+    9 and 10 every step presents one bucket of each type. A count scoped to a
+    single forward would report only that bucket's type, which is the failure
+    the union of bucketing and the mix log introduces and no other test
+    reaches.
+    """
+    module = importlib.import_module("model.scripts.train_panel2_lora")
+    records = []
+    order = [("c0", "choice", 2), ("s0", "score", 3), ("c1", "choice", 2),
+             ("s1", "score", 3)]
+    for row_id, q_type, n_options in order:
+        pad = "" if q_type == "choice" else "yy"
+        for option in range(n_options):
+            gold = 1 if q_type == "score" else 0
+            records.append(_record(f"corpus:{row_id}", option,
+                                   1 if option == gold else 0, q_type,
+                                   CHOICE_PREFIX, f"Option {option}." + pad,
+                                   n_options))
+    plan = _write(tmp_path, records)
+    fake = _fake_training_modules(module, monkeypatch)
+    monkeypatch.setattr(sys, "argv", [
+        "train_panel2_lora.py", "--plan", str(plan),
+        "--output", str(tmp_path / "out"), "--world", "1", "--device", "cpu",
+        "--lr", "0", "--epochs", "1", "--batch-rows", "2",
+        "--plan-unpermuted-noul", "--frozen-loss-sample", "1",
+        "--log-every", "1", "--bucket-tokens", "9,10",
+        "--phase-profile", "2",
+    ])
+    assert module.main() == 0
+    payload = json.loads((tmp_path / "out" / "shard_0.json").read_text())
+    recorded = payload["composition_per_step"]
+    rows, _, _ = module.build_rows(plan.read_bytes(), noul_gold="position",
+                                   plan_unpermuted_noul=True)
+    train = [row for row in rows if row.split == "train"]
+    assert len(train) == 4
+    for entry, pair in zip(recorded, (train[0:2], train[2:4])):
+        expected = {}
+        for row in pair:
+            width = len(fake.tokenizer(module.prompt_of(row),
+                                       add_special_tokens=False)["input_ids"])
+            expected[row.q_type] = expected.get(row.q_type, 0) + width
+        assert entry["rows"] == {"choice": 1, "score": 1}
+        assert entry["tokens"] == expected
+        # Both types present means both buckets were counted: one bucket
+        # holds choice rows and the other holds score rows.
+        assert set(expected) == {"choice", "score"}
+
+
 def test_the_chunk_decision_reports_the_knob_that_bound():
     """A step's label names the constraint that split its chunks, not the config."""
     from model.scripts.train_panel2_lora import (chunk_by_length,
