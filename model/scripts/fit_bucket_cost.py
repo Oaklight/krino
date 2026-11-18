@@ -2,9 +2,17 @@
 
 `model/scripts/bucket_cost_fit.tsv` holds every measured padded forward of the
 a20k twenty-step bucket run: one row per forward, in the order the run
-recorded them (rank, then step, then bucket width), with the 1.5x exclusion
-rule's verdict in the last column. The model's three coefficients are a least
+recorded them (rank, then step, then bucket width, then the presentation when
+one bucket is presented as two forwards), with the 1.5x exclusion rule's
+verdict in the last column. The model's three coefficients are a least
 squares fit to the rows that column does not exclude.
+
+`(rank, step, width)` does not identify a forward: 43 rank-steps present one
+bucket as two forwards, so 86 of the 203 rows sit in pairs whose relative
+order that key cannot fix. A check on it alone would accept a transposition
+inside each pair and still call the file "in run order". `presentation` is
+each row's occurrence ordinal within its group; the check is on all four key
+columns, so every row's position is pinned.
 
 Prints one JSON block and nothing else, with sorted keys and fixed precision,
 so two runs are byte-identical. The keys mirror the PR body: the three
@@ -13,13 +21,19 @@ the four in-sample and out-of-sample rms figures each naming its fit and
 population, the coefficient range across folds, and the linear form's
 out-of-sample bias for comparison.
 
-The cross-validation uses `fold = index % k` over the file's order: within a
-step that cycles across widths, so every fold holds every width; across steps
-it interleaves, so drift over the run is spread over the folds. The exclusion
-rule is applied inside each fold to the training records only; held-out
-records are predicted unfiltered.
+The cross-validation uses `fold = index % k` over the file's order. That order
+is rank-major, so the index cycles over steps within a rank rather than across
+ranks. Every fold holds rows of every width, but not in equal numbers: the
+4096-token rows fall 3, 3, 2, 4 and 2 across folds 0 to 4. The four excluded
+rows land in folds 0, 2 and 4, so folds 1 and 3 carry none of them in test,
+and those four rows carry 95% of the out-of-sample squared error: per-fold
+rms is 0.1006, 0.0241, 0.1664, 0.0266 and 0.1849 against a pooled 0.120956,
+while the 199 kept rows alone give 0.026822. The spread across folds is the
+excluded rows, not the fit. The exclusion rule is applied inside each fold to
+the training records only; held-out records are predicted unfiltered.
+`--per-fold` prints the five folds' counts and rms.
 
-Usage: fit_bucket_cost.py [TSV]
+Usage: fit_bucket_cost.py [--per-fold] [TSV]
 """
 
 import json
@@ -37,16 +51,19 @@ K = 5
 def load(path):
     """Read the pairs in the file's order, and check that order.
 
-    The rows are the run's: rank, then step, then bucket width. The folds are
-    assigned over that order, so a file in another order would produce a
-    cross-validation of something the run did not record. This verifies the
-    order instead of sorting it, because a sort would silently repair such a
-    file and hide the fact.
+    The rows are the run's: rank, then step, then bucket width, then the
+    presentation of that width. The folds are assigned over that order, so a
+    file in another order would produce a cross-validation of something the
+    run did not record. This verifies the order instead of sorting it, because
+    a sort would silently repair such a file and hide the fact. The key covers
+    `presentation` because a bucket presented as two forwards gives two rows
+    with the same rank, step and width, and a check that stopped at width
+    would accept those two in either order.
     """
     lines = path.read_text(encoding="utf-8").splitlines()
     header = lines[0].split("\t")
-    needed = ("rank", "step", "width", "padded_tokens", "seconds",
-              "excluded_by_1_5x_rule")
+    needed = ("rank", "step", "width", "presentation", "padded_tokens",
+              "seconds", "excluded_by_1_5x_rule")
     missing = [name for name in needed if name not in header]
     if missing:
         raise SystemExit(f"{path.name} lacks {', '.join(missing)}")
@@ -60,14 +77,16 @@ def load(path):
         rank = int(fields[column["rank"]])
         step = int(fields[column["step"]])
         width = int(fields[column["width"]])
-        key = (rank, step, width)
+        presentation = int(fields[column["presentation"]])
+        key = (rank, step, width, presentation)
         if previous is not None and key < previous:
             raise SystemExit(
                 f"{path.name} line {number}: {key} follows {previous}; the "
-                f"file must be in run order (rank, step, width) and is not "
-                f"sorted here, because sorting would move the folds")
+                f"file must be in run order (rank, step, width, presentation) "
+                f"and is not sorted here, because sorting would move the folds")
         previous = key
         records.append({"rank": rank, "step": step, "width": width,
+                        "presentation": presentation,
                         "padded": int(fields[column["padded_tokens"]]),
                         "seconds": float(fields[column["seconds"]]),
                         "excluded": int(fields[column["excluded_by_1_5x_rule"]])})
@@ -125,9 +144,10 @@ def written_constants(path):
     return values
 
 
-def cross_validate(records, filtered_training, quadratic=True):
-    held = []
+def fold_residuals(records, filtered_training, quadratic=True):
+    """The held-out residuals, fold by fold, with each fold's own fit."""
     coefficients = []
+    by_fold = []
     for fold in range(K):
         train = [record for index, record in enumerate(records)
                  if index % K != fold]
@@ -144,13 +164,52 @@ def cross_validate(records, filtered_training, quadratic=True):
         solution = solve([features(record, quadratic) for record in train],
                          [record["seconds"] for record in train])
         coefficients.append(solution)
-        held.extend((record, residual(record, solution, quadratic))
-                    for record in test)
-    return coefficients, held
+        by_fold.append([(record, residual(record, solution, quadratic))
+                        for record in test])
+    return coefficients, by_fold
 
 
-def main(path=None):
+def cross_validate(records, filtered_training, quadratic=True):
+    coefficients, by_fold = fold_residuals(records, filtered_training,
+                                           quadratic)
+    return coefficients, [item for fold in by_fold for item in fold]
+
+
+def per_fold_report(records):
+    """What each fold holds and what it predicts, so the docstring's five rms
+    figures have a command behind them rather than a recipe."""
+    _, by_fold = fold_residuals(records, True)
+    folds = []
+    for fold, held in enumerate(by_fold):
+        values = [value for _, value in held]
+        folds.append({
+            "fold": fold,
+            "n": len(held),
+            "excluded": sum(1 for record, _ in held if record["excluded"]),
+            "by_width": {str(width): sum(1 for record, _ in held
+                                         if record["width"] == width)
+                         for width in sorted({record["width"]
+                                              for record, _ in held})},
+            "rms": round(rms(values), 6),
+            "sse": round(sum(value * value for value in values), 6),
+        })
+    held = [item for fold in by_fold for item in fold]
+    return {
+        "folds": folds,
+        "pooled_rms": round(rms([value for _, value in held]), 6),
+        "kept_only_rms": round(
+            rms([value for record, value in held if not record["excluded"]]), 6),
+        "excluded_sse_share": round(
+            sum(value * value for record, value in held if record["excluded"])
+            / sum(value * value for _, value in held), 6),
+    }
+
+
+def main(path=None, per_fold=False):
     records = load(Path(path) if path else DEFAULT_TSV)
+    if per_fold:
+        print(json.dumps(per_fold_report(records), indent=2, sort_keys=True))
+        return
     kept = [record for record in records if not record["excluded"]]
     fitted = solve([features(record) for record in kept],
                    [record["seconds"] for record in kept])
@@ -230,4 +289,6 @@ def main(path=None):
 if __name__ == "__main__":
     # The path is read here, not at import: a test process's argv[1] is the
     # test file, and binding it at import would aim the loader at that.
-    main(sys.argv[1] if len(sys.argv) > 1 else None)
+    arguments = [argument for argument in sys.argv[1:] if argument != "--per-fold"]
+    main(arguments[0] if arguments else None,
+         per_fold="--per-fold" in sys.argv[1:])
