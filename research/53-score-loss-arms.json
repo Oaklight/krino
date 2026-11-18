@@ -1,0 +1,129 @@
+{
+  "note": "53-score-loss-arms.md",
+  "design": {
+    "plan": "v3 a20k",
+    "steps": 303,
+    "lr": 1e-05,
+    "backbone": "Qwen/Qwen3-Reranker-4B",
+    "readout": "panel-2 listwise",
+    "score_target": "one-hot (default)",
+    "arms": {
+      "A": "--score-loss ce",
+      "B": "mix",
+      "C": "rps"
+    }
+  },
+  "lambda": {
+    "pinned": 1.902434173498492,
+    "source": "step 0, 1111 non-synthetic val score rows",
+    "mean_ce": 1.403504,
+    "mean_rps": 0.184435,
+    "ratio": 7.609737,
+    "A_final_weights": 1.866514,
+    "A_final_ratio": 7.466057,
+    "note": "pinned constant; A's final weights within 2%"
+  },
+  "realised_rps_share_by_gold": [
+    {
+      "gold": 0,
+      "share": 0.263,
+      "n": 227
+    },
+    {
+      "gold": 1,
+      "share": 0.177
+    },
+    {
+      "gold": 2,
+      "share": 0.141
+    },
+    {
+      "gold": 3,
+      "share": 0.187
+    },
+    {
+      "gold": 4,
+      "share": 0.208
+    },
+    {
+      "gold": 5,
+      "share": 0.212,
+      "n": 35
+    }
+  ],
+  "realised_rps_share_by_k": {
+    "4": 0.217,
+    "5": 0.197,
+    "6": 0.174
+  },
+  "cells": {
+    "exact": {
+      "A": 530,
+      "B": 530,
+      "C": 521
+    },
+    "n": 1111,
+    "rps": {
+      "A": 0.174367,
+      "B": 0.174091,
+      "C": 0.168172
+    },
+    "qwk": {
+      "A": 0.3922,
+      "B": 0.3885,
+      "C": 0.3577
+    },
+    "mean_ce": {
+      "A": 1.3018,
+      "B": 1.2967,
+      "C": 1.2446
+    }
+  },
+  "paired": {
+    "A_vs_B_exact": {
+      "b": 25,
+      "c": 25,
+      "discordant": 50,
+      "p": 1.0,
+      "mde_items": 20,
+      "mde_convention": "80% power, 2.80*sqrt(discordant)"
+    },
+    "A_vs_C_exact": {
+      "b": 109,
+      "c": 100,
+      "net": 9,
+      "p": 0.5801
+    },
+    "A_vs_C_rps": {
+      "delta": 0.006195,
+      "ci": [
+        0.000555,
+        0.011881
+      ],
+      "p": 0.0328
+    },
+    "A_vs_C_qwk_delta": -0.0345
+  },
+  "ece": {
+    "baseline_shared": 0.1817,
+    "C_payload": 0.111,
+    "C_pgold": 0.2024,
+    "B_baseline": 0.1723,
+    "per_k_delta_pp": {
+      "4": 5.5,
+      "6": -4.6
+    }
+  },
+  "trigger": {
+    "population": "1111 score rows",
+    "registry": "the registration lives in the working record, not in this repository",
+    "size": "12-item exact gain",
+    "paired_mde_items": [
+      41,
+      47
+    ],
+    "fired": false,
+    "paired_mde_convention": "80% power, 2.80*sqrt(n)"
+  },
+  "provenance": "measured; run payloads on the run host, not committed"
+}
