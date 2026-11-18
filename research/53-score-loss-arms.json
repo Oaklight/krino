@@ -85,7 +85,8 @@
       "c": 25,
       "discordant": 50,
       "p": 1.0,
-      "mde_items": 14
+      "mde_items": 20,
+      "mde_convention": "80% power, 2.80*sqrt(discordant)"
     },
     "A_vs_C_exact": {
       "b": 109,
@@ -114,13 +115,15 @@
     }
   },
   "trigger": {
-    "registered_on": "1111 score rows",
+    "population": "1111 score rows",
+    "registry": "the registration lives in the working record, not in this repository",
     "size": "12-item exact gain",
     "paired_mde_items": [
       41,
       47
     ],
-    "fired": false
+    "fired": false,
+    "paired_mde_convention": "80% power, 2.80*sqrt(n)"
   },
   "provenance": "measured; run payloads on the run host, not committed"
 }

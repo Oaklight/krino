@@ -16,7 +16,7 @@ The realised share is not uniform. By gold position the RPS term is 26.3% (gold 
 
 Validation differences sit inside the 0.52 pp band measured in the noise-floor work: B is +38 rows and C is -7 of 9,923. JevBench differences sit inside 1 to 2 items. Neither is a result, and no cell in this section is read as one.
 
-ECE is reported only where it clears the two-run spread of up to 2.0 pp. C's score-row ECE starts at 0.1817 under both definitions: the payload definition improves to 0.1110, which clears the spread, while the p(gold) definition worsens to 0.2024 on the same baseline, so the sign disagreement is established on both sides. B's baseline is 0.1723, and it does not clear. Every ECE sentence in this note names its definition.
+ECE is reported only where it clears the two-run spread of up to 2.0 pp. C's score-row ECE starts at 0.1817 under both definitions: the payload definition improves to 0.1110, which clears the spread, while the p(gold) definition worsens to 0.2024 on the same baseline, a 0.0207 move, or 2.07 pp, against a two-run spread of up to 2.0 pp, so it clears by about 0.07 pp and is reported as at the edge rather than comfortably outside; the sign disagreement is established on both sides. B's baseline is 0.1723, and it does not clear. Every ECE sentence in this note names its definition.
 
 Order self-consistency falls for C by 14 items, with 31 discordant items against A's 17, so the natural-minus-reversed gap shrinks because the flips grew rather than because the orders agree more.
 
@@ -33,9 +33,9 @@ A and B have identical exact counts on different rows: b = 25, c = 25, exact McN
 
 ## 4. Verdicts against the pre-registration
 
-B is null on every endpoint with a stated resolution: its exact pair is b = 25, c = 25, 50 discordant, exact McNemar p = 1.0, and the minimum detectable effect at that discordance is about 14 items, so the finding is no measurable effect at this resolution. Rank probability score, kappa and cross-entropy sit inside the bands as well.
+B is null on every endpoint with a stated resolution: its exact pair is b = 25, c = 25, 50 discordant, exact McNemar p = 1.0, and the minimum detectable effect at that discordance is about 20 items at 80% power (2.80 x sqrt(50) = 19.8), so the finding is no measurable effect at this resolution. The 13.86-item figure is the p = 0.05 line at 50% power, and quoting it would flatter the null; the 80% convention is used throughout this note. The null bounds B's effect at roughly 20 items; it does not establish that a gain below 20 items is worthless. Rank probability score, kappa and cross-entropy sit inside the bands as well.
 
-C is real but different, not a pass. Its rank probability score improves with an interval that excludes zero, its exact accuracy is flat within noise, and its kappa is worse by 0.035. The repeat trigger was registered on the 1,111 score rows as a 12-item exact gain; at that size the paired minimum detectable effect is 41 to 47 items, so the trigger was under-powered. C's non-confirmation therefore rests on its exact p = 0.5801 and on being a single run, not on the trigger failing to fire.
+C is real but different, not a pass. Its rank probability score improves with an interval that excludes zero, its exact accuracy is flat within noise, and its kappa is worse by 0.035. The repeat trigger was registered on the 1,111 score rows as a 12-item exact gain; at that size the paired minimum detectable effect is 41 to 47 items on the same 80% convention (2.80 x sqrt(209) = 40.5 and 2.80 x sqrt(282) = 47.0), so the trigger was under-powered, and its resolution is the one the B null is stated at, not a weaker one. C's non-confirmation therefore rests on its exact p = 0.5801 and on being a single run, not on the trigger failing to fire.
 
 ## 5. Calibration, by definition
 
