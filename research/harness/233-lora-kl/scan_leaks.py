@@ -4,9 +4,8 @@ import json
 import re
 import subprocess
 
-PATTERN = re.compile(
-    r"/home/|/homes/|H100|H200|A100"
-)
+# Add your operator-local host, path and accelerator patterns here.
+PATTERN = re.compile(r"/home/|/homes/|/mnt/|/nfs/")
 NUMBERS = [
     268, 264, 216, 217, 145, 49,
     208, 219, 229, 230, 234, 225, 210, 209, 220, 205, 211, 218, 195, 223,
