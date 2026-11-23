@@ -3,6 +3,9 @@
 One-off scripts kept for provenance. They produced or recorded results cited in
 `research/`, but they are not part of CI and are not maintained.
 
+Run the shell scripts with `bash` (or `./name.sh` after this change made them
+executable) from the repository root, with the variables below set.
+
 Two groups:
 
 - `233-lora-kl/` — the nine-arm LoRA/KL scan harness behind PR #252 and the
