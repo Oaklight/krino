@@ -1,0 +1,1008 @@
+<html data-theme="light">
+<meta charset="utf-8">
+<title>Krino v4 Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Advisor review deck: Krino's path from the v3 screen to the v4 control, the evidence, and five open decisions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ---------------------------------------------------------------
+   Krino advisor deck
+   Layout: 16:9 stage, fixed left rail, one slide at a time.
+   Type:   Plex Sans Condensed (display), Plex Sans (body), Plex Mono (data).
+   Color:  cool paper + ink, one signal blue, amber/red/green for status.
+   --------------------------------------------------------------- */
+:root {
+  --paper: #F6F7F5;
+  --paper-2: #ECEFF0;
+  --surface: #FFFFFF;
+  --ink: #111516;
+  --ink-2: #3D484C;
+  --muted: #667377;
+  --rule: #D3DAD9;
+  --rule-strong: #AEB9B8;
+  --accent: #1B49C9;
+  --accent-ink: #12328C;
+  --accent-soft: #E3E9FA;
+  --amber: #8A5200;
+  --amber-soft: #F6E8CE;
+  --red: #A32E22;
+  --red-soft: #F6DEDB;
+  --green: #1F6B3A;
+  --green-soft: #DDEDE2;
+  --shadow: 0 1px 0 rgba(17, 21, 22, 0.04);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0E1213;
+    --paper-2: #161C1E;
+    --surface: #141A1C;
+    --ink: #EDF1EF;
+    --ink-2: #C2CCCA;
+    --muted: #8E9B9E;
+    --rule: #273234;
+    --rule-strong: #3C4A4D;
+    --accent: #8FA9FF;
+    --accent-ink: #B9C8FF;
+    --accent-soft: #1A2547;
+    --amber: #E5B45E;
+    --amber-soft: #33260F;
+    --red: #F08A7E;
+    --red-soft: #3A1C18;
+    --green: #7CC79A;
+    --green-soft: #12291B;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0E1213;
+  --paper-2: #161C1E;
+  --surface: #141A1C;
+  --ink: #EDF1EF;
+  --ink-2: #C2CCCA;
+  --muted: #8E9B9E;
+  --rule: #273234;
+  --rule-strong: #3C4A4D;
+  --accent: #8FA9FF;
+  --accent-ink: #B9C8FF;
+  --accent-soft: #1A2547;
+  --amber: #E5B45E;
+  --amber-soft: #33260F;
+  --red: #F08A7E;
+  --red-soft: #3A1C18;
+  --green: #7CC79A;
+  --green-soft: #12291B;
+  --shadow: none;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { display: block; }
+.slide {
+  display: none;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-block: clamp(24px, 4vh, 56px);
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: clamp(16px, 3vw, 44px);
+  align-content: center;
+}
+.slide.active { display: grid; }
+.slide[hidden] { display: none !important; }
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding-top: 6px;
+  border-right: 1px solid var(--rule);
+}
+.rail .num {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+.rail .sec {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.rail .tick { flex: 1; width: 1px; background: linear-gradient(var(--rule), transparent); }
+.body { min-width: 0; display: flex; flex-direction: column; gap: clamp(14px, 2.2vh, 24px); }
+.eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow::before { content: ""; width: 22px; height: 2px; background: var(--accent); display: inline-block; }
+h1, h2, h3 { margin: 0; font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif; text-wrap: balance; }
+h1 { font-size: clamp(3.4rem, 8vw, 6.4rem); font-weight: 700; line-height: 0.94; letter-spacing: -0.025em; }
+h2 { font-size: clamp(1.9rem, 3.6vw, 3.1rem); font-weight: 600; line-height: 1.02; letter-spacing: -0.018em; }
+h3 { font-size: clamp(1.05rem, 1.5vw, 1.28rem); font-weight: 600; line-height: 1.2; }
+p { margin: 0; }
+.lead { font-size: clamp(1.02rem, 1.45vw, 1.3rem); color: var(--ink-2); max-width: 62ch; line-height: 1.45; }
+.small { font-size: 0.86rem; color: var(--muted); }
+.mono { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+.accent { color: var(--accent); }
+.source {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.66rem;
+  line-height: 1.5;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+}
+.source b { color: var(--ink-2); font-weight: 500; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.kpis.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.kpi { background: var(--surface); padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+.kpi .v { font-family: "IBM Plex Sans Condensed", sans-serif; font-size: clamp(1.7rem, 3.1vw, 2.5rem); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.kpi .l { font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.kpi .n { font-size: 0.76rem; color: var(--ink-2); line-height: 1.35; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: clamp(16px, 2.4vw, 30px); }
+.stack { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+ul.tight { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 8px; }
+ul.tight li { padding-left: 0.15em; }
+ul.tight li::marker { color: var(--accent); }
+.rule { height: 1px; background: var(--rule); }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 7px; border: 1px solid currentColor; border-radius: 2px; white-space: nowrap; }
+.tag.kill { color: var(--red); background: var(--red-soft); }
+.tag.keep { color: var(--green); background: var(--green-soft); }
+.tag.wait { color: var(--amber); background: var(--amber-soft); }
+.tag.info { color: var(--accent); background: var(--accent-soft); }
+table { width: 100%; border-collapse: collapse; font-size: clamp(0.76rem, 1.05vw, 0.9rem); }
+th { text-align: left; font-family: "IBM Plex Mono", monospace; font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--rule-strong); }
+td { padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+td.num, th.num { text-align: right; font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); background: var(--surface); }
+.table-wrap table { min-width: 560px; }
+.qbox { border-left: 3px solid var(--accent); padding: 2px 0 2px 16px; display: flex; flex-direction: column; gap: 6px; }
+.qbox .q { font-family: "IBM Plex Sans Condensed", sans-serif; font-size: clamp(1.35rem, 2.3vw, 1.95rem); font-weight: 600; line-height: 1.12; }
+.evidence { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.ev { background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.ev .h { font-family: "IBM Plex Mono", monospace; font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.ev .d { font-size: 0.86rem; line-height: 1.4; color: var(--ink-2); }
+.ev .v { font-family: "IBM Plex Sans Condensed", sans-serif; font-size: 1.5rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.decision { display: flex; gap: 10px; align-items: baseline; border-top: 1px solid var(--rule); padding-top: 10px; font-size: 0.9rem; }
+.decision b { font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+.timeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0; border-top: 1px solid var(--rule-strong); }
+.tl { padding: 10px 12px 4px 0; border-right: 1px solid var(--rule); display: flex; flex-direction: column; gap: 4px; }
+.tl:last-child { border-right: none; }
+.tl .d { font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; color: var(--accent); letter-spacing: 0.04em; }
+.tl .t { font-size: 0.82rem; line-height: 1.35; color: var(--ink-2); }
+.tl .t b { color: var(--ink); font-weight: 600; }
+.diagram { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }
+.node { border: 1px solid var(--rule-strong); background: var(--surface); padding: 10px 12px; min-width: 120px; flex: 1 1 120px; display: flex; flex-direction: column; gap: 3px; }
+.node .k { font-family: "IBM Plex Mono", monospace; font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.node .t { font-size: 0.85rem; font-weight: 600; line-height: 1.25; }
+.node .s { font-size: 0.72rem; color: var(--muted); line-height: 1.3; }
+.arrow { display: flex; align-items: center; padding: 0 6px; color: var(--rule-strong); font-family: "IBM Plex Mono", monospace; }
+.dist { display: flex; gap: 3px; margin-top: 4px; }
+.dist span { height: 6px; background: var(--accent); display: block; }
+.dist span:nth-child(2) { background: var(--amber); }
+.dist span:nth-child(3) { background: var(--rule-strong); }
+.chart { background: var(--surface); border: 1px solid var(--rule); padding: 12px 14px 6px; }
+.chart svg { display: block; width: 100%; height: auto; max-width: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; color: var(--muted); padding: 2px 2px 6px; }
+.legend i { display: inline-block; width: 14px; height: 2px; background: var(--accent); margin-right: 5px; vertical-align: middle; }
+.legend i.dash { background: repeating-linear-gradient(90deg, var(--muted) 0 4px, transparent 4px 7px); }
+.notes { display: none; font-size: 0.86rem; line-height: 1.45; color: var(--ink-2); background: var(--amber-soft); border-left: 3px solid var(--amber); padding: 10px 14px; }
+body.notes-on .slide.active .notes { display: block; }
+body.notes-on .notes::before { content: "SPEAKER NOTE  "; font-family: "IBM Plex Mono", monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--amber); }
+.chrome {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: flex; align-items: center; gap: 14px;
+  padding: 8px max(16px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: linear-gradient(transparent, var(--paper) 45%);
+  font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; color: var(--muted);
+  pointer-events: none;
+}
+.chrome .grow { flex: 1; }
+.chrome .count { font-variant-numeric: tabular-nums; letter-spacing: 0.06em; }
+.chrome .hint { opacity: 0.8; }
+.chrome button { pointer-events: auto; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink); width: 30px; height: 26px; cursor: pointer; font-family: inherit; font-size: 0.8rem; line-height: 1; }
+.chrome button:hover { border-color: var(--accent); color: var(--accent); }
+.chrome button:focus-visible, .ov button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.progress { position: fixed; left: 0; bottom: 0; height: 3px; background: var(--accent); z-index: 21; transition: width 180ms ease; }
+.overview { display: none; position: fixed; inset: 0; z-index: 30; background: var(--paper); overflow-y: auto; padding: clamp(20px, 4vw, 48px) max(16px, env(safe-area-inset-right, 0px)) 70px max(16px, env(safe-area-inset-left, 0px)); }
+body.overview-on .overview { display: block; }
+body.overview-on .slide { display: none !important; }
+.overview h2 { margin-bottom: 18px; }
+.ov { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; max-width: 1100px; }
+.ov button { text-align: left; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; font-family: inherit; }
+.ov button:hover { border-color: var(--accent); }
+.ov .n { font-family: "IBM Plex Mono", monospace; font-size: 0.64rem; color: var(--accent); letter-spacing: 0.08em; }
+.ov .t { font-family: "IBM Plex Sans Condensed", sans-serif; font-size: 1rem; font-weight: 600; line-height: 1.2; }
+.title-wrap { display: flex; flex-direction: column; gap: clamp(18px, 3vh, 30px); }
+.title-meta { display: flex; flex-wrap: wrap; gap: 10px 26px; font-family: "IBM Plex Mono", monospace; font-size: 0.74rem; color: var(--muted); letter-spacing: 0.04em; }
+.title-rule { width: 88px; height: 4px; background: var(--accent); }
+.title-sub { font-family: "IBM Plex Sans Condensed", sans-serif; font-size: clamp(1.2rem, 2.2vw, 1.8rem); font-weight: 500; color: var(--ink-2); max-width: 30ch; line-height: 1.2; }
+.type-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.type-strip span { font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; border: 1px solid var(--rule-strong); padding: 4px 9px; color: var(--ink-2); background: var(--surface); }
+.type-strip span b { color: var(--accent); font-weight: 600; }
+.big-number { font-family: "IBM Plex Sans Condensed", sans-serif; font-size: clamp(3.4rem, 7vw, 5.6rem); font-weight: 700; line-height: 0.95; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.two-col { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: clamp(18px, 3vw, 38px); align-items: start; }
+.note-line { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+.hr-label { display: flex; align-items: center; gap: 10px; font-family: "IBM Plex Mono", monospace; font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.hr-label::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+@media (max-width: 560px) {
+  .kpis { grid-template-columns: 1fr; }
+  .chart { overflow-x: auto; }
+  .chart svg { min-width: 620px; }
+  .rail .sec { display: none; }
+}
+@media (max-width: 760px) {
+  .slide { grid-template-columns: 1fr; min-height: auto; padding-block: 24px 64px; }
+  .rail { flex-direction: row; align-items: center; border-right: none; border-bottom: 1px solid var(--rule); padding: 0 0 8px; }
+  .rail .sec { writing-mode: horizontal-tb; transform: none; }
+  .rail .tick { display: none; }
+  .two-col { grid-template-columns: 1fr; }
+  .chrome .hint { display: none; }
+  .title-wrap { padding-top: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress { transition: none; }
+}
+</style>
+
+<main id="deck" aria-label="Krino advisor deck">
+
+<section class="slide active" data-title="Krino v4 review" data-sec="Opening">
+  <div class="rail"><span class="num">01</span><span class="sec">Opening</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="title-wrap">
+      <div class="title-rule"></div>
+      <h1>Krino</h1>
+      <div class="title-sub">A typed decision model at 4B: what we built, what the evidence shows, and five decisions we want your input on.</div>
+      <div class="type-strip">
+        <span>noul <b>P(yes)</b></span>
+        <span>choice <b>P(option)</b></span>
+        <span>score <b>E[level]</b></span>
+      </div>
+      <div class="title-meta">
+        <span>Advisor review</span>
+        <span>2026-11-05</span>
+        <span>Krino v3 to v4</span>
+      </div>
+    </div>
+    <div class="source"><b>Scope.</b> Every number in this deck is taken from a committed result file, an experiment manifest row, a research note, or the project goal note. Sources are named on each slide. Inferences are labelled.</div>
+    <aside class="notes">One sentence to open: we set out to replicate a typed decision model, and the last two weeks changed which part of the problem we think is binding. I want your read on five decisions.</aside>
+  </div>
+</section>
+
+
+<section class="slide" hidden data-title="The short version" data-sec="Summary">
+  <div class="rail"><span class="num">02</span><span class="sec">Summary</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Summary</div>
+    <h2>Only the backbone change moved the number.</h2>
+    <p class="lead">We have a typed-decision stack that runs in 89 ms per item. We do not have a statistically defensible accuracy gain from any trained head on a frozen 4B.</p>
+    <div class="kpis">
+      <div class="kpi"><span class="v">+22.1 cc</span><span class="l">readout</span><span class="n">Marker beat pooled on identical Ettin-150M weights and data.</span></div>
+      <div class="kpi"><span class="v">+7.3 pp</span><span class="l">backbone</span><span class="n">Qwen3.5-4B zero-shot over the v3 raw reranker. No training.</span></div>
+      <div class="kpi"><span class="v">0.5–1.5 pp</span><span class="l">trained heads</span><span class="n">v3 B2 and v4 listwise. Listwise p = 0.125 on 2 distinct items.</span></div>
+    </div>
+    <div class="hr-label">The ask</div>
+    <div class="cols" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div class="stack"><h3>01 · Unfreeze or scale?</h3><p class="small">Set-level heads did no better than pointwise. What is the next lever?</p></div>
+      <div class="stack"><h3>02 · Is 231 enough?</h3><p class="small">The set detects 10.8 pp at 80% power. Our effects are 0.5–1.5 pp.</p></div>
+      <div class="stack"><h3>03 · Hard-tier data?</h3><p class="small">More of the same data gave nothing. The corpus was built for a head, not for the cookbook abilities.</p></div>
+      <div class="stack"><h3>04 · Which target?</h3><p class="small">Jev at 63.62, H2O at 60.04, or latency plus calibration plus abstention.</p></div>
+      <div class="stack"><h3>05 · Abstention now?</h3><p class="small">Confirmed on v3. Fusing it into v4 needs set-level "none of the above" data.</p></div>
+    </div>
+    <div class="source"><b>Source.</b> research/12-marker-readout-result.md; research/24-v3-closeout.md; model/experiments/residual/manifest.jsonl rows 78 and 87; results/gate/v4_listwise_*.</div>
+    <aside class="notes">Two weeks ago the question was which head to train. The measurements now say the head is not where the difference is, and that the acceptance set cannot resolve the differences we are measuring.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="The target" data-sec="Target">
+  <div class="rail"><span class="num">03</span><span class="sec">Target</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">The target</div>
+    <h2>Typed answers, scored as decisions.</h2>
+    <p class="lead">Jev returns a distribution over typed answers, not prose. Acceptance is chance-corrected decision accuracy on JevBench v1.6.1.</p>
+    <div class="kpis">
+      <div class="kpi"><span class="v">231</span><span class="l">public items</span><span class="n">48 easy / 111 hard / 72 original. sha dcb90f87.</span></div>
+      <div class="kpi"><span class="v">63.62</span><span class="l">Jev 1.13.0</span><span class="n">Official Intelligence on the 140-row board.</span></div>
+      <div class="kpi"><span class="v">60.04</span><span class="l">best 4B</span><span class="n">H2O-Lightning-4B v1.1, a Qwen3.5-4B fine-tune.</span></div>
+      <div class="kpi"><span class="v">50</span><span class="l">local gate</span><span class="n">231-item chance-corrected accuracy.</span></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>System</th><th class="num">Composite</th><th class="num">Intelligence</th><th class="num">Capability</th></tr></thead>
+        <tbody>
+          <tr><td>Sage 1.3.0</td><td class="num">74.05</td><td class="num">65.59</td><td class="num">78.60</td></tr>
+          <tr><td>H2O-Lightning-4B v1.1</td><td class="num">72.52</td><td class="num">60.04</td><td class="num">75.00</td></tr>
+          <tr><td>Jev 1.13.0</td><td class="num">71.49</td><td class="num">63.62</td><td class="num">77.13</td></tr>
+          <tr><td>raw Qwen3-Reranker-4B</td><td class="num">3.72</td><td class="num">16.34</td><td class="num">44.75</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note-line">Board Intelligence is 0–100. Local cc is 0–1; multiply by 100. The local 231-item proxy is not the official weighted suite.</p>
+    <p class="note-line">This deck uses the v1.6.1 acceptance board. A 2026-10-30 v1.7.3 snapshot lists Jev 65.60 and H2O 61.05 under a different protocol; do not mix the two.</p>
+    <div class="source"><b>Source.</b> Trilium Goal note CWRfKZ3EE1rI; JevBench v1.6.1 artifact captured 2026-11-02 (140 rows); research/23-public-tier-power.md.</div>
+    <aside class="notes">The board's raw Qwen3-Reranker row is 16.34; our local cc on the 231 public items is 44.59. Same model, different set and scale.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="One forward pass" data-sec="Architecture">
+  <div class="rail"><span class="num">04</span><span class="sec">Architecture</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Architecture</div>
+    <h2>One forward pass, three typed outputs.</h2>
+    <div class="diagram">
+      <div class="node"><span class="k">Input</span><span class="t">Question + K options</span><span class="s">up to 2K tokens; 4K diagnostic</span></div>
+      <div class="arrow"><svg viewBox="0 0 24 12" width="22" height="12" aria-hidden="true"><path d="M1 6h19M15 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="node"><span class="k">Backbone</span><span class="t">Frozen 4B</span><span class="s">Qwen3.5-4B; shared prefix KV</span></div>
+      <div class="arrow"><svg viewBox="0 0 24 12" width="22" height="12" aria-hidden="true"><path d="M1 6h19M15 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="node"><span class="k">Readout</span><span class="t">Marker position</span><span class="s">score at EOS M; per option</span></div>
+      <div class="arrow"><svg viewBox="0 0 24 12" width="22" height="12" aria-hidden="true"><path d="M1 6h19M15 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="node"><span class="k">Gate</span><span class="t">log p_base + α·u</span><span class="s">α = 0 at init</span></div>
+      <div class="arrow"><svg viewBox="0 0 24 12" width="22" height="12" aria-hidden="true"><path d="M1 6h19M15 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="node"><span class="k">Output</span><span class="t">noul / choice / score</span><span class="s">sigmoid / softmax</span>
+        <div class="dist"><span style="width:44%"></span><span style="width:31%"></span><span style="width:25%"></span></div>
+      </div>
+    </div>
+    <div class="cols">
+      <div class="stack"><h3>No text generation</h3><p class="small">The model never writes an answer. It scores a fixed set of typed candidates.</p></div>
+      <div class="stack"><h3>251K params in v3</h3><p class="small">The B2 marker head is tiny against a 4B backbone. α = 0 reproduces the base at step 0.</p></div>
+      <div class="stack"><h3>v4 changes the head</h3><p class="small">The listwise head sees all K options together. The v3 marker head scores each option alone.</p></div>
+    </div>
+    <p class="note-line">v3 B2 path shown. v4 keeps the frozen backbone and shared prefix, and swaps the trained head.</p>
+    <div class="source"><b>Source.</b> research/figures/architecture/README.md; model/src/decision_model.py; model/experiments/residual/manifest.jsonl row 81.</div>
+    <aside class="notes">Slide 12 tests whether set-level scoring changes the result.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="Timeline" data-sec="History">
+  <div class="rail"><span class="num">05</span><span class="sec">History</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">History</div>
+    <h2>Seven weeks, two theses.</h2>
+    <div class="timeline">
+      <div class="tl"><span class="d">2026-09-18</span><span class="t"><b>Start.</b> Jev API probes. Typed output defined: noul, choice, score.</span></div>
+      <div class="tl"><span class="d">2026-10-06</span><span class="t"><b>JevBench v1.6.1.</b> 140-row board. 231 public items.</span></div>
+      <div class="tl"><span class="d">2026-11-02</span><span class="t"><b>Acceptance reset.</b> Encoder thesis killed. 4B becomes primary.</span></div>
+      <div class="tl"><span class="d">2026-11-03</span><span class="t"><b>Residual line.</b> Marker lesson. Two false positives. Abstention confirmed.</span></div>
+      <div class="tl"><span class="d">2026-11-04</span><span class="t"><b>v3 closeout.</b> v4 backbone switch. 89 ms per item.</span></div>
+      <div class="tl"><span class="d">2026-11-05</span><span class="t"><b>v4 listwise.</b> 0.5297 best seed. p = 0.125. Not promoted.</span></div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="v">7 wks</span><span class="l">elapsed</span><span class="n">Encoder screen ran to 2026-11-02.</span></div>
+      <div class="kpi"><span class="v">87</span><span class="l">manifest rows</span><span class="n">Append-only. Last row is status.</span></div>
+      <div class="kpi"><span class="v">2</span><span class="l">days of v4</span><span class="n">Backbone switch to listwise gate.</span></div>
+    </div>
+    <div class="source"><b>Source.</b> Trilium progress log XXDbsWFGkq0H (2026-11-02 to 2026-11-05); model/experiments/residual/manifest.jsonl (87 rows on feat/v4-listwise-gate).</div>
+    <aside class="notes">Most of the seven weeks went to the encoder thesis. It did not survive the board, and the last two days are v4.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="The encoder thesis" data-sec="v3 screen">
+  <div class="rail"><span class="num">06</span><span class="sec">v3 screen</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">v3 screen · 2026-11-02</div>
+    <h2>Every strict encoder scored below the kill line.</h2>
+    <p class="lead">Thirteen strict encoders peaked at Intelligence 7.43 against a kill line of 40. Across 98 models, parameter count tracked Intelligence at r = 0.83.</p>
+    <div class="kpis">
+      <div class="kpi"><span class="v">13</span><span class="l">strict encoders</span><span class="n">All below the 40 kill line.</span></div>
+      <div class="kpi"><span class="v">3.76</span><span class="l">median Intelligence</span><span class="n">Max 7.43. Not close.</span></div>
+      <div class="kpi"><span class="v">0.83</span><span class="l">r, params vs Intelligence</span><span class="n">98 models; R² = 0.69.</span></div>
+      <div class="kpi"><span class="v">12</span><span class="l">screen arms</span><span class="n">Best cc 19.5. All killed.</span></div>
+    </div>
+    <div class="two-col">
+      <div class="stack">
+        <h3>What the screen showed</h3>
+        <ul class="tight small">
+          <li>Ettin-400M tied Ettin-150M on accuracy at 2.7× params: killed.</li>
+          <li>Reranker-0.6B gained 1.3 pp at ~4× FLOP: killed on accuracy per FLOP.</li>
+          <li>K=256 hit 87 GiB OOM. The K range was cut to 2–80 and logged as a plan deviation.</li>
+        </ul>
+      </div>
+      <div class="stack">
+        <div class="hr-label">The one transferable finding</div>
+        <p><strong>Marker readout beat pooled by +22.1 cc</strong> on identical Ettin-150M weights and data: easy .333 to .854, choice .273 to .532.</p>
+        <p class="note-line">Both arms were still below the line. The lesson is the readout, not the arm.</p>
+      </div>
+    </div>
+    <div class="source"><b>Source.</b> Trilium progress log 2026-11-02/03; research/12-marker-readout-result.md; research/24-v3-closeout.md; results/gate/S*_jevbench.json.</div>
+    <aside class="notes">The whole encoder class sits at the bottom of the board, so the limit is the class rather than our training of it.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="v3 residual line" data-sec="v3 4B">
+  <div class="rail"><span class="num">07</span><span class="sec">v3 4B</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">v3 4B · 2026-11-03</div>
+    <h2>A frozen 4B and a 251K-param head: +1.5 pp, inside the seed band.</h2>
+    <div class="diagram">
+      <div class="node"><span class="k">B0</span><span class="t">Raw reranker</span><span class="s">cc 0.4459</span></div>
+      <div class="arrow"><svg viewBox="0 0 24 12" width="22" height="12" aria-hidden="true"><path d="M1 6h19M15 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="node"><span class="k">B1 · killed</span><span class="t">Pooled residual</span><span class="s">cc 0.4395</span></div>
+      <div class="arrow"><svg viewBox="0 0 24 12" width="22" height="12" aria-hidden="true"><path d="M1 6h19M15 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="node"><span class="k">B2 · promoted</span><span class="t">Marker residual</span><span class="s">cc 0.4603</span></div>
+      <div class="arrow"><svg viewBox="0 0 24 12" width="22" height="12" aria-hidden="true"><path d="M1 6h19M15 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="node"><span class="k">Confirm · 3 seeds</span><span class="t">0.4603 / 0.4690 / 0.4545</span><span class="s">mean 0.4613</span></div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="v">+1.54 pp</span><span class="l">confirm vs raw</span><span class="n">Pre-registered promote line cleared.</span></div>
+      <div class="kpi"><span class="v">1.45 pp</span><span class="l">seed range</span><span class="n">The gain is the same size as the spread.</span></div>
+      <div class="kpi"><span class="v">3.87 pp</span><span class="l">short of 50</span><span class="n">0.4613 against the local bar.</span></div>
+    </div>
+    <p class="lead">The zero gate starts exactly at the base model. Training moves the output only if the head earns it.</p>
+    <div class="source"><b>Source.</b> research/24-v3-closeout.md table; results/gate/confirm_frozen_s{43,44}_jevbench.json; model/experiments/residual/manifest.jsonl.</div>
+    <aside class="notes">This was the first arm to clear its pre-registered line. It still left us 3.9 points short, and the gain was inside the seed noise.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="What was killed" data-sec="Graveyard">
+  <div class="rail"><span class="num">08</span><span class="sec">Graveyard</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">The graveyard</div>
+    <h2>What was closed, and on which number.</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Arm</th><th>Change</th><th>Verdict</th><th class="num">cc</th></tr></thead>
+        <tbody>
+          <tr><td>Encoder screen</td><td>12 arms, 150–600M frozen</td><td><span class="tag kill">kill</span></td><td class="num">best 0.195</td></tr>
+          <tr><td>B1 residual</td><td>pooled readout</td><td><span class="tag kill">kill</span></td><td class="num">0.4395</td></tr>
+          <tr><td>LoRA, untuned lr</td><td>last 8 / 36 blocks, r = 16, lr 1e-3</td><td><span class="tag wait">reject, re-openable</span></td><td class="num">0.4459 / 0.4394</td></tr>
+          <tr><td>D20K</td><td>5K–20K, same distribution</td><td><span class="tag kill">kill</span></td><td class="num">0.4603 (Δ 0.0000)</td></tr>
+          <tr><td>Sweep</td><td>alpha-lr / CE / rank</td><td><span class="tag kill">kill</span></td><td class="num">0.4369 / 0.4214 / 0.4517</td></tr>
+          <tr><td>KL 0.5</td><td>seed 42 to confirm</td><td><span class="tag wait">false positive</span></td><td class="num">0.4747 to 0.4538 / 0.4545</td></tr>
+          <tr><td>teacher20k</td><td>Jev soft targets</td><td><span class="tag wait">false positive</span></td><td class="num">0.4892 to 0.4488 / 0.4747</td></tr>
+          <tr><td>teacher30k</td><td>30K Jev, band-selected</td><td><span class="tag kill">kill</span></td><td class="num">0.4300</td></tr>
+          <tr><td>noul-marker</td><td>three attempts</td><td><span class="tag kill">reject</span></td><td class="num">0.4174 / 0.3990 / 0.3926</td></tr>
+          <tr><td>Backbone swap</td><td>Qwen3-4B instruct / base</td><td><span class="tag kill">reject</span></td><td class="num">0.4152 / 0.4270</td></tr>
+          <tr><td>Length 2048 to 4096</td><td>paired diagnostic</td><td><span class="tag wait">ambiguous</span></td><td class="num">+1.06 / −0.32 pp</td></tr>
+          <tr><td>v4 listwise</td><td>3 seeds, frozen Qwen3.5-4B</td><td><span class="tag wait">not promoted</span></td><td class="num">0.5297 best; p = 0.125</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note-line">The narrow LoRA arm matched the raw base exactly and never moved α past 0.017. An earlier full-layer LoRA sweep on the same 4B reached 61.87 internal accuracy against 55.59 frozen; its surviving checkpoint scores 0.4632 on JevBench against 0.6407 for the frozen model. Rows tagged ambiguous or not promoted are parked, not closed.</p>
+    <div class="source"><b>Source.</b> research/24-v3-closeout.md table; model/experiments/residual/manifest.jsonl rows 63–87; results/gate/.</div>
+    <aside class="notes">Every row here has a pre-registered verdict and the number that produced it.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="Noise and false positives" data-sec="Noise">
+  <div class="rail"><span class="num">09</span><span class="sec">Noise</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Noise</div>
+    <h2>Two promotions were noise from seed 42. The gate now assumes it.</h2>
+    <p class="lead">A single seed on 231 items can produce a four-point swing. We now require confirmation before reading a promote.</p>
+    <div class="kpis">
+      <div class="kpi"><span class="v">4.9 pp</span><span class="l">marginal cc SE</span><span class="n">Bootstrap over items, 10k resamples.</span></div>
+      <div class="kpi"><span class="v">2.7–3.1 pp</span><span class="l">paired SE</span><span class="n">38–52 discordant items.</span></div>
+      <div class="kpi"><span class="v">2.0 pp</span><span class="l">effect floor</span><span class="n">About 0.7 paired SE.</span></div>
+      <div class="kpi"><span class="v">p &lt; 0.05</span><span class="l">exact McNemar</span><span class="n">Plus wins &gt; losses.</span></div>
+    </div>
+    <div class="two-col">
+      <div class="stack">
+        <h3>Two single-seed wins that vanished</h3>
+        <ul class="tight small">
+          <li><strong>KL 0.5:</strong> 0.4747 at seed 42 to 0.4538 / 0.4545 at seeds 43/44.</li>
+          <li><strong>teacher20k:</strong> 0.4892 at seed 42 to 0.4488 / 0.4747 at seeds 43/44.</li>
+          <li><strong>v4 listwise:</strong> 0.5297 best seed, but 4 pooled wins are 2 distinct items; p = 0.125.</li>
+        </ul>
+      </div>
+      <div class="stack">
+        <div class="hr-label">What the gate can see</div>
+        <p class="small">On 231 items, the smallest detectable difference at 80% power is <strong>10.8 pp</strong>. On the hard 111 it is <strong>15.7 pp</strong>. A true 2 pp effect has 4% power on the hard tier.</p>
+        <p class="note-line"><strong>Inference:</strong> “not promoted” means underpowered at this effect size, not disproven.</p>
+      </div>
+    </div>
+    <div class="source"><b>Source.</b> research/24-v3-closeout.md; research/23-public-tier-power.md; manifest row 78 (noise field); results/gate/v4_listwise_*.</div>
+    <aside class="notes">This is the methodological change I most want your view on: the gate is now stricter than the set can support.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="v4 control" data-sec="v4">
+  <div class="rail"><span class="num">10</span><span class="sec">v4 control</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">v4 · 2026-11-04</div>
+    <h2>The biggest move was the backbone. It cost zero training.</h2>
+    <p class="lead">Qwen3.5-4B zero-shot beats every trained v3 arm. It is the v4 control, not a result.</p>
+    <div class="kpis">
+      <div class="kpi"><span class="v">0.5187</span><span class="l">control cc</span><span class="n">Row 78. Raw, zero-shot, one seed.</span></div>
+      <div class="kpi"><span class="v">+7.3 pp</span><span class="l">vs v3 raw</span><span class="n">Paired SE 5.0 pp; 95% CI −2.5 to +17.1.</span></div>
+      <div class="kpi"><span class="v">1.87 pp</span><span class="l">above 0.50</span><span class="n">35% of bootstrap resamples below.</span></div>
+      <div class="kpi"><span class="v">0.5045</span><span class="l">hard tier</span><span class="n">Original 0.7639; easy 1.000.</span></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Model</th><th class="num">acc</th><th class="num">cc</th><th class="num">hard</th><th class="num">original</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen3.5-4B instruct</td><td class="num">0.6883</td><td class="num">0.5187</td><td class="num">0.5045</td><td class="num">0.7639</td></tr>
+          <tr><td>Qwen3.5-4B-Base</td><td class="num">0.6840</td><td class="num">0.5069</td><td class="num">0.5045</td><td class="num">0.7500</td></tr>
+          <tr><td>Prism-Qwen3.5-Reranker-4B</td><td class="num">0.6753</td><td class="num">0.4973</td><td class="num">0.4775</td><td class="num">0.7639</td></tr>
+          <tr><td>Qwen3-Reranker-4B</td><td class="num">0.6407</td><td class="num">0.4459</td><td class="num">0.4595</td><td class="num">0.6806</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note-line">The +7.3 pp is directionally consistent but not significant on 231 items: McNemar 32/21, p = 0.169.</p>
+    <div class="source"><b>Source.</b> research/24-v3-closeout.md v4 table; results/gate/qwen35_raw/paired/; model/experiments/residual/manifest.jsonl row 78.</div>
+    <aside class="notes">Zero training. This is the strongest evidence we have that the backbone is the lever.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="cc progression" data-sec="Progression">
+  <div class="rail"><span class="num">11</span><span class="sec">Progression</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Progression</div>
+    <h2>Chance-corrected accuracy: 0.446 to 0.530.</h2>
+    <div class="chart">
+      <div class="legend"><span><i></i>arm cc</span><span><i class="dash"></i>chance 0.50</span><span>axis starts at 0.40</span></div>
+      <svg viewBox="0 0 880 300" role="img" aria-label="Chance-corrected accuracy for four arms: v3 raw 0.4459, v3 B2 confirm 0.4613, v4 control 0.5187, v4 listwise 0.5297, against a chance line at 0.50.">
+        <g font-family="'IBM Plex Mono', monospace" font-size="11" fill="var(--muted)">
+          <line x1="64" y1="24" x2="64" y2="244" stroke="var(--rule-strong)" stroke-width="1"/>
+          <line x1="64" y1="244" x2="860" y2="244" stroke="var(--rule-strong)" stroke-width="1"/>
+          <line x1="64" y1="24" x2="860" y2="24" stroke="var(--rule)" stroke-width="1"/>
+          <line x1="64" y1="79" x2="860" y2="79" stroke="var(--rule)" stroke-width="1"/>
+          <line x1="64" y1="134" x2="860" y2="134" stroke="var(--rule)" stroke-width="1"/>
+          <line x1="64" y1="189" x2="860" y2="189" stroke="var(--rule)" stroke-width="1"/>
+          <text x="56" y="28" text-anchor="end">0.56</text>
+          <text x="56" y="83" text-anchor="end">0.52</text>
+          <text x="56" y="138" text-anchor="end">0.48</text>
+          <text x="56" y="193" text-anchor="end">0.44</text>
+          <text x="56" y="248" text-anchor="end">0.40</text>
+        </g>
+        <line x1="64" y1="106.5" x2="860" y2="106.5" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 6" opacity="0.8"/>
+        <text x="70" y="100" font-family="'IBM Plex Mono', monospace" font-size="11" fill="var(--muted)">chance 0.50</text>
+        <path d="M154 180.9 L359.3 159.7 L564.7 80.8 L770 65.7" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+        <g fill="var(--accent)" stroke="var(--surface)" stroke-width="3">
+          <circle cx="154" cy="180.9" r="7"/>
+          <circle cx="359.3" cy="159.7" r="7"/>
+          <circle cx="564.7" cy="80.8" r="7"/>
+          <circle cx="770" cy="65.7" r="7"/>
+        </g>
+        <g font-family="'IBM Plex Mono', monospace" font-size="12.5" font-weight="600" fill="var(--ink)" text-anchor="middle">
+          <text x="154" y="166">0.4459</text>
+          <text x="359.3" y="145">0.4613</text>
+          <text x="564.7" y="66">0.5187</text>
+          <text x="770" y="51">0.5297</text>
+        </g>
+        <g font-family="'IBM Plex Sans', sans-serif" font-size="12" fill="var(--ink-2)" text-anchor="middle">
+          <text x="154" y="268">v3 raw</text><text x="154" y="284" fill="var(--muted)">Qwen3-Reranker-4B</text>
+          <text x="359.3" y="268">v3 B2 confirm</text><text x="359.3" y="284" fill="var(--muted)">3-seed mean</text>
+          <text x="564.7" y="268">v4 control</text><text x="564.7" y="284" fill="var(--muted)">zero-shot</text>
+          <text x="770" y="268">v4 listwise</text><text x="770" y="284" fill="var(--muted)">best of 3 seeds</text>
+        </g>
+        <g font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="var(--muted)" text-anchor="middle">
+          <text x="470" y="146">+5.7 pp</text><text x="470" y="158">backbone, from B2</text>
+          <text x="667" y="50">+1.1 pp</text><text x="667" y="62">head</text>
+        </g>
+      </svg>
+    </div>
+    <p class="note-line">Listwise is the best of three seeds; the other two are 0.5245 and 0.5239 (mean 0.5260). v3 raw to v4 control: +7.3 pp.</p>
+    <div class="source"><b>Source.</b> results/gate/qwen35_raw/paired/; results/gate/confirm_frozen_s{43,44}_jevbench.json; results/gate/v4_listwise_s{42,43_split42,44_split42}/; manifest rows 78 and 87.</div>
+    <aside class="notes">The jump from 0.461 to 0.519 is the backbone. The move from 0.519 to 0.530 is the head, and it is one item or two.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="v4 head arms" data-sec="v4 arms">
+  <div class="rail"><span class="num">12</span><span class="sec">v4 arms</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">v4 head arms · 2026-11-05</div>
+    <h2>All three head arms land at 0.52 to 0.53. None clears the gate.</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Arm</th><th>Seeds</th><th class="num">cc</th><th class="num">Δ vs control</th><th>Gate</th></tr></thead>
+        <tbody>
+          <tr><td>v4 control</td><td>1</td><td class="num">0.5187</td><td class="num">n/a</td><td>reference</td></tr>
+          <tr><td>Listwise, full K</td><td>3</td><td class="num">0.5297 / 0.5245 / 0.5239</td><td class="num">+0.5 to +1.1 pp</td><td><span class="tag wait">not promoted</span> 4W/0L, p = 0.125</td></tr>
+          <tr><td>Combined, top-4 to listwise</td><td>1</td><td class="num">0.5297</td><td class="num">+1.1 pp</td><td><span class="tag info">inconclusive</span> 1 item differs; 2W/0L, p = 0.5</td></tr>
+          <tr><td>Two-stage pairwise</td><td>3</td><td class="num">0.5245 / 0.5245 / 0.5187</td><td class="num">0 to +0.6 pp</td><td><span class="tag wait">not promoted</span> 2W/0L, p = 0.5; 1 distinct item</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="two-col">
+      <div class="stack">
+        <h3>Why listwise was not promoted</h3>
+        <ul class="tight small">
+          <li>Pooled 4 wins, 0 losses, but the 4 wins are <strong>2 distinct items</strong>. Pooling treats them as independent, so p = 0.125 overstates the evidence.</li>
+          <li>Every seed is below the <strong>+2.0 pp</strong> effect floor: +0.5 to +1.1 pp.</li>
+          <li>Val cc spread across seeds is 0.18 pp sd. This is a null at this scale, not a near miss.</li>
+        </ul>
+      </div>
+      <div class="stack">
+        <div class="hr-label">What would change the verdict</div>
+        <p class="small">A true +2 pp effect needs 6,357 items at 80% power. Pairwise was the last set-level variant left to try, and it did not separate from control either.</p>
+        <p class="note-line">Pairwise drops the gold option at the shortlist stage on 13 of 231 items in every seed. Its two pooled wins are the same item listwise won.</p>
+      </div>
+    </div>
+    <div class="source"><b>Source.</b> results/gate/v4_listwise_s{42,43_split42,44_split42}/; results/gate/v4_combined_top4/; model/experiments/residual/manifest.jsonl rows 81–87; PR #226; PR #228.</div>
+    <aside class="notes">At this resolution we cannot separate any of these heads from the control. Question 2 is about that limit.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="Where the gap is" data-sec="Diagnosis">
+  <div class="rail"><span class="num">13</span><span class="sec">Diagnosis</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Diagnosis</div>
+    <h2>The v3 marker head helps noul and cannot help choice.</h2>
+    <p class="lead">The v3 marker head scores each option alone. In v4 the set-level heads saw all K options together and still did not improve choice.</p>
+    <div class="two-col">
+      <div class="stack">
+        <div class="hr-label">Head decomposition, D20K</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Type</th><th class="num">n</th><th class="num">base</th><th class="num">head alone</th><th class="num">fused</th></tr></thead>
+            <tbody>
+              <tr><td>choice</td><td class="num">139</td><td class="num">0.612</td><td class="num">0.129</td><td class="num">0.597</td></tr>
+              <tr><td>noul</td><td class="num">74</td><td class="num">0.622</td><td class="num">0.500</td><td class="num">0.676</td></tr>
+              <tr><td>score</td><td class="num">18</td><td class="num">0.778</td><td class="num">0.167</td><td class="num">0.778</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note-line">Choice α is −0.234. The head alone scores 0.129, below chance, so the negative gate only flips a reversed signal back; the head carries no usable choice information.</p>
+      </div>
+      <div class="stack">
+        <div class="hr-label">The hard tier</div>
+        <ul class="tight small">
+          <li>Jev hard choice <strong>0.761</strong> vs ours <strong>0.373–0.493</strong>: a 27–39 pp gap.</li>
+          <li>Top-m recall: R@2 0.809, R@3 0.917 (n=157). K=6: R@1 3/16, R@2 5/16.</li>
+          <li><strong>36 of 111</strong> hard items are truncated at 2048 tokens.</li>
+          <li>The corpus has <strong>32</strong> choice items over 4K chars. contractnli has 6,840 long items, all noul.</li>
+          <li>5K–20K items: <strong>Δ 0.0000</strong>.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="source"><b>Source.</b> research/24-v3-closeout.md (head decomposition); research/23-public-tier-power.md; research/13-jevbench-public.md; results/gate/topm_recall/qwen35_4b.json; manifest row 64.</div>
+    <aside class="notes">The choice head alone scores 0.129. That is the mechanistic reason the residual line stopped at 0.46.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="The data we built" data-sec="Data">
+  <div class="rail"><span class="num">14</span><span class="sec">Data</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Data · 2026-11-05</div>
+    <h2>We built data for a head. It should follow the abilities.</h2>
+    <p class="lead">Until two days ago the corpus was shaped around what a head needs: option pairs, labels, a fixed K. The Jev cookbook instead lists the abilities the product exposes. Measured against that list, the corpus covers two of eight.</p>
+    <div class="kpis">
+      <div class="kpi"><span class="v">20,000</span><span class="l">residual items</span><span class="n">27 sources; 9,542 noul / 8,085 choice / 2,373 score.</span></div>
+      <div class="kpi"><span class="v">30,000</span><span class="l">Jev teacher labels</span><span class="n">Soft targets, band-selected; 20K and 30K variants.</span></div>
+      <div class="kpi"><span class="v">1,670</span><span class="l">long-context choice</span><span class="n">HotpotQA, MuSiQue, LongBench, 2Wiki. New this week.</span></div>
+      <div class="kpi"><span class="v">16,081</span><span class="l">tool-call choice</span><span class="n">Five APIGen suites. New this week.</span></div>
+    </div>
+    <div class="two-col">
+      <div class="stack">
+        <div class="hr-label">What the corpus contains</div>
+        <ul class="tight small">
+          <li>Reading and QA: multirc 2,826, commonsenseqa 1,064, logiqa 824, race 572, boolq 571, mmlu 551, arc 380.</li>
+          <li>Natural language inference: contractnli 1,471, mednli 1,197, mnli 1,095, anli 568.</li>
+          <li>Common sense completion: hellaswag 559, winogrande 558, piqa 556, swag 549.</li>
+          <li>Sentiment and topic: sst5 911, yelp 569, sst2 546, agnews 558.</li>
+          <li>Fact check: fever 592, tabfact 547. Intent: banking77 561, K = 80.</li>
+          <li>Jev-style synthetic and authored: 1,402 items.</li>
+          <li>Built but not in the 20K: 3,000 abstention rows per set, 1,670 long-context, 16,081 tool-call.</li>
+        </ul>
+      </div>
+      <div class="stack">
+        <div class="hr-label">The abilities, and what carries each</div>
+        <table class="tight small" style="width:100%;border-collapse:collapse">
+          <tbody>
+            <tr><td>intent</td><td>real: banking77</td></tr>
+            <tr><td>fact</td><td>real: fever, tabfact</td></tr>
+            <tr><td>ordinal</td><td>format only: 2,373 score items, other domains</td></tr>
+            <tr><td>extraction</td><td>synthetic only</td></tr>
+            <tr><td>tool selection</td><td>synthetic only; APIGen set not yet used</td></tr>
+            <tr><td>policy</td><td>synthetic only</td></tr>
+            <tr><td>adequacy</td><td>synthetic only</td></tr>
+            <tr><td>routing</td><td>synthetic only</td></tr>
+          </tbody>
+        </table>
+        <p class="note-line">About 1,400 synthetic items carry five of the eight abilities. No training item has K = 6, so K = 6 is untested. The long-context and tool-call sets are built but not yet trained on. JevBench stays held out and is never a training target: this is a capability gap, not a benchmark gap.</p>
+      </div>
+    </div>
+    <div class="source"><b>Source.</b> TypeSafe Jev cookbook (ability list; not vendored in this repo); data/benchmarks/residual_train_20000.jsonl (source counts); data/benchmarks/{hotpotqa,musique,longbench,twowiki}_long_choice.jsonl; data/benchmarks/apigen_*.jsonl; data/benchmarks/abstention_train_{20k,30k}.jsonl; data/benchmarks/label_target_30k_jev.jsonl; model/experiments/residual/manifest.jsonl rows 64 and 71.</div>
+    <aside class="notes">The corpus was built to feed a head: pairs, options, one K. Two days ago we changed the frame to the abilities the cookbook exposes. By that list we cover two of eight, and five rest on about 1,400 synthetic items. Volume was never the shortage. The bench is our measurement, not our target, so the fix is to fill the missing abilities, not to copy the bench.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="Process and engineering" data-sec="Process">
+  <div class="rail"><span class="num">15</span><span class="sec">Process</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Process and engineering</div>
+    <h2>The nulls come from a controlled pipeline.</h2>
+    <div class="two-col">
+      <div class="stack">
+        <h3>How the claims are made</h3>
+        <ul class="tight small">
+          <li>Gates and kill lines are frozen before each run. No gate changes after the fact.</li>
+          <li>The manifest is append-only: 87 rows, last row is status.</li>
+          <li>Code review by separate agents and peer sessions; training and evaluation on the GPU host, 8 GPUs.</li>
+          <li>Same-code controls: path drift alone is about 1 SE.</li>
+        </ul>
+      </div>
+      <div class="stack">
+        <div class="kpis two">
+          <div class="kpi"><span class="v">7.5×</span><span class="l">training throughput</span><span class="n">Shape bucketing.</span></div>
+          <div class="kpi"><span class="v">0.133 s</span><span class="l">residual inference</span><span class="n">From 1.291 s mean.</span></div>
+          <div class="kpi"><span class="v">0.089 s</span><span class="l">v4 per item</span><span class="n">From 1.08 s; 0.078 s median. Shared-prefix + GDN cache.</span></div>
+          <div class="kpi"><span class="v">2.44×</span><span class="l">option batch</span><span class="n">Accuracy unchanged.</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="lead">The 89 ms figure meets the internal &lt;100 ms gate at 2K tokens on one GPU.</p>
+    <div class="source"><b>Source.</b> research/24-v3-closeout.md; research/13-throughput-levers.md; model/experiments/residual/manifest.jsonl row 78 (latency field); Trilium progress log 2026-11-04.</div>
+    <aside class="notes">This is why I trust the nulls more than I trusted the earlier wins.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="Q1 frozen backbone" data-sec="Question 1">
+  <div class="rail"><span class="num">16</span><span class="sec">Question 1</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Question 1 of 5 · The ceiling</div>
+    <h2>Is the frozen backbone the ceiling?</h2>
+    <div class="qbox">
+      <span class="q">Every trained head on a frozen 4B moved JevBench by 0.5–1.5 pp, pointwise and set-level alike. The one large move was the backbone: +7.3 pp with zero training.</span>
+      <span class="small">Should we stop head architecture and move to unfreezing, a tuned LoRA, a larger backbone, or distillation into the backbone?</span>
+    </div>
+    <div class="evidence">
+      <div class="ev"><span class="h">v3 B2</span><span class="v">+1.54 pp</span><span class="d">Inside the 1.45 pp seed band.</span></div>
+      <div class="ev"><span class="h">v4 listwise</span><span class="v">+1.1 pp</span><span class="d">Best seed; p = 0.125; 2 distinct items.</span></div>
+      <div class="ev"><span class="h">choice head alone</span><span class="v">0.129</span><span class="d">Below chance; base 0.612. α = −0.234.</span></div>
+      <div class="ev"><span class="h">98 models</span><span class="v">r = 0.83</span><span class="d">log10(params) vs Intelligence.</span></div>
+      <div class="ev"><span class="h">in-domain val</span><span class="v">+1.7 pp</span><span class="d">Best head on its own split; base 0.5113.</span></div>
+    </div>
+    <div class="decision"><b>Decision</b><span>Full fine-tune, LoRA with a tuned learning rate, a larger backbone, or distill into the backbone?</span></div>
+    <div class="source"><b>Source.</b> research/24-v3-closeout.md; research/23-public-tier-power.md; Trilium progress log 2026-11-02; results/gate/v4_listwise_*.</div>
+    <aside class="notes">My read: the heads gain about 1.7 points in domain and 0.6 to 1.1 on transfer, and the full-layer LoRA sweep that gained 6 points in domain scores well below the frozen model on JevBench. A stronger backbone is the only change that gained on both. That points at the corpus more than at the head. Unfreezing is the largest untested lever, and I would pair it with data built for the abilities rather than run it alone.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="Q2 statistical power" data-sec="Question 2">
+  <div class="rail"><span class="num">17</span><span class="sec">Question 2</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Question 2 of 5 · Power</div>
+    <h2>Can 231 items decide a 1–2 pp effect?</h2>
+    <div class="qbox">
+      <span class="q">The marginal cc SE is 4.9 pp; the paired SE is 2.7–3.1 pp. The effects we measure are 0.5–1.5 pp. Two single-seed promotions were noise.</span>
+      <span class="small">Is public JevBench alone a valid acceptance set? Should we build a larger held-out set that matches its distribution, and what multi-seed and pooling standard should we use?</span>
+    </div>
+    <div class="evidence">
+      <div class="ev"><span class="h">231 items</span><span class="v">10.8 pp</span><span class="d">Smallest detectable difference at 80% power.</span></div>
+      <div class="ev"><span class="h">hard 111</span><span class="v">15.7 pp</span><span class="d">The tier is not going to get bigger.</span></div>
+      <div class="ev"><span class="h">2 pp effect</span><span class="v">4.0%</span><span class="d">Power on 111 items. 6,357 items for 80%.</span></div>
+      <div class="ev"><span class="h">current gate</span><span class="v">2.0 pp</span><span class="d">Plus p &lt; 0.05. About 0.7 paired SE.</span></div>
+    </div>
+    <div class="decision"><b>Decision</b><span>Keep public JevBench, add a matched held-out set, or change the acceptance standard?</span></div>
+    <div class="source"><b>Source.</b> research/23-public-tier-power.md; research/24-v3-closeout.md; model/experiments/residual/manifest.jsonl row 78 (noise field).</div>
+    <aside class="notes">The gate is stricter than the set can support. If we keep it, we will keep producing nulls.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="Q3 where the lever is" data-sec="Question 3">
+  <div class="rail"><span class="num">18</span><span class="sec">Question 3</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Question 3 of 5 · The lever</div>
+    <h2>Where is the next point of accuracy?</h2>
+    <div class="qbox">
+      <span class="q">More data of the same distribution gave nothing, and teacher soft labels gave nothing. Two of the eight cookbook abilities have matching training data; five are carried only by about 1,400 synthetic items, and no training item has K = 6.</span>
+      <span class="small">Should we rebuild the corpus around the cookbook abilities and K ranges, or change the eval length from 2048 to 4096?</span>
+    </div>
+    <div class="evidence">
+      <div class="ev"><span class="h">D20K</span><span class="v">Δ 0.0000</span><span class="d">5K–20K items, same distribution.</span></div>
+      <div class="ev"><span class="h">teacher20k</span><span class="v">0.4892 to 0.4488</span><span class="d">Seed 43; seed 44 0.4747. Neither replicates seed 42.</span></div>
+      <div class="ev"><span class="h">truncation</span><span class="v">36 / 111</span><span class="d">Hard items truncated at 2048.</span></div>
+      <div class="ev"><span class="h">long choice</span><span class="v">32 items</span><span class="d">Over 4K chars in the whole corpus.</span></div>
+      <div class="ev"><span class="h">task coverage</span><span class="v">2 / 8</span><span class="d">JevBench task types with direct training data.</span></div>
+    </div>
+    <p class="note-line">The 4096 diagnostic is ambiguous: D20K +1.06 cc / +2.70 pp hard; teacher20k −0.32 cc / 0.00 pp. All movement is in the 36 truncated items; the other 75 hard items are identical at 0.48.</p>
+    <div class="decision"><b>Decision</b><span>Rebuild the corpus around the cookbook abilities, or amend the frozen suite to 4096?</span></div>
+    <div class="source"><b>Source.</b> research/24-v3-closeout.md; research/13-jevbench-public.md; model/experiments/residual/manifest.jsonl row 64 (length_diag); results/gate/topm_recall/.</div>
+    <aside class="notes">The length diagnostic is ambiguous. We have not tested it where the data exists.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="Q4 target framing" data-sec="Question 4">
+  <div class="rail"><span class="num">19</span><span class="sec">Question 4</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Question 4 of 5 · Target</div>
+    <h2>What target should we defend?</h2>
+    <div class="qbox">
+      <span class="q">The raw control is 0.5187: 1.87 pp above the 0.50 bar, with a 4.9 pp SE and 35% of bootstrap resamples below 0.50.</span>
+      <span class="small">What is the credible target and story: match Jev at 63.62, beat H2O-Lightning-4B at 60.04, or position the work around latency, calibration, and abstention?</span>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="v">51.9</span><span class="l">local control</span><span class="n">+1.9 pp over the 50 bar. Inside 1 SE.</span></div>
+      <div class="kpi"><span class="v">63.62</span><span class="l">Jev</span><span class="n">Board scale; not comparable to local cc.</span></div>
+      <div class="kpi"><span class="v">60.04</span><span class="l">H2O 4B</span><span class="n">Board scale; not comparable to local cc.</span></div>
+      <div class="kpi"><span class="v">52.97</span><span class="l">best v4 arm</span><span class="n">Single best seed; not promoted.</span></div>
+    </div>
+    <p class="note-line">The engineering story is already real: 89 ms per item, below the 100 ms internal gate. Control ECE is 0.1175; abstention is confirmed on v3.</p>
+    <div class="decision"><b>Decision</b><span>Name the target and the story we will defend.</span></div>
+    <div class="source"><b>Source.</b> model/experiments/residual/manifest.jsonl rows 78 and 87; research/24-v3-closeout.md; Trilium Goal note CWRfKZ3EE1rI.</div>
+    <aside class="notes">We cannot defend a 63.62 claim on this set. We can defend the latency and the abstention result. The question is which story we want to be judged on.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="Q5 abstention" data-sec="Question 5">
+  <div class="rail"><span class="num">20</span><span class="sec">Question 5</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Question 5 of 5 · Secondary</div>
+    <h2>Does abstention belong in v4 now?</h2>
+    <div class="qbox">
+      <span class="q">Abstention is confirmed on v3: AURC 0.4978 against 0.6315 for the max-prob baseline, on three seeds.</span>
+      <span class="small">Fusing it into v4 probably needs set-level “none of the above” data. Is that worth doing now, or after the head direction is chosen?</span>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="v">0.4978</span><span class="l">AURC, seed 42</span><span class="n">vs 0.6315 max-prob.</span></div>
+      <div class="kpi"><span class="v">0.4611</span><span class="l">AURC, seed 43</span><span class="n">vs 0.5872 max-prob.</span></div>
+      <div class="kpi"><span class="v">0.4948</span><span class="l">AURC, seed 44</span><span class="n">vs 0.6401 max-prob.</span></div>
+      <div class="kpi"><span class="v">3 / 3</span><span class="l">seeds confirmed</span><span class="n">Confirmed on 3 seeds; the cleanest v3 replication.</span></div>
+    </div>
+    <p class="lead">The two-head design is answerable + conditional option distribution. It is the one v3 result that replicated cleanly.</p>
+    <div class="decision"><b>Decision</b><span>Fuse now, or park until the Q1 head direction is settled?</span></div>
+    <div class="source"><b>Source.</b> research/24-v3-closeout.md abstention row; results/gate/abstention20k_abstention.json; Trilium progress log 2026-11-03.</div>
+    <aside class="notes">Secondary question. I would park it unless the target story becomes calibration plus abstention.</aside>
+  </div>
+</section>
+
+<section class="slide" hidden data-title="Appendix" data-sec="Appendix">
+  <div class="rail"><span class="num">21</span><span class="sec">Appendix</span><span class="tick"></span></div>
+  <div class="body">
+    <div class="eyebrow">Appendix</div>
+    <h2>Method and sources.</h2>
+    <div class="cols">
+      <div class="stack">
+        <h3>Method</h3>
+        <ul class="tight small">
+          <li>231 public items, sha dcb90f87; 48 easy / 111 hard / 72 original.</li>
+          <li>cc is the mean per-item chance correction; bootstrap 10k for SE.</li>
+          <li>Exact paired McNemar; +2.0 pp effect floor; three seeds where noted.</li>
+          <li>Append-only manifest; an arm's last row is its status.</li>
+        </ul>
+      </div>
+      <div class="stack">
+        <h3>Engineering</h3>
+        <ul class="tight small">
+          <li>7.5× training throughput from shape bucketing.</li>
+          <li>1.291 s to 0.133 s mean residual inference.</li>
+          <li>1.08 s to 0.089 s mean / 0.078 s median on v4 shared prefix.</li>
+          <li>2.44× from option batching; accuracy unchanged.</li>
+        </ul>
+      </div>
+      <div class="stack">
+        <h3>Sources</h3>
+        <ul class="tight small">
+          <li>research/24-v3-closeout.md; research/23-public-tier-power.md.</li>
+          <li>research/13-jevbench-public.md; research/12-marker-readout-result.md.</li>
+          <li>manifest.jsonl rows 63–87; results/gate/qwen35_raw/paired/; v4_listwise_*; topm_recall/.</li>
+          <li>Trilium: 进展日志 XXDbsWFGkq0H; Goal CWRfKZ3EE1rI.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="hr-label">Caveats</div>
+    <ul class="tight small">
+      <li>Local cc is not the official weighted Intelligence. Comparisons across the two are directional.</li>
+      <li>Listwise and pairwise each ran three seeds on one split. Both close as not promoted.</li>
+      <li>No v4 goal note exists. The acceptance criteria are still the v3 goal note.</li>
+      <li>Board values are v1.6.1. The 2026-10-30 v1.7.3 snapshot lists Jev 65.60 / H2O 61.05 under a different protocol.</li>
+      <li>Abstention AURC in the closeout table differs from the gate JSON by ≤0.4 pp; the table is shown.</li>
+    </ul>
+    <div class="source"><b>Source.</b> Every number in this deck traces to one of the files or notes above.</div>
+    <aside class="notes">If you want to check a number, start with research/24-v3-closeout.md. It has the audited table.</aside>
+  </div>
+</section>
+
+</main>
+
+<div class="chrome" aria-hidden="false">
+  <button id="prev" type="button" aria-label="Previous slide"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M15 4l-8 8 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <button id="next" type="button" aria-label="Next slide"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <span class="count" id="count">01 / 01</span>
+  <span class="grow"></span>
+  <span class="hint">Arrow keys navigate · O overview · N notes</span>
+</div>
+<div class="progress" id="progress" style="width:0"></div>
+
+<div class="overview" id="overview" role="dialog" aria-label="Slide overview">
+  <h2>Slides</h2>
+  <p class="note-line" style="margin-bottom:14px">Press O or Esc to close. Click a slide to jump.</p>
+  <div class="ov" id="ov-grid"></div>
+</div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var current = 0;
+  var count = document.getElementById('count');
+  var progress = document.getElementById('progress');
+  var grid = document.getElementById('ov-grid');
+
+  slides.forEach(function (s, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.innerHTML = '<span class="n">' + String(i + 1).padStart(2, '0') + '</span><span class="t">' + (s.dataset.title || 'Slide') + '</span>';
+    b.addEventListener('click', function () { show(i); document.body.classList.remove('overview-on'); });
+    grid.appendChild(b);
+  });
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function show(n) {
+    if (n < 0) n = 0;
+    if (n > slides.length - 1) n = slides.length - 1;
+    current = n;
+    slides.forEach(function (s, i) {
+      s.hidden = i !== n;
+      s.classList.toggle('active', i === n);
+    });
+    count.textContent = pad(n + 1) + ' / ' + pad(slides.length);
+    progress.style.width = ((n + 1) / slides.length * 100) + '%';
+    try { history.replaceState(null, '', '#s' + (n + 1)); } catch (e) {}
+    var active = slides[n];
+    active.setAttribute('aria-hidden', 'false');
+  }
+
+  function next() { show(current + 1); }
+  function prev() { show(current - 1); }
+
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('prev').addEventListener('click', prev);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    var k = e.key;
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === ' ' || k === 'PageDown') { e.preventDefault(); next(); }
+    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp') { e.preventDefault(); prev(); }
+    else if (k === 'Home') { e.preventDefault(); show(0); }
+    else if (k === 'End') { e.preventDefault(); show(slides.length - 1); }
+    else if (k === 'o' || k === 'O') { document.body.classList.toggle('overview-on'); }
+    else if (k === 'n' || k === 'N') { document.body.classList.toggle('notes-on'); }
+    else if (k === 'Escape') { document.body.classList.remove('overview-on'); }
+  });
+
+  var tx = 0, ty = 0;
+  document.addEventListener('touchstart', function (e) {
+    if (e.touches.length !== 1) return;
+    tx = e.touches[0].clientX; ty = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (!e.changedTouches.length) return;
+    var dx = e.changedTouches[0].clientX - tx;
+    var dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 55 && Math.abs(dy) < 45) { dx < 0 ? next() : prev(); }
+  }, { passive: true });
+
+  function fromHash() {
+    var m = (location.hash || '').match(/^#s(\d+)$/);
+    if (m) show(Math.min(slides.length - 1, Math.max(0, parseInt(m[1], 10) - 1)));
+  }
+  window.addEventListener('hashchange', fromHash);
+  var m = (location.hash || '').match(/^#s(\d+)$/);
+  show(m ? Math.min(slides.length - 1, Math.max(0, parseInt(m[1], 10) - 1)) : 0);
+})();
+</script>
+</html>
