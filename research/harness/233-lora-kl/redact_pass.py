@@ -20,32 +20,17 @@ NUMBERS = sorted(set([
     251, 252, 258, 261, 262, 264, 266, 268,
 ]))
 
-EDITABLE = {"Oaklight", "clementine-oaklight[bot]"}
+EDITABLE = {"example-org", "example-bot[bot]"}
 
 REDACTIONS = [
-    (re.compile(r"/nfs/[^ ]*/krino-cpu"), "<shared-storage>/krino-cpu"),
-    (re.compile(r"/nfs/[^ ]*"), "<shared-storage>"),
-    (re.compile(r"/home/[^/]+/projects/krino"), "<checkout>"),
+    (re.compile(r"/mnt/example-storage/[^ ]*/checkout"), "<shared-storage>/checkout"),
+    (re.compile(r"/mnt/example-storage/[^ ]*"), "<shared-storage>"),
+    (re.compile(r"/home/[^/]+/projects/example-repo"), "<checkout>"),
     (re.compile(r"/home/[^/]+"), "~"),
     (re.compile(r"/homes/[^/]+"), "~"),
     (re.compile(r"/homes/"), "/users/"),
-    (re.compile(r"\b(?:H100|H200|A100)/(?:H100|H200|A100)\b"), "GPUs"),
-    (re.compile(r"\b(\d+)xH100\b"), lambda m: f"{m.group(1)} GPUs"),
-    (re.compile(r"\ban A100\b"), "a GPU"),
-    (re.compile(r"\bon (H100|H200|A100)\b"), "on a GPU"),
-    (re.compile(r"\b(?:H100|H200|A100)\b"), "GPU"),
-    (re.compile(r"[a-z0-9-]+\.example\.invalid\b"), "example.invalid"),
 ]
 
-SHA_MAP = {
-    "19ba9a4": "1f3ccf96",
-    "979b7c7": "8549066c",
-    "4035943": "cc6e05e",
-    "a2b8853": "c5b55a2",
-    "73c867f": "a8c7f4b",
-}
-UNREACHABLE = "18ae46e"
-UNREACHABLE_NOTE = "18ae46e (pre-rewrite tip; its successor today is c5b55a2 via a rebase, not a rename)"
 
 
 def api(path):
@@ -57,14 +42,6 @@ def transform(text):
     original = text
     for pattern, replacement in REDACTIONS:
         text = pattern.sub(replacement, text)
-    for old, new in SHA_MAP.items():
-        pattern = re.compile(rf"(?<![0-9a-f]){old}(?![0-9a-f])")
-        if f"{old} (now {new})" in text:
-            continue
-        text = pattern.sub(f"{old} (now {new})", text)
-    if UNREACHABLE in text and UNREACHABLE_NOTE not in text:
-        pattern = re.compile(rf"(?<![0-9a-f]){UNREACHABLE}(?![0-9a-f])")
-        text = pattern.sub(UNREACHABLE_NOTE, text)
     text = re.sub(
         r"(^|(?<=[.!?])[ \t]+)host ([ABCD])\b",
         lambda m: f"{m.group(1)}Host {m.group(2)}",
@@ -142,7 +119,7 @@ if not DRY:
                 ["gh", "api", f"repos/Oaklight/krino/pulls/{n}/reviews/{item_id}", "--jq", ".node_id"],
                 capture_output=True, text=True,
             ).stdout.strip()
-            if entry["author"] != "clementine-oaklight[bot]" or not node:
+            if entry["author"] != "example-bot[bot]" or not node:
                 print("SKIP review", n, item_id, entry["author"])
                 continue
             body_json = json.dumps(entry["new"])
